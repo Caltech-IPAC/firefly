@@ -9,6 +9,10 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,7 +35,7 @@ public class Messenger {
     private static Logger.LoggerImpl LOG = Logger.getLogger();
 
     // to limit one thread per topic
-    private static ConcurrentHashMap<String, SubscriberHandle> pubSubHandlers = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, SubscriberHandler> pubSubHandlers = new ConcurrentHashMap<>();
 
     /**
      * @param topic         the topic to subscribe to
@@ -41,11 +45,11 @@ public class Messenger {
     public static Subscriber subscribe(String topic, Subscriber subscriber) {
         if (pubSubHandlers.containsKey(topic)) {
             LOG.trace("Add subscriber to existing topic: " + topic);
-            SubscriberHandle pubSub = pubSubHandlers.get(topic);
+            SubscriberHandler pubSub = pubSubHandlers.get(topic);
             pubSub.addSubscriber(subscriber);
         } else {
             LOG.trace("Add subscriber to new topic: " + topic);
-            SubscriberHandle pubSub = new SubscriberHandle(topic);
+            SubscriberHandler pubSub = new SubscriberHandler(topic);
             pubSubHandlers.put(topic, pubSub);
             pubSub.addSubscriber(subscriber);
         }
@@ -54,6 +58,9 @@ public class Messenger {
 
     public static int getSubscribedTopics() {
         return pubSubHandlers.size();
+    }
+    public static Map<String, SubscriberHandler> getSubscribers() {
+        return Collections.unmodifiableMap(pubSubHandlers);
     }
 
     /**
@@ -90,11 +97,13 @@ public class Messenger {
      * Internal handler class used to manage the one-to-many relationship of Messenger's subscriber and
      * Jedis's subscriber
      */
-    static class SubscriberHandle {
+    public static class SubscriberHandler {
 
         private final CopyOnWriteArrayList<Subscriber> subscribers = new CopyOnWriteArrayList<>();
         private final String topic;
         private final AtomicInteger retries = new AtomicInteger(5);
+        private Instant failSince = Instant.now();
+        private Thread subscriberThread;
         JedisPubSub jPubSub = new JedisPubSub() {
             public void onMessage(String channel, String message) {
                 Message msg = Message.parse(message);
@@ -102,7 +111,7 @@ public class Messenger {
                     try {
                         sub.onMessage(msg);
                     } catch (Exception e) {
-                        LOG.warn("Error while processing message: " + e.getMessage());
+                        LOG.error(e, "Error while processing message: " + message);
                     }
                 });
             }
@@ -115,13 +124,26 @@ public class Messenger {
 
         };
 
-        SubscriberHandle(String topic) {
+        SubscriberHandler(String topic) {
             this.topic = topic;
         }
 
         void addSubscriber(Subscriber sub) {
             subscribers.add(sub);
-            subscribe();
+            if (subscriberThread == null || !subscriberThread.isAlive()) {
+                // Start the subscriber in a separate thread; use only one thread per topic
+                subscriberThread = new Thread(() -> {
+                    try {
+                        subscribeToRedis();
+                    } catch (Exception e) {
+                        LOG.error(e, "Error while subscribing to topic: " + topic);
+                    } finally {
+                        subscriberThread = null;
+                        LOG.trace("exiting subscribing to topic: " + topic);
+                    }
+                });
+                subscriberThread.start();
+            }
         }
 
         void removeSubscriber(Subscriber sub) {
@@ -132,33 +154,26 @@ public class Messenger {
             }
         }
 
-        void subscribe() {
-            if (subscribers.size() > 1  || jPubSub.isSubscribed()) return;     // already subscribed; do nothing.
+        public Instant getFailSince() {
+            return failSince;
+        }
 
-            Thread subscriberThread = new Thread(() -> {
-                LOG.trace("start subscribing to topic: " + topic);
-                try (Jedis jedis = RedisService.getConnection()) {
-                    jedis.subscribe(jPubSub, topic); // Blocks here
-                } catch (Exception e) {
-                    LOG.error(e, "Error while subscribing to topic: " + topic);
-                    if (!subscribers.isEmpty()) {
-                        if (retries.decrementAndGet() != 0) {
-                            try {
-                                LOG.info("Retry subscribing to %s after 1s wait".formatted(topic));
-                                Thread.sleep(1_000);
-                                subscribe();
-                            } catch (InterruptedException ignored) {}
-                        } else {
-                            LOG.info("Gave up subscribing after a connection failure to the topic: " + topic);
-                            pubSubHandlers.remove(topic);   // give up and clear topic cache
-                        }
+        void subscribeToRedis() throws InterruptedException {
+            LOG.trace("start subscribing to topic: " + topic);
+            try (Jedis jedis = RedisService.getConnection()) {
+                failSince = null;
+                jedis.subscribe(jPubSub, topic); // Blocks here
+            } catch (Exception e) {
+                if (failSince == null) failSince = Instant.now();
+                if (!subscribers.isEmpty()) {
+                    long secSinceFailed = Duration.between(getFailSince(), Instant.now()).toSeconds();
+                    if (secSinceFailed % 5 == 0) {
+                        LOG.info("Subscriber (%s) has been disconnected from Redis for %d seconds".formatted(topic, secSinceFailed));
                     }
+                    Thread.sleep(1_000);
+                    subscribeToRedis();
                 }
-                LOG.trace("exiting subscribing to topic: " + topic);
-            });
-            // Start the subscriber in a separate thread
-            subscriberThread.start();
+            }
         }
     }
-
 }

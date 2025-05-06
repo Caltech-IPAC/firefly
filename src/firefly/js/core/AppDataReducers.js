@@ -144,6 +144,7 @@ function getInitState() {
      * @summary Information about the core of the application
      *
      * @prop {boolean} isReady : false,
+     * @prop {Object} connectionStatus :  {lost, reason}, Status of the client connection to the server. e.g. WebSocket, Redis.
      * @prop {Object.<String,Array>} connections  channel:[] ... keyed by channel, contains an array of connId(s).
      * @prop {WorldPt} activeTarget
      * @prop {string} rootUrlPath

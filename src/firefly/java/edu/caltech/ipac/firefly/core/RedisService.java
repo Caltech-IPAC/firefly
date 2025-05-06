@@ -4,6 +4,9 @@
 
 package edu.caltech.ipac.firefly.core;
 
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import redis.clients.jedis.Jedis;
@@ -14,17 +17,17 @@ import redis.embedded.RedisServer;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.core.RedisService.Status.ONLINE;
-import static edu.caltech.ipac.firefly.core.RedisService.Status.OFFLINE;
 import static edu.caltech.ipac.firefly.core.Util.Try;
 
 
@@ -45,7 +48,6 @@ import static edu.caltech.ipac.firefly.core.Util.Try;
  * @version $Id: $
  */
 public class RedisService {
-    public enum Status {ONLINE, FAIL_TO_CONNECT, OFFLINE};
     public static final String REDIS_HOST = "redis.host";
     public static final String MAX_POOL_SIZE = "redis.max.poolsize";
     private static final int REDIS_PORT = AppProperties.getIntProperty("redis.port", 6379);
@@ -58,16 +60,12 @@ public class RedisService {
     private static final String redisHost = AppProperties.getProperty(REDIS_HOST, "localhost");
     public static final int maxPoolSize = AppProperties.getIntProperty(MAX_POOL_SIZE, 100);
     private static JedisPool jedisPool;
-    private static Status status = Status.OFFLINE;
+    private static Instant failSince;
 
     private static String getRedisPassword() {
         String passwd = System.getenv("REDIS_PASSWORD");
         if (passwd == null) passwd = AppProperties.getProperty("REDIS_PASSWORD");
         return passwd;
-    }
-
-    static {
-        connect();
     }
 
     static JedisPool createJedisPool() {
@@ -103,24 +101,46 @@ public class RedisService {
         } catch (IOException ignored) {}
     }
 
-    public static boolean connect() throws RuntimeException {
-        if (jedisPool != null && !jedisPool.isClosed()) {
-                return true;   // already connected
+    public static Instant getFailSince() { return failSince; }
+
+    public static Jedis getConnection() throws Exception {
+        try {
+            if (jedisPool == null || jedisPool.isClosed()) {
+                jedisPool = createJedisPool();
+                if (jedisPool == null && redisHost.equals("localhost")) {
+                    // can't connect; will start up embedded version if localhost
+                    startLocal();
+                    jedisPool = createJedisPool();
+                }
+                if (jedisPool == null || jedisPool.isClosed()) {
+                    if (jedisPool != null) {
+                        Try.it(jedisPool::close);
+                        jedisPool = null;
+                    }
+                    throw new RuntimeException("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
+                }
+            }
+            Jedis jedis = jedisPool.getResource();
+            if (failSince != null) updateConnectionStatus(false);
+            return jedis;
+        } catch (Exception e) {
+            if (failSince == null) {
+                updateConnectionStatus(true);
+            }
+            throw e;
         }
-        jedisPool = createJedisPool();
-        if (jedisPool == null && redisHost.equals("localhost")) {
-            // can't connect; will start up embedded version if localhost
-            startLocal();
-            jedisPool = createJedisPool();
-        }
-        if (jedisPool == null) {
-            LOG.error("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
-            status = Status.FAIL_TO_CONNECT;
-            return false;
-        } else {
-            status = ONLINE;
-            return true;
-        }
+    }
+
+    // because Redis may be down, we need to use processEvent to directly send it to clients currently connected
+    // to this server and not rely on distributed event messaging.
+    public static void updateConnectionStatus(boolean lost) {
+        failSince = lost ? Instant.now() : null;
+        String reason = lost ? "A critical system component is currently unavailable" : "";
+
+        FluxAction action = new FluxAction("app_data.appUpdate");
+        action.setValue(lost, "connectionStatus", "lost");
+        action.setValue(reason, "connectionStatus", "reason");
+        ServerEventManager.processEvent(ServerEventManager.convertTo(action, ServerEvent.Scope.WORLD));
     }
 
     public static void teardown() {
@@ -130,14 +150,11 @@ public class RedisService {
     }
 
     public static void disconnect() {
-        status = OFFLINE;
         if (jedisPool != null) {
             jedisPool.close();
             jedisPool = null;
         }
     }
-
-    public static Status getStatus() { return status; }
 
     public static Map<String, Object> getStats() {
 
@@ -187,13 +204,8 @@ public class RedisService {
     }
 
     public static String getRedisHostPortDesc() {
-        return redisHost + ":" + REDIS_PORT + " ("+ getStatus() + ")";
-    }
-
-    public static Jedis getConnection() throws Exception {
-        if (connect()) {
-            return jedisPool.getResource();
-        }
-        throw new ConnectException("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
+        String status = failSince == null ? "OK" :
+                "Failed since " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()).format(failSince);
+        return redisHost + ":" + REDIS_PORT + " (%s)".formatted(status);
     }
 }

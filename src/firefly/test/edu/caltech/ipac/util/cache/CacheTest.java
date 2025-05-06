@@ -37,11 +37,6 @@ public class CacheTest extends ConfigTest {
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
-    @Before
-    public void setup() {
-        RedisService.connect();
-    }
-
     @After
     public void tearDown() {
         RedisService.teardown();

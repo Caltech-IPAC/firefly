@@ -10,7 +10,7 @@ import {createRoot} from 'react-dom/client';
 import {set, defer, once, isArray} from 'lodash';
 import 'styles/global.css';
 
-import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
+import {APP_LOAD, dispatchAppOptions, dispatchConnectionStatus, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LandingPage} from './templates/fireflyviewer/LandingPage.jsx';
@@ -36,7 +36,6 @@ import {evaluateWebApi, initWebApi, isUsingWebApi, WebApiStat} from './api/WebAp
 import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage.jsx';
 import {dispatchOnAppReady} from './core/AppDataCntlr.js';
 import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
-import {showLostConnection} from './ui/LostConnection.jsx';
 import {recordHistory} from './core/History.js';
 import {GatorProtocolRootPanel} from './visualize/ui/GatorProtocolRootPanel';
 import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
@@ -465,7 +464,7 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
     return new Promise(async (resolve) => {
 
         const processDecor= (process) => (rawAction) => {
-            getOrCreateWsConn().catch(() => showLostConnection());
+            getOrCreateWsConn().catch(() => dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'}));
             process(rawAction);
             recordHistory(rawAction);
         };

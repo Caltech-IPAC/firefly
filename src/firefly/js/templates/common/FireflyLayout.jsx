@@ -4,7 +4,7 @@ import {object, bool, element, shape, elementType} from 'prop-types';
 import {Stack, Sheet, LinearProgress} from '@mui/joy';
 import {pick} from 'lodash/object.js';
 
-import {warningDivId} from 'firefly/ui/LostConnection.jsx';
+import {LostConnection} from '../../ui/LostConnection.jsx';
 import {Alerts} from 'firefly/ui/DropDownContainer.jsx';
 import {Banner} from 'firefly/ui/Banner.jsx';
 import {Menu} from 'firefly/ui/Menu.jsx';
@@ -82,7 +82,7 @@ export function FireflyLayout({footer, useDefaultExpandedView,
         <Sheet id='app-root' component={Stack} spacing={1} sx={{position:'absolute', inset:'0', ...sx}}>
             <Stack>
                 <BannerSection {...bannerProps} menu={menu} {...slotProps?.banner}/>
-                <div id={warningDivId} data-decor='full' className='warning-div center'/>
+                <LostConnection/>
                 <Alerts />
                 <Slot component={AppConfigDrawer} slotProps={slotProps?.drawer}/>
             </Stack>
