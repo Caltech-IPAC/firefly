@@ -218,11 +218,11 @@ export function makeViewerChannel(channel, file) {
 }
 
 export function isAppReady() {
-    return get(flux.getState(), [APP_DATA_PATH, 'isReady']);
+    return flux.getState()?.[APP_DATA_PATH]?.isReady;
 }
 
 export function getConnectionStatus() {
-    return get(flux.getState(), [APP_DATA_PATH, 'connectionStatus']);
+    return flux.getState()?.[APP_DATA_PATH]?.connectionStatus;
 }
 
 export function getSearchInfo() {
@@ -236,11 +236,11 @@ export function getSearchByName(name) {
 }
 
 export function getMenu() {
-    return get(flux.getState(), [APP_DATA_PATH, 'menu']);
+    return flux.getState()?.[APP_DATA_PATH]?.menu;
 }
 
 export function getAlerts() {
-    return get(flux.getState(), [APP_DATA_PATH, 'alerts'], {});
+    return flux.getState()?.[APP_DATA_PATH]?.alerts || {};
 }
 
 export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
