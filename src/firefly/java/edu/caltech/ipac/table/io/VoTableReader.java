@@ -228,8 +228,8 @@ public class VoTableReader {
                 voTablePath = tmpFile.getPath();
             } catch (Exception e) {
                 tmpFile.delete();
-                LOG.error(e);
-                throw new IOException("Unable to fetch URL: "+ location + "\n" + e.getMessage(), e);
+                LOG.error(e, "Unable to fetch URL: " + location);
+                throw new IOException(e.getMessage(), e);
             }
         } catch (MalformedURLException ex) { /* ok to ignore.  location may not be a URL */ }
 
@@ -238,8 +238,8 @@ public class VoTableReader {
             // at this point, voTablePath is a file path.
             return getVoTableRoot(new FileInputStream(voTablePath), policy);
         }  catch (Exception e) {
-            throw new IOException("Unable to parse VOTABLE from "+ location + "\n" +
-                    e.getMessage(), e);
+            LOG.error(e, "Unable to parse VOTABLE from "+ location);
+            throw new IOException(e.getMessage(), e);
         }
     }
 
@@ -250,7 +250,8 @@ public class VoTableReader {
             voFactory.setStoragePolicy(policy);
             return voFactory.makeVOElement(new BufferedInputStream(source), null);
         } catch (Exception e) {
-            throw new IOException("Unable to parse VOTable from stream: \n" + e.getMessage(), e);
+            LOG.error(e, "Unable to parse VOTable from stream");
+            throw new IOException(e.getMessage(), e);
         }
     }
 

@@ -21,6 +21,7 @@ import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import {MetaConst} from 'firefly/data/MetaConst';
 import {makeFileRequest} from 'firefly/api/ApiUtilTable';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
+import {determineValidity, fileAnalysisErr} from 'firefly/ui/FileUploadProcessor';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -54,8 +55,23 @@ let tblCount = 0;
 function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     if (!request) return false;
     const {additionalParams = {}, fileUpload: serverFile} = request;
-    const {detailsModel, report, summaryModel} = additionalParams;
-    if (!detailsModel || !report || !summaryModel || !serverFile) return false;
+    const {detailsModel, report, message, summaryModel, groupKey: summaryTblId, acceptList,
+        uniqueTypes, acceptOneItem} = additionalParams;
+
+    // determine if the uploaded table file is valid and show error popup if not
+    const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel,
+        summaryTblId, report, acceptOneItem, message);
+    if (!valid) {
+        showInfoPopup(errorMsg, title);
+        return false;
+    }
+
+    // show error popup if the analysis info required below is undefined (and if the file is still valid)
+    if (!detailsModel || !summaryModel || !serverFile) {
+        showInfoPopup(fileAnalysisErr.errorMsg, fileAnalysisErr.title);
+        return false;
+    }
+
     const {fileName,fileSize} = report;
     const {tableData={}}= detailsModel;
     const {data=[]}= tableData;
@@ -245,13 +261,13 @@ const LoadedTables= (props) => {
 export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=undefined) {
     DialogRootContainer.defineDialog(dialogId,
         <PopupPanel title={'Upload'} layoutPosition={LayoutType.TOP_EDGE_CENTER}>
-            <TapUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj}}/>
+            <TableUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj}}/>
         </PopupPanel>
     );
     dispatchShowDialog(dialogId);
 }
 
-const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
+const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
     return (
         <Stack height='35rem' sx={{resize:'both', overflow:'hidden',minHeight:'35rem', minWidth:'40rem'}}>
             <FieldGroup groupKey={groupKey} sx={{ flexGrow: 1}}>

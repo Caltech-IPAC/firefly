@@ -193,7 +193,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                         </Stack>
                     </Box>
                     <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
-                        isDatalink, acceptOneItem, summaryTblId}}/>
+                        isDatalink, acceptOneItem, summaryTblId, message}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
                     <TableDisplayOption {...{isMoc, isDatalink, summaryTblId,
                         currentReport:report, currentSummaryModel:summaryModel, currentDetailsModel:detailsModel,
@@ -327,8 +327,14 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
     } else if (analysisResult) {
         if (analysisResult !== prevAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
+
             if (currentReport.fileFormat === Format.UNKNOWN) {
-                return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined, selectInfo: undefined};
+                let errMessage = 'Unrecognized file type'; //since format is unknown
+                if (currentReport?.parts[0]?.type === FileAnalysisType.ErrorResponse) {
+                    errMessage = currentReport?.parts[0]?.desc; //use ErrorResponse description if available
+                }
+                return {message: errMessage, report:undefined, summaryModel:undefined,
+                    detailsModel:undefined, selectInfo: undefined};
             }
 
             currentSummaryModel= makeSummaryModel(currentReport, summaryTblId, acceptList);
@@ -844,7 +850,7 @@ function UWSInfo ({jobUrl}) {
 
 
 const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
-                          isDL, acceptOneItem}) => {
+                          isDL, acceptOneItem, message}) => {
     //getting FieldGroup context and adding required params to the request object (used in resultSuccess in FileUploadProcessor)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
 
@@ -853,11 +859,11 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
     //types will have repeated 'Image', 'Table', etc. - getting only unique values from types
     const uniqueTypes = types.filter((value, index, self) => self.indexOf(value) === index);
 
-    const additionalReqObjs = {summaryModel, report, detailsModel, groupKey, acceptList, uniqueTypes, acceptOneItem};
+    const additionalReqObjs = {summaryModel, report, message, detailsModel, groupKey, acceptList, uniqueTypes, acceptOneItem};
     useEffect(() => {
         register('additionalParams', () => additionalReqObjs);
         return () => unregister('additionalParams');
-    }, [report]);
+    }, [report, message]);
 
     if (report) {
 
