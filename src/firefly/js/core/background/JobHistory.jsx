@@ -12,13 +12,13 @@ import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemo
 import {InputField} from '../../ui/InputField';
 import Validate from '../../util/Validate';
 import {getRequestFromJob} from '../../tables/TableRequestUtil';
-import {dispatchTableAddLocal, dispatchTableSearch} from '../../tables/TablesCntlr';
+import {dispatchTableAddLocal, dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr';
 import {showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil';
 import {updateSet} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
-import {showJobInfo} from './JobInfo';
+import {isJobInfoOpen, showJobInfo} from './JobInfo';
 import {dispatchHideDropDown, dispatchShowDropDown} from '../LayoutCntlr';
-import {getTableUiById, getTblById, processRequest} from '../../tables/TableUtil';
+import {getCellValue, getTableUiById, getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
 import {SORT_DESC, SortInfo} from '../../tables/SortInfo';
 import {workingIndicator} from '../../ui/Menu';
 import {dispatchHideDialog} from '../ComponentCntlr';
@@ -180,6 +180,16 @@ function JobHistoryTable({help_id, ...props}) {
         dispatchTableAddLocal(table, undefined, false);
     }, [jobMap]); // refreshed only when jobMap changes
 
+    useEffect(() => {
+        return watchTableChanges(tbl_id,
+            [TABLE_HIGHLIGHT],
+            (action) => {
+                const {highlightedRow} = action.payload || {};
+                const jobId = getCellValue(getTblById(tbl_id), highlightedRow, 'Control');
+                if (isJobInfoOpen())    showJobInfo(jobId);
+            });
+    }, []);     // only need to do once
+
     const renderers =  {
         Phase:    {cellRenderer: PhaseRenderer},
         Control:  {cellRenderer: ControlRenderer},
@@ -187,7 +197,6 @@ function JobHistoryTable({help_id, ...props}) {
 
     return (
         <Slot component={TablePanel} rowHeight={32} {...{tbl_id, help_id, renderers}}
-                    highlightedRowHandler = {()=>undefined}
                     sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}}}
                     {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton:false}}
                     slotProps={{...props}}
@@ -324,10 +333,12 @@ function convertToTableModel(jobs, tbl_id) {
         ]);
 
     // add enum values for Phase column
+    makeEnumVals({columns, data, cname:'Phase'});
+    makeEnumVals({columns, data, cname:'Service ID'});
+    makeEnumVals({columns, data, cname:'Type'});
+
     const phaseIdx = columns.findIndex((c) => c.name === 'Phase');
-    const phases = data.map((rowData) => rowData[phaseIdx]);
-    columns[phaseIdx].enumVals = uniq(phases.filter((d) => d)).join(',');
-    const doFilter = phases.includes(Phase.ARCHIVED);
+    const doFilter = columns[phaseIdx].enumVals?.includes(Phase.ARCHIVED);
 
     const totalRows = data.length;
     const {origTableModel:prevTable, request:prevReq} = getTblById(tbl_id) || {};
@@ -337,6 +348,13 @@ function convertToTableModel(jobs, tbl_id) {
         table = processRequest(table, request);
     }
     return table;
+}
+
+function makeEnumVals({columns, data, cname}) {
+    const cidx = columns.findIndex((c) => c.name === cname);
+    const vals = data.map((rowData) => rowData[cidx]);
+    columns[cidx].enumVals = uniq(vals.filter((d) => d)).join(',');
+
 }
 
 function defaultRequest(doFilter) {

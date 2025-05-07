@@ -5,14 +5,15 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {KeywordBlock} from '../../tables/ui/TableInfo.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {dispatchHideDialog, dispatchShowDialog} from '../ComponentCntlr.js';
+import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsibleItem, CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Box, Button, Skeleton, Stack} from '@mui/joy';
-import {OverflowMarker, TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
+import {Box, Skeleton, Stack} from '@mui/joy';
+import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 
+const dialogID = 'show-job-info';
 
 const popupSx = {
     justifyContent: 'space-between',
@@ -22,8 +23,11 @@ const popupSx = {
     width: '45vh'
 };
 
+export function isJobInfoOpen() {
+    return isDialogVisible(dialogID);
+}
+
 export function showJobInfo(jobId) {
-    const ID = 'show-job-info';
     const popup = (
         <PopupPanel title='Job Information' >
             <Stack key={jobId} sx={popupSx}>
@@ -32,8 +36,8 @@ export function showJobInfo(jobId) {
             </Stack>
         </PopupPanel>
     );
-    DialogRootContainer.defineDialog(ID, popup);
-    dispatchShowDialog(ID);
+    DialogRootContainer.defineDialog(dialogID, popup);
+    dispatchShowDialog(dialogID);
 }
 
 export async function showUwsJob({jobUrl, jobId}) {
