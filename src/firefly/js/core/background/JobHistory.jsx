@@ -313,11 +313,11 @@ function convertToTableModel(jobs, tbl_id) {
     const cProps = {align: 'center'};
     const columns = [
         {name: 'Title', width: 22},
-        {name: 'Service ID', width: 11, ...cProps},
-        {name: 'Type', width: 9, ...cProps},
+        {name: 'Service ID', width: 11, type: 'char',  ...cProps},
+        {name: 'Type', width: 9, type: 'char', ...cProps},
         {name: 'Start Time', width: 14, ...cProps},
         {name: 'End Time', width: 14, ...cProps},
-        {name: 'Phase', width: 13, ...cProps},
+        {name: 'Phase', width: 13, type: 'char', ...cProps},
         {name: 'Control', width: 14, sortable: false, filterable:false}
     ];
 
@@ -332,11 +332,6 @@ function convertToTableModel(jobs, tbl_id) {
             job.meta?.jobId
         ]);
 
-    // add enum values for Phase column
-    makeEnumVals({columns, data, cname:'Phase'});
-    makeEnumVals({columns, data, cname:'Service ID'});
-    makeEnumVals({columns, data, cname:'Type'});
-
     const phaseIdx = columns.findIndex((c) => c.name === 'Phase');
     const doFilter = columns[phaseIdx].enumVals?.includes(Phase.ARCHIVED);
 
@@ -348,13 +343,6 @@ function convertToTableModel(jobs, tbl_id) {
         table = processRequest(table, request);
     }
     return table;
-}
-
-function makeEnumVals({columns, data, cname}) {
-    const cidx = columns.findIndex((c) => c.name === cname);
-    const vals = data.map((rowData) => rowData[cidx]);
-    columns[cidx].enumVals = uniq(vals.filter((d) => d)).join(',');
-
 }
 
 function defaultRequest(doFilter) {

@@ -18,7 +18,7 @@ import { trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgro
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
-import {fixPageSize} from './TableUtil.js';
+import {ensureEnumVals, fixPageSize} from './TableUtil.js';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 
 
@@ -382,6 +382,7 @@ function fixClientTable(tableModel) {
     }
 
     set(tableModel, 'request.pageSize', fixPageSize(tableModel.request?.pageSize));
+    ensureEnumVals(tableModel);         // apply enum values to the client tableModel using server-side logic
 
     return tableModel;
 }
