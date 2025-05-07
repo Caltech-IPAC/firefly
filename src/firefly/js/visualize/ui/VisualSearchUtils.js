@@ -266,7 +266,7 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
 }
 
 function setUISize(size, minSize, maxSize, uiCurrentValue, setter) {
-    if (isUndefined(size)) return;
+    if (isUndefined(size) || isNaN(size)) return;
     const sizeToSet = size <= maxSize ? (size >= minSize ? size : minSize) : maxSize;
     if (uiCurrentValue===sizeToSet) return;
     setter(sizeToSet+'');

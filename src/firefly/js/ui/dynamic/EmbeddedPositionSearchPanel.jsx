@@ -192,7 +192,7 @@ export function EmbeddedPositionSearchPanel({
                     minSize: min, maxSize: max, toolbarHelpId,
                     getWhichOverlay: doGetSearchTypeOp, setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
                     targetKey,
-                    sizeKey: sizeEnabled ? sizeKey : undefined,
+                    sizeKey: sizeEnabled ? sizeKey : undefined, //to draw radius only when size input is enabled
                     polygonKey,
                     sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1, ...hipsTargetViewSx}
                 }}/>

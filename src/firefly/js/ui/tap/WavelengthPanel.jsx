@@ -20,6 +20,7 @@ import {
     WavelengthInputField,
     WavelengthRangeInput
 } from 'firefly/ui/WavelengthInputField';
+import {omit} from 'lodash';
 
 const panelTitle = 'Spectral Coverage';
 const panelValue = 'Wavelength';
@@ -109,18 +110,22 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
-export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, filterDefinitions, fixedRangeType, slotProps }) {
+export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, filterDefinitions, fixedSelectionType,
+                                      fixedRangeType, slotProps }) {
     const [getSelectionType,] = useFieldGroupValue(fieldKeys.selectionType);
     const [getRangeType,] = useFieldGroupValue(fieldKeys.rangeType);
 
     const hasFilters = filterDefinitions?.length > 0;
-    const useNumerical = !hasFilters || getSelectionType() === 'numerical';
+    const useFilters = hasFilters && (fixedSelectionType
+        ? fixedSelectionType === 'filter' : getSelectionType() === 'filter');
+    const useNumerical = !hasFilters || (fixedSelectionType
+        ? fixedSelectionType === 'numerical' : getSelectionType() === 'numerical');
     const useRangeContains = fixedRangeType ? fixedRangeType === 'contains' : getRangeType() === 'contains';
     const useRangeOverlaps = fixedRangeType ? fixedRangeType === 'overlaps' : getRangeType() === 'overlaps';
 
     return (
         <Stack spacing={2}>
-            {hasFilters && (
+            {!fixedSelectionType && hasFilters && (
                 <RadioGroupInputField
                     fieldKey={fieldKeys.selectionType}
                     options={[{ label: 'By Filter Bands', value: 'filter' }, { label: 'By Wavelength', value: 'numerical' }]}
@@ -130,7 +135,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                 />
             )}
 
-            {hasFilters && getSelectionType() === 'filter' && (
+            {useFilters && (
                 <Stack spacing={1} {...slotProps?.filterBandsWvlOptions}>
                     {filterDefinitionsLabel && (
                         <Typography level='title-sm'>{filterDefinitionsLabel}</Typography>
@@ -182,6 +187,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                     )}
                     {useRangeOverlaps && (
                         <WavelengthRangeInput minFieldKey={fieldKeys.wvlMin} maxFieldKey={fieldKeys.wvlMax}
+                                              {...slotProps?.wvlRange}
                                               slotProps={{
                                                   wvlMin: {
                                                       initialState: {
@@ -219,6 +225,7 @@ WavelengthOptions.propTypes = {
         name: PropTypes.string,
         options: PropTypes.arrayOf(PropTypes.shape({ value: PropTypes.string, label: PropTypes.string }))
     })),
+    fixedSelectionType: PropTypes.oneOf(['filter', 'numerical']),
     fixedRangeType: PropTypes.oneOf(['contains', 'overlaps']),
     slotProps: PropTypes.shape({
         selectionType: PropTypes.object,
@@ -226,6 +233,7 @@ WavelengthOptions.propTypes = {
         wvlContains: PropTypes.object,
         wvlMin: PropTypes.object,
         wvlMax: PropTypes.object,
+        wvlRange: PropTypes.object,
         wvlUnits: PropTypes.object,
         filterDefOptionsGroup: PropTypes.object,
         numericalWvlOptions: PropTypes.object,
@@ -275,7 +283,7 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
                         fieldKeys: obsCoreWvlFieldKeys,
                         filterDefinitionsLabel: 'Require coverage at the approximate center of these filters:',
                         filterDefinitions,
-                        slotProps: slotProps?.wavelengthOptions}}/>
+                        ...slotProps?.wavelengthOptions}}/>
                     <DebugObsCore {...{ constraintResult }} />
                 </ForceFieldGroupValid>
             </Stack>
@@ -289,6 +297,6 @@ ObsCoreWavelengthSearch.propTypes = {
     useSIAv2: PropTypes.bool,
     slotProps: PropTypes.shape({
         root: PropTypes.object,
-        wavelengthOptions: WavelengthOptions.propTypes.slotProps
+        wavelengthOptions: PropTypes.shape({...omit(WavelengthOptions.propTypes, ['fieldKeys'])})
     })
 };
