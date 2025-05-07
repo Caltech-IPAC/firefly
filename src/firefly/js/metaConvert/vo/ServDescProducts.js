@@ -291,6 +291,6 @@ export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
     return newUrl;
 }
 function logServiceDescriptor(baseUrl, params, newUrl) {
-     // console.log(`service descriptor base URL: ${baseUrl}`);
-     // console.log(`service descriptor new URL: ${newUrl}`);
+     console.log(`service descriptor base URL: ${baseUrl}`);
+     console.log(`service descriptor new URL: ${newUrl}`);
 }
