@@ -30,6 +30,7 @@ import {
     primePlot
 } from '../PlotViewUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
+import {isImage} from '../WebPlot';
 import {coverageCatalogId} from './CoverageWatcher.js';
 
 
@@ -144,7 +145,7 @@ async function handleCatalogUpdate(tbl_id) {
     else {
         // plotting PointType.IMAGE is only set up from extraction
         const columns= findImageCenterColumns(sourceTable);
-        if (!findPlotViewUsingFitsPathMeta(sourceTable)) return;
+        if (!getImagePvAry().length) return;
         const params= { startIdx : 0, pageSize : MAX_ROW, inclCols : `"${columns.xCol}","${columns.yCol}","ROW_IDX"`};
         const req = cloneRequest(sourceTable.request, params);
         req.tbl_id = `cat-extracted-image-pts-${tbl_id}`;
@@ -173,16 +174,17 @@ function updateImagePointsDrawingLayer(tbl_id, allRowsTable, tableRequest, highl
         return;
     }
     const columns= findImageCenterColumns(tbl_id);
-    const pv=  findPlotViewUsingFitsPathMeta(getTblById(tbl_id));
-    if (!pv || !columns) return;
+    const plotIdAry= getImagePvAry().map( (pv) => pv.plotId);
+    if (!plotIdAry.length || !columns) return;
 
     dispatchCreateDrawLayer(Catalog.TYPE_ID,
         {catalogId, title:allRowsTable.title, tableData:allRowsTable.tableData, tableMeta:allRowsTable.tableMeta,
             tableRequest, highlightedRow, selectInfo, columns, catalogType:CatalogType.POINT_IMAGE_PT,
             tbl_id, layersPanelLayoutId: tbl_id });
-    attachToPlot(catalogId, [pv.plotId]);
+    attachToPlot(catalogId, plotIdAry);
 }
 
+const getImagePvAry= () => getPlotViewAry(visRoot()).filter( (pv) => isImage(primePlot(pv)));
 
 function updateHpxCatalogDrawingLayer(tbl_id, tableRequest, highlightedRow) {
 
@@ -254,18 +256,23 @@ function shouldDlBeVisible(dl,pv) {
 
 function attachToCatalog(tbl_id, payload) {
     const table= getTblById(tbl_id);
-    if (getCatalogPtType(table)===PointType.IMAGE) return;
-    const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload;
     const catId= catalogWatcherStandardCatalogId(tbl_id);
     const dl= getDrawLayerById(dlRoot(), catId);
     if (!dl || !table) return;
-    pvNewPlotInfoAry.forEach( (info, idx) => {
-        let r= wpRequest || get(wpRequestAry,idx);
-        if (!r) r= (redReq || blueReq || greenReq);
+    const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload ?? {};
+    const plotIdAry= pvNewPlotInfoAry.map( ({plotId}) => plotId);
+    if (getCatalogPtType(table)===PointType.IMAGE) {
+        plotIdAry
+            .filter( (plotId) => isImage(primePlot(visRoot(),plotId)))
+            .forEach( (plotId) => dispatchAttachLayerToPlot(dl.drawLayerId, plotId) );
+        return;
+    }
+    plotIdAry.forEach( (plotId, idx) => {
+        const r= (wpRequest || wpRequestAry?.[idx] || redReq || blueReq || greenReq);
         if (!r || r.getAttributes[PlotAttribute.RELATED_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
-        const pv= getPlotViewById(visRoot(), info.plotId);
+        const pv= getPlotViewById(visRoot(), plotId);
         if (pv?.plotViewCtx?.useForCoverage) return;
-        dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId,false, shouldDlBeVisible(dl,pv));
+        dispatchAttachLayerToPlot(dl.drawLayerId, plotId,false, shouldDlBeVisible(dl,pv));
         const pvSubGroup= pv?.drawingSubGroupId;
         const tableSubGroup= getTblById(tbl_id)?.tableMeta[SUBGROUP];
         if (!isNil(pvSubGroup) && !isNil(tableSubGroup)  && pvSubGroup!==tableSubGroup) {

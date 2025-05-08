@@ -479,7 +479,7 @@ function doCatalog(request, catalogGroupKey, serviceUrl) {
     const sql= request[catalogGroupKey]?.tableconstraints;
     tReq.constraints = '';
     let addAnd = false;
-    if (sql.constraints.length > 0) {
+    if (sql?.constraints?.length > 0) {
         tReq.constraints += sql.constraints;
         addAnd = true;
     }
