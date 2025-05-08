@@ -4,9 +4,10 @@
 import {get, isEmpty} from 'lodash';
 import Enum from 'enum';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
-import {dispatchAttributeChange, visRoot} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchAttributeChange, visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
+import {closeToolbarModalLayers} from '../visualize/ui/ToolbarToolModalEnd';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -157,6 +158,11 @@ function getLayerChanges(drawLayer, action) {
             break;
         case DrawLayerCntlr.SELECT_MOUSE_LOC:
             return moveMouse(drawLayer,action);
+        case ImagePlotCntlr.CHANGE_HIPS:
+            if (action.payload.coordSys) {
+                setTimeout(() => closeToolbarModalLayers(),4);
+            }
+            return;
     }
     return null;
 }
