@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
@@ -118,11 +119,11 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     /**
      * Ingest data directly from a source file.  This file can be local or remote.
      * @param source can be a local file path or a URL
-     * @param meta  meta to ingest along with the table
+     * @param extraMetaSetter  additional meta to ingest along with the table
      * @return FileInfo on the dbFile
      * @throws DataAccessException
      */
-    public FileInfo ingestDataDirectly(String source, DataGroup meta) throws DataAccessException {
+    public FileInfo ingestDataDirectly(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
 
         String forTable = getDataTable();
         String sqlReadSource = sqlReadSource(source);
@@ -140,7 +141,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         String sql = createTableFromSelect(forTable, dataSqlWithIdx);
         jdbc.update(sql);
 
-        DataGroup tableMeta = getTableMeta(source, meta);     // collect all meta, then update the database with this information.
+        DataGroup tableMeta = getTableMeta(source, extraMetaSetter);     // collect all meta, then update the database with this information.
         if (tableMeta != null) {
             ddToDb(tableMeta, getDataTable());
             metaToDb(tableMeta, getDataTable());
@@ -153,9 +154,9 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return new FileInfo(getDbFile());
     }
 
-    protected DataGroup getTableMeta(String source, DataGroup meta) throws DataAccessException {
+    protected DataGroup getTableMeta(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
         DataGroup tableMeta = execQuery("SELECT * from %s LIMIT 0".formatted(sqlReadSource(source)), null);
-        if (tableMeta != null)    tableMeta.addMetaFrom(meta);
+        if (tableMeta != null && extraMetaSetter != null)  extraMetaSetter.accept(tableMeta);
         return tableMeta;
     }
 
@@ -179,7 +180,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         }
 
         @Override
-        protected DataGroup getTableMeta(String source, DataGroup meta) throws DataAccessException {
+        protected DataGroup getTableMeta(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
             var jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
             try {
                 var votable = jdbc.queryForObject(
@@ -187,11 +188,11 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
                         String.class);
                 if (votable != null) {
                     DataGroup tableMeta = VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
-                    if (tableMeta != null)    tableMeta.addMetaFrom(meta);
+                    if (tableMeta != null && extraMetaSetter != null)    extraMetaSetter.accept(tableMeta);
                     return tableMeta;
                 }
             } catch (Exception ignored) {}        // ignored if it can't read
-            return super.getTableMeta(source, meta);
+            return super.getTableMeta(source, extraMetaSetter);
         }
 
         public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
