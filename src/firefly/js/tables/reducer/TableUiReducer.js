@@ -11,6 +11,9 @@ import {getNumFilters} from '../FilterInfo.js';
 import {makeDefaultRenderer} from '../ui/TableRenderer.js';
 import {applyTblPref} from '../TablePref.js';
 
+export const BY_SCROLL = 'byScroll';
+export const BY_TABLE = 'byTable';
+
 
 /*
 `table_space`(table store) is separated into 3 parts; data, ui, and results
@@ -61,7 +64,7 @@ function handleTableUpdates(root, action, state) {
 
         case (Cntlr.TBL_RESULTS_ADDED) :
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateMerge(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
+            return updateMerge(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: BY_TABLE, ...options});
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
