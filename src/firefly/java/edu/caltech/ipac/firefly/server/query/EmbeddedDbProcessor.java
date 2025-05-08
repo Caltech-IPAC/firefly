@@ -101,7 +101,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     public String getLabel() { return getJob().getParams().getTableServerRequest().getTblTitle(); }
 
     public String getSvcId() {
-        return getJob().getParams().getTableServerRequest().getSvcId();
+        String svcId = getJob().getParams().getTableServerRequest().getSvcId();
+        return isEmpty(svcId) ? Job.Worker.super.getSvcId() : svcId;
     }
 
     /**

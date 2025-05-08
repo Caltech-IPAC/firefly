@@ -50,9 +50,10 @@ const BOOL  = ['boolean','bool'];
 const DATE  = ['date'];
 const NUMBER= [...INT, ...FLOAT];
 const USE_STRING = [...TEXT, ...DATE];
+const ENUM_TYPES = [...TEXT, ...INT, ...BOOL];
 
 // export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
-export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING});
+export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING, ENUM_TYPES});
 export const TBL_STATE = new Enum(['ERROR', 'LOADING', 'NO_DATA', 'NO_MATCH', 'OK']);
 
 /**
@@ -1593,6 +1594,20 @@ export function cleanHtml(text) {
     if (DOMPurify.removed) logger.debug(`cleanHtml removed: ${DOMPurify.removed}`);
     return clean;
 }
+
+export function ensureEnumVals(tableModel) {
+    const {data=[], columns=[]} = tableModel?.tableData || {};
+    columns.forEach((col, idx) => {
+        if (!col.enumVals && isOfType(col.type, COL_TYPE.ENUM_TYPES)) {
+            const vals = data.map((rowData) => rowData[idx]);
+            const uniqVals = uniq(vals.filter((d) => d));
+            if (uniqVals.length && uniqVals.length <= 32) {         // 32 is the default(MAX_COL_ENUM_COUNT) for server-backed tables
+                col.enumVals = uniqVals.join(',');
+            }
+        }
+    });
+}
+
 
 /*-------------------------------------private------------------------------------------------*/
 
