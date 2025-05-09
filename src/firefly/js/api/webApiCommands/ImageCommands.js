@@ -17,7 +17,7 @@ import {makeExamples, ReservedParams} from '../WebApi';
 
 const imageOverview= {
     overview: [
-        'Load and image to firefly either from URL or from a service'
+        'Load an image to firefly either from URL or from a service'
     ],
     allowAdditionalParameters: true,
     parameters: {

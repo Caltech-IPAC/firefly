@@ -3,7 +3,7 @@
  */
 
 import {
-    Badge, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator, Sheet,
+    Badge, Chip, CircularProgress, Divider, IconButton, ListItemDecorator, Sheet,
     Stack, Tab, TabList, Tabs, Tooltip, Typography
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
