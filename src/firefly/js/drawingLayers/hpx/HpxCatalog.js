@@ -374,10 +374,10 @@ function handlePlotActions(action, cancelSelf, params) {
             break;
 
         case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+        case ImagePlotCntlr.RECENTER:
             if (!connectedIds.includes(plotId)) return;
             void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION);
             break;
-        case ImagePlotCntlr.RECENTER:
         case ImagePlotCntlr.ANY_REPLOT:
         case ImagePlotCntlr.CHANGE_HIPS:
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:

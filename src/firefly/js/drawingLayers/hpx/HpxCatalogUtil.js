@@ -1,3 +1,4 @@
+import pointInPolygon from 'point-in-polygon';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr';
 import {FilterInfo} from '../../tables/FilterInfo';
 import {
@@ -194,7 +195,11 @@ async function getSelectedHealPix(tbl_id, cc, pt0, pt1, tileList, norder, contai
         const pix = getCornersForCell(norder, tile.pixel, CoordSys.EQ_J2000);
         const devC = pix.wpCorners.map((wp) => cc.getDeviceCoords(wp)).filter(Boolean);
         if (devC.length < 2) return;
-        if (devC.some((pt) => containsTest(pt))) selectedTiles.push(tile);
+        const polygon= devC.map( ({x,y}) => [x,y]);
+        const match= pointInPolygon([pt0.x,pt0.y], polygon)
+            || pointInPolygon([pt1.x,pt1.y], polygon)
+            || devC.some((pt) => containsTest(pt));
+        if (match) selectedTiles.push(tile);
     });
 
     dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
