@@ -1,4 +1,4 @@
-import {FileAnalysisType, Format} from 'firefly/data/FileAnalysis';
+import {FileAnalysisType, Format, TableDataType} from 'firefly/data/FileAnalysis';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
 import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
 import {MetaConst} from 'firefly/data/MetaConst';
@@ -384,7 +384,7 @@ function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, currentRe
                 ? `${extMarker}:${fileRoot}`
                 : `${fileRoot}:${extMarker}` : fileRoot;
         const META_INFO= {...metaData};
-        if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
+        if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= TableDataType.Spectrum;
         const options=  {META_INFO};
         const tblReq = makeFileRequest(title, fileCacheKey, null, options);
         if (currentReport.parts[idx]?.searchProcessorId) tblReq.id= currentReport.parts[idx].searchProcessorId;

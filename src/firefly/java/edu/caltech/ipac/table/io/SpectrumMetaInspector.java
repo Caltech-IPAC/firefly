@@ -1,6 +1,7 @@
 package edu.caltech.ipac.table.io;
 
 
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.table.DataGroup;
@@ -85,6 +86,8 @@ public class SpectrumMetaInspector {
     private static final String SPEC_SPECTRUM_DATA= "spec:Spectrum.Data";
     private static final String SPEC= "spec:";
 
+    private static final String specHint= FileAnalysisReport.TableDataType.Spectrum.name().toLowerCase();
+
     static {
         List<String> l= new ArrayList<>(wlColNames);
         l.addAll(enColNames);
@@ -101,12 +104,30 @@ public class SpectrumMetaInspector {
         searchForSpectrum(dg,null,spectrumHint);
     }
 
+    public static void searchForSpectrum(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint) {
+        doSpectrumAnalysis(dg,hdu,spectrumHint,true);
+    }
+
+
+    public static boolean isPossiblySpectrum(List<DataType> columns, TableMeta meta) {
+        var dg= new DataGroup("", columns);
+        dg.setTableMeta(meta);
+        return isPossiblySpectrum(dg,null);
+    }
+
+    public static boolean isPossiblySpectrum(DataGroup dg) { return isPossiblySpectrum(dg,null); }
+
+    public static boolean isPossiblySpectrum(DataGroup dg, BasicHDU<?> hdu) {
+        return doSpectrumAnalysis(dg,hdu,true,false);
+    }
+
     public static boolean hasSpectrumHint(TableServerRequest request) {
         if (request==null) return false;
         var passedMetaInfo= request.getMeta();
         if (passedMetaInfo==null) return false;
-        return passedMetaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").equalsIgnoreCase("spectrum");
+        return passedMetaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").equalsIgnoreCase(specHint);
     }
+
 
     /**
      * Look at the metadata for spectrum data model information. If found insert it into
@@ -132,8 +153,9 @@ public class SpectrumMetaInspector {
      * @param dg the data group to insert spectral data model information.
      * @param hdu the HDU that is the source of this DataGroup
      * @param spectrumHint if true, then do not require the utype to be set in the file and do more guessing
+     * @return true if spectrum was found
      */
-    public static void searchForSpectrum(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint) {
+    private static boolean doSpectrumAnalysis(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint, boolean insertMeta) {
 
         String utype= (hdu==null) ? dg.getAttribute(TableMeta.UTYPE) : FitsReadUtil.getUtype(hdu.getHeader());
         if (hdu!=null) { // fits will either use guesser or look for UCDs only
@@ -144,7 +166,7 @@ public class SpectrumMetaInspector {
         }
         else if (!spectrumHint) { // determine if we are to continue or just return
             var treatAsVoTable= hasSpecGroups(dg); // note- a VOTable does not need any further data model building
-            if (treatAsVoTable || utype==null) return;
+            if (treatAsVoTable || utype==null) return false;
         }
 
         // if useOnlyUType is true then all the matching will be by utype (not guessing of columns)
@@ -194,7 +216,8 @@ public class SpectrumMetaInspector {
         }
 
         // finish - there must be two axis to insert anything
-        if (!foundX || !foundY) return;
+        if (!foundX || !foundY) return false;
+        if (!insertMeta) return true;
 
         var newGroupList= new ArrayList<>(dg.getGroupInfos());
         newGroupList.addAll(groupInfosList);
@@ -202,6 +225,7 @@ public class SpectrumMetaInspector {
         TableMeta meta= dg.getTableMeta();
         if (utype!=null) meta.addKeyword(TableMeta.UTYPE, utype.startsWith("spec:") ? utype : "spec:"+utype);
         else meta.addKeyword(TableMeta.UTYPE,SPEC_SPECTRUM);
+        return true;
     }
 
     public static boolean hasSpecGroups(DataGroup dg) {

@@ -254,6 +254,16 @@ export function loadCancelableImage(src) {
     return {promise, cancelImageLoad};
 }
 
+export function isURL(url) {
+    if (url instanceof URL) return true;
+    if (!isString(url)) return false;
+    try {
+        new URL(url);
+        return true;
+    } catch (e) { /* empty */ } // eslint-disable-line no-unused-vars
+    return false;
+}
+
 /**
  * @param urlString     a URL string
  * @param baseUrl       base URL if given a relative URL

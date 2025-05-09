@@ -25,18 +25,19 @@ public class FileAnalysisReport {
         Normal,             // a report with all parts populated, but not details
         Details}            // a full report with details
 
-    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, UWS, TEXT, Unknown}
+    public enum Type {Image, Table, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, UWS, TEXT, Unknown}
     public enum UIRender {Table, Chart, Image, NotSpecified}
+    public enum TableDataType {NotSpecified, Spectrum, LightCurve}
     public enum UIEntry {UseSpecified, UseGuess, UseAll}
     public enum ChartTableDefOption {auto, showChart, showTable, showImage};
 
 
 
-    private ReportType type;
-    private long fileSize;
-    private String filePath;
+    private final ReportType type;
+    private final long fileSize;
+    private final String filePath;
+    private final String fileFormat;
     private String fileName;
-    private String fileFormat;
     private List<Part> parts;
     private String dataType;
     private boolean disableAllImagesOption = false;
@@ -124,7 +125,7 @@ public class FileAnalysisReport {
         if (dataType == null) {
             if (parts != null) {
                 if (parts.size() == 1) {
-                    dataType = parts.get(0).type.name();
+                    dataType = parts.getFirst().type.name();
                 } else {
                     List<String> types = parts.stream().map(part -> part.type.name()).distinct().collect(Collectors.toList());
                     dataType = StringUtils.toString(types);
@@ -168,13 +169,9 @@ public class FileAnalysisReport {
         getDataType();  // init dataType
         if (parts != null) {
             // keep only the first part with data.
-            Part first = parts.stream()
+            parts.stream()
                     .filter(p -> !Arrays.asList(Type.HeaderOnly, Type.Unknown).contains(p.getType()))
-                    .findFirst()
-                    .orElse(null);
-            if (first != null) {
-                parts = Collections.singletonList(first);
-            }
+                    .findFirst().ifPresent(first -> parts = Collections.singletonList(first));
         }
     }
 
@@ -192,6 +189,7 @@ public class FileAnalysisReport {
         private List<ChartParams> chartParams= null;
         private List<String> tableColumnNames= null; //only use for a fits image that is read as a table
         private List<String> tableColumnUnits= null; //only use for a fits image that is read as a table
+        private TableDataType tableDataType= null;
         private boolean defaultPart= false;
         private boolean interpretedData= false;
         private String searchProcessorId="";
@@ -275,6 +273,9 @@ public class FileAnalysisReport {
         public void setChartTableDefOption(ChartTableDefOption chartTableDefOption) {
             this.chartTableDefOption = chartTableDefOption;
         }
+
+        public void setTableDataType(TableDataType tableDataType) { this.tableDataType = tableDataType; }
+        public TableDataType getTableDataType() { return tableDataType; }
 
         public Part copy() {
             Part p= new Part(type, desc);

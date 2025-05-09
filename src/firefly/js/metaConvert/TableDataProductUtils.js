@@ -26,13 +26,17 @@ import {findDataLinkServeDescs} from './vo/ServDescConverter';
 
 
 export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
-
-    return createChartTableActivate({source, titleInfo:{titleStr, showChartTitle:true},
-        activateParams,undefined,tbl_index, dataTypeHint});
+    return createChartTableActivate({source, titleInfo:titleStr, activateParams,tbl_index, dataTypeHint});
 }
 
 const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d}` : d,'');
 
+/**
+ * @typedef {Object} ImageAsTableInfo
+ * @prop {Array.<String>|undefined} p.colNames - an array of column names
+ * @prop {Array.<String>|undefined} p.colUnits - an array of types names
+ * @prop {number} [p.cubePlane] - plane of cube - ignored for non-cubes
+ */
 
 
 /**
@@ -60,17 +64,19 @@ function isTableChartNormalViewAction(payload, type) {
 /**
  *
  * @param {String} source
- * @param {Object} titleInfo
+ * @param {Object|String} titleInfo
  * @param {String} tbl_id
  * @param {number} tbl_index
- * @param {Array.<string>} colNames
- * @param {Array.<string>} colUnits
- * @param {number} cubePlane - plane of cube - ignored for non-cubes
+ * @param {ImageAsTableInfo} imageAsTableInfo
+ * @param cubePlane
  * @param {String} dataTypeHint
  * @param {boolean} extraction
  * @return {TableRequest}
  */
-function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, cubePlane, dataTypeHint, extraction=false) {
+function makeTableRequest(source, titleInfo, tbl_id, tbl_index, imageAsTableInfo={}, cubePlane, dataTypeHint, extraction=false) {
+    const {colNames,colUnits}= imageAsTableInfo;
+
+    const title= isString(titleInfo) ? titleInfo : titleInfo.titleStr;
     const colNamesStr= colNames && makeCommaSeparated(colNames);
     const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
     const META_INFO= !extraction ?
@@ -79,7 +85,7 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUni
             [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
         } : {};
     if (dataTypeHint) META_INFO[MetaConst.DATA_TYPE_HINT]= dataTypeHint;
-    const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
+    const dataTableReq= makeFileRequest(title, source, undefined,
         {
             tbl_id : !extraction ? tbl_id : undefined,
             tbl_index,
@@ -131,17 +137,15 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
 /**
  *
  * @param source
- * @param titleInfo
+ * @param {Object|String} titleInfo
  * @param [tbl_index]
- * @param [colNames]
- * @param [colUnits]
- * @param [cubePlane]
+ * @param {ImageAsTableInfo} imageAsTableInfo
+ * @param cubePlane
  * @param [dataTypeHint]
  */
-export function createTableExtraction(source,titleInfo,tbl_index=0,colNames,colUnits,cubePlane=0,dataTypeHint) {
+export function createTableExtraction(source,titleInfo,tbl_index=0,imageAsTableInfo,cubePlane=0,dataTypeHint) {
     return () => {
-        const ti= isString(titleInfo) ? {titleStr:titleInfo} : titleInfo;
-        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,cubePlane,dataTypeHint, true);
+        const dataTableReq= makeTableRequest(source,titleInfo,undefined,tbl_index,imageAsTableInfo,cubePlane,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
         showPinMessage('Pinning to Table Area');
@@ -162,12 +166,12 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     }
     if (!url) return;
 
-    const positionWP = getSearchTarget(table?.request, table)
+    const positionWP = getSearchTarget(table?.request, table);
     const sRegion= getObsCoreSRegion(table,row);
     const rowWP=  makeWorldPtUsingCenterColumns(table, row);
 
 
-    const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,undefined,true);
+    const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,true);
     if (positionWP) dataTableReq.META_INFO[MetaConst.SEARCH_TARGET]= positionWP.toString();
     if (sRegion) dataTableReq.META_INFO[MetaConst.S_REGION]= sRegion;
     if (rowWP) dataTableReq.META_INFO[MetaConst.ROW_TARGET]= rowWP.toString();
@@ -183,27 +187,23 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
  * @param {Object} p
  * @param {boolean} [p.chartAndTable] - true - both char and table, false - table only
  * @param {String} p.source
- * @param {{titleString:String,showChartTitle:boolean}} p.titleInfo an object that has a titleStr and showchartTile properties
+ * @param {{titleString:String,showChartTitle:boolean}|String} p.titleInfo an object that has a titleStr and showchartTile properties
  * @param {ActivateParams} p.activateParams
  * @param {ChartInfo} [p.chartInfo]
  * @param {Number} p.tbl_index
- * @param {String} p.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
- * @param {Array.<String>} p.colNames - an array of column names
- * @param {Array.<String>} p.colUnits - an array of types names
- * @param {boolean} [p.connectPoints] if a default scatter chart then connect the points
- * @param {number} [p.cubePlane] - plane of cube - ignored for non-cubes
- * @param {String} [p.chartId]
+ * @param {ImageAsTableInfo} [p.imageAsTableInfo]
+ * @param {String|undefined} [p.dataTypeHint]  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {String|undefined} [p.chartId]
  * @param {String} [p.tbl_id]
  * @return {function} the activate function
  */
 export function createChartTableActivate({chartAndTable=false,
                                              source, titleInfo, activateParams, chartInfo={},
-                                         tbl_index=0, dataTypeHint,cubePlane=0,
-                                         colNames= undefined, colUnits= undefined, connectPoints=true,
+                                         tbl_index=0, dataTypeHint='', imageAsTableInfo,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl'}) {
     return () => {
-        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,connectPoints,chartId,tbl_id);
-        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,cubePlane,dataTypeHint, false);
+        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
+        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,imageAsTableInfo,0,dataTypeHint, false);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
@@ -300,18 +300,17 @@ function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,tit
 
 
 
-function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, chartId, tbl_id ) {
+function makeChartObj(chartInfo,  activateParams, titleInfo, chartId, tbl_id ) {
 
     const {chartViewerId:viewerId}= activateParams;
-    const {chartParamsAry}= chartInfo;
-    const {xAxis, yAxis, useChartChooser}= chartInfo;
+    const {xAxis, yAxis, useChartChooser, chartParamsAry,connectPoints,showChartTitle=true}= chartInfo;
 
     /* The table and chart title is the part's desc field. When the HDU does not have extname defined, the desc in the
      part is not defined.  In such case, the title is defined in PartAnalyzer is 'table_'+ HDU-index.  In order to change
      the table name to this title and now show the same title in the chart,  the titleInfo object is introduced. It tells
-     if the showChartTitle or not.  if showChartTitle is false, the chart title is removed. 
+     if the showChartTitle or not.  if chartInfo.showChartTitle is false, the chart title is removed.
      */
-    const chartTitle= titleInfo.showChartTitle ?titleInfo.titleStr:'';
+    const chartTitle= (showChartTitle && titleInfo) ? isString(titleInfo) ? titleInfo : titleInfo.titleStr : '';
     if (chartParamsAry) {
         let chartNum=1;
         return chartParamsAry
@@ -320,7 +319,7 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
     }
     else if (useChartChooser) {
         const obj= [{ viewerId, groupId: viewerId, chartId,xAxis, yAxis, useChartChooser: true }];
-        if (chartTitle) obj[0].title= {text: titleInfo.titleStr};
+        if (chartTitle) obj[0].title= {text: chartTitle};
         return obj;
     }
     else {
@@ -344,8 +343,7 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
 
 
 export function createChartSingleRowArrayActivate(source, titleStr, activateParams,
-                                                  xAxis, yAxis, tblRow= 0,tbl_index=0,
-                                                  dataTypeHint,
+                                                  chartInfo, tblRow= 0,tbl_index=0,
                                     chartId='part-result-chart',tbl_id= 'part-result-tbl') {
     return () => {
         const {tableGroupViewerId, chartViewerId}= activateParams;
@@ -372,8 +370,8 @@ export function createChartSingleRowArrayActivate(source, titleStr, activatePara
 
         onTableLoaded(tbl_id).then( () => {
             const table= getTblById(tbl_id);
-            const xAry= getCellValue(table, tblRow, xAxis);
-            const yAry= getCellValue(table, tblRow, yAxis);
+            const xAry= getCellValue(table, tblRow, chartInfo.xAxis);
+            const yAry= getCellValue(table, tblRow, chartInfo.yAxis);
 
             const dispatchParams= {
                 viewerId: chartViewerId,

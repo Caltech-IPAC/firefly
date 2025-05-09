@@ -55,6 +55,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -585,16 +587,19 @@ public class VoTableReader {
         for(int i = 0; i < parts.size(); i++) {
             if (type == FileAnalysisReport.ReportType.Details) {
                 // convert DataGroup headers into Report's details
-                DataGroup p = parts.get(i).getDetails();
+                DataGroup dg = parts.get(i).getDetails();
                 IpacTableDef meta = new IpacTableDef();
-                meta.setCols(Arrays.asList(p.getDataDefinitions()));
+                meta.setCols(Arrays.asList(dg.getDataDefinitions()));
                 parts.get(i).getDetails().getAttributeList().forEach(attr -> meta.setAttribute(attr.getKey(), attr.getValue()));
                 DataGroup details = TableUtil.getDetails(i, meta);
-                applyIfNotEmpty(p.getGroupInfos(), details::setGroupInfos);
-                applyIfNotEmpty(p.getLinkInfos(), details::setLinkInfos);
-                applyIfNotEmpty(p.getParamInfos(), details::setParamInfos);
-                applyIfNotEmpty(p.getResourceInfos(), details::setResourceInfos);
-                parts.get(i).setDetails(details);
+                applyIfNotEmpty(dg.getGroupInfos(), details::setGroupInfos);
+                applyIfNotEmpty(dg.getLinkInfos(), details::setLinkInfos);
+                applyIfNotEmpty(dg.getParamInfos(), details::setParamInfos);
+                applyIfNotEmpty(dg.getResourceInfos(), details::setResourceInfos);
+
+                var part= parts.get(i);
+                part.setTableDataType(SpectrumMetaInspector.isPossiblySpectrum(dg) ? Spectrum : NotSpecified);
+                part.setDetails(details);
             } else {
                 parts.get(i).setDetails(null);      // remove table headers.. everything else is good
             }

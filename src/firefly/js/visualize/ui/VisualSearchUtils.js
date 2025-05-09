@@ -16,7 +16,7 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {
-    calculatePosition, computeCentralPointAndRadius, computeDistance, getPointOnEllipse
+    calculatePosition, computeCentralPointAndRadius, computeDistance, convertCelestial, getPointOnEllipse
 } from '../VisUtil.js';
 import {changeHiPSProjectionCenter, getDevPixScaleDeg, isImage} from '../WebPlot.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
@@ -341,7 +341,7 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     if (!isCone && wp && radius && canGeneratePolygon) {
         const cc= CsysConverter.make(plot);
         const cen= cc.getDeviceCoords(wp);
-        const ptOnCone= cc.getDeviceCoords(calculatePosition(wp,radius*3600,radius*3600));
+        const ptOnCone= cc.getDeviceCoords(calculatePosition( convertCelestial(wp),radius*3600,radius*3600));
         const dist= Math.abs(cen.y-ptOnCone.y)*2;
         polygonAry= getCircumscribedCorners(cc,cen,dist,dist);
     }

@@ -61,7 +61,7 @@ public class TableUtil {
         } else if (format == FormatUtil.Format.FITS ) {
             try {
                 // Switch to the new function:
-                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), request, FITSTableReader.DEFAULT, tableIndex);
+                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), request, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }
@@ -142,7 +142,8 @@ public class TableUtil {
                 new DataType("name", String.class),
                 new DataType("type", String.class),
                 new DataType("unit", String.class),
-                new DataType("desc", String.class)
+                new DataType("desc", String.class),
+                new DataType("UCD", String.class)
         };
         DataGroup dg = new DataGroup("Header of extension with index " + idx, cols);
         meta.getAttributeList().forEach(a -> dg.getTableMeta().addKeyword(a.getKey(), a.getValue()));
@@ -152,6 +153,7 @@ public class TableUtil {
             row.setDataElement(cols[1], col.getTypeLabel());
             row.setDataElement(cols[2], col.getUnits());
             row.setDataElement(cols[3], col.getDesc());
+            row.setDataElement(cols[4], col.getUCD());
             dg.add(row);
         }
         return dg;

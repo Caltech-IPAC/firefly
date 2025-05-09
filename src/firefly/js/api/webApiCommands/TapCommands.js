@@ -67,7 +67,7 @@ const tapPanelExamples= [
     {
         desc:'Open tap panel- setup ivoa obscore search',
         params:{
-            service: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+            service: 'https://mast.stsci.edu/vo-tap/api/v0.1/caom',
             schema:'ivoa',
             table:'ivoa.obscore',
             WorldPt: '202.48417;47.23056;EQ_J2000',
@@ -77,7 +77,7 @@ const tapPanelExamples= [
     {
         desc:'Execute search above',
         params:{
-            service: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+            service: 'https://mast.stsci.edu/vo-tap/api/v0.1/caom',
             schema:'ivoa',
             table:'ivoa.obscore',
             WorldPt: '202.48417;47.23056;EQ_J2000',

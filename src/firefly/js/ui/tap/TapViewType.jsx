@@ -415,7 +415,7 @@ function BasicUI(props) {
 function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
                             sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
                             tOps,tableTableModel, tableName,setTableName}) {
-    const schemaTitle= !schemaIsLocked ? `${serviceLabel} Tables` : schemaName
+    const schemaTitle= !schemaIsLocked ? `${serviceLabel} Tables` : schemaName;
     return (
         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                 <Stack>
@@ -439,7 +439,7 @@ function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, servi
                 {!schemaIsLocked &&
                     <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel:realSchemaLabel}}/>
                 }
-                <TableChooser {...{tOps,tableTableModel, tableName,setTableName,popupTitle:`${realSchemaLabel}: ${schemaName}`}}/>
+                <TableChooser {...{tOps,tableTableModel, schemaName,tableName,setTableName,popupTitle:`${realSchemaLabel}: ${schemaName}`}}/>
                 {schemaIsLocked && <Box width={1}/>}
             </Stack>
         </Stack>
@@ -447,6 +447,8 @@ function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, servi
 }
 
 function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
+    const dropOps= sOps?.map( (s) => ({...s, label:`${s.value}: ${s.label}`}));
+    const selectedOps= sOps?.map( (s) => ({...s, label:`${s.value}: ${s.label}`, displayLabel:s.label}));
     return (
         <Stack width={1}>
             <ListBoxInputFieldView {...{
@@ -454,16 +456,16 @@ function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
                     width:1,
                     '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
                 title:SCHEMA_TIP,
-                options:sOps, value:schemaName, placeholder:'Loading...',
+                options:dropOps, value:schemaName, placeholder:'Loading...',
                 startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
                 onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
                 renderValue:
                     ({value}) =>
                         (<OpRender {...{
-                            ops: sOps, value, lineClamp:2, label: schemaLabel, rowDesc:'tables'}}/>),
+                            ops: selectedOps, value, lineClamp:2, label: schemaLabel, rowDesc:'tables'}}/>),
                 decorator:
                     (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                        ops: sOps, value, rowDesc:'tables'}}/>),
+                        ops: dropOps, value, rowDesc:'tables'}}/>),
             }} />
             <Typography level='body-xs' pl={1}>{`${schemaLabel} count: ${sOps.length}`}</Typography>
         </Stack>
@@ -471,17 +473,24 @@ function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
 
 }
 
-function TableChooser({tOps,tableTableModel, tableName,setTableName,popupTitle}) {
+function TableChooser({tOps=[],tableTableModel, tableName,setTableName,schemaName,popupTitle}) {
     const {setVal}= useContext(FieldGroupCtx);
+    const dropOps= tOps.length>=50 ? tOps : tOps.map( (s) => {
+        let start= s.value;
+        if (s.value.startsWith(schemaName+'.') || s.value.startsWith(schemaName+'_')) {
+            start= s.value.substring(schemaName.length+1);
+        }
+        return {...s,label:`${start}: ${s.label}`};
+    });
     return (
         <Stack width={1}>
-            {(!tOps?.length || tOps.length<50) ?
+            {(!tOps.length || tOps.length<50) ?
                 <ListBoxInputFieldView {...{
                     sx:{
                         width:1,
                         '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
                     title:TABLE_TIP,
-                    options:tOps, value:tableName, placeholder:'Loading...',
+                    options:dropOps, value:tableName, placeholder:'Loading...',
                     startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
                     onChange:(ev, selectedTapTable) => {
                         setTableName(selectedTapTable);
@@ -492,7 +501,7 @@ function TableChooser({tOps,tableTableModel, tableName,setTableName,popupTitle})
                             (<OpRender {...{ ops: tOps, value, label: 'Tables', lineClamp:2, rowDesc:'rows' }}/>),
                     decorator:
                         (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem', rowDesc:'rows'},
-                            ops: tOps, value}}/>),
+                            ops: dropOps, value}}/>),
                 }} /> :
                 <Button {...{ color:'neutral', variant:'outlined',
                     sx:{
@@ -555,7 +564,7 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
                                     WebkitBoxOrient: 'vertical',
                                 } : {}}
                             sx={{whiteSpace:'normal', textAlign:'left'}}>
-                <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
+                <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.displayLabel??op.label)}`}}/>
                 </Typography>
             </Stack>
         </Tooltip>

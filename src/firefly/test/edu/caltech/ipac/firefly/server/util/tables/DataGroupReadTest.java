@@ -93,7 +93,7 @@ public class DataGroupReadTest {
 
     @Test
     public void fitsTable() throws IOException, FitsException {
-        DataGroup data = FITSTableReader.convertFitsToDataGroup(fitsTable.getPath(), null, FITSTableReader.DEFAULT, 0);
+        DataGroup data = FITSTableReader.convertFitsToDataGroup(fitsTable.getPath(), null, 0);
         Assert.assertNotNull(data);
         Assert.assertEquals("Number of rows", 765, data.size());
         Assert.assertEquals("Number of columns", 52, data.getDataDefinitions().length);

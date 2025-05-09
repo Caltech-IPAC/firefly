@@ -89,6 +89,8 @@ export const DROP_DOWN_KEY= 'toolbar-dropDown';
 const OWNER_ROOT= 'toolbar-dropDown';
 const DEFAULT_DROPDOWN_DIR = 'right';
 
+export const hideDefaultToolbarDropdown= () => dispatchHideDialog(DROP_DOWN_KEY);
+
 
 function DropDownWithCtx({dropdownDirection, dropDown}) {
     const {dropdownVertical='below'}= useContext(DropDownDirCtx);

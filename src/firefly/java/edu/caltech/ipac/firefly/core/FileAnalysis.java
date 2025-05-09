@@ -13,6 +13,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
@@ -33,6 +34,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.table.TableUtil.getDetails;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -150,6 +154,7 @@ public class FileAnalysis {
             FileAnalysisReport report = new FileAnalysisReport(type, format.name(), infile.length(), infile.getPath());
             FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", format.name(), header.getDataDefinitions().length, header.size()));
             part.setTotalTableRows(header.size());
+            part.setTableDataType(SpectrumMetaInspector.isPossiblySpectrum(header) ? Spectrum : NotSpecified);
             report.addPart(part);
             if (type.equals(FileAnalysisReport.ReportType.Details)) {
                 IpacTableDef meta = new IpacTableDef();
@@ -200,6 +205,7 @@ public class FileAnalysis {
                 putPartVal(h, p.getTableColumnNames(),i,"tableColumnNames");
                 putPartVal(h, p.getTableColumnUnits(),i,"tableColumnUnits");
                 putPartVal(h, p.getChartTableDefOption().name(),i,"chartTableDefOption");
+                putPartVal(h, ifNotNull(p.getTableDataType()).get(Enum::name),i,"tableDataType");
                 if (p.getFileLocationIndex()>-1) putPartVal(h, p.getFileLocationIndex(),i,"fileLocationIndex");
                 if (p.isDefaultPart()) putPartVal(h,p.isDefaultPart(),i,"defaultPart");
                 if (p.isInterpretedData()) putPartVal(h,p.isInterpretedData(),i,"interpretedData");

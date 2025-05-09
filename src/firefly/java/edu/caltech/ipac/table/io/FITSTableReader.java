@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -11,7 +12,6 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
-import nom.tam.fits.AbstractTableData;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -51,32 +51,9 @@ public final class FITSTableReader
 
     public static boolean debug = true;
 
-    /**
-     * Strategies to handle FITS data with column-repeat-count greater than 1(TFORMn = rT):
-     *  where n = column index, T = data type, r = repeat count
-
-     * DEFAULT: Set DataType to 'ary'.  Store the full array in DataGroup as an object.
-     * When DataGroup is written out into IPAC format, it should only describe the data
-     * as type = 'char' and value as type[length].  This is the default strategy if not given.
-
-     * TOP_MOST: Ignore the repeat count portion of the TFORMn Keyword
-     * returning only the first datum of the field, even if repeat count is more than 1.
-     * This should produce exactly one DataGroup per table.
-
-     * ( experiemental.. not sure how it would be use )
-     * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
-     * Because each field may have different repeat count (dimension), insert blank
-     * when no data is available. This should produce exactly one DataGroup per table.
-     * No attribute data added to DataGroup with "FULLY_FLATTEN". Should pass headerCols = null.
-
-     * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
-     * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
-     */
-    public static final String DEFAULT = "DEFAULT";
-
     public static DataGroup convertFitsToDataGroup(String fits_filename, TableServerRequest request,
-                                                   String strategy, int table_idx) throws FitsException, IOException {
-        return convertFitsToDataGroup(fits_filename,null,null,strategy,request,table_idx);
+                                                   int table_idx) throws FitsException, IOException {
+        return convertFitsToDataGroup(fits_filename,null,null,request,table_idx);
     }
 
     /**
@@ -86,14 +63,12 @@ public final class FITSTableReader
      *                If dataCols = null, get all the columns into the data group.
      * @param headerCols The names of the columns which will be copied to the header section of the DataGroups.
      *                If headerCols = null, get none of the columns into the header of the data group.
-     * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
      * @param table_idx table index, i.e. HDU number in FITS
      * @return the data group
      */
     public static DataGroup convertFitsToDataGroup(String fits_filename,
                                                          String[] dataCols,
                                                          String[] headerCols,
-                                                         String strategy,
                                                          TableServerRequest request,
                                                          int table_idx) throws FitsException, IOException {
 
@@ -126,7 +101,8 @@ public final class FITSTableReader
                 if (result == null) result = getFitsImageAsTable(hdu,request);
             }
             String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
-            if (result != null) SpectrumMetaInspector.searchForSpectrum(result,hdus[table_idx], dataTypeHint.equals("spectrum"));
+            var spectrumHint= dataTypeHint.equalsIgnoreCase(FileAnalysisReport.TableDataType.Spectrum.name());
+            if (result != null) SpectrumMetaInspector.searchForSpectrum(result,hdus[table_idx], spectrumHint);
             return result;
         } catch (FitsException|IOException e) {
             logTableReadError(fits_filename,table_idx,e.getMessage());
@@ -299,6 +275,15 @@ public final class FITSTableReader
         };
     }
 
+    public static DataGroup readTableHeader(BasicHDU<?> hdu) {
+        if (!(hdu instanceof TableHDU<?> hduTable)) return null;
+        try {
+            return doReadFitsTable(hduTable,"unknown", null, null, false);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     /**
      *
      * @param hdu hdu to use for reading
@@ -310,20 +295,30 @@ public final class FITSTableReader
      * @throws IOException thrown if error reading table entry
      * @throws FitsException call to convertHDUToDataType may throw FitsException
      */
+
     private static DataGroup readFitsTable(BasicHDU<?> hdu,
-                                          String fitsFilename,
-                                          String[] inclCols,
-                                          String[] inclHeaders,
+                                           String fitsFilename,
+                                           String[] inclCols,
+                                           String[] inclHeaders,
                                            int tableIdx) throws IOException, FitsException {
 
         if (!(hdu instanceof TableHDU<?> hduTable)) {
             logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
             return null;
         }
+        return doReadFitsTable(hduTable,fitsFilename,inclCols,inclHeaders,true);
+    }
 
-        AbstractTableData data = (AbstractTableData) hdu.getData();
 
-        int colCount = data.getNCols();
+
+
+    private static DataGroup doReadFitsTable(TableHDU<?> hduTable,
+                                          String title,
+                                          String[] inclCols,
+                                          String[] inclHeaders,
+                                          boolean loadData  ) throws IOException, FitsException {
+
+        int colCount = hduTable.getNCols();
         Class<?>[] bases = new Class[colCount];
         String[] colNames = new String[colCount];
 
@@ -392,12 +387,16 @@ public final class FITSTableReader
             }
         }
 
-        DataGroup dataGroup = new DataGroup(fitsFilename, dataTypes);
+        DataGroup dataGroup = new DataGroup(title, dataTypes);
         // creating DataGroup rows.
         dataGroup.setInitCapacity(nrow);
         DataType[] dataDefinitions= dataGroup.getDataDefinitions();
-        for (int row = 0; row < nrow; row++){
-            addRowToDG(dataGroup, dataDefinitions, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
+
+        if (loadData) {
+            hduTable.getKernel();
+            for (int row = 0; row < nrow; row++){
+                addRowToDG(dataGroup, dataDefinitions, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
+            }
         }
 
         // setting DataGroup meta info
@@ -463,7 +462,7 @@ public final class FITSTableReader
                     case "long" -> evaluator.evalValue(((long[])(elem))[0]);
                     case "float" -> evaluator.evalValue(((float[])(elem))[0]);
                     case "double" -> evaluator.evalValue(((double[])(elem))[0]);
-                    case "boolean" -> Boolean.valueOf(((boolean[])(elem))[0]);
+                    case "boolean" -> ((boolean[]) (elem))[0];
                     case "class java.lang.String" -> isEmpty(((String[])(elem))[0]) ? null : ((String[])(elem))[0];
                     default -> throw new FitsException( "Unrecognized class type in FITS table file entry: " + cls);
                 };
@@ -581,7 +580,7 @@ public final class FITSTableReader
 
     /**
      * converts FITS table keyword TDISPn into firefly's precision/width attributes
-     * see http://archive.stsci.edu/fits/fits_standard/node69.html#SECTION001232060000000000000
+     * see <a href="http://archive.stsci.edu/fits/fits_standard/node69.html#SECTION001232060000000000000">...</a>
      * @param format a format string taken from TDISPn
      * @param dt     the column this format belongs to
      */

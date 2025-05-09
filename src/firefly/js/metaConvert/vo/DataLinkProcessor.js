@@ -1,8 +1,7 @@
+import {TableDataType} from '../../data/FileAnalysis';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
-import {
-    getDataLinkData, getDownloadTypeDesc, isDownloadType, isSimpleImageType, isVoTable
-} from '../../voAnalyzer/VoDataLinkServDef.js';
+import { getDataLinkData, isSimpleImageType, isVoTable } from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSizeAsString, GIG} from '../../util/WebUtil.js';
 import {
     doFileNameAndTypeAnalysis,
@@ -12,7 +11,7 @@ import {
     dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID
 } from '../DataProductsCntlr.js';
 import {
-    dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage,
+    dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtFromMenu, dpdtImage, dpdtMessage,
     dpdtMessageWithError, dpdtPNG, dpdtTable, DPtypes
 } from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil.js';
@@ -98,14 +97,14 @@ function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable}) {
 }
 
 function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                        name, activateParams}) {
+                        name, dropDownText, activateParams}) {
     const {serDef}= dlData;
     const {positionWP, activeMenuLookupKey,menuKey}= getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
     const {title:servDescTitle=''}= serDef;
     const titleStr= baseTitle ? `${baseTitle} (${dlData.description||servDescTitle})` : (dlData.description||servDescTitle);
 
     return makeServiceDefDataProduct({
-        serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name,
+        serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name, dropDownText,
                                                titleStr, activeMenuLookupKey, menuKey, dlData,
     });
 }
@@ -125,7 +124,7 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
  * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, url: *, fileType: *}}
  */
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
-                                      doFileAnalysis, name, activateParams}) {
+                                      doFileAnalysis, name, dropDownText, activateParams}) {
 
     const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isSimpleImage}, contentType, description}= dlData;
     const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey}=
@@ -152,10 +151,10 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
         const activate= createChartTableActivate({
             chartAndTable:true,
             source: url,
-            titleInfo:{titleStr:description, showChartTitle:true},
+            titleInfo:description,
             activateParams,
             tbl_id,
-            chartInfo:{useChartChooser:true},
+            chartInfo:{useChartChooser:true, showChartTitle:true},
             chartId,
         });
         const extract= createTableExtraction(url,description,0);
@@ -163,13 +162,10 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
-            const dataTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : prodType;
-            const prodTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : (dlData.contentType || prodType);
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
-                activateParams,menuKey, dataTypeHint, options, dlData});
-            return dpdtAnalyze({name,
-                activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, prodTypeHint, dlData});
+                activateParams, menuKey, activeMenuLookupKey, options, dlData, originalTitle:dropDownText||name});
+            return dpdtAnalyze({name, activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, dlData});
         }
         else {
             return createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size, dlData);
@@ -198,16 +194,17 @@ const getChartId=  (description, options, idx) =>
  * @param {number} p.sourceRow
  * @param {DataProductsFactoryOptions} p.options
  * @param {string} p.name
+ * @param {string} p.dropDownText
  * @param {boolean} p.doFileAnalysis
  * @param p.activateParams
  * @return {Object}
  */
 function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                        name, doFileAnalysis, activateParams}) {
+                        name, doFileAnalysis, activateParams, dropDownText}) {
 
     if (dlData.serDef) {
         return makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                                name, doFileAnalysis, activateParams});
+                                name, dropDownText, doFileAnalysis, activateParams});
     }
     else if (dlData.url) {
         return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow,options,
@@ -322,7 +319,7 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
                 return edp;
             }
 
-            const menuParams= {dlTableUrl,dlData,idx, baseTitle, sourceTable,
+            const menuParams= {dlTableUrl,dlData,idx, baseTitle, sourceTable, dropDownText:name,
                             sourceRow, options, name, doFileAnalysis, activateParams};
 
             if (cutoutFullPair) {

@@ -5,7 +5,9 @@ import {getObsCoreAccessFormat, getObsTitle} from '../voAnalyzer/TableAnalysis';
 import {
     isGzipType, isHtmlType, isJSONType, isPDFType, isPlainTextType, isSimpleImageType, isTarType, isYamlType
 } from '../voAnalyzer/VoDataLinkServDef';
-import {dispatchActivateFileMenuItem, dispatchUpdateDataProducts} from './DataProductsCntlr.js';
+import {
+    dispatchActivateFileMenuItem, dispatchActivateMenuItem, dispatchUpdateDataProducts
+} from './DataProductsCntlr.js';
 import {
     dpdtDownload,
     dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg, dpdtText, dpdtWorkingMessage,
@@ -29,20 +31,20 @@ const gridEntryHasImages= (parts) => parts.find( (p) => p.type===FileAnalysisTyp
  * @return {function}
  */
 export function makeAnalysisGetSingleDataProduct(makeReq) {
-    return async (table, row, activateParams, options, dataTypeHint = '') => {
+    return async (table, row, activateParams, options) => {
         const reqObj = makeReq(table, row, true);
         const request = reqObj?.single ?? reqObj;
-        return uploadAndAnalyze({request, table, row, activateParams, dataTypeHint, options});
+        return uploadAndAnalyze({request, table, row, activateParams, options});
     };
 }
 
 
-export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options, serviceDescMenuList, originalTitle}) {
+export async function uploadAndAnalyze({request, table, row, activateParams, options, serviceDescMenuList, originalTitle}) {
     const ct= getObsCoreAccessFormat(table,row);
     const obsTitle= getObsTitle(table,row);
     if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
     if (isNonServerAnalysisType(request?.getURL(), ct)) return doFileNameAndTypeAnalysis({url:request?.getURL(),ct, obsTitle});
-    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint,
+    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams,
         options, originalTitle, serviceDescMenuList});
     return dpdtWorkingPromise(LOADING_MSG, analysisPromise, request);
 }
@@ -120,23 +122,23 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
  * @param obj.request
  * @param obj.activateParams
  * @param obj.menuKey
- * @param obj.dataTypeHint
  * @param {ServiceDescriptorDef} [obj.serDef]
  * @param {DatalinkData} [obj.dlData]
  * @param [obj.originalTitle]
  * @param {DataProductsFactoryOptions} [obj.options]
  * @return {function}
  */
-export function makeAnalysisActivateFunc({table, row, request, activateParams, menuKey,
-                                             dataTypeHint, serDef, originalTitle, options, dlData}) {
+export function makeAnalysisActivateFunc({table, row, request, activateParams,
+                                             menuKey, activeMenuLookupKey,
+                                             serDef, originalTitle, options, dlData}) {
     const analysisActivateFunc = async (menu, userInputParams) => {
         const {dpId}= activateParams;
         dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,menuKey));
         // do the uploading and analyzing
-        const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, dataTypeHint, options, menu,
+        const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, options, menu,
             serDef, dlData, userInputParams, analysisActivateFunc, originalTitle, menuKey});
         // activate the result of the analysis
-       dispatchResult(dPDisplayType, menu,menuKey,dpId, serDef, analysisActivateFunc);
+       dispatchResult(dPDisplayType, menu,menuKey,activeMenuLookupKey, dpId, serDef, analysisActivateFunc);
     };
     return analysisActivateFunc;
 }
@@ -147,12 +149,13 @@ export function makeAnalysisActivateFunc({table, row, request, activateParams, m
  * @param {DataProductsDisplayType} dpType
  * @param {Array.<DataProductsDisplayType>} menu
  * @param {string} menuKey
+ * @param {string} activeMenuLookupKey
  * @param {string} dpId
  * @param {ServiceDescriptorDef} serDef
  * @param {function} analysisActivateFunc
  */
-function dispatchResult(dpType, menu,menuKey,dpId, serDef, analysisActivateFunc) {
-    const modifiedResult= {...dpType, menu, menuKey, serDef, analysisActivateFunc};
+function dispatchResult(dpType, menu,menuKey,activeMenuLookupKey, dpId, serDef, analysisActivateFunc) {
+    const modifiedResult= {...dpType, menu, menuKey, activeMenuLookupKey, serDef, analysisActivateFunc};
     if (dpType.displayType===DPtypes.MESSAGE) {
         dispatchUpdateDataProducts(dpId, modifiedResult);
     }
@@ -161,7 +164,9 @@ function dispatchResult(dpType, menu,menuKey,dpId, serDef, analysisActivateFunc)
         dispatchUpdateDataProducts(dpId, dpdtMessage('Loaded in new tab',menu,{complexMessage:true, menuKey, resetMenuKey:menuKey, serDef}));
     }
     else if (dpType.fileMenu) {
-        dispatchActivateFileMenuItem({dpId,fileMenu:dpType.fileMenu,menu,currentMenuKey:menuKey});
+        const fileMenuMenu= dpType.fileMenu?.menu?.map( (item) => ({...item,activeMenuLookupKey}) );
+        const fileMenu= {...dpType.fileMenu,menu:fileMenuMenu};
+        dispatchActivateFileMenuItem({dpId,fileMenu,menu,currentMenuKey:menuKey});
     }
     else {
         console.log('AnalysisUtils: nothing to dispatch');

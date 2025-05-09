@@ -1,16 +1,20 @@
-import {Box, Button, Stack, Typography} from '@mui/joy';
+import {Box, Button, Link, Stack, Typography} from '@mui/joy';
+import {isObject, isString} from 'lodash';
 import React, {useEffect, useState} from 'react';
-import {dispatchActivateMenuItem, dispatchSetSearchParams, doDownload} from '../../../metaConvert/DataProductsCntlr.js';
+import {
+    dispatchActivateMenuItem, dispatchSetSearchParams, doDownload
+} from '../../../metaConvert/DataProductsCntlr.js';
 import {DPtypes} from '../../../metaConvert/DataProductsType';
 import {getTextFile} from '../../../rpc/CoreServices';
 import {CompleteButton} from '../../../ui/CompleteButton.jsx';
-import {MEG} from '../../../util/WebUtil';
+import {showInfoPopup} from '../../../ui/PopupUtil';
+import {isURL, MEG} from '../../../util/WebUtil';
 
 
 
 export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doResetButton, makeDropDown}) {
     const {complexMessage, menu, message, noProductsAvailable= false, isWorkingState,
-        activeMenuLookupKey, detailMsgAry, badUrl, resetMenuKey}= dataProductsState;
+        activeMenuLookupKey, detailMsgAry, badUrl, resetMenuKey, details=[]}= dataProductsState;
 
 
     if (complexMessage) {
@@ -26,12 +30,12 @@ export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doRe
     }
     else {
         const useMessage= noProductsAvailable && noProductMessage ? noProductMessage : message;
-        return (<ProductMessage {...{menu, makeDropDown, isWorkingState, message:useMessage}} />);
+        return (<ProductMessage {...{menu, makeDropDown, isWorkingState, message:useMessage, details}} />);
     }
 }
 
 
-export function ProductMessage({menu, makeDropDown, isWorkingState=false, message, }) {
+export function ProductMessage({menu, makeDropDown, isWorkingState=false, message, details=[]}) {
 
     return (
         <Stack {...{width: '100%', height: '100%'}}>
@@ -40,10 +44,45 @@ export function ProductMessage({menu, makeDropDown, isWorkingState=false, messag
             </Box>
             <Stack {...{direction: 'row', alignSelf: 'center', pt: 5}}>
                 {isWorkingState ? <Box sx={{width: 20, height: 20, mr: 1}} className='loading-animation'/> : ''}
-                <Typography level='title-lg' sx={{alignSelf: 'center', textAlign:'center'}}>{message}</Typography>
+                <Stack spacing={2} alignItems='center'>
+                    <Typography level='title-lg' sx={{alignSelf: 'center', textAlign:'center'}}>{message}</Typography>
+                    {details?.length>0 &&
+                        <Button onClick={ () =>
+                            showInfoPopup(
+                                ( <Stack spacing={1}> {details.map( (d) => <PopupEntry msg={d}/> )} </Stack> ),
+                                'Details'
+                            )
+                        }>
+                            View Details
+                        </Button>
+                    }
+                </Stack>
             </Stack>
         </Stack>
     );
+}
+
+function PopupEntry({msg}) {
+    if (isString(msg)) return <Typography>{msg}</Typography>;
+    if (isObject(msg)) {
+        if (isURL(msg.url)) {
+            return <Link href={msg.url} target='_blank'>{msg.text??'URL'}</Link>;
+        }
+        if (msg.text) {
+            if (msg.title) {
+                return (
+                    <Stack>
+                        <Typography level='title-md'>{msg.title}</Typography>
+                        <Typography>{msg.text}</Typography>
+                    </Stack>
+                );
+            }
+            else {
+                return <Typography>{msg.text}</Typography>;
+            }
+        }
+    }
+    return <Typography>Unknown Error Message</Typography>;
 }
 
 export function ProductDownload({menu, makeDropDown, message, url, downloadName, loadInBrowserMsg, fileType}) {

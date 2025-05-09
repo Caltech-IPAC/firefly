@@ -17,12 +17,12 @@ import edu.caltech.ipac.table.io.TableParseHandler;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FormatUtil;
 
-import static edu.caltech.ipac.util.FormatUtil.Format.*;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.function.Consumer;
+
+import static edu.caltech.ipac.util.FormatUtil.Format.PARQUET;
 
 /**
  * Date: 10/24/24
@@ -102,7 +102,7 @@ public class DbDataIngestor {
     }
 
     static FileInfo ingestFitsTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex) throws IOException, DataAccessException {
-        var table = FITSTableReader.convertFitsToDataGroup(source, req, FITSTableReader.DEFAULT, tableIndex);
+        var table = FITSTableReader.convertFitsToDataGroup(source, req, tableIndex);
         return ingestTable(dbAdapter, table, false);        //logic is already in the reader
     }
 

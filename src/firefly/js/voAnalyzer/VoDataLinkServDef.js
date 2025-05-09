@@ -25,9 +25,12 @@ import {getTableModel} from './VoCoreUtils.js';
  * @param p.localSemantics
  * @param p.contentQualifier
  * @param p.contentType
+ * @param p.sourceObsCoreData
  * @return {DlAnalysisData}
  */
-export function analyzeDatalinkRow({semantics = '', localSemantics = '', contentQualifier = '', contentType = ''}) {
+export function analyzeDatalinkRow({semantics = '', localSemantics = '',
+                                       contentQualifier = '', contentType = '',
+                                       sourceObsCoreData}) {
     const isImage = contentType?.toLowerCase() === 'image/fits';
     const maybeImage = contentType?.toLowerCase().includes('fits');
     const semL = semantics.toLowerCase();
@@ -37,7 +40,9 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
     const isAux = semL === '#auxiliary';
     const isGrid = semL.includes('-grid') || (locSemL.includes('-grid') || ( locSemL.includes('#grid')));
     const isCutout = semL.includes('cutout') || semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('cutout');
-    const isSpectrum = locSemL.includes('spectrum');
+    const isSpectrum = locSemL.includes('spectrum') ||
+        sourceObsCoreData?.dataproduct_type?.toLowerCase()?.includes('spectrum');
+
     const rBand = semL.includes('-red') || locSemL.includes('-red');
     const gBand = semL.includes('-green') || locSemL.includes('-green');
     const bBand = semL.includes('-blue') || locSemL.includes('-blue');
@@ -120,6 +125,7 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
         {
             ID,
             utype,
+            internalServiceDescriptorID: `sd-${table.tbl_id}---${idx}`,
             sdSourceTable: table,
             positionWP: parseWorldPt(getMetaEntry(table, MetaConst.SEARCH_TARGET, undefined)),
             rowWP: parseWorldPt(getMetaEntry(table, MetaConst.ROW_TARGET, undefined)),
@@ -179,13 +185,13 @@ export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourc
 
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
             const serDef= getServiceDescriptorForId(dataLinkTable,serviceDefRef,idx);
-            const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics, contentType, contentQualifier});
+            const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics,
+                contentType, contentQualifier,sourceObsCoreData});
             dlAnalysis.usableEntry= (serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp');
-            const prodTypeHint= contentType || sourceObsCoreData?.dataproduct_type;
             return {
                 id: rowObj[idKey],
                 contentType:contentType?.toLowerCase(), contentQualifier, semantics, localSemantics, url, error_message,
-                description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis, prodTypeHint,
+                description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis,
                 sourceObsCoreData, relatedDLEntries: {}, positionWP, rowWP, sRegion,
                 labelDLExt, bandpassNameDLExt
             };

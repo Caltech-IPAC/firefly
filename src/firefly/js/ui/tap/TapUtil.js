@@ -9,6 +9,7 @@ import {
 } from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
+import {getTAPServicesByName} from './TapKnownServices';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&RUNID=TAP_SCHEMA&';
@@ -565,7 +566,7 @@ export function mergeServices(startingServices, additional) {
 
 export function getTapServices() {
     const {tap} = getAppOptions();
-    const startingTapServices= hasElements(tap?.services) ? [...tap.services] : [...TAP_SERVICES_FALLBACK];
+    const startingTapServices= hasElements(tap?.services) ? [...tap.services] : getTAPServicesByName();
     const mergedServices= mergeServices(startingTapServices,tap?.additional?.services);
     mergedServices.push(...getUserServiceAry());
     return mergedServices;
@@ -647,72 +648,6 @@ WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0
             `SELECT designation, ra, dec, w2mpro 
 FROM allwise_p3as_psd 
 WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
-    }
-];
-
-
-
-// --- keep for reference //todo delete after 2022.2 release
-// export const maybeQuoteByService= (serviceURL, item, isTable) =>
-//           (serviceURL && serviceURL.includes('VizieR')) ? maybeQuote(item,isTable) : item;
-
-export const TAP_SERVICES_FALLBACK = [
-    {
-        label: 'https://irsa.ipac.caltech.edu/TAP',
-        value: 'https://irsa.ipac.caltech.edu/TAP',
-        labelOnly: 'IRSA',
-        query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
-    },
-    {
-        label: 'https://ned.ipac.caltech.edu/tap',
-        value: 'https://ned.ipac.caltech.edu/tap/',
-        labelOnly: '',
-        query: 'SELECT * FROM public.ned_objdir WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,0.01))=1'
-    },
-    {
-        label: 'NASA Exoplanet Archive https://exoplanetarchive.ipac.caltech.edu/TAP/',
-        value: 'https://exoplanetarchive.ipac.caltech.edu/TAP/',
-        labelOnly: 'NED',
-    },
-    {
-        label: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
-        value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
-        labelOnly: 'CADC',
-        query: 'SELECT TOP 10000 * FROM ivoa.ObsCore WHERE CONTAINS(POINT(\'ICRS\', s_ra, s_dec),CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.028))=1'
-    },
-    {
-        label: 'https://gea.esac.esa.int/tap-server/tap',
-        value: 'https://gea.esac.esa.int/tap-server/tap',
-        labelOnly: 'GAIA',
-        query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
-    },
-    {
-        label: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        labelOnly: 'MAST',
-        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
-    },
-    {
-        label: 'http://atoavo.atnf.csiro.au/tap',
-        value: 'http://atoavo.atnf.csiro.au/tap',
-        labelOnly: 'CASDA',
-        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
-    },
-    {
-        label: 'lsp-stable https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
-        value: 'https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
-        labelOnly: 'LSST',
-        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
-            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
-            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
-    },
-    {
-        label: 'lsp-int https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
-        value: 'https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
-        labelOnly: 'LSST',
-        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
-            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
-            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
     }
 ];
 
