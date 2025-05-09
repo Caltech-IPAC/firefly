@@ -2,11 +2,11 @@
 
 import {Box, Link, Sheet, Stack, Typography} from '@mui/joy';
 import React, {Fragment} from 'react';
-import {isEmpty,isObject,isArray} from 'lodash';
+import {isEmpty,isObject,isArray,isFunction} from 'lodash';
 import {getReservedParamKeyDesc, makeExample, ReservedParams, WebApiHelpType} from '../api/WebApi';
 
 
-export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApiCommands, badParams, missingParams}) {
+export function WebApiHelpInfoPage({helpType,appProps, contextMessage='',cmd,params,webApiCommands, badParams, missingParams}) {
     let showContextMsg= false;
     let msg= '';
     let showAllHelp= false;
@@ -42,8 +42,8 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
             {!isEmpty(params) && <ParameterList params={{cmd, ...params}} url={window.location.href}
                                                 badParams={badParams} missingParams={missingParams}/>}
             <Typography sx={{ml:1}}>{showContextMsg && contextMessage}</Typography>
-            {showAllHelp && webApiCommands.map( (c) => <CommandOverview webApiCommand={c} key={c.cmd}/>)}
-            {cmdEntry && <CommandOverview webApiCommand={cmdEntry} key={cmdEntry.cmd}/>}
+            {showAllHelp && webApiCommands.map( (c) => <CommandOverview webApiCommand={c} key={c.cmd} appProps={appProps}/>)}
+            {cmdEntry && <CommandOverview webApiCommand={cmdEntry} key={cmdEntry.cmd} appProps={appProps}/>}
         </Sheet>
     );
 }
@@ -87,7 +87,7 @@ const webApiParamsGridSx = {
     rowGap: '1px',
 };
 
-function CommandOverview({webApiCommand}) {
+function CommandOverview({webApiCommand, appProps}) {
     const {overview, parameters, examples}= webApiCommand;
 
     return (
@@ -99,7 +99,7 @@ function CommandOverview({webApiCommand}) {
             <Stack sx={{ml: 3, mt:1}}>
                 {overview.map( (s) => <Typography key={s}>{s}</Typography>)}
             </Stack>
-            {examples && <ShowExamples examples={examples}/> }
+            {examples && <ShowExamples examples={isFunction(examples) ? examples(appProps) : examples}/> }
             <Stack sx={{mt:1, ml:2}}>
                 <Typography level='h4'>Parameters</Typography>
                 <Box sx={{ml:7, ...webApiParamsGridSx}}>
@@ -132,7 +132,8 @@ function ShowExamples({examples}) {
     }
     else {
         return (
-            <Stack sx={{mt:1, mb:1/2, ml:3}}>Examples:
+            <Stack sx={{mt:1, mb:1/2, ml:3}}>
+                <Typography level='h4'>Examples</Typography>
                 <ShowExampleGroup examples={examples}/>
             </Stack>
         );

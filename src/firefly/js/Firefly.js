@@ -522,14 +522,14 @@ function mergeAppOptions(ops, overrideOps) {
 }
 
 function renderRoot(root, viewer, props, webApiCommands) {
-    const e= document.getElementById(props.div);
-    if (!e) {
+    const element= document.getElementById(props.div);
+    if (!element) {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
         logger.error(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
         return;
     }
 
-    const rootToUse = root ?? createRoot(e);
+    const rootToUse = root ?? createRoot(element);
     initWebApi(webApiCommands);
     const webApi= isUsingWebApi(webApiCommands);
     const doAppRender= () => {
@@ -543,11 +543,11 @@ function renderRoot(root, viewer, props, webApiCommands) {
             );
         }
     };
-    webApi ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
+    webApi ? handleWebApi(webApiCommands, props, element, doAppRender) : doAppRender();
 }
 
 
-function handleWebApi(webApiCommands, e, doAppRender) {
+function handleWebApi(webApiCommands, appProps, element, doAppRender) {
     const {status, helpType, contextMessage, cmd, execute,
         params, badParams, missingParams}= evaluateWebApi(webApiCommands);
     switch (status) {
@@ -562,10 +562,10 @@ function handleWebApi(webApiCommands, e, doAppRender) {
             });
             break;
         case WebApiStat.SHOW_HELP:
-            createRoot(e).render(
-                React.createElement(
-                    WebApiHelpInfoPage,
-                    {helpType, contextMessage, cmd, params, webApiCommands, badParams, missingParams}), e);
+            createRoot(element).render(
+                <WebApiHelpInfoPage {...{helpType, contextMessage, appProps, cmd, params,
+                    webApiCommands, badParams, missingParams}}/>
+            );
             break;
         default:
             logger.error('Unexpect status, can\'t handle web api: '+ status);

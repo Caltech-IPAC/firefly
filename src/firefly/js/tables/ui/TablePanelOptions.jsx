@@ -8,6 +8,7 @@ import {Box, Button, Checkbox, Divider, Stack, Typography} from '@mui/joy';
 import {badgeClasses} from '@mui/joy/Badge';
 
 import {cloneDeep, defaultsDeep, get, isEmpty} from 'lodash';
+import {BY_SCROLL} from '../reducer/TableUiReducer';
 
 import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
@@ -28,7 +29,6 @@ import {SelectInfo} from '../SelectInfo.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblPrefKey} from '../TablePref.js';
 import {showAddOrUpdateColumn} from './AddOrUpdateColumn.jsx';
-import {BY_SCROLL} from './BasicTableView.jsx';
 
 import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
