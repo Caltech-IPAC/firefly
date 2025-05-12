@@ -711,6 +711,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     protected Object[] getDdFrom(DataType dt, int colIdx) {
+        colIdx = switch (dt.getKeyName()) {     // place these at the end, so it will always appear there.
+            case ROW_IDX -> 1_000_000;
+            case ROW_NUM -> 1_000_001;
+            default -> colIdx;
+        };
         return new Object[] {
                 dt.getKeyName(),
                 dt.getLabel(),

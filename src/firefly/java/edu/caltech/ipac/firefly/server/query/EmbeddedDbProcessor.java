@@ -47,9 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.*;
@@ -190,13 +187,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 if (doLogging()) {
                     SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
                 }
-
                 // check for values that can be enumerated
-                if (totalRows < 5000) {
-                    enumeratedValuesCheck(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
-                } else {
-                    enumeratedValuesCheckBG(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
-                }
+                enumeratedValuesCheck(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
             }
         } catch (Exception e) {
             logger.error(e);
@@ -562,17 +554,5 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         // I will use the format 'error:cause' as a way to transport these messages.
     }
 
-    /**
-     * execute the given task if job is still in executing phase.  if job is aborted, throw exception to stop the process.
-     * @param f
-     */
-    protected void jobExecIf(Consumer<Job> f) throws DataAccessException {
-        Job job = getJob();
-        if (job != null) {
-            JobInfo.Phase phase = ifNotNull(getJobInfo(job.getJobId())).get(JobInfo::getPhase);
-            if (phase == JobInfo.Phase.EXECUTING) f.accept(job);
-            if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
-        }
-    }
 }
 
