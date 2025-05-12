@@ -133,6 +133,7 @@
  * @prop {string} jobId         jobId for display only
  * @prop {string} ownerId       ID of the job creator
  * @prop {string} phase         execution phase.  One of PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED
+ * @prop {string} creationTime  creation time in UTC
  * @prop {string} startTime     start time in UTC
  * @prop {string} endTime       end time in UTC
  * @prop {number} executionDuration duration (in seconds) the job is allowed to run. 0 means unlimited

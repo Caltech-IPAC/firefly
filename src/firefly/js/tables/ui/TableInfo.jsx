@@ -13,6 +13,7 @@ import {JobInfo} from '../../core/background/JobInfo.jsx';
 import {getJobIdFromTblId} from '../TableRequestUtil.js';
 import {CopyToClipboard} from '../../visualize/ui/MouseReadout.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
+import {Slot} from '../../ui/SimpleComponent';
 
 
 export function TableInfo({tbl_id, tabsProps, ...props}) {
@@ -157,18 +158,18 @@ const ShowObjectTreeBtn = ({data, title}) => {
     );
 };
 
-export function KeywordBlock({sx={}, label, value, title, asLink}) {
+export function KeywordBlock({label, value, title, asLink, ...props}) {
     return (
-        <Stack direction='row' whiteSpace='nowrap' alignItems='baseline' sx={sx}>
+        <Slot component={Stack} direction='row' whiteSpace='nowrap' alignItems='baseline' slotProps={props}>
             <Keyword {...{label, value, title, asLink}}/>
-        </Stack>
+        </Slot>
     );
 }
 
-export function Keyword({label, value, title, asLink}) {
-    label = label && label + ':';
-    if (label || value) {
-        value = String(value);
+export function Keyword({label=null, value, title, asLink}) {
+    if ((label !== null) || value) {
+        label = label ? label + ':' : '\u00A0';
+        value = value ? String(value) : '\u00A0';
         return (
             <>
                 {label && <Typography level='title-sm' title={title} mr={1/2}>{label}</Typography>}
