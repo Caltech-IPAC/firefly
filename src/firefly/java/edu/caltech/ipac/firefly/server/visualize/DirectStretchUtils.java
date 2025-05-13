@@ -81,7 +81,7 @@ public class DirectStretchUtils {
         int bPosQuarter=0;
         Band[] bands= state.getBands();
         ThreeCComponents tComp= get3CComponents(frGroup,sv.totWidth,sv.totHeight,state);
-        RGBIntensity rgbI= get3CRGBIntensity(state.getRangeValues(),frGroup,bands);
+        RGBIntensity rgbI= get3CRGBIntensity(state,frGroup,bands);
          new ArrayList<Stretch3CTile>(sv.tileLen);
 
         var sTileList =doTileStretch(sv,tileSize, Stretch3CTile::new,
@@ -212,13 +212,15 @@ public class DirectStretchUtils {
         return new ThreeCComponents(float1dAry,imHeadAry,histAry);
     }
 
-    private static RGBIntensity get3CRGBIntensity(RangeValues rv, ActiveFitsReadGroup frGroup, Band[] bands) {
+    private static RGBIntensity get3CRGBIntensity(PlotState state,ActiveFitsReadGroup frGroup, Band[] bands) {
         RGBIntensity rgbIntensity = new RGBIntensity();
         boolean useIntensity= false;
-        if (rv.rgbPreserveHue() && bands.length==3) {
+        if (state.getRangeValues().rgbPreserveHue() && bands.length==3) {
             FitsRead [] fitsReadAry= new FitsRead[] {
                     frGroup.getFitsRead(RED), frGroup.getFitsRead(GREEN), frGroup.getFitsRead(BLUE), };
-            for(int i=0; (i<3); i++) rgbIntensity.addRangeValues(fitsReadAry, i, rv);
+            rgbIntensity.addRangeValues(fitsReadAry, 0, state.getRangeValues(RED));
+            rgbIntensity.addRangeValues(fitsReadAry, 1, state.getRangeValues(GREEN));
+            rgbIntensity.addRangeValues(fitsReadAry, 2, state.getRangeValues(BLUE));
             useIntensity= true;
         }
         return useIntensity ? rgbIntensity : null;

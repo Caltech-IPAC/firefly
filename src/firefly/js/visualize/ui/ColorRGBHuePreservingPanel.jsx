@@ -1,9 +1,7 @@
 import {Stack, Typography} from '@mui/joy';
 import React, {useEffect} from 'react';
 import {debounce} from 'lodash';
-import {replot3ColorHuePreserving} from './ColorDialog.jsx';
 import {getTypeMinField, renderAsinH, ZscaleCheckbox} from './ColorBandPanel.jsx';
-import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
@@ -14,8 +12,6 @@ import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr
 const isDebug = () => window.firefly?.debugStretch ?? false;
 
 export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
-
-    const doReplot= debounce(getReplotFunc(groupKey), 600);
 
     useEffect(() => {
         dispatchForceFieldGroupReducer(groupKey);
@@ -60,8 +56,8 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
         }
     };
 
-    const asinH = renderAsinH(rgbFields, renderRange(zscaleValue), doReplot, true);
-    const scale = renderScalingCoefficients(rgbFields, doReplot);
+    const asinH = renderAsinH(rgbFields, renderRange(zscaleValue), true);
+    const scale = renderScalingCoefficients(rgbFields);
     return (
         <Stack spacing={2} sx={{mt:1, minWidth:360}}>
             <Typography level='body-sm'>
@@ -85,7 +81,7 @@ const scaleMarks = [
     {label:'1', value: 10}
 ];
 
-function renderScalingCoefficients(fields, replot) {
+function renderScalingCoefficients(fields) {
 
     return (
         <FieldGroupCollapsible  header='Scaling coefficients'
@@ -108,20 +104,8 @@ function renderScalingCoefficients(fields, replot) {
                     label={label}
                     style={{marginTop: 10, marginBottom: 20, marginRight: 15}}
                     decimalDig={2}
-                    onValueChange={replot}
                 />);
             })}
         </FieldGroupCollapsible>
     );
-}
-
-function getReplotFunc(groupKey) {
-    return () => {
-        validateFieldGroup(groupKey).then((valid) => {
-            if (valid) {
-                const request = getFieldGroupResults(groupKey);
-                replot3ColorHuePreserving(request);
-            }
-        });
-    };
 }
