@@ -4,6 +4,7 @@
 
 import Validate from '../../util/Validate.js';
 import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER, INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
+import {Band} from '../Band';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
@@ -32,11 +33,10 @@ export function colorPanelChange(band) {
         const plot= primePlot(visRoot());
         if (!plot || !plot.plotState.isBandUsed(band)) return fields;
 
-        const fitsData= plot.webFitsData[band.value];
         const plottedRV= plot.plotState.getRangeValues(band);
-        if (!fitsData || !plottedRV) return fields;
+        if (!plottedRV) return fields;
 
-        return computeColorPanelState(fields, plottedRV, fitsData, band, action);
+        return computeColorPanelState(fields, plottedRV, band, action);
     };
 }
 
@@ -47,12 +47,11 @@ export function colorPanelChange(band) {
  * If there is a replot or a init the update all the fields based on the current plot
  * @param fields
  * @param plottedRV
- * @param fitsData
  * @param band
  * @param action
  * @return {*}
  */
-function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
+function computeColorPanelState(fields, plottedRV, band, action) {
 
     switch (action.type) {
         case FieldGroupCntlr.VALUE_CHANGE:
@@ -60,17 +59,17 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
                 return (!fields[key].mounted || key==='upperRange' || key==='lowerRange') ? true :  fields[key].valid;
             } );
             if (!valid) return fields;
-            return syncFields(fields,makeRangeValuesFromFields(fields),fitsData);
+            return syncFields(fields,makeRangeValuesFromFields(fields));
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case INIT_FIELD_GROUP:
         case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.ANY_REPLOT:
-            if (!plottedRV && !fitsData) return fields;
+            if (!plottedRV) return fields;
             // no update if hue-preserving
             if ((plottedRV?.rgbPreserveHue ?? 0) > 0) return fields;
             const newFields = updateFieldsFromRangeValues(fields,plottedRV);
-            return syncFields(newFields,plottedRV,fitsData);
+            return syncFields(newFields,plottedRV);
 
     }
     return fields;
@@ -82,13 +81,12 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
  * Sync the fields so that are consistent with the passed RangeValues object.
  * @param fields
  * @param rv
- * @param fitsData
  */
-function syncFields(fields,rv,fitsData) {
+function syncFields(fields,rv) {
     const newFields= {...fields};
     if (Number.parseInt(rv.lowerWhich)!==ZSCALE) {
-        newFields.lowerRange= {...fields.lowerRange, ...computeLowerRangeField(fields,rv,fitsData)};
-        newFields.upperRange= {...fields.upperRange, ...computeUpperRangeField(fields,rv,fitsData)};
+        newFields.lowerRange= {...fields.lowerRange, ...computeLowerRangeField(fields,rv)};
+        newFields.upperRange= {...fields.upperRange, ...computeUpperRangeField(fields,rv)};
     }
 
     newFields.algorithm= {...fields.algorithm, value: rv.algorithm};
@@ -106,11 +104,10 @@ function syncFields(fields,rv,fitsData) {
  * depending on what 'lowerWhich' is set to.
  * @param {object} fields - map of fields
  * @param {RangeValues} rv
- * @param {WebFitsData} fitsData
  * @param {String} lowerWhich - field key for the type of lower range
  * @param {String} lowerRange - field key for lower range field
 */
-function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowerRange='lowerRange') {
+function computeLowerRangeField(fields,rv,lowerWhich='lowerWhich', lowerRange='lowerRange') {
     const resetDefault= (Number(fields[lowerWhich].value)!==Number(rv.lowerWhich));
     let retval;
     switch (rv.lowerWhich) {
@@ -122,10 +119,8 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
             break;
         case ABSOLUTE:
             retval= {
-                validator:  fitsData.dataMin && fitsData.dataMax ?
-                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range') :
-                    () => ({valid:true, message:''}),
-                value : resetDefault ? fitsData.dataMin : fields[lowerRange].value
+                validator:  Validate.floatRange.bind(null,undefined, undefined, 3, 'Lower range'),
+                value : fields[lowerRange].value
             };
             break;
         case SIGMA:
@@ -143,10 +138,9 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
  * depending on what 'upperWhich' is set to.
  * @param fields
  * @param rv
- * @param fitsData
  * @return {*}
  */
-function computeUpperRangeField(fields,rv,fitsData) {
+function computeUpperRangeField(fields,rv) {
     let retval;
     const resetDefault= (Number(fields.upperWhich.value)!==Number(rv.upperWhich));
     switch (rv.upperWhich) {
@@ -159,10 +153,8 @@ function computeUpperRangeField(fields,rv,fitsData) {
 
         case ABSOLUTE:
             retval= {
-                validator: fitsData.dataMin && fitsData.dataMax ?
-                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range') :
-                    () => ({valid:true, message:''}),
-            value : resetDefault ? fitsData.dataMax : fields.upperRange.value
+                validator: Validate.floatRange.bind(null,undefined, undefined, 3, 'Upper range'),
+                value : fields.upperRange.value
             };
             break;
         case SIGMA:
@@ -388,11 +380,10 @@ export function rgbHuePreserveChange(bands) {
         const plot= primePlot(visRoot());
         if (!plot || bands.some((b) => !plot.plotState.isBandUsed(b))) return fields;
 
-        const fitsDataAry= bands.map((b)=>plot.webFitsData[b.value]);
         const plottedRVAry= bands.map((b)=>plot.plotState.getRangeValues(b));
-        if (fitsDataAry.some((fd)=>!fd) || plottedRVAry.some((rv)=>(!rv))) return fields;
+        if (plottedRVAry.some((rv)=>(!rv))) return fields;
 
-        return computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, bands, action);
+        return computeHuePreservePanelState(fields, plottedRVAry, bands, action);
     };
 }
 
@@ -401,12 +392,11 @@ export function rgbHuePreserveChange(bands) {
  * If there is a replot or a init the update all the fields based on the current plot
  * @param fields
  * @param plottedRVAry
- * @param fitsDataAry
  * @param bands
  * @param action
  * @returns {*}
  */
-export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, bands, action) {
+export function computeHuePreservePanelState(fields, plottedRVAry, bands, action) {
 
     switch (action.type) {
         case FieldGroupCntlr.VALUE_CHANGE:
@@ -414,15 +404,15 @@ export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, 
                 return !fields[key].mounted ? true :  fields[key].valid;
             } );
             if (!valid) return fields;
-            return syncFieldsHuePreserve(fields,makeHuePreserveRangeValuesFromFields(fields),fitsDataAry);
+            return syncFieldsHuePreserve(fields,makeHuePreserveRangeValuesFromFields(fields));
 
         case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:
-            if (plottedRVAry.some((rv)=>!rv) && fitsDataAry.some((fd)=>!fd)) return fields;
+            if (plottedRVAry.some((rv)=>!rv)) return fields;
             const newFields = updateHuePreserveFieldsFromRangeValues(fields,plottedRVAry);
-            return syncFieldsHuePreserve(newFields,plottedRVAry,fitsDataAry);
+            return syncFieldsHuePreserve(newFields,plottedRVAry);
     }
     return fields;
 }
@@ -431,16 +421,15 @@ export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, 
  * Sync the fields so that are consistent with the passed RangeValues.
  * @param fields
  * @param {Array} rvAry
- * @param {Array} fitsDataAry
  */
-function syncFieldsHuePreserve(fields,rvAry,fitsDataAry) {
+function syncFieldsHuePreserve(fields,rvAry) {
     const newFields= {...fields};
     [['lowerWhichRed','lowerRangeRed', 'kRed'],
         ['lowerWhichGreen','lowerRangeGreen', 'kGreen'],
         ['lowerWhichBlue', 'lowerRangeBlue', 'kBlue']].forEach(
             ([lowerWhich,lowerRange,scalingK],i) => {
         if (Number.parseInt(rvAry[i].lowerRange)!==ZSCALE) {
-            newFields[lowerRange]= {...fields[lowerRange], ...computeLowerRangeField(fields,rvAry[i],fitsDataAry[i],lowerWhich,lowerRange)};
+            newFields[lowerRange]= {...fields[lowerRange], ...computeLowerRangeField(fields,rvAry[i],lowerWhich,lowerRange)};
         }
         newFields[lowerWhich]=   {...fields[lowerWhich],value: rvAry[i].lowerWhich};
         if (newFields[lowerWhich].value===ZSCALE) newFields[lowerWhich].value= PERCENTAGE;

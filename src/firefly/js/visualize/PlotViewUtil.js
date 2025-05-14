@@ -369,8 +369,7 @@ export function getPlotStateAry(pv) {
  * @return {boolean}
  */
 export function hasOverlayColorLock(pv,plotGroup) {
-    return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
-        pv && pv.plotGroupId===plotGroup.plotGroupId);
+    return Boolean(plotGroup?.overlayColorLock && pv?.plotGroupId===plotGroup?.plotGroupId);
 }
 
 /**

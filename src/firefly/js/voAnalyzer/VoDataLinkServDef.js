@@ -216,6 +216,12 @@ function setupRelatedCutout(prim,cutout) {
     cutout.relatedDLEntries.fullImage= prim;
     prim.dlAnalysis.cutoutFullPair= true;
     cutout.dlAnalysis.cutoutFullPair= true;
+    const rBand= prim.dlAnalysis.rBand || cutout.dlAnalysis.rBand;
+    const gBand= prim.dlAnalysis.gBand || cutout.dlAnalysis.gBand;
+    const bBand= prim.dlAnalysis.bBand || cutout.dlAnalysis.bBand;
+    prim.dlAnalysis.rBand= cutout.dlAnalysis.rBand= rBand;
+    prim.dlAnalysis.gBand= cutout.dlAnalysis.gBand= gBand;
+    prim.dlAnalysis.bBand= cutout.dlAnalysis.bBand= bBand;
 
     //?? todo determine if this is right
     if (prim.dlAnalysis.isThis) cutout.dlAnalysis.isThis= true;

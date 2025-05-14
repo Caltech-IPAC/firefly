@@ -153,16 +153,30 @@ function getContrast(plot) {
     }
 }
 
-function isOverlayColorLocked(vr){
-    const pv= getActivePlotView(vr);
-    if (!pv) return false;
-    return hasOverlayColorLock(pv,findPlotGroup(pv?.plotGroupId,vr.plotGroupAry));
+export function ColorStretchLockButton({allowPopout=false, sx={}}) {
+    const overlayColorLocked= useStoreConnector( () => {
+        const vr= visRoot();
+        const pv= getActivePlotView(vr);
+        return pv ? hasOverlayColorLock(pv,findPlotGroup(pv?.plotGroupId,vr.plotGroupAry)) : false;
+    } );
+    const pv= getActivePlotView(visRoot());
+    return (
+        <ToolbarButton plotView={pv}
+                       sx={allowPopout? {mt:-2.5, width:.85, ...sx} : sx}
+                       hasCheckBox={true}
+                       checkBoxOn={overlayColorLocked}
+                       CheckboxOnIcon={<LockIcon sx={{pt: 1/4}}/>}
+                       CheckboxOffIcon={<LockOpenOutlinedIcon sx={{pt: 1/4}}/>}
+                       text={ overlayColorLocked? 'Color, stretch & overlays locked' : 'Color, stretch & overlays unlocked' }
+                       tip='Lock all images for color changes and overlays.'
+                       onClick={() => dispatchOverlayColorLocking(pv.plotId,!overlayColorLocked)} />
+    );
 }
+
+
 
 const AdvancedColorPanel= ({allowPopout}) => {
     const plot = useStoreConnector( () => primePlot(visRoot()) );
-    const overlayColorLocked = useStoreConnector( () => isOverlayColorLocked(visRoot()) );
-    const pv= getActivePlotView(visRoot());
     const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
@@ -225,7 +239,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
 
     const makeItems = () =>
         ctArray.map((ct) =>
-            (<ToolbarButton icon={ct.icon ? <img src={ct.icon} style={{height:8, width:200}}/> : undefined}
+            (<ToolbarButton icon={ct.icon ? <img src={ct.icon} style={{height:8, width:'18.5rem'}}/> : undefined}
                             tip={ct.tip} style={{padding: '2px 0 2px 0'}}
                             text={ct.icon ? undefined : 'Default Color Map'}
                             enabled={true} horizontal={false} key={ct.id}
@@ -314,7 +328,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
     );
 
 
-    const sx=  allowPopout ? {} : {boxShadow: 'none'};
+    const sx=  allowPopout ? {width: '22rem'} : {boxShadow: 'none'};
     return (
         <SingleColumnMenu {...{sx}}>
 
@@ -325,15 +339,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                     </IconButton>
                 </Stack>
             }
-            <ToolbarButton plotView={pv}
-                           sx={allowPopout? {mt:-2.5, width:.85} : {}}
-                           hasCheckBox={true}
-                           checkBoxOn={overlayColorLocked}
-                           CheckboxOnIcon={<LockIcon sx={{pt: 1/4}}/>}
-                           CheckboxOffIcon={<LockOpenOutlinedIcon sx={{pt: 1/4}}/>}
-                           text={ overlayColorLocked? 'Color & overlays locked' : 'Color & overlays unlocked' }
-                           tip='Lock all images for color changes and overlays.'
-                           onClick={() => toggleOverlayColorLock(pv,visRoot().plotGroupAry)} />
+            <ColorStretchLockButton {...{allowPopout}}/>
             <ToolbarHorizontalSeparator/>
             {!threeColor && makeItems()}
             {!threeColor && <Divider sx={{p: 0.1, mt: 0.2}}/>}
@@ -344,10 +350,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
 };
 
 
-function toggleOverlayColorLock(pv,plotGroupAry){
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    dispatchOverlayColorLocking(pv.plotId,!hasOverlayColorLock(pv,plotGroup));
-}
+
 
 export const ColorTableDropDownView= () => {
     setTimeout(() => dispatchHideDialog(POPOUT_ID), 5);

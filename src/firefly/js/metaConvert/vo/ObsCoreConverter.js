@@ -1,6 +1,6 @@
 import {isEmpty, isUndefined} from 'lodash';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
-import {getDataServiceOption, getDataServiceOptionByTable} from '../../ui/tap/DataServicesOptions';
+import {getDataServiceOptionByTable} from '../../ui/tap/DataServicesOptions';
 import {tokenSub} from '../../util/WebUtil.js';
 import {
     getObsCoreAccessURL, getObsReleaseDate, getObsTitle, getProdTypeGuess, getSearchTarget, isFormatDataLink,

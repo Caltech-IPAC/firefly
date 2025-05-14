@@ -1,4 +1,3 @@
-import {TableDataType} from '../../data/FileAnalysis';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
 import { getDataLinkData, isSimpleImageType, isVoTable } from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -339,7 +338,7 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
         })
         .filter(Boolean);
 
-    if (parsingAlgorithm===SPECTRUM && menu.length>1) {
+    if (parsingAlgorithm===SPECTRUM && menu.length>1) { // if I am only doing spectrum then gather them up into one display
         const singleItemMenu= menu.filter( (m) => m.displayType===DPtypes.CHOICE_CTI && m.tbl_id);
         const activateObj= Object.fromEntries(singleItemMenu.map( ({tbl_id,activate,chartId}) => [tbl_id,{activate,chartId}]));
         const extractionObj= Object.fromEntries(singleItemMenu.map( (m) => [m.tbl_id,m.extraction]));

@@ -15,13 +15,14 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ColorBandPanel} from './ColorBandPanel.jsx';
 import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {primePlot, getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
+import {primePlot, getActivePlotView, isThreeColor, getPlotViewAry} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isHiPS, isImage} from '../WebPlot';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {ColorStretchLockButton} from './ColorTableDropDownView';
 
 import {RED_PANEL,
     GREEN_PANEL,
@@ -86,6 +87,7 @@ function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHueP
     const canBeHuePreserving = plotState.isBandUsed(Band.RED) && plotState.isBandUsed(Band.GREEN) && plotState.isBandUsed(Band.BLUE);
     const threeColorStretchMode = canBeHuePreserving &&
         <RadioGroupInputFieldView
+            buttonGroup={true}
             options={[
                 {label: 'Per-band stretch', value: 'perBand'},
                 {label: 'Hue preserving stretch', value: 'huePreserving'}
@@ -96,11 +98,15 @@ function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHueP
         />;
 
     return (
-        <Box sx={{m:1}}>
-            {threeColorStretchMode}
-            {Boolean(isHuePreservingSelected) && renderHuePreservingThreeColorView(plot, rgbFields)}
-            {!isHuePreservingSelected && renderStandardThreeColorView(plot, rFields, gFields, bFields)}
-        </Box>
+        <Stack sx={{m:1}}>
+            <Stack spacing={2}>
+                {getPlotViewAry(visRoot()).filter( (pv) => isImage(primePlot(pv))).length>1 &&
+                    <ColorStretchLockButton/>}
+                {threeColorStretchMode}
+                {Boolean(isHuePreservingSelected) && renderHuePreservingThreeColorView(plot, rgbFields)}
+                {!isHuePreservingSelected && renderStandardThreeColorView(plot, rFields, gFields, bFields)}
+            </Stack>
+        </Stack>
     );
 }
 
@@ -181,14 +187,18 @@ function renderStandardView(plot,fields) {
 
     return (
         <FieldGroup groupKey={NO_BAND_PANEL} keepState={true}  reducerFunc={colorPanelReducer} >
-            <ColorBandPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND} fields={fields} plot={plot}/>
-            <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                <CompleteButton
-                    text='Refresh' dialogId='ColorStretchDialog'
-                    closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
-                    onSuccess={replot()} onFail={invalidMessage}
-                />
-                <HelpIcon helpId='visualization.modifyColorStretchSingleBand'/>
+            <Stack spacing={2}>
+                {getPlotViewAry(visRoot()).filter( (pv) => isImage(primePlot(pv))).length>1 &&
+                    <ColorStretchLockButton/>}
+                <ColorBandPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND} fields={fields} plot={plot}/>
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <CompleteButton
+                        text='Refresh' dialogId='ColorStretchDialog'
+                        closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
+                        onSuccess={replot()} onFail={invalidMessage}
+                    />
+                    <HelpIcon helpId='visualization.modifyColorStretchSingleBand'/>
+                </Stack>
             </Stack>
         </FieldGroup>
        );

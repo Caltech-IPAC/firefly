@@ -38,6 +38,9 @@ import {
  */
 export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
     try {
+
+        if (options.limitViewerDisplay===TABLE_ONLY) return dpdtSimpleMsg('Configuration Error: No support for related spectrum');
+
         dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);

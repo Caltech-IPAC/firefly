@@ -27,7 +27,7 @@ import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr
 
 
 const LABEL_WIDTH= 105;
-const HIST_WIDTH= 340;
+const HIST_WIDTH= 360;
 const HIST_HEIGHT= 55;
 const maskWrapper= {position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const textPadding= {paddingBottom:3};
@@ -45,7 +45,7 @@ const histImStyle= {
 
 export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
     const [exit, setExit]= useState(true);
-    const [{dataHistogram, dataBinMeanArray, dataBinColorIdx, dataMin, dataMax, largeBinPercent}, setDisplayState]= useState({});
+    const [{dataHistogram, dataBinMeanArray, dataBinColorIdx, dataMin, dataMax}, setDisplayState]= useState({});
     const [histReadout, setHistReadout]= useState({histValue:0,histMean:0,histIdx:0});
     const {plotId, plotState}= plot ?? {};
     const doMask= false;
@@ -295,7 +295,7 @@ const asinhSliderMarks = [
 ];
 const ASINH_Q_MAX_SLIDE_VAL = 20;
 
-export function renderAsinH(fields, renderRange, replot, qOnTop=false) {
+export function renderAsinH(fields, renderRange, qOnTop=false) {
     const qvalue = fields?.asinhQ?.value || 0;
     const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
 
@@ -316,7 +316,6 @@ export function renderAsinH(fields, renderRange, replot, qOnTop=false) {
                          label={label}
                          sx={{mt: 1, mb: 2, mr: 2}}
                          decimalDig={1}
-                         onValueChange={replot}
             />
             {qOnTop && renderRange}
         </Stack>

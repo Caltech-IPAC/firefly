@@ -13,6 +13,7 @@ import { PERCENTAGE, ZSCALE, SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA, } from '../RangeValues.js';
 import {showColorDialog} from './ColorDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {ColorStretchLockButton} from './ColorTableDropDownView';
 
 
 function getLabel(rv,baseLabel) {
@@ -83,7 +84,9 @@ export function StretchDropDownView({toolbarElement}) {
 
     return (
         <SingleColumnMenu>
+            <ColorStretchLockButton/>
             <ToolbarButton text='Color stretch...'
+                           hasCheckBox={true}
                            tip='Change the background image stretch'
                            onClick={() => showColorDialog(toolbarElement)}/>
             <DropDownVerticalSeparator/>
