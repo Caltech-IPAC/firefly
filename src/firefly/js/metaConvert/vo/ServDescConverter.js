@@ -5,7 +5,7 @@ import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoD
 import {getActiveMenuKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtSimpleMsg} from '../DataProductsType.js';
 import {
-    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct, makeDlUrl
+    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedImageGridProduct, getDatalinkSingleDataProduct, makeDlUrl
 } from './DatalinkProducts.js';
 import {createServDescMenuRet} from './ServDescProducts.js';
 
@@ -103,7 +103,7 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
     if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to these data.');
     const dlTableUrl= makeDlUrl(findDataLinkServeDescs(descriptors)[0],table, row);
     if (!dlTableUrl) return dpdtSimpleMsg('a datalink service descriptors return images is required for related grid');
-    return getDatalinkRelatedGridProduct({dlTableUrl, activateParams,table,row,threeColorOps, titleStr:'',options});
+    return getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams,table,row,threeColorOps, titleStr:'',options});
 }
 
 

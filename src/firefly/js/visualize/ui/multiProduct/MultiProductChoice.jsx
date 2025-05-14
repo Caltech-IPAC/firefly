@@ -17,6 +17,7 @@ import {MultiImageViewer} from '../MultiImageViewer.jsx';
 
 const imageOp= {label: 'Image', value: SHOW_IMAGE};
 
+let lastChartDefault= 'Chart';
 
 
 
@@ -24,23 +25,24 @@ export function MultiProductChoice({ dataProductsState, dpId,
                                        makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
                                        tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
-    const {enableCutout, pixelBasedCutout=false}= dataProductsState;
+    const {enableCutout, pixelBasedCutout=false, dlData, gridForceRowSize}= dataProductsState;
     const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
-    const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];
+    const stateDef= dlData ? dlData.dlAnalysis.isSpectrum ? 'Spectrum' : 'Chart' : lastChartDefault;
+    const [chartName, setChartName] = useState(stateDef);
+    const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: chartName, value: SHOW_CHART}];
     const options = !imageViewerId ? chartTableOptions : [...chartTableOptions, imageOp];
-    const [chartName, setChartName] = useState('Chart');
     options[1].label = chartName;
     const tbl_id = getTableGroup(tableGroupViewerId)?.active;
     const table = tbl_id ? getTblById(tbl_id) : undefined;
     useEffect(() => {
-        if (!table) return;
         onTableLoaded(tbl_id).then(() => {
             const name = (getMetaEntry(tbl_id, 'utype') === 'spec:Spectrum') ? 'Spectrum' : 'Chart';
             setChartName(name);
+            lastChartDefault= name;
         });
-    }, [table]);
+    }, [dataProductsState.activate,tbl_id]);
 
     const activeItemKey= getActiveFileMenuKeyByKey(dpId,dataProductsState?.fileMenu?.activeItemLookupKey);
     const cubeIdx= dataProductsState?.fileMenu?.menu.find( (i) => i.menuKey===activeItemKey)?.cubeIdx ?? -1;
@@ -97,6 +99,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
                         viewerId:imageViewerId, insideFlex:true, serDef, enableCutout,pixelBasedCutout,
                         enableCutoutFullSwitching:cutoutFullPair,
                         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
+                        forceRowSize: gridForceRowSize,
                         cutoutToFullWarning,
                         makeDropDown: !mayToggle ? makeDropDown : undefined,
                         Toolbar:ImageMetaDataToolbar, factoryKey}} />

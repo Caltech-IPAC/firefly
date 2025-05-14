@@ -15,7 +15,7 @@ import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../tables/T
 import {isDefaultCoverageActive} from '../visualize/PlotViewUtil.js';
 import MultiViewCntlr, {
     getViewerItemIds, dispatchChangeViewerLayout,
-    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails
+    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails, GRID_RELATED
 } from '../visualize/MultiViewCntlr.js';
 import {
     makeDataProductsConverter, getFactoryTemplateOptions
@@ -245,6 +245,12 @@ function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParam
             dispatchChangeViewerLayout(viewer.viewerId,SINGLE,undefined,tbl_id);
         }
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
+    }
+    else {
+        if (viewer.layout===GRID && viewer.layoutDetail===GRID_RELATED && !converter.hasRelatedBands) {
+            dispatchChangeViewerLayout(viewer.viewerId,SINGLE,undefined,tbl_id);
+            viewer = getViewer(getMultiViewRoot(), imageViewerId);
+        }
     }
 
     const threeData= viewer.customData?.[converterId];

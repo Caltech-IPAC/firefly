@@ -119,7 +119,8 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
     return Object.keys(fields)
         .filter((fieldKey) => (isUndefined(fields[fieldKey].mounted)||fields[fieldKey].mounted||includeUnmounted))
         .reduce((request, key) => {
-            request[key] = fields[key].value;
+            const {prepareResult, value}= fields[key] ?? {};
+            request[key] = prepareResult?.(value) ?? value;
             return request;
         }, {});
 }

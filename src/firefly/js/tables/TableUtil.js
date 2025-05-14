@@ -1503,7 +1503,9 @@ export function getObjectMetaEntry(tableOrId,metaKey,defVal= undefined) {
         return obj;
     }, {});
     try {
-        const retVal= JSON.parse(getMetaEntry(tableOrId,metaKey));
+        const obj= getMetaEntry(tableOrId,metaKey);
+        if (isUndefined(obj)) return defVal;
+        const retVal= JSON.parse(obj);
         return {...retVal, ...matchObj};
     }
     catch {

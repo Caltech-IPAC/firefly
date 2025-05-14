@@ -14,9 +14,11 @@ import {
 } from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {convertStrToWpAry} from '../../visualize/ui/VisualSearchUtils.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
+import {FormPanel} from '../FormPanel';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
+import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
-import {useFieldGroupValue} from '../SimpleComponent.jsx';
+import {Slot, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ObsCoreSearch} from '../tap/ObsCore';
 import {ObsCoreWavelengthSearch} from '../tap/WavelengthPanel';
@@ -126,6 +128,17 @@ function makeDynPanel({fieldDefAry, popupHiPS, plotId='defaultHiPSTargetSearch',
             makeDynSpacialPanelFallback({fieldDefAry, popupHiPS, plotId, toolbarHelpId}) :
             makeSimpleTarget(fieldDefAry); // simple target: usually means something not set up right
     }
+}
+
+export function isSimpleTargetPanel(fieldDefAry) {
+    const {targetDetails, manageAllSpacial}= getFieldSpacialInfo(fieldDefAry);
+    const areaType = findFieldDefType(fieldDefAry, AREA);
+    const circleType = findFieldDefType(fieldDefAry, CIRCLE);
+    const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
+    if (sizeKey && manageAllSpacial && targetDetails?.hipsUrl) {
+        return false;
+    }
+    return !Boolean(targetDetails?.hipsUrl);
 }
 
 
@@ -444,14 +457,21 @@ function makeCircleAndPolyPopup({fieldDefAry, plotId= 'defaultHiPSTargetSearch',
     return DynSpacialPanel;
 }
 
-function makeSimpleTarget({fieldDefAry}) {
+function makeSimpleTarget(fieldDefAry) {
     const posType = findFieldDefType(fieldDefAry, POINT) ??
         findFieldDefType(fieldDefAry, POSITION) ??
         findFieldDefType(fieldDefAry, CIRCLE);
     const {nullAllowed = false} = posType;
     const {targetPanelExampleRow1, targetPanelExampleRow2}=  getTargetDetails(fieldDefAry) ?? {};
-    const DynSpacialPanel= () => {
-        return <TargetPanel {...{nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
+    const DynSpacialPanel= ({slotProps={}}) => {
+        return (
+            <Slot {...{ component: FormPanel,
+                slotProps: slotProps?.FormPanel, help_id: 'dynDefaultSearchPanelHelp',
+                onError:() => showInfoPopup('Fix errors and search again', 'Error'),
+                cancelText:'', completeText:'Submit'}} >
+                <TargetPanel {...{nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>
+            </Slot>
+            );
     };
     return DynSpacialPanel;
 

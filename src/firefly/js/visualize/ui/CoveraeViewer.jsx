@@ -96,7 +96,7 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,noCovMessage
             msg= makeNovCovMsg(covState,noCovMessage,tbl_id);
         }
         return (
-            <Typography level='body-lg' sx={{...{pt:4.5, width:'100%',textAlign:'center',fontSize:'14pt'},}}>
+            <Typography component='div' level='body-lg' sx={{pt:4.5, width:'100%',textAlign:'center',fontSize:'14pt'}}>
                 {msg}
             </Typography>
         );
