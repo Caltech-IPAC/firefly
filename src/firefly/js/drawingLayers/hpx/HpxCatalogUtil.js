@@ -7,6 +7,7 @@ import {
 import {SelectInfo} from '../../tables/SelectInfo';
 import {dispatchTableFilter, dispatchTableSelect} from '../../tables/TablesCntlr';
 import {getTblById} from '../../tables/TableUtil';
+import {showInfoPopup} from '../../ui/PopupUtil';
 import BrowserInfo from '../../util/BrowserInfo';
 import CoordSys from '../../visualize/CoordSys';
 import CysConverter from '../../visualize/CsysConverter';
@@ -77,17 +78,48 @@ const getLayers = (pv, dlAry) =>
 export function selectHpxCatalog(pv, dlAry = dlRoot().drawLayerAry) {
     const {p,sel, selectedShape, catDlAry}= setupSelection(pv,dlAry);
     if (!sel || !catDlAry?.length) return;
-    catDlAry.forEach((dl) => doSelect(dl,p,sel,selectedShape));
+    const pAry= catDlAry.map((dl) => doSelect(dl,p,sel,selectedShape));
+    Promise.all(pAry).then((resultAry) => {
+        resultAry.some( (r) => r.foundPts)
+            ? resultAry.forEach( (r) => r.dispatchSelect())
+            : showInfoPopup('Your selection does not cover any objects to select', 'No points found');
+    });
     detachSelectArea(pv);
 }
 
 export function filterHpxCatalog(pv, dlAry) {
     const {p,sel, selectedShape, catDlAry}= setupSelection(pv,dlAry);
     if (!sel || !catDlAry?.length) return;
-    catDlAry.forEach((dl) => dl.canFilter && doFilter(dl, p, sel, selectedShape));
+    const promiseAry= catDlAry
+        .filter((dl) => dl.canFilter)
+        .map((dl) => doFilter(dl, p, sel, selectedShape));
     detachSelectArea(pv);
+    void executeFiltering(promiseAry);
 }
 
+async function executeFiltering(promiseAry) {
+    const resultAry= await Promise.all(promiseAry);
+    const foundCnt= resultAry.filter((r) => r.foundPts).length;
+    if (!foundCnt) {
+        showInfoPopup('Your selection does not cover any objects to filter', 'No points found');
+        return;
+    }
+    resultAry.forEach( (r) => r.dispatchFilter());
+    if (foundCnt<resultAry.length) {
+        const notCovCnt= resultAry.length - foundCnt;
+        const desc= notCovCnt===1
+            ? 'One table is not covered in this selection, it will be filtered to zero rows'
+            : `${notCovCnt} tables are not covered in this selection, they will be filtered to zero rows`;
+        showInfoPopup(desc, `${notCovCnt} ${notCovCnt===1 ? 'table' : 'tables'} not covered`);
+    }
+}
+
+/**
+ *
+ * @param {PlotView} pv
+ * @param {Array.<DrawLayer>} dlAry
+ * @return {{p: WebPlot, sel: Object, selectedShape: string, catDlAry: Array.<DrawLayer>}}
+ */
 function setupSelection(pv,dlAry) {
     const p = primePlot(pv);
     const sel = p.attributes[PlotAttribute.SELECTION];
@@ -106,25 +138,44 @@ export function unselectHxpCatalog(pv, dlAry) {
     });
 }
 
-
+/**
+ *
+ * @param {DrawLayer} dl
+ * @param {WebPlot} p
+ * @param {Object} sel
+ * @param {String} selectedShape
+ * @return {Promise<{foundPts: boolean, dispatchSelect: Function}>}
+ */
 async function doSelect(dl, p, sel, selectedShape) {
     const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
     const hpxSelectList = await getHpxSelectedPts(dl, p, sel, selectedShape);
     hpxSelectList.forEach(({idx}) => selectInfoCls.setRowSelect(idx, true));
-    dispatchTableSelect(dl.tbl_id, selectInfoCls.data, {hpxSelectList, row:undefined});
+    return {
+        foundPts: hpxSelectList.length>0,
+        dispatchSelect: () => dispatchTableSelect(dl.tbl_id, selectInfoCls.data, {hpxSelectList, row:undefined})
+    };
 }
 
+/**
+ *
+ * @param {DrawLayer} dl
+ * @param {WebPlot} p
+ * @param {Object} sel
+ * @param {String} selectedShape
+ * @return {Promise<{foundPts: boolean, dispatchFilter: Function}>}
+ */
 async function doFilter(dl, p, sel, selectedShape) {
     const tbl = getTblById(dl.tbl_id);
-    if (!tbl) return;
+    if (!tbl) return {foundPts: false, dispatchFilter: () => void ''};
     const filterInfo = tbl?.request?.filters;
     const filterInfoCls = FilterInfo.parse(filterInfo);
     const hpxSelectList= await getHpxSelectedPts(dl, p, sel, selectedShape);
     const idxAry= hpxSelectList.map( (e) => e.idx);
-    const filter = idxAry.length ? `IN (${idxAry.toString()})` : undefined;
+    const foundPts= Boolean(idxAry.length);
+    const filter = foundPts ? `IN (${idxAry.toString()})` : 'IN (-1)';
     filterInfoCls.setFilter('ROW_IDX', filter);
     const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
-    if (filter) dispatchTableFilter(newRequest);
+    return {foundPts, dispatchFilter: () => dispatchTableFilter(newRequest) };
 }
 
 
