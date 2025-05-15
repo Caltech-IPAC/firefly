@@ -108,9 +108,9 @@ async function executeFiltering(promiseAry) {
     if (foundCnt<resultAry.length) {
         const notCovCnt= resultAry.length - foundCnt;
         const desc= notCovCnt===1
-            ? 'One table is not covered in this selection, it will be filtered to zero rows'
-            : `${notCovCnt} tables are not covered in this selection, they will be filtered to zero rows`;
-        showInfoPopup(desc, `${notCovCnt} ${notCovCnt===1 ? 'table' : 'tables'} not covered`);
+            ? 'This selection omits a table. It will be filtered down to have zero rows.'
+            : `This selection omits ${notCovCnt} tables. They will be filtered down to have zero rows.`;
+        showInfoPopup(desc, `${notCovCnt} ${notCovCnt===1 ? 'table' : 'tables'} omitted`);
     }
 }
 
