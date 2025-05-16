@@ -12,7 +12,7 @@ import {oneOfType, shape, string} from 'prop-types';
  * @param p.cssStr {string|Object} css string. If theme needs to be handled, pass `{light: cssString, dark: cssString}`.
  * @param p.children {React.ReactNode}
  */
-export default function CssStrThemeWrapper({cssStr, children}) {
+export default function CssStrThemeWrapper({cssStr, children, ...props}) {
     const {isDarkMode} = useColorMode();
     const themeCssStr = (isDarkMode ? cssStr?.dark : cssStr?.light) ?? cssStr ?? '';
 
@@ -21,7 +21,7 @@ export default function CssStrThemeWrapper({cssStr, children}) {
 
     return (
         // JoyUI Box accepts emotion "css" prop natively: https://mui.com/material-ui/integrations/interoperability/#the-css-prop
-        <Box css={themeCssStyles}>
+        <Box css={themeCssStyles} {...props}>
             {children}
         </Box>
     );
