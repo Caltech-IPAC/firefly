@@ -101,6 +101,10 @@ export function isSearchJob(job) {
     return ['SEARCH', 'UWS', 'TAP'].includes(job?.meta?.type);
 }
 
+export function isUWS(job) {
+    return ['UWS', 'TAP'].includes(job?.meta?.type);
+}
+
 export function isTapJob(job) {
     return job?.meta?.type === 'TAP';
 }

@@ -4,11 +4,11 @@
 
 import {Box, Chip, Divider, FormHelperText, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {useState, useRef, useEffect, useContext, useCallback} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {shape, string, object} from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
-import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
+import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy, defaultsDeep} from 'lodash';
 import West from '@mui/icons-material/West';
 import JoinInnerOutlinedIcon from '@mui/icons-material/JoinInnerOutlined';
 
@@ -27,7 +27,7 @@ import {
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useColorMode} from 'firefly/ui/FireflyRoot';
-import CssStrThemeWrapper from 'firefly/ui/CssStrThemeWrapper';
+import CssStrThemeWrapper from '../CssStrThemeWrapper';
 
 //--- PrismJs imports ---
 import Prism from 'prismjs';
@@ -53,9 +53,37 @@ const FILTER_STRING= 'filterString';
 let cFetchKey = Date.now();
 const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
+export function PrismADQLAware ({text, slotProps, ...props}) {
+
+    useEffect(() => {
+        Prism.highlightAll();
+    },  []);
+
+    const formatted = text.replace(/[\r\n]+/g, ' ')     // remove all newlines
+                        .replace(/\s+/g, ' ')           // Normalize spaces
+                        .replace(/,\s*/g, ', ')         // Ensure comma spacing
+                        .replace(/\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY)\b/gi, '\n$1')   // Insert newlines before main clauses (case-insensitive)
+                        .trim();
+    return (
+        <CssStrThemeWrapper cssStr={{light: prismLightCss, dark: prismDarkCss}} {...props}>
+            <pre className='language-sql' {...defaultsDeep(slotProps?.pre, {style: {padding: 4}}) }>
+                <code className='language-sql' {...defaultsDeep(slotProps?.code, {style: {margin: -8}}) }> {formatted} </code>
+            </pre>
+        </CssStrThemeWrapper>
+    );
+}
+PrismADQLAware.propTypes= {
+    text:  string.isRequired,  // the ADQL text to be formatted
+    slotProps: shape({
+        pre: object,      // <pre/> html tag attributes
+        code: object      // <code/> html tag attributes
+    }),
+    ...CssStrThemeWrapper.propTypes
+};
+
 
 function getExamples(serviceUrl) {
-    const configEx= getTapServices().find( ({value}) => value===serviceUrl)?.examples;
+    const configEx = getTapServices().find(({value}) => value === serviceUrl)?.examples;
     const ex= isArray(configEx) ?
         defaultADQLExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultADQLExamples;
 
