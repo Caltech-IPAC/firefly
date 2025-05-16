@@ -191,7 +191,12 @@ div.rootStyle img {
     -moz-background-clip: padding;
     -webkit-background-clip: padding;
     background-clip: padding-box;
-    border-radius: 5px;
+    /*border-radius: 5px;*/
+
+    /* allows consumer to control resizer styling for all the style definitions below */
+    --resizer-color: var(--joy-palette-neutral-outlinedDisabledColor);
+    --resizer-border-size: 2px;
+    --resizer-border-style: solid;
 }
 
 .Resizer:hover {
@@ -200,31 +205,29 @@ div.rootStyle img {
 }
 
 .Resizer.horizontal {
-    height: 7px;
-    margin: -6px 0;
-    border-top: 3px solid rgba(255, 255, 255, 0);
-    border-bottom: 3px solid rgba(255, 255, 255, 0);
+    margin: calc(-2 * var(--resizer-border-size)) 0;
+    border-top: var(--resizer-border-size) var(--resizer-border-style) transparent;
+    border-bottom: var(--resizer-border-size) var(--resizer-border-style) transparent;
     cursor: row-resize;
     width: 100%;
 }
 
 .Resizer.horizontal:hover {
-    border-top: 3px solid rgba(0, 0, 0, 0.5);
-    border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+    border-top: var(--resizer-border-size) var(--resizer-border-style) var(--resizer-color);
+    border-bottom: var(--resizer-border-size) var(--resizer-border-style) var(--resizer-color);
 }
 
 .Resizer.vertical {
-    width: 7px;
-    margin: 0 -6px;
-    border-left: 3px solid rgba(255, 255, 255, 0);
-    border-right: 3px solid rgba(255, 255, 255, 0);
+    margin: 0 calc(-2 * var(--resizer-border-size));
+    border-left: var(--resizer-border-size) var(--resizer-border-style) transparent;
+    border-right: var(--resizer-border-size) var(--resizer-border-style) transparent;
     cursor: col-resize;
     height: 100%;
 }
 
 .Resizer.vertical:hover {
-    border-left: 3px solid rgba(0, 0, 0, 0.5);
-    border-right: 3px solid rgba(0, 0, 0, 0.5);
+    border-left: var(--resizer-border-size) var(--resizer-border-style) var(--resizer-color);
+    border-right: var(--resizer-border-size) var(--resizer-border-style) var(--resizer-color);
 }
 /* react-split-pane style <END> */
 

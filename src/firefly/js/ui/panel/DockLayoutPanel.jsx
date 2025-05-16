@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
-import {Stack, Box} from '@mui/joy';
+import {Stack, Box, Sheet, Tooltip, IconButton} from '@mui/joy';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useStoreConnector} from '../SimpleComponent.jsx';
+import {ArrowDropDown, ArrowDropUp} from '@mui/icons-material';
 
 
 /**
@@ -43,6 +44,44 @@ export function SplitContent({sx={}, style={}, className='', children}) {
                 </Box>
              </Stack>
             );
+}
+
+
+/**
+ * SplitPanel's content panel that has a toggle button to collapse/expand the panel.
+ * This is a controlled component, i.e., the parent component manages its state.
+ *
+ * @param p other than the below keys, it's same as Sheet props
+ * @param p.sx
+ * @param p.panelTitle {string} the title of this panel (appears in the tooltip)
+ * @param p.isOpen {boolean} whether the panel is open
+ * @param p.onToggle {function():void} fired when the toggle button is clicked
+ * @param p.children {JSX.Element} the content of this panel
+ * @returns {Element}
+ */
+export function CollapsibleSplitContent({sx={}, panelTitle, isOpen, onToggle, children, ...props}) {
+    // TODO: dynamically calculate styles based on the position of toggle button and split direction (passed as props)
+    //  e.g. for the redesign of EmbeddedSearchPositionPanel, the toggle button should appear on the middle of the right side of a vertical split
+    return (
+        <Sheet variant='outlined'
+               sx={{display: 'flex', flexGrow: 1, position: 'relative',
+                   borderRadius: '5px', borderTopRightRadius: 0, // since toggle btn is right positioned
+                   ...sx}}
+               {...props}>
+            <Tooltip title={`${isOpen ? 'Collapse' : 'Expand'} ${panelTitle ?? 'this panel'}`}>
+                <IconButton variant='outlined'
+                            onClick={onToggle}
+                            sx={{position: 'absolute', bottom: '100%', right: '-1px', zIndex: 999,
+                                borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomStyle: 'none',
+                                height: '1.25rem', width: '2.5rem', minHeight: 'auto',
+                                boxShadow: '1px -2px 4px 0px rgba(var(--joy-shadowChannel) / var(--joy-shadowOpacity))',
+                                backgroundColor: 'background.surface'}}>
+                    {isOpen ? <ArrowDropDown/> : <ArrowDropUp/>}
+                </IconButton>
+            </Tooltip>
+            {children}
+        </Sheet>
+    );
 }
 
 

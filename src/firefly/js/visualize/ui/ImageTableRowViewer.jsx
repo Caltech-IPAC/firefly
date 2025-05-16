@@ -4,14 +4,14 @@
 
 
 import React, {useEffect, useRef, useState} from 'react';
-import {string, number, func, bool, object, oneOfType} from 'prop-types';
-import {difference, isNil, xor} from 'lodash';
+import {string, number, func, bool, object, oneOfType, node} from 'prop-types';
+import {difference, get, isNil, isString, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getTblById} from '../../tables/TableUtil.js';
+import {getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchReplaceViewerItems, getMultiViewRoot, getViewer, IMAGE, NewPlotMode,} from '../MultiViewCntlr.js';
 import {
@@ -30,10 +30,11 @@ import {getActivePlotView, getPlotViewAry, getPlotViewById} from '../PlotViewUti
 import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
-import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
-import {Box, Sheet, Stack, Typography} from '@mui/joy';
+import {dispatchTableHighlight, TABLE_SPACE_PATH} from 'firefly/tables/TablesCntlr';
+import {Box, Stack, Typography} from '@mui/joy';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {BeforeButton, NextButton} from 'firefly/visualize/ui/Buttons';
+import {flux} from 'firefly/core/ReduxFlux';
 
 
 const MAX_IMAGE_CNT= 7;
@@ -43,8 +44,9 @@ const CUTOUT_SIZE= 'cutoutSize';
 
 export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id, defaultWcsMatchType,
                                        defaultImageCnt= 5, imageExpandedMode, insideFlex=true,
-                                        closeExpanded, maxImageCnt= MAX_IMAGE_CNT}) {
+                                        closeExpanded, maxImageCnt= MAX_IMAGE_CNT, tblErrorMsg}) {
     const table= useStoreConnector(() => getTblById(tbl_id));
+    const tblLoaded = useStoreConnector(() => isFullyLoaded(tbl_id));
     const imageCnt= useFieldGroupValue(IMAGE_CNT_KEY,viewerId)[0]() ?? defaultImageCnt;
     const cutoutSize= useFieldGroupValue(CUTOUT_SIZE,viewerId)[0]() ?? defaultCutoutSizeAS;
     const {wcsMatchType, activePlotId}= useStoreConnector(() =>
@@ -70,7 +72,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     }, [activePlotId]);
 
     useEffect(() => {
-        if (!table || table.isFetching || !makeRequestFromRow) return;
+        if (!table || !tblLoaded || !makeRequestFromRow) return;
 
         if (hRowChangedByUI.current) {
             const midSlideIdx = table?.highlightedRow;
@@ -79,7 +81,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
             adjustImageSlider(sliderRef, table, Number(imageCnt), midSlideIdx);
         }
         else hRowChangedByUI.current = true;
-    }, [imageCnt, table, cutoutSize]);
+    }, [table, tblLoaded, makeRequestFromRow, viewerId, imageCnt, cutoutSize]);
 
     //handles whether to slide or not when slider arrow is clicked,
     //while dispatching the required actions in different conditions
@@ -126,15 +128,23 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
                     showWhenExpanded:true, defaultDecoration:false}}/>
         );
     }
+
+    // TODO: try setting controlViewerMounting:false in MultiImageViewer and persist viewer for the lifetime of parent component?
+    // console.log(get(flux.getState(),[TABLE_SPACE_PATH])); //to debug table disappearing from store on switching tabs in Bi-view
+    if (!table) {
+        tblErrorMsg ??= 'Unable to load images because the required data table couldn\'t be retrieved.';
+        return isString(tblErrorMsg)
+            ? <Typography level='title-lg' sx={{m:'auto'}}>{tblErrorMsg}</Typography>
+            : tblErrorMsg;
+    }
+
     return (
-        <Sheet variant='outlined' sx={{display: 'flex', flexGrow: 1, borderRadius: '5px', maxWidth: 1}}>
-            <MultiImageViewer
-                {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                    makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
-                    wcsMatchType, activePlotId, makeCustomLayout,
-                    forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
-            />
-        </Sheet>
+        <MultiImageViewer
+            {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
+                makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
+                wcsMatchType, activePlotId, makeCustomLayout, mouseReadoutEmbedded: false,
+                forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
+        />
     );
 }
 
@@ -149,6 +159,7 @@ ImageTableRowViewer.propTypes= {
     insideFlex: bool,
     makeRequestFromRow: func.isRequired,
     closeExpanded: func,
+    tblErrorMsg: node,
 };
 
 
