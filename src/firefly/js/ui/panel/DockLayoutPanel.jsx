@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import {Stack, Box, Sheet, Tooltip, IconButton} from '@mui/joy';
@@ -83,6 +83,53 @@ export function CollapsibleSplitContent({sx={}, panelTitle, isOpen, onToggle, ch
         </Sheet>
     );
 }
+
+
+/**@typedef {Object} CollapsibleSplitState Collapsible Split Layout state
+ * @property {Object} panel stateful props to be passed to SplitPanel
+ * @property {Object} collapsibleContent stateful props to be passed to CollapsibleSplitContent
+ */
+
+/**
+ * A hook to manage the state of a split layout in which one of the content panels is collapsible.
+ *
+ * This returns the stateful props to be passed to the SplitPanel and CollapsibleSplitContent. The consumer controls the
+ * layout of these interdependent components, yet can use this hook to handle the common logic related to collapsing behavior.
+ *
+ * @param p
+ * @param [p.collapseSecondContent] {boolean} whether the second content panel is `CollapsibleContentPanel` or not
+ * @param p.openSize {string|number} the size of the collapsible content panel when it is open. Can be a relative size like 'x%'.
+ * @param [p.collapsedSize] {number} the size of the collapsible content panel when it is collapsed. Must be in pixels.
+ * @returns {CollapsibleSplitState}
+ */
+export const useCollapsibleSplitLayout = ({collapseSecondContent=true, openSize, collapsedSize=0}) => {
+    const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true);
+    const [isSplitterDragging, setIsSplitterDragging] = useState(false);
+
+    // TODO: animate width if the split is vertical
+    const animationStyle = {transition: isSplitterDragging ? 'none' : 'height 0.2s ease-in-out'};
+
+    return {
+        panel: {
+            // to let SplitPane manage sizing of the collapsible content panel, and let the other content panel grow/shrink
+            primary: collapseSecondContent ? 'second' : 'first',
+            // control the sizing of collapsible content panel
+            size: isCollapsibleOpen ? openSize : collapsedSize,
+            minSize: collapsedSize,
+            // to create collapsing animation effect only when not dragging otherwise it will be jerky
+            onDragStarted: () => setIsSplitterDragging(true),
+            onDragFinished: (currentSize) => {
+                setIsSplitterDragging(false);
+                setIsCollapsibleOpen(currentSize > collapsedSize); // update the open state after dragging
+            },
+            [collapseSecondContent ? 'pane2Style' : 'pane1Style']: animationStyle,
+        },
+        collapsibleContent: {
+            isOpen: isCollapsibleOpen,
+            onToggle: () => setIsCollapsibleOpen(!isCollapsibleOpen),
+        }
+    };
+};
 
 
 function one(config, items){

@@ -5,7 +5,7 @@
 
 import React, {useEffect, useRef, useState} from 'react';
 import {string, number, func, bool, object, oneOfType, node} from 'prop-types';
-import {difference, get, isNil, isString, xor} from 'lodash';
+import {difference, isNil, isString, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -30,21 +30,21 @@ import {getActivePlotView, getPlotViewAry, getPlotViewById} from '../PlotViewUti
 import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
-import {dispatchTableHighlight, TABLE_SPACE_PATH} from 'firefly/tables/TablesCntlr';
+import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
 import {Box, Stack, Typography} from '@mui/joy';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {BeforeButton, NextButton} from 'firefly/visualize/ui/Buttons';
-import {flux} from 'firefly/core/ReduxFlux';
 
 
 const MAX_IMAGE_CNT= 7;
 const IMAGE_CNT_KEY= 'imageCount';
 const CUTOUT_SIZE= 'cutoutSize';
+const IMAGE_TABLE_ERROR = 'Unable to load images because the required data table couldn\'t be retrieved.';
 
 
 export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id, defaultWcsMatchType,
                                        defaultImageCnt= 5, imageExpandedMode, insideFlex=true,
-                                        closeExpanded, maxImageCnt= MAX_IMAGE_CNT, tblErrorMsg}) {
+                                        closeExpanded, maxImageCnt= MAX_IMAGE_CNT, tblErrorMsg=IMAGE_TABLE_ERROR}) {
     const table= useStoreConnector(() => getTblById(tbl_id));
     const tblLoaded = useStoreConnector(() => isFullyLoaded(tbl_id));
     const imageCnt= useFieldGroupValue(IMAGE_CNT_KEY,viewerId)[0]() ?? defaultImageCnt;
@@ -129,10 +129,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         );
     }
 
-    // TODO: try setting controlViewerMounting:false in MultiImageViewer and persist viewer for the lifetime of parent component?
-    // console.log(get(flux.getState(),[TABLE_SPACE_PATH])); //to debug table disappearing from store on switching tabs in Bi-view
     if (!table) {
-        tblErrorMsg ??= 'Unable to load images because the required data table couldn\'t be retrieved.';
         return isString(tblErrorMsg)
             ? <Typography level='title-lg' sx={{m:'auto'}}>{tblErrorMsg}</Typography>
             : tblErrorMsg;
