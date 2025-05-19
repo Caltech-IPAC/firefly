@@ -321,7 +321,7 @@ const SaveRestoreRow= ({sx,image,hips,mi,pv,enabled}) => (
                        onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
         <InfoButton tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
                        enabled={enabled} visible={mi.directFileAccessData}
-                       onClick={(element) => showPlotInfoPopup(pv, element )} />
+                       onClick={(element) => setTimeout( () => showPlotInfoPopup(pv, element ))} />
     </Stack>
 );
 
