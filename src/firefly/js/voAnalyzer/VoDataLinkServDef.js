@@ -37,6 +37,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '',
     const locSemL = localSemantics.toLowerCase();
     const isThis = semL.includes('#this');
     const isCounterpart = semL.includes('#counterpart');
+    const isCalibration = semL.includes('#calibration');
     const isAux = semL === '#auxiliary';
     const isGrid = semL.includes('-grid') || (locSemL.includes('-grid') || ( locSemL.includes('#grid')));
     const isCutout = semL.includes('cutout') || semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('cutout');
@@ -51,7 +52,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '',
     const isSimpleImage= isSimpleImageType(contentType);
     const isDownloadOnly=  isDownloadType(contentType);
     return {
-        isThis, isCounterpart, isImage, maybeImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand,
+        isThis, isCounterpart, isCalibration, isImage, maybeImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand,
         cisxPrimaryQuery, cisxConcurrentQuery, isSimpleImage, isDownloadOnly, cutoutFullPair:false,
     };
 }
@@ -187,7 +188,7 @@ export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourc
             const serDef= getServiceDescriptorForId(dataLinkTable,serviceDefRef,idx);
             const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics,
                 contentType, contentQualifier,sourceObsCoreData});
-            dlAnalysis.usableEntry= (serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp');
+            dlAnalysis.usableEntry= Boolean((serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp'));
             return {
                 id: rowObj[idKey],
                 contentType:contentType?.toLowerCase(), contentQualifier, semantics, localSemantics, url, error_message,

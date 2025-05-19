@@ -27,6 +27,7 @@ import {isDefined} from 'firefly/util/WebUtil.js';
  * @prop {String|Promise|*} value the value, can be anything including promise, typically a string
  * @prop {boolean} valid the group id, must be unique
  * @prop {Function} validator
+ * @prop {Function} [prepareResult] - a function that takes the value a returns it is a form that is used in a result object
  * @prop {boolean} mounted field is mounted
  * @prop {boolean} nullAllowed, default to true
  *

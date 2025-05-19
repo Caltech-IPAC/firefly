@@ -118,6 +118,7 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
  * @param p.sourceRow
  * @param {DataProductsFactoryOptions} p.options
  * @param p.doFileAnalysis
+ * @param p.dropDownText
  * @param p.name
  * @param {ActivateParams} p.activateParams
  * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, url: *, fileType: *}}
@@ -193,12 +194,12 @@ const getChartId=  (description, options, idx) =>
  * @param {number} p.sourceRow
  * @param {DataProductsFactoryOptions} p.options
  * @param {string} p.name
- * @param {string} p.dropDownText
+ * @param {string} [p.dropDownText]
  * @param {boolean} p.doFileAnalysis
  * @param p.activateParams
  * @return {Object}
  */
-function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
+export function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
                         name, doFileAnalysis, activateParams, dropDownText}) {
 
     if (dlData.serDef) {
@@ -215,10 +216,9 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
  *
  * @param parsingAlgorithm
  * @param {Array.<DatalinkData>} dataLinkData
- * @param {boolean} preferCutout
  * @return {Array.<DatalinkData>}
  */
-export function filterDLList(parsingAlgorithm, dataLinkData, preferCutout) {
+export function filterDLList(parsingAlgorithm, dataLinkData) {
     if (parsingAlgorithm===USE_ALL) return dataLinkData;
     if (parsingAlgorithm===IMAGE) {
         return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.maybeImage);
@@ -281,6 +281,17 @@ function sortRelatedGrid(menu, relatedGridImageOrder) {
     return sortedMenu;
 }
 
+export function sortRelatedGridUsingRequest(reqAry, relatedGridImageOrder) {
+    const sortedReqAry= [];
+    relatedGridImageOrder.forEach( (item) => {
+        const foundEntries= reqAry.filter( (r) => r.getTitle()===item);
+        sortedReqAry.push(...foundEntries);
+    });
+    const foundEntries= reqAry.filter( (r) => !relatedGridImageOrder.includes(r.getTitle()) );
+    sortedReqAry.push(...foundEntries);
+    return sortedReqAry;
+}
+
 /**
  *
  * @param obj
@@ -304,7 +315,7 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
     let auxCnt=0;
     let primeCnt=0;
 
-    const menu= filterDLList(parsingAlgorithm,dataLinkData, preferCutout)
+    const menu= filterDLList(parsingAlgorithm,dataLinkData)
         .map( (dlData) => {
             const {url,error_message,
                 dlAnalysis:{isAux,isThis,cutoutFullPair,isCounterpart,isCutout}}= dlData;
@@ -324,10 +335,7 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
             if (cutoutFullPair) {
                 if (isCutout) return;
                 if (preferCutout && (isThis || isCounterpart)) {
-                    if (isWarnSize(dlData.size)) {
-                        dlData.relatedDLEntries.cutout.cutoutToFullWarning=
-                            `Warning: Full image file is ${getSizeAsString(dlData.size)}, it might take awhile to load`;
-                    }
+                    dlData.relatedDLEntries.cutout.cutoutToFullWarning= getCutoutSizeWarning(dlData);
                     menuParams.dlData = dlData.relatedDLEntries.cutout;
                 }
             }
@@ -394,6 +402,19 @@ export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, 
         options, name, doFileAnalysis:true, activateParams});
     return menuEntry;
 
+}
+
+export function getCutoutTotalWarning(dlDataAry, length) {
+    const allSize= dlDataAry.map ( (d) => d.size).reduce((tot,v) => tot+v,0) ;
+    if (isWarnSize(allSize)) {
+        return `Warning: Loading ${length} images with a total size of ${getSizeAsString(allSize)}, it might take awhile to load`;
+    }
+}
+
+export function getCutoutSizeWarning(dlData) {
+    if (isWarnSize(dlData.size)) {
+        return `Warning: Full image file is ${getSizeAsString(dlData.size)}, it might take awhile to load`;
+    }
 }
 
 export function hasError(dlData) {

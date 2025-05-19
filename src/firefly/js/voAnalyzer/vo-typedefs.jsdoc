@@ -40,6 +40,7 @@
  * @typedef DlAnalysisData
  * @prop {boolean} isThis
  * @prop {boolean} isCounterpart
+ * @prop {boolean} isCalibration
  * @prop {boolean} isImage
  * @prop {boolean} maybeImage - the file is probably a fits file with an image
  * @prop {boolean} isGrid

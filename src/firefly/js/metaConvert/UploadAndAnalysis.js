@@ -109,10 +109,10 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
             const activeMenuKey= getActiveMenuKey(dpId, menu[0].activeMenuLookupKey);
             activeItem= activeMenuKey ? menu.find( (m) => m.menuKey===activeMenuKey) : menu[0];
         }
-        const {name,dropDownText,activateMenuLookupKey}= activeItem ?? {};
+        const {name,dropDownText,activeMenuLookupKey}= activeItem ?? {};
         dispatchUpdateDataProducts(dpId,
             {...makeErrorResult(e.message,undefined,request.getURL(),name),
-            menu, serDef, analysisActivateFunc, name,dropDownText, activateMenuLookupKey});
+            menu, serDef, analysisActivateFunc, name,dropDownText, activeMenuLookupKey});
         return dpdtUploadError(request.getURL(),e);
     }
 }

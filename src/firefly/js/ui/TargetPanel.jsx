@@ -3,6 +3,7 @@
  */
 
 import {Box, Divider, Stack} from '@mui/joy';
+import {isString} from 'lodash';
 import React, {memo, useContext, useEffect} from 'react';
 import PropTypes, {arrayOf, object, bool, string, shape} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
@@ -204,7 +205,7 @@ export function ingestNewTargetValue(value, setter, params, ) {
 
 
 
-
+const prepareResult= (v) => isString(v) ? v : v?.toString();
 
 /**
  * Make a payload and update the active target, Note: this function has as side effect to fires an action to update the active target
@@ -226,7 +227,7 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
         valid : parseResults.valid,
         showHelp : parseResults.showHelp,
         feedback : parseResults.feedback,
-        parseResults
+        prepareResult,
     };
     if (resolver) payload.resolver= resolver;
     return payload;
@@ -246,7 +247,7 @@ export const DEF_TARGET_PANEL_KEY= 'UserTargetWorldPt';
 export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= {},
                                        defaultToActiveTarget= true, ...restOfProps}) => {
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
-                                fieldKey, initialState,
+                                fieldKey, initialState: {...initialState, prepareResult},
                                 confirmValueOnInit: (v, props,initialState,computedState) => replaceValue(v,defaultToActiveTarget,computedState)});
     const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
     return ( <TargetPanelView {...{...newProps,fieldKey}}

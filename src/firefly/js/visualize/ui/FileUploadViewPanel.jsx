@@ -330,7 +330,7 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
 
             if (currentReport.fileFormat === Format.UNKNOWN) {
                 let errMessage = 'Unrecognized file type'; //since format is unknown
-                if (currentReport?.parts[0]?.type === FileAnalysisType.ErrorResponse) {
+                if (currentReport?.parts?.[0]?.type === FileAnalysisType.ErrorResponse) {
                     errMessage = currentReport?.parts[0]?.desc; //use ErrorResponse description if available
                 }
                 return {message: errMessage, report:undefined, summaryModel:undefined,
@@ -895,7 +895,10 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
     else {
         return (
             <>
-            <AcceptedList list={acceptList}/>
+                <Stack spacing={2} alignItems='center' alignSelf='flex-start' ml='200px' mt={4}>
+                    { Boolean(message) && <Typography color='danger'>{message}</Typography> }
+                    <AcceptedList list={acceptList}/>
+                </Stack>
                 <Typography level='h2' component='div' color='warning' sx={{minHeight:'5rem', flex:'1 1 auto', mt:'4rem', textAlign: 'center'}}>
                     Drag & drop your files here
                 </Typography>

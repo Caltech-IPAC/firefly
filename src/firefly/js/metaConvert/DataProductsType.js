@@ -191,9 +191,9 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  */
 export function dpdtImage({name, activate, extraction, menuKey='image-0', extractionText='Pin Image',
                               request, override, interpretedData, requestDefault, enableCutout, pixelBasedCutout,
-                              dropDownText, url, semantics,size, serDef, dlData }) {
+                              dropDownText, url, semantics,size, serDef, dlData, gridForceRowSize }) {
     return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout, pixelBasedCutout,
-        dropDownText, request, override, interpretedData, requestDefault,url, semantics,size,serDef, dlData};
+        dropDownText, request, override, interpretedData, requestDefault,url, semantics,size,serDef, dlData, gridForceRowSize};
 }
 
 /**

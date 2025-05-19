@@ -12,6 +12,7 @@ import {FieldGroup, FieldGroupCtx} from '../FieldGroup.jsx';
 import {getServiceMetaOptions, loadSiaV2Meta, makeObsCoreMetadataModel} from '../tap/SiaUtil';
 import {CONTEXT_PARAMS_STR, convertRequest, DEFER_TO_CONTEXT, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
+import {isSimpleTargetPanel} from './DynComponents';
 import {getStandardIdType, hasAnySpacial, isSIAStandardID, sdToFieldDefAry} from './ServiceDefTools.js';
 import {ConstraintContext} from '../tap/Constraints';
 import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
@@ -48,12 +49,18 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 
     const fieldDefAry= sdToFieldDefAry({
         serviceDef:serDef, sRegion, hipsUrl:getAppOptions()?.coverage?.hipsSourceURL, fovSize });
+    const {hasSpacial, simpleTargetUI}= analyzeSpecial(fieldDefAry);
+    let formSx={};
+    if (hasSpacial) {
+        if (simpleTargetUI) formSx= { ml: 1/2, mr: 2, mt: 2 };
+    }
+    else {
+        formSx= { ml: 1/2, mr: 2, mt: 2 };
+    }
 
-    const hasSpacial= hasAnySpacial(fieldDefAry);
-    const formSx= hasSpacial ? {} : { ml: 1/2, mr: 2, mt: 2 };
 
     return (
-        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:hasSpacial ? 1 : undefined}}>
+        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:(hasSpacial&&!simpleTargetUI) ? 1 : undefined}}>
             <Stack {...{component:hasSpacial?undefined:Card,
                 direction:'column', p:hasSpacial?.25: undefined, width:1, ...formSx,
                 variant: hasSpacial ? undefined : 'outlined', }}>
@@ -113,7 +120,7 @@ function SDPanelContent({fieldDefAry, plotId, serDef={}, setSearchParams, dataSe
         setSearchParams(convertedR);
     };
 
-    const hasSpacial= hasAnySpacial(fieldDefAry);
+    const {hasSpacial, simpleTargetUI}= analyzeSpecial(fieldDefAry);
 
     return (
         <ConstraintContext.Provider value={constraintCtx}>
@@ -121,15 +128,16 @@ function SDPanelContent({fieldDefAry, plotId, serDef={}, setSearchParams, dataSe
                                        slotProps={{
                                            FormPanel: {
                                                onSuccess: (r) => submitSearch(r),
-                                               onError: () => showInfoPopup('Some field are not valid')
-                                           }
+                                               onError: () => showInfoPopup('Some field are not valid'),
+                                               sx: hasSpacial && simpleTargetUI ? {alignSelf:'flex-start', mt:3} : undefined,
+                                           },
                                        }}
                                        obsCoreMetadataModel={obsCoreMetadataModel}
                                        plotId={plotId}>
                 <Stack direction='column' alignItems='flex-start' p={.25}>
                     <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
                         pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
-                        {hasSpacial &&
+                        {hasSpacial && !simpleTargetUI &&
                             <Typography level='body-xs'>Enter search position or click on background HiPS</Typography>}
                     </Stack>
                 </Stack>
@@ -154,3 +162,13 @@ ServiceDescriptorPanel.propTypes= {
 };
 
 
+
+
+function analyzeSpecial(fieldDefAry) {
+    if (hasAnySpacial(fieldDefAry)) {
+        return {hasSpacial: true, simpleTargetUI: isSimpleTargetPanel(fieldDefAry)};
+    }
+    else {
+        return {hasSpacial:false, simpleTargetUI:false};
+    }
+}

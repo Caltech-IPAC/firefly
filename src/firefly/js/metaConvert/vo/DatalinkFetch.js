@@ -42,6 +42,18 @@ async function doMultRequestTableFetch(fetchKey, url, requestOptions) {
     return table;
 }
 
+
+export function fetchAllDatalinkTables(table, requestOptions) {
+    if (!table?.tableData) return;
+    const pAry= table.tableData.data.map( (d,idx)  => {
+        const dlUrl= getObsCoreAccessURL(table,idx);
+        return fetchDatalinkTable(dlUrl, requestOptions);
+    });
+    return Promise.all(pAry);
+}
+
+
+
 export async function fetchSemanticList(tableOrId,row=0) {
     try {
         const table = getTableModel(tableOrId);

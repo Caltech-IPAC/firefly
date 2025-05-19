@@ -1,12 +1,15 @@
-import {getCellValue} from '../../tables/TableUtil.js';
+import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil';
+import {doFetchTable, getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
-import {getSizeAsString} from '../../util/WebUtil';
+import {logger} from '../../util/Logger';
 import {visRoot} from '../../visualize/ImagePlotCntlr';
 import {primePlot} from '../../visualize/PlotViewUtil';
+import {getObsCoreAccessURL} from '../../voAnalyzer/TableAnalysis';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
-import {IMAGE_ONLY, TABLE_ONLY} from '../DataProductConst';
+import {createObsCoreImageTitle} from '../AnalysisUtils';
+import {GROUP_BY_DATALINK_RESULT, IMAGE_ONLY, TABLE_ONLY} from '../DataProductConst';
 import {
     dispatchUpdateActiveKey, dispatchUpdateDataProducts, getActiveMenuKey, getCurrentActiveKeyID
 } from '../DataProductsCntlr';
@@ -16,11 +19,10 @@ import {
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
 } from '../ImageDataProductsUtil.js';
-import {fetchDatalinkTable} from './DatalinkFetch.js';
+import {fetchAllDatalinkTables, fetchDatalinkTable} from './DatalinkFetch.js';
 import {
-    filterDLList, findMenuKeyWithName, hasBandInMenuKey, hasLabelInMenuKey, IMAGE, isWarnSize, processDatalinkTable,
-    RELATED_IMAGE_GRID,
-    SPECTRUM, USE_ALL
+    findMenuKeyWithName, getCutoutSizeWarning, getCutoutTotalWarning, hasBandInMenuKey, hasLabelInMenuKey,
+    IMAGE, makeMenuEntry, processDatalinkTable, RELATED_IMAGE_GRID, sortRelatedGridUsingRequest, SPECTRUM, USE_ALL
 } from './DataLinkProcessor.js';
 
 
@@ -36,7 +38,7 @@ import {
  * @param obj.options
  * @return {Promise<DataProductsDisplayType>}
  */
-export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
+export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
     try {
 
         if (options.limitViewerDisplay===TABLE_ONLY) return dpdtSimpleMsg('Configuration Error: No support for related spectrum');
@@ -79,7 +81,7 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
 
         const threeColorReqAry= (threeColorOps && requestAry.length>1) &&
                                           make3ColorRequestAry(requestAry,threeColorOps,datalinkTable.tbl_id);
-        const onActivePvChanged= getOnActivePvChanged(dlTableUrl,dataLinkGrid,activateParams,options);;
+        const onActivePvChanged= getOnActivePvChanged(dlTableUrl,dataLinkGrid,activateParams,options);
         let highlightPlotId;
         if (options.relatedGridImageOrder?.length) {
             const {dpId}= activateParams;
@@ -92,20 +94,14 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
             tbl_id:table.tbl_id, onActivePvChanged, highlightPlotId });
         const extraction = createSingleImageExtraction(requestAry);
 
-        const gridDlData= {...dlDataAry[0]};
-        if (preferCutout) {
-            const allSize= dlDataAry.map ( (d) => d.size).reduce((tot,v) => tot+v,0) ;
-            if (isWarnSize(allSize)) {
-                gridDlData.cutoutToFullWarning=
-                    `Warning: Loading ${requestAry.length} images with a total size of ${getSizeAsString(allSize)}, it might take awhile to load`;
-            }
-        }
-
+        const gridDlData= {...dlDataAry[0],
+            cutoutToFullWarning: (preferCutout && cutoutSwitching) ? getCutoutTotalWarning(dlDataAry,requestAry.length) : undefined};
 
         const item= dpdtImage({name:'image grid', activate, extraction,
-            dlData: cutoutSwitching ? gridDlData : undefined,
+            dlData: gridDlData,
             enableCutout:preferCutout,
             menu: extractItems,
+            gridForceRowSize: options.gridForceRowSize,
             menuKey:'image-grid-0',serDef:dataLinkGrid.serDef});
         item.menu= extractItems;
         return item;
@@ -114,9 +110,105 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
     }
 }
 
+
+export async function getObsCoreRelatedDataProductByFilter(table, row, threeColorOps, highlightPlotId, activateParams, options) {
+
+    dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
+    const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);
+    const {relatedGridImageOrder,gridForceRowSize= undefined}= options ?? {};
+
+    try {
+        const filteredTbl= await fetchRelatedColsFilteredTable(table,row);
+        const dlTableAry= await fetchAllDatalinkTables(filteredTbl,options.datalinkTblRequestOptions);
+        const {processedGrid,gridDlData, errMsg}=
+            convertDLTableAryToImageGrid(dlTableAry,filteredTbl,preferCutout,activateParams,options);
+        if (errMsg) return dpdtSimpleMsg(errMsg);
+
+
+        const requestAry= processedGrid.map( (g) => g.request);
+        requestAry.forEach((r, idx) => r.setPlotId(r.getPlotId() + '-related_grid-' + idx));
+        const threeColorReqAry= (threeColorOps && requestAry.length>1) &&
+            make3ColorRequestAry(requestAry,threeColorOps,table.tbl_id);
+        const onActivePvChanged= getOnActivePvChanged(getObsCoreAccessURL(filteredTbl,0),processedGrid,activateParams,options);
+        const {imageViewerId} = activateParams;
+        const sortedReqAry= relatedGridImageOrder ? sortRelatedGridUsingRequest(requestAry,relatedGridImageOrder) : requestAry;
+        const activate = createRelatedGridImagesActivate({requestAry:sortedReqAry, threeColorReqAry, imageViewerId,
+            tbl_id:table.tbl_id, onActivePvChanged, highlightPlotId });
+        const extraction = createSingleImageExtraction(sortedReqAry);
+
+        const item= dpdtImage({name:'image grid', activate, extraction,
+            dlData: gridDlData,
+            enableCutout:preferCutout,
+            menu: [],
+            gridForceRowSize,
+            menuKey:'image-grid-0',});
+
+        return item;
+    }
+    catch (reason) {
+        logger.error(`can't filter table: ${reason}`, reason);
+        return dpdtSimpleMsg('can\'t filter table');
+    }
+
+}
+
+
+async function fetchRelatedColsFilteredTable(table,row) {
+    const s= getMetaEntry(table,'tbl.relatedCols');
+    const colNameAry= s.split(',').map( (c) => c.trim());
+    const values= colNameAry.map( (n) => getCellValue(table,row,n));
+    const filters= colNameAry.reduce ( (str,cName,idx) =>
+        `${str}${!idx?'':' AND '}"${cName}" = '${values[idx]}'`, '');
+    const request = cloneRequest(table.request, { startIdx : 0, pageSize : MAX_ROW, filters});
+
+    try {
+        return await doFetchTable(request);
+    }
+    catch (reason) {
+        logger.error('could not fetch table', reason);
+    }
+}
+
+function convertDLTableAryToImageGrid(dlTableAry, filteredTbl, preferCutout, activateParams=undefined, options=undefined) {
+    const dlDataAry =
+        dlTableAry.map( (t,idx) => {
+            const dlList= getDataLinkData(t,false, filteredTbl,idx).filter(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isImage);
+            return dlList[0];
+        });
+    if (!dlDataAry.length) return {errMsg:dpdtSimpleMsg('no support for related grid for this table')};
+    const cutoutSwitching= dataSupportsCutoutSwitching(dlDataAry);
+
+    const processedGrid= dlDataAry.map( (dlData, idx) => {
+        const {dlAnalysis:{cutoutFullPair}}= dlData;
+        const dlTableUrl= getObsCoreAccessURL(filteredTbl,idx);
+        // const name= makeName(dlData, url, 0, 0, 0, 'todo title');
+        const name= createObsCoreImageTitle(filteredTbl,idx);
+        const baseTitle= '';
+
+        const menuParams= {dlTableUrl,dlData,idx, baseTitle, filteredTbl, ropDownText:name,
+            sourceRow:idx, options, name, doFileAnalysis:false, activateParams};
+        if (cutoutFullPair) {
+            dlData.relatedDLEntries.cutout.cutoutToFullWarning= getCutoutSizeWarning(dlData);
+            if (preferCutout) {
+                menuParams.dlData = dlData.relatedDLEntries.cutout;
+            }
+        }
+        return makeMenuEntry({dlTableUrl, dlData:menuParams.dlData,idx, baseTitle, sourceTable:filteredTbl, sourceRow:idx,options,
+            name, doFileAnalysis:false, activateParams});
+    });
+
+    const gridDlData= {...dlDataAry[0],
+        cutoutToFullWarning: (preferCutout && cutoutSwitching) ? getCutoutTotalWarning(dlDataAry,processedGrid.length) : undefined};
+
+    return {processedGrid,dlDataAry, gridDlData, errMsg:undefined};
+}
+
+
+
 function getOnActivePvChanged(dlTableUrl, dataLinkGrid, activateParams, options) {
     if (!options.relatedGridImageOrder?.length) return;
-    const menuKeyAry= dataLinkGrid.menu.map( (m) => m.menuKey);
+    const grid= dataLinkGrid.menu ?? dataLinkGrid;
+    const menuKeyAry= grid.map( (m) => m.menuKey);
     if (!menuKeyAry?.length) return;
     return (plotId) => {
         const activeMenuLookupKey= dlTableUrl;
@@ -200,7 +292,7 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
 
         const isAllRelatedImageGrid= hasRelatedBands && resultAry
             ?.every( ({menu}) => menu
-                .filter( ({dlData:dl}) => dl?.dlAnalysis?.isImage && dl?.dlAnalysis?.isGrid).length>1 );
+                ?.filter( ({dlData:dl}) => dl?.dlAnalysis?.isImage && dl?.dlAnalysis?.isGrid).length>1 );
 
         // const primeIdx= resultAry[0].menu.findIndex( (m) => m.menuKey=== resultAry[0].menuKey);
         const mi= makeGridMi(resultAry,activateParams,table,plotRows,activeMenuKey);
@@ -226,7 +318,7 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
 }
 
 
-function makeAllRelatedGridMenu(resultAry, bandPassSet, activateParams, table, plotRows,options) {
+function makeAllRelatedGridMenu(resultAry, bandPassSet, activateParams, table, plotRows) {
     const highlightedIdx= plotRows.findIndex( (r) => r.highlight);
 
     const flatResult= resultAry.map( (r) => r.menu).flat();
@@ -261,15 +353,30 @@ function makeGridMi(bandMenu, activateParams, table, plotRows, menuKey) {
 }
 
 
-export async function datalinkDescribeThreeColor(dlTableUrl, table,row, options) {
-    const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
-    const dataLinkGrid = processDatalinkTable({
-        sourceTable: table, row, datalinkTable, activateParams:{},
-        baseTitle: '', dlTableUrl, doFileAnalysis: false,
-        options, parsingAlgorithm: RELATED_IMAGE_GRID
-    });
+export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options={}) {
+    const {relatedBandMethod=GROUP_BY_DATALINK_RESULT }= options;
+    let dataLinkGrid;
+    let gridDLData;
+    if (relatedBandMethod===GROUP_BY_DATALINK_RESULT) {
+        const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
+        const results = processDatalinkTable({
+            sourceTable: table, row, datalinkTable, activateParams:{},
+            baseTitle: '', dlTableUrl, doFileAnalysis: false,
+            options, parsingAlgorithm: RELATED_IMAGE_GRID
+        });
+        dataLinkGrid = results.menu;
+        gridDLData= dataLinkGrid.map( (d) => d.dlData);
+    }
+    else {
+        const filteredTbl= await fetchRelatedColsFilteredTable(table,row);
+        const dlTableAry= await fetchAllDatalinkTables(filteredTbl,options.datalinkTblRequestOptions);
+        const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);
+        const {processedGrid}= convertDLTableAryToImageGrid(dlTableAry,filteredTbl,preferCutout,{});
+        dataLinkGrid= processedGrid;
+        gridDLData= processedGrid.map( (d) => d.dlData);
+    }
 
-    const bandData = dataLinkGrid.menu
+    const bandData = dataLinkGrid
         .filter((result) => result?.request && (
             result.displayType === DPtypes.IMAGE ||
             result.displayType === DPtypes.PROMISE ||
@@ -281,7 +388,7 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table,row, options)
         },{});
 
 
-    const {r,g,b}= get3CBandIdxes(datalinkTable);
+    const {r,g,b}= get3CBandIdxes(gridDLData);
 
     if (bandData[r]) bandData[r].color= Band.RED;
     if (bandData[g]) bandData[g].color= Band.GREEN;
@@ -291,17 +398,16 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table,row, options)
 }
 
 /**
- * @param {TableModel} datalinkTable
+ * @param {Array.<DatalinkData>} gridDLData
  * @return {{r: number, b: number, g: number}}
  */
-function get3CBandIdxes(datalinkTable) {
-    const gridData= filterDLList(RELATED_IMAGE_GRID,getDataLinkData(datalinkTable));
-    const rBandIdx= gridData.findIndex( (d) => d.dlAnalysis.rBand);
-    const gBandIdx= gridData.findIndex( (d) => d.dlAnalysis.gBand);
-    const bBandIdx= gridData.findIndex( (d) => d.dlAnalysis.bBand);
+function get3CBandIdxes(gridDLData) {
+    const rBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.rBand);
+    const gBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.gBand);
+    const bBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.bBand);
 
     const bandAry= [];
-    bandAry.length= gridData.length;
+    bandAry.length= gridDLData.length;
     if (rBandIdx!==-1) bandAry[rBandIdx]= Band.RED;
     if (gBandIdx!==-1) bandAry[gBandIdx]= Band.GREEN;
     if (bBandIdx!==-1) bandAry[bBandIdx]= Band.BLUE;

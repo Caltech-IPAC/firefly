@@ -1,5 +1,7 @@
 import {FileAnalysisType} from '../data/FileAnalysis.js';
-import {hasRowAccess} from '../tables/TableUtil.js';
+import {getCellValue, getColumns, hasRowAccess} from '../tables/TableUtil.js';
+import {getDataServiceOptionByTable} from '../ui/tap/DataServicesOptions';
+import {tokenSub} from '../util/WebUtil';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getObsCoreAccessFormat, getObsTitle} from '../voAnalyzer/TableAnalysis';
 import {
@@ -335,3 +337,39 @@ export function makeYamlEntry(url,name, obsTitle) {
 
 const makeErrorResult= (message, fileName,url) =>
     dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
+
+export function createObsCoreImageTitle(table,row) {
+    // 1. try a template
+    const template= getDataServiceOptionByTable('productTitleTemplate',table);
+    if (template?.trim()==='') return ''; // setting template to empty string disables all title guessing
+    if (template) {
+        const templateColNames= template && getColNameFromTemplate(template);
+        const columns= getColumns(table);
+        if (templateColNames?.length && columns?.length) {
+            const cNames= columns.map( ({name}) => name);
+            const colObj= templateColNames.reduce((obj, v) => {
+                if (cNames.includes(v)) {
+                    obj[v]= getCellValue(table,row,v);
+                }
+                return obj;
+            },{});
+            if (Object.keys(colObj).length===templateColNames.length) {
+                const titleStr= tokenSub(colObj,template);
+                if (titleStr) return titleStr;
+            }
+        }
+    }
+    // 2. try obs_title
+    if (getObsTitle(table,row)) return getObsTitle(table,row);
+
+    // 3. compute a name
+    let obsCollect= getCellValue(table,row,'obs_collection') || '';
+    const obsId= getCellValue(table,row,'obs_id') || '';
+    const iName= getCellValue(table,row,'instrument_name') || '';
+    if (obsCollect===iName) obsCollect= '';
+    return `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
+}
+
+function getColNameFromTemplate(template) {
+    return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
+}
