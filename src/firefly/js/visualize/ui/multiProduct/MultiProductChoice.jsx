@@ -29,7 +29,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
     const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
-    const stateDef= dlData ? dlData.dlAnalysis.isSpectrum ? 'Spectrum' : 'Chart' : lastChartDefault;
+    const stateDef= dlData ? dlData?.dlAnalysis?.isSpectrum ? 'Spectrum' : 'Chart' : lastChartDefault;
     const [chartName, setChartName] = useState(stateDef);
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: chartName, value: SHOW_CHART}];
     const options = !imageViewerId ? chartTableOptions : [...chartTableOptions, imageOp];
