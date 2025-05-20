@@ -9,7 +9,7 @@ import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../Compon
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsibleItem, CollapsibleGroup} from '../../ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Box, Skeleton, Stack} from '@mui/joy';
+import {Box, Card, Skeleton, Stack, Typography} from '@mui/joy';
 import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {PrismADQLAware} from '../../ui/tap/AdvancedADQL';
@@ -32,8 +32,8 @@ export function showJobInfo(jobId) {
 
     const popup = (
             <PopupPanel title='Job Information'>
-                <Stack key={jobId} sx={popupSx}>
-                    <JobInfo jobId={jobId} sx={{overflow: 'auto'}}/>
+                <Stack sx={popupSx}>
+                    <JobInfo key={jobId} jobId={jobId} sx={{overflow: 'auto'}}/>
                     <HelpIcon helpId={'basics.bgJobInfo'} sx={{ml: 'auto'}}/>
                 </Stack>
             </PopupPanel>
@@ -142,8 +142,14 @@ function TAPDetails({jobInfo}) {
 
     return (
         <Stack spacing={0}>
-            <KeywordBlock label='ADQL QUERY'/>
-            <PrismADQLAware text={adql} sx={{marginBlock: '-8px', fontSize: 'sm'}}/>
+            <Typography level='title-sm' mr={1/2}>ADQL QUERY</Typography>
+            <Card sx={{ '--Card-padding': '4px' }}>
+                <PrismADQLAware {...{
+                    text:adql,
+                    sx:{marginBlock: '-8px', fontSize: 'sm'},
+                    slotProps:{pre: {style: {borderRadius:'8px'}}}
+                }} />
+            </Card>
         </Stack>
     );
 }
