@@ -1,6 +1,6 @@
 import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
-import {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
+import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
 import {defaultsDeep} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
@@ -317,6 +317,7 @@ EmbeddedPositionSearchPanel.propTypes= {
         spatialSearch: shape({
             component: elementType,
             searchTypeKey: string,
+            children: PropTypes.node,
             sx: object
         } )
     }),
@@ -402,7 +403,7 @@ SearchSummary.propTypes = {
 
 function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setUploadInfo, searchTypeOp, doToggle,
                            initToggle, nullAllowed, searchTypeToggleOptions}) {
-    const { searchTypeKey=CONE_AREA_KEY, sx } = slotProps.spatialSearch ?? {};
+    const { searchTypeKey=CONE_AREA_KEY, children, sx } = slotProps.spatialSearch ?? {};
 
     return (
         <Stack spacing={0.5} sx={{pt: insetSpacial ? 0 : 1, ...sx}}>
@@ -412,6 +413,7 @@ function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setU
                 tooltip: 'Chose type of search', initialState: {value: initToggle},
                 options: searchTypeToggleOptions
             }} />}
+            {children}
             {searchTypeOp === CONE_CHOICE_KEY && <ConeOp {...{slotProps,nullAllowed}}/> }
             {searchTypeOp === POLY_CHOICE_KEY && <PolyOp {...{slotProps}}/> }
             {searchTypeOp === UPLOAD_CHOICE_KEY && <UploadOp {...{slotProps,uploadInfo,setUploadInfo}}/>}
