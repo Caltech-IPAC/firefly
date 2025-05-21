@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {createContext, useContext, useState} from 'react';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import {Stack, Box, Sheet, Tooltip, IconButton} from '@mui/joy';
@@ -8,58 +8,91 @@ import {useStoreConnector} from '../SimpleComponent.jsx';
 import {ArrowDropDown, ArrowDropUp} from '@mui/icons-material';
 
 
+const SplitContext = createContext({});
+
 /**
- * A wrapper for SplitPane with persistent split position
- * @param p  component properties
- * @param p.children  pass through children component
- * @param p.defaultSize   the default split size
- * @param p.pKey  an identifier for this panel.  One will be created if not given
+ * A wrapper for SplitPane with persistent split position.
+ *
+ * @param p  props accepted by `SplitPane` (from react-split-pane) besides the following:
+ * @param p.children pass-through children component, usually two `SplitContent`s. If one of the `SplitContent` has
+ * `isCollapsible` prop set as true, then its state will be implicitly managed by `SplitPanel`.
+ * @param p.pKey {string}  an identifier for this panel.  One will be created if not given
+ * @param p.openCollapsibleSize {string|number} the size of the collapsible content panel when it is open.
+ * Can be a relative size like 'm%' or absolute size like n (in px). Will be used only if one of the `SplitContent`
+ * has `isCollapsible` prop set as true, otherwise ignored.
  * @returns {JSX.Element}
  */
-export const SplitPanel = ({children, defaultSize, pKey, ...rest}) => {
+export const SplitPanel = ({children, pKey, openCollapsibleSize='50%', ...props}) => {
     pKey = 'SplitPanel-' + pKey;
+
     const {pos}  = useStoreConnector(() => getComponentState(pKey));
-    const onChange = (pos) => dispatchComponentStateChange(pKey, {pos});
+    const onChange = (size) => {
+        dispatchComponentStateChange(pKey, {pos: size});
+        props?.onChange?.(size);
+    };
+
+    const collapsibleContentIdx = React.Children.toArray(children).filter((c) => c).findIndex(
+        (c) => c?.props?.isCollapsible);
+    const splitLayoutState = useCollapsibleSplitLayout({
+        collapseSecondContent: collapsibleContentIdx === 1 ? true : (collapsibleContentIdx === 0 ? false : null),
+        openSize: openCollapsibleSize,
+        collapsedSize: props?.minSize,
+    });
 
     return (
-        <SplitPane split='horizontal' defaultSize={pos ?? defaultSize} onChange={onChange} {...rest}>
-            {children}
-        </SplitPane>
+        <SplitContext.Provider value={splitLayoutState.collapsibleContent}>
+            <SplitPane split='horizontal'
+                       defaultSize={pos ?? props?.defaultSize}
+                       onChange={onChange}
+                       {...props}
+                       {...splitLayoutState.panel}>
+                {children}
+            </SplitPane>
+        </SplitContext.Provider>
     );
 };
 
 
 /**
- * decorate the content with DockLayoutPanel's look and feel.
- * @param p  component props
+ * Decorated content panel to be used inside `SplitPanel`.
+ *
+ * @param p other than the below keys, same as `Sheet` or `Box` props
  * @param p.sx
- * @param p.style  additional style to container; (deprecated use sx instead)
- * @param p.className  additional className to container
- * @param p.children  content of this panel
+ * @param p.style additional style to container; (DEPRECATED: use sx instead)
+ * @param p.panelTitle {string} the title of this panel (appears in the collapsible tooltip)
+ * @param p.isCollapsible {boolean} whether to render this panel as a collapsible or not
+ * @param p.children {JSX.Element} the content of this panel
  */
-export function SplitContent({sx={}, style={}, className='', children}) {
-    return ( <Stack overflow='hidden' position='relative' width={1} m={1/2}>
-                <Box overflow='hidden' position='absolute' sx={{inset:'0', ...style, ...sx}} className={className}>
+export function SplitContent({sx={}, style={}, children, panelTitle,
+                                 isCollapsible=false, ...props}) {
+    return isCollapsible
+        ? (
+            <CollapsibleSplitContent sx={sx} panelTitle={panelTitle} {...props}>
+                {children}
+            </CollapsibleSplitContent>
+        )
+        : (
+            <Stack overflow='hidden' position='relative' width={1} m={1/2}>
+                <Box overflow='hidden' position='absolute' sx={{inset:'0', ...style, ...sx}} {...props}>
                     {children}
                 </Box>
-             </Stack>
-            );
+            </Stack>
+        );
 }
 
 
 /**
- * SplitPanel's content panel that has a toggle button to collapse/expand the panel.
- * This is a controlled component, i.e., the parent component manages its state.
+ * Special case of `SplitContent` that has a toggle button to collapse/expand the content panel.
  *
  * @param p other than the below keys, it's same as Sheet props
  * @param p.sx
  * @param p.panelTitle {string} the title of this panel (appears in the tooltip)
- * @param p.isOpen {boolean} whether the panel is open
- * @param p.onToggle {function():void} fired when the toggle button is clicked
  * @param p.children {JSX.Element} the content of this panel
  * @returns {Element}
  */
-export function CollapsibleSplitContent({sx={}, panelTitle, isOpen, onToggle, children, ...props}) {
+function CollapsibleSplitContent({sx={}, panelTitle, children, ...props}) {
+    const {isOpen, onToggle} = useContext(SplitContext);
+    
     // TODO: dynamically calculate styles based on the position of toggle button and split direction (passed as props)
     //  e.g. for the redesign of EmbeddedSearchPositionPanel, the toggle button should appear on the middle of the right side of a vertical split
     return (
@@ -97,17 +130,22 @@ export function CollapsibleSplitContent({sx={}, panelTitle, isOpen, onToggle, ch
  * layout of these interdependent components, yet can use this hook to handle the common logic related to collapsing behavior.
  *
  * @param p
- * @param [p.collapseSecondContent] {boolean} whether the second content panel is `CollapsibleContentPanel` or not
+ * @param p.collapseSecondContent {boolean|null} whether the second content panel is `CollapsibleContentPanel` or not.
+ * Use `null` for no operation from this hook (in case there is no CollapsibleContentPanel).
  * @param p.openSize {string|number} the size of the collapsible content panel when it is open. Can be a relative size like 'x%'.
  * @param [p.collapsedSize] {number} the size of the collapsible content panel when it is collapsed. Must be in pixels.
  * @returns {CollapsibleSplitState}
  */
-export const useCollapsibleSplitLayout = ({collapseSecondContent=true, openSize, collapsedSize=0}) => {
+const useCollapsibleSplitLayout = ({collapseSecondContent, openSize, collapsedSize=0}) => {
     const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true);
     const [isSplitterDragging, setIsSplitterDragging] = useState(false);
 
     // TODO: animate width if the split is vertical
     const animationStyle = {transition: isSplitterDragging ? 'none' : 'height 0.2s ease-in-out'};
+
+    if (collapseSecondContent===null) { //No-op
+        return {panel: {}, collapsibleContent: {}};
+    }
 
     return {
         panel: {
