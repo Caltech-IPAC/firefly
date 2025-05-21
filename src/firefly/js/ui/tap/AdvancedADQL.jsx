@@ -369,7 +369,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                             <Stack sx={{mt:2}}>
                                                 <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
                                                     <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
-                                                        <TextButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
+                                                        <TextButton text={serverFile ? 'Replace Uploaded Table' : 'Upload Table'}
                                                                      onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
                                                         {haveTable &&
                                                             <Typography level='title-lg'

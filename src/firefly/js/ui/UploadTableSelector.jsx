@@ -128,7 +128,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
     return (
         <Stack spacing={.5}>
             <Stack {...{direction:'row', spacing: 1.5, alignItems:'center'}}>
-                <TextButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
+                <TextButton text={(fileName&&haveTable) ? 'Replace Uploaded Table' : 'Upload Table'}
                             onClick={() => showUploadTableChooser(preSetUploadInfo, undefined,
                                 defaultUploadColumnsSelection)} />
                 {haveTable &&
