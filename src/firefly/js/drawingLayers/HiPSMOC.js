@@ -330,9 +330,9 @@ function getLayerChanges(drawLayer, action) {
  * @returns {Object}
  */
 function createMocObj(dl, moc_nuniq_nums = [], mocCsys= undefined) {
-    const {mocObj, drawingDef} = dl;
+    const {mocObj, drawingDef, mocFitsInfo} = dl;
 
-    return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef, mocCsys);
+    return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef, mocCsys, mocFitsInfo);
 }
 
 

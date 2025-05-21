@@ -1,5 +1,6 @@
 import {getAppOptions} from '../../api/ApiUtil.js';
 import {getIpixForWp, getProGradeTilePixels} from '../../tables/HpxIndexCntlr';
+import {logger} from '../../util/Logger';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
 import {isEmpty, has, set, isUndefined} from 'lodash';
@@ -38,7 +39,7 @@ const OUTLINE_OPACITY_RATIO = 1;
  * @param mocCsys
  * @return {object}
  */
-function make(cellNums, drawingDef, mocCsys) {
+function make(cellNums, drawingDef, mocCsys, mocFitsInfo) {
     if (!cellNums || !cellNums.length) return null;
 
     const {style=DEFAULT_STYLE, color} = drawingDef || {};
@@ -46,6 +47,7 @@ function make(cellNums, drawingDef, mocCsys) {
     obj.type = MOC_OBJ;
 
     const mocGroup = MocGroup.make(cellNums, undefined, mocCsys);
+    mocGroup.mocFitsInfo= mocFitsInfo;
     mocGroup.makeGroups();
     return {...obj, regionOptions: {message: 'polygon2'}, mocGroup, style, color};
 }
@@ -187,7 +189,14 @@ export class MocGroup {
     }
 
     makeGroups() {
+        let warn= false;
         this.cells.forEach((oneNuniq) => {
+            if (!oneNuniq) {
+                if (warn) return;
+                warn= true;
+                someZeroEntriesWarning(this.cells,this.mocFitsInfo);
+                return;
+            }
             const {norder, npix} = getMocOrderIndex(oneNuniq);
             const newMember = {npix, nuniq: oneNuniq};
 
@@ -641,6 +650,16 @@ function toRegion(drawObjAry, plot, drawParams) {
 		return prev;
 	}, resRegions);
 }
+
+
+function someZeroEntriesWarning(cells=[], mocFitsInfo) {
+    const cnt= cells.filter( (c) => !c).length;
+    if (mocFitsInfo) {
+        logger.warn(`Bad MOC: nuniq zero warning: ${mocFitsInfo.mocURL || mocFitsInfo.fitsPath}`);
+    }
+    logger.warn(`Bad MOC: nuniq zero warning: ${cnt} out of ${cells.length} nuniq entries in the MOC are zero`);
+}
+
 
 const outputTime = (msg, t0) => {
     const t1 = performance.now();
