@@ -165,7 +165,7 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
 export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourceObsCoreTbl=undefined, sourceObsCoreRow=-1) {
     const dataLinkTable= getTableModel(dataLinkTableOrId);
     const {data}= dataLinkTable?.tableData ?? {};
-    if (!data) return [];
+    if (!data || !isDatalinkTable(dataLinkTable)) return [];
     const sourceObsCoreData= getObsCoreData(sourceObsCoreTbl,sourceObsCoreRow);
     const positionWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.SEARCH_TARGET, undefined));
     const rowWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.ROW_TARGET, undefined));

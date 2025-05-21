@@ -11,7 +11,7 @@ import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {makeFileRequest, MAX_ROW, META} from '../../tables/TableRequestUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
-import {getCellValue, getColumnIdx, getTblById, onTableLoaded,} from '../../tables/TableUtil.js';
+import {getCellValue, getColumnIdx, getTblById, isFullyLoaded, onTableLoaded,} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {makeSearchOnce, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
@@ -332,6 +332,8 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
         doSubmitSearch(request,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,tabsKey);
 
 
+    let dlLoadError= false;
+    if (!qAna && isFullyLoaded(currentTblId)) dlLoadError= true;
 
     return (
         <Sheet sx={{width:1,height:1}}>
@@ -346,7 +348,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
                                 <DLuiTabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
                                     docRows, isAllSky, setClickFunc, submitSearch, slotProps, dataServiceId}}/>
                             :
-                            <NotLoaded {...{regHasUrl,regLoaded,url}}/>
+                            <NotLoaded {...{regHasUrl,regLoaded,url,dlLoadError}}/>
                         }
                     </FieldGroup>
                 </Stack>
@@ -441,13 +443,14 @@ function findInitWp(initFdEntryAry) {
         initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
 }
 
-const NotLoaded= ({regHasUrl,regLoaded, url}) => (
-    (regHasUrl || !regLoaded) ?
-        (<Box sx={{position:'relative', width:1, height:1}}> <Skeleton/> </Box>) :
-        (<Typography level='title-lg' color='warning' sx={{alignSelf:'center', pl:5}}>
+const NotLoaded= ({regHasUrl,regLoaded, url, dlLoadError}) => (
+    ((regHasUrl || !regLoaded) && !dlLoadError) ?
+        (<Box sx={{position:'relative', width:1, height:1}}><Skeleton/></Box>) :
+        (<Typography level='title-lg' color='warning' sx={{alignSelf:'center', ml:10, mt: 10}}>
             {`No collections to load from: ${url}`}
         </Typography>)
 );
+
 
 
 function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,tabsKey)  {
