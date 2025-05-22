@@ -20,11 +20,13 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
@@ -32,6 +34,7 @@ import static edu.caltech.ipac.firefly.data.table.MetaConst.CATALOG_OVERLAY_TYPE
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import edu.caltech.ipac.firefly.core.Util.Try;
 
 
 @SearchProcessorImpl(id = PROC_ID)
@@ -127,16 +130,36 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             // by workspace
             inf = getFromWorkspace(source, altSource);
         } else {
-            // by source/altSource
+            boolean isExternal = isExternalSource(source);
             inf = QueryUtil.resolveFileFromSource(source, req);
             if (inf == null) {
+                isExternal = isExternalSource(source);
                 inf = QueryUtil.resolveFileFromSource(altSource, req);
             }
+            if (isExternal) req.setMeta(TableMeta.DATA_ORIGIN, "external");
         }
         if (inf == null) {
             throw new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
         }
         return inf;
+    }
+
+    private boolean isExternalSource(String source) {
+        String sourceBase = getBaseDomain(source);
+        if (sourceBase == null) return false;
+        String hostBase = getBaseDomain(ServerContext.getRequestOwner().getBaseUrl());
+        boolean isExternal = !sourceBase.equals(hostBase);
+        Logger.getLogger().debug("Is external source: " + isExternal + " sourceBase: " + sourceBase + " hostBase: " + hostBase);
+        return isExternal;
+    }
+
+    private static String getBaseDomain(String source) {
+        URI uri = Try.it(() -> new URI(source.toLowerCase())).get();
+        if (uri == null) return null;
+        String host = uri.getHost();
+        String[] parts = host.split("\\.");
+        if (parts.length < 2) return host;
+        return parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
 
 //====================================================================

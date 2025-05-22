@@ -1591,6 +1591,10 @@ export function isHtml(text) {
     return HtmlRegex.test(text);
 }
 
+export function isExternalSource(tableOrId) {
+    return getMetaEntry(tableOrId, 'data_origin', '') === 'external';
+}
+
 export function cleanHtml(text) {
     const clean = DOMPurify.sanitize(text);
     if (DOMPurify.removed) logger.debug(`cleanHtml removed: ${DOMPurify.removed}`);
