@@ -8,7 +8,7 @@ import {get, isEmpty, isString, omit, set, toNumber} from 'lodash';
 import {Box, Button, Checkbox, Chip, Link, MenuItem, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 
 import {FILTER_CONDITION_TTIPS, FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
-import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isHtml, isOfType, splitCols, splitVals} from '../TableUtil.js';
+import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isExternalSource, isHtml, isOfType, splitCols, splitVals} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -300,7 +300,7 @@ export function makeDefaultRenderer(col={}) {
     return renderer;
 }
 
-export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
+export function ContentEllipsis({children, text, isTrusted=true, textAlign, sx, actions=[]}) {
 
     const [showActions, setShowActions] = useState(false);
     const [dropdown, setDropdown] = useState(false);
@@ -317,19 +317,19 @@ export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
         >
             <Stack ref={contentEl}>{children}</Stack>
             { (showActions || dropdown) &&
-                <ActionDropdown {...{text, actions, onChange: (v)=> setDropdown(v) | setShowActions(v)}}/>
+                <ActionDropdown {...{text, actions, isTrusted, onChange: (v)=> setDropdown(v) | setShowActions(v)}}/>
             }
         </Stack>
     );
 }
 
-function ActionDropdown({text, actions, onChange}) {
+function ActionDropdown({text, actions, onChange, isTrusted=true}) {
     const popupID = 'actions--popup';
     const copyCB = () => {
         copyToClipboard(text);
     };
     const viewAsText = () => {
-        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
+        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text} isTrusted={isTrusted}/>);
         dispatchShowDialog(popupID);
     };
     return (
@@ -365,7 +365,7 @@ export const CellWrapper =  (props) => {
             {content}
         </Stack>
     );
-    return CellRenderer?.allowActions ? <ContentEllipsis sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
+    return CellRenderer?.allowActions ? <ContentEllipsis isTrusted={isExternalSource(tbl_id)} sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
 };
 
 export const FixedCellWrapper = React.memo( CellWrapper, skipCellRender);
@@ -379,7 +379,7 @@ function skipCellRender(prev={}, next={}) {
 }
 
 
-function ViewAsText({text, ...rest}) {
+function ViewAsText({text, isTrusted, ...rest}) {
     const [doFmt, setDoFmt] = useState(true);
 
     const onChange = (e) => {
@@ -392,7 +392,7 @@ function ViewAsText({text, ...rest}) {
         } catch (e) {}      // if text is not JSON, just show as is.
     }
 
-    const content = doFmt && isHtml(text) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(text)}}/> : <Typography whiteSpace='pre'>{text}</Typography>;
+    const content = doFmt && isHtml(text) ? <div dangerouslySetInnerHTML={{__html: isTrusted ? text : cleanHtml(text)}}/> : <Typography whiteSpace='pre'>{text}</Typography>;
 
     const label = 'View with formatting';
     return (
@@ -733,7 +733,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
     if (imgStubKey) {
         label = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
     } else {
-        label = isHtml(label) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(label)}}/> : label;
+        label = isHtml(label) ? <div dangerouslySetInnerHTML={{__html: sanitizeHtmlIfNeeded(tableModel, label)}}/> : label;
     }
     href = encodeUrlString(href);
     return href ? <Link {...{title, href, target, style}}> {label} </Link> : '';
@@ -742,7 +742,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
     text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
-    return isHtml(text) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(text)}}/> : text;
+    return isHtml(text) ? <div dangerouslySetInnerHTML={{__html: sanitizeHtmlIfNeeded(tableModel, text)}}/> : text;
 });
 
 export const ColorSwatch = React.memo(({cellInfo, text, size, ...rest}) => {
@@ -792,7 +792,10 @@ export const RendererXRef = {
     ColorSwatch
 };
 
-
+/*
+ * Sanitize HTML only if the table is from an external source
+ */
+const sanitizeHtmlIfNeeded = (tableModel, html) => isExternalSource(tableModel) ? cleanHtml(html) : html;
 
 /**
  * Parses a string of inline styles into a javascript object with casing for react
