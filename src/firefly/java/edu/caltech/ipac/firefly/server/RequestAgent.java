@@ -168,9 +168,15 @@ public class RequestAgent {
             });
 
             // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
-            String proto = getHeader("X-Forwarded-Proto", request.getScheme());
-            String host  = getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", request.getServerName()));
-            String port  = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            String port = String.valueOf(request.getServerPort());
+            String host  = getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", getHeader("host", request.getServerName())));
+            String[] parts = host.split(":");       // host may contains port; needs to handle it.
+            if (parts.length > 1) {
+                host = parts[0];
+                port = parts[1];
+            }
+            port  = getHeader("X-Forwarded-Port", port);
+            String proto = getHeader("X-Forwarded-Proto", port.equals("443") ? "https" : "http");
             port = port.matches("443|80") ? "" : ":" + port;
             String proxiedPath = getHeader("X-Forwarded-Path", getHeader("X-Forwarded-Prefix", "") + request.getContextPath());
 

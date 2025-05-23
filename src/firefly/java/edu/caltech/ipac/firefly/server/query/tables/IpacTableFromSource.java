@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.function.Consumer;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.CATALOG_OVERLAY_TYPE;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
@@ -156,7 +157,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     private static String getBaseDomain(String source) {
         URI uri = Try.it(() -> new URI(source.toLowerCase())).get();
         if (uri == null) return null;
-        String host = uri.getHost();
+        String host = ifNotNull(uri.getHost()).getOrElse("");
         String[] parts = host.split("\\.");
         if (parts.length < 2) return host;
         return parts[parts.length - 2] + "." + parts[parts.length - 1];
