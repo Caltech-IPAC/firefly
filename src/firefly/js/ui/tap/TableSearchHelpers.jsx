@@ -5,10 +5,10 @@ import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
 import {Box, IconButton, Stack, Typography} from '@mui/joy';
 import HelpIcon from 'firefly/ui/HelpIcon';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
-import {isEqual} from 'lodash';
+import {isEqual, isNil} from 'lodash';
 import Prism from 'prismjs';
 import PropTypes from 'prop-types';
-import React, {useEffect, useRef} from 'react';
+import React, {useContext, useEffect, useRef} from 'react';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
@@ -16,6 +16,7 @@ import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {getDataServiceOption} from './DataServicesOptions';
 import {showResultTitleDialog} from './ResultTitleDialog';
 import {ADQL_QUERY_KEY, makeTapSearchTitle, USER_ENTERED_TITLE} from './TapUtil';
+import {InitArgsCtx} from 'firefly/templates/common/InitArgsCtx';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -153,7 +154,8 @@ function InternalCollapsibleCheckHeader({sx, title, helpID, children, fieldKey, 
     );
 }
 
-
+// maps the base (or panelId) to a key that can be used in the url api for the initial active state of the panel
+export const isPanelActiveInitArg = (base) => `${base}-isPanelActiveInitArg`;
 
 export function makeCollapsibleCheckHeader(base) {
     const panelKey= base+'-panelKey';
@@ -169,6 +171,17 @@ export function makeCollapsibleCheckHeader(base) {
     retObj.CollapsibleCheckHeader= ({sx, title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
         const [getPanelActive, setPanelActive] = useFieldGroupValue(panelCheckKey);// eslint-disable-line react-hooks/rules-of-hooks
         const [getPanelOpenStatus, setPanelOpenStatus] = useFieldGroupValue(panelKey);// eslint-disable-line react-hooks/rules-of-hooks
+
+        // handle the case when url api controls the active state of the panel
+        const {initArgs} = useContext(InitArgsCtx); // eslint-disable-line react-hooks/rules-of-hooks
+        const isInitPanelActive = initArgs?.urlApi?.[isPanelActiveInitArg(base)];
+        useEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+            if (!isNil(isInitPanelActive)) {
+                setPanelActive(isInitPanelActive ? panelValue : '');
+                setPanelOpenStatus(isInitPanelActive);
+            }
+        }, [isInitPanelActive]);
+
         const isActive= getPanelActive() === panelValue;
         retObj.isPanelActive= () => getPanelActive() === panelValue;
         retObj.setPanelActive= (active) => setPanelActive(active ? panelValue : '');

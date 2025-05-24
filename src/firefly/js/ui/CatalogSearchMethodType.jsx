@@ -308,7 +308,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
     }
 }
 
-export function PolygonDataArea({imageCornerCalc,
+export function PolygonDataArea({imageCornerCalc, initValue='',
                                           hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                           centerWP, fovDeg=240, showCornerTypeField=true, slotProps }) {
     let cornerTypeOps=
@@ -354,6 +354,7 @@ export function PolygonDataArea({imageCornerCalc,
                 centerPt:wp,
                 label:'Coordinates:',
                 tooltip:'Enter polygon coordinates search',
+                initValue,
                 ...slotProps?.polygonPanel
             }} />
             <Typography level='body-sm' component='ul' sx={{pl:1, li: {listStyleType: 'none'}}} {...slotProps?.polygonHelp}>
@@ -368,6 +369,7 @@ export function PolygonDataArea({imageCornerCalc,
 
 PolygonDataArea.propTypes = {
     imageCornerCalc: string,
+    initValue: string,
     hipsUrl: string,
     centerWP: string,
     fovDeg: number,

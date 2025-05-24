@@ -67,7 +67,29 @@ async function onClick(onSuccess, onFail, registeredComponents, closeOnValid, gr
     if (continueValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
-
+/**
+ * Button that collects inputs from the field group and handles validation, etc. before submitting.
+ *
+ * @param p
+ * @param p.onFail
+ * @param p.onSuccess
+ * @param p.groupKey
+ * @param p.text
+ * @param p.color
+ * @param p.variant
+ * @param p.requireAllValid
+ * @param p.closeOnValid
+ * @param p.dialogId
+ * @param p.includeUnmounted
+ * @param p.primary
+ * @param p.style
+ * @param p.sx
+ * @param p.changeMasking
+ * @param p.fireOnEnter
+ * @param p.getDoOnClickFunc - callback function that allows the parent component to retrieve the `onComplete` function,
+ * usually for programmatically triggering the button's click behavior.
+ * @returns {Element}
+ */
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           color=undefined, variant=undefined, requireAllValid=true,
                           closeOnValid=true, dialogId,includeUnmounted= false, primary=true,

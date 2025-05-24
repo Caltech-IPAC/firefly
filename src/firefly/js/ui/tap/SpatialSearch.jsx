@@ -25,8 +25,12 @@ import {ConstraintContext} from './Constraints.js';
 import {ROW_POSITION, SEARCH_POSITION} from './Cutout';
 import {getDataServiceOption} from './DataServicesOptions';
 import {
-    DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
-    } from './TableSearchHelpers.jsx';
+    DebugObsCore,
+    getPanelPrefix,
+    makeCollapsibleCheckHeader,
+    makeFieldErrorList,
+    makePanelStatusUpdater,
+} from './TableSearchHelpers.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
@@ -44,12 +48,20 @@ import {defaultsDeep} from 'lodash';
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
 const Spatial = 'Spatial';
+export const spatialPanelId = getPanelPrefix(Spatial);
 export const SPATIAL_TYPE= 'SPATIAL_TYPE';
 export const RadiusSize = 'coneSize';
 export const SpatialMethod = 'spatialMethod';
 export const PolygonCorners = 'polygoncoords';
 const cornerCalcType= 'imageCornerCalc';
 export const SpatialRegOp= 'spatialRegionOperation';
+export const SpatialRegOpType = {
+    CONTAINS_POINT: 'contains_point',
+    CONTAINS_SHAPE: 'contains_shape',
+    CONTAINED_BY_SHAPE: 'contained_by_shape',
+    INTERSECTS: 'intersects',
+    CENTER_CONTAINED: 'center_contained',
+};
 export const SINGLE= 'single';
 export const MULTI= 'multi';
 
@@ -69,7 +81,7 @@ function formCenterColumns(columnsTable) {
 
 
 
-const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(Spatial));
+const checkHeaderCtl= makeCollapsibleCheckHeader(spatialPanelId);
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
@@ -80,7 +92,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                                   obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true,
                                   useSIAv2= false,
                                   slotProps}) {
-    const {searchParams={}}= initArgs ?? {};
+    const {searchParams={}, urlApi={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
     const disablePanel= !canSupportGeneralSpacial(capabilities) && !obsCoreEnabled;
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
@@ -88,6 +100,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
     const posOpenKey= 'pos-columns';
     const {hipsUrl,centerWP,fovDeg}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
     const {canUpload=false}= capabilities ?? {};
+    const showCenterColumns = !obsCoreEnabled && cols;
 
     const {setConstraintFragment}= useContext(ConstraintContext);
     const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
@@ -111,15 +124,15 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
         searchParams.radiusInArcSec && setVal(RadiusSize,searchParams.radiusInArcSec);
         if (searchParams.wp) {
             setVal(SpatialMethod,CONE_CHOICE_KEY);
-            setVal(SpatialRegOp,'contains_point');
+            setVal(SpatialRegOp, urlApi[SpatialRegOp] ?? SpatialRegOpType.CONTAINS_POINT);
             setVal(DEF_TARGET_PANEL_KEY,searchParams.wp);
             checkHeaderCtl.setPanelActive(true);
         }
-        if (searchParams.corners) {
+        if (searchParams.corners || urlApi.polygon) {
             setVal(SpatialMethod,POLY_CHOICE_KEY);
-            setVal(SpatialRegOp,'center_contained');
+            setVal(SpatialRegOp, urlApi[SpatialRegOp] ?? SpatialRegOpType.CENTER_CONTAINED);
             setVal('imageCornerCalc', 'user');
-            setVal(PolygonCorners,searchParams.corners);
+            setVal(PolygonCorners, searchParams.corners || urlApi.polygon);
             checkHeaderCtl.setPanelActive(true);
         }
         if (searchParams.uploadInfo) {
@@ -134,7 +147,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             setUploadInfo(searchParams.uploadInfo);
             checkHeaderCtl.setPanelActive(true);
         }
-    }, [searchParams.radiusInArcSec, searchParams.corners, searchParams.uploadInfo]);
+    }, [searchParams.radiusInArcSec, searchParams.corners, urlApi.polygon, urlApi[SpatialRegOp], searchParams.uploadInfo]);
 
     const spatialMethod= getVal(SpatialMethod)??CONE_CHOICE_KEY;
     useEffect(() => {
@@ -150,7 +163,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             setVal(posOpenKey, 'open');
             checkHeaderCtl.setPanelActive(true);
         }
-        else {
+        else if (showCenterColumns) {
             const {lon,lat} = formCenterColumns(columnsModel);
             const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
             cols && setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
@@ -249,7 +262,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                         /> }
                     <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo, serviceLabel, serviceId,
                         hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
-                    {!obsCoreEnabled && cols &&
+                    {showCenterColumns &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
                             headerTitle:'Position Columns:', openKey:posOpenKey,
                             doQuoteNonAlphanumeric:false,
@@ -285,16 +298,17 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const spacialType= getVal(SPATIAL_TYPE) ?? SINGLE;
     const spatialMethod= getVal(SpatialMethod)??CONE_CHOICE_KEY;
     const cornerCalcTypeValue= getVal(cornerCalcType)??'image';
-    const spatialRegOpValue= getVal(SpatialRegOp) ?? 'contains_point';
+    const spatialRegOpValue= getVal(SpatialRegOp) ?? SpatialRegOpType.CONTAINS_POINT;
     const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled,capabilities?.canUpload);
     const isCone= spatialMethod === CONE_CHOICE_KEY;
-    const containsPoint= spatialRegOpValue === 'contains_point';
+    const containsPoint= spatialRegOpValue === SpatialRegOpType.CONTAINS_POINT;
 
     const radiusField= <RadiusField {...{radiusInArcSec:initArgs?.urlApi?.radiusInArcSec, ...slotProps?.radiusField}}/>;
 
     const radiusOrPolygon= isCone ?
         radiusField :
-        <PolygonDataArea {...{ imageCornerCalc: cornerCalcTypeValue, hipsUrl, centerWP, fovDeg, ...slotProps?.polygonDataArea }}/>;
+        (<PolygonDataArea {...{ imageCornerCalc: cornerCalcTypeValue, hipsUrl, centerWP, fovDeg,
+            initValue: initArgs?.urlApi?.polygon, ...slotProps?.polygonDataArea }}/>);
 
     switch (layoutMode) {
         case OBSCORE_SINGLE_LAYOUT:
@@ -389,21 +403,21 @@ function buildOptions(capabilities, initArgs) {
     const { canUsePoint, canUseCircle, canUsePolygon, canUseContains, canUseIntersects} = capabilities ?? {};
     const apiDefVal= initArgs?.urlApi?.[SpatialRegOp];
     if (canUseContains && canUsePoint) {
-        ops.push({label: 'Observation boundary contains point', value: 'contains_point'});
-        defVal= 'contains_point';
+        ops.push({label: 'Observation boundary contains point', value: SpatialRegOpType.CONTAINS_POINT});
+        defVal= SpatialRegOpType.CONTAINS_POINT;
     }
     if (canUseContains && (canUseCircle || canUsePolygon)) {
-        ops.push({label: 'Observation boundary contains shape', value: 'contains_shape'});
-        ops.push({label: 'Observation boundary is contained by shape', value: 'contained_by_shape'});
-        if (!defVal) defVal= 'contains_shape';
+        ops.push({label: 'Observation boundary contains shape', value: SpatialRegOpType.CONTAINS_SHAPE});
+        ops.push({label: 'Observation boundary is contained by shape', value: SpatialRegOpType.CONTAINED_BY_SHAPE});
+        if (!defVal) defVal= SpatialRegOpType.CONTAINS_SHAPE;
     }
     if (canUseIntersects && (canUseCircle || canUsePolygon)) {
-        ops.push({label: 'Observation boundary intersects shape', value: 'intersects'});
-        if (!defVal) defVal= 'intersects';
+        ops.push({label: 'Observation boundary intersects shape', value: SpatialRegOpType.INTERSECTS});
+        if (!defVal) defVal= SpatialRegOpType.INTERSECTS;
     }
     if (canUseContains && canUsePoint && (canUseCircle || canUsePolygon)) {
-        ops.push({label: 'Central point (s_ra, s_dec) is contained by shape', value: 'center_contained'});
-        if (!defVal) defVal= 'center_contained';
+        ops.push({label: 'Central point (s_ra, s_dec) is contained by shape', value: SpatialRegOpType.CENTER_CONTAINED});
+        if (!defVal) defVal= SpatialRegOpType.CENTER_CONTAINED;
     }
 
     if (apiDefVal && ops.map(({value}) => value).includes(apiDefVal)) {
@@ -605,27 +619,27 @@ function checkUserArea(spatialMethod, wpField, radiusSizeField, polygonCornersSt
 
 
 function makeUserAreaConstraint(regionOp, userArea, adqlCoordSys ) {
-    if (regionOp === 'contains_shape' || regionOp === 'contained_by_shape') {
-        const contains = regionOp === 'contains_shape';
+    if (regionOp === SpatialRegOpType.CONTAINS_SHAPE || regionOp === SpatialRegOpType.CONTAINED_BY_SHAPE) {
+        const contains = regionOp === SpatialRegOpType.CONTAINS_SHAPE;
         const containedBy = contains ? 's_region' : userArea;
         const region = contains ? userArea : 's_region';
         return `CONTAINS(${region}, ${containedBy})=1`;
 
-    } else if (regionOp === 'intersects'){
+    } else if (regionOp === SpatialRegOpType.INTERSECTS){
         return `INTERSECTS(s_region, ${userArea})=1`;
 
-    } else if (regionOp === 'center_contained') { // Same as non-ObsCore, but with fixed s_ra/s_dec columns
+    } else if (regionOp === SpatialRegOpType.CENTER_CONTAINED) { // Same as non-ObsCore, but with fixed s_ra/s_dec columns
         return `CONTAINS(POINT('${adqlCoordSys}', s_ra, s_dec),${userArea})=1`;
     }
 }
 
 function getCutoutTypeFromRegionOp(regionOp) {
     switch (regionOp) {
-        case 'contains_point': return SEARCH_POSITION;
-        case 'contains_shape': return SEARCH_POSITION;
-        case 'contained_by_shape': return ROW_POSITION;
-        case 'intersects': return ROW_POSITION;
-        case 'center_contained': return SEARCH_POSITION;
+        case SpatialRegOpType.CONTAINS_POINT: return SEARCH_POSITION;
+        case SpatialRegOpType.CONTAINS_SHAPE: return SEARCH_POSITION;
+        case SpatialRegOpType.CONTAINED_BY_SHAPE: return ROW_POSITION;
+        case SpatialRegOpType.INTERSECTS: return ROW_POSITION;
+        case SpatialRegOpType.CENTER_CONTAINED: return SEARCH_POSITION;
     }
     return SEARCH_POSITION;
 }
@@ -638,7 +652,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         [SPATIAL_TYPE]:spatialTypeField,
         [UploadCenterLonColumns]:uploadCenLonColumns,
         [UploadCenterLatColumns]:uploadCenLatColumns }= fldObj;
-    const regionOp= fldObj[SpatialRegOp]?.value ?? 'contains_point';
+    const regionOp= fldObj[SpatialRegOp]?.value ?? SpatialRegOpType.CONTAINS_POINT;
     const spatialMethod= fldObj[SpatialMethod]?.value;
     const polygonCornersStr= fldObj[PolygonCorners]?.value;
     const upLonCol= uploadCenLonColumns?.value;
@@ -696,7 +710,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     } else {
         const worldSys = CoordinateSys.EQ_J2000;
 
-        if (regionOp === 'contains_point') {
+        if (regionOp === SpatialRegOpType.CONTAINS_POINT) {
             if (spatialType===SINGLE) {
                 const {valid, x, y} = checkPoint(worldSys, ICRS, wpField, errList);
                 if (valid) adqlConstraint = `CONTAINS(POINT('${ICRS}', ${x}, ${y}), s_region)=1`;

@@ -22,6 +22,7 @@ const ONE_POPULATED= 'at least one field must be populated';
 const panelTitle = 'Timing';
 const panelValue = 'Exposure';
 const panelPrefix = getPanelPrefix(panelValue);
+export const exposurePanelId = panelPrefix;
 const exposureRangeOptions = [
     {label: 'Completed in the Last...', value: 'since' },
     {label: 'Overlapping specified range', value: 'range'}
@@ -110,7 +111,7 @@ function makeExposureConstraints(rangeType, fldObj) {
 }
 
 
-const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
+const checkHeaderCtl= makeCollapsibleCheckHeader(exposurePanelId);
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldListAry= ['exposureSinceValue', 'exposureLengthMin', 'exposureLengthMax',

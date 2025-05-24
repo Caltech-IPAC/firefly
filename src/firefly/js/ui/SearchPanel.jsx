@@ -129,6 +129,15 @@ function searchesAsTabs(allSearchItems, initArgs) {
 
 const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
+/**
+ * Execute the `clickFunc` the first time if `initArgs.urlApi.execute` is true and
+ * if `initArgs.urlApi.searchoption` matches `searchItem`.
+ *
+ * @param clickFunc - generally, a function that gets called when FormPanel's complete button is clicked.
+ * @param initArgs - initial arguments containing `urlApi` parameters.
+ * @param searchItem - only relevant to HydraViewer based apps that use `SearchPanel`. Ignored if there is no
+ * `initArgs.urlApi.searchoption` defined.
+ */
 export function executeOK(clickFunc,initArgs,searchItem) {
     searchOnce(
         () => {
