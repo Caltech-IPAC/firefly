@@ -44,6 +44,8 @@
 - Fixed: Refine search region stays on when it shouldn't- Firefly-1706 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1744)) 
 - Fixed: TAP search from selection tool is broken- Firefly-1195 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1744)) 
 - Fixed: chart filter icon does not work on column mapped to a label- Firefly-1378 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1726)) 
+- Fixed: Table column filter misinterpret 'NOT LIKE'- Firefly-1265 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1773)) 
+- Fixed: Charts X/Y Ratio ui cutting off problem- Firefly-1753 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1775)) 
 
 
 ### _Patches 2025.3_
