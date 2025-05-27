@@ -251,7 +251,7 @@ function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
                 Enter display aspect ratio below.<br/>
                 Leave it blank to use all available space.
             </Typography>
-            <Stack spacing={2} direction={'row'}>
+            <Stack>
                 <Xyratio/>
                 {showStretch && <Stretch/>}
             </Stack>
