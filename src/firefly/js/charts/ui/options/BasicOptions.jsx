@@ -246,12 +246,12 @@ function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
 
     if (xNoLog) return null;
     return (
-        <Stack spacing={.5}>
+        <Stack spacing={0.5}>
             <Typography level='body-sm'>
                 Enter display aspect ratio below.<br/>
                 Leave it blank to use all available space.
             </Typography>
-            <Stack spacing={2} direction={'row'}>
+            <Stack spacing={1}>
                 <Xyratio/>
                 {showStretch && <Stretch/>}
             </Stack>
