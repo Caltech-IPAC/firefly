@@ -8,16 +8,17 @@ import {isNil, get, isArray, isEmpty, isNumber} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {strictParseInt} from '../util/WebUtil.js';
 
-const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
+const operators = /(!=|>=|<=|<|>|=| not like | like | not in | in | is not | is )/i;
 
 // filter group separator
 export const FILTER_SEP = ' _AND_ ';        // internal use need to match what's defined in TableServerRequest.FILTER_SEP
 
 export const FILTER_CONDITION_TTIPS =
-`Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
-Or 'IN', followed by a list of values separated by commas.
-You may combine conditions with either 'and' or 'or'. 
-Examples:  > 12345 or != 3000 and IN a,b,c,d`;
+`Valid values include any of the following operators: =, >, <, !=, >=, <=, LIKE, NOT LIKE, IS, IS NOT.
+Each operator should be followed by a value, separated by a space.
+Alternatively, use IN or NOT IN, followed by a comma-separated list of values.
+You may combine conditions using either AND or OR. 
+Examples:  > 12345 or != 3000 AND IN a,b,c,d`;
 
 export const FILTER_TTIPS =
 `Conditional statements in the form of "column_name" operator value separated by semicolon.
@@ -398,7 +399,7 @@ function autoCorrectConditions(conditions, tbl_id, cname) {
 /**
  * auto correction on filter string in case it is not a valid sql statement.
  * the correction following the rules as follows
- * op : case 1: not specified or 'like' (for text column)
+ * op : case 1: 'not' specified or 'like' (for text column)
  *              if the value part is not enclosed by single quotes:
  *                  convert %, _, | to be \%, \_ or \\. (escape the wildcard and escape character)
  *                  enclose the string by '%' and then by single quotes.
@@ -439,6 +440,7 @@ function autoCorrectCondition(v, col) {
     op = op ? op.toLowerCase() : (!col?.type || useQuote ? 'like' : '=');      // use 'like' when column type is string-like or not defined
 
     switch (op) {
+        case 'not like':
         case 'like':
             if (!val.match(/^'.*'$/)) {
                 val = val.replace(/([_|%\\])/g, '\\$1');
@@ -446,6 +448,7 @@ function autoCorrectCondition(v, col) {
                 val = encloseByQuote(encloseByQuote(val, '%'));
             }
             break;
+        case 'not in':
         case 'in':
             let valList = val.match(/^\((.*)\)$/) ? val.substring(1, val.length-1) : val;
 
