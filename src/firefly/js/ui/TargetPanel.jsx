@@ -228,6 +228,7 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
         showHelp : parseResults.showHelp,
         feedback : parseResults.feedback,
         prepareResult,
+        parseResults,
     };
     if (resolver) payload.resolver= resolver;
     return payload;
