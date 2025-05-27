@@ -33,7 +33,7 @@
 - Better handling of Redis failure and reconnection- Firefly-1727 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1754))
 
 #### Bug fix
-- Fixed: Added columns go away- Firefly-1721 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1721))
+- Fixed: Added columns go away- Firefly-1721 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1764))
 - Fixed: Filtering not working for some very small selections- Firefly-1734 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1762))
 - Fixed: Catalog not scrolling on center change- Firefly-6890 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1762))
 - Fixed: Table image point upload does not work anymore- Firefly-1390 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1761))
