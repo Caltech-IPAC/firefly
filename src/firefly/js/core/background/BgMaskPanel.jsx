@@ -8,7 +8,7 @@ import {Logger} from '../../util/Logger.js';
 import {showJobInfo} from './JobInfo.jsx';
 import {getJobInfo, isActive} from './BackgroundUtil.js';
 import {InfoButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {showJobMonitor} from './JobHistory';
+import {showJobMonitor} from './JobMonitor';
 import {dispatchJobRemove} from './BackgroundCntlr';
 
 const logger = Logger('BgMaskPanel');

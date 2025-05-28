@@ -32,7 +32,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 
-export function JobHistory({initArgs, help_id, slotProps, ...props}) {
+export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const {title, table, note, ...rest} = getAppOptions()?.background?.history || {};
     const titleProps = {...slotProps?.title, ...title};
     const tableProps = {...slotProps?.table, ...table};
@@ -50,7 +50,7 @@ export function JobHistory({initArgs, help_id, slotProps, ...props}) {
     );
 }
 
-JobHistory.propTypes = {
+JobMonitor.propTypes = {
     initArgs: object,
     help_id: string,
     slotProps: shape({
@@ -155,18 +155,24 @@ function Notification({email='', notifEnabled, ...props}) {
     };
 
     return (
-        <Stack direction='row' gap={5} {...props}>
+        <Stack direction='row' gap={2} alignItems='center' {...props}>
             <Typography level='title-md' color='primary'>Notification Email</Typography>
-            <InputField
-                validator={Validate.validateEmail.bind(null, 'an email field')}
-                tooltip='Enter an email to be notified when a process completes.'
-                slotProps={{label:{sx:{ml:0}}}}
-                value={email || ''}
-                placeholder='Enter an email to get notification'
-                sx={{width:250}}
-                onChange={onEmailChanged}
-                actOn={['blur','enter']}
-            />
+            <Stack direction='row' gap={2}>
+                <InputField
+                    validator={Validate.validateEmail.bind(null, 'an email field')}
+                    tooltip='Enter an email to be notified when a process completes.'
+                    slotProps={{label:{sx:{ml:0}}}}
+                    value={email || ''}
+                    placeholder='Enter an email to get notification'
+                    sx={{width:250, justifyContent: 'center'}}
+                    onChange={onEmailChanged}
+                    actOn={['blur','enter']}
+                />
+                <Typography level='body-xs' color='warning' width='45em'>
+                    By default, email notification is turned off. To toggle email notification for any given job in progress, click on the blue bell icon:
+                    <NotificationsOffIcon color='primary' sx={{marginBottom: '-0.25em'}}/>
+                </Typography>
+            </Stack>
         </Stack>
     );
 }

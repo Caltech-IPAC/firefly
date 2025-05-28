@@ -235,9 +235,8 @@ const defFireflyOptions = {
         history: {
             label: 'Job Monitor',    // label for the background monitor button
             note: `
-                Note: The displayed jobs are limited to your current session.
-                A "session" may refer to your browser or the account you're currently logged in with.
-                Jobs older than 14 days will not appear.
+                Note: The listed jobs are limited to your current session, where "session" may refer to your browser or archive, 
+                or account with which you're currently logged in. Jobs older than 14 days will not appear.
             `.trim(),
         }
     },

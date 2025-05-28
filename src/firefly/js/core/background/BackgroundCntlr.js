@@ -5,7 +5,7 @@
 import {flux} from '../ReduxFlux';
 
 import {updateSet} from '../../util/WebUtil.js';
-import {showJobMonitor, showMultiResults} from './JobHistory.jsx';
+import {showJobMonitor, showMultiResults} from './JobMonitor.jsx';
 import {isSuccess} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {doPackageRequest} from './BackgroundUtil.js';
