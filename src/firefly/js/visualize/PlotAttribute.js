@@ -92,6 +92,9 @@ export const PlotAttribute= {
     /** true if there is extraction data */
     EXTRACTION_DATA: 'EXTRACTION_DATA',
 
+    /** true if image should not center on row target */
+    IGNORE_PAN_BY_TABLE_ROW: 'IGNORE_PAN_BY_TABLE_ROW',
+
     /**
      * This will probably an object {pt: point}
      * @See ./Point.js

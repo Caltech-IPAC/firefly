@@ -133,6 +133,7 @@ Tabs.propTypes = {
 };
 
 
+export const StatefulTabsCtx= React.createContext({});
 /*
  * Tab panel with ComponentCntlr supported state
  * Selected state is stored as <componentKey>.selected
@@ -146,7 +147,12 @@ export const StatefulTabs = ({defaultSelected, onTabSelect, componentKey, ...res
         onTabSelect && onTabSelect(val);
     };
 
-    return (<TabPanel {...rest} onTabSelect={onSelect} value={selected} />);
+    return (
+
+        <StatefulTabsCtx.Provider value={{statefulTabComponentKey:componentKey}}>
+            <TabPanel {...rest} onTabSelect={onSelect} value={selected} />
+        </StatefulTabsCtx.Provider>
+    );
 };
 
 StatefulTabs.propTypes = {

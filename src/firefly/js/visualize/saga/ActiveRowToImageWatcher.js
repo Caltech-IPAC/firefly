@@ -10,10 +10,12 @@ import {visRoot, dispatchRecenter, dispatchChangeSubHighPlotView} from '../Image
 import {
     getTblById, getCellValue, hasSubHighlightRows, isSubHighlightRow, getActiveTableId
 } from '../../tables/TableUtil.js';
+import {getMultiViewRoot, getViewer} from '../MultiViewCntlr';
 import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
 import {makeAnyPt} from '../Point.js';
 import {
-    DEFAULT_COVERAGE_PLOT_ID, getActivePlotView, getPlotViewById, hasWCSProjection, primePlot,
+    DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getActivePlotView, getPlotViewById, hasWCSProjection,
+    primePlot,
 } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import ImagePlotCntlr, {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
@@ -97,6 +99,7 @@ const isImageAitoff= (plot) => (isImage(plot) && plot.projection.isWrappingProje
 function shouldCenterOnTableRow(pv, wp, force) {
     const plot= primePlot(pv);
     if (!plot) return false;
+    if (pv?.plotViewCtx.ignorePanByTableRow) return false;
     if (force) {
         if (!isImageAitoff(plot)) return true; // if not an image aitoff projection
         return !(isFullyOnScreen(plot,pv.viewDim));
@@ -110,8 +113,9 @@ function recenterImageActiveRow(tbl_id, force=false) {
     if (!pv) return;
     recenterPlotViewActiveRow(pv, tbl_id, force);
     if (pv.plotId!==DEFAULT_COVERAGE_PLOT_ID) {
+        const covView=getViewer(getMultiViewRoot(),DEFAULT_COVERAGE_VIEWER_ID);
         const covPv = getPlotViewById(visRoot(),DEFAULT_COVERAGE_PLOT_ID);
-        if (!covPv) return;
+        if (!covPv || !covView.mounted) return;
         recenterPlotViewActiveRow(covPv, tbl_id, force);
 
     }

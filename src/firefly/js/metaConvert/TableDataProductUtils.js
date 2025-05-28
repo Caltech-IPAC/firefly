@@ -6,6 +6,7 @@ import {getDefaultChartProps} from 'firefly/charts/ChartUtil.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {isString} from 'lodash';
 import {CHART_UI_EXPANDED, dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
+import ComponentCntlr from '../core/ComponentCntlr';
 import {LO_MODE, LO_VIEW, SET_LAYOUT_MODE} from '../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import {ChartType, TableDataType} from '../data/FileAnalysis';
@@ -97,6 +98,10 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, imageAsTableInfo
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
+    const table= getTblById(tbl_id);
+    if (tbl_id && table?.tbl_id===tbl_id && dataTypeHint) {
+        dataTableReq.META_OPTIONS= {[MetaConst.HIGHLIGHTED_ROW]: table.highlightedRow};
+    }
 
     return dataTableReq;
 }
@@ -209,14 +214,16 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
  * @param {ChartInfo} [p.chartInfo]
  * @param {Number} p.tbl_index
  * @param {ImageAsTableInfo} [p.imageAsTableInfo]
+ * @param {boolean} [p.unloadTable]
  * @param {String|undefined} [p.dataTypeHint]  stuff like 'spectrum', 'image', 'cube', etc
  * @param {String|undefined} [p.chartId]
  * @param {String} [p.tbl_id]
+ * @param {String} [p.statefulTabComponentKey]
  * @return {function} the activate function
  */
 export function createChartTableActivate({chartAndTable=false,
                                              source, titleInfo, activateParams, chartInfo={},
-                                         tbl_index=0, dataTypeHint='', imageAsTableInfo,
+                                         tbl_index=0, dataTypeHint='', imageAsTableInfo, statefulTabComponentKey,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl'}) {
     return () => {
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
@@ -228,7 +235,7 @@ export function createChartTableActivate({chartAndTable=false,
             const noopId = 'noop-' + tbl_id;
             dispatchAddActionWatcher({
                 id: noopId,
-                actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE, CHART_UI_EXPANDED],
+                actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE, CHART_UI_EXPANDED, ComponentCntlr.COMPONENT_STATE_CHANGE],
                 callback: ({payload,type}) => {
                     const tableInfo= loadedTablesIds.get(tbl_id);
                     if (isTableChartNormalViewAction(payload,type) && loadedTablesIds.has(tbl_id)) {
@@ -237,6 +244,9 @@ export function createChartTableActivate({chartAndTable=false,
                         tableInfo.doCleanup=false;
                         tableInfo.defereCleanup=false;
                     } else if (type === TBL_UI_EXPANDED && payload.tbl_id === tbl_id) {
+                        tableInfo.doCleanup=false;
+                        tableInfo.defereCleanup=false;
+                    } else if (type === ComponentCntlr.COMPONENT_STATE_CHANGE && payload.componentId===statefulTabComponentKey) {
                         tableInfo.doCleanup=false;
                         tableInfo.defereCleanup=false;
                     }

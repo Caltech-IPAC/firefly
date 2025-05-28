@@ -1,21 +1,26 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import {isString} from 'lodash';
+import {bool, string, object} from 'prop-types';
 import React, {useEffect} from 'react';
-import {Chip, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Stack, Typography} from '@mui/joy';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {MetaConst} from '../data/MetaConst';
+import {FixedPtControl} from '../drawingLayers/FixedPtControl';
 import {getMetaEntry} from '../tables/TableUtil';
 import {dispatchChangePointSelection, visRoot} from '../visualize/ImagePlotCntlr';
 import {PlotAttribute} from '../visualize/PlotAttribute';
-import {primePlot} from '../visualize/PlotViewUtil';
-import {parseWorldPt} from '../visualize/Point';
+import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil';
+import {isValidPoint, parseWorldPt} from '../visualize/Point';
+import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
 import {makeFoVString} from '../visualize/ZoomUtil';
 import {getSearchTargetFromTable, isRowTargetCapable} from '../voAnalyzer/TableAnalysis';
 import {FieldGroupCollapsible} from './panel/CollapsiblePanel';
 import {RadioGroupInputField} from './RadioGroupInputField';
 import {
+    findCutoutTarget, getCutoutErrorStr,
     getCutoutSize, getCutoutTargetType, ROW_POSITION, SEARCH_POSITION, setAllCutoutParams, setPreferCutout,
     USER_ENTERED_POSITION
 } from './tap/Cutout';
@@ -25,6 +30,7 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from './TargetPanel';
+import {ToolbarButton} from './ToolbarButton';
 import {ValidationField} from './ValidationField.jsx';
 import {showYesNoPopup} from './PopupUtil.jsx';
 import {useFieldGroupValue, useStoreConnector} from './SimpleComponent.jsx';
@@ -37,15 +43,116 @@ import AccessibilityRoundedIcon from '@mui/icons-material/AccessibilityRounded';
 
 const DIALOG_ID= 'cutoutSizeDialog';
 const OVERRIDE_TARGET= 'OverrideTarget';
+export const SHOWING_FULL='SHOWING_FULL';
+export const SHOWING_CUTOUT='SHOWING_CUTOUT';
+
+
+export function CutoutButton({dataProductsComponentKey,activeTable, serDef,pixelBasedCutout=false,
+                          enableCutoutFullSwitching, cutoutToFullWarning=undefined, cutoutMode=undefined, overrideCutoutWpt}) {
+    const cutoutValue= useStoreConnector( () => getCutoutSize(dataProductsComponentKey));
+    const {positionWP:cutoutCenterWP, requestedType,foundType}= findCutoutTarget(dataProductsComponentKey,serDef,activeTable,activeTable?.highlightedRow);
+    const cutoutTypeError= !overrideCutoutWpt && requestedType!==foundType;
+    const cSize= dataProductsComponentKey ? pixelBasedCutout ? cutoutValue+'' : makeFoVString(Number(cutoutValue)) : '';
+
+    if (!dataProductsComponentKey || !activeTable) return;
+
+    if (cutoutMode===SHOWING_FULL) {
+        return (
+            <ToolbarButton
+                icon={<ContentCutRoundedIcon/>} text={'Off'}
+                title='Showing original image (with all extensions), click here to show a cutout'
+                onClick={() =>
+                    showCutoutSizeDialog({showingCutout:false,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                        tbl_id:activeTable?.tbl_id, cutoutCenterWP, serDef, overrideCutoutWpt,
+                        dataProductsComponentKey,enableCutoutFullSwitching})}/>
+        );
+    }
+    else if (cutoutMode===SHOWING_CUTOUT) {
+        return (
+            <ToolbarButton
+                icon={
+                    <CutoutIcon
+                        showTypeError={cutoutTypeError}
+                        type={isValidPoint(overrideCutoutWpt)
+                            ? SEARCH_POSITION
+                            : getCutoutTargetType(dataProductsComponentKey,activeTable?.tbl_id, serDef)}
+                    />}
+                text={`${cSize}`}
+                title={
+                    <Stack>
+                        <Typography>
+                            Showing cutout of image, click here to modify cutout or show original image (with all extensions)
+                        </Typography>
+                        {
+                            cutoutTypeError &&
+                            <Typography color='warning'>
+                                {getCutoutErrorStr(foundType,requestedType)}
+                            </Typography>
+
+                        }
+                    </Stack>
+                }
+                onClick={() =>
+                    showCutoutSizeDialog({
+                        showingCutout:true,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                        tbl_id:activeTable?.tbl_id, cutoutCenterWP, serDef, overrideCutoutWpt,
+                        dataProductsComponentKey,enableCutoutFullSwitching, cutoutToFullWarning})}
+            />
+        );
+    }
+}
+
+CutoutButton.propTypes= {
+    dataProductsComponentKey: string,
+    activeTable: object,
+    serDef: object,
+    pixelBasedCutout: bool,
+    enableCutoutFullSwitching: bool,
+    cutoutToFullWarning: string,
+    cutoutMode: string,
+    overrideCutoutWpt: object,
+};
 
 
 
-export function showCutoutSizeDialog({showingCutout, cutoutDefSizeDeg, pixelBasedCutout, tbl_id, serDef, cutoutCenterWP,
+const CutoutIcon= ({type, showTypeError}) => {
+    if (!type) return <ContentCutRoundedIcon/>;
+
+    let typeIcon;
+    const sx={position:'absolute', transform: 'scale(.9)', top:3, left:15};
+    switch (type) {
+        case USER_ENTERED_POSITION:
+            typeIcon= <AccessibilityRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx}}}/>;
+            break;
+        case SEARCH_POSITION:
+            typeIcon= <CrisisAlertRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx, transform:'scale(.8)', top:sx.top+1}}}/>;
+            break;
+        case ROW_POSITION:
+            typeIcon= <ReadMoreRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx,transform:'scale(1.1)', left:sx.left-2}}}/>;
+            break;
+    }
+    const icon= (
+        <Box sx={{width:24,height:24, position:'relative'}}>
+            <ContentCutRoundedIcon sx={{position:'absolute', top:4, left:-1}}/>
+            {typeIcon}
+        </Box>
+    );
+    return icon;
+};
+
+
+
+
+
+
+export function showCutoutSizeDialog({showingCutout, cutoutDefSizeDeg, pixelBasedCutout, tbl_id, serDef,
+                                         cutoutCenterWP, overrideCutoutWpt,
                                      dataProductsComponentKey, enableCutoutFullSwitching, cutoutToFullWarning}) {
     const popup = (
         <PopupPanel title={'Cutout Settings'} closeCallback={hideDialog} >
             <FieldGroup groupKey={'cutout-size-dialog'} keepState={true}>
-                <CutoutSizePanel {...{showingCutout, cutoutDefSizeDeg,pixelBasedCutout, tbl_id, serDef, cutoutCenterWP,
+                <CutoutSizePanel {...{showingCutout, cutoutDefSizeDeg,pixelBasedCutout, tbl_id, serDef,
+                    cutoutCenterWP,overrideCutoutWpt,
                     dataProductsComponentKey,enableCutoutFullSwitching, cutoutToFullWarning}}/>
             </FieldGroup>
         </PopupPanel>
@@ -67,7 +174,8 @@ function hideDialog() {
 
 
 function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataProductsComponentKey, tbl_id, serDef,
-                             cutoutCenterWP, enableCutoutFullSwitching, cutoutToFullWarning}) {
+                             cutoutCenterWP, overrideCutoutWpt,
+                             enableCutoutFullSwitching, cutoutToFullWarning}) {
     const cutoutFieldKey= dataProductsComponentKey+'-CutoutSize';
     const cutoutTypeFieldKey= dataProductsComponentKey+'-CutoutType';
     let cutoutValue= useStoreConnector( () => getCutoutSize(dataProductsComponentKey));
@@ -79,6 +187,7 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
     const cutoutType= getCutoutType();
 
     const activeWp= useStoreConnector(() => {
+        if (overrideCutoutWpt) return overrideCutoutWpt;
         const plot= primePlot(visRoot());
         if (!plot) return;
         const {pt}=plot.attributes[PlotAttribute.ACTIVE_POINT] ?? {};
@@ -89,8 +198,9 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
     const rowCapable= isRowTargetCapable(tbl_id) || Boolean(parseWorldPt(getMetaEntry(tbl_id,MetaConst.ROW_TARGET)));
 
     useEffect(() => {
+        if (overrideCutoutWpt) return;
         setCutoutType(getModifiedCutoutTargetType(dataProductsComponentKey,tbl_id, serDef,hasSearchTarget,rowCapable));
-    }, [hasSearchTarget,rowCapable]);
+    }, [hasSearchTarget,rowCapable,overrideCutoutWpt]);
 
     useEffect(() => {
         if (activeWp) {
@@ -149,7 +259,10 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
     return (
         <Stack justifyContent='space-between' alignItems='center' spacing={1} minWidth='25rem' ml={1}>
             <Stack spacing={4} minWidth={'40rem'}>
-                <Typography level='title-md'>{cutoutInfoStr}</Typography>
+                <Stack spacing={1}>
+                    <Typography level='title-md'>{cutoutInfoStr}</Typography>
+                    {overrideCutoutWpt && <OverrideTargetFeedback {...{overrideCutoutWpt,showingCutout}}/>  }
+                </Stack>
                 { pixelBasedCutout ?
                     <ValidationField {...{
                         nullAllowed: false,
@@ -169,29 +282,17 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
                                          tooltip: 'Set cutout size',
                                          unit: 'arcsec', min:  1/3600, max:  5 }} />
                 }
-                <RadioGroupInputField {...{
-                    fieldKey:cutoutTypeFieldKey, orientation: 'horizontal', options,
-                    initialState:{ value: getCutoutTargetType(dataProductsComponentKey,tbl_id, serDef) }
-                }}/>
-                {cutoutType===SEARCH_POSITION &&
-                    <Typography color='warning'  level='body-sm'>
-                        Warning: If search position is not on the source image then the cutout will use row position
-                    </Typography>
+                {!overrideCutoutWpt &&
+                    <StandardCutoutControls {...{cutoutTypeFieldKey, cutoutCenterWP, cutoutType,options,
+                        dataProductsComponentKey, tbl_id, serDef}} />
                 }
-                {cutoutType!==USER_ENTERED_POSITION &&
-                    <Typography level='body-sm'>
-                         You may also click on the image to change position
-                    </Typography>
-                }
-                <OptionalTarget cutoutCenterWP={cutoutCenterWP}
-                                sx={{visibility: cutoutType===USER_ENTERED_POSITION?'visible':'hidden'}} />
             </Stack>
 
             <Stack {...{textAlign:'center', direction:'row', justifyContent:'space-between', width:1, pb:1, pt:1}}>
                 <Stack {...{textAlign:'center', direction:'row', spacing:1}}>
                     <CompleteButton text={showingCutout?'Update Cutout':'Show Cutout'} dialogId={DIALOG_ID}
                                     onSuccess={(r) => updateCutout(r,cutoutFieldKey,dataProductsComponentKey,
-                                        cutoutType,pixelBasedCutout,getOverrideTarget(),tbl_id,serDef)}/>
+                                        cutoutType,pixelBasedCutout,getOverrideTarget(),tbl_id,serDef, overrideCutoutWpt)}/>
                     {showingCutout && enableCutoutFullSwitching &&
                         <CompleteButton text='Show Full Image'
                                         onSuccess={(r) =>
@@ -262,15 +363,51 @@ function OptionalTarget({cutoutCenterWP,sx}) {
             </Stack>
         </FieldGroupCollapsible>
     );
-};
+}
+
+const StandardCutoutControls= ({cutoutTypeFieldKey, cutoutCenterWP, cutoutType,options,
+                                   dataProductsComponentKey, tbl_id, serDef}) => (
+    <>
+        <RadioGroupInputField {...{
+            fieldKey:cutoutTypeFieldKey, orientation: 'horizontal', options,
+            initialState:{ value: getCutoutTargetType(dataProductsComponentKey,tbl_id, serDef) }
+        }}/>
+        {cutoutType===SEARCH_POSITION &&
+            <Typography color='warning'  level='body-sm'>
+                Warning: If search position is not on the source image then the cutout will use row position
+            </Typography>
+        }
+        {cutoutType!==USER_ENTERED_POSITION &&
+            <Typography level='body-sm'>
+                You may also click on the image to change position
+            </Typography>
+        }
+        <OptionalTarget cutoutCenterWP={cutoutCenterWP}
+                        sx={{visibility: cutoutType===USER_ENTERED_POSITION?'visible':'hidden'}} />
+    </>
+);
+
+const OverrideTargetFeedback= ({overrideCutoutWpt, showingCutout}) => (
+    <Stack {...{direction:'row', alignItems:'center', spacing:1}} title={formatWorldPtToString(overrideCutoutWpt)}>
+        <Stack {...{direction:'row', alignItems:'baseline', spacing:1}}>
+            <Typography>{`${showingCutout?'Cutouts':'Full images'} include position:`}</Typography>
+            {formatWorldPt(overrideCutoutWpt,5,false)}
+        </Stack>
+        {<FixedPtControl wp={overrideCutoutWpt} pv={getActivePlotView(visRoot())}/>}
+    </Stack>
+);
 
 
 function updateCutout(request,cutoutFieldKey,dataProductsComponentKey,cutoutType,
-                      pixelBasedCutout,overrideTarget,tbl_id,serDef) {
+                      pixelBasedCutout,overrideTarget,tbl_id,serDef,overrideCutoutWpt) {
     hideDialog();
     const size= `${request[cutoutFieldKey]}${pixelBasedCutout?'px':''}`;
-    setAllCutoutParams( dataProductsComponentKey, tbl_id, serDef, cutoutType, size, overrideTarget);
-
+    if (overrideCutoutWpt) {
+        setAllCutoutParams( dataProductsComponentKey, tbl_id, serDef, SEARCH_POSITION, size, overrideCutoutWpt);
+    }
+    else {
+        setAllCutoutParams( dataProductsComponentKey, tbl_id, serDef, cutoutType, size, overrideTarget);
+    }
 }
 
 function showFullImage(request,cutoutFieldKey,dataProductsComponentKey,cutoutToFullWarning,tbl_id) {

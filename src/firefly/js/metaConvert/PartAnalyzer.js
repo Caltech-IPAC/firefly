@@ -286,13 +286,14 @@ function analyzeChartTableResult(table, row, part, fileFormat, source, title, ac
         else {
             return makeChartTableResult({
                 part, source, chartTableDefOption, ddTitleStr, titleInfo,tbl_index, tbl_id,
-                chartId, activateParams, dropDownText, chartInfo,imageAsTableInfo
+                chartId, activateParams, dropDownText, chartInfo,imageAsTableInfo,
+                statefulTabComponentKey: options.statefulTabComponentKey
             });
         }
     }
     else {
         return makeTableOnlyResult({ddTitleStr,tbl_id,source,titleInfo,tbl_index,imageAsTableInfo,
-            activateParams, dropDownText});
+            activateParams, dropDownText, statefulTabComponentKey: options.statefulTabComponentKey});
     }
 }
 
@@ -315,7 +316,8 @@ function makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartIn
 }
 
 function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, titleInfo,tbl_index, tbl_id,
-                                  chartId, activateParams, dropDownText, chartInfo,imageAsTableInfo}) {
+                                  chartId, activateParams, dropDownText, chartInfo,imageAsTableInfo,
+                                  statefulTabComponentKey}) {
     const {interpretedData=false}= part;
     const {tableDataType} = chartInfo;
     const extractionText = getExtractionText(tableDataType);
@@ -324,7 +326,7 @@ function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, ti
         const activate = createChartTableActivate({
             chartAndTable: true, source, titleInfo, activateParams, chartInfo,
             tbl_index, dataTypeHint: tableDataType,
-            imageAsTableInfo, tbl_id, chartId
+            imageAsTableInfo, tbl_id, chartId, statefulTabComponentKey
         });
         return dpdtChartTable(ddTitleStr, activate, extraction, undefined,
             {extractionText, paIdx: tbl_index, chartTableDefOption, interpretedData, dropDownText});
@@ -347,12 +349,13 @@ function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, ti
 }
 
 function makeTableOnlyResult({ddTitleStr,tbl_id,source,titleInfo,tbl_index,imageAsTableInfo,
-                                 activateParams, dropDownText}) {
+                                 activateParams, dropDownText, statefulTabComponentKey}) {
     const {cubePlanes=0}= imageAsTableInfo;
     const extractionText = 'Pin Table';
     if (cubePlanes===0) {
         const extraction= createTableExtraction(source,titleInfo,tbl_index, imageAsTableInfo, 0, '');
-        const activate= createChartTableActivate({source,titleInfo,activateParams, tbl_index, imageAsTableInfo, tbl_id});
+        const activate= createChartTableActivate({source,titleInfo,activateParams, tbl_index, imageAsTableInfo,
+            tbl_id, statefulTabComponentKey});
         return dpdtTable(ddTitleStr, activate, extraction, undefined,
             {extractionText, paIdx:tbl_index,dropDownText});
     }

@@ -17,6 +17,12 @@ import {getCmdSrvSyncURL} from '../util/WebUtil';
 //     showHelp, boolean
 //     return parse results
 
+/**
+ *
+ * @param objName
+ * @param resolver
+ * @return {{p: Promise<unknown>, aborter: aborter}}
+ */
 function makeResolverPromise(objName, resolver) {
     let ignoreSearchResults= undefined;
     let aborted= false;
@@ -105,6 +111,7 @@ export function parseTarget(inStr, lastResults, resolver) {
     const {aborter, p:resolvePromise} = resolveData;
     return {showHelp, feedback, parseError, inputType, valid, resolvePromise, wpt, aborter  };
 }
+
 function resolveObject(objNameIn, resolver) {
     const objName= encodeURIComponent(objNameIn);
     if (!objName) return { showHelp: true, valid : true, feedback: '' };

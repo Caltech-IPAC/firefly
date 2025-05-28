@@ -1,5 +1,4 @@
 import {isEmpty, isNumber, isUndefined} from 'lodash';
-import {getAppOptions} from '../../core/AppDataCntlr';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue} from '../../tables/TableUtil.js';
 import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
@@ -88,7 +87,7 @@ export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTa
 
 const CUTOUT_NAME_GUESS_LIST= ['size'];
 
-function canMakeCutoutProduct(serDef,table,sourceRow,options){
+export function canMakeCutoutProduct(serDef,table,sourceRow,options){
     const {standardID,serDefParams} = serDef;
 
     const {positionWP}= findCutoutTarget(options.dataProductsComponentKey,serDef,table,sourceRow);
@@ -112,7 +111,7 @@ function canMakeCutoutProduct(serDef,table,sourceRow,options){
 }
 
 
-function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activateParams, dlData,
+export function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activateParams, dlData,
                              options, titleStr, menuKey}) {
 
     const {accessURL, standardID, serDefParams, sdSourceTable} = serDef;

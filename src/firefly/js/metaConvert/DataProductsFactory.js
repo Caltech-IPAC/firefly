@@ -295,6 +295,7 @@ function initConverterTemplates() {
  * @prop {Array.<string>} [paramNameKeys] - name of the parameters to put in the url from the getComponentState() return object
  * @prop {Array.<string>} [ucdKeys] - same as above but can be specified by UCD
  * @prop {Array.<string>} [utypeKeys] - same as above but can be specified by utype
+   @prop {String} statefulTabComponentKey
  */
 
 /**

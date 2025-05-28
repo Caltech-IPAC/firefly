@@ -246,7 +246,7 @@ function matchHiPSToImage(pv, hipsPVidAry) {
     hipsPVidAry.forEach( (id) => {
         dispatchAttributeChange({ plotId:id, overlayColorScope:false, positionScope:false, changes:attributes});
         if (!connectPids.includes(id)) dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
-        dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
+        dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter, doWcsImageMatching:false});
         //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
         //the change is dispatched. If not, do nothing
         const jNorth= isPlotRotatedNorth(plot, CoordinateSys.EQ_J2000);

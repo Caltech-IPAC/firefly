@@ -306,7 +306,7 @@ function updateDisplayData(state, action) {
  * @return {VisRoot}
  */
 function processProjectionChange(state,action) {
-    const {plotId,centerProjPt,fullSky= undefined}= action.payload;
+    const {plotId,centerProjPt,fullSky= undefined, doWcsImageMatching=true}= action.payload;
 
     const {plotViewAry,wcsMatchType}= state;
     const newPlotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
@@ -317,7 +317,7 @@ function processProjectionChange(state,action) {
          } );
     const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
     let newState= {...state, plotViewAry :newPlotViewAry};
-    if (matchingByWcs && centerProjPt)  {
+    if (matchingByWcs && centerProjPt && doWcsImageMatching)  {
         const imagePv= newPlotViewAry.find( (aPv) => isImage(primePlot(aPv)));
         if (imagePv) {
             const finalPvAry= recenterUsingWcsMatch(newState,imagePv,centerProjPt, false,true);
