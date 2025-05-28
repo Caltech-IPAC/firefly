@@ -55,9 +55,9 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
         return (
             <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}>
                 <Stack direction='row' spacing={1}>
-                    <Button variant='solid' color='primary' onClick={doHide}>Send to background</Button>
-                    <Button variant='solid' color='primary' onClick={doShowMonitor}>Job Monitor</Button>
-                    <Button variant='soft' onClick={doCancel}>Cancel</Button>
+                    <Button variant='solid' disabled={!jobInfo} color='primary' onClick={doHide}>Send to background</Button>
+                    <Button variant='solid' disabled={!jobInfo} color='primary' onClick={doShowMonitor}>Job Monitor</Button>
+                    <Button variant='soft' disabled={!jobInfo} onClick={doCancel}>Cancel</Button>
                 </Stack>
             </MaskP>
         );
