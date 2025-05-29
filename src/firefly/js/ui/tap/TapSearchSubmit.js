@@ -23,7 +23,8 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints';
 
 
-export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, additionalClauses='', metaInfo={}, tblOptions={}) {
+export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additionalClauses = '',
+                                      allowColumnConstraints = true, metaInfo = {}, tblOptions = {}}) {
     const isUserEnteredADQL = (request.selectBy === 'adql');
     let adql;
     let isUpload;
@@ -32,7 +33,6 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
     let schemaEntry;
     let userColumns;
     const userTitle= request[USER_ENTERED_TITLE];
-    console.log(userTitle);
 
     if (isUserEnteredADQL) {
         adql = request[ADQL_QUERY_KEY];
@@ -42,7 +42,7 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
         uploadTableName = isUpload && TAP_UPLOAD[uploadFile].table;
     }
     else {
-        adql = getAdqlQuery(tapBrowserState, additionalClauses);
+        adql = getAdqlQuery(tapBrowserState, additionalClauses, allowColumnConstraints);
         isUpload = isTapUpload(tapBrowserState);
         schemaEntry = getTapUploadSchemaEntry(tapBrowserState);
         const cols = schemaEntry.columns;
@@ -109,10 +109,12 @@ function getCutoutType(tapBrowserState) {
  *
  * @param {TapBrowserState} tapBrowserState
  * @param {string} additionalClauses post-WHERE clauses like ORDER BY, GROUP BY, etc. that can't be extracted from UI inputs
- * @param [showErrors]
- * @returns {string|null}
+ * @param {boolean} [allowColumnConstraints] - if false, do not check for column constraints and `SELECT * from table`
+ * @param [showErrors] display error popups
+ * @returns {string|undefined}
  */
-export function getAdqlQuery(tapBrowserState, additionalClauses, showErrors= true) {
+export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnConstraints=true,
+                             showErrors= true) {
     const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
     const isUpload= isTapUpload(tapBrowserState);
@@ -143,7 +145,7 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, showErrors= tru
         if (showErrors) showInfoPopup(helperFragment.messages[0], 'Error');
         return;
     }
-    if (!tableCol.valid) {
+    if (allowColumnConstraints && !tableCol.valid) {
         if (showErrors) showInfoPopup(tableCol.message, 'Error');
         return;
     }

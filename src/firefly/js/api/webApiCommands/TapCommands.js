@@ -1,9 +1,11 @@
-import {makeExamples, ReservedParams} from '../WebApi';
-import {dispatchActiveTarget, getAppOptions} from '../../core/AppDataCntlr';
+import {makeExamples, processSpatialReservedParams, ReservedParams} from '../WebApi';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr';
+import {SpatialRegOp, SpatialRegOpType} from 'firefly/ui/tap/SpatialSearch';
+import {BASE_UNIT} from 'firefly/ui/WavelengthInputField';
+import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
 
-
-const tapPanelOverview= {
+const wvlUnit = WAVELENGTH_UNITS[BASE_UNIT].symbol;
+export const tapPanelOverview= {
     overview: [
         'open tap panel'
     ],
@@ -21,7 +23,7 @@ const tapPanelOverview= {
         exposureMax : 'Time when exposures must start by (requires `exposureRangeType=range`, optionally specify `exposureTimeMode=mjd` if in mjd)',
         exposureTimeMode : 'Time mode (iso, mjd) that `exposureMin` and `exposureMax` are specified in',
         exposureRangeType : '`range` or `since` (`since` if not specified)',
-        exposureSinceValue : 'The quantity of time (n) when looking for completed observations',
+        exposureSinceValue : 'The quantity of time (n) when looking for completed observations. Requires `exposureRangeType=since`',
         exposureSinceOptions : 'The unit of time for when looking for completed observations: `minutes`, `hours`, `days`, or `years`. Requires `exposureRangeType=since`',
         obsCoreCalibrationLevel : 'List of ObsCore calibration levels, from 0-4 (e.g. `obsCoreCalibrationLevel=3,4`)',
         obsCoreTypeSelection : 'List of options of ObsCore Data Product types (`image`, `cube`,  `spectrum`, `sed`, `timeseries`, `visibility`, `event`, `measurements`)',
@@ -29,12 +31,13 @@ const tapPanelOverview= {
         obsCoreCollection : 'ObsCore collection',
         obsCoreSubType : 'ObsCore subtype. Only considered if the table contains the appropriate column.',
         obsCoreWavelengthRangeType : 'Type of Wavelength search for Observations. `contains` or `overlaps`',
-        obsCoreWavelengthContains : 'Wavelength value when selecting `obsCoreWavelengthRangeType=contains`',
-        obsCoreWavelengthMinRange : 'Upper limit of an observation\'s wavelength coverage. Requires `obsCoreWavelengthRangeType=overlaps`',
-        obsCoreWavelengthMaxRange : 'Lower limit of an observation\'s wavelength coverage. Requires `obsCoreWavelengthRangeType=overlaps`',
-        obsCoreWavelengthUnits : 'Units for wavelength coverage (`angstrom`, `nm`, `um`)',
+        obsCoreWavelengthContains : `Wavelength value (in ${wvlUnit}) when selecting \`obsCoreWavelengthRangeType=contains\``,
+        obsCoreWavelengthMinRange : `Upper limit of an observation's wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
+        obsCoreWavelengthMaxRange : `Lower limit of an observation\'s wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
         [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],
+        polygon: 'polygon as a list of ra dec strings, example: 269.3 68.2, 272.85 68.2, 272.7 66.7, 269.3 66.7',
+        [SpatialRegOp]: `Query Type for ObsCore searches, one of [${Object.values(SpatialRegOpType).join(', ')}]`,
         execute: 'true or false - if true execute the tap search'
     },
 };
@@ -65,28 +68,39 @@ const tapPanelExamples= [
         }
     },
     {
-        desc:'Open tap panel- setup ivoa obscore search',
+        desc:'Open tap panel - with 2MASS PSC search of a polygon enclosing M5',
         params:{
-            service: 'https://mast.stsci.edu/vo-tap/api/v0.1/caom',
+            service: 'https://irsa.ipac.caltech.edu/TAP',
+            schema:'fp_2mass',
+            table:'fp_psc',
+            polygon: '202.584218 47.312657, 202.583636 47.087652, 202.365233 47.087705, 202.364887 47.312710',
+        }
+    },
+    {
+        desc:'Open tap panel- setup an IVOA ObsCore search',
+        params:{
+            service: 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus',
             schema:'ivoa',
-            table:'ivoa.obscore',
+            table:'ivoa.ObsCore',
             WorldPt: '202.48417;47.23056;EQ_J2000',
-            sr: '20s'
+            sr: '20s',
+            [SpatialRegOp]: SpatialRegOpType.INTERSECTS,
         }
     },
     {
         desc:'Execute search above',
         params:{
-            service: 'https://mast.stsci.edu/vo-tap/api/v0.1/caom',
+            service: 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus',
             schema:'ivoa',
-            table:'ivoa.obscore',
+            table:'ivoa.ObsCore',
             WorldPt: '202.48417;47.23056;EQ_J2000',
             sr: '20s',
+            [SpatialRegOp]: SpatialRegOpType.INTERSECTS,
             execute: 'true'
         }
     },
     {
-        desc:'Open tap panel- setup  gia search for data release 2',
+        desc:'Open tap panel - setup GAIA search for data release 2',
         params:{
             service: 'https://gea.esac.esa.int/tap-server/tap',
             schema:'gaiadr2',
@@ -96,7 +110,7 @@ const tapPanelExamples= [
         }
     },
     {
-        desc:'Execute adql gia search on sources for data release 2',
+        desc:'Execute adql GAIA search on sources for data release 2',
         params:{
             service: 'https://gea.esac.esa.int/tap-server/tap',
             adql: ` SELECT * 
@@ -140,14 +154,9 @@ function validateTap(params) {
     return {valid:true};
 }
 
-function showTapPanel(cmd,inParams) {
-    const params= {...inParams};
-    if (params[ReservedParams.POSITION.name]) dispatchActiveTarget(params[ReservedParams.POSITION.name]);
-    if (params[ReservedParams.SR.name]) {
-        params.radiusInArcSec= params[ReservedParams.SR.name] * 3600;
-        Reflect.deleteProperty(params, ReservedParams.SR.name);
-    }
-    const view= params.view ?? 'TAPSearch';
+function showTapPanel(cmd, inParams) {
+    const params = processSpatialReservedParams(inParams);
+    const view= inParams?.view ?? 'TAPSearch';
 
     dispatchShowDropDown({view, initArgs:{defaultSelectedId:'tap', urlApi:{...params}}});
 }

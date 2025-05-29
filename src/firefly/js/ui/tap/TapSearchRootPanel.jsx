@@ -70,10 +70,11 @@ const initApiAddedServiceOnce= once((initArgs) => {
  * @param {TapBrowserState} tapBrowserState
  * @return {boolean} true if the field are valid to doa search
  */
-function validateAutoSearch(fields, initArgs, tapBrowserState) {
+export function validateAutoSearch(fields, initArgs, tapBrowserState) {
     const {urlApi = {}} = initArgs;
     if (urlApi.adql) return true;
-    if (!getAdqlQuery(tapBrowserState, false)) return false; // if we can't build a query then we are not initialized yet
+    // disable column constraints otherwise we will get recursion error because they aren't ready by the time we execute a urlApi search
+    if (!getAdqlQuery(tapBrowserState, '', false)) return false; // if we can't build a query then we are not initialized yet
     const {valid, where} = getHelperConstraints(tapBrowserState);
     if (!valid) return false;
     const notWhereArgs = ['MAXREC', 'execute', 'schema', 'service', 'table'];
@@ -193,7 +194,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     return (
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
-                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl, tapState)}
+                <FormPanel  onSuccess={(request) => onTapSearchSubmit({request, serviceUrl, tapBrowserState: tapState})}
                             cancelText=''
                             help_id = {tapHelpId('form')}
                             slotProps={{

@@ -25,6 +25,7 @@ import {omit} from 'lodash';
 const panelTitle = 'Spectral Coverage';
 const panelValue = 'Wavelength';
 const panelPrefix = getPanelPrefix(panelValue);
+export const wavelengthPanelId = panelPrefix;
 
 const obsCoreWvlFieldKeys = {
     selectionType: 'obsCoreWavelengthSelectionType',
@@ -107,13 +108,19 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
 
 }
 
-const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
+const checkHeaderCtl= makeCollapsibleCheckHeader(wavelengthPanelId);
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, filterDefinitions, fixedSelectionType,
                                       fixedRangeType, slotProps }) {
-    const [getSelectionType,] = useFieldGroupValue(fieldKeys.selectionType);
+    const [getSelectionType, setSelectionType] = useFieldGroupValue(fieldKeys.selectionType);
     const [getRangeType,] = useFieldGroupValue(fieldKeys.rangeType);
+
+    useEffect(() => {
+        if (Object.keys(initArgs?.urlApi ?? {})?.some((k) => k.startsWith('obsCoreWavelength'))) {
+            setSelectionType('numerical'); //url api doesn't allow selecting filter bands, so we default to numerical
+        }
+    }, [initArgs?.urlApi]);
 
     const hasFilters = filterDefinitions?.length > 0;
     const useFilters = hasFilters && (fixedSelectionType
@@ -165,7 +172,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                                     {label: 'contains', value: 'contains'},
                                     {label: 'overlaps', value: 'overlaps'},
                                 ]}
-                                initialState={{value: initArgs?.urlApi?.rangeType || 'contains'}}
+                                initialState={{value: initArgs?.urlApi?.[fieldKeys.rangeType] || 'contains'}}
                                 label='Select observations whose wavelength coverage'
                                 orientation='vertical'
                                 multiple={false}
@@ -178,11 +185,14 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                             <WavelengthInputField fieldKey={fieldKeys.wvlContains}
                                                   inputStyle={{ overflow: 'auto', height: 16 }}
                                                   placeholder='enter wavelength'
+                                                  {...slotProps?.wvlContains}
                                                   initialState={{
-                                                      value: initArgs?.urlApi?.wvlContains || '',
-                                                      unit: initArgs?.urlApi?.wvlUnits || 'nm'
-                                                  }}
-                                                  {...slotProps?.wvlContains} />
+                                                      unit: 'nm', //unit that shows up in the units dropdown
+                                                      ...slotProps?.wvlContains?.initialState,
+                                                      value: initArgs?.urlApi?.[fieldKeys.wvlContains], //always in BASE_UNIT
+                                                      //we don't need `unit` from initArgs since its purpose is only for display:
+                                                      //displayValue that shows in input field is computed with value and unit
+                                                  }}/>
                         </div>
                     )}
                     {useRangeOverlaps && (
@@ -190,18 +200,20 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                                               {...slotProps?.wvlRange}
                                               slotProps={{
                                                   wvlMin: {
+                                                      ...slotProps?.wvlMin,
                                                       initialState: {
-                                                          value: initArgs?.urlApi?.wvlMin || '',
-                                                          unit: initArgs?.urlApi?.wvlUnits || 'nm'
+                                                          unit: 'nm',
+                                                          ...slotProps?.wvlMin?.initialState,
+                                                          value: initArgs?.urlApi?.[fieldKeys.wvlMin],
                                                       },
-                                                      ...slotProps?.wvlMin
                                                   },
                                                   wvlMax: {
+                                                      ...slotProps?.wvlMax,
                                                       initialState: {
-                                                          value: initArgs?.urlApi?.wvlMax || '',
-                                                          unit: initArgs?.urlApi?.wvlUnits || 'nm'
+                                                          unit: 'nm',
+                                                          ...slotProps?.wvlMax?.initialState,
+                                                          value: initArgs?.urlApi?.[fieldKeys.wvlMax],
                                                       },
-                                                      ...slotProps?.wvlMax
                                                   }
                                               }}/>
                     )}
