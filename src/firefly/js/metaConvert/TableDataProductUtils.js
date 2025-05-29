@@ -8,7 +8,7 @@ import {isString} from 'lodash';
 import {CHART_UI_EXPANDED, dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
 import {LO_MODE, LO_VIEW, SET_LAYOUT_MODE} from '../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
-import {ChartType} from '../data/FileAnalysis';
+import {ChartType, TableDataType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {
@@ -23,6 +23,8 @@ import {
 import {getServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef';
 import {makeDlUrl} from './vo/DatalinkProducts';
 import {findDataLinkServeDescs} from './vo/ServDescConverter';
+import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer';
+import {pinChart} from 'firefly/charts/ui/PinnedChartContainer';
 
 
 export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
@@ -148,8 +150,23 @@ export function createTableExtraction(source,titleInfo,tbl_index=0,imageAsTableI
         const dataTableReq= makeTableRequest(source,titleInfo,undefined,tbl_index,imageAsTableInfo,cubePlane,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
-        showPinMessage('Pinning to Table Area');
+        let pinMessage = 'Pinning to Table Area';
+        if (dataTypeHint === TableDataType.Spectrum || dataTypeHint === TableDataType.LightCurve) {
+            pinMessage += ' and Pinned Chart tab';
+            onTableLoaded(dataTableReq?.tbl_id).then(() => {
+                const chartId = ensureDefaultChart(dataTableReq?.tbl_id);
+                if (chartId) pinChart({chartId, displayPinMessage: false});
+            });
+        }
+        showPinMessage(pinMessage);
     };
+}
+
+
+export function getExtractionText(tableDataType) {
+    if (tableDataType === TableDataType.Spectrum) return 'Pin Table/Spectrum';
+    if (tableDataType === TableDataType.LightCurve) return 'Pin Table/LightCurve';
+    return 'Pin Table';
 }
 
 export function extractDatalinkTable(table,row,title,setAsActive=true) {

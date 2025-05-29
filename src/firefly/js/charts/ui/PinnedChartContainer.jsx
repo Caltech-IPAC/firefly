@@ -139,11 +139,11 @@ export const PinChart = ({viewerId, tbl_group}) => {
     return <PinButton onClick={doPinChart} tip='Pin this chart'/>;
 };
 
-export function pinChart({chartId, autoLayout=false }) {
+export function pinChart({chartId, autoLayout=false, displayPinMessage=true }) {
 
 
     if (!isChartLoading(chartId)) {
-        doPinChart({chartId,autoLayout});
+        doPinChart({chartId,autoLayout, displayPinMessage});
         return;
     }
     // there are cases when chart is not fully loaded.  if so, wait before pinning the chart
@@ -155,7 +155,7 @@ export function pinChart({chartId, autoLayout=false }) {
             }
             if (!isChartLoading(chartId)) { //chart is fully loaded now
                 cancelSelf?.();
-                doPinChart({chartId, autoLayout});
+                doPinChart({chartId, autoLayout, displayPinMessage});
             }
         }
     });
@@ -174,7 +174,7 @@ export function BadgeLabel({labelStr}) {
         );
 }
 
-function doPinChart({chartId, autoLayout=true }) {
+function doPinChart({chartId, autoLayout=true, displayPinMessage=true }) {
 
     const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
     chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
@@ -199,7 +199,9 @@ function doPinChart({chartId, autoLayout=true }) {
             setLayout(true);
         }
         const {sideBySide} = getComponentState(PINNED_CHART_VIEWER_ID);
-        if (!sideBySide) showPinMessage('Pinning chart');
+        if (!sideBySide) {
+            if (displayPinMessage) showPinMessage('Pinning chart');
+        }
     };
 
     if (!chartData?.layout?.title?.text) {

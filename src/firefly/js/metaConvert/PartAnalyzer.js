@@ -9,11 +9,9 @@ import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE} f
 import {FileAnalysisType, Format, TableDataType, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
 import {TitleOptions} from '../visualize/WebPlotRequest';
-import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction} from './TableDataProductUtils.js';
+import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction, getExtractionText
+} from './TableDataProductUtils.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
-
-
-const extractionText= 'Pin Table';
 
 /**
  *
@@ -311,6 +309,7 @@ function makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartIn
     const activate= createChartSingleRowArrayActivate(source,titleStr,activateParams,chartInfo,0,paIdx);
     const extraction= createTableExtraction(source,titleStr,paIdx, imageAsTableInfo,
         0, chartInfo.tableDataType);
+    const extractionText = getExtractionText(chartInfo.tableDataType);
     return dpdtChartTable(ddTitleStr, activate,extraction, undefined,
         {extractionText, paIdx, chartTableDefOption, interpretedData, dropDownText});
 }
@@ -319,6 +318,7 @@ function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, ti
                                   chartId, activateParams, dropDownText, chartInfo,imageAsTableInfo}) {
     const {interpretedData=false}= part;
     const {tableDataType} = chartInfo;
+    const extractionText = getExtractionText(tableDataType);
     if (!imageAsTableInfo?.cubePlanes) {
         const extraction = createTableExtraction(source, titleInfo, tbl_index, imageAsTableInfo, 0, tableDataType);
         const activate = createChartTableActivate({
@@ -349,6 +349,7 @@ function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, ti
 function makeTableOnlyResult({ddTitleStr,tbl_id,source,titleInfo,tbl_index,imageAsTableInfo,
                                  activateParams, dropDownText}) {
     const {cubePlanes=0}= imageAsTableInfo;
+    const extractionText = 'Pin Table';
     if (cubePlanes===0) {
         const extraction= createTableExtraction(source,titleInfo,tbl_index, imageAsTableInfo, 0, '');
         const activate= createChartTableActivate({source,titleInfo,activateParams, tbl_index, imageAsTableInfo, tbl_id});
