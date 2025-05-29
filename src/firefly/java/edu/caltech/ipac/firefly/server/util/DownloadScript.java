@@ -299,7 +299,7 @@ static final String funcTmpl = """
             return href;
         }
         public String getSuffix() {
-            return suffix;
+            return suffix == null ? "" : suffix;
         }
         public String getFilePath() {
             return isEmpty(getPath()) ? getName() : getPath() + "/" + getName();
