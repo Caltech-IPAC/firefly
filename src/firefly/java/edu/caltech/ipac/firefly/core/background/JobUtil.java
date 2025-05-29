@@ -236,7 +236,7 @@ public class JobUtil {
         ifNotNull(toParameters(json.get(PARAMETERS))).apply(p -> rval.setParams(p));
         ifNotNull(toResults(json.get(RESULTS))).apply(r -> rval.setResults(r));
 
-        ifNotNull(json.get(ERROR)).apply(v -> {
+        ifNotNull(json.get(ERROR_SUMMARY)).apply(v -> {
             if (v instanceof JSONObject jo) {
                 int code = getInt(jo.get(ERROR_TYPE), 500);
                 String msg = String.valueOf(jo.get(ERROR_MSG));

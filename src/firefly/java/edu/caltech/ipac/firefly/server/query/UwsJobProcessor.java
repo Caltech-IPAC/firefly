@@ -131,8 +131,18 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     return getResult(req);
                 } else if (phase == Phase.ABORTED) {
                     throw new DataAccessException.Aborted();        // exit; stop tracking
+                } else if (phase == Phase.HELD) {
+                    updateJob(ji -> ji.setPhase(Phase.HELD));
+                    throw new DataAccessException("The job is HELD pending execution and will not automatically be executed");
+                } else if (phase == Phase.SUSPENDED) {
+                    updateJob(ji -> ji.setPhase(Phase.SUSPENDED));
+                    throw new DataAccessException("Job temporarily paused by the system");
+                } else if (phase == Phase.ERROR) {
+                    updateJob(ji -> ji.setError(uwsJob.getError()));
+                    throw new DataAccessException("Job has failed; detailed error information may be available");
                 } else if (phase == Phase.UNKNOWN) {
                     updateJob(ji -> ji.setError(new JobInfo.Error(500, "Unknown phase")));
+                    throw new DataAccessException("The job is in an unknown state");
                 } else {
                     int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
                     TimeUnit.MILLISECONDS.sleep(wait);

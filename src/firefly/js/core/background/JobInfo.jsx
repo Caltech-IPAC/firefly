@@ -91,9 +91,9 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
             {/*{ meta?.runId && <KeywordBlock key='localRunId' label='local runId' value={meta.runId}/>}*/}
             { hasMoreSection && (
                 <CollapsibleGroup>
+                    <OptionalBlock label='Error Summary' title='Referred to as "errorSummary" in UWS' value={errorSummary} isOpen={isOpen}/>
                     <OptionalBlock label='Parameters' title='Referred to as "parameters" in UWS' value={parameters} isOpen={isOpen}/>
                     <OptionalBlock label='Results' title='Referred to as "results" in UWS' value={hrefs} asLink={true} isOpen={isOpen}/>
-                    <OptionalBlock label='Error Summary' title='Referred to as "errorSummary" in UWS' value={errorSummary} isOpen={isOpen}/>
                     <OptionalBlock label='Extra Information' title='Referred to as "jobInfo" in UWS' value={aux} isOpen={isOpen}/>
                 </CollapsibleGroup>
             )}
