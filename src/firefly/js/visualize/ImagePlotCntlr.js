@@ -572,10 +572,11 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  * @param {string} p.plotId
  * @param {WorldPt|undefined} [p.centerProjPt] new center, if undefined just keep the same center
  * @param {boolean} [p.fullSky] if true AITOFF, false half sky, undefined then don't change
+ * @param {boolean} [p.doWcsImageMatching]
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchChangeCenterOfProjection({plotId,centerProjPt, fullSky, dispatcher= flux.process}) {
-    dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt, fullSky} });
+export function dispatchChangeCenterOfProjection({plotId,centerProjPt, fullSky, doWcsImageMatching, dispatcher= flux.process}) {
+    dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt, doWcsImageMatching, fullSky} });
 }
 
 /**

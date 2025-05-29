@@ -4,6 +4,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
+import {getCellValue, getColumn, getColumnIdx} from '../../tables/TableUtil';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
@@ -60,11 +61,37 @@ const TAB_COLUMNS_MSG='These are the recommended columns to use for a spatial se
 
 const spacialTypeOps = [{label: 'Single Object', value: SINGLE}, {label: 'Multi-object', value: MULTI, tooltip:'for uploaded table'}];
 
+const emptyCenterCols= {lon: '', lat: ''};
 
 function formCenterColumns(columnsTable) {
-    const centerCols = findCenterColumnsByColumnsModel(columnsTable);
-    return (centerCols && centerCols.lonCol && centerCols.latCol) ?
-        {lon: centerCols.lonCol.column_name, lat: centerCols.latCol.column_name} : {lon: '', lat: ''};
+    if (!columnsTable?.tableData?.data?.length) return emptyCenterCols;
+    const {lonCol,latCol}= findCenterColumnsByColumnsModel(columnsTable,true) ?? {};
+    if (!lonCol || !latCol) return emptyCenterCols;
+    let lon= lonCol.column_name;
+    let lat= latCol.column_name;
+    if (lon && lat && lon===lat) {
+        if (posColQualifies(columnsTable,lon)) return {lon,lat};
+        const {lonCol,latCol} = findCenterColumnsByColumnsModel(columnsTable,false) ?? {};
+        if (!lonCol || !latCol) return emptyCenterCols;
+        lon= lonCol.column_name;
+        lat= latCol.column_name;
+    }
+    return (lon && lat) ? {lon,  lat} : emptyCenterCols;
+}
+
+function posColQualifies(columnsTable, cName) {
+    const numType= ['double','float','long','short'];
+    const cNameIdx= getColumnIdx(columnsTable,'column_name',true);
+    const arraySizeIdx= getColumnIdx(columnsTable,'arraysize',true);
+    const dataTypeIdx= getColumnIdx(columnsTable,'datatype',true);
+    const xtypeIdx= getColumnIdx(columnsTable,'xtype',true);
+    const posRow= columnsTable.tableData.data.find( (row) => row[cNameIdx]===cName);
+       // must be array size 2 [ra,dec], xtype==='point' and the data type is a number
+    return (
+        posRow[arraySizeIdx]===2 &&
+        posRow[xtypeIdx]==='point' &&
+        numType.some( (n) => n===posRow[dataTypeIdx]?.toLowerCase())
+    );
 }
 
 
@@ -222,7 +249,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                     slotProps: {polygonPanel: {manageHiPS: false}},
                 }}, slotProps);
 
-
+    const posHeaderTitle= getVal(CenterLonColumns)===getVal(CenterLatColumns) ? 'Position Column:' : 'Position Columns:';
 
     return (
         <CollapsibleCheckHeader sx={sx} title={panelTitle} helpID={tapHelpId(panelPrefix)}
@@ -251,7 +278,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                         hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
                     {!obsCoreEnabled && cols &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
-                            headerTitle:'Position Columns:', openKey:posOpenKey,
+                            headerTitle:posHeaderTitle, openKey:posOpenKey,
                             doQuoteNonAlphanumeric:false,
                             headerPostTitle:'(from the selected table on the right)',
                             openPreMessage:posOpenMsg,
@@ -674,7 +701,9 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         const ucdCoord = getUCDCoord(columnsModel, cenLon);
         const worldSys = posCol[ucdCoord.key].coord;
         const adqlCoordSys = posCol[ucdCoord.key].adqlCoord;
-        const point = `POINT('${adqlCoordSys}', ${maybeQuote(preFix+cenLon)}, ${maybeQuote(preFix+cenLat)})`;
+        const point = cenLon===cenLat ?
+            `${maybeQuote(preFix+cenLon)}` :
+            `POINT('${adqlCoordSys}', ${maybeQuote(preFix+cenLon)}, ${maybeQuote(preFix+cenLat)})`;
 
 
         if (spatialType===SINGLE) {

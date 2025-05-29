@@ -4,7 +4,9 @@
 import {get, has, isArray, isEmpty} from 'lodash';
 import {getColumnValues} from '../tables/TableUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
-import { alternateMainPos, mainMeta, OBSTAP_MATCH_COLUMNS, posCol, UCDCoord, ucdSyntaxMap } from './VoConst.js';
+import {
+    alternateMainPos, mainMeta, OBSTAP_MATCH_COLUMNS, posCol, posColArrayCoord, UCDCoord, ucdSyntaxMap
+} from './VoConst.js';
 import {isUCDWith} from './VoCoreUtils.js';
 
 /**
@@ -38,8 +40,9 @@ class ColumnRecognizer {
         });
     }
 
-    getCenterColumnPairsOnUCD(coord) {
+    getCenterColumnPairsOnUCD(coord, acceptArrayCol) {
         const centerColUCDs = has(posCol, coord) ? posCol[coord].ucd : null;
+        const centerColArrayUCDs = has(posColArrayCoord, coord) ? posColArrayCoord[coord].ucd : null;
         const pairs = [];
 
         if (!centerColUCDs) {
@@ -69,6 +72,16 @@ class ColumnRecognizer {
             return prev;
         }, [[], []]);
 
+        const posArray = centerColArrayUCDs.reduce((prev, eqUcdEntry) => {
+            const colsPos = this.ucds.reduce((p, ucd, i) => {
+                if (ucd===eqUcdEntry || ucd.startsWith(eqUcdEntry+';')) {
+                    p.push({ucd, column_name: this.column_names[i]});
+                }
+                return p;
+            }, []);
+            prev.push(...colsPos);
+            return prev;
+        }, []);
 
         const metaMainPair = posPairs.map((posCols, idx) => {
             const mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta);
@@ -83,11 +96,21 @@ class ColumnRecognizer {
             return mainMetaCols;
         });
 
-        if (metaMainPair[0].length || metaMainPair[1].length) {  // get the column with ucd containing meta.main
+        const metaMainArrayColName = posArray
+            .map((col) => col.ucd.includes(mainMeta) ? col: false)
+            .filter(Boolean);
+
+
+
+
+        if (metaMainPair[0].length || metaMainPair[1].length || (metaMainArrayColName.length && acceptArrayCol)) {  // get the column with ucd containing meta.main
             if (metaMainPair[0].length === metaMainPair[1].length) {
                 for (let i = 0; i < metaMainPair[0].length; i++) {
                     pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
                 }
+            }
+            if (metaMainArrayColName.length && acceptArrayCol) {
+                metaMainArrayColName.forEach( (col) => pairs.push([col,col]));
             }
         } else if (posPairs[0].length > 0 && posPairs[1].length > 0) {
             // find first exact match
@@ -105,13 +128,13 @@ class ColumnRecognizer {
         return pairs;
     }
 
-    getCenterColumnsOnUCD() {
+    getCenterColumnsOnUCD(acceptArrayCol) {
         let colPairs;
         const coordSet = this.posCoord ? [UCDCoord[this.posCoord].key] :
             [UCDCoord.eq.key, UCDCoord.galactic.key, UCDCoord.ecliptic.key];
 
         coordSet.find((oneCoord) => {
-            colPairs = this.getCenterColumnPairsOnUCD(oneCoord);
+            colPairs = this.getCenterColumnPairsOnUCD(oneCoord, acceptArrayCol);
             if (colPairs && colPairs.length >= 1) {
                 this.setCenterColumnsInfo(colPairs[0], posCol[oneCoord].coord);  // get the first pair
                 return true;
@@ -159,9 +182,8 @@ class ColumnRecognizer {
     }
 
 
-    getCenterColumns() {
-        return this.getCenterColumnsOnUCD() ||
-            this.guessCenterColumnsByName();
+    getCenterColumns(acceptArrayCol ) {
+        return this.getCenterColumnsOnUCD(acceptArrayCol ) || this.guessCenterColumnsByName();
     }
 
     static newInstance(tableModel) {
@@ -172,11 +194,12 @@ class ColumnRecognizer {
 /**
  * find the center columns based on the columns table model
  * @param columnsModel
+ * @param [acceptArrayCol]
  * @returns {*|{lonCol: {ucd, column_name}, latCol: {ucd, column_name}, csys}|*}
  */
-export function findCenterColumnsByColumnsModel(columnsModel) {
+export function findCenterColumnsByColumnsModel(columnsModel, acceptArrayCol = false) {
     const colRecog = columnsModel && get(columnsModel, ['tableData', 'columns']) && ColumnRecognizer.newInstance(columnsModel);
-    return colRecog && colRecog.getCenterColumns();
+    return colRecog && colRecog.getCenterColumns(acceptArrayCol);
 }
 
 /**

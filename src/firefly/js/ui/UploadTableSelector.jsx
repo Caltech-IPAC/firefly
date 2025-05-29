@@ -220,7 +220,9 @@ export function ColumnMappingPanel({cols, columnFieldValues, columnFields, panel
                                        openPreMessage='', sx, slotProps, children}) {
     const defaultColumnMapping = (colValues) => colValues?.every((val) => !val)
         ? 'unset'
-        : colValues?.map((val) => val || 'unset').join(', ');
+        : colValues.length===2 && colValues[0]===colValues[1]
+            ? colValues[0]
+            : colValues?.map((val) => val || 'unset').join(', ');
 
     const panelHeader= (
         <Stack {...{direction:'row', alignItems:'baseline', spacing:1}}>

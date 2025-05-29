@@ -1,25 +1,24 @@
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+/* * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
 
 import React, {useEffect, useRef, useState} from 'react';
 import {string, number, func, bool, object, oneOfType, node} from 'prop-types';
-import {difference, isNil, isString, xor} from 'lodash';
+import {difference, isEmpty, isNil, isString, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import {getComponentState} from '../../core/ComponentCntlr';
+import {CutoutButton, SHOWING_CUTOUT, SHOWING_FULL} from '../../ui/CutoutSizeDialog';
 
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
+import {getCutoutSize, getCutoutTargetOverride, getPreferCutout} from '../../ui/tap/Cutout';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchReplaceViewerItems, getMultiViewRoot, getViewer, IMAGE, NewPlotMode,} from '../MultiViewCntlr.js';
 import {
     dispatchChangeActivePlotView, dispatchDeletePlotView,
-    dispatchPlotImage,
-    dispatchWcsMatch,
-    visRoot,
-    WcsMatchType
+    dispatchPlotImage, dispatchRecenter, dispatchWcsMatch, visRoot, WcsMatchType
 } from '../ImagePlotCntlr.js';
 import {SORT_ASC, SortInfo, UNSORTED} from '../../tables/SortInfo.js';
 import {CloseButton} from 'firefly/ui/CloseButton';
@@ -28,8 +27,6 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getActivePlotView, getPlotViewAry, getPlotViewById} from '../PlotViewUtil.js';
 import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
-import {ValidationField} from '../../ui/ValidationField.jsx';
-import Validate from '../../util/Validate.js';
 import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
 import {Box, Stack, Typography} from '@mui/joy';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
@@ -38,19 +35,19 @@ import {BeforeButton, NextButton} from 'firefly/visualize/ui/Buttons';
 
 const MAX_IMAGE_CNT= 7;
 const IMAGE_CNT_KEY= 'imageCount';
-const CUTOUT_SIZE= 'cutoutSize';
 const IMAGE_TABLE_ERROR = 'Unable to load images because the required data table couldn\'t be retrieved.';
 
 
 export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id, defaultWcsMatchType,
-                                       defaultImageCnt= 5, imageExpandedMode, insideFlex=true,
+                                       defaultImageCnt= 5, imageExpandedMode, insideFlex=true, cutoutWpt,
                                         closeExpanded, maxImageCnt= MAX_IMAGE_CNT, tblErrorMsg=IMAGE_TABLE_ERROR}) {
     const table= useStoreConnector(() => getTblById(tbl_id));
     const tblLoaded = useStoreConnector(() => isFullyLoaded(tbl_id));
     const imageCnt= useFieldGroupValue(IMAGE_CNT_KEY,viewerId)[0]() ?? defaultImageCnt;
-    const cutoutSize= useFieldGroupValue(CUTOUT_SIZE,viewerId)[0]() ?? defaultCutoutSizeAS;
     const {wcsMatchType, activePlotId}= useStoreConnector(() =>
         ({wcsMatchType: visRoot().wcsMatchType, activePlotId:visRoot().activePlotId}) );
+    const cutoutState= useStoreConnector(() =>getComponentState(viewerId));
+    const hasTable= Boolean(table);
 
     //flags to ensure that effects are fired only when active plot or highlighted row was changed through UI interaction
     //and not when they were changed through the synchronisation code
@@ -60,6 +57,17 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     //keep track of slide index
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
     const onSlideChange = (current, next) => setCurrentSlideIdx(next);
+
+
+    useEffect( ()=>{
+        if (hasTable) recenterImages(viewerId) ;
+    }, [viewerId, hasTable]);
+
+
+    useEffect(() => {
+        if (isEmpty(cutoutState)) return;
+        layoutImages(viewerId, Number(imageCnt), table, makeRequestFromRow, table?.highlightedRow, cutoutWpt, true);
+    }, [cutoutState]);
 
     useEffect(()=>{
         if (!activePlotId?.startsWith(plotIdRoot(viewerId))) return;
@@ -76,12 +84,12 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
 
         if (hRowChangedByUI.current) {
             const midSlideIdx = table?.highlightedRow;
-            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, midSlideIdx);
+            layoutImages(viewerId, Number(imageCnt), table, makeRequestFromRow, midSlideIdx, cutoutWpt);
             changeActivePlot(viewerId, table, midSlideIdx, activePlotChangedByUI); //synchronise active plot as per highlighted row
             adjustImageSlider(sliderRef, table, Number(imageCnt), midSlideIdx);
         }
         else hRowChangedByUI.current = true;
-    }, [table, tblLoaded, makeRequestFromRow, viewerId, imageCnt, cutoutSize]);
+    }, [table, tblLoaded, makeRequestFromRow, viewerId, imageCnt]);
 
     //handles whether to slide or not when slider arrow is clicked,
     //while dispatching the required actions in different conditions
@@ -102,12 +110,12 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         }
         else if((isNext && table.highlightedRow > midSlideIdx) || (!isNext && table.highlightedRow < midSlideIdx)) {
             // keep highlighted row/plot as it is but move slider, until it comes to the middle of slider
-            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, midSlideIdxAfterSliding);
+            layoutImages(viewerId, Number(imageCnt), table, makeRequestFromRow, midSlideIdxAfterSliding, cutoutWpt);
             return true;
         }
         else { //table.highlightedRow === midSlideIdx; move highlighted row/plot as well as slider
             changeHighlightedRow(table, rowToHighlight, hRowChangedByUI);
-            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, rowToHighlight);
+            layoutImages(viewerId,  Number(imageCnt), table, makeRequestFromRow, rowToHighlight, cutoutWpt);
             changeActivePlot(viewerId, table, rowToHighlight, activePlotChangedByUI);
             return true;
         }
@@ -123,8 +131,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         return (
             <MultiImageViewer
                 {...{viewerId, Toolbar, insideFlex, closeFunc:closeExpanded, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                    makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
-                    wcsMatchType, activePlotId,
+                    defaultWcsMatchType, cutoutWpt, wcsMatchType, activePlotId,
                     showWhenExpanded:true, defaultDecoration:false}}/>
         );
     }
@@ -138,7 +145,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     return (
         <MultiImageViewer
             {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
+                makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType, cutoutWpt,
                 wcsMatchType, activePlotId, makeCustomLayout, mouseReadoutEmbedded: false,
                 forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
         />
@@ -150,6 +157,7 @@ ImageTableRowViewer.propTypes= {
     tbl_id: string.isRequired,
     defaultCutoutSizeAS: number,
     defaultWcsMatchType: object,
+    cutoutWpt: object,
     defaultImageCnt: number,
     maxImageCnt: number,
     imageExpandedMode: bool,
@@ -225,9 +233,9 @@ function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, 
 }
 
 
-function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt, makeRequestFromRow,
-                     defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId,
-                     defaultCutoutSizeAS, minCutoutSize=50, maxCutoutSize=1000}) {
+function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt,
+                     defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId, cutoutWpt,
+                     defaultCutoutSizeAS}) {
 
     useEffect(()=>{
         if(wcsMatchType!==defaultWcsMatchType) {
@@ -262,14 +270,16 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
                     orientation: 'horizontal', tooltip:'Choose number of images to show',
                     initialState: {value: defaultImageCnt+''}
                 }} />
-                {defaultCutoutSizeAS && <ValidationField fieldKey={CUTOUT_SIZE}
-                                 initialState= {{value: defaultCutoutSizeAS}}
-                                 validator= {(v) =>  Validate.floatRange(minCutoutSize,maxCutoutSize,1,'cutout size',v,false)}
-                                 tooltip='enter cutout size for the images'
-                                 orientation='horizontal'
-                                 label= 'Cutout Size (arcsec):'
-                                 sx={{'.MuiInput-root': {width: '5rem'}}}
-                />}
+                {defaultCutoutSizeAS &&
+                    <CutoutButton {...{
+                        dataProductsComponentKey:viewerId,
+                        activeTable:getTblById(tbl_id),
+                        serDef:undefined,
+                        enableCutoutFullSwitching:true,
+                        cutoutMode: getPreferCutout(viewerId, tbl_id) ? SHOWING_CUTOUT : SHOWING_FULL,
+                        overrideCutoutWpt:cutoutWpt,
+                    }}/>
+                }
                 <SortDirFeedback table={getTblById(tbl_id)}/>
                 {wcsMatch}
                 <VisMiniToolbar sx={{width:'auto'}}/>
@@ -305,6 +315,7 @@ Toolbar.propTypes= {
     defaultCutoutSizeAS: number,
     minCutoutSize: number,
     maxCutoutSize: number,
+    cutoutWpt: object,
 };
 
 
@@ -342,17 +353,21 @@ const changeActivePlot = (viewerId, table, plotIdxToActivate, activePlotChangedB
     }
 };
 
-function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow, midSlideIdx) {
+function layoutImages(viewerId, imageCnt, table, makeRequestFromRow, midSlideIdx, cutoutWpt, forceReload=false) {
+
+    const cutoutSize= getCutoutSize(viewerId);
+    const useCutout= getPreferCutout(viewerId, table?.tbl_id);
+    const wp= getCutoutTargetOverride(viewerId) ?? cutoutWpt;
     if (!table || isNil(midSlideIdx) || (table?.totalRows??0) < 1) return;
     const viewer= getViewer(getMultiViewRoot(),viewerId);
     if (!viewer) return;
 
     const vr = visRoot();
     const newPlotIdAry = makePlotIds(viewerId, midSlideIdx, table.totalRows, imageCnt);
-    const exclusiveNewPlotIds = difference(newPlotIdAry, viewer.itemIdAry);
+    const exclusiveNewPlotIds = forceReload ? newPlotIdAry : difference(newPlotIdAry, viewer.itemIdAry);
     exclusiveNewPlotIds.forEach((plotId) => {
         const rowNum = getPlotIdRowNum(viewerId,plotId);
-        const wpRequest= makeRequestFromRow(table.tbl_id, rowNum, cutoutSize); //todo - needs documentation
+        const wpRequest= makeRequestFromRow(viewerId, table.tbl_id, rowNum, cutoutSize, wp, useCutout); //todo - needs documentation
         if (!wpRequest) return;
 
         const pv = getPlotViewById(vr, plotId);
@@ -380,6 +395,16 @@ function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow,
         .filter(({plotId}) => plotId !== mpwWcsPrimId)
         .filter(({plotId}) => !keepPlotIdAry.includes(plotId))
         .forEach(({plotId}) => dispatchDeletePlotView({plotId, holdWcsMatch: true}));
+}
+
+function recenterImages(viewerId) {
+    const root= plotIdRoot(viewerId);
+    const pidAry= getPlotViewAry(visRoot()).filter(({plotId}) => plotId.startsWith(root));
+    if (!pidAry.length) return;
+    const {plotId}= pidAry[Math.trunc(pidAry.length/2)] ?? {};
+    if (!plotId) return;
+    dispatchChangeActivePlotView(plotId);
+    dispatchRecenter({plotId,centerOnImage:true});
 }
 
 const getBeforeAfterMidCounts = (totalPlots) => totalPlots%2===0

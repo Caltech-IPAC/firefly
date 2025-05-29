@@ -4,7 +4,7 @@ import {MetaConst} from '../../data/MetaConst';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../../metaConvert/DataProductConst';
 import {getMetaEntry} from '../../tables/TableUtil';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser';
-import {parseWorldPt} from '../../visualize/Point';
+import {isValidPoint, parseWorldPt} from '../../visualize/Point';
 import {pointIn} from '../../visualize/projection/Projection';
 import {
     getObsCoreSRegion, getSearchTargetFromTable, isRowTargetCapable, makeWorldPtUsingCenterColumns
@@ -39,7 +39,7 @@ export function getPreferCutout(dataProductsComponentKey, tbl_id) {
     return result[tbl_id] ?? result.LAST_PREF ?? DEF_PREFER_CUTOUT;
 }
 
-function updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey) {
+function updateAllDataProductsComponents(tbl_id, dataProductsComponentKey) {
     if (!tbl_id || !dataProductsComponentKey) return;
     const all = getComponentState(ALL_DATA_PRODUCT_COMPONENTS);
     if (all[tbl_id]!==dataProductsComponentKey) {
@@ -57,7 +57,7 @@ export function setPreferCutout(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_C
     const result = getComponentState(dataProductsComponentKey)[PREFER_CUTOUT_KEY] ?? {};
     const newState = {...result, [tbl_id]: preferCutout, LAST_PREF: preferCutout};
     dispatchComponentStateChange(dataProductsComponentKey, {[PREFER_CUTOUT_KEY]: newState});
-    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
+    updateAllDataProductsComponents(tbl_id, dataProductsComponentKey);
 }
 
 
@@ -73,7 +73,7 @@ export function setCutoutSize(dataProductsComponentKey, cutoutSize, tbl_id) {
         [SD_CUTOUT_SIZE_KEY]: cutoutSize,
     };
     dispatchComponentStateChange(dataProductsComponentKey, newState);
-    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
+    updateAllDataProductsComponents(tbl_id, dataProductsComponentKey);
 }
 
 /**
@@ -105,7 +105,7 @@ export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCT
             [SD_CUTOUT_WP_OVERRIDE]: wp,
             [SD_CUTOUT_TYPE]: newCutoutTypeState,
         });
-    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
+    updateAllDataProductsComponents(tbl_id, dataProductsComponentKey);
 }
 
 export const tblIdToKey= (tbl_id) => getComponentState(ALL_DATA_PRODUCT_COMPONENTS)?.[tbl_id] ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
@@ -125,6 +125,13 @@ function getIdForCutoutType(tbl_id, serDef) {
     return {lookupTblId, canDoRow};
 }
 
+/**
+ *
+ * @param {String} dataProductsComponentKey
+ * @param {String} tbl_id
+ * @param {ServiceDescriptorDef} serDef
+ * @return {string|*|string}
+ */
 export function getCutoutTargetType(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, serDef) {
 
     const {lookupTblId, canDoRow} = getIdForCutoutType(tbl_id, serDef);

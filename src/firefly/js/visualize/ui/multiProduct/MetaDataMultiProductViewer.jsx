@@ -3,9 +3,10 @@
  */
 
 import {bool, string, object} from 'prop-types';
-import React, {memo} from 'react';
+import React, {memo, useContext} from 'react';
 import {setFactoryTemplateOptions, getDefaultFactoryOptions} from '../../../metaConvert/DataProductsFactory.js';
 import {startDataProductsWatcher} from '../../../metaConvert/DataProductsWatcher.js';
+import {StatefulTabsCtx} from '../../../ui/panel/TabPanel';
 import {MultiProductViewer} from './MultiProductViewer.jsx';
 
 const startedWatchers=[];
@@ -27,7 +28,9 @@ export const MetaDataMultiProductViewer= memo(({
                                                    viewerId='DataProductsType', dataProductTableId,
                                                    autoStartWatcher=true, enableExtraction= false, noProductMessage,
                                                    dataProductsFactoryOptions= getDefaultFactoryOptions()}) => {
-    autoStartWatcher && setTimeout(() => startWatcher(viewerId,dataProductsFactoryOptions),5);
+    const {statefulTabComponentKey} = useContext(StatefulTabsCtx);
+    autoStartWatcher && setTimeout(() =>
+        startWatcher(viewerId, {...dataProductsFactoryOptions, statefulTabComponentKey}),5);
     return (<MultiProductViewer {...{viewerId, metaDataTableId:dataProductTableId,
         noProductMessage, enableExtraction, factoryKey:viewerId}}/>);
 });

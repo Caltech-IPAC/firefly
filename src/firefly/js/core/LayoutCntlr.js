@@ -389,11 +389,13 @@ function getSelView(state, dropDown) {
  */
 export function getResultCounts() {
     const layoutInfo= getLayouInfo();
-    const haveResults = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length>0 ||
-            !isEmpty(layoutInfo.gridViewsData) ;
+    const haveResultsFromShowing = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length>0 ||
+            !isEmpty(layoutInfo.gridViewsData);
     const tblIds= getTblIdsByGroup('main') ?? [];
     const tableCnt= tblIds?.length;
     const tableLoadingCnt= tblIds.filter( (id) => getTblById(id)?.isFetching).length;
+
+    const haveResults= haveResultsFromShowing || tableCnt>0;
 
     const imViewAry= dataProductRoot()
         .map( (entry) => entry.activateParams?.imageViewerId)

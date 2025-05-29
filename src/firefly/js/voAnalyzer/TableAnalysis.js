@@ -373,12 +373,21 @@ export function isFormatPng(tableOrId, rowIdx) {
 }
 
 export function getWorldPtFromTableRow(table) {
-    const centerColumns = findTableCenterColumns(table);
+    const centerColumns = findTableCenterColumns(table,true);
     if (!centerColumns) return undefined;
     const {lonCol, latCol, csys} = centerColumns;
-    const ra = Number(getCellValue(table, table.highlightedRow, lonCol));
-    const dec = Number(getCellValue(table, table.highlightedRow, latCol));
-    const usingRad = isTableUsingRadians(table, [lonCol, latCol]);
+    let ra, dec, usingRad=false;
+
+    if (lonCol===latCol) {
+        const latlonAry= getCellValue(table,table.highlightedRow, lonCol);
+        ra= Number(latlonAry[0] ?? NaN);
+        dec= Number(latlonAry[1] ?? NaN);
+    }
+    else {
+        ra = Number(getCellValue(table, table.highlightedRow, lonCol));
+        dec = Number(getCellValue(table, table.highlightedRow, latCol));
+        usingRad = isTableUsingRadians(table, [lonCol, latCol]);
+    }
     const raDeg = usingRad ? ra * (180 / Math.PI) : ra;
     const decDeg = usingRad ? dec * (180 / Math.PI) : dec;
     return makeAnyPt(raDeg, decDeg, csys || CoordinateSys.EQ_J2000);

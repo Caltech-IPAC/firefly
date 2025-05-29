@@ -1,3 +1,4 @@
+import {FileAnalysisType, TableDataType} from '../../data/FileAnalysis';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
 import { getDataLinkData, isSimpleImageType, isVoTable } from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -126,7 +127,7 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
                                       doFileAnalysis, name, dropDownText, activateParams}) {
 
-    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isSimpleImage}, contentType, description}= dlData;
+    const {semantics,size,url, dlAnalysis:{isSimpleImage}, contentType, description}= dlData;
     const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
@@ -153,9 +154,11 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             source: url,
             titleInfo:description,
             activateParams,
+            dataTypeHint: TableDataType.Spectrum,
             tbl_id,
             chartInfo:{useChartChooser:true, showChartTitle:true},
             chartId,
+            statefulTabComponentKey: options.statefulTabComponentKey
         });
         const extract= createTableExtraction(url,description,0);
         return dpdtChartTable(description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});

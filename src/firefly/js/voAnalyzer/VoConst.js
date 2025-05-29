@@ -192,3 +192,10 @@ export const posCol = {
     }
 };
 
+export const posColArrayCoord = {
+    [UCDCoord.eq.key]: {
+        ucd: ['pos.eq'],
+        coord: CoordinateSys.EQ_J2000,
+        adqlCoord: 'ICRS'
+    },
+};
