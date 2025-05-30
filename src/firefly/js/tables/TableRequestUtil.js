@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId} from 'lodash';
+import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId, merge} from 'lodash';
 
 import {getTblById, uniqueTblId} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
@@ -40,6 +40,9 @@ export function makeTblRequest(id, title, params={}, options={}) {
     const tbl_id = options.tbl_id || uniqueTblId();
     var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
     options = omit(options, 'tbl_id');
+    if (params.META_INFO) {     // if META_INFO is provided as params, merge it with the options.META_INFO
+        merge(META_INFO, params.META_INFO);
+    }
     return omitBy(Object.assign({startIdx: 0}, options, params, {META_INFO, tbl_id, id}), isNil);
 }
 
@@ -139,6 +142,9 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
+    if (params.META_INFO) {     // if META_INFO is provided as params, merge it with the options.META_INFO
+        merge(META_INFO, params.META_INFO);
+    }
     return omitBy(Object.assign({startIdx: 0}, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
 
@@ -161,6 +167,9 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
+    if (params.META_INFO) {     // if META_INFO is provided as params, merge it with the options.META_INFO
+        merge(META_INFO, params.META_INFO);
+    }
     return omitBy({startIdx: 0, ...options, ...params, id, tbl_id, META_INFO, UserTargetWorldPt}, isNil);
 }
 

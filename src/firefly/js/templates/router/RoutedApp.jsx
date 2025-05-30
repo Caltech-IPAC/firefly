@@ -1,14 +1,15 @@
 import React, {useEffect} from 'react';
-import {useOutlet} from 'react-router-dom';
+import {createBrowserRouter, useOutlet} from 'react-router-dom';
 
-import {FireflyLayout} from 'firefly/templates/common/FireflyLayout.jsx';
-import {IrsaFooterSmall} from 'firefly/ui/IrsaFooter.jsx';
+import {FireflyLayout} from '../common/FireflyLayout.jsx';
+import {IrsaFooterSmall} from '../../ui/IrsaFooter.jsx';
 import {useDropdownRoute} from './RouteHelper.jsx';
-import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
-import {startTTFeatureWatchers} from 'firefly/templates/common/ttFeatureWatchers.js';
-import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu} from 'firefly/core/AppDataCntlr.js';
-import {applyLayoutFix, HydraLanding} from 'firefly/templates/hydra/HydraViewer.jsx';
-import {Slot} from 'firefly/ui/SimpleComponent.jsx';
+import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
+import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
+import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu} from '../../core/AppDataCntlr.js';
+import {applyLayoutFix, HydraLanding} from '../hydra/HydraViewer.jsx';
+import {Slot} from '../../ui/SimpleComponent.jsx';
+import {JobMonitor, jobMonitorPath} from '../../core/background/JobMonitor';
 
 
 /*
@@ -96,3 +97,21 @@ export  default function RoutedApp({slotProps, menu, mainPanel, children, dropdo
 }
 
 RoutedApp.propTypes = FireflyLayout.propTypes;
+
+export function createRouter(basename, routes=[]) {
+    return (props) => {
+        const allRoutes = [
+            {
+                path: '/',
+                element: <RoutedApp {...props}/>,
+                children: [
+                    {   path: jobMonitorPath,
+                        element: <JobMonitor/>,
+                    },
+                    ...routes,
+                ]
+            }
+        ];
+        return createBrowserRouter(allRoutes, {basename});
+    };
+}

@@ -1,15 +1,14 @@
 
-import React, {useEffect} from 'react';
+import React, {createContext, useEffect} from 'react';
 import {oneOfType, string, func} from 'prop-types';
 import {RouterProvider, useNavigate, redirect, useLocation} from 'react-router-dom';
 import {isFunction} from 'lodash';
 import {
-    dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
+    dispatchOnAppReady, FORM_CANCEL, FORM_SUBMIT, getMenu
 } from '../../core/AppDataCntlr.js';
 import {
     dispatchHideDropDown,
     dispatchSetLayoutInfo,
-    dispatchShowDropDown,
     getDropDownInfo
 } from '../../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
@@ -18,6 +17,14 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchComponentStateChange, getComponentState} from 'firefly/core/ComponentCntlr.js';
 
 export const ROUTER = 'router';
+
+/**
+ * Context for managing routing-related form data.
+ *
+ * Currently, this context only provides the `submitTo` property,
+ * which specifies the path or route where the form should submit its data.
+ */
+export const RoutedFormContext = createContext({});
 
 const getMenuItems= () => getMenu()?.menuItems;
 
@@ -71,7 +78,11 @@ export function redirectOnMatch(pattern, url, {redirectTo}) {
  */
 export function FormWatcher({submitTo, onCancel, children}) {
     useFormWatcher(submitTo, onCancel);
-    return children;
+    return (
+        <RoutedFormContext.Provider value={{submitTo}}>
+            {children}
+        </RoutedFormContext.Provider>
+    );
 }
 FormWatcher.propTypes = {
     submitTo: oneOfType([string, func]),

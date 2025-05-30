@@ -10,9 +10,8 @@
 import {get, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {submitJob, getJobInfo, Phase} from '../core/background/BackgroundUtil.js';
-import {dispatchBgJobInfo} from '../core/background/BackgroundCntlr.js';
-import {encodeUrl, updateSet, getCmdSrvSyncURL} from '../util/WebUtil.js';
+import {submitJob} from '../core/background/BackgroundUtil.js';
+import {encodeUrl, getCmdSrvSyncURL} from '../util/WebUtil.js';
 
 import {getTblById, getResultSetID, getResultSetRequest} from '../tables/TableUtil.js';
 import {MAX_ROW, getTblId, setResultSetID, setResultSetRequest, setSelectInfo} from '../tables/TableRequestUtil.js';
@@ -207,11 +206,7 @@ export function addBgJob(jobId) {
  */
 export function removeBgJob(jobId) {
     const params = {[ServerParams.JOB_ID]: jobId};
-    return doJsonRequest(ServerParams.REMOVE_JOB, params).then( (jobInfo) => {
-        if (!jobInfo) {     // job is not on the server.. remove it locally
-            dispatchBgJobInfo(updateSet(getJobInfo(jobId), 'phase', Phase.ARCHIVED));
-        }
-    });
+    return doJsonRequest(ServerParams.REMOVE_JOB, params);
 }
 
 /**

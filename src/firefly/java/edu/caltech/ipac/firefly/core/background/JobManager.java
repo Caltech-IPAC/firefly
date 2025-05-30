@@ -150,7 +150,14 @@ public class JobManager {
         return info;
     }
 
-    static void handleAborted(JobInfo jobInfo) {
+    public static void removeJob(String jobId) {
+        ifNotNull(getJobInfo(jobId)).apply(ji -> {
+            allJobInfos.remove(cacheKey(ji));
+            removeLocalJob(ji);
+        });
+    }
+
+    static void removeLocalJob(JobInfo jobInfo) {
         if (jobInfo == null) return;
         JobEntry jobEntry = runningJobs.get(jobInfo.getMeta().getJobId());
         if (jobEntry != null) {
@@ -419,7 +426,7 @@ public class JobManager {
             ifNotNull(JobEvent.getJobInfo(msg)).apply(jobInfo -> {
                 JobEvent.EventType type = Try.it(() -> JobEvent.EventType.valueOf(msg.getValue(null, JobEvent.TYPE))).get();
                 if (type == JobEvent.EventType.ABORTED) {
-                    handleAborted(jobInfo);
+                    removeLocalJob(jobInfo);
                 } else {
                     updateClient(jobInfo);        // update jobInfo to client
                 }
