@@ -17,6 +17,7 @@ import {
 } from '../tables/TablesCntlr';
 import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
+import {isDefined} from '../util/WebUtil';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
     getObsCoreAccessURL, getObsCoreSRegion, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
@@ -55,6 +56,7 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  */
 
 const loadedTablesIds= new Map();
+const tblIdLastHighlightedRow= new Map();
 
 function isTableChartNormalViewAction(payload, type) {
     const {mode, view, tbl_id} = payload;
@@ -98,9 +100,11 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, imageAsTableInfo
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
-    const table= getTblById(tbl_id);
-    if (tbl_id && table?.tbl_id===tbl_id && dataTypeHint) {
-        dataTableReq.META_OPTIONS= {[MetaConst.HIGHLIGHTED_ROW]: table.highlightedRow};
+    if (tbl_id && dataTypeHint) {
+        const table= getTblById(tbl_id);
+        const foundRow= table?.highlightedRow ?? tblIdLastHighlightedRow.get(tbl_id);
+        if (isDefined(foundRow)) dataTableReq.META_OPTIONS= {[MetaConst.HIGHLIGHTED_ROW]: foundRow};
+        if (table?.highlightedRow) tblIdLastHighlightedRow.set(tbl_id,foundRow);
     }
 
     return dataTableReq;
@@ -135,6 +139,8 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     });
 
     return () => {
+        const table= getTblById(tbl_id);
+        if (!table || table.isFetching) return;
         dispatchCancelActionWatcher(noopId);
         dispatchTableRemove(tbl_id,false);
         dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
@@ -261,6 +267,7 @@ export function createChartTableActivate({chartAndTable=false,
         return () => {
             const tableInfo= loadedTablesIds.get(tbl_id);
             if (tableInfo.doCleanup) {
+                if (getTblById(tbl_id)?.highlightedRow) tblIdLastHighlightedRow.set(tbl_id,getTblById(tbl_id)?.highlightedRow);
                 tableInfo.cleanupFunc();
                 loadedTablesIds.delete(tbl_id);
             }
