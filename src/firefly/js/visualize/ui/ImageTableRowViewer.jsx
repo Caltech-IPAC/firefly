@@ -339,9 +339,11 @@ const adjustImageSlider = (sliderRef, table, imageCnt, midSlideIdx) => {
 
 const changeHighlightedRow = (table, rowToHighlight, hRowChangedByUI) => {
     if (table && table.highlightedRow !== rowToHighlight) {
-        dispatchTableHighlight(table.tbl_id, rowToHighlight);
-        // to prevent setting it false when dispatch was aborted due to out of bound
-        if (rowToHighlight >= 0 && rowToHighlight < table?.totalRows) hRowChangedByUI.current = false;
+        if (!table.isFetching) {
+            dispatchTableHighlight(table.tbl_id, rowToHighlight);
+            // to prevent setting it false when dispatch was aborted due to out of bound
+            if (rowToHighlight >= 0 && rowToHighlight < table?.totalRows) hRowChangedByUI.current = false;
+        }
     }
 };
 

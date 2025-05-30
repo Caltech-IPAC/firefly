@@ -287,6 +287,7 @@ function initConverterTemplates() {
  * @prop {string} [chartIdList] - an array of table ids that will be used instead of generating a chart id: {description,chartId}
  * @prop {string} [initialLayout] - one of 'single', 'gridRelated', 'gridFull'
  * @prop {boolean} hasRelatedBands
+ * @prop {boolean} datalinkDisableMoreDrop - if true then use only the first this and don't show the more dropdown
  * @prop {string} [dataProductsComponentKey] - this is the key use when calling getComponentState() to get a key,value object.
  *                The values in this object will override one or more parameters to a service descriptor.
  *                The following are used with this prop by service descriptors to build the url to include input from the UI.
