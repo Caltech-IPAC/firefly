@@ -27,7 +27,7 @@ function makeServices() {
         tapEntry('HEASARC', 'HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
         tapEntry('MASTImages', 'MAST Images', 'https://mast.stsci.edu/vo-tap/api/v0.1/caom'),
         tapEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
-        tapEntry('canfar', 'canfar', 'https://ws-uv.canfar.net/youcat'),
+        tapEntry('CANFAR', 'CANFAR', 'https://ws-uv.canfar.net/youcat'),
         // CDS???
         tapEntry('VizieR', 'VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
         tapEntry('Simbad', 'Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),

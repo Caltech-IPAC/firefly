@@ -13,10 +13,18 @@
 - Color Dialog: color lock button more prominent, Hue preserving better integrated, disabled bound checking for data range- Firefly-1740, Firefly-48 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1766))
 - URL API: goto tab: Firefly-1336 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1763))
 
+#### TAP
+- Support for recognizing and querying array ra/dec `xtype==='point'`, `pos.eq;meta.main` columns- Firefly-1763 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760))
+- Added CANFAR TAP service: https://ws-uv.canfar.net/youcat Firefly-1763 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760))
+- Updated the MAST TAP URL: https://mast.stsci.edu/vo-tap/api/v0.1/caom  Firefly-1728 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
+- Improved Scheme and tables navigation-  Firefly-1733 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
+- Server logging, for working issues: A TAP UWS call will now log a synchronous version url - Firefly-1733 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
+
 #### Data Product Viewer Updates 
 - Supports pdf, yaml, json and plain text files - Firefly-1701([PR](https://github.com/Caltech-IPAC/firefly/pull/1741))
 - Better UI with service descriptors and catalogs with service descriptors - Firefly-1730 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1741))
 - Support related grid for more types of image products- Firefly-1743 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1767)) 
+- Charts that are spectra or timeseries are pinned with the table- Firefly-1755 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1777)) 
 
 #### Enhancements to support applications built on Firefly  
 - Improved Dock layout-  IRSA-6898 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1769)) 
