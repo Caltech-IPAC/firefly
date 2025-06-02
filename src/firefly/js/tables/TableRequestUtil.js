@@ -38,7 +38,7 @@ export const META = {
 export function makeTblRequest(id, title, params={}, options={}) {
     title = title ?? id;
     const tbl_id = options.tbl_id || uniqueTblId();
-    var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
+    const META_INFO = cloneDeep({...options.META_INFO, title, tbl_id});
     options = omit(options, 'tbl_id');
     if (params.META_INFO) {     // if META_INFO is provided as params, merge it with the options.META_INFO
         merge(META_INFO, params.META_INFO);
@@ -137,7 +137,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
     const id = 'GatorQuery';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const catalogProject = project;
-    var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
+    const META_INFO = cloneDeep({...options.META_INFO, title, tbl_id});
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
@@ -162,7 +162,7 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = voProviders[params.providerName] || 'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    const META_INFO = {...options.META_INFO, title, tbl_id};
+    const META_INFO = cloneDeep({...options.META_INFO, title, tbl_id});
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
