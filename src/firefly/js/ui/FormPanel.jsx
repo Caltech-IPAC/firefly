@@ -3,14 +3,17 @@
  */
 
 import {Button, Sheet, Stack} from '@mui/joy';
-import React, {useCallback} from 'react';
+import React, {useCallback, useContext} from 'react';
+import {set} from 'lodash';
+
 import {elementType, shape, node, string, func, oneOfType, element, bool, arrayOf} from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {dispatchFormCancel, dispatchFormSubmit} from 'firefly/core/AppDataCntlr.js';
-import {Stacker} from 'firefly/ui/Stacker.jsx';
-import {Slot} from 'firefly/ui/SimpleComponent.jsx';
+import {dispatchFormCancel, dispatchFormSubmit} from '../core/AppDataCntlr.js';
+import {Stacker} from './Stacker.jsx';
+import {Slot} from './SimpleComponent.jsx';
+import {RoutedFormContext} from '../templates/router/RouteHelper';
 
 /*
 onSuccess: This function is invoked when the submit button is pressed and all input fields pass validation.
@@ -26,13 +29,17 @@ onCancel: This function is invoked when the cancel button is pressed.
  */
 export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, cancelText='Cancel', completeText='Search', help_id, disabledDropdownHide, slotProps, children, ...rootProps}) {
 
+    const {submitTo} = useContext(RoutedFormContext);
+
     const doSubmit = ((p, valid) => {
 
         const funcToCall = valid ? onSuccess : onError;
-
+        if (submitTo && !p?.META_INFO?.form_submitTo) {
+            set(p, 'META_INFO.form_submitTo', submitTo);
+        }
         const submitted = funcToCall?.(p) ?? valid;
         if (submitted) {
-            dispatchFormSubmit(p);
+            dispatchFormSubmit({submitTo});
             !disabledDropdownHide && dispatchHideDropDown();
         }
         return submitted;

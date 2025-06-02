@@ -61,6 +61,8 @@ export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additio
         const hips= getServiceHiPS(serviceUrl);
         const adqlClean = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
         const params = {serviceUrl, QUERY: adqlClean};
+        if (request.META_INFO)  params.META_INFO = request.META_INFO;       // pass along META_INFO if it exists
+
         if (isUpload) {
             params.UPLOAD= serverFile;
             params.adqlUploadSelectTable= uploadTableName;

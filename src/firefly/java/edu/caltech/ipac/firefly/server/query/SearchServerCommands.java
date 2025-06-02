@@ -304,7 +304,8 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
-            JobInfo info = JobManager.setMonitored(jobId, false);
+            JobInfo info = JobManager.setMonitored(jobId, false);       // this removes if from the client job list
+            JobManager.removeJob(jobId);        // stop(if needed) and remove from the server
             return JobUtil.toJson(info);
         }
     }

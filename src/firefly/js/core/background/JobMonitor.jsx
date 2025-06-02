@@ -2,12 +2,12 @@ import React, {useEffect} from 'react';
 import {object, string, shape} from 'prop-types';
 import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
-import {isEmpty, uniq} from 'lodash';
+import {isEmpty} from 'lodash';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
 import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
-import {getAppOptions} from '../AppDataCntlr';
+import {dispatchFormSubmit, getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
 import Validate from '../../util/Validate';
@@ -31,6 +31,9 @@ import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import {FormWatcher} from '../../templates/router/RouteHelper';
+
+export const jobMonitorPath = '/jobMonitor';
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const {title, table, note, ...rest} = getAppOptions()?.background?.history || {};
@@ -44,7 +47,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     return(
         <Slot component={Stack} spacing={1} mt={1} sx={{flexGrow:1}} alignItems='center' slotProps={{...props, ...rest}}>
             <Slot component={TitleSection} sx={{width}} slotProps={titleProps}/>
-            <Slot component={JobHistoryTable} sx={{width}} slotProps={tableProps} help_id={help_id}/>
+            <Slot component={JobMonitorTable} sx={{width}} slotProps={tableProps} help_id={help_id}/>
             {note && (width>100) && <Typography sx={{width}} level='body-sm' fontStyle='italic' color='warning'> {note} </Typography>}
         </Slot>
     );
@@ -80,7 +83,7 @@ export function makeBackgroundMonitorMenuItem() {
             </Tab>
         );
     });
-    return { label, TabRenderer, action: 'BackgroundMonitorCmd', primary: true };
+    return { label, TabRenderer, action: 'BackgroundMonitorCmd', primary: true , path: jobMonitorPath};
 }
 
 export function MultiResultsPopup({job, ...props}) {
@@ -177,7 +180,7 @@ function Notification({email='', notifEnabled, ...props}) {
     );
 }
 
-function JobHistoryTable({help_id, ...props}) {
+function JobMonitorTable({help_id, ...props}) {
     const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
 
     const tbl_id = 'JobHistoryTable';
@@ -291,8 +294,19 @@ function NotifBtn ({jobId, enable}) {
 function Results({job}) {
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
-        const onClick = showResults(job?.meta?.jobId);
-        return <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
+        const request = getRequestFromJob(job?.meta?.jobId);  // the request is initiated from Firefly
+        const submitTo = request?.META_INFO?.form_submitTo;
+        const onClick = showResults(request, submitTo);
+        const icon = <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
+        if (submitTo) {
+            return (
+                <FormWatcher submitTo={submitTo}>
+                    {icon}
+                </FormWatcher>
+            );
+        } else {
+            return icon;
+        }
     } else if (job?.results?.length === 1) {
         return <DownloadBtn job={job}/>;
     } else {
@@ -357,13 +371,13 @@ function defaultRequest(doFilter) {
     return {sortInfo, filters};
 }
 
-function showResults(jobId) {
+function showResults(request, submitTo) {
     // assuming job returns a table;  will expand to other types in the future
-    const request = getRequestFromJob(jobId);  // the request is initiated from Firefly
     if (!isEmpty(request)) {
         return () => {
             dispatchTableSearch(request);
             showJobMonitor(false);
+            if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
         };
     }
 }

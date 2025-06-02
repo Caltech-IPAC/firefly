@@ -110,7 +110,7 @@ public class JobUtil {
                 Document doc = parse(r.getResponseBodyAsStream());
                 jobList.set(convertToJobList(doc, url));
             }).getOrElse(e -> {
-                throw new UnsupportedOperationException(e.getMessage());
+                LOG.error("Failed to import job histories from %s: %s".formatted(url, e.getMessage()));
             });
            return HttpServices.Status.ok();
         });
