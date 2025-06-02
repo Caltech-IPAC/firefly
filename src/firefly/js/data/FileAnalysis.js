@@ -97,10 +97,11 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  * @public
  * @typedef {Object} ChartInfo
  *
- * @prop {string} xAxis
- * @prop {string} yAxis
- * @prop {Array.<FileAnalysisChartParams>} chartParamsAry
+ * @prop {string} [xAxis]
+ * @prop {string} [yAxis]
+ * @prop {Array.<FileAnalysisChartParams>} [chartParamsAry]
  * @prop {boolean} useChartChooser
+ * @prop {String} [tableDataType]
  * @props {Array.<string>} [cUnits]
  * @props {Array.<string>} [cNames]
  *

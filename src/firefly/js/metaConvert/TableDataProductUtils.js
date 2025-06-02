@@ -17,7 +17,6 @@ import {
 } from '../tables/TablesCntlr';
 import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
-import {isDefined} from '../util/WebUtil';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
     getObsCoreAccessURL, getObsCoreSRegion, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
@@ -29,8 +28,11 @@ import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer';
 import {pinChart} from 'firefly/charts/ui/PinnedChartContainer';
 
 
-export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
-    return createChartTableActivate({source, titleInfo:titleStr, activateParams,tbl_index, dataTypeHint});
+export function createTableActivate(source, titleInfo, activateParams, contentType= '', tbl_index=0) {
+    const tableDataType= contentType?.toLowerCase()===TableDataType.Spectrum.toLowerCase()?TableDataType.Spectrum:undefined;
+    return createChartTableActivate({ source, titleInfo, activateParams, tbl_index,
+        chartInfo:{useChartChooser:true, tableDataType},
+    });
 }
 
 const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d}` : d,'');
@@ -43,20 +45,7 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  */
 
 
-/**
- * @global
- * @public
- * @typedef {Object} chartInfo
- *
- *
- * @prop {string} xAxis
- * @prop {string} yAxis
- * @prop {ChartParams} chartParams
- *
- */
-
 const loadedTablesIds= new Map();
-const tblIdLastHighlightedRow= new Map();
 
 function isTableChartNormalViewAction(payload, type) {
     const {mode, view, tbl_id} = payload;
@@ -100,12 +89,6 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, imageAsTableInfo
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
-    if (tbl_id && dataTypeHint) {
-        const table= getTblById(tbl_id);
-        const foundRow= table?.highlightedRow ?? tblIdLastHighlightedRow.get(tbl_id);
-        if (isDefined(foundRow)) dataTableReq.META_OPTIONS= {[MetaConst.HIGHLIGHTED_ROW]: foundRow};
-        if (table?.highlightedRow) tblIdLastHighlightedRow.set(tbl_id,foundRow);
-    }
 
     return dataTableReq;
 }
@@ -156,7 +139,7 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
  * @param cubePlane
  * @param [dataTypeHint]
  */
-export function createTableExtraction(source,titleInfo,tbl_index=0,imageAsTableInfo,cubePlane=0,dataTypeHint) {
+export function createTableExtraction(source,titleInfo,tbl_index=0,imageAsTableInfo,cubePlane=0,dataTypeHint='') {
     return () => {
         const dataTableReq= makeTableRequest(source,titleInfo,undefined,tbl_index,imageAsTableInfo,cubePlane,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
@@ -209,6 +192,19 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
 }
 
 
+function makeTableCleanupFunc(tbl_id) {
+    return () => {
+        const tableInfo= loadedTablesIds.get(tbl_id);
+        if (tableInfo.doCleanup) {
+            tableInfo.cleanupFunc();
+            loadedTablesIds.delete(tbl_id);
+        }
+        else if (tableInfo.deferCleanup) {
+            tableInfo.doCleanup= true;
+        }
+    };
+}
+
 
 /**
  * Activate a chart and table
@@ -220,21 +216,28 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
  * @param {ChartInfo} [p.chartInfo]
  * @param {Number} p.tbl_index
  * @param {ImageAsTableInfo} [p.imageAsTableInfo]
- * @param {boolean} [p.unloadTable]
- * @param {String|undefined} [p.dataTypeHint]  stuff like 'spectrum', 'image', 'cube', etc
  * @param {String|undefined} [p.chartId]
  * @param {String} [p.tbl_id]
  * @param {String} [p.statefulTabComponentKey]
  * @return {function} the activate function
  */
-export function createChartTableActivate({chartAndTable=false,
-                                             source, titleInfo, activateParams, chartInfo={},
-                                         tbl_index=0, dataTypeHint='', imageAsTableInfo, statefulTabComponentKey,
+export function createChartTableActivate({chartAndTable=false, source, titleInfo, activateParams, chartInfo={},
+                                         tbl_index=0, imageAsTableInfo, statefulTabComponentKey,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl'}) {
+
+
     return () => {
+        const dataTypeHint= chartInfo?.tableDataType ?? '';
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
         const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,imageAsTableInfo,0,dataTypeHint, false);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
+
+        const tableInfo= loadedTablesIds.get(tbl_id);
+        if (tableInfo && source===tableInfo.source) {
+            tableInfo.deferCleanup=true;
+            return makeTableCleanupFunc(tbl_id);
+        }
+
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
             const allChartIds= chartAndTable ? dispatchCharts.map( (c) => c.chartId) : [];
@@ -245,36 +248,27 @@ export function createChartTableActivate({chartAndTable=false,
                 callback: ({payload,type}) => {
                     const tableInfo= loadedTablesIds.get(tbl_id);
                     if (isTableChartNormalViewAction(payload,type) && loadedTablesIds.has(tbl_id)) {
-                        tableInfo.defereCleanup=true;
+                        tableInfo.deferCleanup=true;
                     } else if (type === CHART_UI_EXPANDED && allChartIds?.includes(payload.chartId)) {
                         tableInfo.doCleanup=false;
-                        tableInfo.defereCleanup=false;
+                        tableInfo.deferCleanup=false;
                     } else if (type === TBL_UI_EXPANDED && payload.tbl_id === tbl_id) {
                         tableInfo.doCleanup=false;
-                        tableInfo.defereCleanup=false;
+                        tableInfo.deferCleanup=false;
                     } else if (type === ComponentCntlr.COMPONENT_STATE_CHANGE && payload.componentId===statefulTabComponentKey) {
                         tableInfo.doCleanup=false;
-                        tableInfo.defereCleanup=false;
+                        tableInfo.deferCleanup=false;
                     }
                 }
             });
 
             const {tableGroupViewerId}= activateParams;
             const cleanupFunc= loadTableAndCharts(dataTableReq,tbl_id,tableGroupViewerId,dispatchCharts, noopId);
-            loadedTablesIds.set(tbl_id, {request:dataTableReq, doCleanup:true, deferCleanup:false, cleanupFunc});
+            loadedTablesIds.set(tbl_id, {request:dataTableReq, source,
+                doCleanup:true, deferCleanup:false, cleanupFunc});
         }
 
-        return () => {
-            const tableInfo= loadedTablesIds.get(tbl_id);
-            if (tableInfo.doCleanup) {
-                if (getTblById(tbl_id)?.highlightedRow) tblIdLastHighlightedRow.set(tbl_id,getTblById(tbl_id)?.highlightedRow);
-                tableInfo.cleanupFunc();
-                loadedTablesIds.delete(tbl_id);
-            }
-            else if (tableInfo.defereCleanup) {
-                tableInfo.doCleanup= true;
-            }
-        };
+        return makeTableCleanupFunc(tbl_id);
     };
 }
 

@@ -324,10 +324,8 @@ function makeChartTableResult({part, source, chartTableDefOption, ddTitleStr, ti
     if (!imageAsTableInfo?.cubePlanes) {
         const extraction = createTableExtraction(source, titleInfo, tbl_index, imageAsTableInfo, 0, tableDataType);
         const activate = createChartTableActivate({
-            chartAndTable: true, source, titleInfo, activateParams, chartInfo,
-            tbl_index, dataTypeHint: tableDataType,
-            imageAsTableInfo, tbl_id, chartId, statefulTabComponentKey
-        });
+            chartAndTable: true, source, titleInfo, activateParams, chartInfo, tbl_index,
+            imageAsTableInfo, tbl_id, chartId, statefulTabComponentKey });
         return dpdtChartTable(ddTitleStr, activate, extraction, undefined,
             {extractionText, paIdx: tbl_index, chartTableDefOption, interpretedData, dropDownText});
     } else {
@@ -353,9 +351,9 @@ function makeTableOnlyResult({ddTitleStr,tbl_id,source,titleInfo,tbl_index,image
     const {cubePlanes=0}= imageAsTableInfo;
     const extractionText = 'Pin Table';
     if (cubePlanes===0) {
-        const extraction= createTableExtraction(source,titleInfo,tbl_index, imageAsTableInfo, 0, '');
-        const activate= createChartTableActivate({source,titleInfo,activateParams, tbl_index, imageAsTableInfo,
-            tbl_id, statefulTabComponentKey});
+        const extraction= createTableExtraction(source,titleInfo,tbl_index, imageAsTableInfo, 0);
+        const activate= createChartTableActivate({source, titleInfo,activateParams,
+            tbl_index, imageAsTableInfo, tbl_id, statefulTabComponentKey});
         return dpdtTable(ddTitleStr, activate, extraction, undefined,
             {extractionText, paIdx:tbl_index,dropDownText});
     }
@@ -384,7 +382,6 @@ function getCubeTableChartParams({i,titleInfo,dropDownText,source, tbl_index,ima
     const activateObj= {source, titleInfo:title, activateParams, tbl_index, cubePlane:i, imageAsTableInfo, tbl_id};
     if (chartInfo.hasChart) {
         activateObj.chartAndTable= true;
-        activateObj.dataTypeHint= tableDataType;
         activateObj.chartInfo= chartInfo;
         activateObj.chartId= chartId;
     }

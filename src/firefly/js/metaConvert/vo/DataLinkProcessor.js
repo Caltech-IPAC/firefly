@@ -157,11 +157,11 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             activateParams,
             dataTypeHint: TableDataType.Spectrum,
             tbl_id,
-            chartInfo:{useChartChooser:true, showChartTitle:true},
+            chartInfo:{useChartChooser:true, showChartTitle:true, tableDataType:TableDataType.Spectrum},
             chartId,
             statefulTabComponentKey: options.statefulTabComponentKey
         });
-        const extract= createTableExtraction(url,description,0);
+        const extract= createTableExtraction(url,description,0,undefined,undefined,TableDataType.Spectrum);
         return dpdtChartTable(description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
     }
     else if (isAnalysisType(contentType)) {
@@ -499,7 +499,7 @@ function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
  * @param table
  * @param row
  * @param size
- * @param dlData
+ * @param [dlData]
  * @return {DataProductsDisplayType}
  */
 export function createGuessDataType(name, menuKey, url,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
