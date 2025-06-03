@@ -374,12 +374,12 @@ const StandardCutoutControls= ({cutoutTypeFieldKey, cutoutCenterWP, cutoutType,o
         }}/>
         {cutoutType===SEARCH_POSITION &&
             <Typography color='warning'  level='body-sm'>
-                Warning: If search position is not on the source image then the cutout will use row position
+                Warning: If search position is not on the source image, then the cutout will use row position.
             </Typography>
         }
         {cutoutType!==USER_ENTERED_POSITION &&
             <Typography level='body-sm'>
-                You may also click on the image to change position
+                You may also click on the image to change position.
             </Typography>
         }
         <OptionalTarget cutoutCenterWP={cutoutCenterWP}

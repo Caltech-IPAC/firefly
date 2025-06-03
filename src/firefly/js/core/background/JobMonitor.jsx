@@ -242,7 +242,7 @@ function ControlRenderer({cellInfo}) {
 
 function Delete({job}) {
     const doDelete = () => {
-        showYesNoPopup('Are you sure that you want to delete this Job?',(id, yes) => {
+        showYesNoPopup('Are you sure that you want to delete this job?',(id, yes) => {
             if (yes) dispatchJobRemove(job?.meta?.jobId);
             dispatchHideDialog(id);
         });
