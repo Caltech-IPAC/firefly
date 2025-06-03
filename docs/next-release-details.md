@@ -25,6 +25,7 @@
 - Better UI with service descriptors and catalogs with service descriptors - Firefly-1730 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1741))
 - Support related grid for more types of image products- Firefly-1743 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1767)) 
 - Charts that are spectra or timeseries are pinned with the table- Firefly-1755 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1777)) 
+- Tables keep state when switching to another tab- Firefly-1772 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1785)) 
 
 #### Enhancements to support applications built on Firefly  
 - Improved Dock layout-  IRSA-6898 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1769)) 
