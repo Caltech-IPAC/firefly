@@ -382,6 +382,17 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         }
         const s = await result.text();
         const hipsProperties = parseProperties(s);
+
+        const someMocs= getDrawLayersByType(dlRoot(),HiPSMOC.TYPE_ID);
+        if (!blank && someMocs?.length) { //start moc retrieval but don't wait
+            void createHiPSMocLayer({
+                ivoid: getPropertyItem(hipsProperties, 'ivoid'),
+                title: getPropertyItem(hipsProperties, 'obs_title'),
+                hipsUrl: resolvedHipsRootUrl,
+                plot
+            });
+        }
+
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,
