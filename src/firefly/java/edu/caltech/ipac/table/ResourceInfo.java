@@ -53,6 +53,19 @@ public class ResourceInfo implements Serializable, Cloneable {
 
     public Map<String, String> getInfos() { return infos; }
     public void setInfos(Map<String, String> infos) { this.infos = infos; }
+
+    public ResourceInfo copyOf() {
+        ResourceInfo copy = new ResourceInfo();
+        copy.setID(this.ID);
+        copy.setName(this.name);
+        copy.setType(this.type);
+        copy.setUtype(this.utype);
+        copy.setDesc(this.desc);
+        copy.setGroups(new ArrayList<>(this.groups));
+        copy.setParams(new ArrayList<>(this.params));
+        copy.setInfos(new HashMap<>(this.infos));
+        return copy;
+    }
 }
 
 
