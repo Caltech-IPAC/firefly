@@ -13,9 +13,13 @@ import {ChartType, TableDataType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {
-    dispatchActiveTableChanged, dispatchTableRemove, dispatchTableSearch, TBL_RESULTS_ACTIVE, TBL_UI_EXPANDED
+    dispatchActiveTableChanged,
+    dispatchTableRemove,
+    dispatchTableSearch,
+    TBL_RESULTS_ACTIVE,
+    TBL_UI_EXPANDED
 } from '../tables/TablesCntlr';
-import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
+import {getActiveTableId, getMetaEntry, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
@@ -181,14 +185,18 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     const sRegion= getObsCoreSRegion(table,row);
     const rowWP=  makeWorldPtUsingCenterColumns(table, row);
 
-
     const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,true);
     if (positionWP) dataTableReq.META_INFO[MetaConst.SEARCH_TARGET]= positionWP.toString();
     if (sRegion) dataTableReq.META_INFO[MetaConst.S_REGION]= sRegion;
     if (rowWP) dataTableReq.META_INFO[MetaConst.ROW_TARGET]= rowWP.toString();
 
     dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
-    showPinMessage('Pinning to Table Area');
+
+    //return promise to let caller handle UI updates
+    return onTableLoaded(dataTableReq.tbl_id).then(() => ({
+        tbl_id: dataTableReq.tbl_id,
+        serviceId: getMetaEntry(table.tbl_id, MetaConst.DATA_SERVICE_ID) //use service id as the viewer id for MultiProductViewer
+    }));
 }
 
 

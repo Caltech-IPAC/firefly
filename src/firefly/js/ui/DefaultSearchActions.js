@@ -3,13 +3,11 @@ import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
-import {
-    getActiveTableId, getAllColumns, getMetaEntry, getTableUiByTblId, getTblById, getTblRowAsObj, makeFileRequest,
-    onTableLoaded
+import {getActiveTableId, getTableUiByTblId, getTblById, getTblRowAsObj, makeFileRequest, onTableLoaded
 } from '../api/ApiUtilTable.jsx';
 import {extractDatalinkTable} from '../metaConvert/TableDataProductUtils';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
-import {dispatchTableSearch, dispatchTableUpdate} from '../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchTableUiUpdate, dispatchTableUpdate} from '../tables/TablesCntlr.js';
 import {tokenSub} from '../util/WebUtil';
 import { findTableCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
@@ -18,8 +16,10 @@ import {getServiceDescriptors, isDataLinkServiceDesc} from '../voAnalyzer/VoData
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
-import {showInfoPopup} from 'firefly/ui/PopupUtil';
+import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil';
 import {getDataServiceOptionByTable} from './tap/DataServicesOptions';
+import {PrepareDownload} from 'firefly/templates/common/ttFeatureWatchers';
+import React from 'react';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -261,12 +261,23 @@ function searchNed(cenWpt,radius) {
     dispatchTableSearch(request);
 }
 
-function showDatalinkTable() {
-    const table= getTblById(getActiveTableId());
+
+async function showDatalinkTable() {
+    const table = getTblById(getActiveTableId());
     if (!table) return;
-    const row= table.highlightedRow;
-    extractDatalinkTable(table,row,table.title + `: Products row ${row+1}`); //row+1 for better UX for user (since row is 0 based)
+    const row = table.highlightedRow;
+
+    const result = await extractDatalinkTable(table, row, `${table.title}: Products row ${row + 1}`); //row+1 for better UX for user (since row is 0 based)
+
+    if (!result) return;
+    const {tbl_id, serviceId} = result;
+
+    const {tbl_ui_id, leftButtons = []} = getTableUiByTblId(tbl_id) ?? {};
+    leftButtons.unshift(() => <PrepareDownload tbl_id={tbl_id} viewerId={serviceId} downloadType={'script'} dataSource={serviceId}/>);
+    dispatchTableUiUpdate({ tbl_ui_id, leftButtons });
+    showPinMessage('Pinning to Table Area');
 }
+
 
 function canShowDatalinkTable(table) {
     const isObsCore= isObsCoreLike(table) && isFormatDataLink(table,table.highlightedRow);
