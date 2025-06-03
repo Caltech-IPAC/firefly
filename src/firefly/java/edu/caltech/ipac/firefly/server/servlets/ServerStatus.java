@@ -270,7 +270,7 @@ public class ServerStatus extends BaseHttpServlet {
             File [] matchFiles= FileUtil.listFilesWithExtension(sharedDir, ACCESS_TEST_EXT);
             if (matchFiles.length==0) return;
             int maxLen= 5;
-            Arrays.sort(matchFiles, (f1,f2) -> (int)(f2.lastModified()-f1.lastModified()));
+            Arrays.sort(matchFiles, (f1,f2) -> (int)(f1.lastModified()-f2.lastModified()));
             w.println("              Most recent host using the shared working directory:");
             int len= Math.min(maxLen,matchFiles.length);
             for(int i=0; (i<len); i++) {
@@ -278,6 +278,7 @@ public class ServerStatus extends BaseHttpServlet {
                 String hostname= f.getName().substring(0,f.getName().length()- ACCESS_TEST_EXT.length()-1);
                 String detailStr= hostname.equals(FileUtil.getHostname()) ? "(self) " : "";
                 if (isDocker(hostname)) detailStr+= "(probably Docker)";
+                if (isK8S(hostname)) detailStr+= "(probably in container)";
                 w.println(String.format( "%19s%-20s  --  %s %s",
                         "- ", hostname, new Date(f.lastModified()).toString(), detailStr ));
             }
@@ -292,6 +293,10 @@ public class ServerStatus extends BaseHttpServlet {
         } catch (NumberFormatException ignored) {
             return false;
         }
+    }
+
+    private static boolean isK8S(String hostname) {
+        return (hostname!=null && hostname.contains("-") && !hostname.contains("."));
     }
 
     private static void showEventsStatus(PrintWriter w) {
