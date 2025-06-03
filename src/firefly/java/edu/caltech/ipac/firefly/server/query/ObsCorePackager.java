@@ -87,6 +87,9 @@ public class ObsCorePackager extends FileGroupsProcessor {
         List<FileInfo> fileInfos = new ArrayList<>();
         try {
             var selectedRows = new ArrayList<>(request.getSelectedRows());
+            //request.getSearchRequest() - .getParam("source") -> this could be the url for datalink...if it contains links / is a datalink url, call parseDatalink
+            //todo: but might have to loop through the selectedRows still and call parseDatalink for each selected row ? like we do below ?
+            //todo: just that the url to pass will come directly from source above instead of from access_url below...
             MappedData dgDataUrl = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows); //returns all columns
             DataGroup dg = getSelectedData(request.getSearchRequest(), selectedRows);
             Map<String, Integer> prefixCounter = new HashMap<>();

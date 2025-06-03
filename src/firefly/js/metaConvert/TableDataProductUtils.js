@@ -13,9 +13,14 @@ import {ChartType, TableDataType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {
-    dispatchActiveTableChanged, dispatchTableRemove, dispatchTableSearch, TBL_RESULTS_ACTIVE, TBL_UI_EXPANDED
+    dispatchActiveTableChanged,
+    dispatchTableRemove,
+    dispatchTableSearch,
+    dispatchTableUiUpdate,
+    TBL_RESULTS_ACTIVE,
+    TBL_UI_EXPANDED
 } from '../tables/TablesCntlr';
-import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
+import {getActiveTableId, getTableUiByTblId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
@@ -26,6 +31,8 @@ import {makeDlUrl} from './vo/DatalinkProducts';
 import {findDataLinkServeDescs} from './vo/ServDescConverter';
 import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer';
 import {pinChart} from 'firefly/charts/ui/PinnedChartContainer';
+import React from "react";
+import {PrepareDownload} from "firefly/templates/common/ttFeatureWatchers";
 
 
 export function createTableActivate(source, titleInfo, activateParams, contentType= '', tbl_index=0) {
@@ -188,6 +195,14 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     if (rowWP) dataTableReq.META_INFO[MetaConst.ROW_TARGET]= rowWP.toString();
 
     dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
+
+    //todo: this is new code up until showPinMessage (but that was there before)
+    console.log('dataTableReq: ', dataTableReq);
+    onTableLoaded(dataTableReq.tbl_id).then( () => {
+        const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(dataTableReq.tbl_id) ?? {} ;
+        leftButtons.unshift(() => <PrepareDownload/>);
+        dispatchTableUiUpdate({ tbl_ui_id, leftButtons});
+    });
     showPinMessage('Pinning to Table Area');
 }
 
