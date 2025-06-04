@@ -548,7 +548,7 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
                     <Typography level='body-md' >
                         {op.value}
                     </Typography>
-                    {op.rows &&
+                    {Boolean(op.rows) &&
                         <>
                             <Typography level='body-sm'> {`(${rowDesc}:`} </Typography>
                             <Typography level='body-sm' color='warning'> {`${op.rows})`} </Typography>
