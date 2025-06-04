@@ -1,5 +1,5 @@
-import {Stack, Typography, Box} from '@mui/joy';
-import React from 'react';
+import {Stack, Typography} from '@mui/joy';
+import React, {useState} from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {FileAnalysisType, Format} from '../data/FileAnalysis.js';
@@ -19,9 +19,10 @@ import {ServerParams} from 'firefly/data/ServerParams';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import {MetaConst} from 'firefly/data/MetaConst';
-import {makeFileRequest} from 'firefly/api/ApiUtilTable';
+import {cloneRequest, makeFileRequest} from 'firefly/api/ApiUtilTable';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 import {determineValidity, fileAnalysisErr} from 'firefly/ui/FileUploadProcessor';
+import {LoadingMessage} from 'firefly/visualize/ui/FileUploadViewPanel';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -110,18 +111,21 @@ function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
  * @param request
  * @param setUploadInfo
  * @param {DefaultColsEnabled} defaultColsEnabled
+ * @param setLoading
  * @returns {boolean}
  */
-function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
+function existingTableSubmit(request,setUploadInfo,defaultColsEnabled,setLoading) {
     if (!request) return false;
+    setLoading(true);
     const tbl = getTblById('existing-table-list-ui');
     const idx = tbl.highlightedRow;
     const activeTblId = tbl.tableData.data[idx][3]; //tbl_id
     const activeTbl = getTableUiByTblId(activeTblId);
-    const tableRequest = activeTbl.request;
     const columnData = activeTbl.columns;
     const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true})); //filter out hidden cols
     const columnsSelected = applyDefColumnSelection(columns,defaultColsEnabled);
+
+    const tableRequest = cloneRequest(activeTbl.request, {pageSize : 2147483647});
 
     const params ={
         [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
@@ -132,10 +136,13 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
     };
 
     doJsonRequest(ServerParams.TABLE_SAVE, params).then((result) => {
+        setLoading(false);
+
         if (!result.success) {
             showInfoPopup('Error loading this table', result.error);
             return false;
         }
+
         const uploadInfo = {
             serverFile: result?.serverFile ?? null,
             title: tableRequest?.META_INFO?.title,
@@ -204,7 +211,7 @@ const NoTables = () => {
 };
 
 const LoadedTables= (props) => {
-    const {onSubmit, onCancel=dispatchHideDropDown, keepState=true, groupKey} = props;
+    const {onSubmit, onCancel=dispatchHideDropDown, keepState=true, groupKey, isLoading} = props;
     const tables = getTableGroup()?.tables ?? null;
     if (!tables) {
         return <NoTables/>;
@@ -238,6 +245,7 @@ const LoadedTables= (props) => {
                 <FormPanel onSuccess={onSubmit} onCancel={onCancel} completeText='Load Table'>
                     <TablePanel tbl_id={tbl_id+'-ui'} tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} border={false} showTypes={false}
                                 showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
+                    {isLoading && <LoadingMessage/>}
                 </FormPanel>
             </FieldGroup>
         </Stack>);
@@ -268,6 +276,7 @@ export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',d
 }
 
 const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
+    const [isLoading, setLoading]= useState(false);
     return (
         <Stack height='35rem' sx={{resize:'both', overflow:'hidden',minHeight:'35rem', minWidth:'40rem'}}>
             <FieldGroup groupKey={groupKey} sx={{ flexGrow: 1}}>
@@ -287,9 +296,9 @@ const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEna
                         </Tab>
                         <Tab name='Loaded Tables' id='tableLoad' sx={{fontSize:'larger'}}>
                                 <LoadedTables {...{
-                                    keepState: true, groupKey:groupKey+'-tableLoad',
+                                    keepState: true, groupKey:groupKey+'-tableLoad',isLoading,
                                     onCancel:() => dispatchHideDialog(dialogId),
-                                    onSubmit:(request) => existingTableSubmit(request,setUploadInfo,defaultColsEnabledObj)
+                                    onSubmit:(request) => existingTableSubmit(request,setUploadInfo,defaultColsEnabledObj,setLoading)
                                 }}/>
                         </Tab>
                     </FieldGroupTabs>

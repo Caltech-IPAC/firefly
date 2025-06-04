@@ -244,7 +244,7 @@ export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, sx, childre
     );
 }
 
-const LoadingMessage= ({message}) => (
+export const LoadingMessage= ({message}) => (
     <div style={{
         position: 'absolute',
         zIndex:20,
