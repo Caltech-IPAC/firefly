@@ -1021,3 +1021,4 @@ export function createBackgroundRunner({
     } );
 }
 
+export const varStr = (str) => '${' + str + '}';
