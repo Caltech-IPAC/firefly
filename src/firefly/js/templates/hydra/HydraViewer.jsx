@@ -32,7 +32,7 @@ import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout';
-import {hexColorWithAlpha} from 'firefly/util/Color';
+import {joyVarColorWithAlpha} from 'firefly/util/Color';
 
 
 /*
@@ -187,7 +187,7 @@ const defaultPropsWithBgImage = ({bgImage}) => ({
             const darkPalette = theme.colorSchemes.dark.palette;
             return {
                 maxWidth: '56rem', m: 'auto',
-                backgroundColor: hexColorWithAlpha(darkPalette.background.surface.split(', ')?.[1]?.slice(0, -1) ?? '#000', 0.6),
+                backgroundColor: joyVarColorWithAlpha(darkPalette.background.surface, 0.6),
                 backdropFilter: 'blur(1px)',
                 '.MuiTypography-body-md, .MuiTypography-body-lg': { color: darkPalette.text.secondary },
                 '.MuiTypography-h2': { color: darkPalette.text.primary },
