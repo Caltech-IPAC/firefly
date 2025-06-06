@@ -32,6 +32,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import {FormWatcher} from '../../templates/router/RouteHelper';
+import {APP_HINT_IDS, appHintAnchorClassName} from 'firefly/templates/fireflyviewer/LandingPage';
 
 export const jobMonitorPath = '/jobMonitor';
 
@@ -77,7 +78,7 @@ export function makeBackgroundMonitorMenuItem() {
         const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
         const loading = Object.values(jobs).some((j) => isExecuting(j));
         return (
-            <Tab ref={ref} {...props}>
+            <Tab ref={ref} className={appHintAnchorClassName(APP_HINT_IDS.BG_MONITOR)} {...props}>
                 {loading && <ListItemDecorator>{workingIndicator}</ListItemDecorator>}
                 {label}
             </Tab>

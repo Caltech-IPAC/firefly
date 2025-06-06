@@ -1,5 +1,5 @@
 import {Box, Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
-import React, {useContext, useState} from 'react';
+import React, {useContext, useLayoutEffect, useRef, useState} from 'react';
 import {elementType, shape, object, string, arrayOf, oneOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
 import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
@@ -16,14 +16,20 @@ export const APP_HINT_IDS = {
     BG_MONITOR: 'bgMonitor'
 };
 
+export const HINT_TIP_PLACEMENTS = {
+    START: 'start',
+    MIDDLE: 'middle',
+    END: 'end'
+};
+
 
 export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
     const defSlotProps = {
-        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.', sx: { left: '16rem' }},
-        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
+        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.'},
+        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: HINT_TIP_PLACEMENTS.START},
         topSection: { title: `Welcome to ${appTitle}` },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
@@ -121,8 +127,39 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems, slotProps}
 // An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference
 export const appHintPrefName = (appTitle, hintId) => `showAppHint__${appTitle}--${hintId}`;
 
-function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
+/**Classname to identify the anchor (generally a Menu Tab) relative to which AppHint is positioned.**/
+export const appHintAnchorClassName = (hintId) => `ff-AppHintAnchor-${hintId}`;
+
+function AppHint({appTitle, id, hintText, tipPlacement=HINT_TIP_PLACEMENTS.MIDDLE, sx={}}) {
     const showAppHint = useStoreConnector(() => getPreference(appHintPrefName(appTitle, id), true));
+    const appHintRef = useRef();
+
+    // AppHint is rendered inside LandingPage, so we cannot yet compute top/bottom from the anchor element but only left/right
+    const [anchorRelativePosSx, setAnchorRelativePosSx] = useState({});
+    useLayoutEffect(() => {
+        const timeout = setTimeout(() => {
+            const anchorEl = document.querySelector(`.${appHintAnchorClassName(id)}`);
+            if (anchorEl) {
+                const anchorRect = anchorEl.getBoundingClientRect();
+                const appHintRect = appHintRef.current?.getBoundingClientRect() ?? {width: 0};
+                const posSx = {left: 'auto', right: 'auto'};
+                switch (tipPlacement) {
+                    case HINT_TIP_PLACEMENTS.START:
+                        posSx.left = anchorRect.left;
+                        break;
+                    case HINT_TIP_PLACEMENTS.END:
+                        posSx.right = `calc(100vw - ${anchorRect.right}px)`;
+                        break;
+                    case HINT_TIP_PLACEMENTS.MIDDLE:
+                    default:
+                        posSx.left = anchorRect.left + (anchorRect.width/2) - (appHintRect.width/2); // to center the hint
+                        break;
+                }
+                setAnchorRelativePosSx(posSx);
+                //TODO: change timeout to refs or mounted state flag if possible
+        }}, id===APP_HINT_IDS.TABS_MENU ? 10 : 0);
+        return () => clearTimeout(timeout);
+    }, [id]);
 
     const arrowTip = {
         '&::before': {
@@ -133,23 +170,24 @@ function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
             transform: 'rotate(-45deg)',
             position: 'absolute',
             top: '-0.5rem',
-            left: 'calc(50% - 0.5rem)',
-            ...tipPlacement==='start' && {left: 'var(--Snackbar-padding)'},
-            ...tipPlacement==='end' && {left: 'auto', right: 'var(--Snackbar-padding)'}
+            left: 'calc(50% - 0.5rem)', //tipPlacement===HINT_TIP_PLACEMENTS.MIDDLE
+            ...tipPlacement===HINT_TIP_PLACEMENTS.START && {left: 'var(--Snackbar-padding)'},
+            ...tipPlacement===HINT_TIP_PLACEMENTS.END && {left: 'auto', right: 'var(--Snackbar-padding)'}
         }
     };
 
-    // to undo positioning controlled by anchorOrigin prop of Snackbar, and to place it directly below Banner
-    const positioningSx = {
+    // to undo positioning controlled by anchorOrigin prop of Snackbar, and to place it directly below MenuTabBar
+    const defaultPositionSx = {
         position: 'absolute',
-        top: '0.75rem',
+        top: '0.75rem', // to create space for the arrow tip (with height: sqrt(2) * 1 rem / 2)
+        bottom: 'auto',
         left: 'auto',
         right: 'auto',
-        bottom: 'auto'
     };
 
     return (
         <Snackbar open={Boolean(showAppHint)}
+                  ref={appHintRef}
                   size='lg'
                   variant='solid' //to make it look different from alerts
                   color='primary'
@@ -159,7 +197,7 @@ function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
                       if (reason==='clickaway' && e?.target?.closest('.MuiSnackbar-root')) return;
                       dispatchAddPreference(appHintPrefName(appTitle, id), false);
                   }}
-                  sx={{...positioningSx, ...sx, ...arrowTip}}
+                  sx={{...defaultPositionSx, ...anchorRelativePosSx, ...sx, ...arrowTip}}
                   startDecorator={<TipsAndUpdates/>}
                   endDecorator={
                       <Button

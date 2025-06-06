@@ -23,6 +23,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {logout} from 'firefly/rpc/CoreServices';
 import {useColorMode} from 'firefly/ui/FireflyRoot.jsx';
+import {APP_HINT_IDS, appHintAnchorClassName} from 'firefly/templates/fireflyviewer/LandingPage';
 
 const UploadCmd= 'FileUploadDropDownCmd';
 const TapCmd= 'TAPSearch';
@@ -198,6 +199,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
             .map(({action,label,TabRenderer,title}, idx) =>
             {
                 const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
+                    ...(idx===0 && {className: appHintAnchorClassName(APP_HINT_IDS.TABS_MENU)}),
                     ref: (c) => setElement(idx+'',c),
                     sx: (theme) => ({ ...setupTabCss(theme,size) })
                 };
