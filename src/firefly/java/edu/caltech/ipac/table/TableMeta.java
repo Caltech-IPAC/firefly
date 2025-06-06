@@ -70,6 +70,8 @@ public class TableMeta implements Serializable {
     public static final String XTYPE = "xtype";
     public static final String DESC = "description";
     public static final String NAME = "name";
+    public static final String TYPE = "type";
+    public static final String VALUE = "value";
     public static final String DERIVED_FROM = "DERIVED_FROM";
 
     public static final String DOCLINK = "doclink.url";

@@ -75,12 +75,12 @@ public class DataGroupStarTable extends RandomStarTable {
 //====================================================================
 
     private static ColumnInfo convertToColumnInfo(DataType dt, Object data) {
-        Class dType = data != null ? data.getClass() : dt.getDataType();
+        Class dClz = data != null ? data.getClass() : dt.getDataType();
 
         // name, datatype, <DESCRIPTION>
         String desc = dt.getDesc();
         String cname = getAliasName(dt);
-        ColumnInfo col = new ColumnInfo(cname, dType, desc);
+        ColumnInfo col = new ColumnInfo(cname, dClz, desc);
         // LINK child
         List<LinkInfo> links = dt.getLinkInfos();
         if (links.size() > 0 && !isEmpty(links.get(0).getHref())) {
@@ -110,7 +110,7 @@ public class DataGroupStarTable extends RandomStarTable {
         // utype
         applyIfNotEmpty(dt.getUType(), col::setUtype);
 
-        if (dType == Integer.class) {
+        if (dt.isWholeNumber()) {       // Firefly allows all value types to be nullable; to avoid have null=val in the field, we set nullable to false
             col.setNullable(false);
         }
 

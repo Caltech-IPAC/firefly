@@ -229,7 +229,6 @@ public class VoTableReader {
                 HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
                 voTablePath = tmpFile.getPath();
             } catch (Exception e) {
-                tmpFile.delete();
                 LOG.error(e, "Unable to fetch URL: " + location);
                 throw new IOException(e.getMessage(), e);
             }
@@ -299,6 +298,7 @@ public class VoTableReader {
     }
 
     // return this table's resource as well as all non-table <RESOURCE> from the given votable
+    // The first RESOURCE is the one for the given table.
     private static List<ResourceInfo> getResourcesForTable(VOElement docRoot, TableElement table) {
 
         if (docRoot == null) return null;

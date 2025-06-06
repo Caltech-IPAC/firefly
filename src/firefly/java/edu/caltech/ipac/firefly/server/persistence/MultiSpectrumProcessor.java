@@ -134,13 +134,9 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
                         .map(this::quote)
                         .collect(Collectors.joining(","));
         String sql = String.format("SELECT %s FROM %s WHERE ROW_IDX = %d", cnames, dbAdapter.getDataTable(), selRow);
+        DataGroup arrayData = dbAdapter.execQuery(sql, dbAdapter.getDataTable());
 
-        DataGroup table = dbAdapter.execQuery(sql, dbAdapter.getDataTable());
-
-        table = transformArrayToRows(table, getAllParamRef(selSpec));
-        if (table == null) {
-            return null;
-        }
+        DataGroup table = transformArrayToRows(arrayData, getAllParamRef(selSpec));
 
         // add SpectralDM meta
         table.getTableMeta().setAttribute(TableMeta.UTYPE, SPECTRADM_UTYPE);
@@ -149,14 +145,12 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
 
         // copy service descriptors if any
         if (!specs.services.isEmpty()) {
-            table.setResourceInfos(
-                    specs.services.stream()
-                            .filter(ri -> ri.getUtype().equalsIgnoreCase(MULTI_SPECTRUM_SERVICE_UTYPE))
-                            .map(ResourceInfo::copyOf)
-                            .peek(ri -> ri.setUtype("adhoc:service"))
-                            .toList());
+            specs.services.stream()
+                    .filter(ri -> ri.getUtype().equalsIgnoreCase(MULTI_SPECTRUM_SERVICE_UTYPE))
+                    .map(ResourceInfo::copyOf)
+                    .peek(ri -> ri.setUtype("adhoc:service"))
+                    .forEach(ri -> table.getResourceInfos().add(ri));
         }
-
         // therefore, convert all paramRefs to columnRefs
         table.getGroupInfos().forEach(gInfo -> {
             gInfo.getParamRefs().forEach(pRef -> {
@@ -222,9 +216,14 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         for (int i = 0; i < table.size(); i++) {
             table.setData("dataproduct_type", i, "spectrum");
             table.setData("access_format", i, "application/x-votable+xml;content=datalink");
-            table.setData("access_url", i, createLinksUrl(treq, (int) table.getData(DataGroup.ROW_IDX, i)));
+            table.setData("access_url", i, createLinksUrl(treq, getRowIdx(table, i)));
         }
         return dgp;
+    }
+
+    private int getRowIdx(DataGroup table, int rowNum) {
+        if (table.getDataDefintion(DataGroup.ROW_IDX) == null)  return rowNum;
+        return (int) table.getData(DataGroup.ROW_IDX, rowNum);
     }
 
     private String quote(String s) {

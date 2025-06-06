@@ -85,7 +85,7 @@ dependencies {
 
     // starlink
     implementation ':starlink-registry-1.2+2016.05.03'
-    implementation ('uk.ac.starlink:stil:4.1.4')
+    implementation ('uk.ac.starlink:stil:4.3.2')
 
     // validation
     implementation 'javax.validation:validation-api:1.1.0.Final'
