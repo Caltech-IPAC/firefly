@@ -56,7 +56,7 @@ function updateAllDataProductsComponents(tbl_id, dataProductsComponentKey) {
 export function setPreferCutout(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, preferCutout) {
     const result = getComponentState(dataProductsComponentKey)[PREFER_CUTOUT_KEY] ?? {};
     const newState = {...result, [tbl_id]: preferCutout, LAST_PREF: preferCutout};
-    dispatchComponentStateChange(dataProductsComponentKey, {[PREFER_CUTOUT_KEY]: newState});
+    dispatchComponentStateChange(dataProductsComponentKey, {[PREFER_CUTOUT_KEY]: newState, tbl_id});
     updateAllDataProductsComponents(tbl_id, dataProductsComponentKey);
 }
 
@@ -100,6 +100,7 @@ export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCT
 
     dispatchComponentStateChange(dataProductsComponentKey,
         {
+            tbl_id,
             [PREFER_CUTOUT_KEY]: newPreferState,
             [SD_CUTOUT_SIZE_KEY]: cutoutSize,
             [SD_CUTOUT_WP_OVERRIDE]: wp,

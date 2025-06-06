@@ -93,7 +93,10 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
     if (payload.viewerId && payload.viewerId!==imageViewerId) return {...params,firstTime};
 
-    const payloadTblId= payload.tbl_id ?? payload.associatedTblId;
+    let payloadTblId;
+    if (action.type===ComponentCntlr.COMPONENT_STATE_CHANGE) payloadTblId= payload?.componentState?.tbl_id;
+    else payloadTblId= payload.tbl_id ?? payload.associatedTblId;
+
 
 
     if (payloadTblId) {
