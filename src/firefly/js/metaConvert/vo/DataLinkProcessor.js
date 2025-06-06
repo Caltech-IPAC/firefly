@@ -53,14 +53,20 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
     const preferCutout= getPreferCutout(options.dataProductsComponentKey,sourceTable?.tbl_id);
     const isRelatedImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
+    const originalParsingAlgorithm= parsingAlgorithm;
     if (parsingAlgorithm===USE_ALL) {
         if (isMultiTableSpectrum) parsingAlgorithm= SPECTRUM;
         else if (obsCoreTableHasOnlyImages(sourceTable)) parsingAlgorithm= IMAGE;
     }
 
-    const menu=  dataLinkData.length &&
+    let menu=  dataLinkData.length &&
         createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
             additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options, preferCutout});
+
+    if (!menu.length && dataLinkData.length && originalParsingAlgorithm===USE_ALL && parsingAlgorithm!==USE_ALL) {
+        menu= createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
+            additionalServiceDescMenuList, doFileAnalysis, USE_ALL, options, preferCutout});
+    }
 
     const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && (!m.size || m.size<MAX_SIZE));
     const activeMenuLookupKey= dlTableUrl;
@@ -431,7 +437,7 @@ export function hasError(dlData) {
 }
 
 
-const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];
+const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary', 'text'];
 
 
 function makeName(dlData, url, auxTot, autCnt, primeCnt=0, baseTitle) {
