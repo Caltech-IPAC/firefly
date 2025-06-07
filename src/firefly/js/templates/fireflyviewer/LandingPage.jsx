@@ -4,7 +4,7 @@ import {elementType, shape, object, string, arrayOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
 
 import {getBackgroundInfo, isMonitored, isSearchJob} from '../../core/background/BackgroundUtil.js';
-import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
+import {dispatchShowDropDown, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
@@ -15,9 +15,11 @@ export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
+    const {first: tabsMenuHintAnchor, last: bgMonitorHintAnchor} = useStoreConnector(()=>getLayouInfo()?.menuTabNode || {});
+
     const defSlotProps = {
-        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.'},
-        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: HINT_TIP_PLACEMENTS.START},
+        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, anchorNode: tabsMenuHintAnchor, hintText: 'Choose a tab to search for or upload data.'},
+        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, anchorNode: bgMonitorHintAnchor, hintText: 'Load job results from background monitor', tipPlacement: HINT_TIP_PLACEMENTS.START},
         topSection: { title: `Welcome to ${appTitle}` },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
@@ -41,7 +43,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
 
     return (
         <Sheet className='ff-ResultsPanel-StandardView' sx={{width: 1, height: 1, ...sx}} {...props}>
-            <Slot component={AppHint} {...defSlotProps.tabsMenuHint} slotProps={slotProps?.tabsMenuHint}/>
+            {tabsMenuHintAnchor && <Slot component={AppHint} {...defSlotProps.tabsMenuHint} slotProps={slotProps?.tabsMenuHint}/>}
             {haveBgJobs && <Slot component={AppHint} {...defSlotProps.bgMonitorHint} slotProps={slotProps?.bgMonitorHint}/>}
             <FileDropZone {...{
                 dropEvent, setDropEvent,

@@ -15,7 +15,13 @@ import {
     getMenu, getPreference, getSelectedMenuItem, getUserInfo
 } from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
-import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
+import {
+    dispatchHideDropDown,
+    dispatchShowDropDown,
+    dispatchUpdateLayoutInfo,
+    getLayouInfo,
+    getResultCounts
+} from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -23,7 +29,6 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {logout} from 'firefly/rpc/CoreServices';
 import {useColorMode} from 'firefly/ui/FireflyRoot.jsx';
-import {APP_HINT_IDS, appHintAnchorClassName} from 'firefly/ui/AppHint';
 
 const UploadCmd= 'FileUploadDropDownCmd';
 const TapCmd= 'TAPSearch';
@@ -131,6 +136,11 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInf
 
     const setElement= useCallback( (key,el) => {
         if (!el) return;
+
+        // save the first and last tab elements in the layout info store, needed for positioning the app hints
+        if (key==='0') dispatchUpdateLayoutInfo({menuTabNode: {first: el}});
+        if (key===menuTabItems.length-1+'') dispatchUpdateLayoutInfo({menuTabNode: {last: el}});
+
         const {tabWidths}= tabRenderedInfo;
         tabWidths[key]= Math.trunc(el.getBoundingClientRect()?.width ?? 0);
         Object.keys(tabWidths).forEach( (key) => {
@@ -199,8 +209,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
             .map(({action,label,TabRenderer,title}, idx) =>
             {
                 const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
-                    ...(idx===0 && {className: appHintAnchorClassName(APP_HINT_IDS.TABS_MENU)}),
-                    ref: (el) => setElement(idx+'', el),
+                    ref: (el) => setElement(idx + '', el),
                     sx: (theme) => ({ ...setupTabCss(theme,size) })
                 };
                 const tab= TabRenderer ? <TabRenderer {...tabProps} /> : <Tab {...tabProps}> {label}</Tab>;

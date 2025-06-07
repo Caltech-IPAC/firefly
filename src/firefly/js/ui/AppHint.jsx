@@ -1,10 +1,9 @@
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {dispatchAddPreference, getPreference} from 'firefly/core/AppDataCntlr';
-import React, {createContext, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {Button, Snackbar} from '@mui/joy';
 import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
 import {object, oneOf, string} from 'prop-types';
-
 
 
 export const APP_HINT_IDS = {
@@ -18,48 +17,35 @@ export const HINT_TIP_PLACEMENTS = {
     END: 'end'
 };
 
-export const APP_HINT_CTX = createContext({
-    [APP_HINT_IDS.TABS_MENU]: {anchorDOMRect: {}},
-    [APP_HINT_IDS.BG_MONITOR]: {anchorDOMRect: {}}
-});
-
 /**An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference**/
 export const appHintPrefName = (appTitle, hintId) => `showAppHint__${appTitle}--${hintId}`;
 
-/**Classname to identify the anchor (generally a Menu Tab) relative to which AppHint is positioned.**/
-export const appHintAnchorClassName = (hintId) => `ff-AppHintAnchor-${hintId}`;
-
-
-export function AppHint({appTitle, id, hintText, tipPlacement=HINT_TIP_PLACEMENTS.MIDDLE, sx={}}) {
+export function AppHint({appTitle, id, anchorNode, hintText, tipPlacement=HINT_TIP_PLACEMENTS.MIDDLE, sx={}}) {
     const showAppHint = useStoreConnector(() => getPreference(appHintPrefName(appTitle, id), true));
     const appHintRef = useRef();
 
-    // AppHint is rendered inside LandingPage, so we cannot yet compute top/bottom from the anchor element but only left/right
+    // AppHint is rendered inside LandingPage, so we cannot yet compute top/bottom from the anchor node but only left/right
     const [anchorRelativePosSx, setAnchorRelativePosSx] = useState({});
     useLayoutEffect(() => {
-        const timeout = setTimeout(() => {
-            const anchorEl = document.querySelector(`.${appHintAnchorClassName(id)}`);
-            if (anchorEl) {
-                const anchorRect = anchorEl.getBoundingClientRect();
-                const appHintRect = appHintRef.current?.getBoundingClientRect() ?? {width: 0};
-                const posSx = {left: 'auto', right: 'auto'};
-                switch (tipPlacement) {
-                    case HINT_TIP_PLACEMENTS.START:
-                        posSx.left = anchorRect.left;
-                        break;
-                    case HINT_TIP_PLACEMENTS.END:
-                        posSx.right = `calc(100vw - ${anchorRect.right}px)`;
-                        break;
-                    case HINT_TIP_PLACEMENTS.MIDDLE:
-                    default:
-                        posSx.left = anchorRect.left + (anchorRect.width/2) - (appHintRect.width/2); // to center the hint
-                        break;
-                }
-                setAnchorRelativePosSx(posSx);
-                //TODO: change timeout to refs or mounted state flag if possible
-            }}, id===APP_HINT_IDS.TABS_MENU ? 5 : 0);
-        return () => clearTimeout(timeout);
-    }, [id]);
+        if (anchorNode) {
+            const anchorRect = anchorNode.getBoundingClientRect();
+            const appHintRect = appHintRef.current?.getBoundingClientRect() ?? {width: 0};
+            const posSx = {left: 'auto', right: 'auto'};
+            switch (tipPlacement) {
+                case HINT_TIP_PLACEMENTS.START:
+                    posSx.left = anchorRect.left;
+                    break;
+                case HINT_TIP_PLACEMENTS.END:
+                    posSx.right = `calc(100vw - ${anchorRect.right}px)`;
+                    break;
+                case HINT_TIP_PLACEMENTS.MIDDLE:
+                default:
+                    posSx.left = anchorRect.left + (anchorRect.width/2) - (appHintRect.width/2); // to center the hint
+                    break;
+            }
+            setAnchorRelativePosSx(posSx);
+        }
+    }, [anchorNode]);
 
     const arrowTip = {
         '&::before': {
@@ -115,6 +101,7 @@ export function AppHint({appTitle, id, hintText, tipPlacement=HINT_TIP_PLACEMENT
 AppHint.propTypes = {
     appTitle: string.isRequired,
     id: string.isRequired,
+    anchorNode: object, // generally a Menu Tab DOM node
     hintText: string.isRequired,
     tipPlacement: oneOf(['start', 'middle', 'end']),
     sx: object,
