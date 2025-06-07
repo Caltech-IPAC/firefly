@@ -32,7 +32,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import {FormWatcher} from '../../templates/router/RouteHelper';
-import {APP_HINT_IDS, appHintAnchorClassName} from 'firefly/templates/fireflyviewer/LandingPage';
+import {APP_HINT_IDS, appHintAnchorClassName} from 'firefly/ui/AppHint';
 
 export const jobMonitorPath = '/jobMonitor';
 

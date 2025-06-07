@@ -1,26 +1,14 @@
-import {Box, Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
-import React, {useContext, useLayoutEffect, useRef, useState} from 'react';
-import {elementType, shape, object, string, arrayOf, oneOf, node} from 'prop-types';
+import {Box, Divider, Sheet, Stack, Typography} from '@mui/joy';
+import React, {useContext, useState} from 'react';
+import {elementType, shape, object, string, arrayOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
-import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
 
 import {getBackgroundInfo, isMonitored, isSearchJob} from '../../core/background/BackgroundUtil.js';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
-import {dispatchAddPreference, getPreference} from 'firefly/core/AppDataCntlr';
-
-export const APP_HINT_IDS = {
-    TABS_MENU: 'tabsMenu',
-    BG_MONITOR: 'bgMonitor'
-};
-
-export const HINT_TIP_PLACEMENTS = {
-    START: 'start',
-    MIDDLE: 'middle',
-    END: 'end'
-};
+import {APP_HINT_IDS, AppHint, HINT_TIP_PLACEMENTS} from 'firefly/ui/AppHint';
 
 
 export function LandingPage({slotProps={}, sx, ...props}) {
@@ -124,93 +112,6 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems, slotProps}
     );
 }
 
-// An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference
-export const appHintPrefName = (appTitle, hintId) => `showAppHint__${appTitle}--${hintId}`;
-
-/**Classname to identify the anchor (generally a Menu Tab) relative to which AppHint is positioned.**/
-export const appHintAnchorClassName = (hintId) => `ff-AppHintAnchor-${hintId}`;
-
-function AppHint({appTitle, id, hintText, tipPlacement=HINT_TIP_PLACEMENTS.MIDDLE, sx={}}) {
-    const showAppHint = useStoreConnector(() => getPreference(appHintPrefName(appTitle, id), true));
-    const appHintRef = useRef();
-
-    // AppHint is rendered inside LandingPage, so we cannot yet compute top/bottom from the anchor element but only left/right
-    const [anchorRelativePosSx, setAnchorRelativePosSx] = useState({});
-    useLayoutEffect(() => {
-        const timeout = setTimeout(() => {
-            const anchorEl = document.querySelector(`.${appHintAnchorClassName(id)}`);
-            if (anchorEl) {
-                const anchorRect = anchorEl.getBoundingClientRect();
-                const appHintRect = appHintRef.current?.getBoundingClientRect() ?? {width: 0};
-                const posSx = {left: 'auto', right: 'auto'};
-                switch (tipPlacement) {
-                    case HINT_TIP_PLACEMENTS.START:
-                        posSx.left = anchorRect.left;
-                        break;
-                    case HINT_TIP_PLACEMENTS.END:
-                        posSx.right = `calc(100vw - ${anchorRect.right}px)`;
-                        break;
-                    case HINT_TIP_PLACEMENTS.MIDDLE:
-                    default:
-                        posSx.left = anchorRect.left + (anchorRect.width/2) - (appHintRect.width/2); // to center the hint
-                        break;
-                }
-                setAnchorRelativePosSx(posSx);
-                //TODO: change timeout to refs or mounted state flag if possible
-        }}, id===APP_HINT_IDS.TABS_MENU ? 10 : 0);
-        return () => clearTimeout(timeout);
-    }, [id]);
-
-    const arrowTip = {
-        '&::before': {
-            content: '""',
-            width: '1rem',
-            height: '1rem',
-            backgroundColor: 'inherit',
-            transform: 'rotate(-45deg)',
-            position: 'absolute',
-            top: '-0.5rem',
-            left: 'calc(50% - 0.5rem)', //tipPlacement===HINT_TIP_PLACEMENTS.MIDDLE
-            ...tipPlacement===HINT_TIP_PLACEMENTS.START && {left: 'var(--Snackbar-padding)'},
-            ...tipPlacement===HINT_TIP_PLACEMENTS.END && {left: 'auto', right: 'var(--Snackbar-padding)'}
-        }
-    };
-
-    // to undo positioning controlled by anchorOrigin prop of Snackbar, and to place it directly below MenuTabBar
-    const defaultPositionSx = {
-        position: 'absolute',
-        top: '0.75rem', // to create space for the arrow tip (with height: sqrt(2) * 1 rem / 2)
-        bottom: 'auto',
-        left: 'auto',
-        right: 'auto',
-    };
-
-    return (
-        <Snackbar open={Boolean(showAppHint)}
-                  ref={appHintRef}
-                  size='lg'
-                  variant='solid' //to make it look different from alerts
-                  color='primary'
-                  invertedColors={true}
-                  onClose={(e, reason)=> {
-                      //don't close a hint if the click made outside it (clickaway) originated from another hint
-                      if (reason==='clickaway' && e?.target?.closest('.MuiSnackbar-root')) return;
-                      dispatchAddPreference(appHintPrefName(appTitle, id), false);
-                  }}
-                  sx={{...defaultPositionSx, ...anchorRelativePosSx, ...sx, ...arrowTip}}
-                  startDecorator={<TipsAndUpdates/>}
-                  endDecorator={
-                      <Button
-                          onClick={() => dispatchAddPreference(appHintPrefName(appTitle, id), false)}
-                          variant='outlined'
-                          color='primary'>
-                          Got it
-                      </Button>
-                  }>
-            {hintText}
-        </Snackbar>
-    );
-}
 
 
 LandingPage.propTypes = {
@@ -253,13 +154,4 @@ EmptyResults.propTypes = {
         subtext: string
     })),
     slotProps: object,
-};
-
-
-AppHint.propTypes = {
-    appTitle: string.isRequired,
-    id: string.isRequired,
-    hintText: string.isRequired,
-    tipPlacement: oneOf(['start', 'middle', 'end']),
-    sx: object,
 };
