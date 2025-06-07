@@ -15,7 +15,7 @@ import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {getActionFromUrl} from 'firefly/core/History';
 import {getDropDownInfo, SHOW_DROPDOWN} from 'firefly/core/LayoutCntlr';
 import {flux} from 'firefly/core/ReduxFlux';
-import {APP_HINT_IDS, appHintPrefName} from 'firefly/templates/fireflyviewer/LandingPage';
+import {APP_HINT_IDS, appHintPrefName} from 'firefly/ui/AppHint';
 import {InitArgsCtx} from './InitArgsCtx';
 
 /*

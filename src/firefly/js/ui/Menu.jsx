@@ -15,7 +15,13 @@ import {
     getMenu, getPreference, getSelectedMenuItem, getUserInfo
 } from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
-import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
+import {
+    dispatchHideDropDown,
+    dispatchShowDropDown,
+    dispatchUpdateLayoutInfo,
+    getLayouInfo,
+    getResultCounts
+} from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -128,10 +134,15 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInf
         if (ts && tabCount===-1) setTabCount(menuTabItems.length); // force a rerender when we know the html element of the tab bar
     },[]);
 
-    const setElement= useCallback( (key,e) => {
-        if (!e) return;
+    const setElement= useCallback( (key,el) => {
+        if (!el) return;
+
+        // save the first and last tab elements in the layout info store, needed for positioning the app hints
+        if (key==='0') dispatchUpdateLayoutInfo({menuTabNode: {first: el}});
+        if (key===menuTabItems.length-1+'') dispatchUpdateLayoutInfo({menuTabNode: {last: el}});
+
         const {tabWidths}= tabRenderedInfo;
-        tabWidths[key]= Math.trunc(e.getBoundingClientRect()?.width ?? 0);
+        tabWidths[key]= Math.trunc(el.getBoundingClientRect()?.width ?? 0);
         Object.keys(tabWidths).forEach( (key) => {
             if (Number(key)>=menuTabItems.length) tabWidths[key]= undefined;
         });
@@ -192,13 +203,13 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
     const color='primary';
 
     const tabItems= [
-        <ResultsTab {...{key:'results-tab', size, color, variant, ref: (c) => setElement('results-tab ',c)}}/>,
+        <ResultsTab {...{key:'results-tab', size, color, variant, ref: (el) => setElement('results-tab ', el)}}/>,
         ...menuTabItems
             .filter( isItemEnabled)
             .map(({action,label,TabRenderer,title}, idx) =>
             {
                 const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
-                    ref: (c) => setElement(idx+'',c),
+                    ref: (el) => setElement(idx + '', el),
                     sx: (theme) => ({ ...setupTabCss(theme,size) })
                 };
                 const tab= TabRenderer ? <TabRenderer {...tabProps} /> : <Tab {...tabProps}> {label}</Tab>;

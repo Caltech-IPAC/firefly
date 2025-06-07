@@ -161,7 +161,6 @@ const HydraAppBranding = ({title, desc}) => (
 );
 
 const defaultCommonProps = ({title, desc}) => ({
-    bgMonitorHint: { sx: { right: 50 } },
     topSection: { title, desc }
 });
 
