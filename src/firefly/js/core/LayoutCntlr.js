@@ -558,4 +558,7 @@ function getColFitIdx(gridView, row, testIdx, gridColumns, testWidth) {
 
 }
 
-
+// getter/setters for the DOM nodes of Menu Tabs, stored in the layout info
+export const MENU_TAB_NODES = 'menuTabNodes';
+export const getMenuTabNodes = () => getLayouInfo()?.[MENU_TAB_NODES] ?? {};
+export const dispatchUpdateMenuTabNodes = (menuTabNodes) => dispatchUpdateLayoutInfo({[MENU_TAB_NODES]: menuTabNodes});

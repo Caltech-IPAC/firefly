@@ -1,29 +1,25 @@
-import {Box, Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
+import {Box, Divider, Sheet, Stack, Typography} from '@mui/joy';
 import React, {useContext, useState} from 'react';
-import {elementType, shape, object, string, arrayOf, oneOf, node} from 'prop-types';
+import {elementType, shape, object, string, arrayOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
-import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
 
 import {getBackgroundInfo, isMonitored, isSearchJob} from '../../core/background/BackgroundUtil.js';
-import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
+import {dispatchShowDropDown, getMenuTabNodes} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
-import {dispatchAddPreference, getPreference} from 'firefly/core/AppDataCntlr';
-
-export const APP_HINT_IDS = {
-    TABS_MENU: 'tabsMenu',
-    BG_MONITOR: 'bgMonitor'
-};
+import {APP_HINT_IDS, AppHint, HINT_TIP_PLACEMENTS} from 'firefly/ui/AppHint';
 
 
 export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
+    const {first: tabsMenuHintAnchor, last: bgMonitorHintAnchor} = useStoreConnector(getMenuTabNodes);
+
     const defSlotProps = {
-        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.', sx: { left: '16rem' }},
-        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
+        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, anchorNode: tabsMenuHintAnchor, hintText: 'Choose a tab to search for or upload data.'},
+        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, anchorNode: bgMonitorHintAnchor, hintText: 'Load job results from background monitor', tipPlacement: HINT_TIP_PLACEMENTS.START},
         topSection: { title: `Welcome to ${appTitle}` },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
@@ -47,7 +43,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
 
     return (
         <Sheet className='ff-ResultsPanel-StandardView' sx={{width: 1, height: 1, ...sx}} {...props}>
-            <Slot component={AppHint} {...defSlotProps.tabsMenuHint} slotProps={slotProps?.tabsMenuHint}/>
+            {tabsMenuHintAnchor && <Slot component={AppHint} {...defSlotProps.tabsMenuHint} slotProps={slotProps?.tabsMenuHint}/>}
             {haveBgJobs && <Slot component={AppHint} {...defSlotProps.bgMonitorHint} slotProps={slotProps?.bgMonitorHint}/>}
             <FileDropZone {...{
                 dropEvent, setDropEvent,
@@ -118,61 +114,6 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems, slotProps}
     );
 }
 
-// An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference
-export const appHintPrefName = (appTitle, hintId) => `showAppHint__${appTitle}--${hintId}`;
-
-function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
-    const showAppHint = useStoreConnector(() => getPreference(appHintPrefName(appTitle, id), true));
-
-    const arrowTip = {
-        '&::before': {
-            content: '""',
-            width: '1rem',
-            height: '1rem',
-            backgroundColor: 'inherit',
-            transform: 'rotate(-45deg)',
-            position: 'absolute',
-            top: '-0.5rem',
-            left: 'calc(50% - 0.5rem)',
-            ...tipPlacement==='start' && {left: 'var(--Snackbar-padding)'},
-            ...tipPlacement==='end' && {left: 'auto', right: 'var(--Snackbar-padding)'}
-        }
-    };
-
-    // to undo positioning controlled by anchorOrigin prop of Snackbar, and to place it directly below Banner
-    const positioningSx = {
-        position: 'absolute',
-        top: '0.75rem',
-        left: 'auto',
-        right: 'auto',
-        bottom: 'auto'
-    };
-
-    return (
-        <Snackbar open={Boolean(showAppHint)}
-                  size='lg'
-                  variant='solid' //to make it look different from alerts
-                  color='primary'
-                  invertedColors={true}
-                  onClose={(e, reason)=> {
-                      //don't close a hint if the click made outside it (clickaway) originated from another hint
-                      if (reason==='clickaway' && e?.target?.closest('.MuiSnackbar-root')) return;
-                      dispatchAddPreference(appHintPrefName(appTitle, id), false);
-                  }}
-                  sx={{...positioningSx, ...sx, ...arrowTip}}
-                  startDecorator={<TipsAndUpdates/>}
-                  endDecorator={
-                      <Button
-                          onClick={() => dispatchAddPreference(appHintPrefName(appTitle, id), false)}
-                          variant='outlined'
-                          color='primary'>
-                          Got it
-                      </Button>
-                  }>
-            {hintText}
-        </Snackbar>
-    );
-}
 
 
 LandingPage.propTypes = {
@@ -215,13 +156,4 @@ EmptyResults.propTypes = {
         subtext: string
     })),
     slotProps: object,
-};
-
-
-AppHint.propTypes = {
-    appTitle: string.isRequired,
-    id: string.isRequired,
-    hintText: string.isRequired,
-    tipPlacement: oneOf(['start', 'middle', 'end']),
-    sx: object,
 };
