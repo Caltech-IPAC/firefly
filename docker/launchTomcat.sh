@@ -114,7 +114,7 @@ CATALINA_OPTS="$CATALINA_OPTS \
 # --illegal-access is still available in JDK 11.  this is no longer an option in JDK 17.
 
 #------- start background scripts: cleanup
-${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
+${CATALINA_HOME}/cleanup.sh &
 
 echo -e "\nlaunchTomcat.sh: Starting Tomcat"
 if [ "${DEBUG,,}" = "true" ] || [ "$1" = "--debug" ]; then
