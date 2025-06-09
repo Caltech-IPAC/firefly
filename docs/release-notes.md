@@ -8,12 +8,13 @@
 
 
 ## Version 2025.3
-- 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, `2025.3`, `latest`
+- 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`, `2025.3`, `latest`
+- 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, 
 
 #### This release has a complete revamp of the Job monitor and extensive work to support Rubin, SPHEREx, and Euclid needs
 
 #### Major Features
-- Job Monitor (formally Background Monitor): Complete revamp: Firefly-1698 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1742)), Firefly-1735 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760)), Firefly-1327 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1765)), Firefly-1749 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1770))
+- Job Monitor (formally Background Monitor): Complete revamp: Firefly-1698 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1742)), Firefly-1735 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760)), Firefly-1327 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1765)), Firefly-1749 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1770)), Firefly-1754 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1791))
 - Packaging: download script supports cutouts- Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
 - Packaging: download script checks for duplicates, better naming- Firefly-1704 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1745)),
 - Images: Wavelength readout includes bandwidth- Firefly-1482 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1733))
@@ -69,7 +70,12 @@
 
 
 ### _Patches 2025.3_
-_initial release_
+- 2025.3.1 
+  - Fixed: cutouts not changing when the table is not the datalink table ([commit](https://github.com/Caltech-IPAC/firefly/commit/7a3b8cfb88eecb4bd2f34b1500213cf52f7bd95a))
+  - Fixed: handle datalink for obscore tables that claim to be all images but are not ([commit](https://github.com/Caltech-IPAC/firefly/commit/37269537815ad886f445210f85335ab976c57d30))
+  - Fixed: datalink text/plain files not processed correctly ([commit](https://github.com/Caltech-IPAC/firefly/commit/37269537815ad886f445210f85335ab976c57d30))
+  - Fixed: Start tooltip layout. Firefly-1754 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1791))
+  - Fixed: VoTableWriter missing RESOURCES in output file. Firefly-1563 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1790))
 
 
 

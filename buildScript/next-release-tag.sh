@@ -28,7 +28,7 @@ if [ -z "${matchingReleaseTags[0]}" ]; then
 else
    for aTag in "${matchingReleaseTags[@]}"; do
      sedStr="s/release-${baseVer}.//"
-     echo aTag $aTag
+#     echo aTag $aTag
      asNum=$(echo $aTag | sed $sedStr)
      number_array+=("$asNum")
    done
@@ -40,12 +40,14 @@ fi
 # build the new tag string and then "git tag" and "git push --tags"
 #
 newReleaseTag=release-${baseVer}.${nextRev}
+dockerTag=${baseVer}.${nextRev}
 read -n1 -s -p  "New ($branch branch) tag will be: $newReleaseTag, make tag? (y/n [y]): " makeTag
 echo
 makeTagLower=$(echo "$makeTag" | tr '[:upper:]' '[:lower:]')
 if [ "$makeTagLower" = "y" ] || [ "$makeTagLower" = "" ]; then
   echo '>>>>>' git tag $newReleaseTag
   git tag $newReleaseTag
+  echo "docker tags: ${baseVer},${dockerTag},${branch},latest"
   read -n1 -s -p  "push tags (y/n [n]): " doPush
   doPushLower=$(echo "$doPush" | tr '[:upper:]' '[:lower:]')
   echo
