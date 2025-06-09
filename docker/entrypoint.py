@@ -360,9 +360,7 @@ def main():
             dry_run(cmd, webapps)
 
     # Start background cleanup
-    subprocess.Popen(
-        [f"{catalina_home}/cleanup.sh", "/firefly/workarea", "/firefly/shared-workarea"]
-    )
+    subprocess.Popen([f"{catalina_home}/cleanup.sh"])
 
     # Start Tomcat; Replace the current process with Tomcat
     print("Starting Tomcat...")
