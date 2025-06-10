@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.core;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.servlets.ServerStatus;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import redis.clients.jedis.Jedis;
@@ -25,10 +26,12 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.Util.Try;
+import static edu.caltech.ipac.firefly.core.background.JobManager.ALL_JOB_CACHE_KEY;
+import static edu.caltech.ipac.firefly.server.cache.DistributedCache.DEF_TTL;
+import static edu.caltech.ipac.util.StringUtils.isUUID;
 
 
 /**
@@ -156,10 +159,81 @@ public class RedisService {
         }
     }
 
-    public static Map<String, Object> getStats() {
+    public static long cleanupStaleKeys() {
+        long deleted = 0;
+        String cursor = "0";
+        try (Jedis redis = getConnection()) {
+            do {
+                var scanResult = redis.scan(cursor);
+                for (String key : scanResult.getResult()) {
+                    long ttl = redis.ttl(key);
+                    if (ttl == -1) {        // no expiry time
+                        Long idletime = redis.objectIdletime(key);
+                        if (idletime != null && idletime >= DEF_TTL) {      // is older than configured default TTL
+                            redis.del(key);
+                            deleted++;
+                        }
+                    }
+                }
+                cursor = scanResult.getCursor();
+            } while (!cursor.equals("0"));
+        } catch (Exception ignored) {}
+            return deleted;
+    }
 
-        LinkedHashMap<String, Object> stats = new LinkedHashMap<>();
-        stats.put("status", getRedisHostPortDesc());
+    public static ServerStatus.EntryList getFullStats() {
+        ServerStatus.EntryList stats = getStats();
+
+        try (Jedis redis = getConnection()) {
+
+            // Count keys and TTL stats
+            long totalKeys = 0;
+            long keysWithTTL = 0;
+            long keysWithoutTTL = 0;
+            long sessionKeys = 0;
+            long staleKeys = 0;
+            String cursor = "0";
+            do {
+                var scanResult = redis.scan(cursor);
+                var keys = scanResult.getResult();
+                for (String key : keys) {
+                    totalKeys++;
+                    if (isUUID(key)) sessionKeys++;
+                    long ttl = redis.ttl(key);
+                    if (ttl > 0)    keysWithTTL++;
+                    else            keysWithoutTTL++;
+
+                    if (ttl == -1) { // Only consider keys without TTL
+                        Long idletime = redis.objectIdletime(key);
+                        if (idletime != null && idletime >= DEF_TTL) {
+                            staleKeys++;
+                        }
+                    }
+                }
+                cursor = scanResult.getCursor();
+            } while (!cursor.equals("0"));
+
+            stats.add(null, "\n> CACHE USAGE SUMMARY :")
+                .add("ALL_JOB_INFOS", redis.hlen(ALL_JOB_CACHE_KEY))
+                .add("Total keys", totalKeys)
+                .add("Session keys", sessionKeys)
+                .add("Keys with TTL", keysWithTTL)
+                .add("Keys without TTL", keysWithoutTTL)
+                .add("Staled keys", staleKeys);
+
+            // MEMORY STATS
+            stats.add(null, "\n> FULL RAW REDIS MEMORY STATS :");
+            Map<String, Object> memStats = redis.memoryStats();
+            memStats.forEach((stats::add));
+
+        } catch (Exception ignored) {}
+        return stats;
+    }
+
+    public static ServerStatus.EntryList getStats() {
+
+        ServerStatus.EntryList stats = new ServerStatus.EntryList();
+        stats.add("status", getRedisHostPortDesc());
         String passwd = "";
         try {
             if (REDIS_PASSWORD != null) {
@@ -170,37 +244,40 @@ public class RedisService {
 
             var infos = redis.info().split("\r\n");
             Arrays.stream(infos).filter(s -> s.contains("version")).findFirst()
-                    .ifPresent(s -> stats.put("version", s.split(":")[1].trim()));
+                    .ifPresent(s -> stats.add("version", s.split(":")[1].trim()));
 
-            stats.put("active conn", jedisPool.getNumActive());
-            stats.put("idle conn", jedisPool.getNumIdle());
-            stats.put("max conn", maxPoolSize);
-            stats.put("max-wait", jedisPool.getMaxBorrowWaitTimeMillis());
-            stats.put("avg-wait", jedisPool.getMeanBorrowWaitTimeMillis());
-            stats.put("password", passwd);
-            stats.put("db-size", redis.dbSize());
+            stats.add(null, "\n> CONNECTION STATS :");
+            stats.add("active conn", jedisPool.getNumActive())
+                .add("idle conn", jedisPool.getNumIdle())
+                .add("max conn", maxPoolSize)
+                .add("max-wait", jedisPool.getMaxBorrowWaitTimeMillis())
+                .add("avg-wait", jedisPool.getMeanBorrowWaitTimeMillis())
+                .add("db-size", redis.dbSize());
+
+            stats.add(null, "\n> CONFIGURATION :");
             addStat(stats, redis, "maxmemory");
             addStat(stats, redis, "save");
             addStat(stats, redis, "dir");
             addStat(stats, redis, "dbfilename");
             addStat(stats, redis, "appendfilename");
-            stats.put("---MEMORY STATS----", "");
+
+            stats.add(null, "\n> MEMORY STATS :");
             var mem = redis.memoryStats();
-            stats.put("Total memory used", mem.get("dataset.bytes"));
-            stats.put("Total memory allocated", mem.get("allocator.allocated"));
-            stats.put("Fragmented memory", mem.get("fragmentation"));
-            stats.put("Fragmentation ratio", mem.get("allocator-fragmentation.ratio"));
-            stats.put("Number of keys stored", mem.get("keys.count"));
-            stats.put("Avg per key", mem.get("keys.bytes-per-key"));
-            stats.put("Pct of memory used", mem.get("dataset.percentage"));
-            stats.put("Peak memory used", mem.get("peak.allocated"));
+            stats.add("Total memory used", mem.get("dataset.bytes"));
+            stats.add("Total memory allocated", mem.get("allocator.allocated"));
+            stats.add("Fragmented memory", mem.get("fragmentation"));
+            stats.add("Fragmentation ratio", mem.get("allocator-fragmentation.ratio"));
+            stats.add("Number of keys stored", mem.get("keys.count"));
+            stats.add("Avg per key", mem.get("keys.bytes-per-key"));
+            stats.add("Pct of memory used", mem.get("dataset.percentage"));
+            stats.add("Peak memory used", mem.get("peak.allocated"));
         } catch (Exception ignored) {}
         return stats;
     }
 
-    public static void addStat(Map<String, Object> stats, Jedis redis, String key) {
+    public static void addStat(ServerStatus.EntryList stats, Jedis redis, String key) {
         var c = redis.configGet(key);
-        if (c.size() > 1) stats.put(key, c.get(1));
+        if (c.size() > 1) stats.add(key, c.get(1));
     }
 
     public static String getRedisHostPortDesc() {

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import javax.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -135,6 +137,10 @@ public class StringUtils {
         result.append(input.substring(lastIndex).replaceAll("(?i)\\s%s\\s".formatted(oldVal), newVal));
 
         return result.toString();
+    }
+
+    public static boolean isUUID(String key) {
+        return Util.Try.it(() -> UUID.fromString(key)).get() != null;
     }
 
     /**
@@ -351,15 +357,20 @@ public class StringUtils {
 
 
     /**
-     * Returns true is the given string is either null, or an empty string.
-     * A string of white spaces is also considered empty.
+     * Returns true is the object is either null, or empty collections, maps, and strings.
+     * A string of white spaces is considered empty.
      * @param o a Object
-     * @return Returns true is the given toString() is either null, or an empty string.
+     * @return Returns true is the given object is empty.
      */
     public static boolean isEmpty(Object o) {
-        return o == null || isEmpty(o.toString());
+        return switch (o) {
+            case null -> true;
+            case String s -> s.trim().isEmpty();
+            case Collection<?> c -> c.isEmpty();
+            case Map<?,?> m -> m.isEmpty();
+            default -> o.toString().isEmpty();
+        };
     }
-
     /**
      * Returns true if two strings have the same value (null is considered to be equal to "") 
      * @param s1 first string
