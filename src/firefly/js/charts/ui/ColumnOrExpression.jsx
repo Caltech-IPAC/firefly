@@ -120,6 +120,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip, 
     return (
         <AutoCompleteInput fieldKey={fieldKey}
                            groupKey={groupKey}
+                           className='ff-ColumnFld'
                            size='sm'
                            title={tooltip}
                            label={label}

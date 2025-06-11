@@ -104,7 +104,7 @@ function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrac
                               tooltip='Turn error bars on/off'
                               slotProps={slotProps?.errorToggleInput}
             />
-            <Stack direction='row' spacing={1} alignItems='baseline'>
+            <Stack direction='row' spacing={1} alignItems='baseline' flexGrow={1}>
                 <ListBoxInputField
                     initialState= {{value: type}}
                     tooltip='Select type of the errors'
@@ -116,7 +116,7 @@ function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrac
                     sx={{visibility: showError ? 'visible' : 'hidden'}} //to prevent layout from jumping when switch is toggled
                 />
                 {showError &&
-                    <Stack spacing={.5}>
+                    <Stack spacing={.5} flexGrow={1}>
                         {(type === 'sym') && <ErrFld name={`${axisU} Error`} initValue={error} path={errorFieldKey}
                                                      slotProps={slotProps?.errorInput}/>}
                         {(type === 'asym') &&
