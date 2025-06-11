@@ -47,23 +47,23 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
             <Stack spacing={3}>
                 <Stack spacing={2} sx={{
-                    '.MuiFormLabel-root': {width: labelWidth},
-                    // '.MuiFormControl-root > *:not(.MuiFormLabel-root)': {width: `calc(100% - ${labelWidth})`} //TODO: whether to make inputs equally wide?
+                    '.MuiFormLabel-root': {width: labelWidth, flexShrink: 0},
+                    '.ff-ColumnFld': {width: 1, maxWidth: '25rem'}, //since expressions get really long
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
                     <Stack spacing={1}>
-                        <X label='Spectral axis column(X):' readonly={true} sx={{'.MuiInput-root': {width: '25rem'}}}/>
-                        {xErrArray && <Xerrors readonly={true}/>}
-                        {xMax && <Xmax readonly={true}/>}
-                        {xMin && <Xmin readonly={true}/>}
+                        <X label='Spectral axis column(X):'/>
+                        {xErrArray && <Xerrors/>}
+                        {xMax && <Xmax/>}
+                        {xMin && <Xmin/>}
                         <Xunit/>
                         <SpectralFrame labelWidth={labelWidth}/>
                     </Stack>
                     <Stack spacing={1}>
-                        <Y label='Flux axis column(Y):' readonly={true}/>
-                        {yErrArray && <Yerrors readonly={true}/>}
-                        {yMax && <Ymax readonly={true} label = 'Flux axis upper limit column:'/>}
-                        {yMin && <Ymin readonly={true} label = 'Flux axis lower limit column:'/>}
+                        <Y label='Flux axis column(Y):'/>
+                        {yErrArray && <Yerrors/>}
+                        {yMax && <Ymax label = 'Flux axis upper limit column:'/>}
+                        {yMin && <Ymin label = 'Flux axis lower limit column:'/>}
                         <Yunit/>
                     </Stack>
                     <Mode/>
@@ -287,12 +287,20 @@ function Units({activeTrace, value, axis, ...rest}) {
     const unitProp = axis === 'x' ? 'xUnit' : 'yUnit';
     const label = axis === 'x' ? 'Spectral axis units:' : 'Flux axis units:';
     const options = getUnitInfo(value)?.options;
-    if (!options) return null;
+    const unrecognizedTip = 'Cannot change these units because they could not be recognized.';
 
+    return options
+        ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}}
+                             {...{label, options, ...rest}}/>
+        : <ReadOnlyField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} value={value} label={label}
+                         tooltip={unrecognizedTip} {...rest}/>;
+
+}
+
+function ReadOnlyField({value, ...props}) {
     return (
-        <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}} {...{label, options, ...rest}}/>
+        <ValidationField initialState={{value}} orientation={'horizontal'} {...props} readonly={true}/>
     );
-
 }
 
 /*
@@ -311,7 +319,7 @@ export const useSpectrumInputs = ({chartId, groupKey}, deps=[]) => {
             const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
             return Object.values(REF_POS).includes(sfRefPos) //only show options when TOPOCENTER or CUSTOM
                 ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
-                : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
+                : <ReadOnlyField fieldKey={SFOptionFieldKeys(activeTrace).value} value={sfRefPos} {...allProps}/>;
         }, deps),
     };
 };
