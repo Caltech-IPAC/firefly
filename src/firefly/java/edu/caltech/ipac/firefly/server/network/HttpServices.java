@@ -25,8 +25,6 @@ import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,7 +50,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * @version $Id: $
  */
 public class HttpServices {
-    public static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;    // 64k
+    public static final int BUFFER_SIZE = (int) (8*FileUtil.K);    // optimal buffer size
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     private static HttpClient newHttpClient() {
@@ -351,20 +349,16 @@ public class HttpServices {
         }
 
         public Status handleResponse(HttpMethod method) {
-            BufferedInputStream bis = null;
-            BufferedOutputStream bos = null;
-            try {
-                bis = new BufferedInputStream(getResponseBodyAsStream(method));
-                bos = new BufferedOutputStream(results);
-                int b;
-                while ((b = bis.read()) != -1) {
-                    bos.write(b);
+            try (InputStream in = getResponseBodyAsStream(method);
+                 OutputStream out = results) {
+
+                byte[] buffer = new byte[BUFFER_SIZE]; // 8 KB buffer
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
                 }
             } catch (IOException e) {
                 return new Status(400, String.format("Error while reading response body: %s", e.getMessage()));
-            } finally {
-                FileUtil.silentClose(bis);
-                FileUtil.silentClose(bos);
             }
             return new Status(method.getStatusCode(), method.getStatusText());
         }
