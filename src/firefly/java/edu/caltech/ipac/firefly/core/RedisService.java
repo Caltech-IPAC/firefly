@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.Util.Try;
@@ -64,6 +65,8 @@ public class RedisService {
     public static final int maxPoolSize = AppProperties.getIntProperty(MAX_POOL_SIZE, 100);
     private static JedisPool jedisPool;
     private static Instant failSince;
+
+    private static List<String> RESERVED_KEYS = List.of(ALL_JOB_CACHE_KEY);
 
     private static String getRedisPassword() {
         String passwd = System.getenv("REDIS_PASSWORD");
@@ -166,6 +169,7 @@ public class RedisService {
             do {
                 var scanResult = redis.scan(cursor);
                 for (String key : scanResult.getResult()) {
+                    if (RESERVED_KEYS.contains(key)) continue; // skip reserved keys
                     long ttl = redis.ttl(key);
                     if (ttl == -1) {        // no expiry time
                         Long idletime = redis.objectIdletime(key);
