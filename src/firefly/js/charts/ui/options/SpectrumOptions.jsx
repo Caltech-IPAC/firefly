@@ -14,7 +14,7 @@ import {fieldReducer, submitChangesScatter, ScatterCommonOptions, useScatterInpu
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {LayoutOptions, useBasicOptions} from './BasicOptions.jsx';
+import {LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
 import {isFloat} from 'firefly/util/Validate';
@@ -36,7 +36,6 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
 
     const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
@@ -70,10 +69,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                 </Stack>
                 <CollapsibleGroup>
                     <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
-                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
-                                   XaxisTitle={() => <XaxisTitle readonly={true}/>}
-                                   YaxisTitle={() => <YaxisTitle readonly={true}/>}
-                    />
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
                 </CollapsibleGroup>
             </Stack>
         </FieldGroup>
@@ -289,7 +285,7 @@ function Units({activeTrace, value, axis, ...rest}) {
     const options = getUnitInfo(value)?.options;
     const unrecognizedTip = 'Cannot change these units because they could not be recognized.';
 
-    return options
+    return options?.length > 1
         ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}}
                              {...{label, options, ...rest}}/>
         : <ReadOnlyField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} value={value} label={label}

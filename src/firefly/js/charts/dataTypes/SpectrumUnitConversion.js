@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf.js';
+import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
 
 /**
  * Return true if 'from' unit can be converted to 'to'.
@@ -12,7 +12,9 @@ import {sprintf} from '../../externalSource/sprintf.js';
  * @returns {boolean}
  */
 export function canUnitConv({from, to}) {
-    return !! get(UnitXref, [from, to]);
+    const fromKey = normalizeUnit(from);
+    const toKey = normalizeUnit(to);
+    return !!(fromKey && toKey && UnitXref?.[fromKey]?.[toKey]);
 }
 
 /**
@@ -22,12 +24,14 @@ export function canUnitConv({from, to}) {
  * @param p.from    from unit
  * @param p.to      to unit
  * @param p.alias   the name of this new column
- * @param p.colNames    a list of all the columns in the table.  This is used to format the expression so that column names are quoted correctly.
  * @param p.args    any additional arguments used in the conversion formula.
  * @returns {string}
  */
 export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
-    const formula = get(UnitXref, [from, to]);
+    const fromKey = normalizeUnit(from);
+    const toKey = normalizeUnit(to);
+    const formula = UnitXref?.[fromKey]?.[toKey] ?? '';
+
     let colOrExpr = cname;
     if (formula) {
         colOrExpr = sprintf(formula.replace(/(%([0-9]\$)?s)/g, '"$1"'), cname, ...args);
@@ -39,60 +43,62 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
 /**
  * returns an object containing the axis label and an array of options for unit conversion.
  * @param {string} unit         the unit to get the info for
- * @param {string} cname        the name of the column being evaluated
+ * @param {string} cname        the name (or expression) of the column being evaluated
  * @returns {Object}
  */
 export function getUnitInfo(unit, cname) {
-    cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;          // remove enclosing double-quotes if exists
-    // TODO: account aliases in the lookup
-    const meas =  Object.values(UnitXref.measurement).find((m) => m?.options.find( (o) => o?.value === unit)) || {};
-    let label = meas.label ? sprintf(meas.label, unit) : '';
+    let options = [];
+    let label = '';
 
-    // use column name (or expression) if couldn't recognize the unit in options of each measurement
-    if (!label && cname) {
-        label = cname + (unit ? `[${unit}]` : '');
+    const unitKey = normalizeUnit(unit);
+    if (unitKey) {
+        const measurementKey = UnitMetadata[unitKey]?.type;
+        options = Object.entries(UnitMetadata)
+            .filter(([,meta]) => meta?.type === measurementKey) // can only convert units of the same measurement type
+            .map(([key, meta]) => ({value: key, label: meta.label || key}));
+
+        const unitLabel = UnitMetadata[unitKey]?.label || unitKey;
+        const formattedLabel = Measurement[measurementKey]?.axisLabel;
+        if (formattedLabel) label = sprintf(formattedLabel, unitLabel);
     }
-    return {options: meas.options, label};
+    else {
+        cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;  // remove enclosing double-quotes if exists
+        if (cname) label = cname + (unit ? ` [${unit}]` : '');
+    }
+
+    return {options, label};
 }
 
 
-/*
+/**
+ * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
+ * @param {string} cname         the name of the column being evaluated
+ * @param {string} unit          the unit to get the info for
+ * @param {string} sfLabel       the label of spectral frame selected
+ * @param {string} redshiftLabel the label of redshift if rest frame, optional
+ * @returns {string}
+ */
+export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
+    const unitLabel = getUnitInfo(unit, cname).label;
+    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+};
+
+
+
+/**
+ * @typedef {string} UnitKey
+ * Unique identifier for a unit, used as a key in UnitXref and UnitMetadata.
+ */
+
+ /**
   Unit conversions, mapping FROM unit -> TO unit, where the formula is an SQL expression.
   The formula is a format string, similar to printf, where the %s is the column name of the value being converted.
   When argument index is needed, it can be referenced as %1$s, %2$s, %3$s, %4$s, etc.
-*/
 
+  Note: "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
+  @type {Object.<UnitKey, Object.<UnitKey, string>>}
+**/
 const UnitXref = {
-    measurement: {
-        frequency: {
-            options: [{value:'Hz'}, {value:'KHz'}, {value:'MHz'}, {value:'GHz'}],
-            label: '𝛎 [%s]'
-        },
-        wavelength: {
-            options: [{value: 'A'}, {value: 'nm'}, {value:'um'}, {value: 'mm'}, {value:'cm'}, {value:'m'}],
-            label: 'λ [%s]'
-        },
-        flux_density_frequency: {
-            options: [{value:'W/m^2/Hz'}, {value:'erg/s/cm^2/Hz'}, {value:'Jy'}],
-            label: 'F𝛎 [%s]'
-        },
-        flux_density_wavelength: {
-            options: [{value:'W/m^2/um'}, {value:'erg/s/cm^2/A'}],
-            label: 'Fλ [%s]'
-        },
-        inband_flux: {
-            options: [{value:'W/m^2'}, {value:'Jy*Hz'}],
-            label: '𝛎*F𝛎 [%s]'
-        }
-    },
-
-    aliases: {
-        //TODO: add Angstrom, dot product notations of flux density, etc.
-    },
-
-    // Unit Conversions follow
-    // "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
-
     // frequency -------------
     Hz : {
         Hz  : '%s',
@@ -210,15 +216,134 @@ const UnitXref = {
     },
 };
 
+
 /**
- * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
- * @param {string} cname         the name of the column being evaluated
- * @param {string} unit          the unit to get the info for
- * @param {string} sfLabel       the label of spectral frame selected
- * @param {string} redshiftLabel the label of redshift if rest frame, optional
- * @returns {string}
+ * @typedef {string} MeasurementKey - unique identifier for a measurement type, used as a key in Measurement.
  */
-export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
-    const unitLabel = getUnitInfo(unit, cname).label;
-    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+
+ /**
+ * @typedef {Object} Measurement
+ * @property {MeasurementKey} key - the key of the measurement type
+ * @property {string} value - the value of the measurement type
+ * @property {string} axisLabel - the label for the axis, formatted with a placeholder for the unit
+ */
+
+/**Type of measurements by which units are grouped.
+ * @type {Object.<MeasurementKey, Measurement>}
+ */
+const Measurement = {
+    NU: {key: 'NU', value: 'frequency', axisLabel: '𝛎 [%s]'},
+    LAMBDA: {key: 'LAMBDA', value: 'wavelength', axisLabel: 'λ [%s]'},
+    F_NU: {key: 'F_NU', value: 'flux_density_frequency', axisLabel: 'F𝛎 [%s]'},
+    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', axisLabel: 'Fλ [%s]'},
+    F: {key: 'F', value: 'inband_flux', axisLabel: '𝛎·F𝛎 [%s]'},
 };
+
+
+/**
+ * @typedef {Object} UnitMetadata
+ * @property {MeasurementKey} type - the type of measurement this unit belongs to, one of the keys in `Measurement`.
+ * @property {string} label - the label for the unit, used in dropdown options and axis labels. If undefined, the key
+ * is used as the label.
+ * @property {Array<string>} aliases - an object containing aliases for the unit, used for case-insensitive matching. If
+ * undefined, only the key (and label) is used for matching.
+ */
+
+/**
+ * Metadata of each unit, including its type, label, and aliases. Keys are the same as in UnitXref.
+ * @type {Object.<UnitKey, UnitMetadata>}
+ * **/
+const UnitMetadata = {
+    // frequency -------------
+    Hz : {
+        type: Measurement.NU.key,
+    },
+    KHz : {
+        type: Measurement.NU.key,
+    },
+    MHz : {
+        type: Measurement.NU.key,
+    },
+    GHz : {
+        type: Measurement.NU.key,
+    },
+    // wavelength -------------
+    A : {
+        type: Measurement.LAMBDA.key,
+        label: WAVELENGTH_UNITS.angstrom.symbol,
+        aliases: ['angstrom', 'angstroms'] //case-insensitive
+    },
+    nm : {
+        type: Measurement.LAMBDA.key,
+    },
+    um : {
+        type: Measurement.LAMBDA.key,
+        label: WAVELENGTH_UNITS.um.symbol,
+        aliases: ['micron', 'microns'] //case-insensitive
+    },
+    mm : {
+        type: Measurement.LAMBDA.key,
+    },
+    cm : {
+        type: Measurement.LAMBDA.key,
+    },
+    m  : {
+        type: Measurement.LAMBDA.key,
+    },
+    // flux density in frequency space -------------
+    'W/m^2/Hz' : {
+        type: Measurement.F_NU.key,
+        label: 'W/m²/Hz',
+        aliases: [], //TODO: generate aliases in dot product notation with **, as it is with ** for powers
+    },
+    'erg/s/cm^2/Hz' : {
+        type: Measurement.F_NU.key,
+        label: 'erg/s/cm²/Hz',
+    },
+    Jy : {
+        type: Measurement.F_NU.key,
+    },
+    // flux density in wavelength space -------------
+    'erg/s/cm^2/A' : {
+        type: Measurement.F_LAMBDA.key,
+        label: `erg/s/cm²/${WAVELENGTH_UNITS.angstrom.symbol}`,
+    },
+    'W/m^2/um' : {
+        type: Measurement.F_LAMBDA.key,
+        label: `W/m²/${WAVELENGTH_UNITS.um.symbol}`,
+    },
+    // inband flux (independent of frequency or wavelength) -------------
+    'W/m^2' : {
+        type: Measurement.F.key,
+        label: 'W/m²',
+    },
+    'erg/s/cm^2' : {
+        type: Measurement.F.key,
+        label: 'erg/s/cm²',
+    },
+    'Jy*Hz' : {
+        type: Measurement.F.key,
+        label: 'Jy·Hz',
+    },
+};
+
+
+/**
+ * Maps any unit value/label/alias back to a key in UnitXref (and UnitMetadata).
+ * @param u {string} - the unit to normalize
+ * @return {UnitKey|null} - the key in UnitXref if found, otherwise null
+ */
+function normalizeUnit(u) {
+    if (!u) return null;
+    // u is already a key in UnitXref
+    if (UnitXref[u]) return u;
+
+    for (const [key, meta] of Object.entries(UnitMetadata)) {
+        // u is a case-insensitive alias of a key in UnitXref
+        if (meta?.aliases?.some((alias) => alias.toLowerCase() === u.toLowerCase())) return key;
+
+        // u is a label of a key in UnitXref
+        if (meta?.label === u) return key;
+    }
+    return null;
+}
