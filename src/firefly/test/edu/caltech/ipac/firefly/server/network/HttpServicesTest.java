@@ -1,9 +1,20 @@
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.core.Util;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.visualize.plot.CircleTest;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.logging.log4j.Level;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -11,6 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -18,6 +30,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static edu.caltech.ipac.firefly.TestUtil.logMemUsage;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.*;
 
@@ -170,10 +183,57 @@ public class HttpServicesTest extends ConfigTest {
 
 	}
 
+	@Category({TestCategory.Perf.class})
+	@Test
+	public void perfVsCurl() throws DataAccessException {
+        /*
+        */
+		Logger.setLogLevel(Level.TRACE);
+
+		String testUrl = "https://irsatest.ipac.caltech.edu/irsa-euclid/mer-catalog/search?POS=CIRCLE+267+65+0.5";
+		String[] curlCmd = new String[] {
+				"curl",
+				"-o", "a.vot",
+				"-s",
+				"-w", "\\nWait Time: %{time_starttransfer}\\nTotal time: %{time_total}\\n",
+				testUrl
+		};
+
+		Logger.getLogger().debug("CURL:");
+		String curlResults = execCmd(curlCmd);
+		Logger.getLogger().debug(curlResults);
+
+		Logger.getLogger().debug("HttpServices:");
+		StopWatch.getInstance().start("Total Time");
+		StopWatch.getInstance().start("Wait Time");
+		HttpServices.getData(new HttpServiceInput().setRequestUrl(testUrl), (method) -> {
+			StopWatch.getInstance().printLog("Wait Time");
+			File a = new File("b.vot");
+//			a.deleteOnExit();
+			HttpServices.OutputStreamHandler h = Util.Try.it(() -> new HttpServices.OutputStreamHandler(a)).get();
+			StopWatch.getInstance().start("Fetch Time");
+			h.handleResponse(method);
+			StopWatch.getInstance().printLog("Fetch Time");
+			return HttpServices.Status.ok();
+		});
+		StopWatch.getInstance().printLog("Total Time");
+	}
 
 //====================================================================
 //  private
 //====================================================================
+
+	private static String execCmd(String[] cmd) {
+		StringBuilder out = new StringBuilder();
+		try {
+			Process process = Runtime.getRuntime().exec(cmd);
+			try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+				reader.lines().forEach(line -> out.append(line).append("\n"));
+			}
+			process.waitFor();
+		} catch (Exception ignored) {}
+		return out.toString();
+	}
 
 	private static void validateResults(HttpServices.Status status, ByteArrayOutputStream results) {
 		assertFalse("Has error", status.isError());
