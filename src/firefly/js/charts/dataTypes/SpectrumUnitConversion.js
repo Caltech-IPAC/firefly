@@ -44,8 +44,11 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
  */
 export function getUnitInfo(unit, cname) {
     cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;          // remove enclosing double-quotes if exists
+    // TODO: account aliases in the lookup
     const meas =  Object.values(UnitXref.measurement).find((m) => m?.options.find( (o) => o?.value === unit)) || {};
     let label = meas.label ? sprintf(meas.label, unit) : '';
+
+    // use column name (or expression) if couldn't recognize the unit in options of each measurement
     if (!label && cname) {
         label = cname + (unit ? `[${unit}]` : '');
     }
@@ -69,9 +72,13 @@ const UnitXref = {
             options: [{value: 'A'}, {value: 'nm'}, {value:'um'}, {value: 'mm'}, {value:'cm'}, {value:'m'}],
             label: 'λ [%s]'
         },
-        flux_density: {
-            options: [{value:'W/m^2/Hz'}, {value:'Jy'}],
+        flux_density_frequency: {
+            options: [{value:'W/m^2/Hz'}, {value:'erg/s/cm^2/Hz'}, {value:'Jy'}],
             label: 'F𝛎 [%s]'
+        },
+        flux_density_wavelength: {
+            options: [{value:'W/m^2/um'}, {value:'erg/s/cm^2/A'}],
+            label: 'Fλ [%s]'
         },
         inband_flux: {
             options: [{value:'W/m^2'}, {value:'Jy*Hz'}],
@@ -79,10 +86,14 @@ const UnitXref = {
         }
     },
 
+    aliases: {
+        //TODO: add Angstrom, dot product notations of flux density, etc.
+    },
+
     // Unit Conversions follow
     // "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
 
-    // frequency
+    // frequency -------------
     Hz : {
         Hz  : '%s',
         KHz : '%s / 1000.0',
@@ -107,7 +118,7 @@ const UnitXref = {
         MHz : '%s * 1000.0',
         GHz : '%s'
     },
-    // wavelength
+    // wavelength -------------
     A : {
         A  : '%s',
         nm : '%s / 10',
@@ -156,25 +167,47 @@ const UnitXref = {
         cm : '%s * 100',
         m  : '%s'
     },
-    //  flux density
+    // flux density in frequency space -------------
     'W/m^2/Hz' : {
         'W/m^2/Hz' : '%s',
+        'erg/s/cm^2/Hz': '%s * 1.0E+3',
         Jy : '%s * 1.0E+26',
     },
+    'erg/s/cm^2/Hz' : {
+        'W/m^2/Hz': '%s / 1.0E+3',
+        'erg/s/cm^2/Hz' : '%s',
+        Jy : '%s * 1.0E+23',
+    },
     Jy : {
-        'W/m^2/Hz' : '%s / 1.0E+26',
+        'W/m^2/Hz' : '%s / 1.0E+26', //SI units
+        'erg/s/cm^2/Hz': '%s / 1.0E+23', //CGS units
         Jy : '%s',
     },
-    //  inband flux
+    // flux density in wavelength space -------------
+    'erg/s/cm^2/A' : {
+        'erg/s/cm^2/A' : '%s',
+        'W/m^2/um': '%s * 10'
+    },
+    'W/m^2/um' : {
+        'erg/s/cm^2/A' : '%s / 10',
+        'W/m^2/um' : '%s',
+    },
+    // inband flux (independent of frequency or wavelength) -------------
     'W/m^2' : {
         'W/m^2' : '%s',
+        'erg/s/cm^2' : '%s * 1.0E+3',
         'Jy*Hz' : '%s * 1.0E+26',
+    },
+    'erg/s/cm^2' : {
+        'W/m^2' : '%s / 1.0E+3',
+        'erg/s/cm^2' : '%s',
+        'Jy*Hz' : '%s * 1.0E+23',
     },
     'Jy*Hz' : {
         'W/m^2' : '%s / 1.0E+26',
+        'erg/s/cm^2' : '%s / 1.0E+23',
         'Jy*Hz' : '%s',
-    }
-
+    },
 };
 
 /**
