@@ -63,17 +63,18 @@ import static java.util.Optional.ofNullable;
 public class JobManager {
 
     public static final String BG_INFO = "background.info";
+    public static final String ALL_JOB_CACHE_KEY = "ALL_JOB_INFOS"; // cache key for all job infos
     public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 60);     // run cleanup once every 60 minutes
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
-    private static final int JOB_RETENTION_PERIOD = AppProperties.getIntProperty("job.retention.period", 24*14);   // Time in hours to keep a job before deletion.  Default to 14 days.
+    private static final int JOB_EXPIRY_HOURS = AppProperties.getIntProperty("job.expiry.hours", 24*14);        // Time in hours to keep a job after it has ended.  Default to 14 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
     private static final ExecutorService searches = Executors.newCachedThreadPool();
     private static final HashMap<String, JobEntry> runningJobs = new HashMap<>();
-    private static final Cache<JobInfo> allJobInfos = new DistribMapCache<>("ALL_JOB_INFOS", JOB_RETENTION_PERIOD*60*60*2L, new JobInfoSerializer()); // twice the retention period; default to 28 days
+    private static final Cache<JobInfo> allJobInfos = new DistribMapCache<>(ALL_JOB_CACHE_KEY, 0, new JobInfoSerializer()); // the all job hash should never expire
     private static final String COMPLETED_HANDLER = AppProperties.getProperty("job.completed.handler");
 
 
@@ -503,7 +504,7 @@ public class JobManager {
             if (!job.getMeta().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
                 LOG.info("Removing non-monitored job: " + k);
                 allJobInfos.remove(k);      // remove non-monitored job after 1 hour
-            } else if (!CLEANUP_PHASES_EXCLUDES.contains(job.getPhase()) && job.getEndTime().plus(JOB_RETENTION_PERIOD, ChronoUnit.HOURS).isBefore(Instant.now())) {
+            } else if (!CLEANUP_PHASES_EXCLUDES.contains(job.getPhase()) && job.getEndTime().plus(JOB_EXPIRY_HOURS, ChronoUnit.HOURS).isBefore(Instant.now())) {
                 LOG.info("Removing expired job: " + k);
                 allJobInfos.remove(k);
             }
