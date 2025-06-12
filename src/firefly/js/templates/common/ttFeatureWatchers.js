@@ -7,7 +7,7 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {findTableCenterColumns, hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableCenterColumns, hasObsCoreLikeDataProducts, isDatalinkTable} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
@@ -104,16 +104,19 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
     const tbl_id = table_id || getActiveTableId();
     const tblTitle = tbl_title || (getTblById(tbl_id)?.title ?? 'unknown');
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const isDatalink = isDatalinkTable(tbl_id);
 
     const [semList, setSemList] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-        fetchSemanticList(tbl_id).then( (result) => {
-            setSemList(result);
-            setLoading(false);
-        });
+        if (isDatalink) setLoading(false);
+        else {
+            fetchSemanticList(tbl_id).then( (result) => {
+                setSemList(result);
+                setLoading(false);
+            });
+        }
     }, [tbl_id]);
 
     const labelMap = useMemo(() => ({
@@ -149,14 +152,13 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
 
     const tblModel = getTableModel(tbl_id);
 
-    const cutoutValue = useStoreConnector( () => getCutoutSize(viewerId ?? undefined));
+    const cutoutValue = useStoreConnector(() => getCutoutSize(viewerId ?? undefined));
 
     const dataProductsComponentKey= tblIdToKey(tbl_id);
 
     const generateDownloadFileName= getDataServiceOptionByTable('generateDownloadFileName', tbl_id, false);
 
-
-    const cutoutTargetVals = findCutoutTarget(viewerId ?? dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow);
+    const cutoutTargetVals = useStoreConnector(() => findCutoutTarget(viewerId ?? dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow));
     const centerCols = findTableCenterColumns(tbl_id);
     //this will be null if no datalink service descriptor is found, else it will return the access url and input params from the service descriptor
     const isDatalinkSerDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
@@ -165,7 +167,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
     let ra = cutoutTargetVals?.positionWP?.x;
     let dec = cutoutTargetVals?.positionWP?.y;
 
-    if (cutoutTargetVals.foundType === ROW_POSITION) {
+    if (cutoutTargetVals?.foundType === ROW_POSITION && !isDatalink) { //if datalink table (extracted products table), then use the ra/dec directly from cutoutTargetVals
         //server side should use center cols to get ra/dec from the file if user selects this option
         ra = null;
         dec = null;
@@ -200,13 +202,13 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                                 help_id:'table.obsCorePackage',
                                 BaseFileName: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
                             }}}>
-                            <Stack spacing={1}>
+                            {!isDatalink && <Stack spacing={1}>
                                 <CheckboxGroupInputField
                                     fieldKey='productTypes'
                                         options={dynamicOptions}
                                         initialState={{value: '*'}}
                                         label='Products to Download: ' />
-                            </Stack>
+                            </Stack>}
                         </DownloadOptionPanel>
                     </DownloadButton>
                 </Stack>

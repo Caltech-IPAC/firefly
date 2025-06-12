@@ -4,10 +4,9 @@ import {MetaConst} from '../../data/MetaConst';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../../metaConvert/DataProductConst';
 import {getMetaEntry} from '../../tables/TableUtil';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser';
-import {isValidPoint, parseWorldPt} from '../../visualize/Point';
+import {parseWorldPt} from '../../visualize/Point';
 import {pointIn} from '../../visualize/projection/Projection';
-import {
-    getObsCoreSRegion, getSearchTargetFromTable, isRowTargetCapable, makeWorldPtUsingCenterColumns
+import {getObsCoreSRegion, getSearchTargetFromTable, isDatalinkTable, isRowTargetCapable, makeWorldPtUsingCenterColumns
 } from '../../voAnalyzer/TableAnalysis';
 import {findWorldPtInServiceDef} from '../../voAnalyzer/VoDataLinkServDef';
 import {getDataServiceOptionByTable} from './DataServicesOptions';
@@ -119,7 +118,7 @@ function getIdForCutoutType(tbl_id, serDef) {
     let canDoRow = false;
     if (tbl_id) canDoRow = isRowTargetCapable(tbl_id);
 
-    if (!canDoRow && serDef) {
+    if (!canDoRow && serDef && !isDatalinkTable(tbl_id)) { //if this is a datalink table (extracted from obs core type tbl, we don't want to change the lookupTblId)
         canDoRow = Boolean(serDef?.rowWP);
         lookupTblId = canDoRow ? ROW_CAPABLE : NOT_ROW_CAPABLE;
     }
@@ -168,14 +167,18 @@ export function findPreferredCutoutTarget(dataProductsComponentKey=DEFAULT_DATA_
         if (positionWP) {
             foundType = SEARCH_POSITION;
         } else {
-            positionWP = makeWorldPtUsingCenterColumns(table, row);
+            if (isDatalinkTable(table)) positionWP = parseWorldPt(getMetaEntry(table, MetaConst.ROW_TARGET, undefined));
+            else positionWP = makeWorldPtUsingCenterColumns(table, row);
             foundType = ROW_POSITION;
         }
     } else if (cutoutType === ROW_POSITION) {
-        positionWP = makeWorldPtUsingCenterColumns(table, row);
+        if (isDatalinkTable(table)) {
+            //positionWP to come from metadata
+            positionWP = parseWorldPt(getMetaEntry(table, MetaConst.ROW_TARGET, undefined));
+        }
+        else positionWP = makeWorldPtUsingCenterColumns(table, row);
         if (!positionWP) positionWP = serDef?.rowWP;
         if (positionWP) foundType = ROW_POSITION;
-
     } else if (getCutoutTargetOverride(dataProductsComponentKey)) {
         positionWP = getCutoutTargetOverride(dataProductsComponentKey);
         if (positionWP) foundType = USER_ENTERED_POSITION;

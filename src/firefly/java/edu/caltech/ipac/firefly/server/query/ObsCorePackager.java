@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.getSelectedData;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -35,6 +36,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
     public static final String SEMANTICS = "semantics";
     public static final String CONTENT_TYPE = "content_type";
     public static final String FILE = "file";
+    public static final String SOURCE = "source";
 
     public static final String DATALINK_SER_DEF = "datalinkServiceDescriptor";
     public static final String ADHOC_SERVICE = "adhoc:service";
@@ -59,6 +61,11 @@ public class ObsCorePackager extends FileGroupsProcessor {
     private static final List<String> CUTOUT_UCDs= Arrays.asList("phys.size","phys.size.radius","phys.angSize", "pos.spherical.r");
     private static final List<String>  RA_UCDs= List.of("pos.eq.ra");
     private static final List<String>  DEC_UCDs= List.of("pos.eq.dec");
+
+    private static final List<String> SERVICE_DESC_COL_NAMES = List.of(
+            "id", "access_url", "service_def", "error_message", "semantics",
+            "description", "content_type", "content_length"
+    );
 
     record CenterCols(String lonCol, String latCol) {}
 
@@ -87,47 +94,55 @@ public class ObsCorePackager extends FileGroupsProcessor {
         List<FileInfo> fileInfos = new ArrayList<>();
         try {
             var selectedRows = new ArrayList<>(request.getSelectedRows());
-            //request.getSearchRequest() - .getParam("source") -> this could be the url for datalink...if it contains links / is a datalink url, call parseDatalink
-            //todo: but might have to loop through the selectedRows still and call parseDatalink for each selected row ? like we do below ?
-            //todo: just that the url to pass will come directly from source above instead of from access_url below...
             MappedData dgDataUrl = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows); //returns all columns
             DataGroup dg = getSelectedData(request.getSearchRequest(), selectedRows);
-            Map<String, Integer> prefixCounter = new HashMap<>();
 
-            String datalinkServDesc = request.getParam(DATALINK_SER_DEF); //check for a non-obscore table containing a Datalink Service Descriptor
             String pos = request.getParam(POSITION);
+            Map<String, Integer> prefixCounter = new HashMap<>();
+            String datalinkServDesc = request.getParam(DATALINK_SER_DEF); //check for a non-obscore table containing a Datalink Service Descriptor
 
-            for (int idx : selectedRows) {
-                String access_url = (String) dgDataUrl.get(idx, ACCESS_URL);
+            DataType[] dataDefs = dg.getDataDefinitions();
+            boolean isRequestDatalink = checkIfRequestIsDatalink(dataDefs);
 
-                if (access_url == null) {
-                    //check if this could be a non-obscore table containing a datalink url
-                    if (datalinkServDesc != null) {
-                        //construct product url / access url here
-                        ServDescUrl serDescUrl = createUrlFromServDesc(datalinkServDesc);
-                        access_url = getAccessUrlFromNonObsCore(serDescUrl, dg, dgDataUrl, idx);
+            if (isRequestDatalink) { //to check if the incoming request is directly from a datalink table (in cases where user may extract a table from an existing obscore type table)
+                String datalinkAccessUrl = request.getSearchRequest().getParam(SOURCE);
+                List<String> positionColVals = getPositionColVals(pos, -1, null); //don't need index or dgDataUrl, pos should have ra/dec vals
+                System.out.println(positionColVals);
+                List<FileInfo> tmpFileInfos = parseDatalink(new URL(datalinkAccessUrl), request, dgDataUrl, selectedRows, "", positionColVals);
+                fileInfos.addAll(tmpFileInfos);
+            }
+            else {
+                for (int idx : selectedRows) {
+                    String access_url = (String) dgDataUrl.get(idx, ACCESS_URL);
+
+                    if (access_url == null) {
+                        //check if this could be a non-obscore table containing a datalink url
+                        if (datalinkServDesc != null) {
+                            //construct product url / access url here
+                            ServDescUrl serDescUrl = createUrlFromServDesc(datalinkServDesc);
+                            access_url = getAccessUrlFromNonObsCore(serDescUrl, dg, dgDataUrl, idx);
+                        } else continue; //no file available to process
                     }
-                    else continue; //no file available to process
-                }
 
-                String access_format = (String) dgDataUrl.get(idx, ACCESS_FORMAT);
-                URL url = new URL(access_url);
+                    String access_format = (String) dgDataUrl.get(idx, ACCESS_FORMAT);
+                    URL url = new URL(access_url);
 
-                List<String> positionColVals = getPositionColVals(pos, idx, dgDataUrl);
-                String colNames = request.getSearchRequest().getParam(TEMPLATE_COL_NAMES);
-                String[] cols = colNames != null ? colNames.split(",") : null;
-                String fileNamePrefix = getFileNamePrefix(idx, cols, dgDataUrl, url, positionColVals); //this will be used as folder name, and as prefix for individual file names
-                fileNamePrefix = makeUniquePrefix(fileNamePrefix, prefixCounter);
+                    List<String> positionColVals = getPositionColVals(pos, idx, dgDataUrl);
+                    String colNames = request.getSearchRequest().getParam(TEMPLATE_COL_NAMES);
+                    String[] cols = colNames != null ? colNames.split(",") : null;
+                    String fileNamePrefix = getFileNamePrefix(idx, cols, dgDataUrl, url, positionColVals); //this will be used as folder name, and as prefix for individual file names
+                    fileNamePrefix = makeUniquePrefix(fileNamePrefix, prefixCounter);
 
-                boolean isDatalink = (datalinkServDesc != null) || (access_format != null && access_format.contains(DATALINK));
+                    boolean isDatalink = (datalinkServDesc != null) || (access_format != null && access_format.contains(DATALINK));
 
-                if (isDatalink) {
-                    List<FileInfo> tmpFileInfos = parseDatalink(url, request, dgDataUrl, idx, fileNamePrefix, positionColVals);
-                    fileInfos.addAll(tmpFileInfos);
-                } else {
-                    String extName = null;
-                    FileInfo fileInfo = new FileInfo(access_url, extName, 0);
-                    fileInfos.add(fileInfo);
+                    if (isDatalink) {
+                        List<FileInfo> tmpFileInfos = parseDatalink(url, request, dgDataUrl, null, fileNamePrefix, positionColVals);
+                        fileInfos.addAll(tmpFileInfos);
+                    } else {
+                        String extName = null;
+                        FileInfo fileInfo = new FileInfo(access_url, extName, 0);
+                        fileInfos.add(fileInfo);
+                    }
                 }
             }
             fileInfos.forEach(fileInfo -> fileInfo.setRequestInfo(HttpServiceInput.createWithCredential(fileInfo.getInternalFilename())));
@@ -138,7 +153,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
         return Arrays.asList(new FileGroup(fileInfos, null, 0, "ObsCore Download Files"));
     }
 
-    public static List<FileInfo> parseDatalink(URL url, DownloadRequest request, MappedData dgDataUrl, int idx, String prepend_file_name, List<String> positionColVals) {
+    public static List<FileInfo> parseDatalink(URL url, DownloadRequest request, MappedData dgDataUrl, List<Integer> indices, String prepend_file_name, List<String> positionColVals) {
         List<FileInfo> fileInfos = new ArrayList<>();
         boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure"); //true if flattened, else false for structured logic
         boolean generateDownloadFileName = Boolean.parseBoolean(Objects.toString(request.getParam(GENERATE_DOWNLOAD_FILE_NAME), "false"));
@@ -177,6 +192,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 }
 
                 for (int i=0; i < dg.size(); i++) {
+                    if (indices != null && !indices.contains(i)) continue;
                     String accessUrl = Objects.toString(dg.getData(ACCESS_URL, i), null);
                     String sem = Objects.toString(dg.getData(SEMANTICS, i), null);
                     String file = Objects.toString(dg.getData(FILE, i), null);
@@ -233,6 +249,19 @@ public class ObsCorePackager extends FileGroupsProcessor {
             e.printStackTrace();
         }
         return fileInfos;
+    }
+
+    //this function checks if the incoming request is directly from a datalink table (in cases where user may extract a table from an existing obscore type table)
+    public static boolean checkIfRequestIsDatalink(DataType[] dataDefs) {
+        if (dataDefs == null || dataDefs.length == 0) return false;
+
+        Set<String> columnNames = Arrays.stream(dataDefs)
+                .map(attr -> attr.getKeyName().toLowerCase())
+                .collect(Collectors.toSet());
+
+        //check if all service desc column names are present - confirming whether this is a datalink table
+        return SERVICE_DESC_COL_NAMES.stream()
+                .allMatch(columnNames::contains);
     }
 
     private static String makeUniquePrefix(String basePrefix, Map<String, Integer> prefixCounter) {
@@ -421,16 +450,30 @@ public class ObsCorePackager extends FileGroupsProcessor {
 
     private static Position getPosition(String pos) {
         JSONObject jsonObject = new JSONObject(pos);
-        JSONObject centerColsJson = jsonObject.getJSONObject(CENTER_COL_NAMES);
-        CenterCols centerColNames = new CenterCols(
-                String.valueOf(centerColsJson.get(LON_COL)),
-                String.valueOf(centerColsJson.get(LAT_COL))
-        );
+
+        //handle centerColNames with fallback
+        String lonCol = RA;
+        String latCol = DEC;
+
+        if (jsonObject.has(CENTER_COL_NAMES)) {
+            JSONObject centerColsJson = jsonObject.getJSONObject(CENTER_COL_NAMES);
+            if (centerColsJson.has(LON_COL)) {
+                lonCol = String.valueOf(centerColsJson.get(LON_COL));
+            }
+            if (centerColsJson.has(LAT_COL)) {
+                latCol = String.valueOf(centerColsJson.get(LAT_COL));
+            }
+        }
+
+        CenterCols centerColNames = new CenterCols(lonCol, latCol);
+
+        //parse centerColValues
         JSONObject centerColValuesJson = jsonObject.getJSONObject(CENTER_COL_VALS);
-        CenterColValues centerColValues = new CenterColValues(
-                String.valueOf(centerColValuesJson.get(RA)),
-                String.valueOf(centerColValuesJson.get(DEC))
-        );
+        String raVal = String.valueOf(centerColValuesJson.opt(RA));//could be "null"
+        String decVal = String.valueOf(centerColValuesJson.opt(DEC));//could be "null"
+
+        CenterColValues centerColValues = new CenterColValues(raVal, decVal);
+
         return new Position(centerColNames, centerColValues);
     }
 
