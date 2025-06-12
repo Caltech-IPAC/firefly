@@ -132,14 +132,15 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnCons
     }
 
     const helperFragment = getHelperConstraints(tapBrowserState);
+    const tableAsName = getAsEntryForTableName(tableName); // alias is used when upload table is present
     const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel,
-        isUpload?getAsEntryForTableName(tableName):undefined);
+        isUpload ? tableAsName : undefined);
 
-    const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns}= isUpload ?
+    const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns} = isUpload ?
         getTapUploadSchemaEntry(tapBrowserState) : {};
 
     const fromTables= isUpload ?
-        `${tableName} AS ${getAsEntryForTableName(tableName)}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
+        `${tableName} AS ${tableAsName}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
         tableName;
 
     // check for errors
@@ -153,7 +154,7 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnCons
     }
 
     // build columns
-    let selcols = tableCol.selcols || (isUpload ? `${tableName}.*` : '*');
+    let selcols = tableCol.selcols || (isUpload ? `${tableAsName}.*` : '*');
     if (isUpload) {
         const ut= uploadAsTable ?? uploadTable ?? '';
         const tCol= uploadColumns.filter(({use}) => use).map( ({name}) => ut+'.'+name);
