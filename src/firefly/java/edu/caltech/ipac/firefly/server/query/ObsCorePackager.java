@@ -105,10 +105,8 @@ public class ObsCorePackager extends FileGroupsProcessor {
             boolean isRequestDatalink = checkIfRequestIsDatalink(dataDefs);
 
             if (isRequestDatalink) { //to check if the incoming request is directly from a datalink table (in cases where user may extract a table from an existing obscore type table)
-                String datalinkAccessUrl = request.getSearchRequest().getParam(SOURCE);
                 List<String> positionColVals = getPositionColVals(pos, -1, null); //don't need index or dgDataUrl, pos should have ra/dec vals
-                System.out.println(positionColVals);
-                List<FileInfo> tmpFileInfos = parseDatalink(new URL(datalinkAccessUrl), request, dgDataUrl, selectedRows, "", positionColVals);
+                List<FileInfo> tmpFileInfos = parseDatalink(null, request, "", positionColVals, dg);
                 fileInfos.addAll(tmpFileInfos);
             }
             else {
@@ -133,10 +131,10 @@ public class ObsCorePackager extends FileGroupsProcessor {
                     String fileNamePrefix = getFileNamePrefix(idx, cols, dgDataUrl, url, positionColVals); //this will be used as folder name, and as prefix for individual file names
                     fileNamePrefix = makeUniquePrefix(fileNamePrefix, prefixCounter);
 
-                    boolean isDatalink = (datalinkServDesc != null) || (access_format != null && access_format.contains(DATALINK));
+                    boolean isTblContainsDatalink = (datalinkServDesc != null) || (access_format != null && access_format.contains(DATALINK));
 
-                    if (isDatalink) {
-                        List<FileInfo> tmpFileInfos = parseDatalink(url, request, dgDataUrl, null, fileNamePrefix, positionColVals);
+                    if (isTblContainsDatalink) {
+                        List<FileInfo> tmpFileInfos = parseDatalink(url, request, fileNamePrefix, positionColVals, null);
                         fileInfos.addAll(tmpFileInfos);
                     } else {
                         String extName = null;
@@ -153,7 +151,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
         return Arrays.asList(new FileGroup(fileInfos, null, 0, "ObsCore Download Files"));
     }
 
-    public static List<FileInfo> parseDatalink(URL url, DownloadRequest request, MappedData dgDataUrl, List<Integer> indices, String prepend_file_name, List<String> positionColVals) {
+    public static List<FileInfo> parseDatalink(URL url, DownloadRequest request, String prepend_file_name, List<String> positionColVals, DataGroup data) throws IOException {
         List<FileInfo> fileInfos = new ArrayList<>();
         boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure"); //true if flattened, else false for structured logic
         boolean generateDownloadFileName = Boolean.parseBoolean(Objects.toString(request.getParam(GENERATE_DOWNLOAD_FILE_NAME), "false"));
@@ -163,7 +161,11 @@ public class ObsCorePackager extends FileGroupsProcessor {
         String cutoutValue = request.getParam(CUTOUT_VALUE);
 
         try {
-            DataGroup[] groups = VoTableReader.voToDataGroups(url.toString(), false);
+            DataGroup[] groups;
+            if (data != null) { //if the request is from a datalink table, we will get the DataGroup object created directly from the table's selected rows
+                groups = new DataGroup[]{data};
+            }
+            else groups = VoTableReader.voToDataGroups(url.toString(), false); //for obscore/non obscore tables containing datalink, we use the acesss_url of the datalink
 
             //to be used for cutout service descriptor url
             Map<String, ServDescUrl> serDefUrls = new HashMap<>();
@@ -192,7 +194,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 }
 
                 for (int i=0; i < dg.size(); i++) {
-                    if (indices != null && !indices.contains(i)) continue;
+                    //if (indices != null && !indices.contains(i)) continue;
                     String accessUrl = Objects.toString(dg.getData(ACCESS_URL, i), null);
                     String sem = Objects.toString(dg.getData(SEMANTICS, i), null);
                     String file = Objects.toString(dg.getData(FILE, i), null);
