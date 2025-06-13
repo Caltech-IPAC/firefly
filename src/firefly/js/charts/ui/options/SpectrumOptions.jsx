@@ -14,7 +14,7 @@ import {fieldReducer, submitChangesScatter, ScatterCommonOptions, useScatterInpu
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {LayoutOptions} from './BasicOptions.jsx';
+import {LayoutOptions, useBasicOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
 import {isFloat} from 'firefly/util/Validate';
@@ -36,18 +36,23 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
 
     const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
 
     const labelWidth = '11rem';
+    const inputFullWidthSx = {width: 1, maxWidth: '25rem'}; //since expressions get really long
 
     return(
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
-            <Stack spacing={3}>
+            <Stack spacing={3} sx={{
+                '.MuiFormLabel-root': {flexShrink: 0},
+            }}>
                 <Stack spacing={2} sx={{
-                    '.MuiFormLabel-root': {width: labelWidth, flexShrink: 0},
-                    '.ff-ColumnFld': {width: 1, maxWidth: '25rem'}, //since expressions get really long
+                    '.MuiFormLabel-root': {width: labelWidth},
+                    '.ff-ColumnFld': inputFullWidthSx,
+                    '.ff-Input .MuiInput-root': inputFullWidthSx,
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
                     <Stack spacing={1}>
@@ -69,7 +74,10 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                 </Stack>
                 <CollapsibleGroup>
                     <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
-                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey,
+                        XaxisTitle: () => <XaxisTitle readonly={true} sx={{'.MuiInput-root': inputFullWidthSx}}/>,
+                        YaxisTitle: () => <YaxisTitle readonly={true} sx={{'.MuiInput-root': inputFullWidthSx}}/>,
+                    }}/>
                 </CollapsibleGroup>
             </Stack>
         </FieldGroup>
@@ -216,7 +224,7 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
 };
 
 
-
+/* Submit changes for spectrum options (i.e. when "Apply" button in "Modify trace" of chart dialog is clicked).*/
 export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
     const {data, fireflyData} = getChartData(chartId);
     const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
@@ -378,6 +386,7 @@ function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, labe
             <ListBoxInputField fieldKey={SFOptionFieldKeys(activeTrace).value}
                                options={spectralFrameOptions}
                                initialState={{value: spectralFrameOption?.value ?? defaultSFOption}}
+                               slotProps={{input: {sx: {minWidth: '12rem'}}}}
                                {...props}/>
             <Box sx={{
                 position: 'relative',
