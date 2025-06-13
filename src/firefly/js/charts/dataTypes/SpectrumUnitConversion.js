@@ -221,7 +221,7 @@ const UnitXref = {
  * @typedef {string} MeasurementKey - unique identifier for a measurement type, used as a key in Measurement.
  */
 
- /**
+/**
  * @typedef {Object} Measurement
  * @property {MeasurementKey} key - the key of the measurement type
  * @property {string} value - the value of the measurement type
@@ -245,8 +245,7 @@ const Measurement = {
  * @property {MeasurementKey} type - the type of measurement this unit belongs to, one of the keys in `Measurement`.
  * @property {string} label - the label for the unit, used in dropdown options and axis labels. If undefined, the key
  * is used as the label.
- * @property {Array<string>} aliases - an object containing aliases for the unit, used for case-insensitive matching. If
- * undefined, only the key (and label) is used for matching.
+ * @property {Array<string>} aliases - list of aliases for the unit, used for matching besides the key and label.
  */
 
 /**
@@ -271,7 +270,7 @@ const UnitMetadata = {
     A : {
         type: Measurement.LAMBDA.key,
         label: WAVELENGTH_UNITS.angstrom.symbol,
-        aliases: ['angstrom', 'angstroms'] //case-insensitive
+        aliases: ['Angstrom', 'angstrom']
     },
     nm : {
         type: Measurement.LAMBDA.key,
@@ -279,7 +278,7 @@ const UnitMetadata = {
     um : {
         type: Measurement.LAMBDA.key,
         label: WAVELENGTH_UNITS.um.symbol,
-        aliases: ['micron', 'microns'] //case-insensitive
+        aliases: ['micron', 'microns']
     },
     mm : {
         type: Measurement.LAMBDA.key,
@@ -294,7 +293,6 @@ const UnitMetadata = {
     'W/m^2/Hz' : {
         type: Measurement.F_NU.key,
         label: 'W/m²/Hz',
-        aliases: [], //TODO: generate aliases in dot product notation with **, as it is with ** for powers
     },
     'erg/s/cm^2/Hz' : {
         type: Measurement.F_NU.key,
@@ -329,7 +327,7 @@ const UnitMetadata = {
 
 
 /**
- * Maps any unit value/label/alias back to a key in UnitXref (and UnitMetadata).
+ * Maps any unit representation (value/label/alias) back to a key in UnitXref (and UnitMetadata).
  * @param u {string} - the unit to normalize
  * @return {UnitKey|null} - the key in UnitXref if found, otherwise null
  */
@@ -339,11 +337,80 @@ function normalizeUnit(u) {
     if (UnitXref[u]) return u;
 
     for (const [key, meta] of Object.entries(UnitMetadata)) {
-        // u is a case-insensitive alias of a key in UnitXref
-        if (meta?.aliases?.some((alias) => alias.toLowerCase() === u.toLowerCase())) return key;
+        // u is an alias of a key in UnitXref
+        const aliases = meta?.aliases ?? [];
+        aliases.push(...getFluxAliases(key));
+        if (aliases.some((alias) => alias === u)) return key;
 
         // u is a label of a key in UnitXref
         if (meta?.label === u) return key;
     }
     return null;
 }
+
+/* Get all possible representations (key, label, aliases) for a given unitKey */
+function getAllRepresentations(unitKey, includeLabel=true) {
+    const meta = UnitMetadata[unitKey];
+    if (!meta) return []; //invalid unitKey
+    const reps = [unitKey]; // include the key itself
+    if (includeLabel && meta.label && meta.label !== unitKey) reps.push(meta.label);
+    if (Array.isArray(meta.aliases)) reps.push(...meta.aliases);
+    return reps;
+}
+
+/**
+ * Decomposes a unit string into its base units and their powers.
+ * @param unit {string} - the unit string to decompose, e.g. 'erg/s/cm^2/A'
+ * @returns {Map<any, any>} - a Map where keys are base units and values are their powers, e.g.
+ * `Map{'erg'=> 1, 's'=> -1, 'cm'=> -2, 'A'=> -1}`
+ */
+function decomposeUnit(unit) {
+    const pattern = /([*./]?)([A-Za-z]+)(?:\^([+-]?\d+))?/g;
+    const result = new Map(); // to preserve the order of units
+    const matches = unit.matchAll(pattern);
+    for (const match of matches) {
+        const [, operator, baseUnit, exponent] = match;
+        let power = exponent ? Number(exponent) : 1;
+        if (operator === '/') power = -power; // '/' implies negative exponent, '*' or '.' implies positive exponent
+        const prevPower = result.get(baseUnit) || 0;
+        result.set(baseUnit, prevPower + power);
+    }
+    return result;
+}
+
+/**
+ * Get all possible aliases for a flux unit, this includes permutations of its expression notations and its consisting
+ * units' aliases.
+ * @param unitKey {UnitKey}
+ * @returns {Array<string>}
+ */
+const getFluxAliases = (unitKey) => {
+    if (!UnitMetadata[unitKey]?.type.startsWith('F')) return []; //not a flux unit
+
+    let fluxRepresentations;
+    if (UnitMetadata[unitKey]?.type.startsWith('F_')) { //flux density (in nu or lambda)
+        const nuOrLambdaUnitKey = unitKey.substring(unitKey.lastIndexOf('/')+1); // extract the last part after '/'
+        // nu or lambda's representations propagate in the flux density representations
+        // e.g. erg/s/cm^2/A -> erg/s/cm^2/Angstrom, erg/s/cm^2/angstrom, because of the 'A' unit's alternative representations
+        fluxRepresentations = getAllRepresentations(nuOrLambdaUnitKey, false).map(
+            (rep) => unitKey.replace(nuOrLambdaUnitKey, rep));
+    }
+    else {
+        fluxRepresentations = [unitKey]; // inband flux remains the same since it is independent of nu or lambda
+    }
+
+    const aliases = [];
+    for (const fluxUnit of fluxRepresentations) { // generate all possible expression notations for the flux unit
+        const asteriskPowerExpr = fluxUnit.replaceAll('^', '**'); // e.g. erg/s/cm**2/A
+        const invisiblePowerExpr = fluxUnit.replaceAll('^', ''); // e.g. erg/s/cm2/A
+
+        const multiplicationExpr = Array.from(decomposeUnit(fluxUnit).entries())
+            .map(([unit, power]) => power === 1 ? unit : `${unit}**${power}`)
+            .join('.'); // e.g. erg.s**-1.cm**-2.A**-1
+
+        // TODO: also support numerical scale-factor in section 2.10 in  https://ivoa.net/documents/VOUnits/20231215/REC-VOUnits-1.1.pdf
+        //  possibly alias function can return a boolean to do such matching
+        aliases.push(fluxUnit, asteriskPowerExpr, invisiblePowerExpr, multiplicationExpr);
+    }
+    return Array.from(new Set(aliases)); // remove duplicates
+};
