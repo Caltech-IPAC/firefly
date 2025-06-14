@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf.js';
+import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
 
 /**
  * Return true if 'from' unit can be converted to 'to'.
@@ -12,7 +12,9 @@ import {sprintf} from '../../externalSource/sprintf.js';
  * @returns {boolean}
  */
 export function canUnitConv({from, to}) {
-    return !! get(UnitXref, [from, to]);
+    const {unit: fromKey} = normalizeUnit(from);
+    const {unit: toKey} = normalizeUnit(to);
+    return !!(fromKey && toKey && UnitXref?.[fromKey]?.[toKey]);
 }
 
 /**
@@ -22,12 +24,19 @@ export function canUnitConv({from, to}) {
  * @param p.from    from unit
  * @param p.to      to unit
  * @param p.alias   the name of this new column
- * @param p.colNames    a list of all the columns in the table.  This is used to format the expression so that column names are quoted correctly.
  * @param p.args    any additional arguments used in the conversion formula.
  * @returns {string}
  */
 export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
-    const formula = get(UnitXref, [from, to]);
+    const {unit: fromKey, factor: fromFactor} = normalizeUnit(from);
+    const {unit: toKey, factor: toFactor} = normalizeUnit(to);
+
+    let formula = UnitXref?.[fromKey]?.[toKey] ?? '';
+    if (fromFactor !== toFactor) {
+        if (fromFactor) formula = `${formula} * ${fromFactor}`;
+        if (toFactor) formula = `${formula} / ${toFactor}`; //todo: do we need parantheses here?
+    }
+
     let colOrExpr = cname;
     if (formula) {
         colOrExpr = sprintf(formula.replace(/(%([0-9]\$)?s)/g, '"$1"'), cname, ...args);
@@ -39,50 +48,69 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
 /**
  * returns an object containing the axis label and an array of options for unit conversion.
  * @param {string} unit         the unit to get the info for
- * @param {string} cname        the name of the column being evaluated
+ * @param {string} cname        the name (or expression) of the column being evaluated
  * @returns {Object}
  */
 export function getUnitInfo(unit, cname) {
-    cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;          // remove enclosing double-quotes if exists
-    const meas =  Object.values(UnitXref.measurement).find((m) => m?.options.find( (o) => o?.value === unit)) || {};
-    let label = meas.label ? sprintf(meas.label, unit) : '';
-    if (!label && cname) {
-        label = cname + (unit ? `[${unit}]` : '');
+    let options = [];
+    let label = '';
+
+    const {unit: unitKey, factor} = normalizeUnit(unit);
+    if (unitKey) {
+        const measurementKey = UnitMetadata[unitKey]?.type;
+        options = Object.entries(UnitMetadata)
+            .filter(([,meta]) => meta?.type === measurementKey) // can only convert units of the same measurement type
+            .map(([key, meta]) => ({value: key, label: meta.label || key}));
+
+        if (factor) { // add the original unit with its factor as the first option
+            const unitLabel = UnitMetadata[unitKey]?.label || unitKey;
+            const factorOption = {value: unit, label: `${factor} ${unitLabel}`};
+            options = [factorOption, ...options];
+        }
+
+        const unitLabel = UnitMetadata[unitKey]?.label || unitKey;
+        const formattedLabel = Measurement[measurementKey]?.axisLabel;
+        if (formattedLabel) label = sprintf(formattedLabel, unitLabel);
     }
-    return {options: meas.options, label};
+    else {
+        cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;  // remove enclosing double-quotes if exists
+        if (cname) label = cname + (unit ? ` [${unit}]` : '');
+    }
+
+    return {options, label};
 }
 
 
-/*
+/**
+ * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
+ * @param {string} cname         the name of the column being evaluated
+ * @param {string} unit          the unit to get the info for
+ * @param {string} sfLabel       the label of spectral frame selected
+ * @param {string} redshiftLabel the label of redshift if rest frame, optional
+ * @returns {string}
+ */
+export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
+    const unitLabel = getUnitInfo(unit, cname).label;
+    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+};
+
+
+
+/**
+ * @typedef {string} UnitKey
+ * Unique identifier for a unit, used as a key in UnitXref and UnitMetadata.
+ */
+
+ /**
   Unit conversions, mapping FROM unit -> TO unit, where the formula is an SQL expression.
   The formula is a format string, similar to printf, where the %s is the column name of the value being converted.
   When argument index is needed, it can be referenced as %1$s, %2$s, %3$s, %4$s, etc.
-*/
 
+  Note: "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
+  @type {Object.<UnitKey, Object.<UnitKey, string>>}
+**/
 const UnitXref = {
-    measurement: {
-        frequency: {
-            options: [{value:'Hz'}, {value:'KHz'}, {value:'MHz'}, {value:'GHz'}],
-            label: '𝛎 [%s]'
-        },
-        wavelength: {
-            options: [{value: 'A'}, {value: 'nm'}, {value:'um'}, {value: 'mm'}, {value:'cm'}, {value:'m'}],
-            label: 'λ [%s]'
-        },
-        flux_density: {
-            options: [{value:'W/m^2/Hz'}, {value:'Jy'}],
-            label: 'F𝛎 [%s]'
-        },
-        inband_flux: {
-            options: [{value:'W/m^2'}, {value:'Jy*Hz'}],
-            label: '𝛎*F𝛎 [%s]'
-        }
-    },
-
-    // Unit Conversions follow
-    // "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
-
-    // frequency
+    // frequency -------------
     Hz : {
         Hz  : '%s',
         KHz : '%s / 1000.0',
@@ -107,7 +135,7 @@ const UnitXref = {
         MHz : '%s * 1000.0',
         GHz : '%s'
     },
-    // wavelength
+    // wavelength -------------
     A : {
         A  : '%s',
         nm : '%s / 10',
@@ -156,36 +184,257 @@ const UnitXref = {
         cm : '%s * 100',
         m  : '%s'
     },
-    //  flux density
+    // flux density in frequency space -------------
     'W/m^2/Hz' : {
         'W/m^2/Hz' : '%s',
+        'erg/s/cm^2/Hz': '%s * 1.0E+3',
         Jy : '%s * 1.0E+26',
     },
+    'erg/s/cm^2/Hz' : {
+        'W/m^2/Hz': '%s / 1.0E+3',
+        'erg/s/cm^2/Hz' : '%s',
+        Jy : '%s * 1.0E+23',
+    },
     Jy : {
-        'W/m^2/Hz' : '%s / 1.0E+26',
+        'W/m^2/Hz' : '%s / 1.0E+26', //SI units
+        'erg/s/cm^2/Hz': '%s / 1.0E+23', //CGS units
         Jy : '%s',
     },
-    //  inband flux
+    // flux density in wavelength space -------------
+    'erg/s/cm^2/A' : {
+        'erg/s/cm^2/A' : '%s',
+        'W/m^2/um': '%s * 10'
+    },
+    'W/m^2/um' : {
+        'erg/s/cm^2/A' : '%s / 10',
+        'W/m^2/um' : '%s',
+    },
+    // inband flux (independent of frequency or wavelength) -------------
     'W/m^2' : {
         'W/m^2' : '%s',
+        'erg/s/cm^2' : '%s * 1.0E+3',
         'Jy*Hz' : '%s * 1.0E+26',
+    },
+    'erg/s/cm^2' : {
+        'W/m^2' : '%s / 1.0E+3',
+        'erg/s/cm^2' : '%s',
+        'Jy*Hz' : '%s * 1.0E+23',
     },
     'Jy*Hz' : {
         'W/m^2' : '%s / 1.0E+26',
+        'erg/s/cm^2' : '%s / 1.0E+23',
         'Jy*Hz' : '%s',
-    }
-
+    },
 };
 
+
 /**
- * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
- * @param {string} cname         the name of the column being evaluated
- * @param {string} unit          the unit to get the info for
- * @param {string} sfLabel       the label of spectral frame selected
- * @param {string} redshiftLabel the label of redshift if rest frame, optional
- * @returns {string}
+ * @typedef {string} MeasurementKey - unique identifier for a measurement type, used as a key in Measurement.
  */
-export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
-    const unitLabel = getUnitInfo(unit, cname).label;
-    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+
+/**
+ * @typedef {Object} Measurement
+ * @property {MeasurementKey} key - the key of the measurement type
+ * @property {string} value - the value of the measurement type
+ * @property {string} axisLabel - the label for the axis, formatted with a placeholder for the unit
+ */
+
+/**Type of measurements by which units are grouped.
+ * @type {Object.<MeasurementKey, Measurement>}
+ */
+const Measurement = {
+    NU: {key: 'NU', value: 'frequency', axisLabel: '𝛎 [%s]'},
+    LAMBDA: {key: 'LAMBDA', value: 'wavelength', axisLabel: 'λ [%s]'},
+    F_NU: {key: 'F_NU', value: 'flux_density_frequency', axisLabel: 'F𝛎 [%s]'},
+    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', axisLabel: 'Fλ [%s]'},
+    F: {key: 'F', value: 'inband_flux', axisLabel: '𝛎·F𝛎 [%s]'},
+};
+
+
+/**
+ * @typedef {Object} UnitMetadata
+ * @property {MeasurementKey} type - the type of measurement this unit belongs to, one of the keys in `Measurement`.
+ * @property {string} label - the label for the unit, used in dropdown options and axis labels. If undefined, the key
+ * is used as the label.
+ * @property {Array<string>} aliases - list of aliases for the unit, used for matching besides the key and label.
+ */
+
+/**
+ * Metadata of each unit, including its type, label, and aliases. Keys are the same as in UnitXref.
+ * @type {Object.<UnitKey, UnitMetadata>}
+ * **/
+const UnitMetadata = {
+    // frequency -------------
+    Hz : {
+        type: Measurement.NU.key,
+    },
+    KHz : {
+        type: Measurement.NU.key,
+    },
+    MHz : {
+        type: Measurement.NU.key,
+    },
+    GHz : {
+        type: Measurement.NU.key,
+    },
+    // wavelength -------------
+    A : {
+        type: Measurement.LAMBDA.key,
+        label: WAVELENGTH_UNITS.angstrom.symbol,
+        aliases: ['Angstrom', 'angstrom']
+    },
+    nm : {
+        type: Measurement.LAMBDA.key,
+    },
+    um : {
+        type: Measurement.LAMBDA.key,
+        label: WAVELENGTH_UNITS.um.symbol,
+        aliases: ['micron', 'microns']
+    },
+    mm : {
+        type: Measurement.LAMBDA.key,
+    },
+    cm : {
+        type: Measurement.LAMBDA.key,
+    },
+    m  : {
+        type: Measurement.LAMBDA.key,
+    },
+    // flux density in frequency space -------------
+    'W/m^2/Hz' : {
+        type: Measurement.F_NU.key,
+        label: 'W/m²/Hz',
+        // aliases are generated at runtime for this and all the flux units below
+    },
+    'erg/s/cm^2/Hz' : {
+        type: Measurement.F_NU.key,
+        label: 'erg/s/cm²/Hz',
+    },
+    Jy : {
+        type: Measurement.F_NU.key,
+    },
+    // flux density in wavelength space -------------
+    'erg/s/cm^2/A' : {
+        type: Measurement.F_LAMBDA.key,
+        label: `erg/s/cm²/${WAVELENGTH_UNITS.angstrom.symbol}`,
+    },
+    'W/m^2/um' : {
+        type: Measurement.F_LAMBDA.key,
+        label: `W/m²/${WAVELENGTH_UNITS.um.symbol}`,
+    },
+    // inband flux (independent of frequency or wavelength) -------------
+    'W/m^2' : {
+        type: Measurement.F.key,
+        label: 'W/m²',
+    },
+    'erg/s/cm^2' : {
+        type: Measurement.F.key,
+        label: 'erg/s/cm²',
+    },
+    'Jy*Hz' : {
+        type: Measurement.F.key,
+        label: 'Jy·Hz',
+    },
+};
+
+
+// created by using "C.4 The VOUnits grammar" in https://ivoa.net/documents/VOUnits/20231215/REC-VOUnits-1.1.pdf
+const VoUnitRegex = /^((?:0\.\d+|[1-9]\d*(?:\.\d+)?)(?:[eE][+-]?[0-9]+)?)(.*)$/;
+const splitFactorUnit = (u) => {
+    const match = u.match(VoUnitRegex);
+    const factor = match?.[1] ?? '';
+    const unit = (match?.[2] ?? u).trim(); // fallback to the whole string
+    return {factor, unit};
+};
+
+
+/**
+ * Maps any unit representation (value/label/alias) back to a key in UnitXref (and UnitMetadata). Also returns the
+ * scalar factor if present.
+ * @param u {string} - the unit to normalize
+ * @return {{unit: UnitKey|null, factor: string}} - the key in UnitXref if found, otherwise null and the scalar factor.
+ */
+function normalizeUnit(u) {
+    if (!u) return {unit: null, factor: ''};
+    const {factor, unit} = splitFactorUnit(u);
+
+    // unit is already a key in UnitXref
+    if (UnitXref[u]) return {unit, factor};
+
+    for (const [key, meta] of Object.entries(UnitMetadata)) {
+        // unit is an alias of a key in UnitXref
+        const aliases = meta?.aliases ?? [];
+        aliases.push(...getFluxAliases(key));
+        if (aliases.some((alias) => alias === unit)) return {unit: key, factor};
+
+        // unit is a label of a key in UnitXref
+        if (meta?.label === u) return {unit: key, factor};
+    }
+    return {unit: null, factor};
+}
+
+
+/* Get all possible representations (key, label, aliases) for a given unitKey */
+function getAllRepresentations(unitKey, includeLabel=true) {
+    const meta = UnitMetadata[unitKey];
+    if (!meta) return []; //invalid unitKey
+    const reps = [unitKey]; // include the key itself
+    if (includeLabel && meta.label && meta.label !== unitKey) reps.push(meta.label);
+    if (Array.isArray(meta.aliases)) reps.push(...meta.aliases);
+    return reps;
+}
+
+/**
+ * Decomposes a unit string into its base units and their powers.
+ * @param unit {string} - the unit string to decompose, e.g. 'erg/s/cm^2/A'
+ * @returns {Map<any, any>} - a Map where keys are base units and values are their powers, e.g.
+ * `Map{'erg'=> 1, 's'=> -1, 'cm'=> -2, 'A'=> -1}`
+ */
+function decomposeUnit(unit) {
+    const pattern = /([*./]?)([A-Za-z]+)(?:\^([+-]?\d+))?/g;
+    const result = new Map(); // to preserve the order of units
+    const matches = unit.matchAll(pattern);
+    for (const match of matches) {
+        const [, operator, baseUnit, exponent] = match;
+        let power = exponent ? Number(exponent) : 1;
+        if (operator === '/') power = -power; // '/' implies negative exponent, '*' or '.' implies positive exponent
+        const prevPower = result.get(baseUnit) || 0;
+        result.set(baseUnit, prevPower + power);
+    }
+    return result;
+}
+
+/**
+ * Get all possible aliases for a flux unit, this includes permutations of its expression notations and its consisting
+ * units' aliases.
+ * @param unitKey {UnitKey}
+ * @returns {Array<string>}
+ */
+const getFluxAliases = (unitKey) => {
+    if (!UnitMetadata[unitKey]?.type.startsWith('F')) return []; //not a flux unit
+
+    let fluxRepresentations;
+    if (UnitMetadata[unitKey]?.type.startsWith('F_')) { //flux density (in nu or lambda)
+        const nuOrLambdaUnitKey = unitKey.substring(unitKey.lastIndexOf('/')+1); // extract the last part after '/'
+        // nu or lambda's representations propagate in the flux density representations
+        // e.g. erg/s/cm^2/A -> erg/s/cm^2/Angstrom, erg/s/cm^2/angstrom, because of the 'A' unit's alternative representations
+        fluxRepresentations = getAllRepresentations(nuOrLambdaUnitKey, false).map(
+            (rep) => unitKey.replace(nuOrLambdaUnitKey, rep));
+    }
+    else {
+        fluxRepresentations = [unitKey]; // inband flux remains the same since it is independent of nu or lambda
+    }
+
+    const aliases = [];
+    for (const fluxUnit of fluxRepresentations) { // generate all possible expression notations for the flux unit
+        const asteriskPowerExpr = fluxUnit.replaceAll('^', '**'); // e.g. erg/s/cm**2/A
+        const invisiblePowerExpr = fluxUnit.replaceAll('^', ''); // e.g. erg/s/cm2/A
+
+        const multiplicationExpr = Array.from(decomposeUnit(fluxUnit).entries())
+            .map(([unit, power]) => power === 1 ? unit : `${unit}**${power}`)
+            .join('.'); // e.g. erg.s**-1.cm**-2.A**-1
+
+        aliases.push(fluxUnit, asteriskPowerExpr, invisiblePowerExpr, multiplicationExpr);
+    }
+    return Array.from(new Set(aliases)); // remove duplicates
 };
