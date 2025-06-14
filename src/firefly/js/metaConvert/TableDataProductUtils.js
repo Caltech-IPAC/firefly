@@ -13,9 +13,14 @@ import {ChartType, TableDataType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {
-    dispatchActiveTableChanged, dispatchTableRemove, dispatchTableSearch, TBL_RESULTS_ACTIVE, TBL_UI_EXPANDED
+    dispatchActiveTableChanged,
+    dispatchTableRemove,
+    dispatchTableSearch,
+    dispatchTableUiUpdate,
+    TBL_RESULTS_ACTIVE,
+    TBL_UI_EXPANDED
 } from '../tables/TablesCntlr';
-import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
+import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
@@ -26,6 +31,8 @@ import {makeDlUrl} from './vo/DatalinkProducts';
 import {findDataLinkServeDescs} from './vo/ServDescConverter';
 import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer';
 import {pinChart} from 'firefly/charts/ui/PinnedChartContainer';
+import {PrepareDownload} from 'firefly/templates/common/ttFeatureWatchers';
+import React from 'react';
 
 
 export function createTableActivate(source, titleInfo, activateParams, contentType= '', tbl_index=0) {
@@ -181,13 +188,19 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     const sRegion= getObsCoreSRegion(table,row);
     const rowWP=  makeWorldPtUsingCenterColumns(table, row);
 
-
     const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,true);
     if (positionWP) dataTableReq.META_INFO[MetaConst.SEARCH_TARGET]= positionWP.toString();
     if (sRegion) dataTableReq.META_INFO[MetaConst.S_REGION]= sRegion;
     if (rowWP) dataTableReq.META_INFO[MetaConst.ROW_TARGET]= rowWP.toString();
+    const serviceId = getMetaEntry(table.tbl_id,MetaConst.DATA_SERVICE_ID); //use service id as the viewer id for MultiProductViewer
 
     dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
+    onTableLoaded(dataTableReq.tbl_id).then( () => {
+        const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(dataTableReq.tbl_id) ?? {} ;
+        //todo: dataSource for euclid (as an example) is 'euclid' - is there a better alternative than serviceId to use generically as the dataSource for the Download Script?
+        leftButtons.unshift(() => <PrepareDownload tbl_id={dataTableReq.tbl_id} viewerId={serviceId} downloadType={'script'} dataSource={serviceId}/>);
+        dispatchTableUiUpdate({tbl_ui_id, leftButtons});
+    });
     showPinMessage('Pinning to Table Area');
 }
 
