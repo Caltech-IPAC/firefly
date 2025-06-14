@@ -12,8 +12,8 @@ import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
  * @returns {boolean}
  */
 export function canUnitConv({from, to}) {
-    const fromKey = normalizeUnit(from);
-    const toKey = normalizeUnit(to);
+    const {unit: fromKey} = normalizeUnit(from);
+    const {unit: toKey} = normalizeUnit(to);
     return !!(fromKey && toKey && UnitXref?.[fromKey]?.[toKey]);
 }
 
@@ -28,9 +28,14 @@ export function canUnitConv({from, to}) {
  * @returns {string}
  */
 export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
-    const fromKey = normalizeUnit(from);
-    const toKey = normalizeUnit(to);
-    const formula = UnitXref?.[fromKey]?.[toKey] ?? '';
+    const {unit: fromKey, factor: fromFactor} = normalizeUnit(from);
+    const {unit: toKey, factor: toFactor} = normalizeUnit(to);
+
+    let formula = UnitXref?.[fromKey]?.[toKey] ?? '';
+    if (fromFactor !== toFactor) {
+        if (fromFactor) formula = `${formula} * ${fromFactor}`;
+        if (toFactor) formula = `${formula} / ${toFactor}`; //todo: do we need parantheses here?
+    }
 
     let colOrExpr = cname;
     if (formula) {
@@ -50,12 +55,18 @@ export function getUnitInfo(unit, cname) {
     let options = [];
     let label = '';
 
-    const unitKey = normalizeUnit(unit);
+    const {unit: unitKey, factor} = normalizeUnit(unit);
     if (unitKey) {
         const measurementKey = UnitMetadata[unitKey]?.type;
         options = Object.entries(UnitMetadata)
             .filter(([,meta]) => meta?.type === measurementKey) // can only convert units of the same measurement type
             .map(([key, meta]) => ({value: key, label: meta.label || key}));
+
+        if (factor) { // add the original unit with its factor as the first option
+            const unitLabel = UnitMetadata[unitKey]?.label || unitKey;
+            const factorOption = {value: unit, label: `${factor} ${unitLabel}`};
+            options = [factorOption, ...options];
+        }
 
         const unitLabel = UnitMetadata[unitKey]?.label || unitKey;
         const formattedLabel = Measurement[measurementKey]?.axisLabel;
@@ -293,6 +304,7 @@ const UnitMetadata = {
     'W/m^2/Hz' : {
         type: Measurement.F_NU.key,
         label: 'W/m²/Hz',
+        // aliases are generated at runtime for this and all the flux units below
     },
     'erg/s/cm^2/Hz' : {
         type: Measurement.F_NU.key,
@@ -326,27 +338,41 @@ const UnitMetadata = {
 };
 
 
+// created by using "C.4 The VOUnits grammar" in https://ivoa.net/documents/VOUnits/20231215/REC-VOUnits-1.1.pdf
+const VoUnitRegex = /^((?:0\.\d+|[1-9]\d*(?:\.\d+)?)(?:[eE][+-]?[0-9]+)?)(.*)$/;
+const splitFactorUnit = (u) => {
+    const match = u.match(VoUnitRegex);
+    const factor = match?.[1] ?? '';
+    const unit = (match?.[2] ?? u).trim(); // fallback to the whole string
+    return {factor, unit};
+};
+
+
 /**
- * Maps any unit representation (value/label/alias) back to a key in UnitXref (and UnitMetadata).
+ * Maps any unit representation (value/label/alias) back to a key in UnitXref (and UnitMetadata). Also returns the
+ * scalar factor if present.
  * @param u {string} - the unit to normalize
- * @return {UnitKey|null} - the key in UnitXref if found, otherwise null
+ * @return {{unit: UnitKey|null, factor: string}} - the key in UnitXref if found, otherwise null and the scalar factor.
  */
 function normalizeUnit(u) {
-    if (!u) return null;
-    // u is already a key in UnitXref
-    if (UnitXref[u]) return u;
+    if (!u) return {unit: null, factor: ''};
+    const {factor, unit} = splitFactorUnit(u);
+
+    // unit is already a key in UnitXref
+    if (UnitXref[u]) return {unit, factor};
 
     for (const [key, meta] of Object.entries(UnitMetadata)) {
-        // u is an alias of a key in UnitXref
+        // unit is an alias of a key in UnitXref
         const aliases = meta?.aliases ?? [];
         aliases.push(...getFluxAliases(key));
-        if (aliases.some((alias) => alias === u)) return key;
+        if (aliases.some((alias) => alias === unit)) return {unit: key, factor};
 
-        // u is a label of a key in UnitXref
-        if (meta?.label === u) return key;
+        // unit is a label of a key in UnitXref
+        if (meta?.label === u) return {unit: key, factor};
     }
-    return null;
+    return {unit: null, factor};
 }
+
 
 /* Get all possible representations (key, label, aliases) for a given unitKey */
 function getAllRepresentations(unitKey, includeLabel=true) {
@@ -408,8 +434,6 @@ const getFluxAliases = (unitKey) => {
             .map(([unit, power]) => power === 1 ? unit : `${unit}**${power}`)
             .join('.'); // e.g. erg.s**-1.cm**-2.A**-1
 
-        // TODO: also support numerical scale-factor in section 2.10 in  https://ivoa.net/documents/VOUnits/20231215/REC-VOUnits-1.1.pdf
-        //  possibly alias function can return a boolean to do such matching
         aliases.push(fluxUnit, asteriskPowerExpr, invisiblePowerExpr, multiplicationExpr);
     }
     return Array.from(new Set(aliases)); // remove duplicates
