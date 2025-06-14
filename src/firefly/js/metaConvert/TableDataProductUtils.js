@@ -197,7 +197,8 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
     onTableLoaded(dataTableReq.tbl_id).then( () => {
         const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(dataTableReq.tbl_id) ?? {} ;
-        leftButtons.unshift(() => <PrepareDownload tbl_id={dataTableReq.tbl_id} viewerId={serviceId} downloadType={'script'} isDatalink={true}/>);
+        //todo: dataSource for euclid (as an example) is 'euclid' - is there a better alternative than serviceId to use generically as the dataSource for the Download Script?
+        leftButtons.unshift(() => <PrepareDownload tbl_id={dataTableReq.tbl_id} viewerId={serviceId} downloadType={'script'} dataSource={serviceId}/>);
         dispatchTableUiUpdate({tbl_ui_id, leftButtons});
     });
     showPinMessage('Pinning to Table Area');
