@@ -4,7 +4,7 @@
 import {ZoomType} from 'firefly/visualize/ZoomType.js';
 import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
 import {memorizeLastCall} from '../util/WebUtil';
-import {Band} from './Band';
+import {allBandAry, Band} from './Band';
 import CoordinateSys from './CoordSys.js';
 import {CysConverter} from './CsysConverter.js';
 import PlotState, {makePlotStateShimForHiPS} from './PlotState';
@@ -76,6 +76,7 @@ export const RDConst= {
  * @prop {Dimension} screenSize - width/height in screen pixels
  * @prop {Projection} projection - projection routines for this projections
  * @prop {Object} wlData - data object to wave length conversions, if defined then this conversion is available
+ * @prop {Array.<Object>} wlDataAry - array for each band: data object to wave length conversions, if defined then this conversion is available
  * @prop {Object} vradData - data object to vrad conversions, if defined then this conversion is available
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Object} spectralData - data object to spectral wcs conversions, if defined then this conversion is available
@@ -220,6 +221,19 @@ export const RDConst= {
  * @prop {Array.<RelatedData>} relatedData
  */
 
+
+/**
+ * @typedef {Object} HeaderEntry
+ *
+ * @prop {String} comment
+ * @prop {number} idx
+ * @prop {String} value
+ */
+
+/**
+* @typedef {Object.<String,HeaderEntry> | Object.<String,Array.<HeaderEntry>>} Header
+*/
+
 /**
  * @typedef {Object} CubeCtx
  * Information common to all cubes
@@ -236,6 +250,21 @@ export const RDConst= {
  * @prop wlData
  * @prop getFitsFileSize
  */
+
+/**
+ * @typedef {Object} AllHeaderAndWlInfo
+ *
+ *  @prop {Object} processHeader
+ *  @prop {Array.<Object>} wlTableRelatedAry,
+ *  @prop {Object} wlData
+ *  @prop {Array.<Object>} wlDataAry
+ *  @prop {Header} header
+ *  @prop {Header} zeroHeader
+ *  @prop {Array.<Header>} headerAry
+ *  @prop {Object.<String,Array.<Object>>} allWCSMap
+ *  @prop {Object.<String,Array.<Object>>} allWlMap
+ */
+
 
 
 const relatedIdRoot= '-Related-';
@@ -321,15 +350,79 @@ function processAllSpacialAltWcs(header) {
     }, {});
 }
 
-function processAllWavelengthAltWcs(header,wlTableRelatedAry) {
+function processAllWavelengthAltWcs(header,wlTableRelatedAry, reprojectedWcs) {
     const availableAry= getAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
     return availableAry.reduce( (obj, altChar) => {
-        const wlData= parseWavelengthHeaderInfo(header, altChar, undefined, wlTableRelatedAry);
+        const wlData= parseWavelengthHeaderInfo(header, altChar, undefined, wlTableRelatedAry, reprojectedWcs);
         if (wlData) obj[altChar]= wlData;
         return obj;
     }, {});
+}
+
+
+
+
+
+/**
+ * @param {CubeCtx} cubeCtx
+ * @param {WebPlotInitializer} wpInit
+ * @param {PlotState} plotState
+ * @return {AllHeaderAndWlInfo}
+ */
+function getAllHeaderAndWlInfo(cubeCtx, wpInit, plotState) {
+    let processHeader;
+    let wlTableRelatedAry;
+    let wlData;
+    let wlDataAry;
+
+    const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
+    const header= headerAry[plotState.firstBand().value];
+    const zeroHeader= wpInit.zeroHeaderAry[0];
+
+
+
+    if (cubeCtx?.processHeader) {
+        processHeader= cubeCtx.processHeader;
+        wlTableRelatedAry= cubeCtx.wlTableRelatedAry;
+        wlData= cubeCtx.wlData;
+        wlDataAry= [cubeCtx.wlData];
+    }
+    else {
+        const headerInfo= processHeaderData(wpInit,plotState);
+        processHeader= headerInfo.processHeader;
+        wlTableRelatedAry= headerInfo.wlTableRelatedAry;
+        wlData= headerInfo.wlData;
+        wlDataAry= headerInfo.wlDataAry;
+    }
+
+
+    //- get all the wavelength projections, for all the bands, in all alternate headers
+
+    const allWCSMap= processAllSpacialAltWcs(header);
+    const allWlMap= {};
+    const relatedData= wpInit.relatedData;
+    plotState.getBands().forEach( (b,idx) => {
+        const bStr= b.toString();
+        const bandWlTable= relatedData?.filter( (r) => r.dataType===RDConst.WAVELENGTH_TABLE_RESOLVED && r.band===bStr);
+        allWlMap[bStr]=processAllWavelengthAltWcs(headerAry[b.value], bandWlTable, idx>0);
+    });
+
+    plotState.getBands().forEach( (b,idx) => {
+        const bStr= b.toString();
+        if (wlDataAry[b.value]) {
+            allWlMap[bStr]['']= wlDataAry[b.value];
+        }
+        else if (!isEmpty(allWlMap[bStr])) {
+            wlDataAry[b.value]= Object.values(allWlMap[bStr])[0];
+            allWlMap[bStr]['']= undefined;
+        }
+    });
+    if (!wlData) wlData= wlDataAry[plotState.firstBand().value];
+
+    return { processHeader, wlTableRelatedAry, wlData, wlDataAry,
+        headerAry,header,zeroHeader, allWCSMap, allWlMap};
 }
 
 
@@ -355,24 +448,11 @@ export const WebPlot= {
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
         if (!request0) request0= plotState.getWebPlotRequest();
-        const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
-        const header= headerAry[plotState.firstBand().value];
-        const zeroHeader= wpInit.zeroHeaderAry[0];
 
-        let processHeader;
-        let wlTableRelatedAry;
-        let wlData;
-        if (cubeCtx?.processHeader) {
-            processHeader= cubeCtx.processHeader;
-            wlTableRelatedAry= cubeCtx.wlTableRelatedAry;
-            wlData= cubeCtx.wlData;
-        }
-        else {
-            const headerInfo= processHeaderData(wpInit);
-            processHeader= headerInfo.processHeader;
-            wlTableRelatedAry= headerInfo.wlTableRelatedAry;
-            wlData= headerInfo.wlData;
-        }
+        const {processHeader, wlData, wlDataAry, headerAry, header, zeroHeader,
+            allWCSMap, allWlMap}= getAllHeaderAndWlInfo(cubeCtx,wpInit,plotState);
+
+
         let projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
         const processHeaderAry= !plotState.isThreeColor() ?
                                    [processHeader] :
@@ -382,17 +462,6 @@ export const WebPlot= {
             useRed: true, useGreen: true, useBlue:true,
             bandData:processHeaderAry.map( (pH) => ({processHeader:pH, bias:.5,contrast:1}))
         };
-
-
-        const allWCSMap= processAllSpacialAltWcs(header);
-        const allWlMap= processAllWavelengthAltWcs(header, wlTableRelatedAry);
-        if (wlData) {
-            allWlMap['']= wlData;
-        }
-        else if (!isEmpty(allWlMap)) {
-            wlData= Object.values(allWlMap)[0];
-            allWlMap['']= undefined;
-        }
 
         // if main projection is not available, consider an alternate
         if (!projection.isSpecified() || !projection.isImplemented()) {
@@ -423,6 +492,7 @@ export const WebPlot= {
         const zf= getInitZoomLevel(viewDim, request0, dataWidth, dataHeight, projection.getPixelScaleDegree());
 
         // noinspection JSUnresolvedVariable
+        /** @type WebPlot */
         const imagePlot= {
             tileData    : undefined,
             relatedData     : null,
@@ -435,6 +505,7 @@ export const WebPlot= {
             plotState,
             projection,
             wlData,
+            wlDataAry,
             allWCSMap,
             allWlMap,
             dataWidth,
@@ -464,7 +535,7 @@ export const WebPlot= {
         plot= {...plot, ...imagePlot};
         if (relatedData) {
             plot.relatedData= relatedData.map( (d) =>
-                ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey+'-'+dataWidth+'-'+dataHeight}));
+                ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey+'-'+d.band+'-'+dataWidth+'-'+dataHeight}));
         }
 
         if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failReason)  {
@@ -810,16 +881,32 @@ export function getImagePixScaleDeg(plot) {
 export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
 
 /**
- * @param {WebPlotInitializer} pC
- * @return {{processHeader:Object, wlData: Object, wlTableRelatedAry:Array}}
+ * @param {WebPlotInitializer} wpInit
+ * @param {PlotState} [plotState] - only necessary for three color
+ * @return {{processHeader:Object, wlData: Object, wlDataAry: Array.<Object>, wlTableRelatedAry:Array}}
  */
-export function processHeaderData(pC) {
-    const relatedData= pC.relatedData;
-    const wlTableRelatedAry= relatedData && relatedData.filter( (r) => r.dataType===RDConst.WAVELENGTH_TABLE_RESOLVED);
+export function processHeaderData(wpInit, plotState) {
+    const threeColor= plotState?.threeColor ?? false;
+    const firstBand= threeColor ? plotState.firstBand() : Band.NO_BAND;
+    const relatedData= wpInit.relatedData;
+    const wlTableRelatedAry= relatedData?.filter( (r) =>
+        r.dataType===RDConst.WAVELENGTH_TABLE_RESOLVED && r.band===firstBand.toString());
 
-    return {
-        processHeader: parseSpacialHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0]),
-        wlData: parseWavelengthHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0], wlTableRelatedAry),
+    const wlData= parseWavelengthHeaderInfo(wpInit.headerAry[firstBand.value],'',wpInit.zeroHeaderAry[0], wlTableRelatedAry);
+    const headerInfo= {
+        processHeader: parseSpacialHeaderInfo(wpInit.headerAry[firstBand.value],'',wpInit.zeroHeaderAry[0]),
+        wlData,
+        wlDataAry: [wlData],
         wlTableRelatedAry
     };
+
+    if (threeColor) {
+        headerInfo.wlDataAry= wpInit.headerAry.map( (h, idx) => {
+            const bStr= allBandAry[idx]?.toString();
+            const bandWlTab= relatedData?.filter((r) => r.dataType===RDConst.WAVELENGTH_TABLE_RESOLVED && r.band===bStr);
+            parseWavelengthHeaderInfo(h,'',wpInit.zeroHeaderAry[0], bandWlTab);
+        });
+    }
+
+    return headerInfo;
 }

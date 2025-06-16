@@ -11,16 +11,16 @@ import {
     TYPE_EMPTY
 } from '../MouseReadoutCntlr.js';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
-import {Band} from '../Band.js';
+import {allBandAry, Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {getPixScale, getScreenPixScale, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
-    primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
+    primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits,
+    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits, isThreeColor,
 } from '../PlotViewUtil';
 import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
@@ -106,7 +106,7 @@ function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeC
             return mouseCtx;
         }
     }
-    catch(error) {
+    catch {
         const mouseCtx = yield call(mouseUpdatePromise);
         return mouseCtx;
     }
@@ -134,7 +134,7 @@ function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeCol
             return mouseCtx;
         }
     }
-    catch(error) {
+    catch {
         console.log('flux error= just ignore');
         const mouseCtx = yield call(mouseUpdatePromise);
         return mouseCtx;
@@ -389,19 +389,33 @@ function showSingleBandFluxLabel(plot, band) {
 
 }
 
+/**
+ * do wavelength readout if it has pixel level wl or if it is a not a cube image with plane wl info
+ * @param plot
+ * @param imagePt
+ * @return {Object}
+ */
 function makeWLResult(plot,imagePt= undefined) {
-               // do wavelength readout if it has pixel level wl or if it is a not a cube image with plane wl info
     if ((hasPixelLevelWLInfo(plot) || (hasPlaneOnlyWLInfo(plot) && !isImageCube(plot)))) {
         if (wavelengthInfoParsedSuccessfully(plot)) {
-            if (!imagePt) return;
+            if (!imagePt) return {};
             const cubeIdx= (isImageCube(plot) && getImageCubeIdx(plot)) || 0;
-            // const wlValue= getPtWavelength(plot, imagePt, cubeIdx);
             const specCoords= getPtSpectralCoords(plot, imagePt, cubeIdx);
-            return {
+            const result= {
                 wl: makeValueReadoutItem('Wavelength', specCoords[0] ?? 0, getWaveLengthUnits(plot), 4),
                 bandWidth: makeValueReadoutItem('Wavelength', specCoords[1] ?? 0, getBandWidthUnits(plot), 4),
-
             };
+            if (isThreeColor(plot)) {
+                allBandAry.forEach( (b) => {
+                    if (plot.plotState.isBandUsed(b)) {
+                        const bStr= b.toString();
+                        const [wl,bw]= getPtSpectralCoords(plot, imagePt, cubeIdx, b);
+                        result[`wl${bStr}`]= makeValueReadoutItem(`Wavelength ${bStr}`, wl, getWaveLengthUnits(plot,b), 4);
+                        result[`bandWidth${bStr}`]= makeValueReadoutItem(`Wavelength ${bStr}`, bw, getBandWidthUnits(plot,b), 4);
+                    }
+                });
+            }
+            return result;
         }
         else {
             const item=  makeValueReadoutItem('Wavelength', 'Failed', '', 4);

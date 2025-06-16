@@ -248,7 +248,9 @@ public class VisJsonSerializer {
         if (wpInit.imageCoordSys()!=null) putStr(map,"imageCoordSys", wpInit.imageCoordSys().toString());
         if (wpInit.headerAry()!=null) putJsonAry(map,"headerAry", serializeHeaderAry(wpInit.headerAry()));
         if (wpInit.zeroHeaderAry()!=null) putJsonAry(map,"zeroHeaderAry", serializeHeaderAry(wpInit.zeroHeaderAry()));
-        if (wpInit.relatedData()!=null) putJsonAry(map,"relatedData", serializeRelatedDataArray(wpInit.relatedData()));
+        if (wpInit.relatedDataMap()!=null && !wpInit.relatedDataMap().isEmpty()) {
+            putJsonAry(map,"relatedData", serializeRelatedDataArray(wpInit.relatedDataMap()));
+        }
         putNumOver0(map,"dataWidth", wpInit.dataWidth());
         putNumOver0(map,"dataHeight", wpInit.dataHeight());
         putJsonObj(map, "plotState", serializePlotState(wpInit.plotState()));
@@ -266,18 +268,18 @@ public class VisJsonSerializer {
         return map;
     }
 
-
-
-    private static JSONArray serializeRelatedDataArray(List<RelatedData> relatedData) {
-        if (relatedData==null || relatedData.size()==0) return null;
+    private static JSONArray serializeRelatedDataArray(Map<Band,List<RelatedData>> relatedDataMap) {
+        if (relatedDataMap==null || relatedDataMap.isEmpty()) return null;
         JSONArray relatedArray= new JSONArray();
-        for(RelatedData r : relatedData) {
-            addJsonObj(relatedArray,serializeRelated(r));
+        for(var entry : relatedDataMap.entrySet()) {
+            for(RelatedData r : entry.getValue()) {
+                addJsonObj(relatedArray,serializeRelated(r,entry.getKey()));
+            }
         }
         return relatedArray;
     }
 
-    private static JSONObject serializeRelated(RelatedData rData) {
+    private static JSONObject serializeRelated(RelatedData rData, Band band) {
         if (rData==null) return null;
         JSONObject retObj= new JSONObject();
         putStr(retObj,"dataType", rData.getDataType());
@@ -286,6 +288,7 @@ public class VisJsonSerializer {
         }
         putJsonObj(retObj, "searchParams", new JSONObject(rData.getSearchParams()));
         putStr(retObj, "desc", rData.getDesc());
+        putStr(retObj, "band", band.toString().toUpperCase());
         putStr(retObj, "dataKey", rData.getDataKey());
         putStrNotNull(retObj, "hduName", rData.getHduName());
         if (rData.getHduIdx()>-1) {

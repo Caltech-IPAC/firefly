@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Chip, Stack, Switch, Typography} from '@mui/joy';
+import {Box, Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
@@ -55,6 +55,7 @@ const baseLS={whiteSpace:'nowrap', textOverflow: 'ellipsis'};
 
 
 export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
+                                        labelColor,
                                         label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
     const isEmptyUnit= unit===EMPTY_BUNIT_DEFAULT;
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
@@ -63,6 +64,7 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
     const mouseReadoutLabelSx = {
         cursor: 'default',
         justifySelf: 'end',
+        color: labelColor,
         ...(prefChangeFunc && {
             cursor: 'pointer',
             textDecoration: 'underline',
@@ -80,10 +82,14 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
     const mStyle= monoFont ? {fontFamily:'monospace'} : {};
     const vStr=isEmptyUnit ? value + ' (no units defined in file)'  : value+' ' + unit;
 
+    if (value==='' && label==='') {
+        return <Box sx={{...mouseReadoutLabelSx,...lS}}/>;
+    }
+
     return (
         <Fragment>
             {prefChangeFunc
-                ? <Chip variant='soft' color='neutral' title={value+''} sx={{borderRadius:5, ...lS}} onClick={prefChangeFunc}>{label}</Chip>
+                ? <Chip variant='soft' color='neutral' title={value+''} sx={{color:labelColor, borderRadius:5, ...lS}} onClick={prefChangeFunc}>{label}</Chip>
                 : <Typography level='body-sm' title={value+''} sx={{...mouseReadoutLabelSx, ...lS}} onClick={prefChangeFunc}>{label}</Typography>
             }
             <Typography level='body-sm' color='warning' sx={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
