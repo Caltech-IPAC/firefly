@@ -8,7 +8,8 @@
 
 
 ## Version 2025.3
-- 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`, `2025.3`, `latest`
+- 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`, `2025.3`, `latest`
+- 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`
 - 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, 
 
 #### This release has a complete revamp of the Job monitor and extensive work to support Rubin, SPHEREx, and Euclid needs
@@ -70,6 +71,9 @@
 
 
 ### _Patches 2025.3_
+- 2025.3.2 
+  - Fixed: TAP: Upload fails when using a `*` in the ADQL statement-  Firefly-1581 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1796))
+  - Improved download performance for some calls- Firefly-1682 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1795))
 - 2025.3.1 
   - Fixed: cutouts not changing when the table is not the datalink table ([commit](https://github.com/Caltech-IPAC/firefly/commit/7a3b8cfb88eecb4bd2f34b1500213cf52f7bd95a))
   - Fixed: handle datalink for obscore tables that claim to be all images but are not ([commit](https://github.com/Caltech-IPAC/firefly/commit/37269537815ad886f445210f85335ab976c57d30))
