@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.cache;
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -34,6 +35,7 @@ import java.util.function.Predicate;
  * @version $Id: EhcacheImpl.java,v 1.8 2009/12/16 21:43:25 loi Exp $
  */
 public class DistributedCache<T> implements Cache<T> {
+    public static final int DEF_TTL = AppProperties.getIntProperty("dist.cache.ttl.hours", 14*24) * 60 * 60;   // default to 14 days in seconds
     static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final String BASE64 = "BASE64::";
     private transient Predicate<T> getValidator;
@@ -53,7 +55,7 @@ public class DistributedCache<T> implements Cache<T> {
     }
 
     public void put(CacheKey key, Object value) {
-        put(key, value, 0);
+        put(key, value, DEF_TTL);
     }
 
     public void put(CacheKey key, Object value, int lifespanInSecs) {

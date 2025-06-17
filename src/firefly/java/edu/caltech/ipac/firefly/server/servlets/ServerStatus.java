@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
 import net.sf.ehcache.CacheManager;
@@ -36,12 +37,14 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.server.ServerContext.ACCESS_TEST_EXT;
 import static edu.caltech.ipac.firefly.core.Util.Try;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 
 /**
@@ -62,45 +65,30 @@ public class ServerStatus extends BaseHttpServlet {
         boolean showDebug = Boolean.parseBoolean(req.getParameter("debug"));
         boolean execGC = Boolean.parseBoolean(req.getParameter("execGC"));
         boolean showJobDetails = Boolean.parseBoolean(req.getParameter("job.details"));
+        boolean showRedisDetails = Boolean.parseBoolean(req.getParameter("redis.details"));
+        boolean execRedisCleanup = Boolean.parseBoolean(req.getParameter("execRedisCleanup"));
 
-        if (execGC)     System.gc();            // force garbage collection.
 
-        ServerContext.Info sInfo = ServerContext.getSeverInfo();
         res.addHeader("content-type", "text/html");
         PrintWriter writer = res.getWriter();
         writer.println("<pre style='font-size: -1'>");
+
+        if (execGC)             System.gc();            // force garbage collection.
+        if (execRedisCleanup)   {
+            long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
+            writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
+            skip(writer);
+        }
+
         try {
+            showActions(writer);
 
-            // show optional parameters
-            writer.println("Available Actions");
-            writer.println("--------------------");
-            writer.println("<li><a href=./status>Default View</a>:   Default set of information");
-            writer.println("<li><a href=./status?debug=true>Debug Info</a>:     Display information for debugging; request headers, system properties, etc.");
-            writer.println("<li><a href=./status?job.details=true>Job Details</a>:    View detailed Async Job Information");
-            writer.println("<li><a href=./status?execGC=true>Trigger GC</a>:     Invoke JVM garbage collection");
-            skip(writer);
-
-            Try.it(() -> showCountStatus(writer)).getOrElse(e -> writer.println("Failed to load Count Status: " + e.getMessage()));
-            skip(writer);
-
-            Try.it(() -> showPackagingStatus(writer, showJobDetails)).getOrElse(e -> writer.println("Failed to Packaging Status: " + e.getMessage()));
-            skip(writer);
-
-            Try.it(() -> showMessagingStatus(writer)).getOrElse(e -> writer.println("Failed to load Messaging Status: " + e.getMessage()));
-            skip(writer);
-
-            Try.it(() -> showEventsStatus(writer)).getOrElse(e -> writer.println("Failed to load Event Status: " + e.getMessage()));
-            skip(writer);
-
-            Try.it(() -> showDatabaseStatus(writer)).getOrElse(e -> writer.println("Failed to load Database Status: " + e.getMessage()));
-            skip(writer);
-
-            Try.it(() -> showWorkAreaStatus(writer)).getOrElse(e -> writer.println("Failed to load Work Area Status: " + e.getMessage()));
-            skip(writer);
-
-            EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
-
-            Try.it(() -> displayCacheInfo(writer, prov.getEhcacheManager(), sInfo)).getOrElse(e -> writer.println("Failed to load Cache Info: " + e.getMessage()));
+            // some information may be time-consuming to load, so we should only do it on demand
+            if (showRedisDetails) {
+                redisView(writer);
+            } else {
+                defaultView(writer, showJobDetails);
+            }
 
             if (showDebug) {
                 skip(writer);
@@ -117,6 +105,90 @@ public class ServerStatus extends BaseHttpServlet {
             writer.close();
         }
 
+    }
+    public static class EntryList {
+        private final LinkedList<KeyVal<String, Object>> data = new LinkedList<>();
+
+        public EntryList add(String key, Object value) {
+            data.add(new KeyVal<>(key, value));
+            return this;
+        }
+
+        public EntryList addAll(EntryList other) {
+            if (other != null) {
+                data.addAll(other.data);
+            }
+            return this;
+        }
+
+        public void print(PrintWriter writer) {
+            if (data.isEmpty()) {
+                writer.println("No data");
+            } else {
+                for (KeyVal<String, Object> entry : data) {
+                    printEntry(writer, entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        private static void printEntry(PrintWriter writer, String key, Object value) {
+            if (isNotEmpty(key)) writer.print("  - " + key + ": ");
+
+            switch (value) {
+                case Integer v -> writer.printf("%,d\n", v);
+                case Long v -> writer.printf("%,d\n", v);
+                case Float v -> writer.printf("%,.2f\n", v);
+                case Double v -> writer.printf("%,.2f\n", v);
+                case List list -> writer.println(StringUtils.toString(list, ", "));
+                case null -> writer.println("");
+                default -> writer.println(value);
+            }
+        }
+    }
+
+    private void defaultView(PrintWriter writer, boolean showJobDetails) {
+
+        ServerContext.Info sInfo = ServerContext.getSeverInfo();
+
+        Try.it(() -> showCountStatus(writer)).getOrElse(e -> writer.println("Failed to load Count Status: " + e.getMessage()));
+        skip(writer);
+
+        Try.it(() -> showPackagingStatus(writer, showJobDetails)).getOrElse(e -> writer.println("Failed to Packaging Status: " + e.getMessage()));
+        skip(writer);
+
+        Try.it(() -> showMessagingStatus(writer)).getOrElse(e -> writer.println("Failed to load Messaging Status: " + e.getMessage()));
+        skip(writer);
+
+        Try.it(() -> showEventsStatus(writer)).getOrElse(e -> writer.println("Failed to load Event Status: " + e.getMessage()));
+        skip(writer);
+
+        Try.it(() -> showDatabaseStatus(writer)).getOrElse(e -> writer.println("Failed to load Database Status: " + e.getMessage()));
+        skip(writer);
+
+        Try.it(() -> showWorkAreaStatus(writer)).getOrElse(e -> writer.println("Failed to load Work Area Status: " + e.getMessage()));
+        skip(writer);
+
+        EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
+
+        Try.it(() -> displayCacheInfo(writer, prov.getEhcacheManager(), sInfo)).getOrElse(e -> writer.println("Failed to load Cache Info: " + e.getMessage()));
+
+    }
+    private static void redisView(PrintWriter writer) {
+        writer.println("Redis detail information: ");
+        writer.println("-------------------------  ");
+        RedisService.getFullStats().print(writer);
+    }
+
+    private void showActions(PrintWriter writer) {
+        // show optional parameters
+        writer.println("Available Actions");
+        writer.println("--------------------");
+        writer.println("<li><a href=./status>Default View</a>:   Default set of information");
+        writer.println("<li><a href=./status?debug=true>Debug Info</a>:     Display information for debugging; request headers, system properties, etc.");
+        writer.println("<li><a href=./status?job.details=true>Job Details</a>:    View detailed Async Job Information");
+        writer.println("<li><a href=./status?execGC=true>Trigger GC</a>:     Invoke JVM garbage collection");
+        writer.println("<li><a href=./status?redis.details=true>Redis Details</a>:     View detailed Redis information");
+        writer.println("<li><a href=./status?execRedisCleanup=true>Redis Cleanup</a>:  Manually trigger Redis cleanup of stale keys");
+        skip(writer);
     }
 
     private static void displayCacheInfo(PrintWriter writer, CacheManager cm, ServerContext.Info sInfo) {
@@ -320,8 +392,7 @@ public class ServerStatus extends BaseHttpServlet {
     private static void showMessagingStatus(PrintWriter w) {
         w.println("Redis information: ");
         w.println("-----------------  ");
-        Map<String, Object> stats = RedisService.getStats();
-        stats.forEach((k,v)-> w.println("  - " + k + ": " + v));
+        RedisService.getStats().print(w);
 
         w.println("\nMessenger info: ");
         w.println("-----------------  ");

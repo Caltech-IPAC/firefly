@@ -57,8 +57,8 @@ import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static uk.ac.starlink.table.StoragePolicy.*;
 
@@ -303,11 +303,11 @@ public class VoTableReader {
 
         if (docRoot == null) return null;
         List<ResourceInfo> resources = new ArrayList<>();
-        applyIfNotEmpty(makeResourceInfo(table.getParent()), resources::add);      // ensure the first resource is for the given table.
+        ifNotEmpty(makeResourceInfo(table.getParent())).apply(resources::add);      // ensure the first resource is for the given table.
 
         Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
                 .filter(res -> res.getChildrenByName("TABLE").length == 0)      // only the ones without TABLE
-                .forEach( res -> applyIfNotEmpty(makeResourceInfo(res), resources::add));
+                .forEach( res -> ifNotEmpty(makeResourceInfo(res)).apply(resources::add));
         return resources;
     }
 
@@ -400,12 +400,12 @@ public class VoTableReader {
         DataGroup dg = new DataGroup(name, cols);
 
         // attribute ID, ref, ucd, utype from TABLE
-        applyIfNotEmpty(name, v -> dg.getTableMeta().addKeyword(TableMeta.NAME, v));
-        applyIfNotEmpty(table.getAttribute(ID), v -> dg.getTableMeta().addKeyword(TableMeta.ID, v));
-        applyIfNotEmpty(table.getAttribute(REF), v -> dg.getTableMeta().addKeyword(TableMeta.REF, v));
-        applyIfNotEmpty(table.getAttribute(UCD), v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v));
-        applyIfNotEmpty(table.getAttribute(UTYPE), v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v));
-        applyIfNotEmpty(table.getDescription(), v -> dg.getTableMeta().addKeyword(TableMeta.DESC, v));
+        ifNotEmpty(name).apply( v -> dg.getTableMeta().addKeyword(TableMeta.NAME, v.trim()));
+        ifNotEmpty(table.getAttribute(ID)).apply(v -> dg.getTableMeta().addKeyword(TableMeta.ID, v.trim()));
+        ifNotEmpty(table.getAttribute(REF)).apply(v -> dg.getTableMeta().addKeyword(TableMeta.REF, v.trim()));
+        ifNotEmpty(table.getAttribute(UCD)).apply(v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v.trim()));
+        ifNotEmpty(table.getAttribute(UTYPE)).apply(v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v.trim()));
+        ifNotEmpty(table.getDescription()).apply(v -> dg.getTableMeta().addKeyword(TableMeta.DESC, v.trim()));
 
         // PARAMs info
         Arrays.stream(table.getChildrenByName("PARAM"))
@@ -471,9 +471,9 @@ public class VoTableReader {
         String desc = group.getDescription();
 
         GroupInfo gObj = new GroupInfo(name, desc);
-        applyIfNotEmpty(group.getAttribute(ID), gObj::setID);
-        applyIfNotEmpty(group.getAttribute(UCD), gObj::setUCD);
-        applyIfNotEmpty(group.getAttribute(UTYPE), gObj::setUtype);
+        ifNotEmpty(group.getAttribute(ID)).apply(v -> gObj.setID(v.trim()));
+        ifNotEmpty(group.getAttribute(UCD)).apply(v -> gObj.setUCD(v.trim()));
+        ifNotEmpty(group.getAttribute(UTYPE)).apply(v -> gObj.setUtype(v.trim()));
 
         // add FIELDref
         Arrays.stream(group.getChildrenByName("FIELDref"))
@@ -498,19 +498,19 @@ public class VoTableReader {
     private static LinkInfo linkElToLinkInfo(VOElement el) {
         if (el == null) return null;
         LinkInfo li = new LinkInfo();
-        applyIfNotEmpty(el.getAttribute(ID), li::setID);
-        applyIfNotEmpty(el.getAttribute("content-role"), li::setRole);
-        applyIfNotEmpty(el.getAttribute("content-type"), li::setType);
-        applyIfNotEmpty(el.getAttribute("title"), li::setTitle);
-        applyIfNotEmpty(el.getAttribute("href"), li::setHref);
-        applyIfNotEmpty(el.getAttribute("value"), li::setValue);
-        applyIfNotEmpty(el.getAttribute("action"), li::setAction);
+        ifNotEmpty(el.getAttribute(ID)).apply(v -> li.setID(v.trim()));
+        ifNotEmpty(el.getAttribute("content-role")).apply(v -> li.setRole(v.trim()));
+        ifNotEmpty(el.getAttribute("content-type")).apply(v -> li.setType(v.trim()));
+        ifNotEmpty(el.getAttribute("title")).apply(v -> li.setTitle(v.trim()));
+        ifNotEmpty(el.getAttribute("href")).apply(v -> li.setHref(v.trim()));
+        ifNotEmpty(el.getAttribute("value")).apply(v -> li.setValue(v.trim()));
+        ifNotEmpty(el.getAttribute("action")).apply(v -> li.setAction(v.trim()));
         return li;
     }
 
     private static ParamInfo paramElToParamInfo(VOElement el) {
         ParamInfo dt = (ParamInfo) fieldElToDataType(new ParamInfo(), el,0, null);
-        applyIfNotEmpty(dt.convertStringToData(el.getAttribute("value")), dt::setValue);
+        ifNotEmpty(dt.convertStringToData(el.getAttribute("value"))).apply( dt::setValue);
         return dt;
     }
 
@@ -528,19 +528,19 @@ public class VoTableReader {
         String name = getCName(el, idx, cols);
         dt.setKeyName(name);
 
-        applyIfNotEmpty(el.getAttribute(ID), dt::setID);
-        applyIfNotEmpty(el.getAttribute("unit"), dt::setUnits);
-        applyIfNotEmpty(el.getAttribute("precision"), v -> dt.setPrecision(makePrecisionStr(v)));
-        applyIfNotEmpty(el.getAttribute("width"), v -> dt.setWidth(Integer.parseInt(v)));
-        applyIfNotEmpty(el.getAttribute("ref"), dt::setRef);
-        applyIfNotEmpty(el.getAttribute("ucd"), dt::setUCD);
-        applyIfNotEmpty(el.getAttribute("utype"), dt::setUType);
-        applyIfNotEmpty(el.getAttribute("xtype"), dt::setXType);
-        applyIfNotEmpty(el.getDescription(), dt::setDesc);
-        applyIfNotEmpty(el.getAttribute("datatype"), v -> {
-            dt.setDataType(DataType.descToType(v));
+        ifNotEmpty(el.getAttribute(ID)).apply(v -> dt.setID(v.trim()));
+        ifNotEmpty(el.getAttribute("unit")).apply(v -> dt.setUnits(v.trim()));
+        ifNotEmpty(el.getAttribute("precision")).apply(v -> dt.setPrecision(makePrecisionStr(v.trim())));
+        ifNotEmpty(el.getAttribute("width")).apply(v -> dt.setWidth(Integer.parseInt(v.trim())));
+        ifNotEmpty(el.getAttribute("ref")).apply(v -> dt.setRef(v.trim()));
+        ifNotEmpty(el.getAttribute("ucd")).apply(v -> dt.setUCD(v.trim()));
+        ifNotEmpty(el.getAttribute("utype")).apply(v -> dt.setUType(v.trim()));
+        ifNotEmpty(el.getAttribute("xtype")).apply(v -> dt.setXType(v.trim()));
+        ifNotEmpty(el.getDescription()).apply(v -> dt.setDesc(v.trim()));
+        ifNotEmpty(el.getAttribute("datatype")).apply(v -> {
+            dt.setDataType(DataType.descToType(v.trim()));
         });
-        applyIfNotEmpty(el.getAttribute("type"), v -> {
+        ifNotEmpty(el.getAttribute("type")).then(String::trim).apply(v -> {
             if (v.equals("hidden")) {       // mentioned in appendix A.1(LINK substitutions)
                 dt.setVisibility(DataType.Visibility.hidden);
             }else if (v.equals("location")) {       // mentioned in appendix A.4(FIELDs as Data Pointers)
@@ -548,12 +548,12 @@ public class VoTableReader {
             }
         });
 
-        applyIfNotEmpty(el.getAttribute("arraysize"), dt::setArraySize);
+        ifNotEmpty(el.getAttribute("arraysize")).apply(v ->  dt.setArraySize(v.trim()));
 
         // handle VALUES and OPTIONS
         VOElement values = el.getChildByName("VALUES");
             if (values != null) {
-                applyIfNotEmpty(el.getAttribute("null"), dt::setNullString);
+                ifNotEmpty(el.getAttribute("null")).apply(v -> dt.setNullString(v.trim()));
                 dt.setMaxValue(getChildValue(values, "MAX", "value"));
                 dt.setMinValue(getChildValue(values, "MIN", "value"));
                 String options = Arrays.stream(values.getChildrenByName("OPTION"))
@@ -592,10 +592,10 @@ public class VoTableReader {
                 meta.setCols(Arrays.asList(dg.getDataDefinitions()));
                 parts.get(i).getDetails().getAttributeList().forEach(attr -> meta.setAttribute(attr.getKey(), attr.getValue()));
                 DataGroup details = TableUtil.getDetails(i, meta);
-                applyIfNotEmpty(dg.getGroupInfos(), details::setGroupInfos);
-                applyIfNotEmpty(dg.getLinkInfos(), details::setLinkInfos);
-                applyIfNotEmpty(dg.getParamInfos(), details::setParamInfos);
-                applyIfNotEmpty(dg.getResourceInfos(), details::setResourceInfos);
+                ifNotEmpty(dg.getGroupInfos()).apply(details::setGroupInfos);
+                ifNotEmpty(dg.getLinkInfos()).apply(details::setLinkInfos);
+                ifNotEmpty(dg.getParamInfos()).apply(details::setParamInfos);
+                ifNotEmpty(dg.getResourceInfos()).apply(details::setResourceInfos);
 
                 var part= parts.get(i);
                 part.setTableDataType(SpectrumMetaInspector.isPossiblySpectrum(dg) ? Spectrum : NotSpecified);
