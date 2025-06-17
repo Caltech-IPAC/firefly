@@ -68,8 +68,8 @@ export function getUnitInfo(unit, cname) {
             options = [{value: unit, label: unitLabel}, ...options];
         }
 
-        const formattedLabel = Measurement[measurementKey]?.axisLabel;
-        if (formattedLabel) label = sprintf(formattedLabel, unitLabel);
+        const measurementLabel = Measurement[measurementKey]?.symbol;
+        if (measurementLabel) label = `${measurementLabel} [${unitLabel}]`;
     }
     else {
         cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;  // remove enclosing double-quotes if exists
@@ -94,6 +94,27 @@ export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
 };
 
 
+/**
+ * Returns the measurement label for a given unit.
+ * @param unit {string} - the unit to get the measurement label for
+ * @returns {string}
+ */
+export const getMeasurementLabel = (unit) => {
+    const {unit: unitKey} = normalizeUnit(unit);
+    if (!unitKey) return '';
+    const measurementKey = UnitMetadata[unitKey]?.type;
+    return Measurement[measurementKey]?.symbol || '';
+};
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// Unit data structures and their relationships:
+
+// UnitXRef is Object of {UnitKey: {UnitKey: conversionFormulaString}} mapping a UnitKey to another UnitKey.
+// Measurement is Object of {MeasurementKey: {key: MeasurementKey, value: string, symbol: string}} to group units.
+// UnitMetadata is Object of {UnitKey: {type: MeasurementKey, label: string, aliases: Array<string>}} mapping a UnitKey
+// to MeasurementKey, and to other metadata like label and aliases.
+//---------------------------------------------------------------------------------------------------------------------
 
 /**
  * @typedef {string} UnitKey
@@ -235,18 +256,19 @@ const UnitXref = {
  * @typedef {Object} Measurement
  * @property {MeasurementKey} key - the key of the measurement type
  * @property {string} value - the value of the measurement type
- * @property {string} axisLabel - the label for the axis, formatted with a placeholder for the unit
+ * @property {string} symbol - the symbol for the measurement type, used in chart axis labels and UI labels
  */
 
 /**Type of measurements by which units are grouped.
  * @type {Object.<MeasurementKey, Measurement>}
  */
 const Measurement = {
-    NU: {key: 'NU', value: 'frequency', axisLabel: '𝛎 [%s]'},
-    LAMBDA: {key: 'LAMBDA', value: 'wavelength', axisLabel: 'λ [%s]'},
-    F_NU: {key: 'F_NU', value: 'flux_density_frequency', axisLabel: 'F𝛎 [%s]'},
-    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', axisLabel: 'Fλ [%s]'},
-    F: {key: 'F', value: 'inband_flux', axisLabel: '𝛎·F𝛎 [%s]'},
+    NU: {key: 'NU', value: 'frequency', symbol: '𝛎'},
+    LAMBDA: {key: 'LAMBDA', value: 'wavelength', symbol: 'λ'},
+    // TODO: use LaTex to make 𝛎 and λ subscripts of F
+    F_NU: {key: 'F_NU', value: 'flux_density_frequency', symbol: 'F𝛎'},
+    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', symbol: 'Fλ'},
+    F: {key: 'F', value: 'inband_flux', symbol: '𝛎·F𝛎'},
 };
 
 
@@ -346,6 +368,10 @@ const splitFactorUnit = (u) => {
     return {factor, unit};
 };
 
+
+//---------------------------------------------------------------------------------------------------------------------
+// Utility functions for unit normalization and representation/aliases retrieval to work with above data structures.
+//---------------------------------------------------------------------------------------------------------------------
 
 /**
  * Maps any unit representation (value/label/alias) back to a key in UnitXref (and UnitMetadata). Also returns the
