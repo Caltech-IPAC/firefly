@@ -504,16 +504,16 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
 
     const specPref= foundSpec ?
         selectedTables.length > 1 ?
-            'Some table appears to be a Spectra, ' :
-            'Table appears to be a spectra. ' : '';
+            'Some tables appear to be spectra, ' :
+            'Table appears to be a spectrum. ' : '';
 
     return (
         <div style={{marginTop: 3}}>
                 {acceptList.includes(SPECTRUM_TABLES) && <CheckboxGroupInputField
                     sx={{mx:1}}
                     options={[{value: 'spectrum',
-                        title:'If possible - interpret table columns names to fit into a spectrum data model',
-                        label:specPref+'Attempt to interpret tables as spectra'}]}
+                        title:'If possible - interpret table columns names to fit into a spectrum data model.',
+                        label:specPref+'Attempt to interpret tables as spectra.'}]}
                     fieldKey='tablesAsSpectrum'
                 />}
         </div>
