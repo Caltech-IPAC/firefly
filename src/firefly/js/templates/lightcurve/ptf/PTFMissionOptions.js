@@ -130,7 +130,7 @@ export function ptfRawTableRequest(converter, source, uploadFileName='') {
         uploadFileName
 
     };
-    return makeFileRequest(`${mission}`+'-Input Data', source, null, options);
+    return makeFileRequest(`${mission}`+' Input Data', source, null, options);
 
 }
 

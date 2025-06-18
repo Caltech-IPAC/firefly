@@ -281,7 +281,7 @@ export function* lcManager(params={}) {
 function updateRawTableChart(timeCName, fluxCName, converterId) {
 
     if (timeCName && fluxCName) {
-
+        const missionName = getConverter(converterId).missionName;
         const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):'';
 
         const chartX = get(getChartData(LC.RAW_TABLE), ['tablesources', 0, 'mappings', 'x']);
@@ -307,7 +307,7 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
                 mode: 'markers'
             }],
             layout: {
-                title,
+                title: `${missionName}` + ' ' + `${title}`,
                 yaxis: {autorange: 'reversed', showgrid: true, title: {text: fluxCName}}
             }
         };

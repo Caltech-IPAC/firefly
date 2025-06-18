@@ -127,7 +127,7 @@ export function ztfRawTableRequest(converter, source, uploadFileName='') {
         uploadFileName
 
     };
-    return makeFileRequest(`${mission}`+'-Input Data', source, null, options);
+    return makeFileRequest(`${mission}`+' Input Data', source, null, options);
 
 }
 
