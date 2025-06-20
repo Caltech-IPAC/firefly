@@ -9,7 +9,6 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.CollectionUtil;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -34,8 +33,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -53,11 +54,17 @@ public class HttpServices {
     public static final int BUFFER_SIZE = (int) (8*FileUtil.K);    // optimal buffer size
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
+    /* Takes the header name and value, and returns a sanitized value if needed. */
+    private static final List<BiFunction<String, String, String>> headerSanitizers = List.of(
+            (k, v) -> v.replaceAll("[\\r\\n]", ""),        // remove any new line characters from value
+            new AuthHeader()
+    );
+
     private static HttpClient newHttpClient() {
         HttpClient httpClient = new HttpClient();
         HttpConnectionManagerParams params = httpClient.getHttpConnectionManager().getParams();
         params.setConnectionTimeout(5000);
-        params.setSoTimeout(0);     // this is the default.. but, setting it explicitly to be sure
+        params.setSoTimeout(0);     // this is the default. but, setting it explicitly to be sure
         return httpClient;
     }
 
@@ -486,8 +493,8 @@ public class HttpServices {
                     "\n\tstatus: " + status.getStatusCode() + "-" + status.getErrMsg() +
                     "\n\turl: " + method.getURI() +
                     input.getDesc() +
-                    "\n\tREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
-                    "\n\tRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
+                    "\n\tREQUEST HEADERS: " + sanitizeHeaders(method.getRequestHeaders()) +
+                    "\n\tRESPONSE HEADERS: " + sanitizeHeaders(method.getResponseHeaders());
 
             final StringBuilder curl = new StringBuilder("curl -v");
             for(Header h : method.getRequestHeaders())  curl.append(String.format(" -H '%s'", h.toString().trim()));
@@ -506,7 +513,41 @@ public class HttpServices {
         }
     }
 
+    /**
+     * Sanitize the header value for logging purposes.
+     * @param name      name of the header
+     * @param value     value of the header
+     * @return  the sanitized value of the header
+     */
+    public static String sanitizeHeader(String name, String value) {
+        String rval = value;
+        for (BiFunction<String, String, String> sanitizer : headerSanitizers) {
+            rval = sanitizer.apply(name, rval);
+        }
+        return rval;
+    }
 
+    public static String sanitizeHeaders(Header[] headers) {
+        if (headers == null || headers.length == 0) return "";
+        return Arrays.stream(headers)
+                .map(h -> "%s: %s".formatted(h.getName(), sanitizeHeader(h.getName(), h.getValue())))
+                .collect(Collectors.joining(", "));
+    }
+
+    private static class AuthHeader implements BiFunction<String, String, String> {
+        // // Authorization: <scheme> <credentials>
+        public String apply(String key, String value) {
+            if (key == null || value == null) return value;
+            if (key.equalsIgnoreCase("Authorization")) {
+                int sep = value.indexOf(' ');
+                if (sep > 0) {
+                    String scheme = value.substring(0, sep);
+                    return scheme + " [redacted]";
+                }
+            }
+            return value;
+        }
+    }
 
     public interface Handler {
         Status handleResponse(HttpMethod method);

@@ -48,6 +48,8 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
+import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
+
 
 public class URLDownload {
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
@@ -625,7 +627,7 @@ public class URLDownload {
                             }
                         }
                         else {
-                            workBuff.append(se.getValue());
+                            workBuff.append(sanitizeHeader(se.getKey(), String.valueOf(se.getValue())));
                         }
                         outStr.add(workBuff.toString());
                     }
