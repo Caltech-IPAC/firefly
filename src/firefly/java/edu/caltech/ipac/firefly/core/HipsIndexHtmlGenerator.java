@@ -1,10 +1,8 @@
 package edu.caltech.ipac.firefly.core;
 
-import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry;
 import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.util.AppProperties;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.NotImplementedException;
@@ -177,12 +175,17 @@ public class HipsIndexHtmlGenerator {
         throw new NotImplementedException();
     }
 
+    private String makeHiPSPropsUrl(String urlRoot) {
+        if (urlRoot.toLowerCase().endsWith("/properties")) return urlRoot;
+        return (urlRoot.endsWith("/") ? urlRoot : urlRoot + '/') + "properties";
+    }
+
     Properties getProperties(String hipsUrl) throws IOException {
         // Take properties file under root URL where the HiPS are and parse it with delimiter '='
         InputStream inf = null;
         Properties proper = null;
         try {
-            inf = new URL(hipsUrl+"/properties").openStream();
+            inf = new URL(makeHiPSPropsUrl(hipsUrl)).openStream();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
 
