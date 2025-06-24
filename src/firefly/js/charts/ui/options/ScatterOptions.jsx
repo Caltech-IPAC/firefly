@@ -58,7 +58,7 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
 
     groupKey = groupKey || `${chartId}-scatter-${activeTrace}`;
     const {tbl_id, tablesource, dataType} = getChartProps(chartId, ptbl_id, activeTrace);
-    const {UseSpectrum, X, Y, Yerrors, Xerrors, Ymax, Ymin, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {UseSpectrum, X, Y, Yerrors, Xerrors, Ymax, Ymin} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const showUseSpectrum = !isSpectralOrder(chartId) && dataType === spectrumType;
 
     const reducerFunc = fieldReducer({chartId, activeTrace, tbl_id});
@@ -87,7 +87,6 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
                             </Stack>
                         </Stack>
                     }
-                    <Mode/>
                 </Stack>
                 <CollapsibleGroup>
                     <ScatterCommonOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
@@ -101,7 +100,7 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
 export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, ...props}) {
 
     const {activeTrace, tbl_id, noColor, multiTrace} = getChartProps(chartId, ptbl_id, pActiveTrace);
-    const {Symbol, ColorMap, ColorSize, ColorScale} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {Symbol, ColorMap, ColorSize, ColorScale, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const {Name, Color} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
     const colValStats = getColValStats(tbl_id);
     const isOrder = isSpectralOrder(chartId);
@@ -111,6 +110,7 @@ export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, 
                                    {...props /* to allow AccordionGroup styling props inserted by joy UI, propagate to Accordion */}>
             <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
                 {multiTrace && <Name/>}
+                <Mode/>
                 <Symbol/>
                 {!noColor && <Color/>}
                 {colValStats && !isOrder && (

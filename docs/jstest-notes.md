@@ -29,16 +29,16 @@ JavaScript Unit Testing
 
 
 ###### Running test with additional options:  
-    cd into src/firefly  
+    cd src/firefly  
     yarn run test-unit --verbose        # run all, displaying more details  
-    yarn run test-unit -t pattern	    # run all tests matching the given pattern  
+    yarn run test-unit pattern	        # run all tests matching the given pattern or filename 
 
 
 ###### How to write tests using Jest:
 
-Sample tests: /firefly/src/firefly/js/tables/\__tests__/TableUtil-test.js
+Sample tests: `/firefly/src/firefly/js/tables/__tests__/TableUtil-test.js`
 
-- Test files under \__tests__ directories are automatically picked up 
+- Test files under `__tests__` directories are automatically picked up 
 - The structure.  describe -> test
     - grouping
     - scope
@@ -50,7 +50,7 @@ Sample tests: /firefly/src/firefly/js/tables/\__tests__/TableUtil-test.js
 ###### How to debug tests using Chrome DevTool:
 
     gradle :firefly:jsTestDebug  # run all test in debug mode
-    yarn test-debug -t pattern   # run all tests matching the given pattern in debug mode
+    yarn test-debug pattern      # run all tests matching the given pattern in debug mode
 
 - Using Chrome, goto url `chrome://inspect/`    
 

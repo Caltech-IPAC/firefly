@@ -27,7 +27,7 @@ import {isFloat} from 'firefly/util/Validate';
 import {ValidationField} from 'firefly/ui/ValidationField';
 import {sprintf} from 'firefly/externalSource/sprintf';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
-import {Box, Divider, FormLabel, Stack, Typography} from '@mui/joy';
+import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 
 
@@ -41,7 +41,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin, xUnit, yUnit} = getSpectrumProps(tbl_id);
 
     const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
@@ -54,7 +54,12 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
 
     const labelWidth = '11rem';
     const inputFullWidthSx = {width: 1, maxWidth: '25rem'}; //since expressions get really long
-    const dividerSx = { '--Divider-childPosition': '10%' };
+    const GroupedStack = ({groupTitle, spacing=1, children}) => (
+        <Stack spacing={spacing}>
+            <Typography level={'title-md'}>{groupTitle}</Typography>
+            <Stack spacing={spacing} sx={{pl: 1}}>{children}</Stack>
+        </Stack>
+    );
 
     return(
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
@@ -67,24 +72,21 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                     '.ff-Input .MuiInput-root': inputFullWidthSx,
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
-                    <Mode/>
-                    <Stack spacing={1}>
-                        <Divider sx={dividerSx}>X-axis</Divider>
+                    <GroupedStack groupTitle='X-axis'>
                         <X label={`Spectral axis column${xLabelSuffix}:`}/>
                         {xErrArray && <Xerrors/>}
                         {xMax && <Xmax/>}
                         {xMin && <Xmin/>}
                         <Xunit/>
                         <SpectralFrame labelWidth={labelWidth}/>
-                    </Stack>
-                    <Stack spacing={1}>
-                        <Divider sx={dividerSx}>Y-axis</Divider>
+                    </GroupedStack>
+                    <GroupedStack groupTitle='Y-axis'>
                         <Y label={`Flux axis column${yLabelSuffix}:`}/>
                         {yErrArray && <Yerrors/>}
                         {yMax && <Ymax label = 'Flux axis upper limit column:'/>}
                         {yMin && <Ymin label = 'Flux axis lower limit column:'/>}
                         <Yunit/>
-                    </Stack>
+                    </GroupedStack>
                 </Stack>
                 <CollapsibleGroup>
                     <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>

@@ -32,7 +32,7 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
     const {unit: toKey, factor: toFactor} = normalizeUnit(to);
 
     let formula = UnitXref?.[fromKey]?.[toKey] ?? '';
-    if (fromFactor !== toFactor) {
+    if (formula && fromFactor !== toFactor) {
         if (fromFactor) formula = `${formula} * ${fromFactor}`;
         if (toFactor) formula = `${formula} / ${toFactor}`; //todo: do we need parantheses here?
     }
@@ -65,7 +65,7 @@ export function getUnitInfo(unit, cname) {
 
         if (factor) { // add the original unit with its factor as the label and as the first option in conversion dropdown
             unitLabel = `${factor} ${unitLabel}`;
-            options = [{value: unit, label: unitLabel}, ...options];
+            options = [{value: `${factor}${unitKey}`, label: unitLabel}, ...options];
         }
 
         const measurementLabel = Measurement[measurementKey]?.symbol;
