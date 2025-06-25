@@ -16,8 +16,8 @@ import {FilterInfo} from 'firefly/tables/FilterInfo';
 import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
 import {onTableLoaded} from 'firefly/tables/TableUtil';
 
-const TAB_COLUMNS_DEFAULT_MSG='These are the recommended columns to use for a spatial search on this table; changing them could cause the query to fail';
-const TAB_COLUMNS_USER_MSG = 'User-specified coordinate columns may or may not work depending on the configuration of the database being queried';
+const TAB_COLUMNS_DEFAULT_MSG='These are the recommended columns to use for a spatial search on this table; changing them could cause the query to fail.';
+const TAB_COLUMNS_USER_MSG = 'User-specified coordinate columns may or may not work depending on the configuration of the database being queried.';
 const TAB_COLUMNS_EMPTY_MSG = 'Unable to identify coordinate columns for spatial searches; spatial searches are disabled. It is possible to designate coordinate ' +
     'columns by hand if the automatic recognition has failed; depending on the database being queried, this may or may not work.';
 
