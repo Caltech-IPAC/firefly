@@ -287,7 +287,6 @@ export class WebPlotRequest extends ServerRequest {
         return this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg, 'IRIS '+survey, 'iras');
     }
 
-
     //======================== 2MASS =====================================
     /**
      * @param wp
@@ -797,8 +796,8 @@ export class WebPlotRequest extends ServerRequest {
 
     setMaskRequiredHeight(height) { this.setParam(WPConst.MASK_REQUIRED_HEIGHT, height+''); }
 
-    setHipsRootUrl(url) { this.setSafeParam(WPConst.HIPS_ROOT_URL, url);}
-    getHipsRootUrl() { return this.getSafeParam(WPConst.HIPS_ROOT_URL);}
+    setHipsRootUrl(url) { this.setSafeParam(fixHiPSRoot(WPConst.HIPS_ROOT_URL), url);}
+    getHipsRootUrl() { return fixHiPSRoot(this.getSafeParam(WPConst.HIPS_ROOT_URL));}
 
 
     setHipsUseAitoffProjection(useAitoff) { this.setParam(WPConst.HIPS_USE_AITOFF_PROJECTION, Boolean(useAitoff));}
@@ -930,6 +929,13 @@ export class WebPlotRequest extends ServerRequest {
 }
 
 export default WebPlotRequest;
+
+export function fixHiPSRoot(urlRoot) {
+    if (urlRoot?.toLowerCase().endsWith('/properties')) {
+        return urlRoot.substring(0, urlRoot.length - 'properties'.length);      // remove properties from url
+    }
+    return urlRoot;
+}
 
 /**
  * Create a new object with the keys more consistent with the keys defined in WebPlotRequest.

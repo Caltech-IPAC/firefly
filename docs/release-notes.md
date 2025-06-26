@@ -8,6 +8,7 @@
 
 
 ## Version 2025.3
+- 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`, `2025.3`, `latest`
 - 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`, `2025.3`, `latest`
 - 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`
 - 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, 
@@ -71,6 +72,9 @@
 
 
 ### _Patches 2025.3_
+- 2025.3.3
+  - Sanitize header values when logging and handle HiPS /properties url-  Patch ([PR](https://github.com/Caltech-IPAC/firefly/pull/1801))
+  - Improve Redis configuration and administration features- FIREFLY-1779 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1794))
 - 2025.3.2 
   - Fixed: TAP: Upload fails when using a `*` in the ADQL statement-  Firefly-1581 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1796))
   - Improved download performance for some calls- Firefly-1682 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1795))

@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.CircleTest;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.logging.log4j.Level;
 import org.json.simple.JSONObject;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
+import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeaders;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.*;
 
@@ -165,7 +168,7 @@ public class HttpServicesTest extends ConfigTest {
 
     @Test
     @Ignore    // This is tested using mockbin.  It should not run normally.
-    public void testFetchMaxFollow(){
+    public void testFetchMaxFollow() {
         HttpServiceInput nInput = input.setRequestUrl("https://mockbin.org/bin/c8bc6283-9129-4aef-8768-1488a85cae09");
 //                "https://mockbin.org/bin/8066cc72-aff6-4443-8812-f4983bcd43c8"    // setup to redirect to another bin
 
@@ -175,6 +178,22 @@ public class HttpServicesTest extends ConfigTest {
         });
         assertEquals(421, status.getStatusCode());    // 421 ERR_TOO_MANY_REDIRECTS
 
+    }
+
+    @Test
+    public void testSanitizeHeader() {
+        Header[] headers = new Header[]{
+                new Header("Authorization", "Bearer abc-123"),
+                new Header("AUTHORIZATION", "basic abc-123"),
+                new Header("remove-new-line", "there is\r and new line\n"),
+                new Header("ignore", "what ever the value is"),
+        };
+        assertEquals("Bearer [redacted]", sanitizeHeader(headers[0].getName(), headers[0].getValue()) );
+        assertEquals("basic [redacted]", sanitizeHeader(headers[1].getName(), headers[1].getValue()) );
+        assertEquals("there is and new line", sanitizeHeader(headers[2].getName(), headers[2].getValue()));
+        assertEquals("what ever the value is", sanitizeHeader(headers[3].getName(), headers[3].getValue()));
+
+        assertEquals("Authorization: Bearer [redacted], AUTHORIZATION: basic [redacted], remove-new-line: there is and new line, ignore: what ever the value is", sanitizeHeaders(headers));
     }
 
     @Category({TestCategory.Perf.class})

@@ -17,20 +17,20 @@ import java.util.List;
  */
 public class DistribMapCache<T> extends DistributedCache<T> {
     String mapKey;
-    long lifespanInSecs;
+    long ttl;
 
     public DistribMapCache(String mapKey) {
-        this(mapKey, 0);
+        this(mapKey, DEF_TTL);
     }
 
-    public DistribMapCache(String mapKey, long lifespanInSecs) {
-        this(mapKey, lifespanInSecs, new JavaSerializer());
+    public DistribMapCache(String mapKey, long ttl) {
+        this(mapKey, ttl, new JavaSerializer());
     }
 
-    public DistribMapCache(String mapKey, long lifespanInSecs, Serializer serializer) {
+    public DistribMapCache(String mapKey, long ttl, Serializer serializer) {
         super(serializer);
         this.mapKey = mapKey;
-        this.lifespanInSecs = lifespanInSecs;
+        this.ttl = ttl;
     }
 
 //====================================================================
@@ -46,15 +46,16 @@ public class DistribMapCache<T> extends DistributedCache<T> {
     }
 
     void set(Jedis redis, String key, String value) {
-        boolean exists = redis.exists(mapKey);
         redis.hset(mapKey, key, value);
-        if (!exists && lifespanInSecs > 0) {
-            redis.expire(mapKey, lifespanInSecs);      // set only when creating a new map; setting here instead of hset to accommodate older version of redis.
+        if (ttl > 0) {
+            redis.expire(mapKey, ttl);  // renew ttl on each update
+        } else if (redis.ttl(mapKey) > 0) {
+            redis.persist(mapKey);      // remove ttl if it was set (only needed for correction)
         }
     }
 
-    void setex(Jedis redis, String key, String value, long lifespanInSecs) {
-        throw new IllegalArgumentException("Cannot set expiry on individual key.  Do it as  Map");
+    void setex(Jedis redis, String key, String value, long ttl) {
+        set(redis, key, value); // ttl is managed at the map level, not individual keys
     }
 
     List<String> keys(Jedis redis) {

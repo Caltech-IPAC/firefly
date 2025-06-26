@@ -3,10 +3,10 @@ import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {MetaConst} from '../data/MetaConst';
 import {makeTblRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
-import {dispatchTableFetch} from '../tables/TablesCntlr.js';
 import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {isBlankHiPSURL} from './WebPlot.js';
+import {fixHiPSRoot} from '../visualize/WebPlotRequest';
 
 /**
  * @typedef HiPSDataType
@@ -134,7 +134,7 @@ export async function resolveHiPSIvoURL(ivoOrUrl) {
     if (!ivoOrUrl) throw new Error('empty url');
     if (ivoOrUrl.startsWith('http')) return ivoOrUrl;
     if (isBlankHiPSURL(ivoOrUrl)) ivoOrUrl= BLANK_HIPS_URL;
-    return convertIvoToUrl(FULL_HIPS_TABLE,ivoOrUrl);
+    return fixHiPSRoot(convertIvoToUrl(FULL_HIPS_TABLE,ivoOrUrl));
 }
 
 export async function isUrlInHipsList(url='') {
