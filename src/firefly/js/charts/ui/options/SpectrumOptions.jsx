@@ -4,7 +4,13 @@ import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
-import {canUnitConv, getUnitInfo, getUnitConvExpr, getXLabel} from '../../dataTypes/SpectrumUnitConversion.js';
+import {
+    canUnitConv,
+    getUnitInfo,
+    getUnitConvExpr,
+    getXLabel,
+    getMeasurementLabel
+} from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -21,7 +27,7 @@ import {isFloat} from 'firefly/util/Validate';
 import {ValidationField} from 'firefly/ui/ValidationField';
 import {sprintf} from 'firefly/externalSource/sprintf';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
-import {Box, Stack} from '@mui/joy';
+import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 
 
@@ -32,55 +38,69 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     groupKey = groupKey || `${chartId}-ffsed-${activeTrace}`;
 
     const {tbl_id} = getChartProps(chartId, ptbl_id, activeTrace);
-    const {xErrArray, yErrArray, xMax, xMin, yMax, yMin} = getSpectrumProps(tbl_id);
+    const {xErrArray, yErrArray, xMax, xMin, yMax, yMin, xUnit, yUnit} = getSpectrumProps(tbl_id);
 
     const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
 
+    const [xLabelSuffix, yLabelSuffix] = [xUnit, yUnit].map((unit) => {
+        const measurementLabel = getMeasurementLabel(unit);
+        return measurementLabel ? ` (${measurementLabel})` : '';
+    });
+
     const labelWidth = '11rem';
+    const inputFullWidthSx = {width: 1, maxWidth: '25rem'}; //since expressions get really long
+    const GroupedStack = ({groupTitle, spacing=1, children}) => (
+        <Stack spacing={spacing}>
+            <Typography level={'title-md'}>{groupTitle}</Typography>
+            <Stack spacing={spacing} sx={{pl: 1}}>{children}</Stack>
+        </Stack>
+    );
 
     return(
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
-            <Stack spacing={3}>
+            <Stack spacing={3} sx={{
+                '.MuiFormLabel-root': {flexShrink: 0},
+            }}>
                 <Stack spacing={2} sx={{
                     '.MuiFormLabel-root': {width: labelWidth},
-                    // '.MuiFormControl-root > *:not(.MuiFormLabel-root)': {width: `calc(100% - ${labelWidth})`} //TODO: whether to make inputs equally wide?
+                    '.ff-ColumnFld': inputFullWidthSx,
+                    '.ff-Input .MuiInput-root': inputFullWidthSx,
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
-                    <Stack spacing={1}>
-                        <X label='Spectral axis column(X):' readonly={true} sx={{'.MuiInput-root': {width: '25rem'}}}/>
-                        {xErrArray && <Xerrors readonly={true}/>}
-                        {xMax && <Xmax readonly={true}/>}
-                        {xMin && <Xmin readonly={true}/>}
+                    <GroupedStack groupTitle='X-axis'>
+                        <X label={`Spectral axis column${xLabelSuffix}:`}/>
+                        {xErrArray && <Xerrors/>}
+                        {xMax && <Xmax/>}
+                        {xMin && <Xmin/>}
                         <Xunit/>
                         <SpectralFrame labelWidth={labelWidth}/>
-                    </Stack>
-                    <Stack spacing={1}>
-                        <Y label='Flux axis column(Y):' readonly={true}/>
-                        {yErrArray && <Yerrors readonly={true}/>}
-                        {yMax && <Ymax readonly={true} label = 'Flux axis upper limit column:'/>}
-                        {yMin && <Ymin readonly={true} label = 'Flux axis lower limit column:'/>}
+                    </GroupedStack>
+                    <GroupedStack groupTitle='Y-axis'>
+                        <Y label={`Flux axis column${yLabelSuffix}:`}/>
+                        {yErrArray && <Yerrors/>}
+                        {yMax && <Ymax label = 'Flux axis upper limit column:'/>}
+                        {yMin && <Ymin label = 'Flux axis lower limit column:'/>}
                         <Yunit/>
-                    </Stack>
-                    <Mode/>
+                    </GroupedStack>
                 </Stack>
                 <CollapsibleGroup>
                     <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
-                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
-                                   XaxisTitle={() => <XaxisTitle readonly={true}/>}
-                                   YaxisTitle={() => <YaxisTitle readonly={true}/>}
-                    />
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey,
+                        XaxisTitle: () => <XaxisTitle readonly={true} sx={{'.MuiInput-root': inputFullWidthSx}}/>,
+                        YaxisTitle: () => <YaxisTitle readonly={true} sx={{'.MuiInput-root': inputFullWidthSx}}/>,
+                    }}/>
                 </CollapsibleGroup>
             </Stack>
         </FieldGroup>
     );
 }
 
-
+/**Returns a reducer function to handle the value changes in spectrum options' fields**/
 export function spectrumReducer({chartId, activeTrace, tbl_id}) {
     const scatterReducer = fieldReducer({chartId, activeTrace, tbl_id});
     const {fireflyData, data, spectralAxis, fluxAxis} = getChartProps(chartId, tbl_id, activeTrace);
@@ -97,6 +117,7 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
 
         if (type === VALUE_CHANGE) {
             ['x', 'y'].forEach((v) => {
+                // if the xUnit or yUnit field is changed, apply unit conversion
                 if (fieldKey === `fireflyData.${activeTrace}.${v}Unit`) {
                     const axis = v === 'x' ? spectralAxis : fluxAxis;
                     inFields = applyUnitConversion({fireflyData, data, inFields, axisType:v, newUnit:value, traceNum:activeTrace, axis, isInput:true});
@@ -106,6 +127,7 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
                 }
             });
 
+            // if the spectral frame option is changed, apply redshift correction
             if (Object.values(SFOptionFieldKeys(activeTrace)).includes(fieldKey)) {
                 inFields = applyRedshiftCorrection({fireflyData, inFields, spectralAxis, activeTrace, isInput: true});
                 inFields = updateSet(inFields, ['__xreset', 'value'], 'true');
@@ -116,7 +138,7 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
     };
 }
 
-
+/* ------------------------------ Redshift correction handling ------------------------------ */
 const getRedshiftCorrectedExpr = ({cname, spectralFrame, sfOption, redshift=undefined}) => {
     const {refPos, redshift: customRedshift} = spectralFrame;
     const multiplyBy = refPos.toUpperCase() === REF_POS.CUSTOM ? ` * (1 + ${customRedshift ?? '0'})` : '';
@@ -175,7 +197,8 @@ const applyRedshiftCorrection = ({fireflyData, inFields, spectralAxis, activeTra
     return revalidateFields(inFields); //revalidate otherwise validation state of x would be stale
 };
 
-
+/* ------------------------------ Unit conversion Handling ------------------------------ */
+// this changes several related fields: those with the field keys (or paths) passed in updateSet() calls below
 export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newUnit, traceNum, axis, isInput=false}) => {
     const path = (p) => isInput ? [p, 'value'] : [p];
     const layoutAxis = axisType === 'x' ? 'xaxis' : 'yaxis';
@@ -220,7 +243,7 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
 };
 
 
-
+/* Submit changes for spectrum options (i.e. when "Apply" button in "Modify trace" of chart dialog is clicked).*/
 export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
     const {data, fireflyData} = getChartData(chartId);
     const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
@@ -287,12 +310,20 @@ function Units({activeTrace, value, axis, ...rest}) {
     const unitProp = axis === 'x' ? 'xUnit' : 'yUnit';
     const label = axis === 'x' ? 'Spectral axis units:' : 'Flux axis units:';
     const options = getUnitInfo(value)?.options;
-    if (!options) return null;
 
+    return options?.length > 1
+        ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}}
+                             {...{label, options, ...rest}}/>
+        : <ReadOnlyField value={value} label={label}/>;
+}
+
+function ReadOnlyField({value, label, ...props}) {
     return (
-        <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}} {...{label, options, ...rest}}/>
+        <Stack direction='row' {...props}>
+            {label && <FormLabel sx={{mr: '0.75rem'}}>{label}</FormLabel>}
+            <Typography fontSize='sm'>{value}</Typography>
+        </Stack>
     );
-
 }
 
 /*
@@ -311,7 +342,7 @@ export const useSpectrumInputs = ({chartId, groupKey}, deps=[]) => {
             const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
             return Object.values(REF_POS).includes(sfRefPos) //only show options when TOPOCENTER or CUSTOM
                 ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
-                : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
+                : <ReadOnlyField value={sfRefPos} {...allProps}/>;
         }, deps),
     };
 };
@@ -374,6 +405,7 @@ function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, labe
             <ListBoxInputField fieldKey={SFOptionFieldKeys(activeTrace).value}
                                options={spectralFrameOptions}
                                initialState={{value: spectralFrameOption?.value ?? defaultSFOption}}
+                               slotProps={{input: {sx: {minWidth: '12rem'}}}}
                                {...props}/>
             <Box sx={{
                 position: 'relative',
