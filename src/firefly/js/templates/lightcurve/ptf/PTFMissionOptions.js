@@ -122,6 +122,7 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
 export function ptfRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
+    const missionName = converter.missionName;
     const options = {
         tbl_id: LC.RAW_TABLE,
         sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
@@ -130,7 +131,7 @@ export function ptfRawTableRequest(converter, source, uploadFileName='') {
         uploadFileName
 
     };
-    return makeFileRequest('Input Data', source, null, options);
+    return makeFileRequest(`${missionName}`+' Input Data', source, null, options);
 
 }
 
