@@ -76,10 +76,10 @@
 - 2025.3.4 
   - Timeseries: improve save table filename- Firefly-1354 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1802))
   - Better messaging for Position Cols in TAP Spatial Search- Firefly-1677 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1803))
-  - Fixed: TAP and SIA issues- Firefly-1786 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
+  - Fixed: TAP and SIA issues- Firefly-1786, rubin DM-51532  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
   - Fixed: Image expansion in bi-view mode fails ([commit](https://github.com/Caltech-IPAC/firefly/commit/1d2c3f222cb6d8611f0361ffa4ad5aaa63d278f5))
 - 2025.3.3 
-  - Sanitize header values when logging and handle HiPS /properties url-  Patch ([PR](https://github.com/Caltech-IPAC/firefly/pull/1801))
+  - Sanitize header values when logging and handle HiPS /properties url- (rubin DM-51480) Patch ([PR](https://github.com/Caltech-IPAC/firefly/pull/1801))
   - Improve Redis configuration and administration features- FIREFLY-1779 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1794))
 - 2025.3.2 
   - Fixed: TAP: Upload fails when using a `*` in the ADQL statement-  Firefly-1581 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1796))
