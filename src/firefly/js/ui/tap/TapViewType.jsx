@@ -48,7 +48,7 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 
 
 export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy,
-                                serviceLabel, selectBy, initArgs, lockObsCore, lockedSchemaName,
+                                serviceLabel, selectBy, initArgs, lockObsCore, lockedSchemaName, lockedTableName,
                                 obsCoreLockTitle, obsCoreTableModel, hasObsCoreTable, setError}) {
 
     return (
@@ -56,7 +56,7 @@ export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lo
             {selectBy==='adql' ?
                 <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy, setError}}/> :
                 <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService,
-                    lockObsCore, obsCoreLockTitle, lockedSchemaName, obsCoreTableModel,
+                    lockObsCore, obsCoreLockTitle, lockedSchemaName, obsCoreTableModel, lockedTableName,
                     servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy, setError}}/>
             }
         </Stack>
@@ -72,6 +72,7 @@ TapViewType.propTypes= {
     setError: func,
     serviceLabel: string,
     lockedSchemaName: string,
+    lockedTableName: string,
     obsCoreLockTitle: string,
     selectBy: string,
     initArgs: shape({
@@ -143,7 +144,7 @@ function useStateRef(initialState){
 
 function BasicUI(props) {
     const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing, obsCoreLockTitle,
-        setServicesShowing, lockedSchemaName, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore, setError}= props;
+        setServicesShowing, lockedSchemaName, lockedTableName, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore, setError}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const initState = getTapBrowserState();
@@ -152,7 +153,7 @@ function BasicUI(props) {
     const serviceLabel= props.serviceLabel ?? initState.serviceLabel;
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
     const [schemaName, schemaRef, setSchemaName] = useStateRef(lockedSchemaName || searchParams.schema || initState.schemaName || urlApi.schema);
-    const [tableName, tableRef, setTableName] = useStateRef(searchParams.table || initState.tableName || urlApi.table);
+    const [tableName, tableRef, setTableName] = useStateRef(lockedTableName || searchParams.table || initState.tableName || urlApi.table);
     const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || initArgs.urlApi?.selectBy === 'obscore');
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const [schemaOptions, setSchemaOptions] = useState();
@@ -163,6 +164,7 @@ function BasicUI(props) {
     const {schemaLabel}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
 
     const schemaIsLocked= !forceLockObsCore && Boolean(lockedSchemaName);
+    const tableIsLocked= !forceLockObsCore && Boolean(lockedTableName);
 
     const capabilities= getLoadedCapability(serviceUrl);
 
@@ -179,9 +181,15 @@ function BasicUI(props) {
     const setLockToObsCore= (doLock) => {
         if (!hasObsCoreTable || !obsCoreTableModel?.tableData?.data) return;
         if (doLock) {
-            const [schema, table] = obsCoreTableModel?.tableData?.data[0];
-            setSchemaName(schema);
-            setTableName(table);
+            if (lockedTableName && lockedSchemaName) {
+                setSchemaName(lockedSchemaName);
+                setTableName(lockedTableName);
+            }
+            else {
+                const [schema, table] = obsCoreTableModel?.tableData?.data[0];
+                setSchemaName(schema);
+                setTableName(table);
+            }
         }
         else {
             const foundSchema= schemaOptions.find( (s) => {
@@ -353,7 +361,7 @@ function BasicUI(props) {
             <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
                 <Stack {...{direction:'row', justifyContent:'space-between', width:1, spacing:1}}>
                     {showTableSelectors ?
-                        <TableSelectors {...{hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
+                        <TableSelectors {...{hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel, obsCoreLockTitle,
                             sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
                             tOps,tableTableModel, tableName,setTableName}}/> :
                         <Stack {...{width:1}}>
@@ -414,8 +422,8 @@ function BasicUI(props) {
 
 function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
                             sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
-                            tOps,tableTableModel, tableName,setTableName}) {
-    const schemaTitle= !schemaIsLocked ? `${serviceLabel} Tables` : schemaName;
+                            tOps,tableTableModel, tableName,setTableName, obsCoreLockTitle }) {
+    const schemaTitle= !schemaIsLocked ? `${serviceLabel} Tables` : (obsCoreLockTitle ?? schemaName);
     return (
         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                 <Stack>

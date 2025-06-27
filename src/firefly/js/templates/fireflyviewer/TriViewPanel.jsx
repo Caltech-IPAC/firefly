@@ -50,7 +50,7 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
     if (!showImages && !showXyPlots && !showTables) return landingPage;
 
-    if (!imagesWithCharts && (showImages || coverageLeft)) {
+    if (expanded===LO_VIEW.images || (!imagesWithCharts && (showImages || coverageLeft)) ) {
         content.imagePlot = (<TriViewImageSection key='res-tri-img'
                                                   closeable={closeable}
                                                   coverageSide={coverageSide}

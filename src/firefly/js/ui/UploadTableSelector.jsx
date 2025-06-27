@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Box, Chip, Stack, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {defaultsDeep, omit} from 'lodash';
@@ -16,6 +16,10 @@ import {FilterInfo} from 'firefly/tables/FilterInfo';
 import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
 import {onTableLoaded} from 'firefly/tables/TableUtil';
 
+const TAB_COLUMNS_DEFAULT_MSG='These are the recommended columns to use for a spatial search on this table; changing them could cause the query to fail.';
+const TAB_COLUMNS_USER_MSG = 'User-specified coordinate columns may or may not work depending on the configuration of the database being queried.';
+const TAB_COLUMNS_EMPTY_MSG = 'Unable to identify coordinate columns for spatial searches; spatial searches are disabled. It is possible to designate coordinate ' +
+    'columns by hand if the automatic recognition has failed; depending on the database being queried, this may or may not work.';
 
 //--------------------------------------------------------------------------------------------------------------------
 // GENERIC components and helpers
@@ -367,17 +371,32 @@ export function UploadTableSelectorPosCol(props) {
 
 export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
                                   doQuoteNonAlphanumeric, headerTitle='Position Columns:',
-                                  headerPostTitle = '', openPreMessage='', slotProps}) {
+                                  headerPostTitle = '', posDefaultOpenMsg='', setPosDefaultOpenMsg, slotProps}) {
     const columnFields = positionColumnFields(
         {fieldKey: lonKey, doQuoteNonAlphanumeric},
         {fieldKey: latKey, doQuoteNonAlphanumeric}
     );
-    const customSlotProps = defaultsDeep({...slotProps}, selectorPosColSlotProps.columnMappingPanel.slotProps);
+
+    const customSlotProps = defaultsDeep({openPreMessage: {level: 'body-sm'}}, slotProps, selectorPosColSlotProps.columnMappingPanel.slotProps);
+
+    const [openPreMsg, setOpenPreMsg] = useState(TAB_COLUMNS_DEFAULT_MSG);
+
+    useEffect(() => {
+        if (!lonCol || !latCol) setOpenPreMsg(TAB_COLUMNS_EMPTY_MSG);
+        else {
+            if (posDefaultOpenMsg) {
+                setOpenPreMsg(TAB_COLUMNS_DEFAULT_MSG);
+                setPosDefaultOpenMsg(false);
+            }
+            else setOpenPreMsg(TAB_COLUMNS_USER_MSG);
+        }
+    }, [lonCol, latCol]);
+
 
     return (
         <ColumnMappingPanel cols={cols} columnFieldValues={[lonCol, latCol]} columnFields={columnFields}
                             panelKey={openKey} headerTitle={headerTitle} headerPostTitle={headerPostTitle}
-                            openPreMessage={openPreMessage} sx={sx} slotProps={customSlotProps}/>
+                            openPreMessage={openPreMsg} sx={sx} slotProps={customSlotProps}/>
     );
 }
 
@@ -392,7 +411,8 @@ CenterColumns.propTypes = {
     doQuoteNonAlphanumeric: PropTypes.bool,
     headerTitle: PropTypes.node,
     headerPostTitle: PropTypes.string,
-    openPreMessage: PropTypes.string,
+    posDefaultOpenMsg: PropTypes.bool,
+    setPosDefaultOpenMsg: PropTypes.func,
     slotProps: ColumnMappingPanel.propTypes.slotProps,
     children: PropTypes.node
 };

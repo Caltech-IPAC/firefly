@@ -69,8 +69,6 @@ export const MULTI= 'multi';
 const SpatialLabelSpatial = '6em';
 const ICRS = 'ICRS';
 
-const TAB_COLUMNS_MSG='These are the recommended columns to use for a spatial search on this table; changing them could cause the query to fail';
-
 const spacialTypeOps = [{label: 'Single Object', value: SINGLE}, {label: 'Multi-object', value: MULTI, tooltip:'for uploaded table'}];
 
 const emptyCenterCols= {lon: '', lat: ''};
@@ -133,13 +131,11 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
     const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
     const [constraintResult, setConstraintResult] = useState({});
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
-    const [posOpenMsg, setPosOpenMsg]= useState(TAB_COLUMNS_MSG);
+    const [posDefaultOpenMsg, setPosDefaultOpenMsg]= useState(true);
 
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
 
     const uploadInfo= getUploadInfo() || undefined;
-
-
 
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), Spatial);
 
@@ -196,6 +192,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             cols && setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
             cols && setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
             const noDefaults= !lon || !lat;
+            if (lon && lat) setPosDefaultOpenMsg(true);
             setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
             if (noDefaults || disablePanel) checkHeaderCtl.setPanelActive(false);
             checkHeaderCtl.setPanelActive(!noDefaults);
@@ -294,8 +291,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                             headerTitle:posHeaderTitle, openKey:posOpenKey,
                             doQuoteNonAlphanumeric:false,
                             headerPostTitle:'(from the selected table on the right)',
-                            openPreMessage:posOpenMsg,
-                            cols, lonKey:CenterLonColumns, latKey:CenterLatColumns}} />}
+                            posDefaultOpenMsg, cols, lonKey:CenterLonColumns, latKey:CenterLatColumns, setPosDefaultOpenMsg}} />}
                 </ForceFieldGroupValid>
             </Stack>
             <DebugObsCore {...{constraintResult}}/>
@@ -359,7 +355,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
             return (
                 <Stack spacing={1} direction='column'>
                     <ConeOrAreaField {...slotProps?.coneOrAreaField}/>
-                    {isCone && <TargetPanelForSpacial {...{serviceLabel, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
+                    {isCone && <TargetPanelForSpacial {...{serviceLabel, serviceId, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {radiusOrPolygon}
                 </Stack>
             );
