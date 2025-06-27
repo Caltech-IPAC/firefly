@@ -103,7 +103,7 @@ function getInitServiceUrl(tapBrowserState,initArgs,tapOps, lockedServiceUrl,loc
 }
 
 export function TapSearchPanel({initArgs= {}, titleOn=false,
-                                   lockService=false, lockedServiceUrl, lockedServiceName, lockObsCore=false,
+                                   lockService=false, lockedServiceUrl, lockedServiceName, lockedTableName, lockObsCore=false,
                                    lockedSchemaName,
                                    obsCoreLockTitle,
                                    groupKey=DEFAULT_TAP_PANEL_GROUP_KEY }) {
@@ -111,13 +111,13 @@ export function TapSearchPanel({initArgs= {}, titleOn=false,
     return (
         <FieldGroup groupKey={groupKey} keepState={true} key={groupKey} sx={{width: 1, height: 1}}>
             <TapSearchPanelImpl {...{initArgs, titleOn, lockService, obsCoreLockTitle, lockedServiceUrl,
-                lockedSchemaName, lockedServiceName, lockObsCore}}/>
+                lockedSchemaName, lockedServiceName, lockedTableName, lockObsCore}}/>
         </FieldGroup>
     );
 }
 
 function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lockedServiceUrl, lockedServiceName,
-                                lockedSchemaName,
+                                lockedSchemaName, lockedTableName,
                                 obsCoreLockTitle, lockObsCore}) {
     const {setVal,getVal,setFld,groupKey}= useContext(FieldGroupCtx);
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
@@ -211,7 +211,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
                             }}>
 
                     <TapSearchPanelComponents {...{
-                        servicesShowing, setServicesShowing, lockService, lockObsCore, obsCoreLockTitle,
+                        servicesShowing, setServicesShowing, lockService, lockObsCore, lockedTableName, obsCoreLockTitle,
                         lockedSchemaName, srvNameKey,
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
@@ -227,6 +227,7 @@ TapSearchPanel.propTypes= {
     lockedServiceUrl: string,
     lockedServiceName: string,
     lockedSchemaName: string,
+    lockedTableName: string,
     obsCoreLockTitle: string,
     lockService: bool,
     lockObsCore: bool,
@@ -239,7 +240,7 @@ TapSearchPanel.propTypes= {
 
 function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect,
                                       lockService, lockObsCore, obsCoreLockTitle, tapOps,
-                                      lockedSchemaName, titleOn=true, selectBy, setSelectBy}) {
+                                      lockedSchemaName, lockedTableName, titleOn=true, selectBy, setSelectBy}) {
 
     const serviceLabel= getServiceLabel(serviceUrl);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
@@ -276,7 +277,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
                 <ServiceWarning {...{error,serviceUrl}}/> :
                 <TapViewType  {...{
                     serviceUrl, serviceLabel, selectBy, initArgs, lockService,
-                    lockObsCore, obsCoreLockTitle, obsCoreTableModel, lockedSchemaName,
+                    lockObsCore, obsCoreLockTitle, obsCoreTableModel, lockedSchemaName, lockedTableName,
                     servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy, setError
                 }} />
             }

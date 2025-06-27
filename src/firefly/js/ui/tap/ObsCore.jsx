@@ -105,9 +105,9 @@ const makeConstraints = function(hasSubType, fldObj) {
     if (hasSubType){
         errList.checkForError(obsCoreSubType);
         if (obsCoreSubType?.value?.length > 0) {
-            const mcResult = multiConstraint(obsCoreSubType.value, 'dataproduct_subtype', '', '\'');
+            const mcResult = multiConstraint(obsCoreSubType.value, 'dataproduct_subtype', 'DPSUBTYPE', '\'');
             adqlConstraintsAry.push(mcResult.adqlConstraint);
-            siaConstraintErrors.push('Not able to translate dataproduct_subtype to SIAV2 query');
+            siaConstraints.push(...mcResult.siaConstraints);
         }
     }
 
@@ -195,7 +195,13 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
         }, []);
     };
 
-    const hasSubType = useSubtype && Boolean(cols && cols.findIndex((v) => v.name === 'dataproduct_subtype') !== -1);
+    let hasSubType= false;
+    if (useSubtype) {
+        hasSubType= useSIAv2
+            ? obsCoreMetadataModel?.tableData?.data?.some( (row) => row[0]==='DPSUBTYPE')
+            : Boolean(cols && cols.findIndex((v) => v.name === 'dataproduct_subtype') !== -1);
+    }
+
 
     useEffect(() => {
         updatePanelStatus(makeConstraints(hasSubType,makeFldObj(fldListAry)), constraintResult, setConstraintResult,useSIAv2);
@@ -303,22 +309,22 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
                                     </Stack>
                                 }
                             </Stack>
+                        {hasSubType && <Stack>
+                            <ObsCoreInputField fieldKey='obsCoreSubType'
+                                               tooltip={obsCoreSubTypeOptions.tooltip || 'Select ObsCore Dataproduct Subtype Name'}
+                                               placeholder={obsCoreSubTypeOptions.placeholder}
+                                               label='Data Product Subtype'
+                                               initialState={{ value: urlApi.obsCoreSubType || '' }}
+                                               columnName={useSIAv2 ? 'DPSUBTYPE' : 'dataproduct_subtype'}
+                                               obsCoreMetadataModel={obsCoreMetadataModel}
+                            />
+                            {obsCoreSubTypeOptions.helptext &&
+                                <div style={{marginLeft: LableSaptail, marginTop: 5, padding: 2}}>
+                                    <i>{obsCoreSubTypeOptions.helptext}</i>
+                                </div>
+                            }
+                        </Stack>}
                     </Stack>
-                    {hasSubType && <div style={{marginTop: 5}}>
-                        <ObsCoreInputField fieldKey='obsCoreSubType'
-                                           tooltip={obsCoreSubTypeOptions.tooltip || 'Select ObsCore Dataproduct Subtype Name'}
-                                           placeholder={obsCoreSubTypeOptions.placeholder}
-                                           label='Data Product Subtype:'
-                                           initialState={{ value: urlApi.obsCoreSubType || '' }}
-                                           columnName='dataproduct_subtype'
-                                           obsCoreMetadataModel={obsCoreMetadataModel}
-                        />
-                        {obsCoreSubTypeOptions.helptext &&
-                            <div style={{marginLeft: LableSaptail, marginTop: 5, padding: 2}}>
-                                <i>{obsCoreSubTypeOptions.helptext}</i>
-                            </div>
-                        }
-                    </div>}
                     <DebugObsCore {...{constraintResult, includeSia: true}}/>
                 </ForceFieldGroupValid>
             </Stack>

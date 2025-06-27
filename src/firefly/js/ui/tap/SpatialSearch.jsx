@@ -355,7 +355,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
             return (
                 <Stack spacing={1} direction='column'>
                     <ConeOrAreaField {...slotProps?.coneOrAreaField}/>
-                    {isCone && <TargetPanelForSpacial {...{serviceLabel, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
+                    {isCone && <TargetPanelForSpacial {...{serviceLabel, serviceId, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {radiusOrPolygon}
                 </Stack>
             );

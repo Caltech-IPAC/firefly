@@ -266,7 +266,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selec
         errList.checkForError(objectIDCol);
         if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table Object IDs are not set.');
         else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
-        else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
+        else if (!useSIAv2 && !objectID) errList.addError('Selected Table (on the right) Object ID is not set');
     }
     else if (!useSIAv2) {
         if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
@@ -277,7 +277,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selec
         if (selectInObjList?.length) {
             const str= makeColsLines(selectInObjList);
             adqlConstraint = `${objectID} IN (${str})`;
-            siaConstraints= selectInObjList.map( (id) => `ID=${id}`);
+            siaConstraints= selectInObjList.map( (id) => `ID=${encodeURIComponent(id)}`);
         }
         else {
             errList.addError(`Enter at least one ${useSIAv2?'observation ID':'object ID'}`);
