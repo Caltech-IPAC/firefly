@@ -8,8 +8,9 @@
 
 
 ## Version 2025.3
-- 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`, `2025.3`, `latest`
-- 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`, `2025.3`, `latest`
+- 2025.3.4 - (June 26, 2025), _docker tag_: `2025.3.4`, `2025.3`, `latest`
+- 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`
+- 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`
 - 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`
 - 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, 
 
@@ -72,7 +73,12 @@
 
 
 ### _Patches 2025.3_
-- 2025.3.3
+- 2025.3.4 
+  - Timeseries: improve save table filename- Firefly-1354 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1802))
+  - Better messaging for Position Cols in TAP Spatial Search- Firefly-1677 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1803))
+  - Fixed: TAP and SIA issues- Firefly-1786 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
+  - Fixed: Image expansion in bi-view mode fails ([commit](https://github.com/Caltech-IPAC/firefly/commit/1d2c3f222cb6d8611f0361ffa4ad5aaa63d278f5))
+- 2025.3.3 
   - Sanitize header values when logging and handle HiPS /properties url-  Patch ([PR](https://github.com/Caltech-IPAC/firefly/pull/1801))
   - Improve Redis configuration and administration features- FIREFLY-1779 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1794))
 - 2025.3.2 
