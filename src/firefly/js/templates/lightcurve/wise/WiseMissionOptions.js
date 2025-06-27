@@ -138,6 +138,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
 export function wiseRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
+    const missionName = converter.missionName;
     const options = {
         tbl_id: LC.RAW_TABLE,
         sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
@@ -147,7 +148,7 @@ export function wiseRawTableRequest(converter, source, uploadFileName='') {
 
     };
 
-    return makeFileRequest('Input Data', source, null, options);
+    return makeFileRequest(`${missionName}`+' Input Data', source, null, options);
 
 }
 
