@@ -4,8 +4,9 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
-import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -67,7 +68,13 @@ public class CommandService extends BaseHttpServlet {
             String cmd = sp.getCommandKey();
             ServerCommandAccess.HttpCommand command = ServerCommandAccess.getCommand(cmd);
             command.processRequest(req, res, sp);
-            Logger.briefDebug(String.format("CommandService: %s : %dms", cmd, System.currentTimeMillis() - start));
+            var sso= ServerContext.getRequestOwner().getSsoAdapter();
+            String userInfoStr= "";
+            if (sso!=null) {
+                var ui= sso.getUserInfo();
+                if (ui!=null) userInfoStr= ui.toString();
+            }
+            Logger.briefInfo(String.format("CommandService: %s (%s): %dms", cmd, userInfoStr, System.currentTimeMillis() - start));
         } catch (Exception ex) {
             LOGGER.error(ex);
             HashMap<String, String> errors = new HashMap<>();

@@ -103,10 +103,11 @@ public class FitsReadUtil {
         fits.write(retFile);
         closeFits(fits);
         Fits retReadFits= new Fits(retFile);
-        return new UncompressFitsInfo(retFile,fits.read(), retReadFits);
+        BasicHDU<?>[] inHDUs= retReadFits.read();
+        return new UncompressFitsInfo(retFile,inHDUs, retReadFits);
     }
 
-    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu) {
+    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu, List<Long> headersSizesList, List<Long> headersOffsetsList) {
         ArrayList<BasicHDU<?>> HDUList = new ArrayList<>();
 
         String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0
@@ -144,7 +145,7 @@ public class FitsReadUtil {
 
 
             if (goodImage) {
-                insertPositionIntoHeader(header, j, hdu.getFileOffset());
+                insertPositionIntoHeader(header, j, headersSizesList.get(j), headersOffsetsList.get(j));
 
                 int naxis3 = header.getIntValue("NAXIS3", -1);
                 if ((naxis > 2) && (naxis3 > 1)) { //it is a cube data
@@ -167,10 +168,9 @@ public class FitsReadUtil {
 
 
 
-    private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) {
+    private static void insertPositionIntoHeader(Header header, int pos, long headerSize, long hduOffset) {
         if (hduOffset < 0) hduOffset = 0;
         if (pos < 0) pos = 0;
-        long headerSize = getHeaderSize(header);
         int bitpix = header.getIntValue("BITPIX", -1);
         header.addLine(new HeaderCard(SPOT_HS, headerSize, "Header block size on disk (added by Firefly)"));
         header.addLine(new HeaderCard(SPOT_EXT, pos, "Extension Number (added by Firefly)"));
@@ -350,7 +350,7 @@ public class FitsReadUtil {
     }
 
     public static long getHeaderSize(Header header) {
-        return header.getOriginalSize() > 0 ? header.getOriginalSize() : header.getSize();
+           return header.getOriginalSize() > 0 ? header.getOriginalSize() : header.getSize();
     }
 
 

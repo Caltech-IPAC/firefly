@@ -65,7 +65,7 @@ public class JobManager {
     public static final String BG_INFO = "background.info";
     public static final String ALL_JOB_CACHE_KEY = "ALL_JOB_INFOS"; // cache key for all job infos
     public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 60);     // run cleanup once every 60 minutes
-    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);  // default keepalive interval in seconds
+    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 60);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
     private static final int JOB_EXPIRY_HOURS = AppProperties.getIntProperty("job.expiry.hours", 24*14);        // Time in hours to keep a job after it has ended.  Default to 14 days.

@@ -8,7 +8,8 @@
 
 
 ## Version 2025.3
-- 2025.3.4 - (June 26, 2025), _docker tag_: `2025.3.4`, `2025.3`, `latest`
+- 2025.3.5 - (July 1, 2025), _docker tag_: `2025.3.5`, `2025.3`, `latest`
+- 2025.3.4 - (June 26, 2025), _docker tag_: `2025.3.4`
 - 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`
 - 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`
 - 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`
@@ -73,6 +74,8 @@
 
 
 ### _Patches 2025.3_
+- 2025.3.5
+  - Fixed: Images: mouse readout with some compressed images- Firefly-1793,Firefly-1792,Firefly-1789  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
 - 2025.3.4 
   - Timeseries: improve save table filename- Firefly-1354 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1802))
   - Better messaging for Position Cols in TAP Spatial Search- Firefly-1677 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1803))
