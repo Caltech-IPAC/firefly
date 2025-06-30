@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import {ScopedCssBaseline, extendTheme, CssVarsProvider, useColorScheme, GlobalStyles} from '@mui/joy';
+import {getBoolean, isDefined, toBoolean} from '../util/WebUtil';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 
 import {defaultTheme} from './ThemeSetup.js';
@@ -16,8 +17,12 @@ import '@fontsource/inter/800.css'; // Bolder
 
 export function FireflyRoot({sx, children, ctxProperties={}}) {
 
-    const customTheme = getAppOptions().theme?.customized?.();
+    const appOps= getAppOptions();
+    const customTheme = appOps.theme?.customized?.();
     const theme = extendTheme(customTheme || defaultTheme());
+    if (isDefined(appOps.showUserInfo)) { // the showUserInfo option will override the property default
+        ctxProperties= {...ctxProperties, showUserInfo:toBoolean(appOps.showUserInfo)};
+    }
 
     return (
         <AppPropertiesCtx.Provider value={ctxProperties}>
