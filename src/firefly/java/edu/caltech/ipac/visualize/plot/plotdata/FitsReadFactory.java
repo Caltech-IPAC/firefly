@@ -18,6 +18,7 @@ import nom.tam.fits.ImageHDU;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author Trey Roby
@@ -38,8 +39,10 @@ public class FitsReadFactory {
 
     public static FitsRead[] createFitsReadArray(BasicHDU<?>[] HDUs, File f, boolean clearHdu) throws FitsException {
         if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
+        var headersSizesList= Arrays.stream(HDUs).map(hdu -> hdu.getHeader().getSize()).toList();
+        var headersOffsetsList= Arrays.stream(HDUs).map(hdu -> hdu.getHeader().getFileOffset()).toList();
 
-        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs, true);
+        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs, true, headersSizesList, headersOffsetsList);
         BasicHDU<?> hdu;
         Header zeroHeader= getZeroHeader(HDUs) ;
         confirmHasImageData(imageHDUs,HDUs);
