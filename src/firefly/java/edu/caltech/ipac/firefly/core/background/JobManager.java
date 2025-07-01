@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.api.Async;
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
@@ -26,18 +27,14 @@ import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.lang.text.StrBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import redis.clients.jedis.Jedis;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -395,7 +392,46 @@ public class JobManager {
 
     private static void checkJobs() {
 
-        // ping clients with active(EXECUTING) job
+        try (Jedis redis = RedisService.getConnection()) {
+            Set<String> jobIds = redis.smembers("runningJobs"); //this allows us to only go through running jobs - and not ALL jobs
+
+            jobIds.forEach(id -> {
+                JobInfo ji = JobManager.getJobInfo(id);
+                if (ji == null || ji.getPhase() != EXECUTING) {
+                        redis.srem("runningJobs", id); // clean up stale ID
+                }
+            });
+
+
+            //ping clients with EXECUTING/Running jobs
+            jobIds.stream()
+                    .map(JobManager::getJobInfo)
+                    .filter(Objects::nonNull)
+                    .filter(ji -> ji.getPhase() == EXECUTING)
+                    .map(ji -> ji.getMeta().getUserKey() + "::" + ji.getMeta().getEventConnId())
+                    .distinct()
+                    .forEach(client -> {
+                        String[] ownerConnId = client.split("::");
+                        WebsocketConnector.pingClient(ownerConnId[0], ownerConnId[1]);
+                    });
+
+
+
+            //kill expired jobs
+            jobIds.stream()
+                    .map(JobManager::getJobInfo)
+                    .filter(Objects::nonNull)
+                    .forEach(ji -> {
+                        long duration = ji.executionDuration();
+                        if (duration != 0 && ji.getStartTime().plus(duration, ChronoUnit.SECONDS).isBefore(Instant.now())) {
+                            abort(ji.getMeta().getJobId(), "Exceeded execution duration");
+                        }
+                    });
+
+        } catch (Exception e) {
+            Logger.getLogger().error(e);
+        }
+        /*// ping clients with active(EXECUTING) job
         getAllJobs().stream().filter(fi -> fi != null && fi.getPhase() == EXECUTING)     // all running jobs
                 .map(fi -> fi.getMeta().getUserKey() + "::" + fi.getMeta().getEventConnId()).distinct()       // get distinct list of userKey and connId
                 .forEach(client -> {                                                    // ensure it gets pinged only once, regardless of the number of jobs it has.
@@ -409,7 +445,7 @@ public class JobManager {
                     if (duration != 0 && fi.getStartTime().plus(duration, ChronoUnit.SECONDS).isBefore(Instant.now())) {
                         abort(fi.getMeta().getJobId(), "Exceeded execution duration");
                     }
-                });
+                });*/
     }
 
     private static class JobEntry {

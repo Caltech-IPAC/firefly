@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -13,6 +14,9 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
 import static java.util.Optional.ofNullable;
+
+import redis.clients.jedis.Jedis;
+
 
 /**
  * Date: 9/29/21
@@ -57,11 +61,20 @@ public interface Job extends Callable<String> {
 
     default String call() {
 
+        String jobId = getJobId();
+
         sendJobStatus(ji -> {
             ji.setPhase(JobInfo.Phase.EXECUTING);
             ji.getMeta().setProgress(10);
             ji.setStartTime(Instant.now());
         });
+
+        try (Jedis redis = RedisService.getConnection()) {
+            redis.sadd("runningJobs", jobId); //add job a new runningJobs redis set
+        } catch (Exception e) {
+            Logger.getLogger().error(e);
+        }
+
         try {
             String results = run();
             updateJobStatus(ji -> ji.setPhase(JobInfo.Phase.COMPLETED));
@@ -79,6 +92,12 @@ public interface Job extends Callable<String> {
                 ji.getMeta().setProgress(100);
             });
             getWorker().onComplete();
+            //cleanup jobs from runningJobs set
+            try (Jedis redis = RedisService.getConnection()) {
+                redis.srem("runningJobs", jobId);
+            } catch (Exception e) {
+                Logger.getLogger().error(e);
+            }
         }
         return null;
     }
