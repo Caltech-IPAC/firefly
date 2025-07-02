@@ -1,8 +1,9 @@
-import React, {useEffect} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {object, string, shape} from 'prop-types';
 import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
 import {isEmpty} from 'lodash';
+import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
 import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
@@ -14,7 +15,7 @@ import Validate from '../../util/Validate';
 import {getRequestFromJob} from '../../tables/TableRequestUtil';
 import {dispatchTableAddLocal, dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr';
 import {showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil';
-import {updateSet} from '../../util/WebUtil';
+import {isDefined, updateSet} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
 import {isJobInfoOpen, showJobInfo} from './JobInfo';
 import {dispatchHideDropDown, dispatchShowDropDown} from '../LayoutCntlr';
@@ -292,13 +293,14 @@ function NotifBtn ({jobId, enable}) {
 
 
 function Results({job}) {
+    const appProps = useContext(AppPropertiesCtx);
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
         const request = getRequestFromJob(job?.meta?.jobId);  // the request is initiated from Firefly
         const submitTo = request?.META_INFO?.form_submitTo;
         const onClick = showResults(request, submitTo);
         const icon = <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
-        if (submitTo) {
+        if (isDefined(appProps.getRouter) && submitTo) {
             return (
                 <FormWatcher submitTo={submitTo}>
                     {icon}
