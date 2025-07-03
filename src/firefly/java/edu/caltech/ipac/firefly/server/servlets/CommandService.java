@@ -74,7 +74,7 @@ public class CommandService extends BaseHttpServlet {
                 var ui= sso.getUserInfo();
                 if (ui!=null) userInfoStr= ui.toString();
             }
-            Logger.briefInfo(String.format("CommandService: %s (%s): %dms", cmd, userInfoStr, System.currentTimeMillis() - start));
+            Logger.debug(String.format("CommandService: %s (%s): %dms", cmd, userInfoStr, System.currentTimeMillis() - start));
         } catch (Exception ex) {
             LOGGER.error(ex);
             HashMap<String, String> errors = new HashMap<>();

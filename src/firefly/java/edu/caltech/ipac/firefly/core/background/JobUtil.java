@@ -13,6 +13,8 @@ import org.w3c.dom.Document;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,14 +24,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.COMPLETED;
-import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ERROR;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getAllUserJobs;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
-import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.*;
-import static edu.caltech.ipac.util.StringUtils.*;
-import static edu.caltech.ipac.firefly.core.Util.Try;
+import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.convertToJobList;
+import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.getUwsJobInfo;
+import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.parse;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.getInt;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 public class JobUtil {
     // Services are defined as strings with three fields (url|serviceId|serviceType), separated by commas. Only url is required; the others are optional.
@@ -97,18 +102,22 @@ public class JobUtil {
         String url = svcParts[0].trim();
         String svcId = svcParts.length > 1 ? svcParts[1].trim() : null;
         String svcType = svcParts.length > 2 ? svcParts[2].trim() : null;
-
         if (url.isEmpty()) return count;
 
-        LOG.debug("Importing job histories from %s; svcId=%s svcType=%s".formatted(url, svcId, svcType));
+        URL urlObs= Try.it(() -> new URI(url).toURL()).getOrElse((URL)null);
+        String paramStr= urlObs == null ? "" : urlObs.getQuery();
+        String urlBase= (!isEmpty(paramStr) && url.contains("?"))  ? url.split("\\?")[0] : url;
+
         List<JobInfo> history = getAllUserJobs();
 
-        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        HttpServiceInput input = HttpServiceInput.createWithCredential(urlBase);
+        if (!isEmpty(paramStr)) input.setRequestUrl(input.getRequestUrl()+"?"+paramStr);
+        LOG.info("Importing job histories from %s; svcId=%s svcType=%s".formatted(input.getRequestUrl(), svcId, svcType));
         Ref<List<JobInfo>> jobList = new Ref<>();
         HttpServices.getData(input, r -> {
            Try.it(() -> {
                 Document doc = parse(r.getResponseBodyAsStream());
-                jobList.set(convertToJobList(doc, url));
+                jobList.set(convertToJobList(doc, urlBase));
             }).getOrElse(e -> {
                 LOG.error("Failed to import job histories from %s: %s".formatted(url, e.getMessage()));
             });

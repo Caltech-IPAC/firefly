@@ -265,7 +265,7 @@ public class RequestOwner implements Cloneable {
             action.setValue(getSsoAdapter().getLoginUrl(""), "login_url");
             action.setValue(getSsoAdapter().getLogoutUrl(""), "logout_url");
         }
-        LOG.info("notifyClient new User info: " + userInfo);
+        LOG.debug("notifyClient new User info: " + userInfo);
         ServerEventManager.fireAction(action);
     }
 
