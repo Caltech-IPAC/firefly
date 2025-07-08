@@ -6,7 +6,7 @@ import {MetaConst} from '../data/MetaConst';
 import {isDefined} from '../util/WebUtil';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point';
 import {
-    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, getSearchTarget,
+    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion,
     isDatalinkTable, isObsCoreLike,
 } from './TableAnalysis';
 import {
@@ -97,7 +97,7 @@ function getSDDescription(table, ID) {
     const descriptionCol = getColumnIdx(table, 'description');
     if (descriptionCol === -1 || serviceDefCol === -1) return;
     if (table.totalRows > 50) return;
-    const sdRow = table.tableData.data.find((dAry) => dAry[serviceDefCol] === ID);
+    const sdRow = table?.tableData?.data?.find((dAry) => dAry[serviceDefCol] === ID);
     if (!sdRow) return;
     return sdRow[descriptionCol];
 }
