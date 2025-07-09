@@ -82,8 +82,7 @@ public class DownloadScriptTest {
         assertTrue("Mkdir should be present", lines.stream().anyMatch(line -> line.contains("mkdir ")));
         assertTrue("Unzip command should be present", lines.stream().anyMatch(line -> line.contains("unzip -qq")));
     }
-
-    @Ignore("Need to update test to match new script format")
+    
     @Test
     public void wgetUnzip() throws Exception {
         List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(

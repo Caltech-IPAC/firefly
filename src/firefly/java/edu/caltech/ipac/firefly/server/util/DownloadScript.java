@@ -176,6 +176,8 @@ static final String funcTmpl = """
       # move file to main directory and cleanup
       mv "$downloadedFile" "$destPath"
       echo ">> Saved as $destPath"
+      
+      [zip-logic-added-here]
 
       cd "$startDir"
       rm -rf "$tmpDir"

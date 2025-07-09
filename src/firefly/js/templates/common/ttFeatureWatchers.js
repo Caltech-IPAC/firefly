@@ -200,7 +200,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                                 viewerId,
                                 DataSource: dataSource,
                                 help_id:'table.obsCorePackage',
-                                BaseFileName: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
+                                Title: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
                             }}}>
                             {!isDatalink && <Stack spacing={1}>
                                 <CheckboxGroupInputField
