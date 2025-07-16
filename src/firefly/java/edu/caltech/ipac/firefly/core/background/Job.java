@@ -64,7 +64,10 @@ public interface Job extends Callable<String> {
         });
         try {
             String results = run();
-            updateJobStatus(ji -> ji.setPhase(JobInfo.Phase.COMPLETED));
+            updateJobStatus(ji -> {
+                ji.setPhase(JobInfo.Phase.COMPLETED);
+                ji.getMeta().setProgress(100, "");
+            });
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {
             updateJobStatus(ji -> ji.setPhase(JobInfo.Phase.ABORTED));

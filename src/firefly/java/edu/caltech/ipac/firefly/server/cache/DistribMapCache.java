@@ -3,9 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server.cache;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Like {@link DistributedCache} but specifically designed for managing Redis Maps.
@@ -24,13 +29,30 @@ public class DistribMapCache<T> extends DistributedCache<T> {
     }
 
     public DistribMapCache(String mapKey, long ttl) {
-        this(mapKey, ttl, new JavaSerializer());
+        this(mapKey, ttl, new DefaultImpl<>());
     }
 
-    public DistribMapCache(String mapKey, long ttl, Serializer serializer) {
+    public DistribMapCache(String mapKey, long ttl, Serializer<T> serializer) {
         super(serializer);
         this.mapKey = mapKey;
         this.ttl = ttl;
+    }
+
+    public List<T> getValuesFor(ScanParams scanParams) {
+        List<T> result = new ArrayList<>();
+        try (Jedis jedis = RedisService.getConnection()) {
+            String cursor = ScanParams.SCAN_POINTER_START;
+            do {
+                ScanResult<Map.Entry<String, String>> scanResult = jedis.hscan(mapKey, cursor, scanParams);
+                for (Map.Entry<String, String> entry : scanResult.getResult()) {
+                    result.add(deserialize(entry.getValue()));
+                }
+                cursor = scanResult.getCursor();
+            } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return result;
     }
 
 //====================================================================
@@ -69,5 +91,6 @@ public class DistribMapCache<T> extends DistributedCache<T> {
     int size(Jedis redis) {
         return (int) redis.hlen(mapKey);
     }
+
 }
 
