@@ -367,7 +367,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                             break;
                         }
                     }
-                    String resolvedValue = (String) dgDataUrl.get(idx, key);
+                    String resolvedValue = Objects.toString(dgDataUrl.get(idx, key), null);
                     if (resolvedValue != null && !resolvedValue.isEmpty()) {
                         if (serDescUrl.partialUrl.endsWith("?"))
                             finalUrl.append(missing.paramName).append("=").append(resolvedValue);
@@ -644,6 +644,9 @@ public class ObsCorePackager extends FileGroupsProcessor {
             e.printStackTrace();
         }
 
-        return new ServDescUrl(accessUrl + "?" + queryString.toString(), missingParams);
+        String separator = Objects.requireNonNull(accessUrl, "accessUrl cannot be null")
+                .endsWith("?") ? "" : "?";
+        return new ServDescUrl(accessUrl + separator + queryString.toString(), missingParams);
+
     }
 }
