@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqBy} from 'lodash';
+import {flatten, isArray, isEmpty, uniqBy} from 'lodash';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {getCenterPtOfPlot} from '../WebPlotAnalysis';
 import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';
@@ -130,11 +130,12 @@ function getRequestFromResult(result) {
 }
 
 
-async function setRelatedDataItem(pc, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel) {
+async function setRelatedDataItem(pc, band, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel) {
     try {
         const wlTable= await doFetchTable(searchParams);
         if (wlTable) {
             pc.relatedData.push({
+                band,
                 dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, dataKey:dataKey+'-resolved',
                 table:wlTable, hduIdx, hduName, hduVersion, hduLevel
             });
@@ -143,20 +144,29 @@ async function setRelatedDataItem(pc, searchParams, dataKey, hduIdx, hduName, hd
     catch (e) {
         console.log(`failed: related data: hdu: ${hduIdx}, hdu name: ${hduName}, used for: ${dataKey} --- server error: ${e.toString()}`);
     }
-
 }
+
+function findRelatedDataToRetrieve(pc) {
+    const relatedData= pc.relatedData;
+    if (!relatedData) return [];
+    const tTypeAry= relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
+    if (!tTypeAry?.length) return [];
+    const promiseAry= [];
+    tTypeAry.forEach( async ({searchParams, band, dataKey, hduIdx, hduName, hduVersion, hduLevel}) => {
+        const p= setRelatedDataItem(pc, band, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel);
+        promiseAry.push(p);
+    });
+    return promiseAry;
+}
+
 
 function getRelatedData(successAry) {
     const promiseAry= [Promise.resolve()];
     successAry.forEach( (s) => s.PlotCreate
         .forEach( (pc) => {
-            const tTypeAry= pc.relatedData && pc.relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
-            if (tTypeAry?.length) {
-                tTypeAry.forEach( async ({searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel}) => {
-                    const p= setRelatedDataItem(pc, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel);
-                    promiseAry.push(p);
-                });
-            }
+            if (isEmpty(pc.relatedData)) return;
+            const resultPAry= findRelatedDataToRetrieve(pc);
+            promiseAry.push(...resultPAry);
         }));
     return Promise.all(promiseAry);
 }

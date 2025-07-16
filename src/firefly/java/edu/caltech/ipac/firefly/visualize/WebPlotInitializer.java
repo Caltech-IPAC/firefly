@@ -8,13 +8,10 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import nom.tam.fits.Header;
 
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Trey Roby
- * Date: Sep 11, 2009
- */
 public record WebPlotInitializer(PlotState plotState, CoordinateSys imageCoordSys,
                                  Header[] headerAry, Header[] zeroHeaderAry, int dataWidth,
                                  int dataHeight, WebFitsData[] fitsData,
-                                 String desc, String dataDesc, List<RelatedData> relatedData) { }
+                                 String desc, String dataDesc, Map<Band,List<RelatedData>> relatedDataMap) { }
 

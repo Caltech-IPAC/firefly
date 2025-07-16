@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder.MultiImageAction;
@@ -188,7 +187,7 @@ public class WebPlotFactory {
 
 
         var desc= PlotServUtils.makePlotDesc(state,pInfo.fitsReadGroup(),pInfo.dataDesc(),state.isMultiImageFile());
-        List<RelatedData> rdList= pInfo.relatedData();
+        var relatedDataMap= pInfo.relatedDataMap();
         int noBandIdx= NO_BAND.getIdx();
         if (!state.isThreeColor()) {
             if (frAry[noBandIdx].isCube()) {
@@ -196,7 +195,7 @@ public class WebPlotFactory {
                 state.setCubePlaneNumber(cubePlane,NO_BAND);
                 if (cubePlane>0) {  // have a cube
                     headerAry = null;
-                    rdList = null;
+                    relatedDataMap = null;
                     dataWidth = -1;
                     dataHeight = -1;
                     imageCoordSys = null;
@@ -230,7 +229,7 @@ public class WebPlotFactory {
                                       wfDataAry,
                                       desc,
                                       clearRedundantHeaderData ? null : pInfo.dataDesc(),
-                                      rdList);
+                                      relatedDataMap);
     }
 
 

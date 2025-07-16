@@ -48,6 +48,12 @@ export const MR_HEALPIX_PIXEL= 'healpixPixel';
 export const MR_HEALPIX_NORDER='healpixNorder';
 export const MR_WL= 'wl';
 export const MR_BAND_WIDTH= 'bandWidth';
+export const MR_WL_RED= 'wlRED';
+export const MR_BAND_WIDTH_RED= 'bandWidthRED';
+export const MR_WL_GREEN= 'wlGREEN';
+export const MR_BAND_WIDTH_GREEN= 'bandWidthGREEN';
+export const MR_WL_BLUE= 'wlBLUE';
+export const MR_BAND_WIDTH_BLUE= 'bandWidthBLUE';
 
 export const MR_FIELD_IMAGE_MOUSE_READOUT1= 'imageMouseReadout1';
 export const MR_FIELD_IMAGE_MOUSE_READOUT2= 'imageMouseReadout2';
@@ -165,5 +171,11 @@ const initState= () =>
             floatFluxValueRadix: '10',
             wl: MR_WL,
             bandWidth: MR_BAND_WIDTH,
+            wlRED: MR_WL_RED,
+            bandWidthRED: MR_BAND_WIDTH_RED,
+            wlGREEN: MR_WL_GREEN,
+            bandWidthGREEN: MR_BAND_WIDTH_GREEN,
+            wlBLUE: MR_WL_BLUE,
+            bandWidthBLUE: MR_BAND_WIDTH_BLUE,
         }
     });

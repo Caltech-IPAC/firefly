@@ -16,6 +16,7 @@ import {getActivePlotView, getPlotViewById, primePlot} from 'firefly/visualize/P
 import {getFluxInfo, getFluxRadix, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
 import {isImage} from 'firefly/visualize/WebPlot.js';
+import {Band} from '../Band';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 
 export const MOUSE_READOUT_DIALOG_ID= 'MouseReadoutPopoutAll';
@@ -75,17 +76,24 @@ const rS = { width: '23rem', position: 'relative', p: .5};
 
 
 function Readout({readout, readoutData, showHealpixPixel=false, radix}){
-    const {threeColor, readoutType}= readoutData;
+    const {threeColor, readoutType, plotId}= readoutData;
+    if (!readoutData?.readoutItems) return <Box style={rS}/>;
+    
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
+    const {plotState}= primePlot(visRoot(),plotId) ?? {};
+    const redUsed= threeColor && image && plotState.isBandUsed(Band.RED);
+    const greenUsed= threeColor && image && plotState.isBandUsed(Band.GREEN);
+    const blueUsed= threeColor && image && plotState.isBandUsed(Band.BLUE);
 
-    if (!readoutData?.readoutItems) return <Box style={rS}/>;
     const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, isHiPS);
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(readoutData, radix);
     const hipsPixel= showHealpixPixel && isHiPS;
     const showCopy= readout.lockByClick;
-    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength, bandWidth}= displayEle;
+    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed,
+        waveLength, bandWidth,
+        waveLengthRED, bandWidthRED, waveLengthGREEN, bandWidthGREEN, waveLengthBLUE, bandWidthBLUE}= displayEle;
 
     return (
         <Box sx={{
@@ -95,13 +103,8 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
             gridTemplateColumns: '6em 14px auto',
             gridTemplateRows: `2em 1.4em 1.4em 1.4em 1.4em${threeColor ? ' 1.4em 1.4em' : ''}`,
             alignItems: 'center',
-            gridTemplateAreas: `". . lock"
-                                "pixSizeLabel . pixSizeValue"
-                                "pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"
-                                "pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"
-                                "redLabel . redValue"
-                                "greenLabel . greenValue"
-                                " blueLabel . blueValue"`,
+            gridTemplateAreas: getGridTemplate(threeColor,isHiPS,waveLength,bandWidth,
+                waveLengthRED,waveLengthGREEN,waveLengthBLUE),
             ...rS
         }}>
             <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
@@ -118,32 +121,115 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
                                            label={healpixPixelReadout.label} value={healpixPixelReadout.value}/> }
             {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'greenLabel'}} valueStyle={{gridArea:'greenValue'}}
                                            label={healpixNorderReadout.label} value={healpixNorderReadout.value}/> }
-            {!isHiPS && <DataReadoutItem lArea='redLabel' vArea='redValue'
+            {image && !threeColor && <DataReadoutItem lArea='redLabel' vArea='redValue'
                                          monoFont={radix===16}
                                          prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                          label={fluxArray[0].label||'Value:'}
                                          unit={fluxArray[0].unit??''}
                                          value={fluxArray[0].value}/>}
+            {redUsed && <DataReadoutItem lArea='redLabel' vArea='redValue'
+                                                        monoFont={radix===16} labelColor='red'
+                                                        prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
+                                                        label={fluxArray[0].label||'Value:'}
+                                                        unit={fluxArray[0].unit??''}
+                                                        value={fluxArray[0].value}/>}
             {!threeColor && waveLength && image &&
                 <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {!threeColor && bandWidth && image &&
                 <DataReadoutItem lArea='blueLabel' vArea='blueValue' label={bandWidth.label} value={bandWidth.value}
                                  prefChangeFunc={showWavelengthFailed} /> }
-            {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
-                                            monoFont={radix===16}
+            {greenUsed && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
+                                            monoFont={radix===16} labelColor='green'
                                             prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                             label={fluxArray[1].label}
                                             unit={fluxArray[1].unit??''}
                                             value={fluxArray[1].value}/> }
-            {threeColor && <DataReadoutItem lArea='blueLabel' vArea='blueValue'
-                                            monoFont={radix===16}
+            {blueUsed && <DataReadoutItem lArea='blueLabel' vArea='blueValue'
+                                            monoFont={radix===16} labelColor='blue'
                                             prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                             label={fluxArray[2].label}
                                             unit={fluxArray[2].unit??''}
                                             value={fluxArray[2].value}/> }
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
+            {redUsed && waveLengthRED &&
+                <DataReadoutItem lArea='wlRedLabel' vArea='wlRedValue' labelColor='red'
+                                 label={waveLengthRED.label}
+                                 unit={waveLengthRED.unit??''}
+                                 value={waveLengthRED.value}/>
+            }
+            {greenUsed && waveLengthGREEN &&
+                <DataReadoutItem lArea='wlGreenLabel' vArea='wlGreenValue' labelColor='green'
+                                 label={waveLengthGREEN.label}
+                                 unit={waveLengthGREEN.unit??''}
+                                 value={waveLengthGREEN.value}/>
+            }
+            {blueUsed && waveLengthBLUE &&
+                <DataReadoutItem lArea='wlBlueLabel' vArea='wlBlueValue' labelColor='blue'
+                                 label={waveLengthBLUE.label}
+                                 unit={waveLengthBLUE.unit??''}
+                                 value={waveLengthBLUE.value}/>
+            }
+            {redUsed && bandWidthRED &&
+                <DataReadoutItem lArea='bwRedLabel' vArea='bwRedValue' labelColor='red'
+                                 label={bandWidthRED.label}
+                                 unit={bandWidthRED.unit??''}
+                                 value={bandWidthRED.value}/>
+            }
+            {greenUsed && bandWidthGREEN &&
+                <DataReadoutItem lArea='bwGreenLabel' vArea='bwGreenValue' labelColor='green'
+                                 label={bandWidthGREEN.label}
+                                 unit={bandWidthGREEN.unit??''}
+                                 value={bandWidthGREEN.value}/>
+            }
+            {blueUsed && bandWidthBLUE &&
+                <DataReadoutItem lArea='bwBlueLabel' vArea='bwBlueValue' labelColor='blue'
+                                 label={bandWidthBLUE.label}
+                                 unit={bandWidthBLUE.unit??''}
+                                 value={bandWidthBLUE.value}/>
+            }
         </Box>
     );
 }
 
+function getGridTemplate(threeColor,isHiPS, waveLength, bandWidth, waveLengthRED, waveLengthGREEN, waveLengthBLUE) {
+    const resultAry= ['". . lock"',
+        '"pixSizeLabel . pixSizeValue"',
+        '"pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"',
+        '"pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"',
+        '"redLabel . redValue"',
+    ];
+    const green= [ '"greenLabel . greenValue"'];
+    const blue= [ '"blueLabel . blueValue"'];
+
+    const wlRed= [
+        '"wlRedLabel . wlRedValue"',
+        '"bwRedLabel . bwRedValue"',
+    ];
+    const wlGreen= [
+        '"wlGreenLabel . wlGreenValue"',
+        '"bwGreenLabel . bwGreenValue"',
+    ];
+    const wlBlue= [
+        '"wlBlueLabel . wlBlueValue"',
+        '"bwBlueLabel . bwBlueValue"',
+    ];
+
+    if (isHiPS) {
+        resultAry.push(...green);
+    }
+    else if (threeColor) {
+        if (waveLengthRED) resultAry.push(...wlRed);
+        resultAry.push(...green);
+        if (waveLengthGREEN) resultAry.push(...wlGreen);
+        resultAry.push(...blue);
+        if (waveLengthBLUE) resultAry.push(...wlBlue);
+    }
+    else {
+        if (waveLength || bandWidth) {
+            resultAry.push(...green);
+            resultAry.push(...blue);
+        }
+    }
+    return resultAry.join('\n');
+}

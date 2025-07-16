@@ -10,7 +10,8 @@ import {
     MR_FIELD_IMAGE_MOUSE_READOUT2, MR_FITS_IP, MR_WL, MR_ZERO_IP,
     MR_GALACTIC, MR_HEALPIX_NORDER, MR_HEALPIX_PIXEL, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_WCS_COORDS,
     STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT,
-    MR_BAND_WIDTH, EQ_TYPE
+    MR_BAND_WIDTH, EQ_TYPE, MR_WL_RED, MR_WL_GREEN, MR_WL_BLUE, MR_BAND_WIDTH_GREEN, MR_BAND_WIDTH_RED,
+    MR_BAND_WIDTH_BLUE
 } from '../MouseReadoutCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {convertCelestial} from '../VisUtil';
@@ -43,7 +44,13 @@ const labelMap = {
     [MR_HEALPIX_PIXEL]: 'Pixel: ',
     [MR_HEALPIX_NORDER]: 'Norder: ',
     [MR_WL]: 'Wavelength: ',
-    [MR_BAND_WIDTH]: 'Band Width: ',
+    [MR_WL_RED]: 'R Wavelength: ',
+    [MR_WL_GREEN]: 'G Wavelength: ',
+    [MR_WL_BLUE]: 'B Wavelength: ',
+    [MR_BAND_WIDTH]: 'bandwidth: ',
+    [MR_BAND_WIDTH_RED]: 'R bandwidth: ',
+    [MR_BAND_WIDTH_GREEN]: 'G bandwidth: ',
+    [MR_BAND_WIDTH_BLUE]: 'B bandwidth: ',
 };
 
 const coordOpTitle= 'Choose readout coordinates';
@@ -67,7 +74,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
     const objList= getNonFluxReadoutElements(readoutData,  readoutPref, isHiPS);
 
     const {imageMouseReadout1, imageMouseReadout2, imageMouseNoncelestialReadout1, imageMouseNoncelestialReadout2,
-        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl, bandWidth} = objList;
+        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl, bandWidth,
+        wlRED, bandWidthRED, wlGREEN, bandWidthGREEN, wlBLUE, bandWidthBLUE} = objList;
 
 
     let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength, bandWidthField= undefined;
@@ -112,22 +120,30 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
             showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout2', readoutPref.imageMouseNoncelestialReadout2, undefined, coordOpTitle, wcsCoordOptionTitle);
         }
 
-
-        if (wl?.value) {
-            waveLength= {...wl, label:labelMap[MR_WL]};
-            showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
-        }
-        if (bandWidth?.value) {
-            bandWidthField= {...bandWidth, label:labelMap[MR_BAND_WIDTH]};
-        }
     }
 
-    return {
-        readout1, readout2, waveLength, bandWidth:bandWidthField, showWavelengthFailed,
+    const retval= {
+        readout1, readout2,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {...pixelSize, label: labelMap[readoutPref.pixelSize]},
         showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize, undefined, 'Choose pixel size'),
     };
+
+    if (!isHiPS && wl?.value) {
+        retval.waveLength= {...wl, label:labelMap[MR_WL]};
+        retval.showWavelengthFailed= readoutData.readoutItems.wl.failReason ? () => showInfoPopup(readoutData.readoutItems.wl.failReason) : undefined;
+        if (wlRED) retval.waveLengthRED= {...wlRED, label:labelMap[MR_WL_RED]};
+        if (wlGREEN) retval.waveLengthGREEN= {...wlGREEN, label:labelMap[MR_WL_GREEN]};
+        if (wlBLUE) retval.waveLengthBLUE= {...wlBLUE, label:labelMap[MR_WL_BLUE]};
+    }
+    if (!isHiPS && bandWidth?.value) {
+        retval.bandWidth= {...bandWidth, label:labelMap[MR_BAND_WIDTH]};
+        if (bandWidthRED) retval.bandWidthRED= {...bandWidthRED, label:labelMap[MR_BAND_WIDTH_RED]};
+        if (bandWidthGREEN) retval.bandWidthGREEN= {...bandWidthGREEN, label:labelMap[MR_BAND_WIDTH_GREEN]};
+        if (bandWidthBLUE) retval.bandWidthBLUE= {...bandWidthBLUE, label:labelMap[MR_BAND_WIDTH_BLUE]};
+    }
+
+    return retval;
 }
 
 
@@ -200,17 +216,20 @@ export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
             const {healpixNorder}= readoutItems;
             return {value: (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : ''};
         case MR_WL:
-            const {wl}= readoutItems;
-            if (!wl) return {value:undefined};
-            return {value:makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit))};
+        case MR_WL_RED:
+        case MR_WL_GREEN:
+        case MR_WL_BLUE:
         case MR_BAND_WIDTH:
-            const {bandWidth}= readoutItems;
-            if (!bandWidth) return {value:undefined};
-            return {value:makeWLReturn(bandWidth.value, getFormattedWaveLengthUnits(bandWidth.unit))};
+        case MR_BAND_WIDTH_RED:
+        case MR_BAND_WIDTH_GREEN:
+        case MR_BAND_WIDTH_BLUE:
+            return makeWlEntry(readoutItems[readoutKey]);
     }
 
     return {value:''};
 }
+
+const makeWlEntry= (obj) => obj ? {value:makeWLReturn(obj.value, getFormattedWaveLengthUnits(obj.unit))} : {};
 
 /**
  * Label for non-celestial coordinates readout item.
@@ -249,7 +268,9 @@ function getFluxValueByType(readoutType,radix,valueBase10,valueBase16,unit,label
     }
 }
 
-function makeFluxEntry({valueBase10, valueBase16, readoutType,status,unit='',title:label,precision=6},radix=10) {
+function makeFluxEntry(obj,radix=10) {
+    if (!obj) return {value: '', label: '', unit:''};
+    const {valueBase10, valueBase16, readoutType,status,unit='',title:label,precision=6}= obj;
     const is16= radix===16;
     switch (status) {
         case STATUS_UNAVAILABLE: return {value: 'unavailable', label, unit:''};
@@ -273,9 +294,9 @@ export function getFluxInfo(sndReadout, radix=10){
     const fluxObj = [];
     const {REDFlux, GREENFlux, BLUEFlux, nobandFlux}= sndReadout.readoutItems;
     if (sndReadout.threeColor){
-        REDFlux && fluxObj.push(REDFlux);
-        GREENFlux && fluxObj.push(GREENFlux);
-        BLUEFlux && fluxObj.push(BLUEFlux);
+        fluxObj.push(REDFlux);
+        fluxObj.push(GREENFlux);
+        fluxObj.push(BLUEFlux);
     }
     else if (nobandFlux){
         fluxObj.push(nobandFlux);

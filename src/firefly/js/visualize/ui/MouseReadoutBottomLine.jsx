@@ -25,7 +25,6 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
         setHaveDivRef(Boolean(divref.element));
     }, [divref?.element,haveDivRef]);
 
-
     const width= divref?.element?.getBoundingClientRect()?.width ?? 200;
 
     const {readoutType}= readoutData;
@@ -77,9 +76,12 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     const fluxLabel= threeColor ? label3C : labelStand;
     const fluxValue= threeColor ? value3C : valueStand;
-    const fluxWidth= threeColor ? '9.5rem' : '8rem';
+    const fluxWidth= threeColor ? '14rem' : '8rem';
 
-    let wlStr= doWL ? `${wlValue}${bwValue?' / ':''}${bwValue||''}` : '';
+    let wlStr= '';
+    if (doWL) {
+        wlStr= threeColor ? 'use popout' : `${wlValue}${bwValue?' / ':''}${bwValue||''}`;
+    }
 
     return (
         <Stack {...{direction:'row', sx, ref: (c) => divref.element=c}}>
@@ -188,5 +190,12 @@ function get3CLabel(fluxArray) {
         if (!rgbChar) return prev;
         return prev ? `${prev}, ${rgbChar}` : rgbChar;
     }, '');
-    return label? label+':' : '';
+    if (label) return label+':';
+    const altLabel=  fluxArray.reduce( (prev,f) => {
+        if (!f?.label) return prev;
+        const rgbChar= getWhichRGBChar(f.label);
+        if (!rgbChar) return prev;
+        return prev ? `${prev}, ${rgbChar}` : rgbChar;
+    }, '');
+    return altLabel? altLabel+':' : 'r,g,b:';
 }

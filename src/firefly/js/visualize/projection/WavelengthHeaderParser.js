@@ -28,11 +28,12 @@ const logger = Logger('SpectralCoord');
  * @param {String} altWcs
  * @param {FitsHeader} zeroHeader
  * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
+ * @param {boolean} reprojectedWcs
  * @return {SpectralWCSData|undefined}
  */
-export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
+export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTableRelatedAry, reprojectedWcs=false) {
     try {
-        return doParse(header, altWcs, zeroHeader, wlTableRelatedAry);
+        return doParse(header, altWcs, zeroHeader, wlTableRelatedAry, reprojectedWcs);
     } catch (e) {
         logger.error(`Exception parsing wavelength header: ${e?.message}`);
         logger.error(e.stack);
@@ -45,9 +46,10 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
  * @param {String} altWcs
  * @param {FitsHeader} zeroHeader
  * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
+ * @param {boolean} reprojectedWcs
  * @return {SpectralWCSData|undefined}
  */
-function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
+function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry, reprojectedWcs) {
     const parse = makeDoubleHeaderParse(header, zeroHeader, altWcs);
 
     // identify spectral coordinates and the subset that requires table lookup (-TAB) algorithm
@@ -66,7 +68,7 @@ function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
     iCtypeSupported.forEach((which) => {
         const {ctype, cname, units, crpix, crval, cdelt} = getCoreSpectralHeaders(parse, altWcs, which);
 
-        const mijMatrixKeyRoot = getPC_ijKey(parse, which);
+        const mijMatrixKeyRoot = getPC_ijKey(parse, which, !reprojectedWcs);
         if (!mijMatrixKeyRoot) {
             failWarnings.push(`${ctype}: both PC i_j and CD i_j are present`);
             return;
@@ -335,15 +337,16 @@ const allGoodValues = (...numbers) => numbers.every((n) => !isNaN(n));
  *
  * @param parser
  * @param which
+ * @param failOnConflict
  * @returns {*}
  */
-function getPC_ijKey(parser, which) {
+function getPC_ijKey(parser, which, failOnConflict= true) {
 
     const hasPC = parser.hasKeyStartWith(`PC${which}_`);
     const hasCD = parser.hasKeyStartWith(`CD${which}_`);
 
     if (hasPC && hasCD) {
-        return undefined;
+        return (failOnConflict) ? undefined : 'PC';
     }
     if (!hasPC && hasCD) {
         return 'CD';
