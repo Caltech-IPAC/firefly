@@ -47,7 +47,7 @@ export function makeAllSearchRequest(request, siaConstraints, primeSd, concurren
     const concurrentRequestAry= concurrentSDAry
         .map( (sd) => {
             const newR= convertRequestToSecondary(request, primaryFdAry?.[0], sd.serviceDef, primeSd.standardID);
-            return newR ? makeServiceDescriptorSearchRequest(newR,sd.serviceDef) : undefined;
+            return newR ? makeServiceDescriptorSearchRequest(newR,undefined,sd.serviceDef) : undefined;
         })
         .filter( (r) => r);
 
