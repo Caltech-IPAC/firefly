@@ -8,7 +8,7 @@ import {
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import {debounce, isFunction} from 'lodash';
-import React, {forwardRef, memo, useCallback, useContext, useEffect, useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {
     COMMAND, dispatchAddPreference, dispatchSetMenu, getAppOptions,
@@ -351,7 +351,7 @@ function AppHelpButton({menuItem,sx,size='lg'}) {
 }
 
 
-const UserInfo= memo(() => {
+const UserInfo= () => {
     const userInfo = useStoreConnector(() => getUserInfo() ?? {});
 
     const {loginName='Guest', firstName='', lastName='', login_url, logout_url} = userInfo;
@@ -376,7 +376,7 @@ const UserInfo= memo(() => {
             {isGuest && <Chip onClick={onLogin}>Login</Chip>}
         </Stack>
     );
-});
+};
 
 
 
