@@ -272,8 +272,11 @@ public class VisJsonSerializer {
         if (relatedDataMap==null || relatedDataMap.isEmpty()) return null;
         JSONArray relatedArray= new JSONArray();
         for(var entry : relatedDataMap.entrySet()) {
-            for(RelatedData r : entry.getValue()) {
-                addJsonObj(relatedArray,serializeRelated(r,entry.getKey()));
+            var list= entry.getValue();
+            if (list!=null) {
+                for(RelatedData r : list) {
+                    addJsonObj(relatedArray,serializeRelated(r,entry.getKey()));
+                }
             }
         }
         return relatedArray;
