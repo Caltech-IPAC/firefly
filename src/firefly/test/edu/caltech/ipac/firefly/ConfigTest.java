@@ -130,7 +130,7 @@ public class ConfigTest {
 
         requestAgent = requestAgent == null ? new RequestAgent(null, "localhost", "/test", "localhost:8080/", "127.0. 0.1", UUID.randomUUID().toString(), contextPath): requestAgent;
 
-        ServerContext.getRequestOwner().setRequestAgent(requestAgent);
+        ServerContext.getRequestOwner().init(requestAgent);
         ServerContext.init(contextPath, contextName, webappConfigPath);
     }
 

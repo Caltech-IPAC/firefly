@@ -41,11 +41,8 @@ public class CommonFilter implements Filter {
     public void destroy() {}
 
     public static void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
-
-        RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
-        owner.setRequestAgent(ServerContext.getHttpRequestAgent(request, response));
-        owner.getUserKey();
-
+        // Initialize the RequestOwner for the current request.
+        ServerContext.getRequestOwner().init(ServerContext.getHttpRequestAgent(request, response));
     }
 
 }
