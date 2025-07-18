@@ -138,8 +138,11 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     updateJob(ji -> ji.setPhase(Phase.SUSPENDED));
                     throw new DataAccessException("Job temporarily paused by the system");
                 } else if (phase == Phase.ERROR) {
-                    updateJob(ji -> ji.setError(uwsJob.getError()));
-                    throw new DataAccessException("Job has failed; detailed error information may be available");
+                    JobInfo.Error error = uwsJob.getError() != null
+                            ? uwsJob.getError() // error is a part of the job resource
+                            : getError(jobUrl); // error resource maybe present at /error endpoint of the job
+                    updateJob(ji -> ji.setError(error));
+                    throw new DataAccessException("Job has failed with the error: " + error.msg());
                 } else if (phase == Phase.UNKNOWN) {
                     updateJob(ji -> ji.setError(new JobInfo.Error(500, "Unknown phase")));
                     throw new DataAccessException("The job is in an unknown state");
@@ -176,14 +179,12 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         final Ref<String> jobUrl = new Ref<>();
         input.setFollowRedirect(false);         // ensure redirect is off, although this is handled by HttpServices already.
         HttpServices.Status status = HttpServices.postData(input, (method) -> {
-            jobUrl.set(HttpServices.getResHeader(method, "Location", null));
+            jobUrl.set(HttpServices.getResHeader(method, "Location", null)); // Location header contains jobUrl
             if (jobUrl.has()) {
                 return HttpServices.Status.ok();
             } else {
-                // Location header contains jobUrl.  Must be an error when there's not a Location header
-                String error = HttpServices.isOk(method) ? parseError(method, input.getRequestUrl())
-                        : String.format("Error submitting job to %s: %s", input.getRequestUrl(), method.getStatusText());
-
+                // No location header because an error occurred in POSTing the job
+                String error = parseError(method, input.getRequestUrl());
                 return new HttpServices.Status(400, error);
             }
         });
@@ -307,7 +308,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    public static String getError(String jobUrl)  {
+    public static JobInfo.Error getError(String jobUrl)  {
         String errorUrl = jobUrl + "/error";
         HttpServices.Status status = HttpServices.getWithAuth(errorUrl, method -> {
             try {
@@ -316,7 +317,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 return new HttpServices.Status(500, "Unexpected exception: " + e.getMessage());
             }
         });
-        return status.getErrMsg();
+        return new JobInfo.Error(status.getStatusCode(), status.getErrMsg());
     }
 
     public long getTimeout(String jobUrl) {

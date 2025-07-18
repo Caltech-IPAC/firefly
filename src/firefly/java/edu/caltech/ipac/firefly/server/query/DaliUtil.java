@@ -121,34 +121,47 @@ public class DaliUtil {
         return new DataAccessException(msg, cause);
     }
 
-    public static String parseError(HttpMethod method, String errorUrl) {
+    /**
+     * Parse the error message from the given HttpMethod. Also takes into account whether the URL is an
+     * error document or not.
+     *
+     * @param method the HttpMethod that contains the error response
+     * @param url    the URL of the request
+     * @return a string containing the parsed error message
+     */
+    public static String parseError(HttpMethod method, String url) {
+        boolean isErrorDoc = HttpServices.isOk(method); // url is an error document
+        String httpErrMsg = isErrorDoc ? "" : String.format("Request to %s failed: %s", url, method.getStatusText());
 
         String errMsg;
-        if (HttpServices.isOk(method)) {
-            String contentType = HttpServices.getResHeader(method, "Content-Type", "");
-            boolean isText = contentType.startsWith("text/plain");
-            try {
-                if (isText) {
-                    // error is text doc
-                    errMsg = HttpServices.getResponseBodyAsString(method);
-                } else {
-                    // error is VOTable doc
-                    InputStream is = HttpServices.getResponseBodyAsStream(method);
-                    try {
-                        String voError = VoTableReader.getError(is, errorUrl);
-                        if (voError == null) {
-                            voError = "Non-compliant error doc " + errorUrl;
-                        }
-                        errMsg = voError;
-                    } finally {
-                        FileUtil.silentClose(is);
-                    }
+        String contentType = HttpServices.getResHeader(method, "Content-Type", "");
+        boolean parseAsText = contentType.startsWith("text/plain") || contentType.startsWith("application/json");
+        try {
+            if (parseAsText) {
+                // error can be parsed as text
+                errMsg = HttpServices.getResponseBodyAsString(method);
+                if (errMsg.length() > 1000) {
+                    errMsg = errMsg.substring(0, 1000) + "...";
                 }
-            } catch (Exception e) {
-                errMsg = String.format("Error retrieving error document from %s: %s", errorUrl, e.getMessage());
+            } else {
+                // error is VOTable doc
+                InputStream is = HttpServices.getResponseBodyAsStream(method);
+                try {
+                    String voError = VoTableReader.getError(is, url);
+                    if (voError == null) {
+                        voError = isErrorDoc
+                                ? "Non-compliant VOTable in error document at " + url
+                                : httpErrMsg; // give generic HTTP error message over the VOTable error
+                    }
+                    errMsg = voError;
+                } finally {
+                    FileUtil.silentClose(is);
+                }
             }
-        } else {
-            errMsg = String.format("Error retrieving error document from %s: %s", errorUrl, method.getStatusText());
+        } catch (Exception e) {
+            errMsg = isErrorDoc
+                    ? String.format("Error retrieving error document from %s: %s", url, e.getMessage())
+                    : httpErrMsg; // give generic HTTP error message over the exception in parsing
         }
         return errMsg;
     }
