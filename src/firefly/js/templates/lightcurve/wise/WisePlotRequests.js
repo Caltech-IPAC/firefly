@@ -57,21 +57,6 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     fluxCol: 'w1mpro_ep',
     dataSource: 'frame_id'
 }) {
-/*
-    const {CENTER_COLUMN} = get(tableModel, ['tableMeta']);
-    const ra_dec = ['ra', 'dec'];
-    const centerColumns = getCenterColumns(tableModel);
-
-
-    if (CENTER_COLUMN) {
-        const s = CENTER_COLUMN.split(';');
-
-        if (s && s.length === 3) {
-            ra_dec[0] = s[0];
-            ra_dec[1] = s[1];
-        }
-    }
- */
     const centerColumns = findTableCenterColumns(tableModel);
     const ra_dec = [get(centerColumns, 'lonCol', 'ra'), get(centerColumns, 'latCol', 'dec')];
 

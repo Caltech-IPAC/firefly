@@ -111,25 +111,46 @@ function makeContent(content) {
     );
 }
 
+/**
+ * show a popup with yes and no buttons
+ * @param content - text or react
+ * @param {Function} clickSelection - callback returns (popupId:string, yes:boolean)
+ * @param {String} title - title on popup
+ * @param {Object} sx - sx style
+ */
 export function showYesNoPopup(content, clickSelection,  title='Information', sx) {
+    showMultiAnswerPopup(content,(id,v) => clickSelection(id,v==='yes'), {yes:'Yes', 'no': 'No'}, title, sx);
+}
+
+/**
+ * show a popup with a set of buttons defined by the answers parameter
+ * @param content - text or react
+ * @param {Function} clickSelection - callback returns (popupId:string, answerId:string)
+ * @param {Object.<answerId:string, buttonText:String>} answers - e.g {hello:'Hello', goodbye:'Goodbye'}
+ * @param {String} title - title on popup
+ * @param {Object} sx - sx style
+ */
+export function showMultiAnswerPopup(content, clickSelection,  answers, title='Information', sx) {
     const results= (
         <PopupPanel title={title} >
-            {makeYesNoContent(content, clickSelection, sx)}
+            { makeMultiAnswerContent(content, clickSelection, answers, sx) }
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
     dispatchShowDialog(INFO_POPUP);
 }
 
-function makeYesNoContent(content, clickSelection, sx) {
+function makeMultiAnswerContent(content, clickSelection, answers, sx) {
     return (
         <Stack direction='column' p={1} spacing={2}>
             <Sheet style={{minWidth:190, maxWidth: 400, p:1, ...sx}}>
                 {content}
             </Sheet>
             <Stack direction='row' spacing={1}>
-                <CompleteButton onSuccess={() => clickSelection(INFO_POPUP, true)} text= 'Yes'/>
-                <CompleteButton onSuccess={() => clickSelection(INFO_POPUP, false)} text= 'No'/>
+                {
+                    Object.entries(answers).map( ([k,v],idx) =>
+                        <CompleteButton key={k} primary={idx===0} onSuccess={() => clickSelection(INFO_POPUP, k)} text= {v}/>)
+                }
             </Stack>
         </Stack>
     );

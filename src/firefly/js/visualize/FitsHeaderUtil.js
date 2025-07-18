@@ -37,6 +37,7 @@ export const HdrConst= {
     DATAMIN  : 'DATAMIN',
     EXTNAME  : 'EXTNAME',
     EXTTYPE  : 'EXTTYPE',
+    NAXIS    : 'NAXIS',
     NAXIS1   : 'NAXIS1',
     NAXIS2   : 'NAXIS2',
     NAXIS3   : 'NAXIS3',

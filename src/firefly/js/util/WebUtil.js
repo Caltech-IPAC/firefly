@@ -826,6 +826,61 @@ export function matches(s, regExp, ignoreCase) {
     return false;
 }
 
+/**
+ * trim a string on one of several ways.
+ * <ul>
+ *  <li>middle - both end are preserver middle has an ellipsis</li>
+ *  <li>bothEnds - middle is preserved both ends have an ellipsis</li>
+ *  <li>complex - middle and ends are preserved with ellipsis between the parts </li>
+ *  <li>startMiddle - start and middle are preserved with ellipsis between the parts </li>
+ *  <li>start - start is preserved ellipsis at end</li>
+ *  <li>end - end is preserved ellipsis at start</li>
+ * </ul>
+ * @param s - the string to trim
+ * @param maxLength - max length of the string
+ * @param trimType - either- 'middle', 'bothEnds', 'complex', 'start', 'end', 'startMiddle', default to 'middle'
+ * @return {string}
+ */
+export function advancedTrim(s='', maxLength=15, trimType='middle') {
+    const len= s?.length ?? 0;
+    const e= '…';
+    if (!s || maxLength < 1 || len<maxLength) return s;
+    if (maxLength===1) return s[0] + '…';
+    const types= ['start', 'end', 'middle','bothends', 'startmiddle', 'complex'];
+    const useTrimType= types.find( (t) => t===trimType.toLowerCase()) ?? 'middle';
+
+    const midpoint = Math.ceil(len / 2);
+    const middleLen = len - maxLength;
+    const startLen = Math.ceil(middleLen / 2);
+    const endLen = middleLen - startLen;
+    const maxLenThird= Math.ceil(maxLength / 3);
+    const maxLenHalf= Math.ceil(maxLength / 2);
+    switch (useTrimType) {
+        case 'start':
+            return s.substring(0,maxLength) + e;
+        case 'end':
+            return e + s.substring(s.length-maxLength,s.length);
+        case 'startmiddle':
+            const start2= s.substring(0,maxLenHalf);
+            const halfHalf= Math.ceil(maxLenHalf/2);
+            const mid2= s.substring(midpoint-halfHalf, midpoint+halfHalf);
+            return `${start2}${e}${mid2}${e}`;
+            return '';
+        case 'bothends':
+            return e + s.substring(midpoint-maxLenHalf, midpoint+maxLenHalf)+ e;
+        case 'complex':
+            const start3= s.substring(0,maxLenThird);
+            const end3= s.substring(s.length-maxLenThird);
+            const halfThird= Math.ceil(maxLenThird/2);
+            const mid3= s.substring(midpoint-halfThird, midpoint+halfThird);
+            return `${start3}${e}${mid3}${e}${end3}`;
+        case 'middle':
+        default:
+            return s.substring(0, midpoint - startLen) + e + s.substring(midpoint + endLen);
+
+    }
+}
+
 export const matchesIgCase= (s, regExp) => matches(s, regExp, true);
 
 export function uuid() {
