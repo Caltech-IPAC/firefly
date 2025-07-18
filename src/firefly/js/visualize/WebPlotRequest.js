@@ -759,6 +759,10 @@ export class WebPlotRequest extends ServerRequest {
     getDownloadFileNameRoot() { return this.getParam(WPConst.DOWNLOAD_FILENAME_ROOT); }
 
     setPlotId(id) { this.setParam(WPConst.PLOT_ID,id); }
+
+    /**
+     * @return {String}
+     */
     getPlotId() { return this.getParam(WPConst.PLOT_ID); }
 
     setPlotGroupId(id) { this.setParam(WPConst.PLOT_GROUP_ID,id); }

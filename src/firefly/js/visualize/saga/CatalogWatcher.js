@@ -14,7 +14,7 @@ import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {
     TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT, TBL_RESULTS_ACTIVE
 } from '../../tables/TablesCntlr.js';
-import {doFetchTable, getMetaEntry} from '../../tables/TableUtil';
+import {doFetchTable, getBooleanMetaEntry, getMetaEntry} from '../../tables/TableUtil';
 import {getTblById} from '../../tables/TableUtil.js';
 import {darker} from '../../util/Color.js';
 import {logger} from '../../util/Logger';
@@ -205,9 +205,12 @@ function updateHpxCatalogDrawingLayer(tbl_id, tableRequest, highlightedRow) {
     const color= coverageDrawLayer?.drawingDef.color;
     const catDL= dispatchCreateDrawLayer(HpxCatalog.TYPE_ID,
         {catalogId, tbl_id, title, highlightedRow, color, layersPanelLayoutId: catalogId});
-    const plotIdAry= visRoot().plotViewAry
-        .filter( (pv) => pv.plotViewCtx.useForSearchResults)
-        .map( (pv) => pv.plotId);
+
+    const plotIdAry=  isTableExclusiveToPlot(table)
+        ? [findPlotViewUsingFitsPathMeta(table)?.plotId]
+        : visRoot().plotViewAry
+            .filter( (pv) => pv.plotViewCtx.useForSearchResults)
+            .map( (pv) => pv.plotId);
     attachToPlot(catalogId,plotIdAry);
 
     const {showCatalogSearchTarget}= getAppOptions();
@@ -288,4 +291,11 @@ export function findPlotViewUsingFitsPathMeta(table) {
     if (!filePath) return;
     const pvAry= getPlotViewAry(visRoot());
     return pvAry.find( (pv) => primePlot(pv)?.plotState.getWorkingFitsFileStr()===filePath);
+}
+export function isTableExclusiveToPlot(table) {
+    const pv= findPlotViewUsingFitsPathMeta(table);
+    if (!pv) return false;
+    return getBooleanMetaEntry(table, MetaConst.EXCLUSIVE_TO_PLOT);
+
+
 }

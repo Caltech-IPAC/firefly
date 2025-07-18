@@ -194,12 +194,7 @@ async function processPlotImageSuccessResponse(dispatcher, payload, result) {
         dispatchPlotProgressUpdate(wpRequest.getPlotId(), 'Loading Images', false,wpRequest.getRequestKey());
     });
 
-    // try {
-        await getRelatedData(successAry);
-    // }
-    // catch (e) {
-    //    console.log('related data failed'+ e) ;
-    // }
+    await getRelatedData(successAry);
     successAry.forEach( (r) => {
         onViewDimDefined(getRequestFromResult(r)?.getPlotId())
             .then(() => processSuccessResult(dispatcher, payload, [r]));
@@ -295,7 +290,7 @@ function createPlots(plotCreate, plotCreateHeader, payload, requestKey) {
     const attributes= {...initAttributes,  ...request0.getAttributes()};
     let title;
     const plotAry= plotCreate.map((wpInit,idx) => {
-        const plot= WebPlot.makeWebPlotData(plotId, viewDim, wpInit, attributes,false, cubeCtxAry[idx],request0,rv0);
+        const plot= WebPlot.makeWebPlotData({plotId, viewDim, wpInit, attributes,cubeCtx:cubeCtxAry[idx],request0,rv0});
         const extStr= plotCreate.length===1 ? getExtName(plot) || getExtType(plot) : undefined;
         if (!title) title= makePostPlotTitle(plot,request0, extStr);
         plot.title= title;

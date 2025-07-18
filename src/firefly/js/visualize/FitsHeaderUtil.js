@@ -37,6 +37,7 @@ export const HdrConst= {
     DATAMIN  : 'DATAMIN',
     EXTNAME  : 'EXTNAME',
     EXTTYPE  : 'EXTTYPE',
+    NAXIS    : 'NAXIS',
     NAXIS1   : 'NAXIS1',
     NAXIS2   : 'NAXIS2',
     NAXIS3   : 'NAXIS3',
@@ -289,5 +290,24 @@ export function isFitsTableDataTypeNumeric(fdt) {
 }
 
 
+/**
+ * return true if the two plot HDU has the same number and matching dimensions
+ * @param refPlot
+ * @param plot
+ * @return {boolean}
+ */
+export function hduDimMatches(refPlot,plot) {
+    const dims= getHeader(refPlot,HdrConst.NAXIS,'0');
+    const xLen= getHeader(refPlot,HdrConst.NAXIS1,'1');
+    const yLen= getHeader(refPlot,HdrConst.NAXIS2,'1');
+    const zLen= getHeader(refPlot,HdrConst.NAXIS3,'1');
+
+    return (
+        dims=== getHeader(plot,HdrConst.NAXIS,'0') &&
+        xLen===getHeader(plot,HdrConst.NAXIS1,'1') &&
+        yLen===getHeader(plot,HdrConst.NAXIS2,'1') &&
+        zLen===getHeader(plot,HdrConst.NAXIS3,'1')
+    );
+}
 
 
