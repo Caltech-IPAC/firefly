@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
-import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.COMPLETED;
-import static edu.caltech.ipac.firefly.core.background.JobManager.getAllUserJobs;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.convertToJobList;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.getUwsJobInfo;
@@ -92,10 +91,11 @@ public class JobUtil {
 
     /**
      * Import job histories from the given service URL.
-     * @param svcDef the service to import job histories from
+     * @param svcDef   the service to import job histories from
+     * @param userJobs
      * @return the number of job histories imported
      */
-    public static int importJobHistories(String svcDef) {
+    public static int importJobHistories(String svcDef, List<JobInfo> userJobs) {
         int count = 0;
 
         String[] svcParts = ifNotNull(svcDef).getOrElse("").split("\\|", 3);
@@ -107,8 +107,6 @@ public class JobUtil {
         URL urlObs= Try.it(() -> new URI(url).toURL()).getOrElse((URL)null);
         String paramStr= urlObs == null ? "" : urlObs.getQuery();
         String urlBase= (!isEmpty(paramStr) && url.contains("?"))  ? url.split("\\?")[0] : url;
-
-        List<JobInfo> history = getAllUserJobs();
 
         HttpServiceInput input = HttpServiceInput.createWithCredential(urlBase);
         if (!isEmpty(paramStr)) input.setRequestUrl(input.getRequestUrl()+"?"+paramStr);
@@ -130,17 +128,20 @@ public class JobUtil {
         if (hasBadJobs) LOG.debug("Some jobs with no URL or ignored runId were removed from list");
 
         for (JobInfo job : jobList.get()) {
-            JobInfo uws = Try.it(() -> getUwsJobInfo(job.getAux().getJobUrl())).get();
-            if (uws == null) {
-                LOG.debug("Failed to get job info for " + job.getAux().getJobUrl());
-            } else if (runIdIgnoreList.contains(String.valueOf(uws.getRunId()))) {
-                LOG.debug("Ignoring job at %s with RUNID=%s".formatted(job.getAux().getJobUrl(), uws.getRunId()));
+            JobInfo jobInfo = findJobInfo(job.getJobId(), userJobs);
+            if (jobInfo == null || isActive(jobInfo)) {
+                // for performance, we only get updated job info if the job is not in history, or it's still active
+                JobInfo uws = Try.it(() -> getUwsJobInfo(job.getAux().getJobUrl())).get();
+                if (uws == null) {
+                    LOG.debug("Failed to get job info for " + job.getAux().getJobUrl());
+                } else {
+                    count++;
+                    mergeJobInfo(jobInfo, uws, svcId, svcType);
+                    if (jobInfo == null )  userJobs.add(uws);           // update passed in userJobs; to avoid having to call getUserJobs, which can be expensive
+                    LOG.trace("Job added jobUrl=%s jobId=%s".formatted(job.getAux().getJobUrl(),uws.getJobId()));
+                }
             } else {
-                count++;
-                String jobId = uws.getJobId();
-                JobInfo jobInfo = findJobInfo(jobId, history);
-                mergeJobInfo(jobInfo, uws, svcId, svcType);
-                LOG.trace("Job added jobUrl=%s jobId=%s".formatted(job.getAux().getJobUrl(),uws.getJobId()));
+                LOG.debug("Job %s is already completed, skipping".formatted(job.getJobId()));
             }
         }
         LOG.debug("%d job histories imported".formatted(count));
@@ -166,8 +167,12 @@ public class JobUtil {
         return null;
     }
 
-    ;
-
+    public static boolean isActive(JobInfo jobInfo) {
+        Phase phase = jobInfo.getPhase();
+        return phase == PENDING
+            || phase == QUEUED
+            || phase == EXECUTING;
+    }
 //====================================================================
 //  JSON serialization
 //====================================================================
@@ -327,12 +332,13 @@ public class JobUtil {
      * @param infos
      * @return an array of job IDs under the 'jobs' prop as a json string
      */
-    public static String toJsonJobList(List<JobInfo> infos) {
+    public static String toJsonJobList(List<JobInfo> infos, boolean overflow) {
         JSONObject rval = new JSONObject();
-        if (infos != null && infos.size() > 0) {
-            // object with "jobs": array of JobInfo urls
-            List<String> urls = infos.stream().map(i -> i.getMeta().getJobId()).collect(Collectors.toList());
-            rval.put("jobs", urls);
+        if (infos != null && !infos.isEmpty()) {
+            // object with "jobs": array of JobInfo and "overflow: true" if the list exceed 'LAST' or default limit
+            List<JSONObject> jobs = infos.stream().map(JobUtil::toJsonObject).collect(Collectors.toList());
+            rval.put("jobs", jobs);
+            if (overflow) rval.put("overflow", true);
         }
         return rval.toJSONString();
     }

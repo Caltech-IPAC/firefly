@@ -18,8 +18,11 @@ import edu.caltech.ipac.firefly.core.background.JobManager;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.background.JobManager.JOB_LIST_DEFAULT_LIMIT;
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
 import static edu.caltech.ipac.util.StringUtils.*;
 
@@ -54,7 +57,7 @@ public class Async extends BaseHttpServlet {
             if (jobId == null) {
                 if (params.size() == 0) {
                     // list all jobs for current user;          /CmdSrv/async
-                    listUserJob(res);
+                    listUserJob(res, params);
                 } else {
                     // submit job with given cmd parameters;    /CmdSrv/async?cmd=xxx
                     submitJob(res, params);
@@ -93,10 +96,35 @@ public class Async extends BaseHttpServlet {
 //
 //====================================================================
 
-    private static void listUserJob(HttpServletResponse res) throws Exception {
-        // list all jobs for current user; /CmdSrv/async
+    /**
+     * List all jobs for current user sorted by creation time. Returns a JSON array of job info.
+     * @param res
+     * @param params
+     * @throws Exception
+     */
+    private static void listUserJob(HttpServletResponse res, SrvParam params) throws Exception {
+        int last = params.getOptionalInt("LAST", JOB_LIST_DEFAULT_LIMIT);
+        List<String > phase = params.getOptionalList("PHASE");
+        String after = params.getOptional("AFTER");
         List<JobInfo> list = JobManager.list();
-        sendResponse(JobUtil.toJsonJobList(list), res);
+        list.sort(
+                Comparator.comparing(
+                        JobInfo::getCreationTime,
+                        Comparator.nullsFirst(Comparator.naturalOrder())
+                ).reversed()
+        );
+        if (phase != null && !phase.isEmpty()) {
+            list.removeIf(info -> !phase.contains(info.getPhase().name()));
+        }
+        if (after != null) {
+            list.removeIf(info -> info.getCreationTime().compareTo(Instant.parse(after)) < 0);
+        }
+        boolean overflow = false;
+        if (list.size() > last) {
+            overflow = true;
+            list = list.subList(0, last);
+        }
+        sendResponse(JobUtil.toJsonJobList(list, overflow), res);
     }
 
     private static void submitJob(HttpServletResponse res, SrvParam params) throws Exception {

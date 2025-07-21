@@ -6,7 +6,7 @@ import {get, isNil} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../ReduxFlux';
-import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgJobInfo, dispatchJobAdd} from './BackgroundCntlr.js';
+import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgJobInfo, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
 import {getCmdSrvAsyncURL} from '../../util/WebUtil.js';
 import {COMPONENT_STATE_CHANGE, dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
@@ -56,21 +56,14 @@ export const fetchJobInfo = (jobId) => {
 
 export const loadAllJobs = () => {
     const url = getCmdSrvAsyncURL();
-    jsonFetch(url).then( ({jobs}) => {
-        jobs?.forEach( (jobId) => {
-            fetchJobInfo(jobId).then( (jobInfo) => {
-                if (jobInfo) {
-                    dispatchBgJobInfo(jobInfo);
-                }
-            });
-        });
+    jsonFetch(url).then( ({jobs, overflow}) => {
+        if (jobs) {
+            // convert List<JobInfo> to Object<JobId, JobInfo>
+            const jobsMap = Object.fromEntries(jobs.map((j) => [j?.meta?.jobId, j]));
+            dispatchBgLoadJobs({jobs:jobsMap, overflow});
+        }
     });
 };
-
-
-
-
-
 
 /**
  * returns the whole background info object

@@ -40,13 +40,22 @@ public class DistributedCache<T> implements Cache<T> {
     private static final String BASE64 = "BASE64::";
     private transient Predicate<T> getValidator;
 
-    private Serializer serializer;
+    private final Serializer<T> serializer;      // required; default is DefaultImpl
 
     public DistributedCache() {
-        this(new JavaSerializer());
+        this(new DefaultImpl<>());
     }
-    public DistributedCache(Serializer serializer) {
+    public DistributedCache(Serializer<T> serializer) {
         this.serializer = serializer;
+    }
+
+
+    String serialize(Object value) {
+        return serializer.serialize(value);
+    }
+
+    T deserialize(String value) throws Exception {
+        return serializer.deserialize(value);
     }
 
     public Cache<T> validateOnGet(Predicate<T> validator) {
@@ -66,9 +75,9 @@ public class DistributedCache<T> implements Cache<T> {
                         del(redis, keystr);
                     } else {
                         if (lifespanInSecs > 0) {
-                            setex(redis, keystr, serializer.serialize(value), lifespanInSecs);
+                            setex(redis, keystr, serialize(value), lifespanInSecs);
                         } else {
-                            set(redis, keystr, serializer.serialize(value));
+                            set(redis, keystr, serialize(value));
                         }
                     }
                 }
@@ -83,7 +92,7 @@ public class DistributedCache<T> implements Cache<T> {
 
     public T get(CacheKey key) {
         try(Jedis redis = RedisService.getConnection()) {
-            T v = (T) serializer.deserialize( get(redis, key.getUniqueString()) );
+            T v = deserialize( get(redis, key.getUniqueString()) );
             if (v != null && getValidator != null && !getValidator.test(v)) {
                 del(redis, key.getUniqueString());
                 return null;
@@ -156,12 +165,16 @@ public class DistributedCache<T> implements Cache<T> {
 //  Utility functions
 //====================================================================
 
-    public interface Serializer {
+    public interface Serializer<T> {
         String serialize(Object object);
-        Object deserialize(String s) throws Exception;
+        T deserialize(String s) throws Exception;
     }
 
-    public static class JavaSerializer implements Serializer {
+    /**
+     * Default implementation of the Serializer.  It serializes objects to Base64 strings
+     * using java serialization.  When the object is a String, it returns the string directly.
+     */
+    public static class DefaultImpl<T> implements Serializer<T> {
 
         public String serialize(Object object) {
             if (object == null) return null;
@@ -172,9 +185,9 @@ public class DistributedCache<T> implements Cache<T> {
             }
         }
 
-        public Object deserialize(String s) throws Exception {
+        public T deserialize(String s) throws Exception {
             if (s == null) return null;
-            return !s.startsWith(BASE64) ? s : Util.deserialize(s.substring(BASE64.length()));
+            return !s.startsWith(BASE64) ? (T) s : (T) Util.deserialize(s.substring(BASE64.length()));
         }
     }
 
