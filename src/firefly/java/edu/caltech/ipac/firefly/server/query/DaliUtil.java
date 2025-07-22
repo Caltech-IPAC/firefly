@@ -130,7 +130,7 @@ public class DaliUtil {
      * @return a string containing the parsed error message
      */
     public static String parseError(HttpMethod method, String url) {
-        boolean isErrorDoc = HttpServices.isOk(method); // url is an error document
+        boolean isErrorDoc = HttpServices.isOk(method); // url is an error document (at /error) if isOK() is true
         String httpErrMsg = isErrorDoc ? "" : String.format("Request to %s failed: %s", url, method.getStatusText());
 
         String errMsg;
@@ -145,8 +145,7 @@ public class DaliUtil {
                 }
             } else {
                 // error is VOTable doc
-                InputStream is = HttpServices.getResponseBodyAsStream(method);
-                try {
+                try (InputStream is = HttpServices.getResponseBodyAsStream(method)) {
                     String voError = VoTableReader.getError(is, url);
                     if (voError == null) {
                         voError = isErrorDoc
@@ -154,8 +153,6 @@ public class DaliUtil {
                                 : httpErrMsg; // give generic HTTP error message over the VOTable error
                     }
                     errMsg = voError;
-                } finally {
-                    FileUtil.silentClose(is);
                 }
             }
         } catch (Exception e) {

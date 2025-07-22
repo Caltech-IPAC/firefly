@@ -8,6 +8,7 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {TimePanel} from '../TimePanel.jsx';
 import {changeTimeMode, checkExposureTime, getTimeInfo, isTimeUndefined, ISO, MJD} from '../TimeUIUtil.js';
 
+export const TimeMode = 'exposureTimeMode';
 const START_TIME_GREATER_MSG= 'the start time is greater than the end time';
 const timeOptions = [{label: 'UTC date/times (ISO format)', value: ISO}, {label: 'MJD values', value: MJD}];
 const timeOptionsTip='Choose between:\nISO 8601 time format (e.g., 2021-03-20)\nor\nModified Julian Date time format (e.g., 59293.1)';
@@ -19,7 +20,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, sx={},
                                    fromTip="'from' time", toTip="'to' time",
                                    fixedTimeMode, minExamples, maxExamples,}) {
     const {setFld,getFld,getVal} = useContext(FieldGroupCtx);
-    const [getExposureTimeMode] = useFieldGroupValue('exposureTimeMode'); //user-controlled through RadioGroupInputField
+    const [getExposureTimeMode] = useFieldGroupValue(TimeMode); //user-controlled through RadioGroupInputField
     const timeMode = fixedTimeMode || getExposureTimeMode(); // if no fixed time mode passed, time mode is as chosen by user
 
     useFieldGroupRerender([minKey,maxKey]);
@@ -57,7 +58,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, sx={},
     return (
         <Stack spacing={1} sx={sx}>
             {!fixedTimeMode && <RadioGroupInputField
-                fieldKey='exposureTimeMode' options={timeOptions} orientation='horizontal'
+                fieldKey={TimeMode} options={timeOptions} orientation='horizontal'
                 tooltip={timeOptionsTip}
                 initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
             />}

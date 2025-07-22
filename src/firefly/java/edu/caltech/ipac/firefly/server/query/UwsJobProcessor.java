@@ -138,9 +138,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     updateJob(ji -> ji.setPhase(Phase.SUSPENDED));
                     throw new DataAccessException("Job temporarily paused by the system");
                 } else if (phase == Phase.ERROR) {
-                    JobInfo.Error error = uwsJob.getError() != null
-                            ? uwsJob.getError() // error is a part of the job resource
-                            : getError(jobUrl); // error resource maybe present at /error endpoint of the job
+                    JobInfo.Error error = getError(uwsJob, jobUrl);
                     updateJob(ji -> ji.setError(error));
                     throw new DataAccessException("Job has failed with the error: " + error.msg());
                 } else if (phase == Phase.UNKNOWN) {
@@ -308,16 +306,20 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    public static JobInfo.Error getError(String jobUrl)  {
-        String errorUrl = jobUrl + "/error";
-        HttpServices.Status status = HttpServices.getWithAuth(errorUrl, method -> {
-            try {
-                return new HttpServices.Status(200, parseError(method, errorUrl));
-            } catch (Exception e) {
-                return new HttpServices.Status(500, "Unexpected exception: " + e.getMessage());
-            }
-        });
-        return new JobInfo.Error(status.getStatusCode(), status.getErrMsg());
+    public static JobInfo.Error getError(JobInfo uwsJob, String jobUrl)  {
+        JobInfo.Error jobError = uwsJob.getError();
+        if (jobError != null) return jobError; // error is a part of the job resource
+        else { // error document maybe present at /error endpoint of the job
+            String errorUrl = jobUrl + "/error";
+            HttpServices.Status status = HttpServices.getWithAuth(errorUrl, method -> {
+                try {
+                    return new HttpServices.Status(200, parseError(method, errorUrl));
+                } catch (Exception e) {
+                    return new HttpServices.Status(500, "Unexpected exception: " + e.getMessage());
+                }
+            });
+            return new JobInfo.Error(status.getStatusCode(), status.getErrMsg());
+        }
     }
 
     public long getTimeout(String jobUrl) {

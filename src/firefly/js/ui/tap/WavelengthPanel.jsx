@@ -9,7 +9,7 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
 import {getDataServiceOption} from './DataServicesOptions';
 import {
-    DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader,
+    DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader,
     makeFieldErrorList,
     makePanelStatusUpdater, SpatialWidth,
 } from './TableSearchHelpers.jsx';
@@ -147,7 +147,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
                     {filterDefinitionsLabel && (
                         <Typography level='title-sm'>{filterDefinitionsLabel}</Typography>
                     )}
-                    <Stack spacing={.5} style={{ marginLeft: filterDefinitionsLabel ? LeftInSearch : 0 }}>
+                    <Stack spacing={.5} sx={{ pl: filterDefinitionsLabel ? 2 : 0 }}>
                         {filterDefinitions.map((filterDefinition) => (
                             <CheckboxGroupInputField
                                 key={'filter' + filterDefinition.name + 'Key'}

@@ -21,7 +21,6 @@ import {InitArgsCtx} from 'firefly/templates/common/InitArgsCtx';
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
 // Style Helpers
-export const LeftInSearch = 24;
 export const LabelWidth = 110;
 export const LableSaptail = 65;
 export const SpatialWidth = 520;
