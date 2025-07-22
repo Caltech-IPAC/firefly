@@ -117,10 +117,26 @@ export function modifyURLToFull(url, rootPath) {
 }
 
 export function isFullURL(url) {
-    if (!url) return false;
+    if (url instanceof URL) return true;
+    if (!url || !isString(url)) return false;
     const hPref = ['http', 'https', '/', 'file'];
     url = url.toLowerCase();
     return hPref.some((s) => url.startsWith(s));
+}
+
+/**
+ * return true if the string is a valid full url
+ * @param url
+ * @return {boolean}
+ */
+export function isValidFullUrl(url) {
+    if (url instanceof URL) return true;
+    if (!url || !isString(url)) return false;
+    try {
+        return Boolean(new URL(url));
+    } catch {
+        return false;
+    }
 }
 
 

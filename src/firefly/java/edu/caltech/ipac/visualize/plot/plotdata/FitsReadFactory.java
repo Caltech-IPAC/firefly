@@ -42,7 +42,8 @@ public class FitsReadFactory {
         var headersSizesList= Arrays.stream(HDUs).map(hdu -> hdu.getHeader().getSize()).toList();
         var headersOffsetsList= Arrays.stream(HDUs).map(hdu -> hdu.getHeader().getFileOffset()).toList();
 
-        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs, true, headersSizesList, headersOffsetsList);
+        var totalImageHdusInFile= FitsReadUtil.getImageHDUArray(HDUs).length;
+        BasicHDU<?> [] imageHDUs= FitsReadUtil.getCubeExpandedImageHDUArray(HDUs, true, headersSizesList, headersOffsetsList);
         BasicHDU<?> hdu;
         Header zeroHeader= getZeroHeader(HDUs) ;
         confirmHasImageData(imageHDUs,HDUs);
@@ -61,7 +62,7 @@ public class FitsReadFactory {
             else {
                 planeNumber++;
             }
-            fitsReadAry[i]= new FitsRead(lastHdu, zeroHeader, f, clearHdu, cube, cube?planeNumber:0);
+            fitsReadAry[i]= new FitsRead(lastHdu, zeroHeader, f, clearHdu, cube, cube?planeNumber:0, totalImageHdusInFile);
         }
         return fitsReadAry;
     }

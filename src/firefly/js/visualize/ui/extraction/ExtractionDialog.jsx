@@ -253,13 +253,6 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
     const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
-
-    // const bottomUI = plotlyData ?
-    //         (<RadioGroupInputFieldView value={chartXAxis} buttonGroup={true}
-    //                                    options={ [ {label: 'Image X', value: 'imageX'}, {label: 'Image Y', value: 'imageY'} ]}
-    //                                    onChange={(ev) => setChartXAxis(ev.target.value)} />) :
-    //         undefined;
-
     useEffect(() => {
         const getData= async () => {
             if (imPtAry && imPtAry.length && plot) {

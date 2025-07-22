@@ -13,5 +13,5 @@ public record WebPlotHeaderInitializer(String originalFitsFileStr, String workin
                                        String uploadFileNameStr, RangeValues rv,
                                        String dataDesc, boolean multiImageFile,
                                        boolean threeColor, WebPlotRequest request, Header[] zeroHeaderAry,
-                                       Map<String,String> attributes) {}
+                                       Map<String,String> attributes, int totalImageHdusInFile) {}
 

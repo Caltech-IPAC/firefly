@@ -1,16 +1,18 @@
 import {Stack, Typography} from '@mui/joy';
-import React from 'react';
-import {dispatchHideDialog} from '../../../core/ComponentCntlr';
+import React, {useEffect} from 'react';
 import {MetaConst} from '../../../data/MetaConst';
 import {ServerParams} from '../../../data/ServerParams';
 import {makeTblRequest} from '../../../tables/TableRequestUtil';
 import {dispatchTableFetch, dispatchTableSearch} from '../../../tables/TablesCntlr';
 import {onTableLoaded} from '../../../tables/TableUtil';
 import {showTableDownloadDialog} from '../../../tables/ui/TableSave';
-import {showInfoPopup, showMultiAnswerPopup, showPinMessage} from '../../../ui/PopupUtil';
+import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField';
+import { showFieldGroupPopup, showInfoPopup, showPinMessage, } from '../../../ui/PopupUtil';
+import {RadioGroupInputField} from '../../../ui/RadioGroupInputField';
+import {useFieldGroupValue} from '../../../ui/SimpleComponent';
 import {advancedTrim} from '../../../util/WebUtil';
 import {CCUtil, CysConverter} from '../../CsysConverter';
-import {getExtName, getHeader, HdrConst} from '../../FitsHeaderUtil';
+import {getExtName} from '../../FitsHeaderUtil';
 import {visRoot} from '../../ImagePlotCntlr';
 import {
     getAllWaveLengthsForCube, getHDU, getHduPlotStartIndexes, getImageCubeIdx, getPlotViewAry,
@@ -23,6 +25,7 @@ import {addZAxisExtractionWatcher} from '../ExtractionWatchers';
 
 let idCnt = 0;
 const MAX_HDU= 20;
+const MIN_FULL_TITLE_LEN= 15;
 const getNextTblId = () => 'extraction-table-' + (idCnt++);
 
 async function doDispatchTableSaving(req, doOverlay) {
@@ -100,76 +103,150 @@ export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both
         showInfoPopup('Plot no longer exist. Cannot extract.');
         return;
     }
-    const {pvAry,filteredPvAry,canDoMultiImage}= getExtractableImageList(pv);
     const extractionSizeX= axis==='x' ? 1 : pointSize;
     const extractionSizeY= axis==='y' ? 1: pointSize;
+    const params= {baseImPtAry, pv, extractionSizeX, extractionSizeY, combineOp, save,
+        doOverlay, isLine, allMatchingHDUs: true};
+    const {canDoMultiImage}= getExtractableImageList(pv,true);
     if (!canDoMultiImage) {
-        const tbl_id= makeDataExtractionTable({baseImPtAry, pv, extractionSizeX, extractionSizeY,
-            combineOp, save, doOverlay, isLine});
-        return Promise.resolve([tbl_id]);
+        return Promise.resolve([makeDataExtractionTable(params)]);
     }
-
-    if (filteredPvAry.length < pvAry.length) {
-        let msg= 'Cannot extract from all images';
-        if (pvAry.some( (testPv) => !hasWCSProjection(testPv))) {
-            msg+= ' Some image do not have a WCS Projection.';
-        }
-        if (pvAry.some( (testPv) => getMatchingHDUCount(testPv)>MAX_HDU)) {
-            msg+= ` Some images have more than ${MAX_HDU} HDUs.`;
-        }
-        msg+= ' These image can be extracted in single image mode';
-        setTimeout( () => showInfoPopup(msg), 1000);
-    }
+    const {pvAry}= getExtractableImageList(pv,false);
 
 
-    const AllImagesQuestion= () => (
-        <Stack spacing={2} sx={{width:'30rem'}}>
-            <Typography>
-                You can either extract from a single image or all images that have a WCS and a limited amount of HDUs.
-            </Typography>
-            <Typography color='warning'>
-                Do you want to extract from all images?
-            </Typography>
-        </Stack>
-    );
-    const answers= {allSame: 'Yes / one table', allDiff: 'Yes / multiple tables', single: 'No'};
-
-    let tblId, tblIdAry;
     return new Promise((resolve) => {
-        const handleAnswer= (id,answer) => {
-            dispatchHideDialog(id);
-            if (answer==='allDiff') {
-                tblIdAry= getExtractableImageList(pv,false).filteredPvAry.map( (pv) => {
-                    const ccBase = CysConverter.make(primePlot(filteredPvAry[0]));
+        const handleAnswer= ({hdus= 'all', titleType='full', whatToExtract, pvAry:extractPvAry}) => {
+            const allMatchingHDUs= hdus==='all';
+            if (whatToExtract==='allDiff') {
+                const tblIdAry= extractPvAry.map( (pv) => {
+                    const ccBase = CysConverter.make(primePlot(extractPvAry[0]));
                     const cc= CysConverter.make(primePlot(pv));
                     const newBaseImPtAry= baseImPtAry.map((pt) => cc.getImageCoords(ccBase.getWorldCoords(pt)));
                     return makeDataExtractionTable({baseImPtAry:newBaseImPtAry, pv, extractionSizeX, extractionSizeY,
-                        combineOp, save, doOverlay, isLine, exclusiveToPlot:true});
+                        combineOp, save, doOverlay, isLine, exclusiveToPlot:true, allMatchingHDUs});
                 } );
                 resolve(tblIdAry);
             }
             else {
-                tblId= makeDataExtractionTable({baseImPtAry, pv, extractionSizeX, extractionSizeY, combineOp, save,
-                    doOverlay, isLine, allImages: answer==='allSame'});
-                resolve([tblId]);
+                const tbl_id= (whatToExtract==='allSame')
+                    ? makeDataExtractionTable({...params, allMatchingHDUs, pvAry: extractPvAry, truncatedHeaders:titleType!=='full'})
+                    : makeDataExtractionTable({...params, allMatchingHDUs});
+                resolve([tbl_id]);
             }
         };
-        showMultiAnswerPopup(<AllImagesQuestion/>, handleAnswer, answers, 'Extract Image Type', {maxWidth:'30rem'});
+        showFieldGroupPopup({groupKey:'ExtractOptions', keepState:true, successText:'Pin Chart/Table',
+            content:<ExtractTableOptions pvAry={pvAry} />,
+            onSuccess:handleAnswer,  title:'Extract Image Type'});
     });
 }
 
 
+const ExtractTableOptions= ({pvAry:initPvAry}) => {
+    const whatToExtract= useFieldGroupValue('whatToExtract')[0]();
+    const allHdus= useFieldGroupValue('hdus')[0]()==='all';
+    const [getPvAry,setPvAry]= useFieldGroupValue('pvAry');
+    const someHduOverMax=  initPvAry.some( (testPv) => primePlot(testPv).totalImageHdusInFile>MAX_HDU);
+
+    const pvAry= getPvAry() ?? initPvAry;
+    const allToSameFile= whatToExtract==='allSame';
+
+    useEffect(() => {
+        const newPvAry= (allHdus && allToSameFile)
+            ? initPvAry.filter( (pv) => primePlot(pv).totalImageHdusInFile<=MAX_HDU && hasWCSProjection(pv))
+            : initPvAry.filter( (pv) => hasWCSProjection(pv));
+        setPvAry(newPvAry);
+    }, [allHdus, allToSameFile, initPvAry, someHduOverMax]);
+
+    const wcsPvAry= initPvAry.filter( (testPv) => hasWCSProjection(testPv));
+    const wcsWarning= wcsPvAry.length < initPvAry.length;
+    const hasLongTitles= pvAry.some( (pv) =>  primePlot(pv)?.title?.length>MIN_FULL_TITLE_LEN);
+    const someMultiHDUs=  initPvAry.some( (testPv) => primePlot(testPv).totalImageHdusInFile>1);
+    const maxHduWarning= (allToSameFile && allHdus)
+        ? initPvAry.some( (testPv) => primePlot(testPv).totalImageHdusInFile>MAX_HDU)
+        : false ;
+
+    return (
+        <Stack spacing={3} m={2}>
+            <Stack spacing={1}>
+                <Stack spacing={2} sx={{width:'30rem'}}>
+                    <Typography>
+                        You can either extract from the currently selected single image, or all loaded images that have a WCS
+                        and a limited amount of HDUs (with WCS information).
+                    </Typography>
+                    <Typography color='warning'>
+                        What do you want to extract?
+                    </Typography>
+                </Stack>
+                <Stack pl={6}>
+                    <RadioGroupInputField
+                        fieldKey='whatToExtract'
+                        options={[
+                            {label: 'Selected image only', value: 'single'},
+                            {label: 'All images (into one table)', value: 'allSame'},
+                            {label: 'All images (into multiple table)', value: 'allDiff'}
+                        ]}
+                        initialState= {{value: 'allSame' }} />
+                </Stack>
+            </Stack>
+            <Stack spacing={1} pl={6}>
+                {someMultiHDUs &&
+                    <CheckboxGroupInputField
+                        fieldKey='hdus' options={[{
+                            label:'Include all matching HDUs', value: 'all'}]}
+                        initialState= {{value: 'all' }} />
+                }
+                {hasLongTitles &&
+                    <CheckboxGroupInputField
+                        fieldKey='titleType'
+                        sx={{visibility: (allToSameFile) ? 'visible' : 'hidden'}}
+                        options={[{label:'Use full image titles in column headers', value: 'full'}]}
+                        initialState= {{value: '' }} />
+                }
+            </Stack>
+            <Stack>
+                {(wcsWarning || maxHduWarning) &&
+                    <Typography color='warning' level='body-sm'> Cannot extract from all images.
+                    </Typography>}
+                <Stack sx={{pl:2}}>
+                    {wcsWarning &&
+                        <Typography level='body-sm'> Some images do not have a WCS Projection.
+                        </Typography>}
+                    {maxHduWarning &&
+                        <Typography level='body-sm'>
+                            <div>
+                                {` Some images have more than ${MAX_HDU} HDUs.`}
+                            </div>
+                            <div>
+                                Hint: turn off 'include all match HDUs' or don't use 'All image (into one table)'
+                            </div>
+                        </Typography>}
+                    {(wcsWarning || maxHduWarning) &&
+                        <Typography level='body-sm'>
+                            These images can also be extracted in single image mode
+                        </Typography>
+                    }
+                </Stack>
+            </Stack>
+        </Stack>
+    );
+};
 
 
-export function makeDataExtractionTable({baseImPtAry, pv, extractionSizeX, extractionSizeY,
+export function makeDataExtractionTable({baseImPtAry, pv, pvAry, extractionSizeX, extractionSizeY,
                                        combineOp, save = false, doOverlay = true,
-                                            allImages=false, exclusiveToPlot=false, isLine}) {
+                                            truncatedHeaders=false,
+                                            allMatchingHDUs= true,
+                                            exclusiveToPlot=false, isLine}) {
     const plot= primePlot(pv);
     const tbl_id = getNextTblId();
     const cc = CysConverter.make(plot);
 
     const baseWpAry= hasWCSProjection(plot) ? baseImPtAry.map((pt) => cc.getWorldCoords(pt)) : undefined;
-    const {filteredPvAry}= allImages ? getExtractableImageList(pv) : {filteredPvAry: [pv]};
+    const filteredPvAry= pvAry ?? [pv];
+
+
+
+    const headers= truncatedHeaders ? getTitles(filteredPvAry) : filteredPvAry.map( (pv) => primePlot(pv)?.title ?? '');
 
     const epBase= {
         wptAry: baseWpAry ? JSON.stringify(baseWpAry.map((wpt) => wpt.toString())) :  undefined,
@@ -178,8 +255,8 @@ export function makeDataExtractionTable({baseImPtAry, pv, extractionSizeX, extra
         extractionSizeX,
         extractionSizeY,
         [ServerParams.COMBINE_OP]: combineOp,
-        allMatchingHDUs: true,
-        titleAry: JSON.stringify(getTitles(filteredPvAry)),
+        allMatchingHDUs,
+        titleAry: JSON.stringify(headers),
     };
 
     const extractParams= filteredPvAry.reduce( (obj,workingPv,idx) => {
@@ -215,7 +292,7 @@ export function makeDataExtractionTable({baseImPtAry, pv, extractionSizeX, extra
 
 function getTitles(pvAry) {
     const titleAry= pvAry.map( (pv) => primePlot(pv)?.title ?? '');
-    const lenTest= [15,18,21,24];
+    const lenTest= [MIN_FULL_TITLE_LEN,MIN_FULL_TITLE_LEN+3,MIN_FULL_TITLE_LEN+6,MIN_FULL_TITLE_LEN+9];
     for(let i=0;i<lenTest.length;i++) {
         const tryArray= getTestTitles(titleAry,lenTest[i]);
         if (new Set(tryArray).size === tryArray.length) return tryArray;
@@ -250,9 +327,6 @@ function getTestTitles(titleAry,size) {
     return titleAry.map( (t) => advancedTrim(t,size,trimType) );
 }
 
-
-
-
 function makePlaneTitle(rootStr, pv, plot, cnt) {
     let hduStr = '';
     let cubeStr = '';
@@ -264,74 +338,14 @@ function makePlaneTitle(rootStr, pv, plot, cnt) {
     return `${rootStr} ${cnt}${hduStr}${cubeStr}`;
 }
 
-export function keepPointsExtraction(ptAry, pv, plot, filename, refHDUNum, plane, extractionSize, combineOp, save = false, doOverlay = true) {
-    if (!pv || !plot || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
-        return;
-    }
-    const tbl_id = getNextTblId();
-    const cc = CysConverter.make(plot);
-    const wlAry = hasPixelLevelWLInfo(plot) ?
-        ptAry.map((pt) => getPtWavelength(plot, pt, 0))
-        : undefined;
-    const wptStrAry =
-        hasWCSProjection(plot) ?
-            ptAry.map((pt) => cc.getWorldCoords(pt)).map((pt) => pt.toString()) :
-            undefined;
-    const dataTableReq = makeTblRequest('ExtractFromImage', makePlaneTitle('Points', pv, plot, titleCnt),
-        {
-            startIdx: 0,
-            extractionType: 'points',
-            ptAry: JSON.stringify(ptAry.map((pt) => pt.toString())),
-            wptAry: JSON.stringify(wptStrAry),
-            wlAry,
-            wlUnit: getWaveLengthUnits(plot),
-            filename,
-            refHDUNum,
-            plane,
-            extractionSizeX: extractionSize,
-            extractionSizeY: extractionSize,
-            [ServerParams.COMBINE_OP]: combineOp,
-            allMatchingHDUs: true,
-        },
-        {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
-    idCnt++;
-    titleCnt++;
-    return tbl_id;
-}
-
-function getMatchingHDUCount(pv) {
-    const plot= primePlot(pv);
-    if (!plot) return 0;
-    return pv.plots.filter( (p) => hduMatches(plot,p)).length;
-}
-
-
-function hduMatches(refPlot,plot) {
-
-    const dims= getHeader(refPlot,HdrConst.NAXIS,'0');
-    const xLen= getHeader(refPlot,HdrConst.NAXIS1,'1');
-    const yLen= getHeader(refPlot,HdrConst.NAXIS2,'1');
-    const zLen= getHeader(refPlot,HdrConst.NAXIS3,'1');
-
-    return (
-        dims=== getHeader(plot,HdrConst.NAXIS,'0') &&
-        xLen===getHeader(plot,HdrConst.NAXIS1,'1') &&
-        yLen===getHeader(plot,HdrConst.NAXIS2,'1') &&
-        zLen===getHeader(plot,HdrConst.NAXIS3,'1')
-    );
-
-
-}
-
 function getExtractableImageList(pv,limitHDUs=true) {
     const singleRet= {filteredPvAry:[pv], pvAry:[pv], canDoMultiImage:false};
-    if (!hasWCSProjection(primePlot(pv))) return singleRet;
-    if (limitHDUs && getMatchingHDUCount(pv)>MAX_HDU) return singleRet;
+    const plot= primePlot(pv);
+    if (!hasWCSProjection(plot)) return singleRet;
+    if (limitHDUs && plot.totalImageHdusInFile>MAX_HDU) return singleRet;
     const pvAry= [pv,
         ...getPlotViewAry(visRoot(), pv.plotGroupId).filter( (testPv) => isImage(primePlot(testPv)) && testPv!==pv) ];
     if (pvAry.length===1) return singleRet;
-    const filteredPvAry= pvAry.filter( (testPv) => hasWCSProjection(testPv) && (!limitHDUs || getMatchingHDUCount(testPv)<=MAX_HDU) );
+    const filteredPvAry= pvAry.filter( (testPv) => hasWCSProjection(testPv) && (!limitHDUs || primePlot(testPv).totalImageHdusInFile<=MAX_HDU) );
     return {filteredPvAry,pvAry,canDoMultiImage:true};
 }

@@ -62,6 +62,7 @@ export const RDConst= {
  * @prop {String} title - the title
  * @prop {number} colorTableId
  * @prop {Object} header
+ * @prop {number} totalImageHdusInFile
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
  * @prop {number} cubeIdx
  * @prop {PlotState} plotState - the plot state, immutable
@@ -433,17 +434,18 @@ export const WebPlot= {
 
     /**
      *
-     * @param {string} plotId
-     * @param {Dimension} viewDim
-     * @param {WebPlotInitializer} wpInit init data returned from server
-     * @param {object} attributes any attributes to initialize
-     * @param {boolean} asOverlay
-     * @param {CubeCtx} [cubeCtx]
-     * @param {WebPlotRequest} [request0] - only used when this is part of a cube
-     * @param {RangeValues} [rv0] - only used when this is part of a cube
+     * @param {Object} obj
+     * @param {string} obj.plotId
+     * @param {Dimension} [obj.viewDim]
+     * @param {WebPlotInitializer} obj.wpInit init data returned from server
+     * @param {object} [obj.attributes] any attributes to initialize
+     * @param {boolean} [obj.asOverlay]
+     * @param {CubeCtx} [obj.cubeCtx]
+     * @param {WebPlotRequest} [obj.request0] - only used when this is part of a cube
+     * @param {RangeValues} [obj.rv0] - only used when this is part of a cube
      * @return {WebPlot} the plot
      */
-    makeWebPlotData(plotId, viewDim, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0, rv0) {
+    makeWebPlotData({plotId, viewDim={}, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0, rv0}) {
 
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
@@ -497,6 +499,7 @@ export const WebPlot= {
             tileData    : undefined,
             relatedData     : null,
             colorTableId: request0?.getInitialColorTable() ?? 0,
+            totalImageHdusInFile: wpInit.totalImageHdusInFile ?? 1,
             header,
             headerAry,
             zeroHeader,

@@ -37,6 +37,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     private final boolean cube;
     private final int hduNumber;
     private final Header zeroHeader;
+    private final int totalImageHdusInFile;
     private ImageHDU hdu;
     private float[] float1d;
     private final Header header;
@@ -58,7 +59,8 @@ public class FitsRead implements Serializable, HasSizeOf {
      * @param imageHdu this hdu to build this FitsRead around
      * @throws FitsException if we can process the data
      */
-    FitsRead(BasicHDU<?> imageHdu, Header zeroHeader, File file, boolean clearHdu, boolean cube, int planeNumber) throws FitsException {
+    FitsRead(BasicHDU<?> imageHdu, Header zeroHeader, File file, boolean clearHdu,
+             boolean cube, int planeNumber, int totalImageHdusInFile) throws FitsException {
 
         this.file= file;
         this.tileCompress= (imageHdu instanceof CompressedImageHDU);
@@ -68,6 +70,7 @@ public class FitsRead implements Serializable, HasSizeOf {
         this.planeNumber = cube ? planeNumber : 0;
         this.cube = cube;
         this.hduNumber = header.getIntValue(SPOT_EXT, 0);
+        this.totalImageHdusInFile = totalImageHdusInFile;
         this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "---";
 
         ImageHeader imageHeader = new ImageHeader(header, header.getLongValue(SPOT_OFF, 0), planeNumber);
@@ -89,6 +92,7 @@ public class FitsRead implements Serializable, HasSizeOf {
 
     public int getImageDataWidth() { return getNaxis1(); }
     public int getImageDataHeight() { return getNaxis2(); }
+    public int getTotalImageHdusInFile() { return totalImageHdusInFile; }
 
     public boolean isTileCompress() { return tileCompress; }
     public int getNaxis() { return FitsReadUtil.getNaxis(header); }

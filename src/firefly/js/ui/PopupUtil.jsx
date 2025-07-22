@@ -6,6 +6,7 @@ import {Sheet, Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {isString} from 'lodash';
 import CompleteButton from './CompleteButton.jsx';
+import {FieldGroup} from './FieldGroup';
 import {PopupPanel} from './PopupPanel.jsx';
 import {ModalDialog} from './ModalDialog.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -76,6 +77,21 @@ export function showPopup({ID, content, title='Options', modal = false}) {
     DialogRootContainer.defineDialog(ID, dialogContent);
     dispatchShowDialog(ID);
     return () => dispatchHideDialog(ID);
+}
+
+export function showFieldGroupPopup({groupKey, content, onSuccess, keepState=false,
+                                        successText='OK', title='Options', modal = false}) {
+    const dialogContent= (
+        <FieldGroup {...{groupKey,keepState}}>
+            <Stack spacing={4} sx={{p:2}}>
+                {content}
+                <Stack {...{direction:'row'}}>
+                    <CompleteButton onSuccess={onSuccess} text= {successText} dialogId={groupKey}/>
+                </Stack>
+            </Stack>
+        </FieldGroup>
+    );
+    return showPopup({ID:groupKey,content:dialogContent,title,modal} );
 }
 
 

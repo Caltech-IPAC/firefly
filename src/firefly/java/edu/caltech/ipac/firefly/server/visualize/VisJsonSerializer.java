@@ -237,6 +237,7 @@ public class VisJsonSerializer {
         putStr(map,"dataDesc", wpHeader.dataDesc());
         putJsonAry(map,"zeroHeaderAry", serializeHeaderAry(wpHeader.zeroHeaderAry()));
         putBoolIfTrue(map,"multiImageFile", wpHeader.multiImageFile());
+        putNumOver0(map, "totalImageHdusInFile", wpHeader.totalImageHdusInFile() );
         if (wpHeader.attributes()!=null) putJsonObj(map,"attributes", new JSONObject(wpHeader.attributes()));
         return map;
     }

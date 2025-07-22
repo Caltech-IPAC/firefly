@@ -74,6 +74,11 @@ public class FitsReadUtil {
         return clonedHeader;
     }
 
+    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs) {
+        return Arrays.stream(HDUs)
+                .filter(hdu -> hdu instanceof ImageHDU || hdu instanceof CompressedImageHDU)
+                .toArray(BasicHDU[]::new);
+    }
 
     public static boolean hasCompressedImageHDUS(BasicHDU<?>[] HDUs)  {
         return Arrays.stream(HDUs).anyMatch(h -> h instanceof CompressedImageHDU);
@@ -107,7 +112,7 @@ public class FitsReadUtil {
         return new UncompressFitsInfo(retFile,inHDUs, retReadFits);
     }
 
-    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu, List<Long> headersSizesList, List<Long> headersOffsetsList) {
+    public static BasicHDU<?>[] getCubeExpandedImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu, List<Long> headersSizesList, List<Long> headersOffsetsList) {
         ArrayList<BasicHDU<?>> HDUList = new ArrayList<>();
 
         String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0

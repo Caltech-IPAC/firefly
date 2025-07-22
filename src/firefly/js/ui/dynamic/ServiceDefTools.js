@@ -4,7 +4,7 @@ import {sprintf} from '../../externalSource/sprintf.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
-import {splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
+import {isValidFullUrl, splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {
@@ -293,7 +293,8 @@ function getMOCList(searchAreaInfo) {
                 mocColor: searchAreaInfo['mocColor'+cnt],
                 maxFetchDepth: searchAreaInfo['maxFetchDepth'+cnt]
             };
-        });
+        })
+        .filter((entry) => isValidFullUrl(entry.mocUrl) );
     return mocAry.length ? mocAry : undefined;
 }
 
