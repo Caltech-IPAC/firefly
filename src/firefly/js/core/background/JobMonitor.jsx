@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {object, string, shape} from 'prop-types';
 import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
@@ -196,10 +196,15 @@ function Notification({email='', notifEnabled, ...props}) {
 
 function JobMonitorTable({help_id, ...props}) {
     const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
+    const [hlJobId, setHlJobId] = useState();
 
     const tbl_id = 'JobHistoryTable';
     useEffect(() => {
         const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id);
+        if (hlJobId) {
+            const highlightedRow = table.tableData.data.findIndex((row) => row[6] === hlJobId);
+            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
+        }
         dispatchTableAddLocal(table, undefined, false);
     }, [jobMap]); // refreshed only when jobMap changes
 
@@ -209,6 +214,7 @@ function JobMonitorTable({help_id, ...props}) {
             (action) => {
                 const {highlightedRow} = action.payload || {};
                 const jobId = getCellValue(getTblById(tbl_id), highlightedRow, 'Control');
+                setHlJobId(jobId);
                 if (isJobInfoOpen())    showJobInfo(jobId);
             });
     }, []);     // only need to do once
