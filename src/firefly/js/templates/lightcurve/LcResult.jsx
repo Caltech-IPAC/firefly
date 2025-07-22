@@ -140,7 +140,7 @@ export function defaultDownloadPanel(mission='', cutoutSize, addtlParams={}) {
                 title={'Image Download Options'}
                 dlParams={{
                     MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                    BaseFileName: `${mission}_Files`,
+                    Title: `${mission}_Files`,
                     DataSource: `${mission} images`,
                     FileGroupProcessor: 'LightCurveFileGroupsProcessor',
                     ...addtlParams

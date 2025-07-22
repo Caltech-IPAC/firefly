@@ -198,11 +198,11 @@ function bgSetInfo(action) {
 function bgPackage(action) {
     return (dispatch) => {
         const {dlRequest={}, searchRequest, selectionInfo, bgKey='', downloadType} = action.payload;
-        let {fileLocation, wsSelect, BaseFileName} = dlRequest;
+        let {fileLocation, wsSelect, Title} = dlRequest; //use Title as the file name
 
-        BaseFileName = BaseFileName.endsWith('.zip') ? BaseFileName : BaseFileName.trim() + '.zip';
+        Title = Title.endsWith('.zip') ? Title : Title.trim() + '.zip';
         if (fileLocation === WORKSPACE) {
-            if (!validateFileName(wsSelect, BaseFileName)) return false;
+            if (!validateFileName(wsSelect, Title)) return false;
         }
 
         const onComplete = (jobInfo) => {

@@ -190,7 +190,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
     const maskPanel = (<BgMaskPanel key={bgKey} componentKey={bgKey}
                                    onMaskComplete={() =>hideDownloadDialog()}/>);
 
-    const dlTitle = get(dlParams, 'BaseFileName', 'Download' + '-' + dlTitleIdx); //use BaseFileName as title as well
+    const dlTitle = get(dlParams, 'Title', 'Download' + '-' + dlTitleIdx); //title will also be filename of the downloaded file
     const preTitleMessage = dlParams?.PreTitleMessage ?? '';
     return (
         <Stack sx ={{m:1/2, position: 'relative', minWidth:400, height:'auto', ...style}}>
@@ -241,9 +241,8 @@ DownloadOptionPanel.propTypes = {
 
     validateOnSubmit: PropTypes.func,      // to validate form inputs on submit
     dlParams:   PropTypes.shape({               // these params should be used as defaults value if they appears as input fields
-        TitlePrefix:    PropTypes.string,           // default title of the download..  an index number will be appended to this.
         FilePrefix:     PropTypes.string,           // packaged file prefix
-        BaseFileName:   PropTypes.string,           // zip file name
+        Title:   PropTypes.string,           // title in the UI, also the file name of the downloaded file
         DataSource:     PropTypes.string,
         MaxBundleSize:  PropTypes.number,
         FileGroupProcessor: PropTypes.string.isRequired,
@@ -255,7 +254,7 @@ export function TitleField({style={}, value, label='Title:', size=30}) {
     return (
         <ValidationField
             forceReinit={true}
-            fieldKey='BaseFileName' //title on the UI will also be used as file name on the backend
+            fieldKey='Title' //title will also be used as the filename on the server
             tooltip='Enter a description to identify this download.'
             {...{validator:NotBlank, initialState:{value}, label, size, style}}
         />
