@@ -8,7 +8,8 @@
 
 
 ## Version 2025.3
-- 2025.3.6 - (July 3, 2025), _docker tag_: `2025.3.6`, `2025.3`, `latest`
+- 2025.3.7 - (July 23, 2025), _docker tag_: `2025.3.7`, `2025.3`, `latest`
+- 2025.3.6 - (July 3, 2025), _docker tag_: `2025.3.6`
 - 2025.3.5 - (July 1, 2025), _docker tag_: `2025.3.5`
 - 2025.3.4 - (June 26, 2025), _docker tag_: `2025.3.4`
 - 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`
@@ -75,8 +76,11 @@
 
 
 ### _Patches 2025.3_
+- 2025.3.7
+  - Fixed: username switching unexpectedly for same user - ([PR](https://github.com/Caltech-IPAC/firefly/pull/1811))
+  - Optimized: Redis usage when querying jobs by user - Firefly-1796  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1810))
 - 2025.3.6
-  - Handle Importing job histories URL that have parameters : - Firefly-1794  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1807))
+  - Handle Importing job histories URL that have parameters - Firefly-1794  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1807))
 - 2025.3.5
   - Fixed: Images: mouse readout with some compressed images- Firefly-1793,Firefly-1792,Firefly-1789  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
 - 2025.3.4 
