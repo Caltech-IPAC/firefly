@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {object, string, shape} from 'prop-types';
 import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
@@ -6,7 +6,7 @@ import {isEmpty} from 'lodash';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {dispatchFormSubmit, getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
@@ -33,10 +33,24 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import {FormWatcher} from '../../templates/router/RouteHelper';
+import {logger} from '../../util/Logger';
 
 export const jobMonitorPath = '/jobMonitor';
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
+    const pollInterval = getAppOptions()?.background?.historyPollInterval || 30000;       // every 30 seconds
+    useEffect(() => {
+        logger.info(`Poll Job History every ${pollInterval/1000}s`);
+        const intervalId = setInterval(() => {
+            loadAllJobs();
+        }, pollInterval);
+
+        // 🔁 Cleanup: clear the interval when the component unmounts
+        return () => {
+            clearInterval(intervalId);
+        };
+    },[]);
+
     const {title, table, note, ...rest} = getAppOptions()?.background?.history || {};
     const titleProps = {...slotProps?.title, ...title};
     const tableProps = {...slotProps?.table, ...table};
@@ -110,18 +124,18 @@ export function showMultiResults(job) {
 // ----------------------------------Start of private functions ------------------------------------------//
 
 function TitleSection({summary, notification, ...props}) {
-    const {jobs:jobMap={}, email, notifEnabled} = useStoreConnector(() => getBackgroundInfo());
+    const {jobs:jobMap={}, email, notifEnabled, overflow} = useStoreConnector(() => getBackgroundInfo());
     const jobs = getMonitoredJob(jobMap);
 
     return (
         <Stack component={Sheet} variant='soft' borderRadius={4} padding={1} spacing={1} {...props}>
-            <Slot component={JobSummary} jobs={jobs} slotProps={summary}/>
+            <Slot component={JobSummary} jobs={jobs} overflow={overflow} slotProps={summary}/>
             <Slot component={Notification} {...{email, notifEnabled}} slotProps={notification}/>
         </Stack>
     );
 }
 
-function JobSummary({jobs, ...props}) {
+function JobSummary({jobs, overflow, ...props}) {
     const total = jobs?.length || 0;
     const active = jobs?.filter((j) => isActive(j)).length || 0;
     const failed = jobs?.filter((j) => isFail(j)).length || 0;
@@ -136,7 +150,7 @@ function JobSummary({jobs, ...props}) {
         <Stack direction='row' gap={5} {...props}>
             <Typography level='title-md' color='primary'>Job Summary</Typography>
             <Stack direction='row' gap={10}>
-                <Entry label='Total' value={total}/>
+                <Entry label='Total' value={total + (overflow ? '(+)' : '')}/>
                 <Entry label='Active' value={active}/>
                 <Entry label='Failed' value={failed}/>
                 {(archived>0) && <Entry label='Archived' value={archived} title={getPhaseTips(Phase.ARCHIVED)}/>}
@@ -183,10 +197,15 @@ function Notification({email='', notifEnabled, ...props}) {
 
 function JobMonitorTable({help_id, ...props}) {
     const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
+    const [hlJobId, setHlJobId] = useState();
 
     const tbl_id = 'JobHistoryTable';
     useEffect(() => {
         const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id);
+        if (hlJobId) {
+            const highlightedRow = table.tableData.data.findIndex((row) => row[6] === hlJobId);
+            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
+        }
         dispatchTableAddLocal(table, undefined, false);
     }, [jobMap]); // refreshed only when jobMap changes
 
@@ -196,6 +215,7 @@ function JobMonitorTable({help_id, ...props}) {
             (action) => {
                 const {highlightedRow} = action.payload || {};
                 const jobId = getCellValue(getTblById(tbl_id), highlightedRow, 'Control');
+                setHlJobId(jobId);
                 if (isJobInfoOpen())    showJobInfo(jobId);
             });
     }, []);     // only need to do once

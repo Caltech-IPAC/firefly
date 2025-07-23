@@ -4,7 +4,7 @@
 
 import {flux} from '../ReduxFlux';
 
-import {updateSet} from '../../util/WebUtil.js';
+import {updateObject, updateSet} from '../../util/WebUtil.js';
 import {showJobMonitor, showMultiResults} from './JobMonitor.jsx';
 import {isSuccess} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
@@ -20,6 +20,7 @@ export const BACKGROUND_PATH = 'background';
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const BG_JOB_INFO        = `${BACKGROUND_PATH}.jobInfo`;
+export const BG_LOAD_JOBS       = `${BACKGROUND_PATH}.loadJobs`;
 export const BG_MONITOR_SHOW    = `${BACKGROUND_PATH}.bgMonitorShow`;
 
 export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
@@ -62,6 +63,13 @@ function reducers() {
  */
 export function dispatchBgJobInfo(jobInfo) {
     flux.process({ type : BG_JOB_INFO, payload: jobInfo });
+}
+
+/*
+ * Load the full list of background jobs.
+ */
+export function dispatchBgLoadJobs(jobListInfo) {
+    flux.process({ type : BG_LOAD_JOBS, payload: jobListInfo });
 }
 
 /**
@@ -240,6 +248,16 @@ function reducer(state={}, action={}) {
             }
             return nstate;
             break;
+        case BG_LOAD_JOBS: {
+            const {jobs, overflow} = action.payload;
+            let nstate = state;
+            if (jobs) {
+                const updates = {jobs, overflow};
+                nstate = updateObject(nstate, updates);
+            }
+            return nstate;
+            break;
+        }
         case BG_SET_INFO : {
             const {email, notifEnabled} = action.payload;
             let nstate = updateSet(state, 'email', email);

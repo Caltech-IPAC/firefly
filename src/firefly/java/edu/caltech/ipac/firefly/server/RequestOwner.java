@@ -15,7 +15,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.annotation.Nonnull;
 import javax.servlet.http.Cookie;
-import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,14 +39,12 @@ public class RequestOwner implements Cloneable {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
-    public static StringKey USER_INFO_KEY = new StringKey("UserInfo");
     public static int USER_KEY_EXPIRY = AppProperties.getIntProperty("userkey.expiry", 3600 * 24 * 7 * 2);         // 2 weeks
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
     private Date startTime;
-    private File workingDir;
-    private HashMap<String, Object> attributes = new HashMap<String, Object>();
+    private HashMap<String, Object> attributes = new HashMap<String, Object>();         // TODO: seem like it's not used.  cleanup on next dev cycle
     private String eventChannel;
     private String eventConnID;
     // ------ these are lazy-load variables.. make sure you access it via getter. --------
@@ -59,8 +56,18 @@ public class RequestOwner implements Cloneable {
 
 
 
-    public RequestOwner(Date startTime) {
-        this.startTime = startTime;
+    public RequestOwner(){}
+
+    public void init(RequestAgent requestAgent) {
+        this.requestAgent = requestAgent;
+        startTime = new Date();
+        attributes = new HashMap<>();
+        userInfo = null;
+        ssoAdapter = null;
+        wsManager = null;
+        if (requestAgent != null) {
+            setWsConnInfo(requestAgent.getHeader("FF-connID"), requestAgent.getHeader("FF-channel"));
+        }
     }
 
     public RequestAgent getRequestAgent() {
@@ -72,13 +79,6 @@ public class RequestOwner implements Cloneable {
             ssoAdapter = SsoAdapter.getAdapter();
         }
         return ssoAdapter;
-    }
-
-    public void setRequestAgent(RequestAgent requestAgent) {
-        this.requestAgent = requestAgent;
-        if (requestAgent != null) {
-            setWsConnInfo(requestAgent.getHeader("FF-connID"), requestAgent.getHeader("FF-channel"));
-        }
     }
 
     public void setWsConnInfo(String connID, String channel) {
@@ -164,44 +164,44 @@ public class RequestOwner implements Cloneable {
         if (userInfo == null) {
             userInfo = ifNotNull(this::getAuthUser).get();
             if (userInfo == null) {
-                String userKey = ifNotNull(getUserKeyFromClient()).getOrElse(newUserKey());
-                UserCache<UserInfo> userInfoCache = UserCache.getInstance(userKey);
-                userInfo = userInfoCache.get(USER_INFO_KEY);
-                if (userInfo == null) {
-                    userInfo = UserInfo.newGuestUser();
-                    userInfo.setUserKey(userKey);
-                    userInfoCache.put(USER_INFO_KEY, userInfo);
+                userInfo = UserInfo.newGuestUser();
+                String userKey = getUserKeyFromClient();
+                if (isEmpty(userKey)) {
+                    userKey = newUserKey();
+                    updateClientUserKey(userKey);
                 }
-                syncUserKey(userInfo);
+                userInfo.setUserKey(userKey);
             }
             notifyClient(userInfo);
         }
         return userInfo;
     }
 
+    /**
+     * Copy the source RequestOwner to the target RequestOwner.
+     * @param source the source RequestOwner
+     * @param target the target RequestOwner
+     * @return the target RequestOwner
+     */
+    private RequestOwner copy(RequestOwner source, RequestOwner target) {
+        target.requestAgent = source.requestAgent;
+        target.startTime = source.startTime;
+        target.attributes = source.attributes;
+        target.userInfo = source.userInfo;
+        target.ssoAdapter = source.ssoAdapter;
+        target.eventChannel = source.eventChannel;
+        target.eventConnID = source.eventConnID;
+        target.wsManager = source.wsManager;
+        return target;
+    }
+
     @Override
     public Object clone() throws CloneNotSupportedException {
-        RequestOwner ro = new RequestOwner(startTime);
-        ro.setRequestAgent(requestAgent);
-        ro.workingDir = workingDir;
-        ro.attributes = (HashMap<String, Object>) attributes.clone();
-        ro.userInfo = userInfo;
-        ro.wsManager = wsManager;
-        ro.eventChannel = eventChannel;
-        ro.eventConnID = eventConnID;
-
-        return ro;
+        return copy(this, new RequestOwner());
     }
 
     public void setTo(RequestOwner ro) {
-        requestAgent = ro.requestAgent;
-        startTime = ro.startTime;
-        workingDir = ro.workingDir;
-        attributes = ro.attributes;
-        userInfo = ro.userInfo;
-        eventChannel = ro.eventChannel;
-        eventConnID = ro.eventConnID;
-        wsManager = ro.wsManager;
+        copy(ro, this);
     }
 
     public String getBaseUrl() {
@@ -269,10 +269,9 @@ public class RequestOwner implements Cloneable {
         ServerEventManager.fireAction(action);
     }
 
-    private void syncUserKey(UserInfo userInfo) {
-        if (requestAgent == null) return;
-        if (!userInfo.getUserKey().equals(String.valueOf(getUserKeyFromClient()))) {
-            Cookie cookie = new Cookie(USER_KEY, userInfo.getUserKey());
+    private void updateClientUserKey(String userKey) {
+        if (requestAgent != null) {
+            Cookie cookie = new Cookie(USER_KEY, userKey);
             cookie.setMaxAge(USER_KEY_EXPIRY);      // to live for two weeks
             cookie.setPath(requestAgent.getContextPath());
             requestAgent.sendCookie(cookie);
