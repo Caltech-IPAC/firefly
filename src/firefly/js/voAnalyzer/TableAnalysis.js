@@ -11,6 +11,7 @@ import {
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
+import {isTableExclusiveToPlot} from '../visualize/saga/CatalogWatcher';
 import {
     ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION, SERVICE_DESC_COL_NAMES,
     SSA_COV_UTYPE, SSA_TITLE_UTYPE
@@ -83,6 +84,7 @@ export function hasCoverageData(tableOrId) {
     if (!getBooleanMetaEntry(table, MetaConst.COVERAGE_SHOWING, true)) return false;
     if (!table) return false;
     if (!table.totalRows) return false;
+    if (isTableExclusiveToPlot(table)) return false;
     return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table, true)) || !isEmpty(getCornersColumns(table));
 }
 

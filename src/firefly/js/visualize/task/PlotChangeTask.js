@@ -326,7 +326,8 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
             resultAry.forEach((r, i) => {
                 if (i === 0) return;
                 const {imageOverlayId}= existingOverlayPlotViews[i-1];
-                const plot = WebPlot.makeWebPlotData(imageOverlayId, pv.viewDim, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
+                const plot = WebPlot.makeWebPlotData({plotId:imageOverlayId, viewDim:pv.viewDim,
+                    wpInit:r.data[WebPlotResult.PLOT_CREATE][0],  asOverlay:true});
                 overlayPlotViews[i - 1] = {plot};
             });
 
@@ -354,13 +355,14 @@ function getResultAry(result) {
 
 function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
     const oldPlot= primePlot(pv);
-    const plot= WebPlot.makeWebPlotData(pv.plotId, pv.viewDim,pc,
-        {...oldPlot.attributes,
+    const {plotId,viewDim}= pv;
+    const plot= WebPlot.makeWebPlotData({plotId, viewDim,wpInit:pc,cubeCtx,
+        attributes:{...oldPlot.attributes,
             [PlotAttribute.IMAGE_BOUNDS_SELECTION]:undefined,
             [PlotAttribute.SELECTION]: undefined,
             [PlotAttribute.SELECTION_SOURCE]: undefined
         },
-    false, cubeCtx);
+    });
     plot.title= oldPlot.title;
     plot.colorTableId= oldPlot.colorTableId;
     return plot;

@@ -932,7 +932,7 @@ export function getCubePlaneFromWavelength(pv,wl,imPt) {
 
 /**
  * Return the units string
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param {Band} [band]
  * @return {string}
  */

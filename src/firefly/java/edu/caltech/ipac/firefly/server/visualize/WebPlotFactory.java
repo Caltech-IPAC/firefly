@@ -156,7 +156,7 @@ public class WebPlotFactory {
         return new WebPlotHeaderInitializer(s.getOriginalFitsFileStr(NO_BAND),
                 s.getWorkingFitsFileStr(NO_BAND), s.getUploadFileName(NO_BAND),
                 s.getRangeValues(), pInfo.dataDesc(), s.isMultiImageFile(),
-                false, s.getPrimaryRequest(),zeroHeaderAry, attributes);
+                false, s.getPrimaryRequest(),zeroHeaderAry, attributes, frAry[0].getTotalImageHdusInFile());
     }
 
 

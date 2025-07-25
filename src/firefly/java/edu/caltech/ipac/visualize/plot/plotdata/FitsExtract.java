@@ -20,7 +20,7 @@ public class FitsExtract {
 
     public enum CombineType {AVG, SUM, OR}
 
-    private static  Number combineArray(List<Number> aryList, CombineType ct, Class<?> type) {
+    private static Number combineArray(List<Number> aryList, CombineType ct, Class<?> type) {
         if (aryList.isEmpty()) return Double.NaN;
         if (aryList.size() == 1) return aryList.get(0);
         double cnt = 0;
@@ -107,13 +107,7 @@ public class FitsExtract {
         int adjustY= (int)Math.floor((ptSizeY-1) / 2.0);
         x= x - adjustX;
         y= y - adjustY;
-        if (x<0) x= 0;
-        if (y<0) y= 0;
-
-        if (x+ptSizeX>=naxis1) x-= (x+ptSizeX-naxis1+1);
-        if (y+ptSizeY>=naxis2) y-= (y+ptSizeY-naxis2+1);
-        if (x<0) x= 0;
-        if (y<0) y= 0;
+        boolean outOfImage= x < 0 || y < 0 || x+ptSizeX>=naxis1+1 ||  y+ptSizeY>=naxis2+1;
 
         Class<?> arrayType= switch (bitpix) {
             case -32 -> Float.TYPE;
@@ -121,6 +115,17 @@ public class FitsExtract {
             case 64 -> Long.TYPE;
             default -> Double.TYPE;
         };
+        var blankValue= FitsReadUtil.getBlankValue(header);
+
+        if (outOfImage) {
+            return switch (arrayType.toString()) {
+                case "float" -> Float.NaN;
+                case "int" -> (int)blankValue;
+                case "long" -> (long)blankValue;
+                default -> Double.NaN;
+            };
+        }
+
 
         if (!primaryHdu && (arrayType==Integer.TYPE || arrayType==Long.TYPE)) {
            ct= CombineType.OR;
@@ -130,7 +135,6 @@ public class FitsExtract {
 
         var bscale= FitsReadUtil.getBscale(header);
         var bzero= FitsReadUtil.getBzero(header);
-        var blankValue= FitsReadUtil.getBlankValue(header);
 
         if (bscale==1.0D && bzero==0D && !isNaN(aveValue) && aveValue.doubleValue()!=blankValue) return aveValue;
         if (arrayType==Float.TYPE && Float.isNaN(aveValue.floatValue())) return Float.NaN;

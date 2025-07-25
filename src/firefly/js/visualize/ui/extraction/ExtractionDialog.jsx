@@ -4,11 +4,10 @@
 
 
 import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
-import {isUndefined} from 'lodash';
+import {isUndefined,isArray} from 'lodash';
 import React, {useEffect, useState} from 'react';
 import sizeMe from 'react-sizeme';
 import {getAppOptions} from '../../../api/ApiUtil.js';
-import {isDefined} from '../../../util/WebUtil';
 import {makeImagePt} from '../../Point';
 import {allowPinnedCharts} from '../../../charts/ChartUtil';
 import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
@@ -28,7 +27,6 @@ import {FieldGroup} from '../../../ui/FieldGroup';
 import HelpIcon from '../../../ui/HelpIcon.jsx';
 import {ListBoxInputField, ListBoxInputFieldView} from '../../../ui/ListBoxInputField.jsx';
 import {PopupPanel} from '../../../ui/PopupPanel.jsx';
-import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue, useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {ValidationField} from '../../../ui/ValidationField';
 import {intValidator} from '../../../util/Validate';
@@ -48,8 +46,8 @@ import {
     isMultiHDUFits, primePlot
 } from '../../PlotViewUtil.js';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
-import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart';
-import {keepLineExtraction, keepPointsExtraction, keepZAxisExtraction} from './ExtractionTable';
+import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart.jsx';
+import {keepDataExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
 
 
 const DIALOG_ID= 'extractionDialog';
@@ -241,7 +239,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
-    const [chartXAxis,setChartXAxis]= useState('imageX');
+    const [chartXAxis]= useState('imageX');
     const plot= primePlot(pv);
     const ptAry=plot?.attributes?.[PlotAttribute.PT_ARY] ??[];
     const cc= CysConverter.make(plot);
@@ -254,13 +252,6 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const hduNum= getHDU(plot);
     const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
     const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
-
-
-    const bottomUI = plotlyData ?
-            (<RadioGroupInputFieldView value={chartXAxis} buttonGroup={true}
-                                       options={ [ {label: 'Image X', value: 'imageX'}, {label: 'Image Y', value: 'imageY'} ]}
-                                       onChange={(ev) => setChartXAxis(ev.target.value)} />) :
-            undefined;
 
     useEffect(() => {
         const getData= async () => {
@@ -295,10 +286,8 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
-            callKeepExtraction: (download, doOverlay) =>
-                keepPointsExtraction(imPtAry, pv, plot,
-                    plot.plotState.getWorkingFitsFileStr(), hduNum, plane,
-                    pointSize,combineOp, download, doOverlay),
+            callKeepExtraction: (save, doOverlay) =>
+                keepDataExtraction({pv,baseImPtAry:imPtAry,save,doOverlay,pointSize,combineOp})
         }} /> );
 }
 
@@ -371,17 +360,16 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             sizeType: axis==='y'?SIZE_HORIZONTAL:SIZE_VERTICAL,
             startUpHelp: <LineStartUpHelp {...{helpWarning,plot,pvCnt}}/>,
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
-            callKeepExtraction: (download, doOverlay) =>
-                keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(),
-                    hduNum, plane,
-                    axis==='x' ? 1 : pointSize,
-                    axis==='y' ? 1: pointSize,
-                    combineOp, download, doOverlay),
+            callKeepExtraction: (save, doOverlay) =>
+                keepDataExtraction({pv,baseImPtAry:getLinePointAry(ipt1, ipt2),save,
+                    doOverlay,axis,pointSize,combineOp, isLine:true})
         }}>
             <LineExtractionType {...{plotlyData:plotlyDataToUse, plotId, selectionType}}/>
         </ExtractionPanelView>
     );
 }
+
+
 
 const LineStartUpHelp= ({helpWarning,plot,pvCnt}) => (
     <Stack alignItems='center'>
@@ -631,6 +619,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
         for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x${i}`, value:i});
     }
 
+    const canExtract = plotlyData && canCreateExtractionTable;
 
     return (
         <Stack {...{p:.5, alignItems:'stretch', overflow: 'hidden', zIndex:1, direction:'column',
@@ -661,21 +650,16 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
             <Stack {...{
                 textAlign:'center', alignSelf: 'stretch', direction:'row',
                 justifyContent:'space-between', pt:2, pl:2, pb:1, pr: 1}}>
-                <Stack {...{direction:'row', justifyContent:'space-between'}}>
-                    {plotlyData && canCreateExtractionTable && !allowPinnedCharts() &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false,true)} />}
-                    {plotlyData && canCreateExtractionTable && allowPinnedCharts() &&
-                        <CompleteButton style={{paddingLeft: 15}} text='Pin Chart/Table' onSuccess={() => {
-                            const tbl_id = callKeepExtraction(false,true);
-                            onTableLoaded(tbl_id).then(() => {
-                                const chartId = ensureDefaultChart(tbl_id);
-                                if (chartId) pinChart({chartId});
-                            });
-                        }} />}
+                <Stack {...{direction:'row', justifyContent:'space-between', spacing:2}}>
+                    {canExtract &&
+                        <CompleteButton text= {allowPinnedCharts() ? 'Pin Chart/Table' : 'Pin Table'}
+                                        onSuccess={ () => void keepExtractionAndPin(callKeepExtraction, allowPinnedCharts()) } />}
                     {plotlyData &&
-                    <CompleteButton sx={{pl: 2}} primary={false} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
+                        <CompleteButton primary={false} text='Download as Table'
+                                        onSuccess={()=> void callKeepExtraction(true,false)}/>}
                     {plotlyData &&
-                    <CompleteButton sx={{pl: 2}} primary={false} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
+                        <CompleteButton primary={false} text='Download Chart'
+                                        onSuccess={()=> void downloadChart(CHART_ID)}/>}
                 </Stack>
                 <HelpIcon helpId={'visualization.extraction'}/>
             </Stack>
@@ -684,6 +668,15 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
 }
 
 
+async function keepExtractionAndPin(callKeepExtraction,allowpinChart=false) {
+    const tblIdAry = await callKeepExtraction(false,true);
+    if (!allowpinChart) return;
+    for (const tbl_id of tblIdAry) {
+        await onTableLoaded(tbl_id);
+        const chartId = ensureDefaultChart(tbl_id);
+        if (chartId) pinChart({chartId});
+    }
+}
 
 function cancelZaxisExtraction() {
     dispatchChangePointSelection(ZAXIS_POINT_SELECTION_ID, false);
@@ -709,6 +702,3 @@ function cancelPointExtraction() {
     }
     dispatchHideDialog(DIALOG_ID);
 }
-
-
-

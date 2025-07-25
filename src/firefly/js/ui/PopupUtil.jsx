@@ -6,6 +6,7 @@ import {Sheet, Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {isString} from 'lodash';
 import CompleteButton from './CompleteButton.jsx';
+import {FieldGroup} from './FieldGroup';
 import {PopupPanel} from './PopupPanel.jsx';
 import {ModalDialog} from './ModalDialog.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -78,6 +79,21 @@ export function showPopup({ID, content, title='Options', modal = false}) {
     return () => dispatchHideDialog(ID);
 }
 
+export function showFieldGroupPopup({groupKey, content, onSuccess, keepState=false,
+                                        successText='OK', title='Options', modal = false}) {
+    const dialogContent= (
+        <FieldGroup {...{groupKey,keepState}}>
+            <Stack spacing={4} sx={{p:2}}>
+                {content}
+                <Stack {...{direction:'row'}}>
+                    <CompleteButton onSuccess={onSuccess} text= {successText} dialogId={groupKey}/>
+                </Stack>
+            </Stack>
+        </FieldGroup>
+    );
+    return showPopup({ID:groupKey,content:dialogContent,title,modal} );
+}
+
 
 /**
  * Show a simple information popup
@@ -111,25 +127,46 @@ function makeContent(content) {
     );
 }
 
+/**
+ * show a popup with yes and no buttons
+ * @param content - text or react
+ * @param {Function} clickSelection - callback returns (popupId:string, yes:boolean)
+ * @param {String} title - title on popup
+ * @param {Object} sx - sx style
+ */
 export function showYesNoPopup(content, clickSelection,  title='Information', sx) {
+    showMultiAnswerPopup(content,(id,v) => clickSelection(id,v==='yes'), {yes:'Yes', 'no': 'No'}, title, sx);
+}
+
+/**
+ * show a popup with a set of buttons defined by the answers parameter
+ * @param content - text or react
+ * @param {Function} clickSelection - callback returns (popupId:string, answerId:string)
+ * @param {Object.<answerId:string, buttonText:String>} answers - e.g {hello:'Hello', goodbye:'Goodbye'}
+ * @param {String} title - title on popup
+ * @param {Object} sx - sx style
+ */
+export function showMultiAnswerPopup(content, clickSelection,  answers, title='Information', sx) {
     const results= (
         <PopupPanel title={title} >
-            {makeYesNoContent(content, clickSelection, sx)}
+            { makeMultiAnswerContent(content, clickSelection, answers, sx) }
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
     dispatchShowDialog(INFO_POPUP);
 }
 
-function makeYesNoContent(content, clickSelection, sx) {
+function makeMultiAnswerContent(content, clickSelection, answers, sx) {
     return (
         <Stack direction='column' p={1} spacing={2}>
             <Sheet style={{minWidth:190, maxWidth: 400, p:1, ...sx}}>
                 {content}
             </Sheet>
             <Stack direction='row' spacing={1}>
-                <CompleteButton onSuccess={() => clickSelection(INFO_POPUP, true)} text= 'Yes'/>
-                <CompleteButton onSuccess={() => clickSelection(INFO_POPUP, false)} text= 'No'/>
+                {
+                    Object.entries(answers).map( ([k,v],idx) =>
+                        <CompleteButton key={k} primary={idx===0} onSuccess={() => clickSelection(INFO_POPUP, k)} text= {v}/>)
+                }
             </Stack>
         </Stack>
     );

@@ -185,9 +185,9 @@ export const MetaConst = {
     SIMULATED_TABLE: 'SIMULATED_TABLE',
 
     /**
-     * if true, Show the coverage display even it this table does not have coverage information
-     * if false, treat this table as it has no coverage
-     * value must be true or false, it not defined or has some other value then evaluate the table for coverage as normal.
+     * If true, Show the coverage display even it this table does not have coverage information.
+     * If false, treat this table as it has no coverage.
+     * Value must be true or false, if not defined or has some other value then evaluate the table for coverage as normal.
      */
     COVERAGE_SHOWING : 'CoverageShowing',
 
@@ -253,6 +253,9 @@ export const MetaConst = {
      * If defined and true, dispatchTableSearch will be called but prevent going to results view directly
      */
     UPLOAD_TABLE: 'UploadTable',
+
+    /** boolean - if true then use with FITS_FILE_PATH to determine if a PlotView exist that is exclusive*/
+    EXCLUSIVE_TO_PLOT: 'ExclusiveToPlot',
 
     /**
      * if defined and an object, Then this will be table specific DataProductsFactory options
