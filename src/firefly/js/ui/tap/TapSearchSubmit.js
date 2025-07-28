@@ -82,7 +82,7 @@ export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additio
             ...treq.META_INFO,
             ...additionalTapMeta,
             ...metaInfo,
-            [MetaConst.DATA_SERVICE_ID] : getServiceId(serviceUrl),
+            [MetaConst.DATA_SERVICE_ID] : metaInfo?.[MetaConst.DATA_SERVICE_ID] ?? getServiceId(serviceUrl)
         };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true, ...tblOptions});
     };

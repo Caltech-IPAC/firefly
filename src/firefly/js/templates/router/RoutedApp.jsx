@@ -5,7 +5,7 @@ import {FireflyLayout} from '../common/FireflyLayout.jsx';
 import {IrsaFooterSmall} from '../../ui/IrsaFooter.jsx';
 import {useDropdownRoute} from './RouteHelper.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
-import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
+import {getAllStartIds, startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu} from '../../core/AppDataCntlr.js';
 import {applyLayoutFix, HydraLanding} from '../hydra/HydraViewer.jsx';
 import {Slot} from '../../ui/SimpleComponent.jsx';
@@ -61,7 +61,7 @@ useDropdownRoute:  The hook marrying route behavior on top of Firefly's layout c
 export  default function RoutedApp({slotProps, menu, mainPanel, children, dropdownPanels, ...props}) {
 
     useEffect(() => {
-        startTTFeatureWatchers();
+        startTTFeatureWatchers(getAllStartIds());
         dispatchSetMenu({menuItems: menu});
         dispatchOnAppReady(() => {
             dispatchNotifyRemoteAppReady();

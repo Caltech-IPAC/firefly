@@ -17,7 +17,7 @@ import {
     SSA_COV_UTYPE, SSA_TITLE_UTYPE
 } from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
-import {hasServiceDescriptors} from './VoDataLinkServDef.js';
+import {getServiceDescriptors, hasServiceDescriptors, isDataLinkServiceDesc} from './VoDataLinkServDef.js';
 import {VoTableRecognizer} from './VoTableRecognizer.js';
 
 
@@ -176,6 +176,17 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
     const hasFormat = getObsCoreTableColumn(table, ACCESS_FORMAT);
     const hasProdType = getObsCoreProdTypeCol(table);
     return Boolean(hasUrl && hasFormat && hasProdType);
+}
+
+/**
+ * Return true if this table has a datalink service descriptor (treat it like obscore-type table in this case)
+ * @param {TableModel|String} tableOrId
+ * @return {boolean}
+ */
+export function hasDataLinkSvcDesc(tableOrId) {
+    const table = getTableModel(tableOrId);
+    const serDefs  = getServiceDescriptors?.(table) ?? [];
+    return serDefs.some(isDataLinkServiceDesc);
 }
 
 

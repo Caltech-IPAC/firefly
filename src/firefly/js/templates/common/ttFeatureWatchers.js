@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {cloneDeep, once} from 'lodash';
+import {cloneDeep, isEmpty, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
@@ -7,7 +7,8 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {findTableCenterColumns, hasObsCoreLikeDataProducts, isDatalinkTable} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable
+} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
@@ -44,10 +45,13 @@ export function startTTFeatureWatchers(startIds=[
 export const getObsCoreWatcherDef= once(() => ({
     id : 'ObsCorePackage',
     watcher : watchForObsCoreTable,
-    testTable : hasObsCoreLikeDataProducts,
+    testTable : isObsCoreish,
     actions: [TABLE_LOADED]
 }));
 
+function isObsCoreish(tableOrId) {
+    return hasObsCoreLikeDataProducts(tableOrId) || hasDataLinkSvcDesc(tableOrId);
+}
 
 const addedTblIds=[];
 
@@ -74,8 +78,10 @@ function setupObsCorePackaging(tbl_id) {
     }
     if (!enabled) return;
 
+    const dlProps = getDataServiceOptionByTable('obsCoreDownloadProps', table, {}) || {};
+
     const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {} ;
-    leftButtons.unshift(() => <PrepareDownload/>);
+    leftButtons.unshift(() => <PrepareDownload {...dlProps} />);
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons});
 }
 
