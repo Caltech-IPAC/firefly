@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {cloneDeep, isEmpty, once} from 'lodash';
+import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
@@ -11,11 +11,10 @@ import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, 
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
-import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
+import {getActiveRowToImageDef} from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
-import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,
-} from 'firefly/ui/tap/Cutout';
+import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,} from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
 import {fetchSemanticList} from 'firefly/metaConvert/vo/DatalinkFetch';
 import {checkForDatalinkServDesc} from 'firefly/ui/dynamic/ServiceDefTools';
@@ -183,12 +182,14 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
         centerColValues: { ra, dec }
     };
 
+    const keysToWatch = cutoutValue + '|' + position.centerColValues.ra + '|' + position.centerColValues.dec;
+
     return (
         <>
             {loading && <ToolbarButton enabled={false} variant={'soft'} color='warning' text={downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}/>}
             {!loading &&
                 <Stack>
-                    <DownloadButton
+                    <DownloadButton key={keysToWatch}
                         buttonText = {downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}>
                         <DownloadOptionPanel {...{
                             updateSearchRequest,

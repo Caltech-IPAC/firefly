@@ -315,12 +315,7 @@ function OptionalTarget({cutoutCenterWP,sx}) {
     useEffect(() => {
         const newWp= getEnteredTarget();
         if (newWp?.then) return; // ignore promises
-        if (!newWp || newWp?.toString()===cutoutCenterWP?.toString()) {
-            setOverrideTarget(undefined);
-        }
-        else {
-            setOverrideTarget(newWp);
-        }
+        setOverrideTarget(newWp);
     }, [getEnteredTarget]);
 
     const header= (
