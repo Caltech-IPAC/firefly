@@ -1,15 +1,20 @@
-import {Box, Button, Chip, Stack, Typography} from '@mui/joy';
-import {truncate} from 'lodash';
+import {Box, Button, Chip, Stack, Switch, Typography} from '@mui/joy';
+import {isFunction, truncate} from 'lodash';
 import React from 'react';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr';
 import {getTableUiByTblId, getTblById} from '../../tables/TableUtil';
 import {hideColorPickerDialog, showColorPickerDialog} from '../../ui/ColorPicker';
+import {useStoreConnector} from '../../ui/SimpleComponent';
 import {ColorChangeType} from '../draw/DrawLayer';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import DrawUtil from '../draw/DrawUtil';
 import {SimpleCanvas} from '../draw/SimpleCanvas';
-import {dispatchChangeDrawingDef, getDlAry} from '../DrawLayerCntlr';
-import {getDrawLayerById, getDrawLayersByDisplayGroup} from '../PlotViewUtil';
+import {dispatchChangeDrawingDef, dispatchChangeVisibility, getDlAry, GroupingScope} from '../DrawLayerCntlr';
+import {visRoot} from '../ImagePlotCntlr';
+import {
+    DEFAULT_COVERAGE_PLOT_ID,
+    getDrawLayerById, getDrawLayersByDisplayGroup, getLayerTitle, getPlotViewById, isDrawLayerVisible, primePlot
+} from '../PlotViewUtil';
 
 const symbolSize= 10;
 
@@ -63,10 +68,12 @@ export function TableColorTitle({color,drawLayerId, plotId, tbl_id}) {
     const dl= getDrawLayerById(getDlAry(), drawLayerId);
     if (!table || !dl) return;
 
+    const titleControl= ( <TableTitleLayerVisible {...{dl}}/> );
+
     return (
         <Stack direction='row' alignItems='center' spacing={1/4} overflow='hidden'>
             <Button sx={{p:'3px', minHeight:0, zIndex:2}}
-                onClick={() => modifyDrawColor(dl,plotId,tbl_id)}>
+                onClick={() => modifyDrawColor(dl,plotId,tbl_id,' and Visibility',titleControl)}>
                 <Box {...{
                      width:symbolSize, height:symbolSize, backgroundColor: color,
                     border:'1px solid transparent', borderRadius:3
@@ -77,11 +84,28 @@ export function TableColorTitle({color,drawLayerId, plotId, tbl_id}) {
     );
 }
 
+function TableTitleLayerVisible({dl}) {
+    const plotIdToUse= () => getPlotViewById(visRoot(), DEFAULT_COVERAGE_PLOT_ID)?.plotId ?? primePlot(visRoot())?.plotId;
+
+    const visible= useStoreConnector(() =>
+        isDrawLayerVisible( getDrawLayerById(getDlAry(),dl.drawLayerId), plotIdToUse() ));
+
+    return (
+        <Stack {...{direction: 'row', alignItems: 'center'}}>
+            <Switch {...{
+                checked:visible,
+                sx:{pr:.5},
+                onChange:() => changeVisible(dl, !visible, plotIdToUse()) }}/>
+            {getTitleTag(getLayerTitle(plotIdToUse(),dl),30, dl.autoFormatTitle)}
+        </Stack>
+    );
+}
+
 export function makeTableColorTitle(color, drawLayerId, plotId, tbl_id) {
     return <TableColorTitle {...{color, drawLayerId, plotId, tbl_id}} />;
 }
 
-export function modifyDrawColor(inDl, plotId, tbl_id) {
+export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
     hideColorPickerDialog();
     showColorPickerDialog(inDl.drawingDef.color, inDl.canUserChangeColor === ColorChangeType.STATIC, false,
         (ev) => {
@@ -105,5 +129,48 @@ export function modifyDrawColor(inDl, plotId, tbl_id) {
                 const dl = getDrawLayersByDisplayGroup(getDlAry(), inDl.displayGroupId);
                 dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({}, dl.drawingDef, {color: rgbStr}), plotId, dl.titleMatching);
             }
-        }, '');
+        }, '', undefined, undefined, undefined, postTitle, topComponent);
+}
+
+export function getTitleTag(title, maxTitleChars, autoFormatTitle) {
+    if (!autoFormatTitle) {
+        return isFunction(title) ? title() : title;
+    }
+    const {minW,maxW}= getMinMaxWidth(maxTitleChars);
+
+    return (
+        <Typography {...{
+            whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+            minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
+            {title}
+        </Typography>
+    );
+}
+
+/**
+ *
+ * @param {DrawLayer} dl
+ * @param {boolean} visible
+ * @param {string} plotId
+ */
+export function changeVisible(dl, visible, plotId) {
+    const {displayGroupId, groupingScope, supportSubgroups} = dl;
+    const pv = getPlotViewById(visRoot(), plotId);
+    if (groupingScope === GroupingScope.GROUP || !supportSubgroups || !groupingScope || !pv || !pv.drawingSubGroupId) {
+        dispatchChangeVisibility({id: displayGroupId, visible, plotId, matchTitle: dl.titleMatching});
+    } else {
+        switch (groupingScope) {
+            case GroupingScope.SUBGROUP : // change all, then put only subgroup back
+                dispatchChangeVisibility({id: displayGroupId, visible, plotId, subGroupId: pv.drawingSubGroupId});
+                break;
+            case GroupingScope.SINGLE : // change all, then put only image back
+                dispatchChangeVisibility({id: displayGroupId, visible, plotId, useGroup: false});
+                break;
+            default :
+                console.log('DrawLayerPanelView.changeVisible show never happen');
+                break;
+        }
+
+    }
+
 }

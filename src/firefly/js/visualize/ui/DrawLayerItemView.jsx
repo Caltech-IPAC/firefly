@@ -5,8 +5,7 @@
 import React from 'react';
 import {Box, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
-import {isFunction} from 'lodash';
-import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';
+import {getTitleTag, makeColorChange, makeShape} from './DrawLayerUIComponents';
 
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
@@ -63,21 +62,6 @@ DrawLayerItemView.propTypes= {
     packWithNext: PropTypes.bool,
 };
 
-
-function getTitleTag(title, maxTitleChars, autoFormatTitle) {
-    if (!autoFormatTitle) {
-        return isFunction(title) ? title() : title;
-    }
-    const {minW,maxW}= getMinMaxWidth(maxTitleChars);
-
-    return (
-        <Typography {...{
-            whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
-            minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
-            {title}
-        </Typography>
-    );
-}
 
 
 function makeColorChangeUIElement(color, canUserChangeColor, modifyColor) {

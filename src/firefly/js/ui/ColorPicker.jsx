@@ -32,10 +32,11 @@ const dialogTip= (
 export const hideColorPickerDialog= () => dispatchHideDialog('ColorPickerDialog');
 
 export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, cb, Id = '',
-                                      helpId, presetAlpha,  presetColors, postTitle) {
+                                      helpId, presetAlpha,  presetColors, postTitle, topComponent) {
     const popup= (
-        <PopupPanel title={'Color Picker'+ (Id ? ` - ${Id}`: '') + (postTitle ? ` - ${postTitle}`: '')} >
+        <PopupPanel title={'Color Picker'+ (Id ? ` - ${Id}`: '') + (postTitle ? `${postTitle}`: '')} >
             <ColorPickerWrapper callback={cb} color={color} helpId={helpId}
+                                topComponent={topComponent}
                                 callbackOnOKOnly={callbackOnOKOnly} callbackOnBoth={callbackOnBoth}
                                 presetColors={presetColors}  presetAlpha={presetAlpha} />
         </PopupPanel>
@@ -47,7 +48,7 @@ export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, c
 var lastEv;
 
 function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth,
-                                 helpId= 'visualization.colorpicker',
+                                 helpId= 'visualization.colorpicker', topComponent,
                                  presetAlpha,  presetColors=DEF_PRESET_COLORS}) {
     const [currentColor, setCurrentColor] = useState(color);
 
@@ -71,26 +72,29 @@ function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth,
 
     return (
         <Tooltip title={dialogTip} placement='right'>
-            <Stack spacing={1}>
-                <SketchPicker color={currentColor} presetColors={psColors}
-                              styles={{
-                                  picker:{
-                                      minWidth: '20rem',
-                                      padding: 8,
-                                  }
-                              }}
-                              onChangeComplete={updateColor}
-                              onChange={(ev) => updateStateFromRGBA(ev.rgb)}/>
-                <Stack {...{ direction:'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <CompleteButton
-                        text={(callbackOnOKOnly||callbackOnBoth)? 'OK' : 'Close'}
-                        onSuccess={() => {
-                        (callbackOnOKOnly||callbackOnBoth) && callback(lastEv,true);
-                        dispatchHideDialog('ColorPickerDialog');
-                    }} />
-                    <div style={{ textAlign:'center'}}>
-                        <HelpIcon helpId={helpId} />
-                    </div>
+            <Stack spacing={2}>
+                {Boolean(topComponent) && topComponent}
+                <Stack spacing={1}>
+                    <SketchPicker color={currentColor} presetColors={psColors}
+                                  styles={{
+                                      picker:{
+                                          minWidth: '20rem',
+                                          padding: 8,
+                                      }
+                                  }}
+                                  onChangeComplete={updateColor}
+                                  onChange={(ev) => updateStateFromRGBA(ev.rgb)}/>
+                    <Stack {...{ direction:'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <CompleteButton
+                            text={(callbackOnOKOnly||callbackOnBoth)? 'OK' : 'Close'}
+                            onSuccess={() => {
+                                (callbackOnOKOnly||callbackOnBoth) && callback(lastEv,true);
+                                dispatchHideDialog('ColorPickerDialog');
+                            }} />
+                        <div style={{ textAlign:'center'}}>
+                            <HelpIcon helpId={helpId} />
+                        </div>
+                    </Stack>
                 </Stack>
             </Stack>
         </Tooltip>

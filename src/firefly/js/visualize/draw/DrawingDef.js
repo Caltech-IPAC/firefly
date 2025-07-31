@@ -74,10 +74,11 @@ export const TextLocation = new Enum([
  * @prop ENDHANDLED
  * @prop LIGHT
  * @prop FILL
+ * @prop AUTO
  * @prop DESTINATION_OUTLINE
  */
 /** @type Style */
-export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL', 'DESTINATION_OUTLINE']);
+export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL', 'DESTINATION_OUTLINE', 'AUTO']);
 
 export const DEFAULT_FONT_SIZE = '9pt';
 

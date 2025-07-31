@@ -6,7 +6,7 @@ import {get, set, isEmpty, cloneDeep, isString} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup, getFoV} from '../visualize/PlotViewUtil.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer, dlRoot} from '../visualize/DrawLayerCntlr.js';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
@@ -22,12 +22,13 @@ import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {MetaConst} from '../data/MetaConst';
 import {getNextColor} from '../visualize/draw/DrawingDef';
-import {rateOpacity} from '../util/Color.js';
+import {rateOpacity, toRGBA, toRGBAString} from '../util/Color.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
 const MocPrefix = 'MOC - ';
+const MIN_AUTO_FILL_DEPTH= 6;
 const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, onDetach, getUIComponent, null, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
@@ -53,6 +54,7 @@ function getVisiblePlotIdsByDrawlayerId(id, getState) {
 
 function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
     const {id, mocFitsInfo}= params;
+    let autoUsesOnlyOutline= false;
     if (action.payload.drawLayerId === id && (action.payload.visible)) {
         const {fitsPath,tbl_id,tablePreloaded} = mocFitsInfo || {};
 
@@ -71,6 +73,9 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
 
                       // in this case we may have 1 test row loaded. test to see if it is greater than the filter
                 if (preloadedTbl.tableData.data[0][0] > maxDepth)  filterObj= {}; //abort filtering
+
+                autoUsesOnlyOutline= (preloadedTbl.tableData.data[0][0]> 4*(4**(MIN_AUTO_FILL_DEPTH)));
+
 
                 tReq= cloneRequest(preloadedTbl.request,
                     { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName, ...filterObj});
@@ -91,7 +96,7 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
             doFetchTable(tReq).then(
                 (tableModel) => {
                     if (tableModel.tableData) {
-                        dispatchModifyCustomField(tbl_id, {mocTable:tableModel});
+                        dispatchModifyCustomField(tbl_id, {mocTable:tableModel,autoUsesOnlyOutline});
                         const visiblePlotIdAry =getVisiblePlotIdsByDrawlayerId(id, getState);
                         visiblePlotIdAry.forEach((pId) => {
                             dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
@@ -149,7 +154,7 @@ function creator(initPayload) {
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
     drawingDef.color = preloadedTbl?.tableMeta?.[MetaConst.DEFAULT_COLOR] ?? defColors[mocGroupDefColorId] ?? color;
-    const defStyle= getAppOptions().hips.mocDefaultStyle ?? 'outline';
+    const defStyle= getAppOptions().hips.mocDefaultStyle ?? 'AUTO';
     const inStyleStr= getMetaEntry(preloadedTbl, MetaConst.MOC_DEFAULT_STYLE, defStyle).toLowerCase();
     switch (inStyleStr) {
         case 'moc tile outline':
@@ -160,6 +165,9 @@ function creator(initPayload) {
         case 'fill':
             drawingDef.style= Style.FILL;
             break;
+        case 'auto':
+            drawingDef.style= Style.AUTO;
+            break;
         case 'outline':
         case 'destination_outline':
         default:
@@ -169,6 +177,8 @@ function creator(initPayload) {
 
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
+
+    dl.requestedStyle= drawingDef.style;
 
     dl.mocFitsInfo = mocFitsInfo;
     dl.mocTable= undefined;
@@ -256,7 +266,7 @@ function showMessage(text, bShow = false) {
  */
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId, plotIdAry} = action.payload;
-    const {visiblePlotIdAry=[], mocFitsInfo} = drawLayer;
+    const {visiblePlotIdAry=[], mocFitsInfo, autoUsesOnlyOutline=false} = drawLayer;
 
     if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
 
@@ -277,14 +287,31 @@ function getLayerChanges(drawLayer, action) {
             return {title: tObj, updateStatusAry};
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {fillStyle, targetPlotId, mocTable} = action.payload.changes;
+            const {fillStyle, targetPlotId, mocTable, autoUsesOnlyOutline=false} = action.payload.changes;
 
             if (fillStyle && targetPlotId) {
-                const {mocStyle={}} = drawLayer;
-                const style = Style.get(fillStyle);
 
-                set(mocStyle, [targetPlotId], style);
-                return Object.assign({}, {mocStyle});
+                const [r,g,b,alpha]= toRGBA(drawLayer.drawingDef.color);
+                const {mocStyle={},drawingDef} = drawLayer;
+                const requestedStyle= Style.get(fillStyle);
+                const savedAlpha= requestedStyle!==Style.AUTO ? alpha : drawLayer.savedAlpha;
+                const newDrawingDef= {...drawingDef};
+
+                let newStyle;
+                const newMocObj = {...drawLayer.mocObj};
+                if (requestedStyle===Style.AUTO) {
+                    const {style: s, color:newColor} = getAutoDrawStyle(primePlot(visRoot(),targetPlotId), drawingDef.color, autoUsesOnlyOutline);
+                    newDrawingDef.color= newColor;
+                    newMocObj.color= newColor;
+                    newStyle= s;
+                }
+                else {
+                    if (drawLayer.requestedStyle===Style.AUTO) newDrawingDef.color= toRGBAString([r,g,b,savedAlpha]);
+                    newStyle= requestedStyle;
+                }
+
+                set(mocStyle, [targetPlotId], newStyle);
+                return {mocStyle, drawingDef:newDrawingDef, savedAlpha, requestedStyle, mocObj:newMocObj};
             }
             if (mocTable) {
                 const getMocNuniqs = () => {
@@ -295,7 +322,7 @@ function getLayerChanges(drawLayer, action) {
                 const mocCsys= getMetaEntry(mocTable,'COORDSYS')?.trim().toUpperCase().startsWith('G') ?
                     CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
                 const mocObj = createMocObj(drawLayer, mocTiles, mocCsys);
-                return {mocTable, mocObj, mocCsys, title: getTitle(drawLayer, visiblePlotIdAry)};
+                return {mocTable, mocObj, mocCsys, title: getTitle(drawLayer, visiblePlotIdAry), autoUsesOnlyOutline};
             }
             break;
 
@@ -309,13 +336,19 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.CHANGE_DRAWING_DEF:   // from color change
             const {color} = action.payload.drawingDef || {};
             const newMocObj = createMocObj(drawLayer, undefined, undefined);
-
-            if (newMocObj && newMocObj.color!==color) {
-                newMocObj.color = color;
-                if (drawLayer.mocGroupDefColorId) defColors[drawLayer.mocGroupDefColorId]= color;
-                return {mocObj: newMocObj};
+            const [r,g,b,savedAlpha]= toRGBA(color);
+            if (!newMocObj) return;
+            if (drawLayer.mocGroupDefColorId) defColors[drawLayer.mocGroupDefColorId]= color;
+            if (drawLayer.requestedStyle===Style.AUTO) {
+                const {color:newColor} = getAutoDrawStyle(primePlot(visRoot(),plotId ?? plotIdAry?.[0]), color, autoUsesOnlyOutline);
+                newMocObj.color = newColor;
             }
-            break;
+            else {
+                if (newMocObj.color===color) return;
+                newMocObj.color = color;
+            }
+            const overrideDrawingDef= {...action.payload.drawingDef, color: newMocObj.color};
+            return {mocObj: newMocObj, savedAlpha, drawingDef:overrideDrawingDef};
         default:
             return null;
     }
@@ -372,21 +405,36 @@ function addTask(plotId, taskId) {
 
 /**
  * update MOC draw data at specific intervals
- * @param dl
- * @param plotId
+ * @param {DrawLayer} inDrawLayer
+ * @param {String} plotId
  */
-function updateMocData(dl, plotId) {
-    const {updateStatusAry, mocObj} = dl;
+function updateMocData(inDrawLayer, plotId) {
+    const {updateStatusAry, mocObj} = inDrawLayer;
     const plot = primePlot(visRoot(), plotId);
     if (!plot?.viewDim) return;
     const updateStatus = updateStatusAry[plotId];
+    const dl= {...inDrawLayer};
+    dl.drawingDef= {...dl.drawingDef};
+
+    const inStyle= dl.requestedStyle ?? dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
+    let style;
+    if (inStyle===Style.AUTO) {
+        const {style:s,color}=  getAutoDrawStyle(plot,dl.drawingDef.color,dl.autoUsesOnlyOutline);
+        style= s;
+        dl.drawingDef.color= color;
+        mocObj.color= color;
+    }
+    else {
+        style= inStyle;
+    }
+
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
         const newMocObj = {...mocObj};
 
         newMocObj.mocGroup = MocGroup.copy(mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
-        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
+        newMocObj.style = style;
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
@@ -405,10 +453,24 @@ function updateMocData(dl, plotId) {
                  startIdx, endIdx, updateStatus.storedSidePoints);  // handle max chunk
              updateStatus.processedTiles.push(...moreObjs);
              if (updateStatus.processedTiles.length >= updateStatus.totalTiles) {
-                 abortUpdate(dl, updateStatusAry, plotId, LayerUpdateMethod.byTrueAry);
+                 completeAsyncUpdate(dl, updateStatusAry, plotId, LayerUpdateMethod.byTrueAry);
              }
          }
      }
+}
+
+function getAutoDrawStyle(plot, color,autoUsesOnlyOutline=false) {
+    const [r,g,b]= toRGBA(color);
+    const fov= getFoV(plot);
+    if (!fov) return {style:Style.FILL, color:toRGBAString([r,g,b,1])};
+    if (autoUsesOnlyOutline || fov<30) return {style:Style.DESTINATION_OUTLINE, color:toRGBAString([r,g,b,1])};
+    const alpha= getAlpha(fov);
+    return {style:Style.FILL, color: toRGBAString([r,g,b,alpha])};
+}
+
+function getAlpha(fov, {minFov=25, maxFov=70, minAlpha=.01, maxAlpha=.7}={}) {
+    const t = Math.min(Math.max((fov - minFov) / (maxFov - minFov), 0), 1); // normalized fov in [0,1]
+    return minAlpha + t * (maxAlpha - minAlpha);
 }
 
 /**
@@ -448,34 +510,36 @@ function makeUpdateDeferred(drawLayerId, plotId) {
  * @param plotId
  */
 function updateDrawLayer(drawObjAry, drawLayer, plotId) {
-    const dd = Object.assign({}, drawLayer.drawData);
-    set(dd[DataTypes.DATA], [plotId], drawObjAry);
-
-    const newDrawLayer = {...drawLayer, drawData: dd};
+    const drawData = {...drawLayer.drawData, data:{...drawLayer.drawData.data, [plotId]:drawObjAry}};
+    const newDrawLayer = {...drawLayer, drawData};
     dispatchUpdateDrawLayer(newDrawLayer);
     return newDrawLayer;
 }
 
 
 /**
- * abort the draw data update
- * @param dl
+ * complete the async drow object computation and update the draw layer
+ * @param dl - the droaw layer, if not defined then just end the async task
  * @param updateStatusAry
  * @param pId
  * @param updateMethod
  */
-function abortUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.none) {
-    if (updateMethod === LayerUpdateMethod.byTrueAry) {
-        const {processedTiles} = updateStatusAry[pId];
-        updateDrawLayer(processedTiles, dl, pId);
-    } else if (updateMethod === LayerUpdateMethod.byEmptyAry) {
-        updateDrawLayer([], dl, pId);
+function completeAsyncUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.none) {
+    if (dl && (updateMethod===LayerUpdateMethod.byTrueAry || updateMethod===LayerUpdateMethod.byEmptyAry)) {
+        const drawObjAry= LayerUpdateMethod.byTrueAry ? updateStatusAry[pId].processedTiles : [];
+        updateDrawLayer(drawObjAry, dl, pId);
     }
-
     removeTask(pId, updateStatusAry[pId].updateTaskId);
     updateStatusAry[pId].abortUpdate();
 
 }
+
+
+function abortLastAsyncUpdateIfRunning(updateStatusAry, pId) {
+    completeAsyncUpdate(undefined,updateStatusAry, pId);
+}
+
+
 
 /**
  * produce the draw data in async style
@@ -517,19 +581,16 @@ function asyncComputeDrawData(drawLayer, action) {
 
 function mocRedraw(drawLayer,action) {
     const {plotId, plotIdAry} = action.payload;
-    const {visiblePlotIdAry, updateStatusAry} = drawLayer;
+    const {visiblePlotIdAry, updateStatusAry={}} = drawLayer;
 
     const pIdAry= plotIdAry ?? action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION
         ? getPlotViewIdListInOverlayGroup(visRoot(), plotId)
         : plotId ? [plotId] : [];
 
 
-
     pIdAry.forEach((pId) => {
-        if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
-            const updateMethod = LayerUpdateMethod.none;
-
-            abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
+        if (visiblePlotIdAry.includes(pId) && updateStatusAry[pId]) {
+            abortLastAsyncUpdateIfRunning(updateStatusAry,pId);
             updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer.drawLayerId, pId));
         }
     });
