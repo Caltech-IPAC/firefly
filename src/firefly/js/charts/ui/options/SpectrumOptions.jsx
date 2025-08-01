@@ -29,6 +29,7 @@ import {sprintf} from 'firefly/externalSource/sprintf';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
+import {MathJax} from 'better-react-mathjax';
 
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -49,7 +50,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
 
     const [xLabelSuffix, yLabelSuffix] = [xUnit, yUnit].map((unit) => {
         const measurementLabel = getMeasurementLabel(unit);
-        return measurementLabel ? ` (${measurementLabel})` : '';
+        return measurementLabel ? ` ($${measurementLabel}$)` : '';
     });
 
     const labelWidth = '11rem';
@@ -73,7 +74,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
                     <GroupedStack groupTitle='X-axis'>
-                        <X label={`Spectral axis column${xLabelSuffix}:`}/>
+                        <X label={<MathJax>{`Spectral axis column${xLabelSuffix}:`}</MathJax>}/>
                         {xErrArray && <Xerrors/>}
                         {xMax && <Xmax/>}
                         {xMin && <Xmin/>}
@@ -81,7 +82,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                         <SpectralFrame labelWidth={labelWidth}/>
                     </GroupedStack>
                     <GroupedStack groupTitle='Y-axis'>
-                        <Y label={`Flux axis column${yLabelSuffix}:`}/>
+                        <Y label={<MathJax>{`Flux axis column${yLabelSuffix}:`}</MathJax>}/>
                         {yErrArray && <Yerrors/>}
                         {yMax && <Ymax label = 'Flux axis upper limit column:'/>}
                         {yMin && <Ymin label = 'Flux axis lower limit column:'/>}

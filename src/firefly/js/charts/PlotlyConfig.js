@@ -2,58 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript, getRootURL} from '../util/WebUtil.js';
 import {logger} from '../util/Logger.js';
 
-const PLOTLY_SCRIPT= 'plotly-2.32.0.min.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load Plotly';
+let loaderPromise = null;
 
-function initPlotLyRetriever(loadNow) {
-    let plotlyLoadBegin= false;
-    let waitingResolvers= [];
-    let waitingRejectors= [];
-    let loadedPlotlyFailed;
-    let loadedPlotly;
-
-    const getPlotLy= () => {
-        if (loadedPlotly || loadedPlotlyFailed) {
-            return loadedPlotly ? Promise.resolve(loadedPlotly) : Promise.reject(Error(LOAD_ERR_MSG));
-        }
-
-        const script= `${getRootURL()}${PLOTLY_SCRIPT}`;
-        if (!plotlyLoadBegin) {
-            plotlyLoadBegin= true;
-            loadScript(script).then( () => {
-                loadedPlotly= window.Plotly;
-                if (loadedPlotly) {
-                    waitingResolvers.forEach((r) => r(loadedPlotly));
-                } else {
-                    logger.error(`Plotly object is not available after ${script} is loaded`);
-                    const err= Error(LOAD_ERR_MSG);
-                    loadedPlotlyFailed= true;
-                    waitingRejectors.forEach( (r) => r(err));
-                }
-                waitingResolvers = [];
-                waitingRejectors = [];
-            }).catch( () => {
-                const err= Error(LOAD_ERR_MSG);
-                loadedPlotlyFailed= true;
-                waitingRejectors.forEach( (r) => r(err));
-                waitingResolvers= [];
-                waitingRejectors= [];
+export function getPlotLy() {
+    if (!loaderPromise) {
+        // Dynamically import Plotly.js so that it is not included in the main bundle (code splitting)
+        loaderPromise = import(/* webpackChunkName: "plotly" */ 'plotly.js-dist-min')
+            .then((mod) => mod.default || mod)
+            .catch((err) => {
+                loaderPromise = null; // so that we can retry next time
+                logger.error(`Plotly import failed: ${err.message}`);
+                throw new Error(LOAD_ERR_MSG);
             });
-        }
-        return new Promise( function(resolve, reject) {
-            waitingResolvers.push(resolve);
-            waitingRejectors.push(reject);
-        });
-    };
-    if (loadNow) getPlotLy();
-    return getPlotLy;
+    }
+    return loaderPromise;
 }
-
-
-/**
- * function to return a promise to PlotLy
- */
-export const getPlotLy= initPlotLyRetriever(false);

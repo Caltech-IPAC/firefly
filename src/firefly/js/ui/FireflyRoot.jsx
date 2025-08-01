@@ -1,8 +1,9 @@
 import React, {useEffect} from 'react';
 import {ScopedCssBaseline, extendTheme, CssVarsProvider, useColorScheme, GlobalStyles} from '@mui/joy';
-import {getBoolean, isDefined, toBoolean} from '../util/WebUtil';
-import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
+import {MathJaxContext} from 'better-react-mathjax';
 
+import {isDefined, toBoolean} from '../util/WebUtil';
+import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {defaultTheme} from './ThemeSetup.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {logger} from '../util/Logger.js';
@@ -14,6 +15,22 @@ import '@fontsource/inter/500.css'; // Medium
 import '@fontsource/inter/600.css'; // Semi-Bold
 import '@fontsource/inter/700.css'; // Bold
 import '@fontsource/inter/800.css'; // Bolder
+
+
+const mathJaxConfig = {
+    loader: {
+        // TODO: test if output can be changed to CommonHTML
+        load: ['input/tex', 'output/svg'] // Input processor is TeX, output processor is SVG
+    },
+    tex: {
+        // From TeX Input Processor Options: https://docs.mathjax.org/en/latest/options/input/tex.html
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+    },
+    svg: {
+        mtextInheritFont: true,
+        fontCache: 'global'
+    },
+};
 
 export function FireflyRoot({sx, children, ctxProperties={}}) {
 
@@ -38,7 +55,9 @@ export function FireflyRoot({sx, children, ctxProperties={}}) {
                     WebkitFontSmoothing: 'unset',
                     ...sx
                 }}>
-                    <App>{children}</App>
+                    <MathJaxContext config={mathJaxConfig} asyncLoad={true}>
+                        <App>{children}</App>
+                    </MathJaxContext>
                 </ScopedCssBaseline>
             </CssVarsProvider>
         </AppPropertiesCtx.Provider>

@@ -69,7 +69,7 @@ export function getUnitInfo(unit, cname) {
         }
 
         const measurementLabel = Measurement[measurementKey]?.symbol;
-        if (measurementLabel) label = `${measurementLabel} [${unitLabel}]`;
+        if (measurementLabel) label = `$${measurementLabel} [${unitLabel}]$`;
     }
     else {
         cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;  // remove enclosing double-quotes if exists
@@ -263,12 +263,11 @@ const UnitXref = {
  * @type {Object.<MeasurementKey, Measurement>}
  */
 const Measurement = {
-    NU: {key: 'NU', value: 'frequency', symbol: '𝛎'},
-    LAMBDA: {key: 'LAMBDA', value: 'wavelength', symbol: 'λ'},
-    // TODO: use LaTex to make 𝛎 and λ subscripts of F
-    F_NU: {key: 'F_NU', value: 'flux_density_frequency', symbol: 'F𝛎'},
-    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', symbol: 'Fλ'},
-    F: {key: 'F', value: 'inband_flux', symbol: '𝛎·F𝛎'},
+    NU: {key: 'NU', value: 'frequency', symbol: '\\nu'},
+    LAMBDA: {key: 'LAMBDA', value: 'wavelength', symbol: '\\lambda'},
+    F_NU: {key: 'F_NU', value: 'flux_density_frequency', symbol: 'F_{\\nu}'},
+    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', symbol: 'F_{\\lambda}'},
+    F: {key: 'F', value: 'inband_flux', symbol: '\\nu \\cdot F_{\\nu}'},
 };
 
 
@@ -324,7 +323,7 @@ const UnitMetadata = {
     // flux density in frequency space -------------
     'W/m^2/Hz' : {
         type: Measurement.F_NU.key,
-        label: 'W/m²/Hz',
+        label: 'W/m²/Hz',//TODO: change it to LaTeX
         // aliases are generated at runtime for this and all the flux units below
     },
     'erg/s/cm^2/Hz' : {

@@ -152,14 +152,14 @@ function renderAsThumbnail(layout) {
         showgrid: false,
         zeroline: false,
         showline: false,
-        autotick: true,
+        tickmode: 'auto',
         ticks: '',
         showticklabels: false
     };
     layout.xaxis = {...layout.xaxis, ...axisOverride};
     layout.yaxis = {...layout.yaxis, ...axisOverride};
     layout.margin = {l:0, r:0, b:0, t:20, pad: 0};
-    layout.titlefont = {...(layout.titlefont||{}), size: 9};
+    layout.title = {...layout.title, font: {...(layout.title.font||{}), size: 9}};
     layout.showlegend = false;
 }
 
