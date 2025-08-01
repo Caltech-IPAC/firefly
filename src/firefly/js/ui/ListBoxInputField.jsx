@@ -32,7 +32,9 @@ export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, 
                 <Tooltip {...{title:tooltip, placement:'top', ...slotProps?.tooltip}}>
                     <Select {...{name: fieldKey, multiple, onChange, placeholder, renderValue, startDecorator,
                         disabled: readonly, size, value: multiple ? vAry : fieldValue,
-                        ...slotProps?.input}}>
+                        slotProps: {...slotProps?.input,
+                                listbox: {...(slotProps?.listbox ?? {}),}}
+                    }}>
                         {options?.map((({value,label,disabled=false},idx) => {
                             return (
                                 <Option {...{value, key:`k${idx}`, label:forceLabelToValue?value:label, disabled}}>
