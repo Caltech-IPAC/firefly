@@ -183,7 +183,7 @@ const defFireflyOptions = {
         defHipsSources: {source: 'irsa', label: 'Featured'},
         mergedListPriority: 'irsa',
         mocMaxDepth : 5,
-        mocDefaultStyle : 'DESTINATION_OUTLINE',
+        mocDefaultStyle : 'AUTO',
     },
     table : {
         pageSize: 100,

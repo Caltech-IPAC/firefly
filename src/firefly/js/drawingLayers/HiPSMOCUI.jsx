@@ -12,19 +12,20 @@ import {Style} from '../visualize/draw/DrawingDef.js';
 const options= [
     {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},
     {label: 'Fill', value: Style.FILL.key},
+    {label: 'Auto', value: Style.AUTO.key},
     {label: 'MOC Tile Outline', value: Style.STANDARD.key},
 ];
 
 
 export const getUIComponent = (drawLayer,pv) => <HiPSMOCUI drawLayer={drawLayer} pv={pv}/>;
 
-function HiPSMOCUI({drawLayer,pv}) {
-    const style = drawLayer?.mocStyle?.[pv.plotId] ?? drawLayer.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
+function HiPSMOCUI({drawLayer:dl,pv}) {
+    const style = dl?.requestedStyle ?? dl?.mocStyle?.[pv.plotId] ?? dl.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
 
     return (
         <RadioGroupInputFieldView options={options}  value={style.key}
                                   buttonGroup={true}
-                                  onChange={(ev) => changeMocPref(drawLayer,pv,ev.target.value, style.key)} />
+                                  onChange={(ev) => changeMocPref(dl,pv,ev.target.value, style.key)} />
     );
 }
 

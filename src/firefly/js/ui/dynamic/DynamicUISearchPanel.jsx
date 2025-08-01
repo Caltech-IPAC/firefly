@@ -3,6 +3,7 @@
  */
 
 import {Box, Stack} from '@mui/joy';
+import {isArray} from 'lodash';
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
 import {isDefined} from '../../util/WebUtil';
@@ -134,7 +135,11 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
     }, {});
     const hiddenFields= fieldDefAry
         .reduce( (obj,{hide, key,initValue}) => {
-            if (hide && key && initValue) obj[key]= initValue;
+            if (hide && key && initValue) {
+                if (isArray(obj[key])) obj[key].push(initValue);
+                else if (isDefined(obj[key])) obj[key]= [obj[key],initValue];
+                else obj[key]= initValue;
+            }
             return obj;
         },{});
     return {...retReq,...hiddenFields};

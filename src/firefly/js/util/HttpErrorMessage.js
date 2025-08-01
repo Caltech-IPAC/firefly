@@ -1,6 +1,8 @@
 const msg= {
     100: 'Continue',
     101: 'Switching Protocols',
+    102: 'Processing',
+    103: 'Early Hints',
     200: 'OK',
     201: 'Created',
     202: 'Accepted',
@@ -9,6 +11,8 @@ const msg= {
     205: 'Reset Content',
     206: 'Partial Content',
     207: 'Multi-Status',
+    208: 'Already Reported',
+    226: 'IM Used',
     300: 'Multiple Choices',
     301: 'Moved Permanently',
     302: 'Found',
@@ -16,6 +20,7 @@ const msg= {
     304: 'Not Modified',
     305: 'Use Proxy',
     307: 'Temporary Redirect',
+    308: 'Permanent Redirect',
     400: 'Bad Request',
     401: 'Unauthorized',
     402: 'Payment Required',
@@ -39,6 +44,9 @@ const msg= {
     422: 'Unprocessable Entity',
     423: 'Locked',
     424: 'Failed Dependency',
+    429: 'Too Many Requests',
+    431: 'Request Header Fields Too Large',
+    451: 'Unavailable For Legal Reasons',
     495: 'SSL Certificate Error',
     500: 'Internal Server Error',
     501: 'Not Implemented',
@@ -47,6 +55,9 @@ const msg= {
     504: 'Gateway Time-out',
     505: 'HTTP Version not supported',
     507: 'Insufficient Storage',
+    508: 'Loop Detected',
+    510: 'Not Extended',
+    511: 'Network Authentication Required',
 };
 
 export const getHttpErrorMessage= (reposeCode) => msg[reposeCode] ?? 'Unknown Error';

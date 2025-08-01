@@ -470,7 +470,7 @@ function findMocs(cisxUI) {
 
 let tblCnt=1;
 
-export function makeServiceDescriptorSearchRequest(request, siaConstraints,serviceDescriptor, extraMeta={}) {
+export function makeServiceDescriptorSearchRequest(request, siaConstraints=[],serviceDescriptor, extraMeta={}) {
     const {standardID = '', accessURL, utype, serDefParams, title, cisxUI=[]} = serviceDescriptor;
     const hiddenColumns= cisxUI.find( (e) => e.name==='hidden_columns')?.value;
     const tblSortOrder= cisxUI.find( (e) => e.name==='table_sort_order')?.value;
@@ -488,9 +488,15 @@ export function makeServiceDescriptorSearchRequest(request, siaConstraints,servi
     }
 
     const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};
+    const requestAsArray= Object.entries(request).reduce( (ary, [k,v]) => {
+        isArray(v)
+            ? v.forEach( (vEntry) => ary.push([k,vEntry]))
+            : ary.push([k,v]) ;
+        return ary;
+    }, []);
 
     if (isSIAStandardID(standardID)) {
-        const reqParams= new URLSearchParams(request);
+        const reqParams= new URLSearchParams(requestAsArray);
         const siaParams= new URLSearchParams();
         siaConstraints.forEach( (s) => {
             const [k,v]= s.split('=');
@@ -501,7 +507,7 @@ export function makeServiceDescriptorSearchRequest(request, siaConstraints,servi
         return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isSSAStandardID(standardID)) {
-        const url = accessURL + '?' + new URLSearchParams(request).toString();
+        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
         return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isCisxTapStandardID(standardID, utype)) {
@@ -526,7 +532,7 @@ export function makeServiceDescriptorSearchRequest(request, siaConstraints,servi
     }
     else {
         //todo: we should to call file analysis first
-        const url = accessURL + '?' + new URLSearchParams(request).toString();
+        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
         return makeFileRequest(tblTitle, url, undefined,options);   //todo- figure out title
     }
 }

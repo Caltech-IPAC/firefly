@@ -24,6 +24,8 @@ public class ResponseMessage {
         return switch (reposeCode) {
             case 100 -> "Continue";
             case 101 -> "Switching Protocols";
+            case 102 -> "Processing";
+            case 103 -> "Early Hints";
             case 200 -> "OK";
             case 201 -> "Created";
             case 202 -> "Accepted";
@@ -32,6 +34,8 @@ public class ResponseMessage {
             case 205 -> "Reset Content";
             case 206 -> "Partial Content";
             case 207 -> "Multi-Status";
+            case 208 -> "Already Reported";
+            case 226 -> "IM Used";
             case 300 -> "Multiple Choices";
             case 301 -> "Moved Permanently";
             case 302 -> "Found";
@@ -39,6 +43,7 @@ public class ResponseMessage {
             case 304 -> "Not Modified";
             case 305 -> "Use Proxy";
             case 307 -> "Temporary Redirect";
+            case 308 -> "Permanent Redirect";
             case 400 -> "Bad Request";
             case 401 -> "Unauthorized";
             case 402 -> "Payment Required";
@@ -62,6 +67,9 @@ public class ResponseMessage {
             case 422 -> "Unprocessable Entity";
             case 423 -> "Locked";
             case 424 -> "Failed Dependency";
+            case 429 -> "Too Many Requests";
+            case 431 -> "Request Header Fields Too Large";
+            case 451 -> "Unavailable For Legal Reasons";
             case 495 -> "SSL Certificate Error";
             case 500 -> "Internal Server Error";
             case 501 -> "Not Implemented";
@@ -70,6 +78,9 @@ public class ResponseMessage {
             case 504 -> "Gateway Time-out";
             case 505 -> "HTTP Version not supported";
             case 507 -> "Insufficient Storage";
+            case 508 -> "Loop Detected";
+            case 510 -> "Not Extended";
+            case 511 -> "Network Authentication Required";
             default -> "Error in retrieving file";
         };
         

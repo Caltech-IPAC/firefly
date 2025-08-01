@@ -1,5 +1,5 @@
 import {getAppOptions} from '../../api/ApiUtil.js';
-import {getIpixForWp, getProGradeTilePixels} from '../../tables/HpxIndexCntlr';
+import {getProGradeTilePixels} from '../../tables/HpxIndexCntlr';
 import {logger} from '../../util/Logger';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';

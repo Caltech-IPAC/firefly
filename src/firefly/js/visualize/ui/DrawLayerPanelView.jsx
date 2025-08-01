@@ -12,15 +12,14 @@ import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
 import {clone} from '../../util/WebUtil.js';
-import {dispatchChangeVisibility, dispatchDetachLayerFromPlot, GroupingScope} from '../DrawLayerCntlr.js';
+import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchDeleteOverlayPlot, dispatchOverlayPlotChangeAttributes, visRoot} from '../ImagePlotCntlr.js';
-import {getPlotViewById} from '../PlotViewUtil';
 import {getAllDrawLayersForPlot, getHDU, getLayerTitle, isDrawLayerVisible, primePlot} from '../PlotViewUtil.js';
 import {
     enableRelatedDataLayer, findUnactivatedRelatedData, operateOnOverlayPlotViewsThatMatch, setMaskVisible
 } from '../RelatedDataUtil.js';
 import {DrawLayerItemView} from './DrawLayerItemView.jsx';
-import {modifyDrawColor} from './DrawLayerUIComponents';
+import {changeVisible, modifyDrawColor} from './DrawLayerUIComponents';
 
 
 export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
@@ -251,36 +250,6 @@ function deleteMaskLayer(opv) {
  */
 function flipVisible(dl, plotId) {
     changeVisible(dl, !isDrawLayerVisible(dl,plotId),plotId );
-}
-
-
-/**
- *
- * @param {DrawLayer} dl
- * @param {boolean} visible
- * @param {string} plotId
- */
-function changeVisible(dl, visible, plotId) {
-    const {displayGroupId, groupingScope, supportSubgroups}= dl;
-    const pv= getPlotViewById(visRoot(),plotId);
-    if (groupingScope===GroupingScope.GROUP || !supportSubgroups || !groupingScope || !pv || !pv.drawingSubGroupId)  {
-        dispatchChangeVisibility( {id:displayGroupId, visible,plotId, matchTitle:dl.titleMatching} );
-    }
-    else {
-        switch (groupingScope) {
-            case GroupingScope.SUBGROUP : // change all, then put only subgroup back
-                dispatchChangeVisibility({id:displayGroupId, visible,plotId,subGroupId:pv.drawingSubGroupId});
-                break;
-            case GroupingScope.SINGLE : // change all, then put only image back
-                dispatchChangeVisibility({id:displayGroupId, visible,plotId, useGroup:false});
-                break;
-            default :
-                console.log('DrawLayerPanelView.changeVisible show never happen');
-                break;
-        }
-
-    }
-
 }
 
 
