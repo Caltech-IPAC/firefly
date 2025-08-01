@@ -52,16 +52,13 @@ function isObsCoreish(tableOrId) {
     return hasObsCoreLikeDataProducts(tableOrId) || hasDataLinkSvcDesc(tableOrId);
 }
 
-const addedTblIds=[];
-
 function watchForObsCoreTable(tbl_id, action, cancelSelf) {
     if (action) return;
-    if (addedTblIds.includes(tbl_id)) return;
+    const {leftButtons=[]} = getTableUiByTblId(tbl_id);
+    if (leftButtons.some((lb) => lb.prepareDownloadBtn)) return;
     setupObsCorePackaging(tbl_id);
-    addedTblIds.push(tbl_id);
     cancelSelf();
 }
-
 
 function setupObsCorePackaging(tbl_id) {
     const table= getTblById(tbl_id);
@@ -80,7 +77,9 @@ function setupObsCorePackaging(tbl_id) {
     const dlProps = getDataServiceOptionByTable('obsCoreDownloadProps', table, {}) || {};
 
     const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {} ;
-    leftButtons.unshift(() => <PrepareDownload {...dlProps} />);
+    const prepareDownloadFunc = () => <PrepareDownload {...dlProps} />;
+    prepareDownloadFunc.prepareDownloadBtn = true;
+    leftButtons.unshift(prepareDownloadFunc);
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons});
 }
 
