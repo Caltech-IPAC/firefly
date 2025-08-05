@@ -1569,11 +1569,21 @@ export function splitVals(values='') {
 
 export function parseError(error) {
     const message = error?.message ?? error;
+    const colonRegex = /(.+?):(.+)/;
+
     if (error?.cause) {
-        const [_, type, cause] = error?.cause.match(/(.+?):(.+)/) || [];
+        const [_, type, cause] = error.cause.match(colonRegex) || [];
         return {message, type, cause};
     } else {
-        const [_, error, cause] = message?.match(/(.+?):(.+)/) || [];     // formatted error messages; 'error:cause'
+        // Check if message contains URLs or JSON - if so, don't split
+        const hasUrl = /https?:\/\//.test(message);
+        const hasJson = /[{[]/.test(message) && /[}\]]/.test(message);
+        if (hasUrl || hasJson) {
+            return {message: 'Table Error', cause: message};
+        }
+
+        // Safe to split on colon for simple error messages
+        const [_, error, cause] = message?.match(colonRegex) || [];
         return {message: error || message, cause};
     }
 }
