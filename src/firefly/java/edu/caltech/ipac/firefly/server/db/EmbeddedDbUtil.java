@@ -191,15 +191,12 @@ public class EmbeddedDbUtil {
         List<DataType> cols = new ArrayList<>();
         boolean useRealAsDouble = dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false);
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-            String cname = rsmd.getColumnLabel(i);
-            JDBCType type = JDBCType.valueOf(rsmd.getColumnType(i));
-            boolean isArray = type == JDBCType.ARRAY;
-            if (isArray) {
-                String typeDesc = rsmd.getColumnTypeName(i).replace("[]", "");
-                type = JDBCType.valueOf(typeDesc);
-            }
-            Class clz = convertToClass(type, useRealAsDouble);
-            DataType dt = new DataType(cname, clz);
+            String type = rsmd.getColumnTypeName(i);
+            boolean isArray = JDBCType.valueOf(rsmd.getColumnType(i)) == JDBCType.ARRAY;
+            if (isArray) type = type.replace("[]", "");
+            Class clz = jdbcTypeToJava(type, useRealAsDouble);
+
+            DataType dt = new DataType(rsmd.getColumnLabel(i), clz);
             if (isArray)    dt.setArraySize("*");
             cols.add(dt);
         }
@@ -428,26 +425,26 @@ public class EmbeddedDbUtil {
         return  null;
     }
 
-    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class, Byte.class);
-    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
+    private static final List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class, Byte.class);
+    private static final List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
     private static boolean maybeEnums(DataType dt) {
         return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
 
     }
 
-    static Class convertToClass(JDBCType type, boolean useRealAsDouble) {
+    static Class jdbcTypeToJava(String type, boolean useRealAsDouble) {
         return switch (type) {
-            case CHAR, VARCHAR, LONGVARCHAR -> String.class;
-            case TINYINT    -> Byte.class;
-            case SMALLINT   -> Short.class;
-            case INTEGER    -> Integer.class;
-            case BIGINT     -> Long.class;
-            case FLOAT  -> Float.class;
-            case REAL -> useRealAsDouble ? Double.class : Float.class;
-            case DOUBLE, NUMERIC, DECIMAL   -> Double.class;
-            case BIT, BOOLEAN -> Boolean.class;
-            case DATE, TIME, TIMESTAMP  -> Date.class;
-            case BINARY, VARBINARY, LONGVARBINARY -> String.class;
+            case "CHAR", "VARCHAR", "LONGVARCHAR" -> String.class;
+            case "TINYINT"    -> Byte.class;
+            case "SMALLINT", "UTINYINT"   -> Short.class;
+            case "INTEGER", "USMALLINT"   -> Integer.class;
+            case "BIGINT", "UINTEGER"     -> Long.class;
+            case "FLOAT"      -> Float.class;
+            case "REAL"       -> useRealAsDouble ? Double.class : Float.class;
+            case "DOUBLE", "NUMERIC", "DECIMAL" -> Double.class;
+            case "BIT", "BOOLEAN" -> Boolean.class;
+            case "DATE", "TIME", "TIMESTAMP" -> Date.class;
+            case "BINARY", "VARBINARY", "LONGVARBINARY" -> String.class;
             default -> String.class;
         };
     }
