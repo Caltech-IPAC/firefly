@@ -1569,7 +1569,7 @@ export function splitVals(values='') {
 
 export function parseError(error) {
     const message = error?.message ?? error;
-    const colonRegex = /(.+?):(.+)/;
+    const colonRegex = /^((?:\S+\s*){1,3}?):(.+)/s; // colon appears at most 3 words after the beginning of the string
 
     if (error?.cause) {
         const [_, type, cause] = error.cause.match(colonRegex) || [];
@@ -1583,8 +1583,12 @@ export function parseError(error) {
         }
 
         // Safe to split on colon for simple error messages
-        const [_, error, cause] = message?.match(colonRegex) || [];
-        return {message: error || message, cause};
+        const [_, errorTitle, cause] = message.match(colonRegex) || [];
+        if (errorTitle) {
+            return {message: errorTitle, cause};
+        } else {
+            return {message: 'Table Error', cause: message};
+        }
     }
 }
 
