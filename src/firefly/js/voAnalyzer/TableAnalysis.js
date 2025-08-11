@@ -186,7 +186,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
 export function hasDataLinkSvcDesc(tableOrId) {
     const table = getTableModel(tableOrId);
     const serDefs  = getServiceDescriptors?.(table) ?? [];
-    return serDefs.some(isDataLinkServiceDesc);
+    return serDefs && serDefs.some(isDataLinkServiceDesc);
 }
 
 
