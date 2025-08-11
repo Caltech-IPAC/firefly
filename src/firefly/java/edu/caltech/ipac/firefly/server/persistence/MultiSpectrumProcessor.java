@@ -63,8 +63,12 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         try {
             String source = treq.getParam(SOURCE);
+            updateJob(ji -> ji.getAux().setJobUrl(source));
+
             File inFile = QueryUtil.resolveFileFromSource(source, treq);
             DataGroup table = TableUtil.readAnyFormat(inFile);
+
+            setJobResults(inFile);
 
             return table;
         } catch (Exception e) {

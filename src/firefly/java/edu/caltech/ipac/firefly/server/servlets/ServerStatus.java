@@ -264,10 +264,11 @@ public class ServerStatus extends BaseHttpServlet {
             </div>
             """, ServerContext.getRequestOwner().getBaseUrl(), driver);
 
-        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  JDBC URL     (elapsed time are in min:sec; memory is in MB)");
+        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  JDBC URL     (elapsed time are in min:sec; memory is in MB) (ONLY THE LATEST 100 JOBS ARE SHOWN BELOW)");
         writer.println("------  ------  ----------  -------  ------  ----------       ------  ---------");
         DbMonitor.getDbInstances().values().stream()
             .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
+            .limit(100) // only show the latest 100
             .forEach((db) -> writer.printf("%7$tM:%7$tS   %8$tM:%8$tS   %,10d  %7d  %6d  %,10d  %11.1f  %s\n",
                 db.getDbStats().rowCnt(),
                 db.getDbStats().colCnt(),

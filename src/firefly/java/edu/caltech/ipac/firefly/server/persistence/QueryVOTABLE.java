@@ -23,7 +23,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
 import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
@@ -89,7 +88,7 @@ public abstract class QueryVOTABLE extends EmbeddedDbProcessor {
     private File getSearchResult(TableServerRequest req) throws IOException, DataAccessException, EndUserException {
         String urlQuery = getQueryString(req);
 
-        sendJobUpdate(ji -> ji.getAux().setJobUrl(urlQuery));
+        updateJob(ji -> ji.getAux().setJobUrl(urlQuery));
 
         URL url;
         try {
@@ -111,6 +110,9 @@ public abstract class QueryVOTABLE extends EmbeddedDbProcessor {
         } catch (Exception e) {
             throw new DataAccessException("query failed", e);
         }
+
+        setJobResults(outFile);
+
         return outFile;
     }
 }

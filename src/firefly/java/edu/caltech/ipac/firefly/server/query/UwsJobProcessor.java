@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
@@ -92,7 +93,13 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         // this worker is self-managed, so it needs to update job status
         try {
-            jobUrl = req.getParam(JOB_URL);
+            if (!isEmpty(req.getJobId())) {
+                // a previously submitted job
+                jobUrl = ifNotNull(JobManager.getJobInfo(req.getJobId()))
+                        .get(j -> j.getAux().getJobUrl());
+            } else {
+                jobUrl = req.getParam(JOB_URL);
+            }
             if (jobUrl == null) {
                 jobUrl = submitJob(req);
                 if (jobUrl != null) runJob(jobUrl);

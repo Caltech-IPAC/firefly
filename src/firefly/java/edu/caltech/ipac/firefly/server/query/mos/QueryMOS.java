@@ -126,6 +126,7 @@ public class QueryMOS extends EmbeddedDbProcessor {
         URLConnection conn = null;
         try {
             _log.info("querying MOS:" + url);
+            updateJob(ji -> ji.getAux().setJobUrl(url.toString()));
 
             final Ref<File> catOverlayFile = new Ref<File>(null);
 
@@ -140,6 +141,9 @@ public class QueryMOS extends EmbeddedDbProcessor {
 
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), headerOnly);
             if (groups != null) {
+
+//                setJobResults(votable);       // TODO: cannot save result because it needs custom logic to load DataGroup from saved file.
+
                 for (DataGroup dg : groups) {
                     if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.get() != null) {
                             // save the generated file as ipac table headers

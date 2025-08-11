@@ -4,7 +4,9 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.Util;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
@@ -47,12 +49,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
+import static edu.caltech.ipac.firefly.server.ServerContext.convertToFile;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.table.DataGroup.*;
 import static edu.caltech.ipac.util.StringUtils.*;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * NOTE: We're using spring jdbc v2.x.  API changes dramatically in later versions.
@@ -216,7 +222,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
 
             // dataSupplier is passed in.  the adapter decides if fetch is needed.
-            FileInfo finfo = dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataGroup(req)), dbAdapter.getDataTable());
+            FileInfo finfo = dbAdapter.ingestData(makeDgSupplier(req, () -> getOrFetchDataGroup(req)), dbAdapter.getDataTable());
 
             StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
             return finfo;
@@ -224,6 +230,34 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             logger.error(ex,"Failed to ingest data into the database:" + req.getRequestId());
             throw new DataAccessException(ex);
         }
+    }
+
+    /**
+     * This allows the processor to fetch data from a previously submitted job.
+     * @param req  the request to fetch data from
+     * @return the DataGroup containing the data
+     */
+    protected DataGroup getOrFetchDataGroup(TableServerRequest req) throws DataAccessException {
+        DataGroup retval = null;
+        if (!isEmpty(req.getJobId())) {
+            // a previously submitted job; try to get from cache
+            List<JobInfo.Result> results = ifNotNull(JobManager.getJobInfo(req.getJobId()))
+                                           .get(JobInfo::getResults);
+            if (results != null && !results.isEmpty()) {
+                String href = results.getFirst().href();
+                if (!isEmpty(href)) {
+                    File file = convertToFile(href);
+                    if (file.exists()) {        // if the result is a file cached on the server, use it.
+                        int tblIdx = req.getIntParam(TBL_INDEX, 0);
+                        retval = Try.it(() -> TableUtil.readAnyFormat(file, tblIdx, req)).get();  // ignore exception
+                    }
+                }
+            }
+        }
+        if (retval == null) {       // if not found in cache, fetch from source
+            retval = fetchDataGroup(req);
+        }
+        return retval;
     }
 
     protected DataGroupSupplier makeDgSupplier(TableServerRequest req, DataGroupSupplier getter) throws DataAccessException {
@@ -235,16 +269,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             sendJobUpdate(v -> v.getMeta().setProgress(70, dg.size() + " rows of data found"));
 
-            makeExtraMetaSetter(req).accept(dg);
+            applyExtraMeta(dg, req);
             return dg;
         };
     }
 
-    protected Consumer<DataGroup> makeExtraMetaSetter(TableServerRequest req) {
-        return dg -> {
-            prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
-            TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
-        };
+    protected void applyExtraMeta(DataGroup dg, TableServerRequest req) {
+        prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
+        TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
@@ -502,6 +534,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
         selectInfo.setRowCount(rowCnt);
         return selectInfo;
+    }
+
+    protected void setJobResults(File... files) {
+        if (files == null || files.length == 0) return;
+        updateJob(ji -> {
+            Arrays.stream(files)
+                    .filter(f -> f != null && f.isFile() && f.canRead())
+                    .forEach(file -> ji.addResult(new JobInfo.Result("result", ServerContext.replaceWithPrefix(file), null, String.valueOf(file.length()))));
+        });
     }
 
     private static String retrieveMsgFromError(Exception e, TableServerRequest treq, DbAdapter dbAdapter) {

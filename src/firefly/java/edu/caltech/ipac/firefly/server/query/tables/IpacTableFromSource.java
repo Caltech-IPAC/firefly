@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
+import edu.caltech.ipac.firefly.core.background.JobInfo;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -27,11 +29,13 @@ import edu.caltech.ipac.util.FormatUtil;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.CATALOG_OVERLAY_TYPE;
+import static edu.caltech.ipac.firefly.server.ServerContext.convertToFile;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -77,18 +81,15 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     }
 
     @Override
-    protected Consumer<DataGroup> makeExtraMetaSetter(TableServerRequest req) {
-        var sup = super.makeExtraMetaSetter(req);
-        return dg -> {
-            if (sup != null) sup.accept(dg);
-            if (!dg.getTableMeta().contains(CATALOG_OVERLAY_TYPE)) {                    // when CATALOG_OVERLAY_TYPE is not set, apply defaults
-                if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
-                    if (isEmpty(req.getMeta(CATALOG_OVERLAY_TYPE))) {
-                        dg.getTableMeta().setAttribute(CATALOG_OVERLAY_TYPE, "TRUE");
-                    }
+    protected void applyExtraMeta(DataGroup dg, TableServerRequest req) {
+        super.applyExtraMeta(dg, req);
+        if (!dg.getTableMeta().contains(CATALOG_OVERLAY_TYPE)) {                    // when CATALOG_OVERLAY_TYPE is not set, apply defaults
+            if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
+                if (isEmpty(req.getMeta(CATALOG_OVERLAY_TYPE))) {
+                    dg.getTableMeta().setAttribute(CATALOG_OVERLAY_TYPE, "TRUE");
                 }
             }
-        };
+        }
     }
 
     @Override
@@ -109,22 +110,48 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             } else if (!isEmpty(jsonSearchRequest)) {
                 fetchDataGroup = () -> getByTableRequest(jsonSearchRequest);
             } else {
-                srcFile = fetchSourceFile(req);
+                srcFile = getOrFetchSourceFile(req);
             }
             if (srcFile == null) {
                 return DbDataIngestor.ingestData(req, dbAdapter, makeDgSupplier(req, fetchDataGroup));
             } else {
-                return DbDataIngestor.ingestData(req, dbAdapter, makeExtraMetaSetter(req), srcFile, tblIdx, format);
+                return DbDataIngestor.ingestData(req, dbAdapter, (dg) -> applyExtraMeta(dg, req), srcFile, tblIdx, format);
             }
         } catch (IOException e) {
             Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
             throw new DataAccessException(e);
         }
     }
+
+    /**
+     * This allows the processor to fetch data from a previously submitted job.
+     * @param req  the request to fetch data from
+     * @return the DataGroup containing the data
+     */
+    private File getOrFetchSourceFile(TableServerRequest req) throws DataAccessException {
+        File retval = null;
+        if (!isEmpty(req.getJobId())) {
+            // a previously submitted job; try to get from cache
+            List<JobInfo.Result> results = ifNotNull(JobManager.getJobInfo(req.getJobId()))
+                    .get(JobInfo::getResults);
+            if (results != null && !results.isEmpty()) {
+                String href = results.getFirst().href();
+                if (!isEmpty(href)) {
+                    retval = convertToFile(href);
+                }
+            }
+        }
+        if (retval == null || ! retval.canRead()) {       // if not found in cache, fetch from source
+            retval = fetchSourceFile(req);
+        }
+        return retval;
+    }
+
     private File fetchSourceFile (TableServerRequest req) throws DataAccessException {
 
         String source = req.getParam(ServerParams.SOURCE);
         String altSource = req.getParam(ServerParams.ALT_SOURCE);
+        updateJob(ji -> ji.getAux().setJobUrl(source));
 
         File inf = null;
         if (isWorkspace(req)) {
@@ -142,6 +169,9 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         if (inf == null) {
             throw new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
         }
+
+        setJobResults(inf);
+
         return inf;
     }
 
