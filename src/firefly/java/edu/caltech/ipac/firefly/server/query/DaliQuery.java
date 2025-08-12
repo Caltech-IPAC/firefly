@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.table.DataGroup;
@@ -31,13 +30,18 @@ public class DaliQuery extends EmbeddedDbProcessor {
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         var inputs = createInput(req);
+        updateJob(ji -> ji.getAux().setJobUrl(inputs.getRequestUrl()));
+
         try {
-            File outFile = File.createTempFile(req.getRequestId()+"-", ".vot", ServerContext.getTempWorkDir());
+            File outFile = createTempFile(req, ".vot");
             HttpServices.Status status = HttpServices.getWithAuth(inputs, HttpServices.defaultHandler(outFile));
             if (status.isError()) {
                 throw DaliUtil.createDax("Failed to retrieve the result from", inputs.getRequestUrl(), status.getException());
             }
             DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
+
+            setJobResults(outFile);
+
             return results.length > 0 ? results[0] : null;
 
         } catch (Exception e) {

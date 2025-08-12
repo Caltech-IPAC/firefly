@@ -35,9 +35,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
-
 
 /**
  * Date: Jun 5, 2009
@@ -111,7 +108,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             boolean isPost = isPost(req);
             URL url = createURL(req, isPost);
 
-            ifNotNull(getJob()).then( j -> updateJobInfo(j.getJobId(), ji -> ji.getAux().setJobUrl(url.toString())));
+            updateJob(ji -> ji.getAux().setJobUrl(url.toString()));
 
             if (isPost) {
                 _postBuilder = new MultiPartPostBuilder(url.toString());
@@ -140,6 +137,9 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             _log.error(e, e.toString());
             throw new DataAccessException("Catalog Query Failed", e);
         }
+
+        setJobResults(outFile);
+
         return outFile;
     }
 

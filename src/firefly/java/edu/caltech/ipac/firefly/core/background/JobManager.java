@@ -334,11 +334,10 @@ public class JobManager {
             );
 
 
-            List<JobInfo> subList = allJobs.subList(0, 100);
             sb.append("\n (ONLY THE LATEST 100 JOBS ARE SHOWN BELOW) \n");
             sb.append("JOB ID               LOCAL JOB ID         PHASE       creationTime           elapsedTime(s) progress monitored userKy                               \n");
             sb.append("-------------------- -------------------- ----------- ---------------------- -------------- -------- --------- -------------------------------------\n");
-            subList.forEach((ji) -> {
+            allJobs.stream().limit(100).forEach((ji) -> {
                 Instant endT = ji.getEndTime();
                 Instant startT = ji.getStartTime();
                 sb.append(String.format("%-20s %-20s %-11s %-22s %,14d %8d %9s %-37s\n",
