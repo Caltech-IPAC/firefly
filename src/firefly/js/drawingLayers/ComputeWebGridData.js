@@ -97,11 +97,12 @@ var middleLatValue=[];
 export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
 
+    if (!plot || !cc) return;
     const {width,height, screenWidth, csys, labelFormat} = getDrawLayerParameters(plot);
-
     const wpt = cc.getWorldCoords(makeImagePt(1, 1), csys);
     const aitoff = (!wpt);
-    const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
+    const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim) ?? {};
+    if (!centerWp || !fov) return;
     const centerWpt = convertCelestial(centerWp,csys);
 
 
