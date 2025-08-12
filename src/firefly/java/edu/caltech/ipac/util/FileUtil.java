@@ -461,24 +461,35 @@ public class FileUtil
     }
 
 
+    public static boolean isGZipFile(InputStream is) {
+        if (!is.markSupported()) {
+            //to ensure mark and reset works
+            is = new BufferedInputStream(is);
+        }
+        try {
+            is.mark(2);
+            int b0 = is.read();
+            int b1 = is.read();
+            is.reset();
+
+            if (b0 == -1 || b1 == -1) {
+                return false; // too short
+            }
+            int value = (b1 << 8) | b0;
+            return (value == GZIPInputStream.GZIP_MAGIC); //0x8b1f
+        } catch (IOException e) {
+            return false;
+        }
+    }
 
     public static boolean isGZipFile(File f) {
-        boolean retval;
-        DataInputStream in=null;
-        try {
-            in=new DataInputStream( new FileInputStream(f));
-            int b0 = in.read();
-            int b1 = in.read();
-            if (b0 == -1 || b1==-1) throw new EOFException();
-            int value=  (b1 << 8) | b0;
-            retval= (value == GZIPInputStream.GZIP_MAGIC);
+        try (InputStream in = new BufferedInputStream(new FileInputStream(f))) {
+            return isGZipFile(in);
         } catch (IOException e) {
-            retval= false;
-        } finally {
-            FileUtil.silentClose(in);
+            return false;
         }
-        return retval;
     }
+
 
     /**
      * Write a file to an output stream

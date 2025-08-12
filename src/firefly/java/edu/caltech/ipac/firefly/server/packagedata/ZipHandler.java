@@ -4,18 +4,13 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.URLDownload;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -79,22 +74,24 @@ public class ZipHandler {
             filename = FileUtil.getUniqueFileNameForGroup(fi.getExternalName(), dupMap);
 
             int inBufSize = 4096;
-            if (filename != null && FileUtil.isExtension(filename, FileUtil.GZ)) {
-                InputStream decompressedIs = null;
-                try {// try to uncompress the data
-                    decompressedIs = new GZIPInputStream(is);  // for uncompressed data, throw an exception
-                    bis = new BufferedInputStream(decompressedIs);
-                } catch (Exception e) {
-                    FileUtil.silentClose(decompressedIs);
-                    bis = new BufferedInputStream(is, inBufSize);
+
+            BufferedInputStream peek = new BufferedInputStream(is, inBufSize);
+
+            boolean looksGzip = FileUtil.isGZipFile(peek) || FileUtil.isExtension(filename, FileUtil.GZ);
+
+            InputStream processedIS = peek;
+            if (looksGzip) {
+                try {
+                    processedIS = new GZIPInputStream(peek);
+                    if (FileUtil.isExtension(filename, FileUtil.GZ)) {
+                        filename = filename.substring(0, filename.length() - 3);
+                    }
+                } catch (IOException e) {
+                    processedIS = peek;
                 }
-            } else {
-                bis = new BufferedInputStream(is, inBufSize);
             }
-            // remove .gz, if exists - filename or url stream are all going to be uncompressed at this point
-            if (FileUtil.isExtension(filename, FileUtil.GZ)) {
-                filename = filename.substring(0, filename.length() - 3);
-            }
+
+            bis = new BufferedInputStream(processedIS, inBufSize);
 
             zipEntry = new ZipEntry(filename);
             zipEntry.setComment(zipEntryComment);
