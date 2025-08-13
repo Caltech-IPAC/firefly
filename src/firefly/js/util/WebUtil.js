@@ -881,7 +881,6 @@ export function advancedTrim(s='', maxLength=15, trimType='middle') {
             const halfHalf= Math.ceil(maxLenHalf/2);
             const mid2= s.substring(midpoint-halfHalf, midpoint+halfHalf);
             return `${start2}${e}${mid2}${e}`;
-            return '';
         case 'bothends':
             return e + s.substring(midpoint-maxLenHalf, midpoint+maxLenHalf)+ e;
         case 'complex':

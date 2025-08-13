@@ -23,6 +23,7 @@ import {logger} from '../../util/Logger.js';
 
 
 export const isLsstFootprintTable = (tableModel) => {
+    if (!tableModel) return false;
     const lsstKeys = ['contains_lsst_footprints', 'contains_lsst_measurements'];
     const {tableMeta} = tableModel || {};
 

@@ -1,15 +1,20 @@
-import React from 'react';
-import {isEmpty, uniqueId} from 'lodash';
-import {useCallback, useContext, useEffect, useState, useTransition} from 'react';
+import React, {useCallback, useContext, useEffect, useState, useTransition} from 'react';
+import {isEmpty, isUndefined, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {
-    getField, getFieldsForKeys, getFieldVal, getGroupFields, getMetaState, makeFieldsObject, setFieldValue
+    getField, getFieldsForKeys, getFieldVal, getGroupFields, getMetaState, makeFieldsObject, setField, setFieldValue
 } from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 import {smartMerge} from 'firefly/tables/TableUtil.js';
+
+/**
+ * @typedef InitArgs
+ * @prop {Object} searchParams = any value that the panel should change the default to
+ * @prop {Object} urlApi - parameters coming from the URL api. Should only be used once
+ */
 
 
 /**
@@ -61,6 +66,25 @@ export function useStoreConnector(stateGetter, deps=[], markAsTransition=false) 
     return val;
 }
 
+/**
+ * Set a field group field from the initArea.searchParams object.
+ * @param {InitArgs} initArgs
+ * @param {String} paramKey - the key in the initArea.searchParams object
+ * @param {String} additionalUpdatesFunc - calls a function (setFld,value,fieldObj
+ * @param [fieldKey] - the field key, defaults to paramKey
+ * @param [groupKey] - groupKey - the should not be used except for a good reason
+ */
+export function useInitArgSearchParam(initArgs, paramKey, additionalUpdatesFunc, fieldKey= undefined, groupKey=undefined) {
+    const context= useContext(FieldGroupCtx);
+    return useEffect(() => {
+        const v= initArgs?.searchParams?.[paramKey];
+        if (isUndefined(v) || (!context && !groupKey)) return;
+        const fk= fieldKey ?? paramKey;
+        (context && !groupKey) ? context.setVal(fk,v) : setFieldValue(groupKey,fk,v);
+        const gk= groupKey||context.groupKey;
+        additionalUpdatesFunc?.(getField(gk,fk), (obj) => setField( gk, fk, obj), );
+    }, [initArgs?.searchParams?.[paramKey]]);
+}
 
 /**
  * @deprecated

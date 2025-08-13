@@ -63,12 +63,14 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static final String WORKSPACE_PUT = "workspacePut";
     private static final String WS_CMD = "wsCmd";
     public  static final String ANALYZER_ID = "analyzerId";
+    public  static final String NAME = "name";
     /** use the hips cache hierarchy */
     public  static final String HIPS_CACHE = "hipsCache";
     /** load from a URL */
     private static final String URL = "URL";
     /** load from a WebPlotRequest */
     private static final String WEB_PLOT_REQUEST = "webPlotRequest";
+    private static final String FILE_ON_SERVER = "fileOnServer";
     /** run file analysis and return an analysis json object */
     private static final String FILE_ANALYSIS= "fileAnalysis";
 
@@ -116,7 +118,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             int responseCode= statusFileInfo.getResponseCode();
 
             if (responseCode>=400) {
-                res.sendError(statusFileInfo.getResponseCode(), statusFileInfo.getResponseCodeMsg());
+                res.sendError(responseCode, statusFileInfo.getResponseCodeMsg());
                 return;
             }
 
@@ -144,7 +146,6 @@ public class AnyFileUpload extends BaseHttpServlet {
 
             // returns the fileCacheKey or full analysis json
             String returnVal= analyzeFile ? callAnalysis(sp,statusFileInfo,uploadFileInfo,fileCacheKey) : fileCacheKey;
-            if (responseCode>=400) throw new Exception(codeFailMsg(responseCode));
 
             sendReturnMsg(res, 200, null, returnVal);
             Counters.getInstance().increment(Counters.Category.Upload, uploadFileInfo.getContentType());
@@ -175,7 +176,7 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static UploadFileInfo makeUploadFileInfo(FileInfo statusFileInfo, String fname) {
         File file= statusFileInfo.getFile();
         return new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname!=null ? fname : file.getName(),
-                statusFileInfo.getContentType());
+                statusFileInfo.getContentType(), statusFileInfo.getResponseCode());
     }
 
     private static void updateFeedback(String statusKey, long totalRead) {
@@ -225,6 +226,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         String wsCmd = sp.getOptional(WS_CMD);
         String fromUrl = sp.getOptional(URL);
         WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
+        String fileOnServer= sp.getOptional(FILE_ON_SERVER);
         boolean hipsCache = sp.getOptionalBoolean(HIPS_CACHE,false);
 
         UploadFileInfo uploadFileInfo;
@@ -254,6 +256,14 @@ public class AnyFileUpload extends BaseHttpServlet {
             if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
             statusFileInfo = retrieve.getFile(fromWPR,false);
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,null);
+        } else if (fileOnServer != null) {
+            File f= ServerContext.convertToFile(fileOnServer);
+            if (!f.canRead()) {
+                return new Result(new FileInfo(404),null);
+            }
+            String name= sp.getOptional(NAME,f.getName());
+            uploadFileInfo= new UploadFileInfo(fileOnServer, f,name,null);
+            statusFileInfo= new FileInfo(uploadFileInfo.getFile());
         } else if (uploadedItem != null) {
             // it's a stream from multipart.. write it to disk
             String name = uploadedItem.getName();
