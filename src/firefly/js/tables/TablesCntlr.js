@@ -377,13 +377,14 @@ function fixClientTable(tableModel) {
 
     tableModel.totalRows = tableModel?.tableData?.data?.length ?? 0;
 
+    ensureEnumVals(tableModel);         // apply enum values to the client tableModel using server-side logic
+
     if (!tableModel.origTableModel) {
         tableModel = TblUtil.cloneClientTable(tableModel);
     }
 
     set(tableModel, 'request.pageSize', fixPageSize(tableModel.request?.pageSize));
-    ensureEnumVals(tableModel);         // apply enum values to the client tableModel using server-side logic
-
+    
     return tableModel;
 }
 
