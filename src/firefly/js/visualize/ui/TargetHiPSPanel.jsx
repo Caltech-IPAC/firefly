@@ -108,7 +108,7 @@ VisualTargetPanel.propTypes= {
 export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
                                    targetKey=DEF_TARGET_PANEL_KEY, sizeKey=RADIUS_DISABLED_KEY, polygonKey='non---Polygon',
-                                   getWhichOverlay=() => CONE_CHOICE_KEY, toolbarHelpId,
+                                   getWhichOverlay=() => CONE_CHOICE_KEY, toolbarHelpId, showHelpLines=true,
                                    setWhichOverlay, sRegion, coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
@@ -188,7 +188,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                 <Typography level='h4' color='danger' textAlign='center'>
                     {`The coverage MOC is unavailable${mocError?.title?': '+mocError.title:''}`}
                 </Typography>}
-            <HelpLines whichOverlay={getWhichOverlay()}/>
+            {showHelpLines && <HelpLines whichOverlay={getWhichOverlay()}/>}
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
