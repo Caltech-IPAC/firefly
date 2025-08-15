@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.table.TableUtil.foldAry;
 import static edu.caltech.ipac.util.StringUtils.*;
-import static org.apache.commons.lang.StringUtils.stripEnd;
 
 /**
  * Table below taken from https://www.ivoa.net/documents/VOTable/20191021/REC-VOTable-1.4-20191021.html#ToC11
@@ -472,16 +471,16 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public int[] getShape() {
-        if (StringUtils.isEmpty(getArraySize())) return new int[0];
+        if (isEmpty(getArraySize())) return new int[0];
         return Arrays.stream(getArraySize().split("x"))
-                .mapToInt(d -> StringUtils.getInt(d, -1))
+                .mapToInt(d -> StringUtils.getInt(d, -1))// -1 is used to indicate variable length
                 .toArray();
     }
 
     public boolean isArrayType() {
         int[] shape = getShape();
         if (getDataType() == String.class) {
-            return shape.length -1 > 0;
+            return shape.length > 1;        // array of char is naturally a string. to get an array of single-char strings, use arraysize=1x*
         } else {
             return shape.length > 0;
         }
@@ -521,22 +520,13 @@ public class DataType implements Serializable, Cloneable {
     public Object convertStringToData(String s) {
         if (s == null || getNullString().equals(s)) return null;
 
-        Object retval = s;
-        if (StringUtils.isEmpty(getArraySize())) {
-            retval = strToObject(s);
+        if (!isArrayType()) {
+            return strToObject(s);
         } else if (type == String.class) {
-            // char array.. fold first dimension into a string
-            int[] shape = getShape();
-            if (shape.length > 1 && shape[0] > 0) {
-                return split(s, shape[0]).stream().map( v -> stripEnd(v, " ")).toArray(String[]::new);
-            } else {
-                return s;
-            }
+            return TableUtil.strToStringAry(s,getShape(), false);
         } else {
             return strToPrimitiveAry(s.split(" "));
         }
-
-        return retval;
     }
 
     private Object strToPrimitiveAry(String[] strAry) {

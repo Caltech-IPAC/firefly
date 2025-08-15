@@ -154,11 +154,11 @@ public class EmbeddedDbUtil {
         int cIdx = idx+1;      // ResultSet index starts from 1
         Object val = rs.getObject(cIdx);
         if (val == null)         return null;
-        if (clz.isInstance(val)) return val;
-
         if (isAry) {
             if (val instanceof Array)   return val;    // we will assume the data type matches
             return Try.it(()-> Util.deserialize(val.toString())).get();        // handles base64 encoded Java serialized objects; ignore errors
+        } else if (clz.isInstance(val)) {
+            return val;
         } else if (clz == String.class) {
             if (val instanceof Blob b) {
                 return new String(b.getBytes(1, (int) b.length()), UTF_8);   // handles binary UTF-8 encoded string

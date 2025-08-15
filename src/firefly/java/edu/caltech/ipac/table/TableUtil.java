@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -244,6 +245,111 @@ public class TableUtil {
             String nCname = adjCname(cname, (name)->dg.containsKey(name));
             dg.renameColumn(cname, nCname);
         }
+    }
+
+    /**
+     * Parse datatype="char" (or unicodeChar) to String or String[]
+     *  - shape[0] = chars per string (> 0), unless shape.length == 1 and shape[0] == -1 (variable)
+     *  - Only the last dimension may be -1 (variable)
+     * Returns:
+     *  - shape.length == 0              -> String (scalar)
+     *  - shape.length == 1 && >0        -> one fixed-length String (exactly shape[0] chars)
+     *  - shape.length == 1 && == -1     -> one variable-length String (no split)
+     *  - shape.length >= 2              -> nested Object[] with leaf = String (each of length shape[0])
+     *
+     * @param s         flat data (already decoded)
+     * @param shape     dims info (e.g., "3x2x*" -> [3, 2, -1])
+     * @param trimPad   if true, strip trailing spaces from each fixed-length string
+     */
+    public static Object strToStringAry(String s, int[] shape, boolean trimPad) {
+        if (s == null || s.isEmpty()) return null;
+        if (shape == null || shape.length == 0) return s; // scalar: no arraysize
+
+        // Single-dimension cases; should not be needed because isArrayType is called first, but handle anyway
+        if (shape.length == 1) {
+            int first = shape[0];
+            if (first <= 0) {
+                // arraysize="*" → variable-length single string
+                return trimPad ? rstrip(s) : s;
+            }
+            if (s.length() != first) {
+                throw new IllegalArgumentException("Input length (" + s.length()
+                        + ") must equal arraysize[0] (" + first + ") for fixed-length single string");
+            }
+            return trimPad ? rstrip(s) : s;
+        }
+
+        // Multi-dimension cases (length >= 2)
+        final int charsPerString = shape[0];
+        if (charsPerString <= 0) {
+            throw new IllegalArgumentException("arraysize[0] (chars per string) must be > 0");
+        }
+        if (s.length() % charsPerString != 0) {
+            throw new IllegalArgumentException("Input length not a multiple of charsPerString");
+        }
+
+        // Validate middle dims and resolve last=-1 if present
+        int[] dims = Arrays.copyOfRange(shape, 1, shape.length);
+        for (int i = 0; i < dims.length - 1; i++) {
+            if (dims[i] <= 0) {
+                throw new IllegalArgumentException("Only the last dimension may be -1; others must be > 0");
+            }
+        }
+
+        final int totalStrings = s.length() / charsPerString;
+
+        // Resolve variable last dim
+        int fixedProd = 1;
+        for (int i = 0; i < dims.length - 1; i++) fixedProd *= dims[i];
+        if (dims[dims.length - 1] == -1) {
+            if (fixedProd == 0) throw new IllegalArgumentException("Invalid arraysize");
+            int last = totalStrings / fixedProd;
+            if (last * fixedProd != totalStrings) {
+                throw new IllegalArgumentException("Data length incompatible with variable last dimension");
+            }
+            dims[dims.length - 1] = last;
+        } else if (dims[dims.length - 1] <= 0) {
+            throw new IllegalArgumentException("Last dimension must be > 0 or -1");
+        }
+
+        // Check product of dims matches number of strings
+        int expectedStrings = 1;
+        for (int d : dims) expectedStrings *= d;
+        if (expectedStrings != totalStrings) {
+            throw new IllegalArgumentException("Data length incompatible with arraysize: expected "
+                    + expectedStrings + " strings, got " + totalStrings);
+        }
+
+        // Build nested arrays; leaf = String (len = charsPerString)
+        AtomicInteger idx = new AtomicInteger(0);
+        return buildNested(s, charsPerString, dims, 0, idx, trimPad);
+    }
+
+    private static Object buildNested(String s, int cps, int[] dims, int depth,
+                                      AtomicInteger idx, boolean trimPad) {
+        int count = dims[depth];
+        Object[] out = new Object[count];
+
+        if (depth == dims.length - 1) {
+            // Leaf level: materialize Strings
+            for (int i = 0; i < count; i++) {
+                int start = idx.getAndIncrement() * cps;
+                String piece = s.substring(start, start + cps);
+                out[i] = trimPad ? rstrip(piece) : piece;
+            }
+        } else {
+            for (int i = 0; i < count; i++) {
+                out[i] = buildNested(s, cps, dims, depth + 1, idx, trimPad);
+            }
+        }
+        return out;
+    }
+
+    /** Strip trailing ASCII spaces (for fixed-length padded strings). */
+    private static String rstrip(String x) {
+        int end = x.length();
+        while (end > 0 && x.charAt(end - 1) == ' ') end--;
+        return (end == x.length()) ? x : x.substring(0, end);
     }
 
 //====================================================================
