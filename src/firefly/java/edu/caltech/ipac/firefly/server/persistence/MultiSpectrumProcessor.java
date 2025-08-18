@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.SPECTRADM_UTYPE;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -63,6 +65,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         try {
             String source = treq.getParam(SOURCE);
+            ifNotEmpty(treq.getParam(RequestOwner.USER_KEY)).apply((uk) -> ServerContext.getRequestOwner().setUserKey(uk));
             updateJob(ji -> ji.getAux().setJobUrl(source));
 
             File inFile = QueryUtil.resolveFileFromSource(source, treq);

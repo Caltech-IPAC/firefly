@@ -51,8 +51,9 @@ public class RequestOwner implements Cloneable {
     private WorkspaceManager wsManager;
 
     //------------------------------------------------------------------------------------
-    private transient UserInfo userInfo;
+//    private transient UserInfo userInfo;
     private transient SsoAdapter ssoAdapter;
+    private transient String usrKey;
 
 
 
@@ -62,7 +63,11 @@ public class RequestOwner implements Cloneable {
         this.requestAgent = requestAgent;
         startTime = new Date();
         attributes = new HashMap<>();
-        userInfo = null;
+        usrKey = getUserKeyFromClient();
+        if (isEmpty(usrKey)) {
+            usrKey = newUserKey();
+            updateClientUserKey(usrKey);
+        }
         ssoAdapter = null;
         wsManager = null;
         if (requestAgent != null) {
@@ -88,6 +93,7 @@ public class RequestOwner implements Cloneable {
 
     public WorkspaceManager getWsManager() {
         if (wsManager == null) {
+            UserInfo userInfo = getUserInfo();
             if (userInfo.isGuestUser()) {
                 wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(getUserKey()));
             } else {
@@ -102,7 +108,7 @@ public class RequestOwner implements Cloneable {
      * @param userKey a user key string
      */
     public void setUserKey(String userKey) {
-        getUserInfo().setUserKey(userKey);
+        usrKey = userKey;
     }
 
     public String getUserKey() {
@@ -161,19 +167,12 @@ public class RequestOwner implements Cloneable {
      */
     @Nonnull
     public UserInfo getUserInfo() {
+        UserInfo userInfo = getAuthUser();
         if (userInfo == null) {
-            userInfo = ifNotNull(this::getAuthUser).get();
-            if (userInfo == null) {
-                userInfo = UserInfo.newGuestUser();
-                String userKey = getUserKeyFromClient();
-                if (isEmpty(userKey)) {
-                    userKey = newUserKey();
-                    updateClientUserKey(userKey);
-                }
-                userInfo.setUserKey(userKey);
-            }
-            notifyClient(userInfo);
+            userInfo = UserInfo.newGuestUser();
+            userInfo.setUserKey(usrKey);
         }
+        notifyClient(userInfo);
         return userInfo;
     }
 
@@ -187,7 +186,7 @@ public class RequestOwner implements Cloneable {
         target.requestAgent = source.requestAgent;
         target.startTime = source.startTime;
         target.attributes = source.attributes;
-        target.userInfo = source.userInfo;
+        target.usrKey = source.usrKey;
         target.ssoAdapter = source.ssoAdapter;
         target.eventChannel = source.eventChannel;
         target.eventConnID = source.eventConnID;
