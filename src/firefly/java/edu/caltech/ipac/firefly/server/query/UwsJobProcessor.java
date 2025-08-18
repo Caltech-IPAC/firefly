@@ -127,11 +127,11 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 JobInfo uwsJob = getUwsJobInfo(jobUrl);
                 if (uwsJob == null) {
                     String msg = "Failed to retrieve UWS job info";
-                    updateJob(ji -> ji.setError(new JobInfo.Error(500, msg)));
+                    sendJobUpdate(ji -> ji.setError(new JobInfo.Error(500, msg)));
                     throw new DataAccessException(msg);
                 }
 
-                updateJob(ji -> ji.copyFrom(uwsJob));
+                sendJobUpdate(ji -> ji.copyFrom(uwsJob));
                 Phase phase = ifNotNull(uwsJob.getPhase()).getOrElse(Phase.UNKNOWN);
 
                 if (phase == Phase.COMPLETED) {
