@@ -57,6 +57,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
 public class JOSSOAdapter implements SsoAdapter {
     private static final String SSO_SERVICES_URL = AppProperties.getProperty("sso.server.url", "https://irsa.ipac.caltech.edu/account/");
     private static final String SSO_PROFILE_URL = AppProperties.getProperty("sso.user.profile.url");
+    private static final boolean SEND_USER_KEY = AppProperties.getBooleanProperty("sso.send.user.key", false);
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static final String REQUESTER = "JOSSOAdapter";
     private static final String JOSSO_ASSERT_ID = "josso_assertion_id";
@@ -246,6 +247,7 @@ public class JOSSOAdapter implements SsoAdapter {
         if(http!=null){
             if (SsoAdapter.requireAuthCredential(inputs.getRequestUrl(), "ipac.caltech.edu")) {
                 applyIfNotEmpty(http.getHeader("Authorization"), (v) -> inputs.setHeader("Authorization", v));      // pass along authorization header; this includes more than just basic-auth. should this in mind.
+                if (SEND_USER_KEY) inputs.setHeader("X-Remote-User", ServerContext.getRequestOwner().getUserKey());
                 for (String name : ID_COOKIE_NAMES) {
                     String value = http.getCookieVal(name);
                     if (!isEmpty(value)) {
