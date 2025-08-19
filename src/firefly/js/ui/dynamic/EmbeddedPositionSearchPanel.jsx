@@ -1,7 +1,7 @@
 import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
-import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
-import {defaultsDeep} from 'lodash';
+import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, elementType, node} from 'prop-types';
+import {defaultsDeep, isString} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
@@ -55,6 +55,7 @@ export const emptyHeaderSx = {
  *   - `searchRoot` slot - embedded Sheet that contains a Collapsible, containing:
  *      - `formPanel` slot^ - FormPanel with CompleteBtn, containing:
  *          - *State: collapsible is open*:
+ *              - `formTitle` slot - Typography
  *              - `spatialSearch` slot^ - a wrapper with radio options for search types:
  *                  - *State: Cone*:
  *                      - `targetPanel` slot - TargetPanel
@@ -81,6 +82,7 @@ export const emptyHeaderSx = {
  * @param p.usePolygon whether to use Polygon search type in spatialSearch
  * @param p.slotProps props to control the slots mentioned above. See propTypes.slotProps for details.
  * @param p.doSearch function to execute when panel is submitted
+ * @param p.formTitle title of the form panel when collapsible is open (optional)
  * @param p.children additional components to be wrapped inside the embedded search form (when collapsible is open)
  *
  */
@@ -94,6 +96,7 @@ export function EmbeddedPositionSearchPanel({
                                                 usePolygon= true,
                                                 slotProps={},
                                                 doSearch,
+                                                formTitle,
                                                 children
                                             } ) {
 
@@ -161,6 +164,7 @@ export function EmbeddedPositionSearchPanel({
         mocList= undefined,
         sRegion= undefined,
         toolbarHelpId= undefined,
+        showHelpLines=true,
         coordinateSys : csysStr = 'EQ_J2000',
         sx:hipsTargetViewSx={},
     }= slotProps.hipsTargetView ?? {};
@@ -189,7 +193,7 @@ export function EmbeddedPositionSearchPanel({
                     hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList,
                     coordinateSys: CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000,
                     sRegion, plotId,
-                    minSize: min, maxSize: max, toolbarHelpId,
+                    minSize: min, maxSize: max, toolbarHelpId, showHelpLines,
                     getWhichOverlay: doGetSearchTypeOp, setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
                     targetKey,
                     sizeKey: sizeEnabled ? sizeKey : undefined, //to draw radius only when size input is enabled
@@ -244,6 +248,15 @@ export function EmbeddedPositionSearchPanel({
                               })}
                               {...defFormPanelProps}
                         >
+                            {formTitle && (
+                                isString(formTitle)
+                                    ? <Typography level='title-lg' color='neutral' mb={1}
+                                                  sx={{textAlign: 'center', ...slotProps?.formTitle?.sx}}
+                                                  {...slotProps?.formTitle}>
+                                        {formTitle}
+                                    </Typography>
+                                    : formTitle
+                            )}
                             <Slot component={SpatialSearch} slotProps={slotProps.spatialSearch}
                                   {...{rootSlotProps:slotProps,insetSpacial,uploadInfo, setUploadInfo, searchTypeOp:doGetSearchTypeOp(),
                                       doToggle,initToggle, nullAllowed, searchTypeToggleOptions}}
@@ -266,6 +279,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     usePolygon: bool,
     useUpload: bool,
     doSearch: func,
+    formTitle: node,
     initArgs: shape({ searchParams: object, urlApi: object, }),
     slotProps: shape({ // all slotProps are optional except for formPanel.onSuccess
         formPanel : shape({
@@ -283,10 +297,12 @@ EmbeddedPositionSearchPanel.propTypes= {
             hipsFOVInDeg: number,
             sRegion: string,
             toolbarHelpId: string,
+            showHelpLines: bool,
             sx: object,
             initCenterPt: object,
             coordinateSys: oneOf(['EQ_J2000','GALACTIC']),
         }),
+        formTitle: object,
         targetPanel: shape({
             targetKey: string,
             targetPanelExampleRow1: arrayOf(string),

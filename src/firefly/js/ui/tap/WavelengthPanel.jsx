@@ -20,7 +20,7 @@ import {
     WavelengthInputField,
     WavelengthRangeInput
 } from 'firefly/ui/WavelengthInputField';
-import {omit} from 'lodash';
+import {isString, omit} from 'lodash';
 
 const panelTitle = 'Spectral Coverage';
 const panelValue = 'Wavelength';
@@ -144,9 +144,10 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
 
             {useFilters && (
                 <Stack spacing={1} {...slotProps?.filterBandsWvlOptions}>
-                    {filterDefinitionsLabel && (
-                        <Typography level='title-sm'>{filterDefinitionsLabel}</Typography>
-                    )}
+                    {isString(filterDefinitionsLabel)
+                        ? <Typography level='title-sm'>{filterDefinitionsLabel}</Typography>
+                        : filterDefinitionsLabel // just render it as is if it's a React node
+                    }
                     <Stack spacing={.5} sx={{ pl: filterDefinitionsLabel ? 2 : 0 }}>
                         {filterDefinitions.map((filterDefinition) => (
                             <CheckboxGroupInputField
@@ -232,7 +233,7 @@ WavelengthOptions.propTypes = {
         wvlMin: PropTypes.string,
         wvlMax: PropTypes.string,
     }).isRequired,
-    filterDefinitionsLabel: PropTypes.string,
+    filterDefinitionsLabel: PropTypes.node,
     filterDefinitions: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
         options: PropTypes.arrayOf(PropTypes.shape({ value: PropTypes.string, label: PropTypes.string }))
