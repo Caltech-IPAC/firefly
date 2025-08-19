@@ -29,7 +29,6 @@ public class UserInfo implements Serializable {
     private int userId = -1;
     private String loginName;
     private String pass;
-    private String userKey;
     private HashMap<String, String> preferences = new HashMap<String,String>(3);
     private RoleList roles;
 
@@ -55,9 +54,6 @@ public class UserInfo implements Serializable {
 
     public String getPassword() { return pass; }
     public void setPassword(String password) { this.pass = password;}
-
-    public void setUserKey(String userKey) { this.userKey = userKey; }
-    public String getUserKey() { return userKey; }
 
     public String getName() { return getFirstName()+" "+getLastName(); }
 
