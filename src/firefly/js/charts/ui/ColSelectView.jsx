@@ -33,9 +33,9 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
     // make a local table for plot column selection panel
     const columns = [
-        {name: 'Name'},
-        {name: 'Unit'},
-        {name: 'Type'},
+        {name: 'Name', type: 'char'},
+        {name: 'Unit', type: 'char'},
+        {name: 'Type', type: 'char'},
         {name: '', visibility: 'hidden'},
         {name: '', visibility: 'hidden'}
     ];
