@@ -2,13 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import AdsClickIcon from '@mui/icons-material/AdsClick';
 import {Box, Stack, Typography} from '@mui/joy';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
-import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string, func} from 'prop-types';
+import PropTypes, {arrayOf, bool, func, number, object, oneOf, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import {getTblById, makeFileRequest, onTableLoaded} from '../../api/ApiUtilTable.jsx';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
@@ -43,13 +44,11 @@ import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {HelpLines, targetHipsDefaultMenuItemKey, TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
 import {closeToolbarModalLayers} from './ToolbarToolModalEnd.js';
-import {HelpLines, TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
 import {
-    convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput,
-    updateUIFromPlot
+    convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput, updateUIFromPlot
 } from './VisualSearchUtils.js';
-import AdsClickIcon from '@mui/icons-material/AdsClick';
 
 const DIALOG_ID= 'HiPSPanelPopup';
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
@@ -108,7 +107,8 @@ VisualTargetPanel.propTypes= {
 export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
                                    targetKey=DEF_TARGET_PANEL_KEY, sizeKey=RADIUS_DISABLED_KEY, polygonKey='non---Polygon',
-                                   getWhichOverlay=() => CONE_CHOICE_KEY, toolbarHelpId, showHelpLines=true,
+                                   getWhichOverlay=() => CONE_CHOICE_KEY, toolbarHelpId,
+                                   showHelpLines=true, selectionHelpText= undefined,
                                    setWhichOverlay, sRegion, coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
@@ -124,6 +124,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
     const userEnterSearchRadius= () =>  Number(getHiPSRadius());
     const userEnterPolygon= () => convertStrToWpAry(getPolygon());
+    const usingRadius= sizeKey!==RADIUS_DISABLED_KEY;
 
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
@@ -171,7 +172,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
              const wp = primePlot(visRoot(), plotId)?.attributes[PlotAttribute.USER_SEARCH_WP];
              wp && setTargetWp(wp.toString());
          }
-        const radius= sizeKey!==RADIUS_DISABLED_KEY ? userEnterSearchRadius() : undefined;
+        const radius=  usingRadius ? userEnterSearchRadius() : undefined;
 
         updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
             radius, userEnterPolygon(), false, canGenerate);
@@ -188,13 +189,14 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                 <Typography level='h4' color='danger' textAlign='center'>
                     {`The coverage MOC is unavailable${mocError?.title?': '+mocError.title:''}`}
                 </Typography>}
-            {showHelpLines && <HelpLines whichOverlay={getWhichOverlay()}/>}
+            {showHelpLines && <HelpLines {...{selectionHelpText, whichOverlay:getWhichOverlay(), usingRadius}}/>}
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
                               whichOverlay={getWhichOverlay()}
                               toolbarHelpId={toolbarHelpId}
                               handleToolbar={false}
+                              menuItemKeys={{...targetHipsDefaultMenuItemKey, selectArea:usingRadius}}
                               Toolbar={TargetHipsPanelToolbar}/>
         </Stack>
     );
@@ -388,10 +390,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
             userCanDeletePlots: false,
             highlightFeedback: false,
             embedMainToolbar: true,
-            menuItemKeys: {
-                zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false, clickToSearch:false,
-                recenter: false, selectArea: true, restore: false,
-            }
+            menuItemKeys: targetHipsDefaultMenuItemKey,
         }
     });
     await onPlotComplete(plotId);
