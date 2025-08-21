@@ -108,11 +108,11 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
+export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, viewerId, tips={}, menuItemKeys}) => {
     const {visRoot,dlCount, modalEndInfo} = useStoreConnector(getStoreState,[],true);
     return (
         <Box sx={{...rS, ...sx}} className='disable-select' >
-            <VisMiniToolbarView {...{visRoot, dlCount, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
+            <VisMiniToolbarView {...{visRoot, dlCount, manageExpand, expandGrid,modalEndInfo, viewerId, tips, menuItemKeys}} />
         </Box>
     );
 });
@@ -122,7 +122,8 @@ VisMiniToolbar.propTypes= {
     manageExpand : PropTypes.bool,
     expandGrid: PropTypes.bool,
     viewerId: PropTypes.string,
-    tips: PropTypes.object
+    tips: PropTypes.object,
+    menuItemKeys: PropTypes.object,
 };
 
 const rS= {
@@ -144,7 +145,7 @@ function getCorrectPlotView(visRoot, viewer) {
 }
 
 
-const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, modalEndInfo, viewerId, tips}) => {
+const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, modalEndInfo, viewerId, tips, menuItemKeys}) => {
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
@@ -166,7 +167,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, moda
     const plot= primePlot(pv);
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
-    const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
+    const mi= menuItemKeys ?? pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
@@ -243,7 +244,8 @@ VisMiniToolbarView.propTypes= {
     expandGrid: PropTypes.bool,
     availableWidth: PropTypes.number,
     modalEndInfo: PropTypes.object,
-    viewerId: PropTypes.string
+    viewerId: PropTypes.string,
+    menuItemKeys: PropTypes.object,
 };
 
 function doRotateNorth(pv,rotate) {
