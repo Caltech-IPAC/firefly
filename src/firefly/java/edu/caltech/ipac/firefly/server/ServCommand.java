@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -22,6 +23,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
     public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
         JSONObject json=new JSONObject();
         String jsonData;
+        RedisService.sendConnectionStatus(false);      // notify the client if redis is down
         try {
             String result = doCommand(new SrvParam(sp.getParamMap()));
 

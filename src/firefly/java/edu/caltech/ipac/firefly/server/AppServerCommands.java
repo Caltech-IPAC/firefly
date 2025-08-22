@@ -57,8 +57,8 @@ public class AppServerCommands {
             action.setValue(bgInfo.notifEnabled(), "notifEnabled");
             ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
 
-            // check for redis connection
-            if (RedisService.getFailSince() != null)  RedisService.updateConnectionStatus(true);
+            // send redis connection status
+            RedisService.sendConnectionStatus(true);
 
             return "true";
         }
