@@ -4,7 +4,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getCellValue, getColumn, getColumnIdx} from '../../tables/TableUtil';
+import {getColumnIdx} from '../../tables/TableUtil';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
@@ -291,7 +291,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                             headerTitle:posHeaderTitle, openKey:posOpenKey,
                             doQuoteNonAlphanumeric:false,
                             headerPostTitle:'(from the selected table on the right)',
-                            posDefaultOpenMsg, cols, lonKey:CenterLonColumns, latKey:CenterLatColumns, setPosDefaultOpenMsg}} />}
+                            posDefaultOpenMsg, cols, lonKey:CenterLonColumns, latKey:CenterLatColumns, setPosDefaultOpenMsg, tableName}} />}
                 </ForceFieldGroupValid>
             </Stack>
             <DebugObsCore {...{constraintResult}}/>
