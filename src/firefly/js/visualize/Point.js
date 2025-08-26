@@ -411,8 +411,8 @@ export function parseAnyPt(inStr) {
  * If both points are WorldPt and are equal in values and coordinate system but have a
  * different resolver and object names, * they are still considered equal.
  *
- * @param {Point} p1 - the first point
- * @param {Point} p2 - the second point
+ * @param {Point|undefined|null} p1 - the first point
+ * @param {Point|undefined|null} p2 - the second point
  *
  * @return  true if equals
  *
