@@ -191,6 +191,7 @@ export function EmbeddedPositionSearchPanel({
            sx={{alignSelf: 'stretch', position: 'relative'}}>
             <HiPSTargetView
                 {...{
+                    key: groupKey,
                     hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList,
                     coordinateSys: CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000,
                     sRegion, plotId,
@@ -458,6 +459,7 @@ function ConeOp({slotProps,nullAllowed}) {
         <Stack>
             <TargetPanel {...{
                 sx:{width:DEFAULT_TARGET_PANEL_WIDTH, ...slotProps.targetPanel?.sx},
+                key:targetKey,
                 fieldKey:targetKey, nullAllowed,
                 targetPanelExampleRow1, targetPanelExampleRow2,
                 slotProps: {

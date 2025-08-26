@@ -87,12 +87,13 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx, pla
 
 export function VisualTargetPanel({fieldKey, label, feedbackStyle,
                                       targetPanelExampleRow1, targetPanelExampleRow2, manageHiPS=true, ...restOfProps}) {
+    const {groupKey}= useContext(FieldGroupCtx);
     const popupButton= manageHiPS && (
         <Box sx={{pr: 1/4}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </Box>
     );
-    return ( <TargetPanel {...{fieldKey, button:popupButton, label, feedbackStyle,
+    return ( <TargetPanel {...{key:groupKey, fieldKey, button:popupButton, label, feedbackStyle,
         targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 

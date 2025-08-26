@@ -8,6 +8,7 @@ export const PositionParsedInputType={Name: 'Name', Position:'Position', DB_ID:'
 
 const DEFAULT_COORD_SYS = 'equ j2000';
 const INVALID = 'invalid';
+const MAX_NAME_LENGTH= 35;
 
 
 /**
@@ -26,6 +27,7 @@ export function parsePosition(s) {
     let valid= false;
     let raParseErr='';
     let decParseErr='';
+    let validCoordSys= true;
     let position;
     s= s?.trim();
     if (!s) return {valid};
@@ -35,7 +37,7 @@ export function parsePosition(s) {
     inputType= determineType(s);
     if (inputType ===PositionParsedInputType.Name) {
         objName= s;
-        valid = s.length>1 && s.split(' ')?.length<6;
+        valid = s.length<MAX_NAME_LENGTH && s.length>1 && s.split(' ')?.length<6;
     }
     else if (inputType ===PositionParsedInputType.DB_ID) {
         const r= parseDBIdToCoord(s);
@@ -50,6 +52,8 @@ export function parsePosition(s) {
     else {
         const {raStr,decStr,csysStr}= parseAndConvertToMeta(s);
         coordSys= getCoordSysFromString(csysStr);
+        validCoordSys= Boolean(coordSys) ;
+        if (!validCoordSys) coordSys= CoordinateSys.EQ_J2000;
         let validRa= true;
         let validDec= true;
         try {
@@ -82,7 +86,13 @@ export function parsePosition(s) {
         }
         // determineType uses the first string to decide if the input is a position or object name.
         // "12 mus" (a valid object name in NED) would be classified as a position.
-        if (!validDec && !Number(decStr)) {
+
+        if (!validCoordSys && validDec && validRa) {
+            valid= false;
+            raParseErr = 'Invalid Coordinate system';
+            decParseErr = 'Invalid Coordinate system';
+        }
+        else if (!validDec && !Number(decStr) && s<MAX_NAME_LENGTH) {
             //validDec may be false when dec is out of range [-90, 90] as well
             inputType = PositionParsedInputType.Name;
             objName = s;
@@ -93,7 +103,8 @@ export function parsePosition(s) {
         }
 
     }
-    return { valid, coordSys, inputType, raParseErr, decParseErr, ra, dec, objName, position };
+    return { valid, coordSys:validCoordSys?coordSys:CoordinateSys.UNDEFINED,
+        inputType, raParseErr, decParseErr, ra, dec, objName, position };
 }
 
 // -------------------- static methods --------------------

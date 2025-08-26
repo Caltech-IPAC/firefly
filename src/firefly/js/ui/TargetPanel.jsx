@@ -5,17 +5,18 @@
 import {Box, Divider, Stack} from '@mui/joy';
 import {isString} from 'lodash';
 import React, {memo, useContext, useEffect} from 'react';
-import PropTypes, {arrayOf, object, bool, string, shape} from 'prop-types';
+import PropTypes, {arrayOf, object, bool, string, shape, func} from 'prop-types';
+import {parsePosition, PositionParsedInputType} from '../util/PositionParser';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {parseTarget} from './TargetPanelWorker.js';
-import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
+import {formatPosForHelp, formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
-import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
+import {isValidPoint, makeWorldPt, parseWorldPt, pointEquals} from '../visualize/Point.js';
 
 
 const TARGET= 'targetSource';
@@ -72,23 +73,24 @@ const TargetPanelView = (props) =>{
 
 
 TargetPanelView.propTypes = {
-    label : PropTypes.string,
-    sx: PropTypes.object,
-    valid   : PropTypes.bool.isRequired,
-    showHelp   : PropTypes.bool.isRequired,
-    feedback: PropTypes.string.isRequired,
-    examples: PropTypes.object,
-    resolver: PropTypes.string.isRequired,
-    message: PropTypes.string.isRequired,
-    onChange: PropTypes.func.isRequired,
-    value : PropTypes.string.isRequired,
-    onUnmountCB : PropTypes.func,
-    nullAllowed: PropTypes.bool,
-    showResolveSourceOp: PropTypes.bool,
-    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
-    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
+    label : string,
+    sx: object,
+    valid   : bool.isRequired,
+    showHelp   : bool.isRequired,
+    feedback: string.isRequired,
+    examples: object,
+    resolver: string.isRequired,
+    message: string.isRequired,
+    onChange: func.isRequired,
+    value : string.isRequired,
+    onUnmountCB : func,
+    nullAllowed: bool,
+    showResolveSourceOp: bool,
+    targetPanelExampleRow1: arrayOf(string),
+    targetPanelExampleRow2: arrayOf(string),
     connectedMarker: bool,
-    showExample: PropTypes.bool,
+    showExample: bool,
+    fieldKey: string,
     slotProps: shape({
         feedback: object,
     })
@@ -219,8 +221,15 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
     const {wpt}= parseResults;
     const wpStr= parseResults && wpt ? wpt.toString() : null;
 
+
+    if (isValidPoint(wpt) && !pointEquals(wpt, getActiveTarget()?.worldPt)) {
+        setTimeout(() => dispatchActiveTarget(wpt), 0);
+    }
+
+    const message= parseResults.parseError || (displayValue ? 'Could not resolve object: Enter valid object' : '');
+
     const payload= {
-        message : parseResults.parseError || 'Could not resolve object: Enter valid object',
+        message,
         displayValue,
         wpt,
         value : resolvePromise ? resolvePromise  : wpStr,
@@ -238,6 +247,7 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 function replaceValue(v,defaultToActiveTarget, computedState) {
     if (!defaultToActiveTarget) return v;
     if ((computedState.displayValue || computedState.message) && !computedState.valid) return '';
+    if (v?.trim() && v===computedState.value && computedState.valid && isValidPoint(parseWorldPt(v))) return v;
     return getActiveTarget()?.worldPt?.toString() ?? v;
 }
 
@@ -250,8 +260,8 @@ export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= 
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
                                 fieldKey, initialState: {...initialState, prepareResult},
                                 confirmValueOnInit: (v, props,initialState,computedState) => replaceValue(v,defaultToActiveTarget,computedState)});
-    const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
-    return ( <TargetPanelView {...{...newProps,fieldKey}}
+    const newProps= computePropsForView(viewProps, restOfProps, fieldKey, groupKey);
+    return ( <TargetPanelView {...{...newProps}}
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
 });
 
@@ -272,33 +282,52 @@ TargetPanel.propTypes = {
 };
 
 
-function computeProps(viewProps, componentProps, fieldKey, groupKey) {
+function computePropsForView(viewProps, componentProps, fieldKey, groupKey) {
 
     let feedback;
     let value;
     let showHelp;
     const wp= parseWorldPt(viewProps.value);
+    let displayValue;
 
-    if (isValidPoint(wp) && !viewProps.displayValue) {
-        feedback= formatTargetForHelp(wp);
-        value= wp.objName || formatPosForTextField(wp);
+    // note that the value returned is the display value since it is going to the view. This is hard to understand
+    // and should be clean up at some point in the future
+
+    if (isValidPoint(wp)) {
         showHelp= false;
+        if (!viewProps.displayValue) {
+            feedback = formatTargetForHelp(wp);
+            value = wp.objName || formatPosForTextField(wp);
+        }
+        else if (wp.objName) {
+            value= wp.objName;
+            feedback= (wp.objName===viewProps.displayValue) ? viewProps.feedback : formatTargetForHelp(wp);
+        }
+        else {
+            const {valid, inputType, ra, dec, coordSys} = parsePosition(viewProps.displayValue);
+            const dWp= (valid && inputType===PositionParsedInputType.Position) ?  makeWorldPt(ra,dec,coordSys) : undefined;
+            value= pointEquals(wp,dWp) ? viewProps.displayValue : formatPosForTextField(wp);
+            feedback= formatPosForHelp(wp);
+        }
+        displayValue= value;
     }
     else {
         value= viewProps.displayValue;
-        feedback= viewProps.feedback|| '';
+        feedback= viewProps.feedback;
         showHelp= viewProps?.showHelp ?? true;
     }
 
     return {
         ...viewProps,
+        displayValue,
         visible: true,
         label: 'Coordinates or Object Name',
         tooltip: 'Enter a target',
         value,
-        feedback,
+        feedback: feedback||'',
         resolver: viewProps.resolver ?? nedThenSimbad,
         showHelp,
+        fieldKey,
         onUnmountCB: (props) => didUnmount(fieldKey,groupKey,props),
         ...componentProps};
 }
