@@ -58,7 +58,7 @@ public class AppServerCommands {
             ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
 
             // send redis connection status
-            RedisService.sendConnectionStatus(true);
+            RedisService.sendConnectionStatus();
 
             return "true";
         }

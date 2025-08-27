@@ -141,13 +141,14 @@ public class RedisService {
             return; // state unchanged
         }
         failSince = ok ? null : Instant.now();
-        sendConnectionStatus(true);     // notify clients of the update
+        sendConnectionStatus();     // notify clients of the update
     }
 
-    public static void sendConnectionStatus(boolean always) {
-        if (!always && failSince == null) {
-            return; // no need to send status if not lost
-        }
+    public static void sendConnectionStatusIfFailed () {
+        if (failSince != null) sendConnectionStatus();
+    }
+
+    public static void sendConnectionStatus() {
         boolean lost = failSince != null;
         String reason = lost ? "A critical system component is currently unavailable" : "";
 
