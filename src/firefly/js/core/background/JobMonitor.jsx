@@ -248,7 +248,8 @@ function PhaseRenderer({cellInfo}) {
 
 function ControlRenderer({cellInfo}) {
     const {value:jobId} = cellInfo;
-    const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
+    const job = getJobInfo(jobId);
+    // const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
     if (!job?.meta?.jobId) return null;
 
     return  (
@@ -271,7 +272,7 @@ function Delete({job}) {
     const title = job?.jobInfo?.title || job.jobId;
     if (isDone(job)) {
         return <IconButton  title={`Delete job ${job?.meta?.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
-    } else if (isExecuting(job)) {
+    } else if (isActive(job)) {
         return <IconButton  title={`Abort job ${title}`} color='danger' onClick={() => dispatchJobCancel(job?.meta?.jobId)}><StopCircleOutlinedIcon/></IconButton>;
     }
 }

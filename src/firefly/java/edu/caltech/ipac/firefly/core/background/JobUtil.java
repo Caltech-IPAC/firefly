@@ -19,8 +19,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
@@ -93,16 +95,16 @@ public class JobUtil {
      * Import job histories from the given service URL.
      * @param svcDef   the service to import job histories from
      * @param userJobs
-     * @return the number of job histories imported
+     * @return the set of job IDs that were imported
      */
-    public static int importJobHistories(String svcDef, List<JobInfo> userJobs) {
+    public static Set<String> importJobHistories(String svcDef, List<JobInfo> userJobs) {
         int count = 0;
 
         String[] svcParts = ifNotNull(svcDef).getOrElse("").split("\\|", 3);
         String url = svcParts[0].trim();
         String svcId = svcParts.length > 1 ? svcParts[1].trim() : null;
         String svcType = svcParts.length > 2 ? svcParts[2].trim() : null;
-        if (url.isEmpty()) return count;
+        if (url.isEmpty()) return Set.of();
 
         URL urlObs= Try.it(() -> new URI(url).toURL()).getOrElse((URL)null);
         String paramStr= urlObs == null ? "" : urlObs.getQuery();
@@ -121,12 +123,12 @@ public class JobUtil {
             });
            return HttpServices.Status.ok();
         });
-        if (jobList.get() == null || jobList.get().isEmpty()) return count;
+        if (jobList.get() == null || jobList.get().isEmpty()) return Set.of();
 
         // remove jobs with no URL or runId in the ignore list
         boolean hasBadJobs = jobList.get().removeIf(j -> j.getAux().getJobUrl() == null || runIdIgnoreList.contains(String.valueOf(j.getRunId())));
         if (hasBadJobs) LOG.debug("Some jobs with no URL or ignored runId were removed from list");
-
+        HashSet<String> importedIds = new HashSet<>();
         for (JobInfo job : jobList.get()) {
             JobInfo jobInfo = findJobInfo(job.getJobId(), userJobs);
             if (jobInfo == null || isActive(jobInfo)) {
@@ -138,6 +140,7 @@ public class JobUtil {
                     count++;
                     mergeJobInfo(jobInfo, uws, svcId, svcType);
                     if (jobInfo == null )  userJobs.add(uws);           // update passed in userJobs; to avoid having to call getUserJobs, which can be expensive
+                    importedIds.add(uws.getJobId());
                     LOG.trace("Job added jobUrl=%s jobId=%s".formatted(job.getAux().getJobUrl(),uws.getJobId()));
                 }
             } else {
@@ -145,7 +148,7 @@ public class JobUtil {
             }
         }
         LOG.debug("%d job histories imported".formatted(count));
-        return count;
+        return importedIds;     // return imported job IDs to the caller to avoid having to call the uws service again
     }
 
     public static JobInfo mergeJobInfo(JobInfo local, JobInfo uws, String svcId, String svcType) {
@@ -154,7 +157,7 @@ public class JobUtil {
             ji.copyFrom(uws);
             Job.Type type = Try.it(() -> Job.Type.valueOf(svcType)).getOrElse(Job.Type.UWS);
             ji.getMeta().setType(type);
-            ji.getMeta().setSvcId(svcId);
+            if (svcId != null )  ji.getMeta().setSvcId(svcId);
         });
     }
 

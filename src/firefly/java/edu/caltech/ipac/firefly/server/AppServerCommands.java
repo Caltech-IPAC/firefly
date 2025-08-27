@@ -41,6 +41,7 @@ public class AppServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String spaName = params.getRequired(SPA_NAME);
+            ServerContext.getRequestOwner().extendUserKeyExpiry();
 
             // check for alerts
             AlertsMonitor.checkAlerts(true);

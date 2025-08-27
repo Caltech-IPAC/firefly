@@ -193,7 +193,7 @@ public class HttpServices {
         try {
             String url = input.getRequestUrl();
             if (isEmpty(url))  throw new FileNotFoundException("Missing URL parameter");
-            input.setFollowRedirect(false);                                                 // post are not allowed to follow redirect
+            input.setFollowRedirect(false);                                                 // httpclient 3.x, post are not allowed to follow redirect
             return executeMethod(new PostMethod(url), input, handler);
         } catch (Exception e) {
             return new Status(400, e.getMessage());
@@ -232,11 +232,11 @@ public class HttpServices {
         try {
             input = input == null ? new HttpServiceInput() : input;
 
-            method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive.. we don't plan to reuse this connection.
+            method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive. we don't plan to reuse this connection.
             method.setRequestHeader("User-Agent", VersionUtil.getUserAgentString());
             method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
-                method.setFollowRedirects(input.isFollowRedirect());    // post are not allowed to follow redirect
+                method.setFollowRedirects(input.isFollowRedirect());    // httpclient 3.x, post are not allowed to follow redirect
             }
 
             HttpClient httpClient = newHttpClient();

@@ -83,7 +83,7 @@ public class SearchServerCommands {
             String format = params.getOptional(FORMAT, "json");
 
             SearchProcessor<?> processor = SearchManager.getProcessor(tsr.getRequestId());
-            if (processor instanceof Job.Worker) setWorker((Job.Worker)processor);
+            onStart(processor instanceof Job.Worker ? (Worker) processor : null);
 
             if (format.toLowerCase().contains("votable")) {
                 ByteArrayOutputStream rval = new ByteArrayOutputStream();
@@ -275,7 +275,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             PackagingWorker worker = new PackagingWorker();
-            setWorker(worker);
+            onStart(worker);
             return worker.doCommand(params);
         }
     }
@@ -286,7 +286,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             DownloadScriptWorker worker = new DownloadScriptWorker();
-            setWorker(worker);
+            onStart(worker);
             return worker.doCommand(params);
         }
     }
@@ -314,7 +314,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
-            JobInfo info = JobManager.abort(jobId, "Aborted by user");
+            JobInfo info = JobManager.abort(jobId, null);
             return JobUtil.toJson(info);
         }
     }

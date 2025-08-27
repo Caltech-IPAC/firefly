@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.sendUpdate;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
 import static java.util.Optional.ofNullable;
@@ -30,7 +31,7 @@ public interface Job extends Callable<String> {
 
     Worker getWorker();
 
-    void setWorker(Worker worker);
+    void onStart(Worker worker);
 
     void setParams(SrvParam params);
 
@@ -42,46 +43,44 @@ public interface Job extends Callable<String> {
 
     String run() throws Exception;
 
-    default boolean shouldUpdate() {
-        boolean isSelfManaged = ofNullable(getWorker()).map(Worker::isSelfManaged).orElse(false);
-        return !isSelfManaged;
-    }
-
-    default void updateJobStatus(Consumer<JobInfo> apply) {
-        if (shouldUpdate()) updateJobInfo(getJobId(), apply);
-    }
-
-    default void sendJobStatus(Consumer<JobInfo> apply) {
-        if (shouldUpdate()) JobManager.sendUpdate(getJobId(), apply);
+    default void updateManagedStatus(Consumer<JobInfo> func) {
+        if (getWorker() != null && !getWorker().isSelfManaged()) {
+            updateJobInfo(getJobId(), func);
+        }
     }
 
     default String call() {
-
-        sendJobStatus(ji -> {
-            ji.setPhase(JobInfo.Phase.EXECUTING);
-            ji.getMeta().setProgress(10);
-            ji.setStartTime(Instant.now());
-        });
         try {
+            updateJobInfo(getJobId(), ji -> {
+                ji.setStartTime(Instant.now());
+                ji.getMeta().setProgress(0);
+            });
             String results = run();
-            updateJobStatus(ji -> {
+            // the worker is set in onStart().
+            getWorker().onComplete();
+            if (Thread.currentThread().isInterrupted()) throw new InterruptedException("Job was aborted");
+            updateManagedStatus(ji -> {
                 ji.setPhase(JobInfo.Phase.COMPLETED);
                 ji.getMeta().setProgress(100, "");
             });
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {
-            updateJobStatus(ji -> ji.setPhase(JobInfo.Phase.ABORTED));
+            updateJobInfo(getJobId(), ji -> {
+                ji.setPhase(JobInfo.Phase.ABORTED);
+                ji.getMeta().setProgress(100, "Job was aborted");
+            });
             getWorker().onAbort();
         } catch (Exception e) {
-            String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
-            updateJobStatus(ji -> ji.setError(new JobInfo.Error(500, msg)));
+            updateManagedStatus(ji -> {
+                String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+                ji.setError(new JobInfo.Error(500, msg));
+            });
             Logger.getLogger().error(e);
         } finally {
-            sendJobStatus(ji -> {
+            sendUpdate(getJobId(), ji -> {
                 ji.setEndTime(Instant.now());
                 ji.getMeta().setProgress(100);
             });
-            getWorker().onComplete();
         }
         return null;
     }
@@ -118,7 +117,7 @@ public interface Job extends Callable<String> {
          */
         default void sendJobUpdate(Consumer<JobInfo> func) {
             ifNotNull(getJob()).apply(j -> {
-                JobManager.sendUpdate(j.getJobId(), func);
+                sendUpdate(j.getJobId(), func);
             });
         }
 

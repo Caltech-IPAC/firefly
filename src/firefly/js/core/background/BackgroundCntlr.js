@@ -160,7 +160,7 @@ function bgJobRemove(action) {
     return (dispatch) => {
         const {jobId} = action.payload;
         if (jobId) {
-            SearchServices.cancel(jobId);
+            // SearchServices.cancel(jobId);
             SearchServices.removeBgJob(jobId);
             dispatch(action);
         }
