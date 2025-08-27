@@ -859,6 +859,8 @@ public class ServerContext {
                         JobManager.CLEANUP_INTVL_MINS,
                         JobManager.CLEANUP_INTVL_MINS,
                         TimeUnit.MINUTES);
+
+                JobManager.init();  // initialize JobManager on startup
             } catch (Throwable e) {
                 e.printStackTrace();
             }

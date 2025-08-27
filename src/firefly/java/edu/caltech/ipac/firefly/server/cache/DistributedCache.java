@@ -113,11 +113,12 @@ public class DistributedCache<T> implements Cache<T> {
         return false;
     }
 
+    @Nonnull
     public List<StringKey> getKeys() {
         try(Jedis redis = RedisService.getConnection()) {
             return keys(redis).stream().map(StringKey::new).toList();
         } catch (Exception ex) { LOG.error(ex); }
-        return null;
+        return List.of();
     }
 
     public int getSize() {

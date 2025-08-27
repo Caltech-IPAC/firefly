@@ -82,7 +82,7 @@ public class RedisService {
             pconfig.setBlockWhenExhausted(true);                // wait; if needed
             pconfig.setMaxWait(Duration.of(5, ChronoUnit.SECONDS));
             JedisPool pool = new JedisPool(pconfig, redisHost, REDIS_PORT, Protocol.DEFAULT_TIMEOUT, REDIS_PASSWORD);
-            pool.getResource().close();     // test connection
+            pool.getResource().ping();     // test connection
             return pool;
         } catch(Exception ignored) {}
         return null;
@@ -107,31 +107,28 @@ public class RedisService {
         } catch (IOException ignored) {}
     }
 
-    public static Instant getFailSince() { return failSince; }
-
     public static Jedis getConnection() throws Exception {
         try {
-            if (jedisPool == null || jedisPool.isClosed()) {
+            if (jedisPool == null) {
                 jedisPool = createJedisPool();
-                if (jedisPool == null && redisHost.equals("localhost")) {
-                    // can't connect; will start up embedded version if localhost
-                    startLocal();
-                    jedisPool = createJedisPool();
-                }
-                if (jedisPool == null || jedisPool.isClosed()) {
-                    if (jedisPool != null) {
-                        Try.it(jedisPool::close);
-                        jedisPool = null;
-                    }
-                    throw new RuntimeException("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
-                }
+            }
+            if (jedisPool == null && redisHost.equals("localhost")) {
+                // when running on localhost, startup Redis if it’s not already running.
+                startLocal();
+                jedisPool = createJedisPool();
+            }
+            if (jedisPool == null) {
+                throw new Exception("Failed to connect to Redis at %s:%d".formatted(redisHost, REDIS_PORT));
             }
             Jedis jedis = jedisPool.getResource();
-            if (failSince != null) updateConnectionStatus(false);
+            jedis.ping(); // test connection before returning
+            setConnectionOk(true);
             return jedis;
         } catch (Exception e) {
-            if (failSince == null) {
-                updateConnectionStatus(true);
+            setConnectionOk(false);
+            if (jedisPool != null) {
+                Try.it(jedisPool::close);
+                jedisPool = null;
             }
             throw e;
         }
@@ -139,8 +136,20 @@ public class RedisService {
 
     // because Redis may be down, we need to use processEvent to directly send it to clients currently connected
     // to this server and not rely on distributed event messaging.
-    public static void updateConnectionStatus(boolean lost) {
-        failSince = lost ? Instant.now() : null;
+    public static void setConnectionOk(boolean ok) {
+        if (ok == (failSince == null)) {
+            return; // state unchanged
+        }
+        failSince = ok ? null : Instant.now();
+        sendConnectionStatus();     // notify clients of the update
+    }
+
+    public static void sendConnectionStatusIfFailed () {
+        if (failSince != null) sendConnectionStatus();
+    }
+
+    public static void sendConnectionStatus() {
+        boolean lost = failSince != null;
         String reason = lost ? "A critical system component is currently unavailable" : "";
 
         FluxAction action = new FluxAction("app_data.appUpdate");

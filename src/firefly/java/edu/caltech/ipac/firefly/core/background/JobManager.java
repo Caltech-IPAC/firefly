@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.api.Async;
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
@@ -25,6 +26,7 @@ import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.lang.text.StrBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ScanParams;
 
 import javax.annotation.Nonnull;
@@ -79,7 +81,7 @@ public class JobManager {
     private static final CacheKey JOB_CACHE_VERSION_KEY = new StringKey("job.all.cache.version");
     private static final String JOB_CACHE_VERSION = "1.0";
 
-    static {
+    public static void init() {
         if (!isEmpty(COMPLETED_HANDLER)) {
             Class<?> clz = Try.it(() -> Class.forName(COMPLETED_HANDLER)).get();
             if (clz != null && JobCompletedHandler.class.isAssignableFrom(clz)) {
@@ -92,16 +94,25 @@ public class JobManager {
 
         Messenger.subscribe(JobEvent.TOPIC, new JobEventHandler());
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                    JobManager::checkJobs, KEEP_ALIVE_INTERVAL, KEEP_ALIVE_INTERVAL, TimeUnit.SECONDS);   // check every 30 seconds
+                JobManager::checkJobs, KEEP_ALIVE_INTERVAL, KEEP_ALIVE_INTERVAL, TimeUnit.SECONDS);   // check every 30 seconds
 
-
-        String jobCacheVersion = (String) CacheManager.getDistributed().get(JOB_CACHE_VERSION_KEY);
-        if (isEmpty(jobCacheVersion) || !jobCacheVersion.equals(JOB_CACHE_VERSION)) {
-            LOG.info("Migrating job cache keys to new format");
-            int count = migrateRedisKeys();
-            LOG.info("Migrated " + count + " job cache keys to new format");
-            CacheManager.getDistributed().put(JOB_CACHE_VERSION_KEY, JOB_CACHE_VERSION); // set the version
-        }
+        ScheduledExecutorService migrator = Executors.newSingleThreadScheduledExecutor();
+        migrator.scheduleWithFixedDelay(() -> {
+            try (Jedis jedis = RedisService.getConnection()) {
+                // run migration only when there's connection to Redis
+                LOG.info("Ensure job history is up to date");
+                String jobCacheVersion = (String) CacheManager.getDistributed().get(JOB_CACHE_VERSION_KEY);
+                if (isEmpty(jobCacheVersion) || !jobCacheVersion.equals(JOB_CACHE_VERSION)) {
+                    LOG.info("Migrating job history keys to new format");
+                    int count = migrateRedisKeys();
+                    LOG.info("Migrated "+ count + " job keys to new format");
+                    CacheManager.getDistributed().put(JOB_CACHE_VERSION_KEY, JOB_CACHE_VERSION);
+                }
+                migrator.shutdown(); // stop once successful
+            } catch (Exception e) {
+                LOG.debug("Job history check failed, retrying in 5s");
+            }
+        }, 0, 5, TimeUnit.SECONDS);
     }
 
     /**
