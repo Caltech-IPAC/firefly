@@ -391,7 +391,7 @@ function convertToTableModel(jobs, tbl_id) {
 }
 
 function defaultRequest(doFilter) {
-    const sortInfo = SortInfo.newInstance(SORT_DESC, 'Start Time').serialize();
+    const sortInfo = SortInfo.newInstance(SORT_DESC, 'Created').serialize();
     const filters = doFilter ? "Phase IN ('EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED')" : undefined;
     return {sortInfo, filters};
 }
