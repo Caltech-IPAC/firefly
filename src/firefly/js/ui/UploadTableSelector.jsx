@@ -307,15 +307,30 @@ export const MappedColumnFld = ({cols, fieldKey, name, ...props}) => (
  * @param cols {Columns} - all column options for the ColumnFld
  * @param colTblId {string} - id of the column selection table that appears in a popup when the search button is clicked on a ColumnFld
  * @param ucd {string} - UCD to filter by
+ * @param operator {string} filter type (like, in, etc.)
  */
-export function filterMappedColFldTbl(cols, colTblId, ucd) {
+export function filterMappedColFldTbl(cols, colTblId, ucd, operator = 'like') {
     onTableLoaded(colTblId).then((tbl) => {
-        const colsWithUcd = cols.filter((col) => { if (col.ucd) {return col.ucd.includes(ucd);} });
+        const ucdList = ucd.split(',').map((s) => s.trim()).filter(Boolean);
+        const colsWithUcd = cols.filter((col) =>
+            col.ucd && ucdList.some((u) => col.ucd.includes(u))
+        );
         if (colsWithUcd.length > 1) {
             if (!tbl) return;
             const filterInfo = tbl?.request?.filters;
             const filterInfoCls = FilterInfo.parse(filterInfo);
-            const ucdFilter = `like '%${ucd}%'`;
+            let ucdFilter;
+            if (operator === 'like') {
+                //build LIKE expression: like '%ucd1%' OR like '%ucd2%' ...
+                ucdFilter = ucdList.map((ucd) => `like '%${ucd}%'`).join(' OR ');
+            } else if (operator === 'in') {
+                //build IN expression: in ('ucd1','ucd2','ucd3')
+                const quoted = ucdList.map((ucd) => `'${ucd}'`).join(', ');
+                ucdFilter = `in (${quoted})`;
+            } else {
+                console.warn(`Unsupported filter type: ${operator}`);
+                return;
+            }
             filterInfoCls.setFilter('UCD', ucdFilter);
             const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
             dispatchTableFilter(newRequest);
@@ -371,11 +386,13 @@ export function UploadTableSelectorPosCol(props) {
 
 export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
                                   doQuoteNonAlphanumeric, headerTitle='Position Columns:',
-                                  headerPostTitle = '', posDefaultOpenMsg='', setPosDefaultOpenMsg, slotProps}) {
+                                  headerPostTitle = '', posDefaultOpenMsg='', setPosDefaultOpenMsg, tableName, slotProps}) {
     const columnFields = positionColumnFields(
-        {fieldKey: lonKey, doQuoteNonAlphanumeric},
-        {fieldKey: latKey, doQuoteNonAlphanumeric}
-    );
+        {fieldKey: lonKey, doQuoteNonAlphanumeric, colTblId: 'posCol'+tableName, onSearchBtnClicked: () =>
+                filterMappedColFldTbl(cols, 'posCol'+tableName, 'pos.eq.ra, pos.eq.ra;meta.main, pos.galactic.lon, pos.galactic.lon;meta.main, pos.ecliptic.lon, pos.ecliptic.lon;meta.main, pos.eq;meta.main,', 'in')},
+        {fieldKey: latKey, doQuoteNonAlphanumeric, colTblId: 'posCol'+tableName, onSearchBtnClicked: () =>
+                filterMappedColFldTbl(cols, 'posCol'+tableName, 'pos.eq.dec, pos.eq.dec;meta.main, pos.galactic.lat, pos.galactic.lat;meta.main, pos.ecliptic.lat, pos.ecliptic.lat;meta.main, pos.eq;meta.main', 'in')}
+    ); //colTblId: posCol+tableName is to give the col select popups for each table a unique tblId, otherwise it may lead to bugs with different tables sharing the same tblId
 
     const customSlotProps = defaultsDeep({openPreMessage: {level: 'body-sm'}}, slotProps, selectorPosColSlotProps.columnMappingPanel.slotProps);
 
