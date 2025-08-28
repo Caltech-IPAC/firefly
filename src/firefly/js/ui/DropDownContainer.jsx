@@ -25,6 +25,7 @@ import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {JobMonitor} from '../core/background/JobMonitor';
+import {isHtml} from 'firefly/tables/TableUtil';
 
 
 export const flexGrowWithMax = {width: '100%', maxWidth: 1400};
@@ -112,21 +113,35 @@ DropDownContainer.propTypes = {
 };
 
 export function Alerts() {
+    let { msg } = useStoreConnector(getAlerts);
+    
+    if (!msg) return null;
 
-    const {msg} = useStoreConnector(getAlerts);
-    if (msg) {
-        /* eslint-disable react/no-danger */
-        return (
-            <Alert variant='outlined' color='warning'
-                   sx={{
-                       p:1/2,
-                       justifyContent:'center',
-                       borderRadius:0,
-                       backgroundColor:'#FFF7C2'            // retro look
-                   }}
-            >
-                <div dangerouslySetInnerHTML={{__html: msg}} />
-            </Alert>
-        );
-    } else return null;
+    const looksHtml = isHtml(msg);
+
+    if (!looksHtml) { //escape special chars then render safely as HTML below
+        msg = msg
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br/>');
+    }
+
+    return (
+        <Alert variant='soft' color='warning' className='ff-alert'
+               sx={{p: 0.5, borderRadius: 0, justifyContent: 'center', width: '100%', textAlign: 'center',
+                '& p': { m: 0 }, '& ul, & ol': { m: 0, pl: 2 },
+                '& a': {
+                    color: 'inherit',
+                    textDecoration: 'underline',
+                    fontWeight: 600,
+                }
+            }}
+        >
+            {/* eslint-disable-next-line react/no-danger */}
+            <div style={{ width: '100%' }} className='ff-alert-content' dangerouslySetInnerHTML={{ __html: msg }} />
+        </Alert>
+    );
 }
+
+
