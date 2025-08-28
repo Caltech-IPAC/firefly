@@ -158,10 +158,13 @@ function doUrlAnalysis(value, fireValueChange, type, fileAnalysis) {
 
 function handleChange(ev, fireValueChange, type, fileAnalysis) {
     let file = ev?.target?.files?.[0];
-    let displayValue = ev?.target?.value;
-    if (ev.type === 'drop') { //drag drop files - instead of picking file from 'Choose File'
-        file = Array.from(ev.dataTransfer.files)[0];
-        displayValue = file?.name;
+    let displayValue;
+    if (ev) {
+        displayValue = ev.target?.value;
+        if (ev.type === 'drop') { //drag drop files - instead of picking file from 'Choose File'
+            file = Array.from(ev.dataTransfer.files)[0];
+            displayValue = ev.transferIsUrl ?  ev?.dataTransfer?.files?.[0] : file?.name;
+        }
     }
     fireValueChange({
         displayValue,

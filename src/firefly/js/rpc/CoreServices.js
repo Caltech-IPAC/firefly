@@ -3,7 +3,7 @@
  */
 
 
-import {isString} from 'lodash';
+import {isEmpty, isString} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest';
@@ -52,7 +52,7 @@ export function getTextFile(url,maxSize) {
  * @return {Promise}
  */
 export async function upload(item, fileAnalysis= false, params={}) {
-    const fetchParam= item && buildUploadParam(item);
+    const fetchParam= (item || !isEmpty(params)) && buildUploadParam(item, params);
     if (!fetchParam) {
         const msg= item ? 'Did not recognize item to upload: must be URL (String), File, Blob, or WebPlotRequest' :
                           'item parameter not given';
@@ -66,11 +66,17 @@ export async function upload(item, fileAnalysis= false, params={}) {
 /**
  * return the correct upload parameter based on the type that is passed
  * @param {WebPlotRequest|Blob|File|String} item - the parameter to evaluate
+ * @param {Object} [params] - this will override the analysis of item
  * @return {Object|undefined} an object with the correct parameter to pass to the upload,
  * or undefined if it is not the correct parameter type
  */
-function buildUploadParam(item) {
-    if (isString(item)) return {URL: item};
+function buildUploadParam(item, params={}) {
+    const overrideKeys= ['URL', 'fileOnServer', 'file', 'webPlotRequest'];
+    const overrideUploadParamKey= Object.keys(params).find( (k) => overrideKeys.includes(k));
+    if (overrideUploadParamKey) return {[overrideUploadParamKey]:params[overrideUploadParamKey]};
+    if (isString(item)) {
+       return (item.startsWith('${') || item.startsWith('/')) ? {fileOnServer:item} : {URL: item};
+    }
     else if (WebPlotRequest.isWPR(item)) return {webPlotRequest: item.toString()};
     else if (item instanceof Blob)  return {file:item}; // handles blob or file
 }

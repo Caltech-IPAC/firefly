@@ -1,31 +1,41 @@
+import {Stack, Typography} from '@mui/joy';
+import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {FileAnalysisType, Format, TableDataType} from 'firefly/data/FileAnalysis';
-import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
-import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
 import {MetaConst} from 'firefly/data/MetaConst';
-import {isLsstFootprintTable} from 'firefly/visualize/task/LSSTFootprintTask';
-import {makeFileRequest, makeTblRequest} from 'firefly/tables/TableRequestUtil';
-import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
+import LSSTFootprint from 'firefly/drawingLayers/ImageLineBasedFootprint';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot';
-import {dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry} from 'firefly/visualize/DrawLayerCntlr';
-import {getDrawLayersByType, getPlotViewAry, primePlot} from 'firefly/visualize/PlotViewUtil';
-import {dispatchPlotImage, visRoot} from 'firefly/visualize/ImagePlotCntlr';
+import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
+import {makeFileRequest, makeTblRequest} from 'firefly/tables/TableRequestUtil';
 import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import {getSelectedDataSync, uniqueTblId} from 'firefly/tables/TableUtil';
-import LSSTFootprint from 'firefly/drawingLayers/ImageLineBasedFootprint';
-import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
-import RangeValues from 'firefly/visualize/RangeValues';
+import {
+    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables, acceptNonMocTables,
+    acceptRegions, acceptTableOrSpectrum, acceptUWS, DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES,
+    TABLES, UWS
+} from 'firefly/ui/FileUploadUtil';
+import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
+import {
+    dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry
+} from 'firefly/visualize/DrawLayerCntlr';
+import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
+import {dispatchPlotImage, visRoot} from 'firefly/visualize/ImagePlotCntlr';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
-import {getTableHeaderFromAnalysis} from '../metaConvert/PartAnalyzer.js';
+import {getDrawLayersByType, getPlotViewAry, primePlot} from 'firefly/visualize/PlotViewUtil';
+import RangeValues from 'firefly/visualize/RangeValues';
+import {isLsstFootprintTable} from 'firefly/visualize/task/LSSTFootprintTask';
+import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
+import React from 'react';
+import {EXTERNAL_UPLOAD} from '../core/AppDataCntlr';
+import {dispatchHideDropDown, dispatchShowDropDown} from '../core/LayoutCntlr';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
+import {getIntHeaderFromAnalysis, getTableHeaderFromAnalysis} from '../metaConvert/PartAnalyzer.js';
+import {upload} from '../rpc/CoreServices';
+import {getHttpErrorMessage} from '../util/HttpErrorMessage';
+import {getStatusFromFetchError} from '../util/WebUtil';
 
 import {isAnalysisTableDatalink} from '../voAnalyzer/VoDataLinkServDef.js';
 import {fetchDatalinkUITable} from './dynamic/FetchDatalinkTable.js';
-import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
-import React from 'react';
-import {
-    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
-    acceptNonMocTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, IMAGES, REGIONS, TABLES, UWS
-} from 'firefly/ui/FileUploadUtil';
 
 const FILE_ID = 'fileUpload';
 const uploadOptions = 'uploadOptions';
@@ -36,6 +46,16 @@ const SUPPORTED_TYPES=[
     FileAnalysisType.Table,
     FileAnalysisType.Spectrum,
     FileAnalysisType.UWS
+];
+
+export const defaultAcceptList = [
+    TABLES,
+    REGIONS,
+    DATA_LINK_TABLES,
+    SPECTRUM_TABLES,
+    MOC_TABLES,
+    IMAGES,
+    UWS
 ];
 
 const LOAD_REGION=0;
@@ -51,13 +71,12 @@ const imageWarning = 'Only loading the table(s), ignoring any selected image(s).
 const tableWarning = 'Only loading the image(s), ignoring any selected table(s).';
 export const fileAnalysisErr = {valid: false, errorMsg: 'Could not analyze the file.', title: 'File Analysis Error'};
 
-
-export function resultSuccess(request) {
+export function resultSuccess(request,cacheKey) {
 
     const {message, report, detailsModel, summaryModel, groupKey, acceptList,
         uniqueTypes, acceptOneItem} = request.additionalParams ?? {};
     const summaryTblId = groupKey; //FileUploadAnalysis
-    const fileCacheKey = getFileCacheKey(groupKey);
+    const fileCacheKey = cacheKey ?? getFileCacheKey(groupKey);
 
     //determine if the file type or selections are valid to be loaded
     const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel,
@@ -473,7 +492,9 @@ export function getSelectedRows(type, summaryTblId, report, currentSummaryModel,
         if (type===getFirstPartType(currentSummaryModel)) retRows= [0];
     }
     else {
-        const {totalRows=0, tableData} = getSelectedDataSync(summaryTblId, ['Index', 'Type']);
+        const {totalRows=0, tableData} = summaryTblId
+            ? getSelectedDataSync(summaryTblId, ['Index', 'Type'])
+            : {totalRows:currentSummaryModel.totalRows, tableData:currentSummaryModel.tableData};
         if (totalRows>0) {
             retRows= tableData.data.filter((row) => row[1] === type)            // take only rows with the right type
                 .map((row) => row[0]);                       // returns only the index
@@ -488,4 +509,115 @@ export function getSelectedRows(type, summaryTblId, report, currentSummaryModel,
         retRows= retRows.filter( (idx) => !singleAxisIdxs.includes(idx));
     }
     return retRows;
+}
+
+export function makeSummaryModel(report, summaryTblId, acceptList) {
+    const isFits = report?.fileFormat === Format.FITS;
+    const columns = [
+        {name: 'Index', label: isFits ? 'HDU' : 'Index', type: 'int', desc: 'Extension Index', width: isFits ? 3 : 5},
+        {name: 'Type', type: 'char', desc: 'Data Type'},
+        {name: 'Description', type: 'char', desc: 'Extension Description', width: 40},
+        {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
+    ];
+    const {parts = []} = report;
+    const data = parts.map((p) => {
+        const naxis = getIntHeaderFromAnalysis('NAXIS', p, 0);
+        const entryType = (naxis === 1 && p.type === FileAnalysisType.Image) ? FileAnalysisType.Table : p.type;
+        const descPrefix = (naxis === 1 && p.type === FileAnalysisType.Image) ? '1D image, load as table, ' : '';
+        const isMoc = isMOCFitsFromUploadAnalsysis(report)?.valid;
+        const isDatalink = isAnalysisTableDatalink(report);
+        let isImageAllowed = true;
+        let isTableAllowed = true;
+        if (!acceptImages(acceptList)) {
+            isImageAllowed = false;
+        }
+        if (!acceptTableOrSpectrum(acceptList)) {
+            //edge case: could still be a MOC/DL table file - which only has table entries - don't pink those out
+            isMoc || isDatalink ? isTableAllowed = true : isTableAllowed = false;
+        }
+        let allowedType = true;
+        if (entryType === FileAnalysisType.Table || entryType === FileAnalysisType.Image) {
+            allowedType = entryType === FileAnalysisType.Table ? isTableAllowed : isImageAllowed;
+        }
+        const desc = p.desc ? descPrefix + p.desc : '';
+        return [p.index, entryType, desc, allowedType];
+    });
+
+    const summaryModel = {
+        tbl_id: summaryTblId,
+        tableMeta: {
+            DATARIGHTS_COL: 'AllowedType'
+        },
+        title: 'File Summary',
+        totalRows: data.length,
+        tableData: {columns, data}
+    };
+    return summaryModel;
+}
+
+
+async function loadFile(loadParam,displayName) {
+    try {
+        const {status, analysisResult}= await upload(undefined, 'details', {name:displayName, ...loadParam});
+        if (Number(status)!==200) {
+            showUploadErrorMsg(status, displayName);
+            return;
+        }
+
+        const report= JSON.parse(analysisResult);
+        const summaryModel= makeSummaryModel(report, '', defaultAcceptList);
+        const types= summaryModel?.tableData?.data.map( (d) => d[1]) ?? [];
+        const request= {
+            additionalParams: {
+                acceptOneItem: false,
+                acceptList: defaultAcceptList,
+                groupKey : '',
+                summaryModel,
+                report,
+                uniqueTypes: [...new Set(types)],
+
+            }
+        };
+        resultSuccess(request, report.filePath);
+        dispatchHideDropDown();
+    }
+    catch(error) {
+        const status= getStatusFromFetchError(error?.message);
+        showUploadErrorMsg(status, displayName);
+    }
+}
+
+function showUploadErrorMsg(status, displayName) {
+    const msg= (
+        <Stack>
+            <Typography>{`File upload of ${displayName} failed`}</Typography>
+            <Typography>{`status: ${status}`}</Typography>
+            <Typography>{`message: ${getHttpErrorMessage(status)}`}</Typography>
+        </Stack>
+    );
+    showInfoPopup(msg,'Error');
+}
+
+
+export function initHandleExternalUpload() {
+    const handleExternalUpload= (action) => {
+        const {type,payload}= action ?? {};
+        if (type!==EXTERNAL_UPLOAD) return;
+        const {fileOnServer,displayName= 'Loaded File', immediate= false, url}= payload;
+        if (immediate) {
+            const loadParam= fileOnServer ? {fileOnServer} : url ? {URL:url} : undefined;
+            void loadFile(loadParam,displayName);
+        }
+        else {
+            if (!fileOnServer && !url) {
+                showInfoPopup('external upload parameters incorrect','Error');
+                return;
+            }
+            const searchParams= fileOnServer
+                ? { fileOnServer, displayName, uploadOptions: 'onServer' }
+                : { dropEvent: {type: 'drop', dataTransfer: {files: [url]}, transferIsUrl: true}};
+            dispatchShowDropDown({view:'FileUploadDropDownCmd', initArgs:{searchParams}});
+        }
+    };
+    dispatchAddActionWatcher({ actions:[EXTERNAL_UPLOAD], callback: handleExternalUpload, });
 }

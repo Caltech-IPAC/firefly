@@ -37,6 +37,7 @@ export const LOAD_SEARCHES = `${APP_DATA_PATH}.loadSearches`;
 export const NOTIFY_REMOTE_APP_READY = `${APP_DATA_PATH}.notifyRemoteAppReady`;
 export const FORM_SUBMIT = `${APP_DATA_PATH}.formSubmit`;
 export const FORM_CANCEL = `${APP_DATA_PATH}.formCancel`;
+export const EXTERNAL_UPLOAD = `${APP_DATA_PATH}.externalUpload`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
 export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
@@ -46,7 +47,7 @@ export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
 /** the extension to add to a channel string to make a viewer channel */
 const CHANNEL_VIEWER_EXTENSION = '__viewer';
-const channel_matcher = new RegExp(`(.+)${CHANNEL_VIEWER_EXTENSION}(?:-(.+))?`)
+const channel_matcher = new RegExp(`(.+)${CHANNEL_VIEWER_EXTENSION}(?:-(.+))?`);
 
 /** @type {SearchInfo} */
 const searchInfo = {};
@@ -209,6 +210,7 @@ export function dispatchFormCancel(payload) {
 /**
  * Given a channel string return a version of the will be the channel for a viewer
  * @param {String} channel
+ * @param {String} file
  * @return {string}
  */
 export function makeViewerChannel(channel, file) {

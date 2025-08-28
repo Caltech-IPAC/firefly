@@ -21,7 +21,7 @@ const imageOverview= {
     ],
     allowAdditionalParameters: true,
     parameters: {
-        url : 'URL of the FITS image',
+        url : 'URL to the FITS image',
         title : 'title to show',
         service : 'one of IRIS, ISSA, DSS, SDSS, TWOMASS, MSX-ATLAS, WISE, ATLAS,ZTF, PTF',
         SurveyKey : [

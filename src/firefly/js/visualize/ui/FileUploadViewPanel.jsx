@@ -3,50 +3,52 @@
  */
 
 import {Box, Chip, Stack, Typography} from '@mui/joy';
+import {UwsJobInfo} from 'firefly/core/background/JobInfo';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
+import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
+import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson';
+import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
+import {
+    findSingleAxisImages, getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS, makeSummaryModel
+} from 'firefly/ui/FileUploadProcessor';
+import {
+    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables, acceptNonMocTables,
+    acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, DATA_LINK_TABLES, IMAGES, REGIONS,
+    SPECTRUM_TABLES, TABLES, UWS
+} from 'firefly/ui/FileUploadUtil';
 import React, {useContext, useEffect, useState} from 'react';
-import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
+import shallowequal from 'shallowequal';
+import {FileAnalysisType, Format, TableDataType} from '../../data/FileAnalysis';
+import {getField} from '../../fieldGroup/FieldGroupUtils';
+import {upload} from '../../rpc/CoreServices';
+
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {dispatchTableAddLocal, dispatchTableRemove} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById} from '../../tables/TableUtil.js';
+import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 
 import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {getField} from '../../fieldGroup/FieldGroupUtils';
-import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {getCellValue, getTblById} from '../../tables/TableUtil.js';
-import {dispatchTableAddLocal, dispatchTableRemove} from '../../tables/TablesCntlr.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 
-import {isAnalysisTableDatalink} from '../../voAnalyzer/VoDataLinkServDef.js';
+import {
+    useFieldGroupMetaState, useFieldGroupValue, useInitArgSearchParam, useStoreConnector
+} from '../../ui/SimpleComponent.jsx';
+import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
-import {SelectInfo} from '../../tables/SelectInfo.js';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
-import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {isAnalysisTableDatalink} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
+import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
+import {getWorkspaceConfig, isAccessWorkspace} from '../WorkspaceCntlr.js';
 
-import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
-
-import {getIntHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
-import {FileAnalysisType, TableDataType} from '../../data/FileAnalysis';
-import {Format} from '../../data/FileAnalysis';
-import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
-import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
-import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
-import {
-    findSingleAxisImages, getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS
-} from 'firefly/ui/FileUploadProcessor';
-import {
-    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
-    acceptNonMocTables, acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, DATA_LINK_TABLES,
-    IMAGES, REGIONS, SPECTRUM_TABLES, TABLES, UWS
-} from 'firefly/ui/FileUploadUtil';
-import {UwsJobInfo} from 'firefly/core/background/JobInfo';
-import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson';
 export const  FILE_ID = 'fileUpload';
 export const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
+const  ON_SERVIER_ID = 'onServer';
 const SINGLE_ROW_AS_TABLE= 'singleRowImageAsTable';
 
 const TABLE_MSG = 'Custom catalog or table in IPAC, CSV, TSV, VOTABLE, Parquet, or FITS table format';
@@ -69,19 +71,19 @@ const TABLES_ONLY_SUPPORTED_TYPES=[
     FileAnalysisType.Table,
 ];
 
-const uploadOptions = 'uploadOptions';
+const UPLOAD_OPTIONS_KEY = 'uploadOptions';
 
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
+let cachedFileOnServerOptions= {};
 
-export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, externalDropEvent}) {
+export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, externalDropEvent, initArgs}) {
 
     const {groupKey, keepState}= useContext(FieldGroupCtx);
 
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
-    const [getLoadingOp, setLoadingOp]= useFieldGroupValue(uploadOptions);
+    const [getLoadingOp, setLoadingOp]= useFieldGroupValue(UPLOAD_OPTIONS_KEY);
     const singleAxisImageAsTable= useFieldGroupValue(SINGLE_ROW_AS_TABLE)[0]()==='singleAxisImage';
-
     //dropEvent is used for files being dragged and drooped for uploads
     const [dropEvent, setDropEvent] = useState(() => externalDropEvent);
 
@@ -154,10 +156,26 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
         });
     }, [isLoading, statusKey] );
 
+    useInitArgSearchParam(initArgs,UPLOAD_OPTIONS_KEY);
+
+    let fileOnServerOptions= {
+        fileOnServer:initArgs?.searchParams?.fileOnServer,
+        displayName:initArgs?.searchParams?.displayName ?? 'Loaded File',
+    };
+    let useFileOnServer= false;
+    if (fileOnServerOptions.fileOnServer || cachedFileOnServerOptions.fileOnServer) {
+        useFileOnServer= true;
+        if (fileOnServerOptions.fileOnServer) cachedFileOnServerOptions= fileOnServerOptions;
+        else fileOnServerOptions= cachedFileOnServerOptions;
+    }
+
+
+
     const workspace = getWorkspaceConfig();
-    const uploadMethod = [{value: FILE_ID, label: 'Upload file'},
-        {value: URL_ID, label: 'Upload from URL'}
-    ].concat(workspace ? [{value: WS_ID, label: 'Upload from workspace'}] : []);
+    const uploadMethod = [{value: FILE_ID, label: 'Upload file'}, {value: URL_ID, label: 'Upload from URL'}];
+    if (workspace) uploadMethod.push({value: WS_ID, label: 'Upload from workspace'});
+    if (useFileOnServer) uploadMethod.push({value: ON_SERVIER_ID, label: 'Preloaded file'});
+
 
     const clearReport= () => {
         dispatchValueChange({fieldKey:getLoadingOp(), groupKey, value:'', displayValue:'', analysisResult:undefined});
@@ -166,6 +184,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
     const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
     const isDatalink=  isAnalysisTableDatalink(report);
 
+    const loadingOp= dropEvent ? dropEvent.transferIsUrl ? URL_ID : FILE_ID : getLoadingOp();
     return (
         <Stack {...{flexGrow:1, position: 'relative', height:1, alignItems: 'stretch'}}>
             <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}}>
@@ -174,11 +193,11 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                         <RadioGroupInputField
                             initialState={{value: uploadMethod[0].value}}
                             slotProps={{radio:{size:'md'}}}
-                            fieldKey={uploadOptions}
+                            fieldKey={UPLOAD_OPTIONS_KEY}
                             orientation='horizontal'
                             options={uploadMethod} />
                         <Stack {...{pt: 1, direction:'row', justifyContent:'space-between'}}>
-                            <UploadOptions {...{uploadSrc: dropEvent ? FILE_ID : getLoadingOp(), isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent}}/>
+                            <UploadOptions {...{uploadSrc: loadingOp, isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent, fileOnServerOptions}}/>
                             <Stack>
                                 {report && <Chip sx={{whiteSpace:'nowrap', ml:1}}
                                                  onClick={() =>{
@@ -210,7 +229,7 @@ export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, sx, childre
 
     useEffect(() => {
         if (dropEvent) {
-             setLoadingOp('fileUpload');
+            setLoadingOp(dropEvent.transferIsUrl ? URL_ID : FILE_ID);
         }
     }, [dropEvent]);
 
@@ -402,50 +421,6 @@ function summaryModelEqual(sm1,sm2) {
         sm1?.selectInfo !== sm2?.selectInfo);
 }
 
-function makeSummaryModel(report, summaryTblId, acceptList) {
-    const isFits= report?.fileFormat===Format.FITS;
-    const columns = [
-        {name: 'Index', label:isFits? 'HDU' : 'Index', type: 'int', desc: 'Extension Index', width:isFits?3:5},
-        {name: 'Type', type: 'char', desc: 'Data Type'},
-        {name: 'Description', type: 'char', desc: 'Extension Description', width: 40},
-        {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
-    ];
-    const {parts=[]} = report;
-    const data = parts.map( (p) => {
-        const naxis= getIntHeaderFromAnalysis('NAXIS',p,0);
-        const entryType = (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type;
-        const descPrefix= (naxis===1 && p.type===FileAnalysisType.Image)? '1D image, load as table, ' : '';
-        const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
-        const isDatalink=  isAnalysisTableDatalink(report);
-        let isImageAllowed = true;
-        let isTableAllowed = true;
-        if (!acceptImages(acceptList)) {
-            isImageAllowed = false;
-        }
-        if (!acceptTableOrSpectrum(acceptList)) {
-            //edge case: could still be a MOC/DL table file - which only has table entries - don't pink those out
-            isMoc || isDatalink? isTableAllowed= true: isTableAllowed= false;
-        }
-        let allowedType = true;
-        if (entryType === FileAnalysisType.Table || entryType === FileAnalysisType.Image) {
-            allowedType = entryType === FileAnalysisType.Table? isTableAllowed: isImageAllowed;
-        }
-        const desc= p.desc ? descPrefix+p.desc : '';
-        return [p.index, entryType , desc, allowedType];
-    });
-
-    const summaryModel = {
-        tbl_id: summaryTblId,
-        tableMeta: {
-            DATARIGHTS_COL: 'AllowedType'
-        },
-        title: 'File Summary',
-        totalRows: data.length,
-        tableData: {columns, data}
-    };
-    return summaryModel;
-}
-
 function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     if (!tableModel) return;
     const {highlightedRow=0} = tableModel;
@@ -556,7 +531,23 @@ function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, a
     }
 }
 
-function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent, setDropEvent}) {
+function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent, setDropEvent, fileOnServerOptions}) {
+
+    const {setFld,getVal}= useContext(FieldGroupCtx);
+    const {fileOnServer, displayName}= fileOnServerOptions;
+
+    useEffect(() => {
+        const up= async () => {
+            if (uploadSrc!==ON_SERVIER_ID || !fileOnServer || getVal(ON_SERVIER_ID)===fileOnServer) return;
+            const {status, analysisResult}= await upload(fileOnServer, 'details', {name:displayName});
+            const value= fileOnServer;
+            const fld= Number(status)===200
+                ? {analysisResult, message:undefined, value}
+                : {analysisResult:undefined, message:'External Upload failed', value};
+            setFld(ON_SERVIER_ID,fld);
+        };
+        void up();
+    }, [uploadSrc,fileOnServer,displayName]);
 
     const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({isLoading:undefined, statusKey: undefined });
     const onLoading = (loading, statusKey) => {
@@ -599,6 +590,18 @@ function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent
                 fileAnalysis={onLoading}
                 tooltip='Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace'
             />
+        );
+    } else if (uploadSrc === ON_SERVIER_ID) {
+        return (
+            <Stack direction='row' spacing={1} pt={1} pb={2}>
+                <Typography>
+                    Preloaded file:
+                </Typography>
+                <Typography level='title-lg'>
+                    {`${displayName}`}
+                </Typography>
+            </Stack>
+
         );
     }
     return null;

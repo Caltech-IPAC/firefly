@@ -2,38 +2,29 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Skeleton} from '@mui/joy';
 import React, {useState} from 'react';
-import {FormPanel} from './FormPanel.jsx';
-import {FileUploadViewPanel, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {Box, Skeleton} from '@mui/joy';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
-import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
-import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
-import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
+import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
-import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES, UWS} from 'firefly/ui/FileUploadUtil';
+import {defaultAcceptList, resultSuccess} from 'firefly/ui/FileUploadProcessor';
+import {TABLES} from 'firefly/ui/FileUploadUtil';
+import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
+import {FileUploadViewPanel, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {FormPanel} from './FormPanel.jsx';
 
 const panelKey = 'FileUploadAnalysis';
-
-const defaultAcceptList = [
-    TABLES,
-    REGIONS,
-    DATA_LINK_TABLES,
-    SPECTRUM_TABLES,
-    MOC_TABLES,
-    IMAGES,
-    UWS
-];
-
-const tableOnlyDefaultAcceptList = [
-    TABLES
-];
+const tableOnlyDefaultAcceptList = [ TABLES ];
 
 export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepState=true,
                                       initArgs,
-                                      groupKey=panelKey, acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'?
-        tableOnlyDefaultAcceptList: defaultAcceptList, acceptOneItem=false}) =>{
+                                      groupKey=panelKey,
+                                      acceptOneItem=false,
+                                      acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'
+                                          ? tableOnlyDefaultAcceptList
+                                          : defaultAcceptList,
+                                      }) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
@@ -56,7 +47,7 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
                     }}>
 
                     <FileUploadViewPanel {...{setSubmitText, acceptList, acceptOneItem,
-                        externalDropEvent:initArgs?.searchParams?.dropEvent}}/>
+                        externalDropEvent:initArgs?.searchParams?.dropEvent, initArgs}}/>
                 </FormPanel>
             </FieldGroup>
             { doMask && <Skeleton sx={{inset:0, zIndex:10}}/> }

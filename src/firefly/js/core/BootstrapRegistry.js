@@ -55,6 +55,7 @@ import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js
 import {dispatchAddSaga, masterSaga} from './MasterSaga.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
 import {addExtensionWatcher} from './messaging/ExternalAccessWatcher.js';
+import {initHandleExternalUpload} from '../ui/FileUploadProcessor';
 
 
 const USE_LOGGING_MIDDLEWARE= false; // logging middleware is useful for debugging but we don't use if much
@@ -132,6 +133,7 @@ export const getBootstrapRegistry= once(() => {
         sagaMiddleware.run(masterSaga);
         dispatchAddSaga( watchReadout);
         addExtensionWatcher();
+        initHandleExternalUpload();
     };
 
     const registerCntlr= (cntlr = {}) => {
