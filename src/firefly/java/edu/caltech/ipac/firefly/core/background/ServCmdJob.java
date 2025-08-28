@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 
+import java.time.Instant;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.background.JobManager.*;
@@ -65,11 +66,15 @@ public abstract class ServCmdJob extends ServCommand implements Job {
         return params;
     }
 
-    public void setWorker(Worker worker) {
-        if (jobId != null) {
+    public void onStart(Worker worker) {
+        if (jobId != null || worker == null) {  // a job must have a jobId and worker
             this.worker = worker;
             worker.setJob(this);
-            sendUpdate(getJobId(), ji -> {      // needs to update clients, because these values may change after the job has submitted
+            updateManagedStatus(ji -> {     // set these only if it's not a self-managed job
+                ji.setPhase(JobInfo.Phase.EXECUTING);
+                ji.getMeta().setProgress(10);
+            });
+            sendUpdate(jobId, ji -> {      // needs to update clients, because these values may change after the job has submitted
                 ji.getMeta().setType(worker.getType());
                 ji.getAux().setTitle(worker.getLabel());
                 ji.getMeta().setSvcId(worker.getSvcId());

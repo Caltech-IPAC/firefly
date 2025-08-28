@@ -156,7 +156,7 @@ public class Async extends BaseHttpServlet {
     private static void updateJobPhase(HttpServletRequest req, HttpServletResponse res, String jobId) throws Exception {
         String phase = req.getParameter("PHASE");
         if (String.valueOf(phase).equals("ABORT")) {
-            JobInfo fi = JobManager.abort(jobId, "Abort by user");
+            JobInfo fi = JobManager.abort(jobId, null);
             sendResponse(JobUtil.toJson(fi), res);
         }
     }

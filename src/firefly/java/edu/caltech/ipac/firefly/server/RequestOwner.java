@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -38,7 +39,7 @@ public class RequestOwner implements Cloneable {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
-    public static int USER_KEY_EXPIRY = AppProperties.getIntProperty("userkey.expiry", 3600 * 24 * 7 * 2);         // 2 weeks
+    public static int USER_KEY_EXPIRY = AppProperties.getIntProperty("userkey.expiry", 3600 * 24 * 365);         // 1 year
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
@@ -98,6 +99,10 @@ public class RequestOwner implements Cloneable {
             usrKey = newUserKey();
             updateClientUserKey(usrKey);
         }
+    }
+
+    public void extendUserKeyExpiry() {
+        ifNotEmpty(getUserKeyFromClient()).apply(this::updateClientUserKey);
     }
 
 

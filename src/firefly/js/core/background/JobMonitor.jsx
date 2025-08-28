@@ -248,7 +248,8 @@ function PhaseRenderer({cellInfo}) {
 
 function ControlRenderer({cellInfo}) {
     const {value:jobId} = cellInfo;
-    const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
+    const job = getJobInfo(jobId);
+    // const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
     if (!job?.meta?.jobId) return null;
 
     return  (

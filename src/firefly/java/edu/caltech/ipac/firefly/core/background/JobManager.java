@@ -37,8 +37,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -46,9 +48,11 @@ import java.util.stream.Stream;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.Job.Type.UWS;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.*;
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
+import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.getUwsJobInfo;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.PACKAGE;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
@@ -120,9 +124,26 @@ public class JobManager {
      */
     public static List<JobInfo> list() {
         List<JobInfo> userJobs = JobManager.getUserJobs();      // Ensure getUserJobs() is called only once, since it may be expensive. List is updated and returned at the end.
+        Set<String> importedJobIds = new HashSet<>();
         UWS_HISTORY_SVCS.forEach(svc -> {
-            Try.it(() -> importJobHistories(svc, userJobs)).getOrElse(LOG::error);
+            Set<String> ids = Try.it(() -> importJobHistories(svc, userJobs)).getOrElse(LOG::error);
+            if (ids != null) importedJobIds.addAll(ids);
         });
+        // update all userJobs with active status
+        userJobs.forEach(ji -> {
+            if (ji.getMeta().getType() == UWS &&
+                    isActive(ji) &&
+                    !importedJobIds.contains(ji.getMeta().getJobId())) {
+                JobInfo uws = Try.it(() -> getUwsJobInfo(ji.getAux().getJobUrl())).get();
+                if (uws == null) {
+                    LOG.debug("Job no longer exists:" + ji.getAux().getJobUrl());
+                    ji.setError(new JobInfo.Error(404, "Job no longer exists"));
+                } else {
+                    mergeJobInfo(ji, uws, null, null);
+                }
+            }
+        });
+
         return userJobs;
     }
 
@@ -164,7 +185,7 @@ public class JobManager {
 
     public static JobInfo abort(String jobId, String reason) {
         JobInfo info = updateJobInfo(jobId, (ji) -> {
-            ji.setError(new JobInfo.Error(410, reason));
+            if (reason != null) ji.setError(new JobInfo.Error(500, reason));
             ji.setPhase(ABORTED);
         });
         if (info != null) {
@@ -476,9 +497,8 @@ public class JobManager {
                 JobEvent.EventType type = Try.it(() -> JobEvent.EventType.valueOf(msg.getValue(null, JobEvent.TYPE))).get();
                 if (type == JobEvent.EventType.ABORTED) {
                     removeLocalJob(jobInfo);
-                } else {
-                    updateClient(jobInfo);        // update jobInfo to client
                 }
+                updateClient(jobInfo);        // update jobInfo to client
             });
         }
     }

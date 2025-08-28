@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
@@ -33,12 +34,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
+import edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * Date: Sept 19, 2018
@@ -79,11 +82,31 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         // send abort request.  ignore if there's error
         if (isEmpty(jobUrl)) return;
         String phaseUrl = jobUrl.trim().replaceAll("/$", "") + "/phase" ;        // remove trailing slash
-        HttpServices.postData(
-                HttpServiceInput.createWithCredential(phaseUrl)
-                        .setParam("PHASE", "ABORT")
+        Status status = HttpServices.postData(HttpServiceInput.createWithCredential(phaseUrl).setParam("PHASE", "ABORT"),
+                res -> {
+                    String location = getResHeader(res, "Location", null);      // expecting a 303 redirect to the job URL
+                    if (location == null) {
+                        String error = ifNotEmpty(parseError(res, phaseUrl)).getOrElse("Unknown error");
+                        int errorCode = isOk(res) ? 400 : res.getStatusCode();
+                        return new Status(errorCode, "Failed to abort: " + error);
+                    } else {
+                        JobInfo jobInfo = Try.it(() -> getUwsJobInfo(jobUrl)).get();
+                        if (jobInfo == null || JobUtil.isActive(jobInfo)) {
+                            String msg = ifNotNull(jobInfo.getError().msg()).getOrElse("Job cannot be aborted");
+                            return new Status(400, "Failed to abort: %s".formatted(msg) );
+                        }
+                        return Status.ok();         // aborted or no longer active
+                    }
+                }
         );
-        Logger.getLogger().debug("UWS job aborted: " + jobUrl);
+        if (status.isError()) {
+            logger.warn(status.getErrMsg());
+            sendJobUpdate(ji -> {
+                ji.setError(new JobInfo.Error(status.getStatusCode(), status.getErrMsg()));
+            });
+        } else {
+            logger.info("UWS job aborted: " + jobUrl);
+        }
     }
 
 //====================================================================
@@ -104,8 +127,8 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 jobUrl = submitJob(req);
                 if (jobUrl != null) runJob(jobUrl);
                 updateJob(ji -> {
-                    ji.setPhase(Phase.PENDING);
-                    ji.getMeta().setProgress(10, "UWS job submitted");
+                    ji.setPhase(Phase.QUEUED);
+                    ji.getMeta().setProgress(0, "UWS job submitted");
                 });
             }
         } catch (Exception e) {
@@ -141,9 +164,9 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 } else if (phase == Phase.HELD) {
                     updateJob(ji -> ji.setPhase(Phase.HELD));
                     throw new DataAccessException("The job is HELD pending execution and will not automatically be executed");
-                } else if (phase == Phase.SUSPENDED) {
-                    updateJob(ji -> ji.setPhase(Phase.SUSPENDED));
-                    throw new DataAccessException("Job temporarily paused by the system");
+                } else if (phase == Phase.PENDING) {
+                    updateJob(ji -> ji.setPhase(Phase.PENDING));
+                    throw new DataAccessException("The job was submitted, but no execution request has been made.");
                 } else if (phase == Phase.ERROR) {
                     JobInfo.Error error = getError(uwsJob, jobUrl);
                     updateJob(ji -> ji.setError(error));
