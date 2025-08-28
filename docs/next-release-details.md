@@ -1,7 +1,7 @@
 # Notes for next Release
 
-## Version 2025.4
-- 2025.4.0 - (tentative planed Sept 30, 2025),  _docker tag_: `nightly`
+## Version 2025.5
+- 2025.5.0 - (tentative planed Nov 15, 2025),  _docker tag_: `nightly`
 
 ## No notes yet
 
