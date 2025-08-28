@@ -56,7 +56,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const tableProps = {...slotProps?.table, ...table};
     const width = useStoreConnector(() => {
         const {columnWidths=[]} = getTableUiById('JobHistoryTable-ui') || {};
-        return columnWidths.reduce((acc, val, idx) => idx < 7 ? acc + val : acc, 3);
+        return columnWidths.reduce((acc, val, idx) => idx < 8 ? acc + val : acc, 3);
 
     });
     return(
@@ -271,7 +271,7 @@ function Delete({job}) {
     const title = job?.jobInfo?.title || job.jobId;
     if (isDone(job)) {
         return <IconButton  title={`Delete job ${job?.meta?.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
-    } else if (isExecuting(job)) {
+    } else if (isActive(job)) {
         return <IconButton  title={`Abort job ${title}`} color='danger' onClick={() => dispatchJobCancel(job?.meta?.jobId)}><StopCircleOutlinedIcon/></IconButton>;
     }
 }
@@ -357,6 +357,7 @@ function convertToTableModel(jobs, tbl_id) {
         {name: 'Title', width: 22},
         {name: 'Service ID', width: 11, type: 'char',  ...cProps},
         {name: 'Type', width: 9, type: 'char', ...cProps},
+        {name: 'Created', width: 14, ...cProps},
         {name: 'Start Time', width: 14, ...cProps},
         {name: 'End Time', width: 14, ...cProps},
         {name: 'Phase', width: 13, type: 'char', ...cProps},
@@ -368,6 +369,7 @@ function convertToTableModel(jobs, tbl_id) {
             getJobTitle(job),
             job.meta?.svcId,
             job.meta?.type,
+            job.creationTime && moment.utc(job.creationTime).format('YYYY-MM-DD HH:mm:ss'),
             job.startTime && moment.utc(job.startTime).format('YYYY-MM-DD HH:mm:ss'),
             job.endTime && moment.utc(job.endTime).format('YYYY-MM-DD HH:mm:ss'),
             job.phase,
@@ -421,7 +423,8 @@ function doDownload(job, index) {
 function getMonitoredJob(jobMap) {
     return (jobMap ? Object.values(jobMap) : [])
         .filter((job) => job?.meta?.monitored)                   // only monitored jobs
-        .sort((a,b) => b.startTime?.localeCompare(a.startTime));
+        .map((job) => ({...job, creationTime: job.creationTime || job.startTime}))                   // if creationTime is missing, use startTime
+        .sort((a,b) => b.creationTime?.localeCompare(a.creationTime));
 }
 
 
