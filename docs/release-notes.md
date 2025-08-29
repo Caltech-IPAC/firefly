@@ -9,15 +9,15 @@
 ## Version 2025.4
 - 2025.4.0 - (Sep 3, 2025), _docker tag_: `2025.4.0`, `2025.4`, `latest`
 
-#### This release include Job Monitor improvements and other updates to support the applications
+#### This release include Job Monitor improvements, more image extraction features, and improvements other updates to support the applications
 
 #### Major Features
 - Packaging: Datalink tables can now be packaged- Firefly-1759 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1797)) 
 - Spectrum: Improved unit recognition- Firefly-1694,11,05,1784 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1798)) 
-- Images: Wavelength support for 3-color images- Firefly-1776 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1799)) 
-- Image Extraction: Extraction across multiple images- Firefly-1801 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1814)) 
+- Image: Wavelength support for 3-color images- Firefly-1776 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1799)) 
+- Image: Extraction now supported across multiple images- Firefly-1801 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1814)) 
 - MOC: Add auto display mode- Firefly-1806 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1817)) 
-- TAP: column settings: Default filters for Spatial Search Position Columns- Firefly-1787 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1831)) 
+- TAP: Column selection improvements- Firefly-1787 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1831)), Firefly-1827 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1829))
 - Job Monitor: Fully support Job ABORT- Firefly-1829 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1833)) 
 - Job Monitor: UI Enhancements- IRSA-7229 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1834)) 
 - API: remote load file to upload panel using firefly_client- Firefly-1815 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1825)) 
@@ -26,17 +26,19 @@
 
 #### Bug fix
  - Fixed: Packaging: Cutout size, ra, dec not updating in download script- Firefly-1803 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1816)) 
- - Fixed Job Monitor issues- Firefly-1804 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1818)), Firefly-1812, Firefly-1813([PR](https://github.com/Caltech-IPAC/firefly/pull/1822))
+ - Fixed: Job Monitor issues- Firefly-1804 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1818)), Firefly-1812, Firefly-1813([PR](https://github.com/Caltech-IPAC/firefly/pull/1822))
  - Fixed: Mishandling of UTINYINT JDBCType- IRSA-7144 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1820)) 
  - Fixed: Packaging: ZipHandler fix to better handle GZIP- Firefly-1811 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1821)) 
  - Fixed: Table: Failed to load multi-dimension array of strings- Firefly-1828 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1823)) 
  - Fixed: Fails to detect broken Redis connection; misleading server-status and client UI-  Firefly-1807 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1828)) 
  - Fixed: Alert banner handles both light and dark mode, better handles html alert files-   Firefly-1795 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1830)) 
+ - Fixed: Issues with WCS aligning (rotation off) some images when large and near pole- ([commit](https://github.com/Caltech-IPAC/firefly/commit/a4e6a94dbae692fa6627d594f49257928bb74874))
+ - Fixed: Target panel selection issues: Firefly-1820, Firefly-1821 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1832)) 
 
 ### _Patches 2025.4_
-- original release
+original release
 
-#### _Pull Requests in this release_
+### _All Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.4+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.4+)
 
@@ -215,7 +217,7 @@ Firefly-1591([PR](https://github.com/Caltech-IPAC/firefly/pull/1662)), Firefly-1
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.1+)
 
 
-# Older Release notes 2019 - 2023
+# Older Release notes 2019 - 2024
 - [2024](old-release-notes/older-release-notes-2024.md)
 - [2023](old-release-notes/older-release-notes-2023.md)
 - [2022](old-release-notes/older-release-notes-2022.md)
