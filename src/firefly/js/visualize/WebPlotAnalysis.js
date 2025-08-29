@@ -7,7 +7,7 @@ import {makeDevicePt, makeImagePt, makeImageWorkSpacePt, makeWorldPt} from './Po
 import {
     contains, containsEllipse, containsRec, findIntersectionPt, getAngleInDeg, getBoundingBox, getPositionAngle
 } from './VisUtil';
-import {getPixScaleDeg} from './WebPlot';
+import {getPixScaleDeg, isImage} from './WebPlot';
 
 
 export function isPlotRotatedNorth(plot, csys = CoordinateSys.EQ_J2000) {
@@ -46,7 +46,7 @@ export function isPlotNorth(plot, csys = CoordinateSys.EQ_J2000) {
 
 /**
  * get the world point at the center of the plot
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {WorldPt}
  */
 export function getCenterPtOfPlot(plot) {
@@ -55,17 +55,37 @@ export function getCenterPtOfPlot(plot) {
     return CCUtil.getWorldCoords(plot, ip);
 }
 
-export const getRotationAngle = (plot) => {
-    const iWidth = plot.dataWidth;
-    const iHeight = plot.dataHeight;
-    const ix = iWidth / 2;
-    const iy = iHeight / 2;
+/**
+ * find the rotation angle of an image from north. The calculation will be based in the center of the image or some other
+ * world point using the image's projection.
+ * @param {WebPlot|undefined} plot
+ * @param {WorldPt} [centerWp] The world point to base rotation angle on. If undefined or out of the projection conversion range then the center of the image is used
+ * @return {number} rotation angle.
+ */
+export const getRotationAngle = (plot, centerWp) => {
+    if (!plot) return 0;
     const cc = CysConverter.make(plot);
-    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
-    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy + iHeight / 4));
-    if (wptC && wpt2) return getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
-    return 0;
+    const iHeight = plot.dataHeight;
+
+    if (centerWp) {
+        const ip1= cc.getImageWorkSpaceCoords(centerWp);
+        if (ip1) {
+            const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ip1.x, ip1.y + iHeight / 4));
+            if (wpt2) return getPAngle(centerWp, wpt2);
+        }
+    }
+
+    // use fallback if no centerWp or centerWp could not project
+    const centerPlotImagePt= makeImageWorkSpacePt(plot.dataWidth / 2, iHeight / 2);
+    const wptC= cc.getWorldCoords(centerPlotImagePt);
+    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(centerPlotImagePt.x, centerPlotImagePt.y + iHeight / 4));
+    return getPAngle(wptC,wpt2);
 };
+
+
+const getPAngle= (wp1,wp2) => (wp1 && wp2)
+    ? getPositionAngle(wp1.getLon(), wp1.getLat(), wp2.getLon(), wp2.getLat()) : 0;
+
 
 /**
  * Return true if east if left of north.  If east is right of north return false. This works regardless of the rotation
@@ -111,13 +131,14 @@ export const isCsysDirMatching = (p1, p2) => isEastLeftOfNorth(p1) === isEastLef
 
 export function getMatchingPlotRotationAngle(masterPlot, plot, masterRotationAngle, isMasterFlipY) {
     if (!plot || !masterPlot) return 0;
+    const centerMasterPlot= isImage(plot) ? getCenterPtOfPlot(plot) : undefined; // if image use center point method
     const masterRot = masterRotationAngle * (isMasterFlipY ? -1 : 1);
-    const rot = getRotationAngle(plot);
+    const rot = getRotationAngle(plot,centerMasterPlot);
     let targetRotation;
     if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation = ((getRotationAngle(masterPlot) + masterRot) - rot) * (isMasterFlipY ? 1 : -1);
+        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + masterRot) - rot) * (isMasterFlipY ? 1 : -1);
     } else {
-        targetRotation = ((getRotationAngle(masterPlot) + (360 - masterRot)) - rot) * (isMasterFlipY ? 1 : -1);
+        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + (360 - masterRot)) - rot) * (isMasterFlipY ? 1 : -1);
 
     }
     if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;

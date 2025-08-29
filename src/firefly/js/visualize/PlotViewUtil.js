@@ -9,7 +9,7 @@ import {Band} from './Band';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {getViewer} from './MultiViewCntlr.js';
-import {getMatchingPlotRotationAngle, getRotationAngle, isPlotNorth } from './WebPlotAnalysis';
+import {getCenterPtOfPlot, getMatchingPlotRotationAngle, getRotationAngle, isPlotNorth} from './WebPlotAnalysis';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
@@ -1105,8 +1105,9 @@ export function isRotationMatching(pv1, pv2) {
 
     if (!p1 || !p2) return false;
     if (isNorthCountingRotation(pv1, p1) && isNorthCountingRotation(pv2, p2)) return true;
-    const r1 = getRotationAngle(p1) + pv1.rotation;
-    const r2 = getRotationAngle(p2) + pv2.rotation;
+    const centerFirstPlot= isImage(p1) ? getCenterPtOfPlot(p1) : undefined; // if image use center point method
+    const r1 = getRotationAngle(p1,centerFirstPlot) + pv1.rotation;
+    const r2 = getRotationAngle(p2,centerFirstPlot) + pv2.rotation;
     return Math.abs((r1 % 360) - (r2 % 360)) < .9;
 }
 
