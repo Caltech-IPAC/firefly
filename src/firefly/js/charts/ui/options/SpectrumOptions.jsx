@@ -5,11 +5,7 @@ import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
 import {
-    canUnitConv,
-    getUnitInfo,
-    getUnitConvExpr,
-    getXLabel,
-    getMeasurementLabel
+    canUnitConv, getUnitConvExpr, getMeasurementLabel, getUnitOptions, getXLabel, getYLabel
 } from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
@@ -48,10 +44,10 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
 
-    const [xLabelSuffix, yLabelSuffix] = [xUnit, yUnit].map((unit) => {
-        const measurementLabel = getMeasurementLabel(unit);
-        return measurementLabel ? ` ($${measurementLabel}$)` : '';
-    });
+    const axisColumnFieldLabel = (axisName, axisUnit) => {
+        const measLabel = getMeasurementLabel(axisUnit);
+        return <MathJax>{axisName} axis column{measLabel ? ` (${measLabel}):` : ':'}</MathJax>;
+    };
 
     const labelWidth = '11rem';
     const inputFullWidthSx = {width: 1, maxWidth: '25rem'}; //since expressions get really long
@@ -74,7 +70,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                 }}>
                     {!isSpectralOrder(chartId) && <UseSpectrum/>}
                     <GroupedStack groupTitle='X-axis'>
-                        <X label={<MathJax>{`Spectral axis column${xLabelSuffix}:`}</MathJax>}/>
+                        <X label={axisColumnFieldLabel('Spectral', xUnit)}/>
                         {xErrArray && <Xerrors/>}
                         {xMax && <Xmax/>}
                         {xMin && <Xmin/>}
@@ -82,7 +78,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                         <SpectralFrame labelWidth={labelWidth}/>
                     </GroupedStack>
                     <GroupedStack groupTitle='Y-axis'>
-                        <Y label={<MathJax>{`Flux axis column${yLabelSuffix}:`}</MathJax>}/>
+                        <Y label={axisColumnFieldLabel('Flux', yUnit)}/>
                         {yErrArray && <Yerrors/>}
                         {yMax && <Ymax label = 'Flux axis upper limit column:'/>}
                         {yMin && <Ymin label = 'Flux axis lower limit column:'/>}
@@ -204,7 +200,7 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
     const path = (p) => isInput ? [p, 'value'] : [p];
     const layoutAxis = axisType === 'x' ? 'xaxis' : 'yaxis';
 
-    let label = getUnitInfo(newUnit, axis.value).label;
+    let label = getYLabel(newUnit, axis.value);
     let colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: newUnit});
     if (axisType==='x') {
         // take redshift correction into account too
@@ -310,11 +306,13 @@ function Units({activeTrace, value, axis, ...rest}) {
 
     const unitProp = axis === 'x' ? 'xUnit' : 'yUnit';
     const label = axis === 'x' ? 'Spectral axis units:' : 'Flux axis units:';
-    const options = getUnitInfo(value)?.options;
+    const options = getUnitOptions(value);
 
     return options?.length > 1
         ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}}
-                             {...{label, options, ...rest}}/>
+                             options={options.map(({label, ...opt}) =>
+                                 ({...opt, label: <MathJax>{label}</MathJax>}))}
+                             {...{label, ...rest}}/>
         : <ReadOnlyField value={value} label={label}/>;
 }
 

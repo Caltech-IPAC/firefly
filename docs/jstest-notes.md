@@ -28,11 +28,14 @@ JavaScript Unit Testing
     gradle :firefly:jsTest       # run all test suites
 
 
-###### Running test with additional options:  
+###### Running test with additional options:
     cd src/firefly  
     yarn run test-unit --verbose        # run all, displaying more details  
     yarn run test-unit pattern	        # run all tests matching the given pattern or filename 
+    yarn run test-unit t=spec           # run all tests with given spec i.e. the name in describe() or test(), basically
 
+`yarn run test-unit` command is a convenient alias for `node ../../node_modules/jest/bin/jest --passWithNoTests` so it 
+accepts any jest CLI options. See the full list of options at https://jestjs.io/docs/cli.
 
 ###### How to write tests using Jest:
 

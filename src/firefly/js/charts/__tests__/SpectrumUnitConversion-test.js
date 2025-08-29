@@ -2,13 +2,14 @@
 import {
     canUnitConv,
     getUnitConvExpr,
-    getUnitInfo,
+    getUnitOptions,
     getXLabel,
+    getYLabel,
     getMeasurementLabel
 } from 'firefly/charts/dataTypes/SpectrumUnitConversion';
 
 
-describe('Test SpectrumUnitConversion', () => {
+describe('SpectrumUnitConversion', () => {
     test('canUnitConv', () => {
         // NU
         expect(canUnitConv({from: 'Hz', to: 'GHz'})).toBe(true);
@@ -143,161 +144,171 @@ describe('Test SpectrumUnitConversion', () => {
         ).toBe('FLUX'); // can't convert between F and F_LAMBDA
     });
 
-    test('getUnitInfo: LAMBDA', () => {
-        const angstromUnits = ['A', 'Angstrom'];
-        const micronsUnits = ['um', 'microns'];
-        const validUnits = [...angstromUnits, ...micronsUnits, 'm'];
-        const invalidUnits = ['Ang', 'micro'];
+    describe('getUnitOptions', () => {
+        test('LAMBDA measurement', () => {
+            // recognized units and their aliases
+            ['A', 'Angstrom', 'um', 'microns', 'm'].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    { value: 'A', label: '$\\mathrm{\\mathring{A}}$' },
+                    { value: 'nm', label: '$\\mathrm{nm}$' },
+                    { value: 'um', label: '$\\mathrm{\\mu m}$' },
+                    { value: 'mm', label: '$\\mathrm{mm}$' },
+                    { value: 'cm', label: '$\\mathrm{cm}$' },
+                    { value: 'm', label: '$\\mathrm{m}$' }
+                ]);
+            });
 
-        const unitInfos = Object.fromEntries([...validUnits, ...invalidUnits].map(
-            (unit) => [unit, getUnitInfo(unit, 'WAVELENGTH')]
-        ));
-
-        // Test unitInfo.options
-        validUnits.forEach((unit)=>{
-            expect(unitInfos[unit].options).toEqual([
-                { value: 'A', label: 'Å' },
-                { value: 'nm', label: 'nm' },
-                { value: 'um', label: 'μm' },
-                { value: 'mm', label: 'mm' },
-                { value: 'cm', label: 'cm' },
-                { value: 'm', label: 'm' }
-            ]);
-        });
-        invalidUnits.forEach((unit)=>{
-            expect(unitInfos[unit].options).toEqual([]);
+            // unrecognized units
+            ['Ang', 'micro'].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([]);
+            });
         });
 
-        // Test unitInfo.label
-        angstromUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe('λ [Å]');
-        });
-        micronsUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe('λ [μm]');
-        });
-        expect(
-            validUnits.map((unit) => unitInfos[unit].label)
-        ).toEqual(
-            ['Å', 'Å', 'μm', 'μm', 'm'].map((symbol)=> `λ [${symbol}]`)
-        );
-        invalidUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe(`WAVELENGTH [${unit}]`); // falls back to column name with as-is unit
-        });
-    });
+        test('F_LAMBDA measurement', () => {
+            [// valid recognized units and their alternative representations (note: following are still a subset of all possible representations)
+                'erg/s/cm^2/A', 'erg/s/cm^2/Angstrom', 'erg/s/cm**2/Angstrom', 'erg/s/cm2/Angstrom', 'erg.s**-1.cm**-2.Angstrom**-1', // CGS units with Angstrom subunit
+                'W/m^2/um', 'W/m^2/microns', 'W/m**2/microns', 'W.m**-2.microns**-1', // SI units with micron subunit
+            ].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    { value: 'erg/s/cm^2/A', label: '$\\mathrm{erg/s/cm^{2}/\\mathring{A}}$' },
+                    { value: 'W/m^2/um', label: '$\\mathrm{W/m^{2}/\\mu m}$' }
+                ]);
+            });
 
-    test('getUnitInfo: F_LAMBDA', () => {
-        // note: following are still a subset of all possible representations
-        const CGSAngstromUnits = ['erg/s/cm^2/A', 'erg/s/cm^2/Angstrom', 'erg/s/cm**2/Angstrom',
-            'erg/s/cm2/Angstrom', 'erg.s**-1.cm**-2.Angstrom**-1'];
-        const scalarCGSAngstromUnits = ['1e-16erg/s/cm^2/Angstrom', '1e-16erg.s**-1.cm**-2.Angstrom**-1'];
-        const SIMicronUnits = ['W/m^2/um', 'W/m^2/microns', 'W/m**2/microns', 'W.m**-2.microns**-1'];
-        const validUnits = [...CGSAngstromUnits, ...scalarCGSAngstromUnits, ...SIMicronUnits];
-        const invalidUnits = [
-            'erg/s/cm^2/Ang', // unrecognized subunit Ang
-            '1e-16erg.s**-1.cm^-2.Angstrom**-1', // mixed power expression
-            '1abe-16erg.s**-1.cm**-2.Angstrom**-1' // bad scalar prefix
-        ];
+            [// scalar (1e-16) prefixed units
+                '1e-16erg/s/cm^2/Angstrom', '1e-16erg.s**-1.cm**-2.Angstrom**-1',
+            ].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    { value: '1e-16erg/s/cm^2/A', label: '$10^{-16}\\,\\mathrm{erg/s/cm^{2}/\\mathring{A}}$' },
+                    { value: 'erg/s/cm^2/A', label: '$\\mathrm{erg/s/cm^{2}/\\mathring{A}}$' },
+                    { value: 'W/m^2/um', label: '$\\mathrm{W/m^{2}/\\mu m}$' }
+                ]);
+            });
 
-        const unitInfos = Object.fromEntries([...validUnits, ...invalidUnits].map(
-            (unit) => [unit, getUnitInfo(unit, 'FLUX_DENSITY')]
-        ));
-
-        const expectedOptions = [
-            { value: 'erg/s/cm^2/A', label: 'erg/s/cm²/Å' },
-            { value: 'W/m^2/um', label: 'W/m²/μm' }
-        ];
-        const expectedScalarOptions = [
-            { value: '1e-16erg/s/cm^2/A', label: '1e-16 erg/s/cm²/Å' },
-            ...expectedOptions
-        ];
-
-        // Test unitInfo.options
-        [...CGSAngstromUnits, ...SIMicronUnits].forEach((unit)=>{
-            expect(unitInfos[unit].options).toEqual(expectedOptions);
-        });
-        scalarCGSAngstromUnits.forEach((unit)=>{
-            expect(unitInfos[unit].options).toEqual(expectedScalarOptions);
-        });
-        invalidUnits.forEach((unit)=>{
-            expect(unitInfos[unit].options).toEqual([]);
+            [// invalid or unrecognized units
+                'erg/s/cm^2/Ang', // unrecognized subunit Ang
+                '1e-16erg.s**-1.cm^-2.Angstrom**-1', // mixed power expression
+                '1abe-16erg.s**-1.cm**-2.Angstrom**-1' // bad scalar prefix
+            ].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([]);
+            });
         });
 
-        // Test unitInfo.label
-        CGSAngstromUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe('Fλ [erg/s/cm²/Å]');
-        });
-        scalarCGSAngstromUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe('Fλ [1e-16 erg/s/cm²/Å]');
-        });
-        SIMicronUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe('Fλ [W/m²/μm]');
-        });
-        invalidUnits.forEach((unit)=>{
-            expect(unitInfos[unit].label).toBe(`FLUX_DENSITY [${unit}]`); // falls back to column name with as-is unit
-        });
-    });
+        test('Other measurements', () => {
+            // Following are testing simple cases, complex cases are already covered in previous tests for LAMBDA and F_LAMBDA
+            // NU
+            ['Hz', 'KHz', 'MHz', 'GHz'].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    {value: 'Hz', label: '$\\mathrm{Hz}$'},
+                    {value: 'KHz', label: '$\\mathrm{KHz}$'},
+                    {value: 'MHz', label: '$\\mathrm{MHz}$'},
+                    {value: 'GHz', label: '$\\mathrm{GHz}$'}
+                ]);
+            });
 
-    test('getUnitInfo: other measurements', () => {
-        // Following are testing simple cases, complex cases are already covered in previous tests for LAMBDA and F_LAMBDA
+            // F_NU
+            ['erg/s/cm^2/Hz', 'erg.s**-1.cm**-2.Hz**-1'].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    { value: 'W/m^2/Hz', label: '$\\mathrm{W/m^{2}/Hz}$' },
+                    { value: 'erg/s/cm^2/Hz', label: '$\\mathrm{erg/s/cm^{2}/Hz}$' },
+                    { value: 'Jy', label: '$\\mathrm{Jy}$' }
+                ]);
+            });
 
-        // NU
-        ['Hz', 'KHz', 'MHz', 'GHz'].forEach((unit) => {
-            expect(getUnitInfo(unit, 'FREQUENCY')).toEqual(
-                {
-                    options: [
-                        {value: 'Hz', label: 'Hz'},
-                        {value: 'KHz', label: 'KHz'},
-                        {value: 'MHz', label: 'MHz'},
-                        {value: 'GHz', label: 'GHz'}
-                    ],
-                    label: `𝛎 [${unit}]`
-                }
-            );
-        });
-
-        // F_NU
-        ['erg/s/cm^2/Hz', 'erg.s**-1.cm**-2.Hz**-1'].forEach((unit) => {
-            expect(getUnitInfo(unit, 'FLUX_DENSITY')).toEqual(
-                {
-                    options: [
-                        { value: 'W/m^2/Hz', label: 'W/m²/Hz' },
-                        { value: 'erg/s/cm^2/Hz', label: 'erg/s/cm²/Hz' },
-                        { value: 'Jy', label: 'Jy' }
-                    ],
-                    label: 'F𝛎 [erg/s/cm²/Hz]'
-                }
-            );
-        });
-
-        // F
-        ['erg/s/cm^2', 'erg.s**-1.cm**-2'].forEach((unit) => {
-            expect(getUnitInfo(unit, 'FLUX')).toEqual(
-                {
-                    options: [
-                        { value: 'W/m^2', label: 'W/m²' },
-                        { value: 'erg/s/cm^2', label: 'erg/s/cm²' },
-                        { value: 'Jy*Hz', label: 'Jy·Hz' }
-                    ],
-                    label: '𝛎·F𝛎 [erg/s/cm²]'
-                }
-            );
+            // F
+            ['erg/s/cm^2', 'erg.s**-1.cm**-2'].forEach((unit) => {
+                expect(getUnitOptions(unit)).toEqual([
+                    { value: 'W/m^2', label: '$\\mathrm{W/m^{2}}$' },
+                    { value: 'erg/s/cm^2', label: '$\\mathrm{erg/s/cm^{2}}$' },
+                    { value: 'Jy*Hz', label: '$\\mathrm{Jy \\cdot Hz}$' }
+                ]);
+            });
         });
     });
 
     test('getXLabel', () => {
-        expect(getXLabel('wavelength', 'A', 'Rest Frame', 'Redshift = 0.456')).toBe('Rest Frame λ [Å]<br>(Redshift = 0.456)');
-        expect(getXLabel('frequency', 'Hz', 'Observed Frame')).toBe('Observed Frame 𝛎 [Hz]');
+        // LAMBDA ---
+        expect(
+            getXLabel('wavelength', 'A', 'Observed Frame')
+        ).toBe('$\\text{Observed Frame }\\lambda\\ [\\mathrm{\\mathring{A}}]$');
+        expect(
+            getXLabel('wavelength', 'Angstrom', 'Observed Frame') // 'Angstrom' is an alias for 'A'
+        ).toBe('$\\text{Observed Frame }\\lambda\\ [\\mathrm{\\mathring{A}}]$');
+        expect(
+            getXLabel('wavelength', 'um', 'Observed Frame')
+        ).toBe('$\\text{Observed Frame }\\lambda\\ [\\mathrm{\\mu m}]$');
+        expect(
+            getXLabel('wavelength', 'microns', 'Observed Frame') // 'microns' is an alias for 'um'
+        ).toBe('$\\text{Observed Frame }\\lambda\\ [\\mathrm{\\mu m}]$');
+        expect(
+            getXLabel('wavelength', 'micro', 'Observed Frame') // 'micro' is an unrecognized lambda unit
+        ).toBe('Observed Frame wavelength [micro]'); // falls back to plain string with column name and as-is unit
+        expect(
+            getXLabel('wavelength', 'A', 'Rest Frame', 'Redshift = 0.456')
+        ).toBe('$\\begin{matrix} \\text{Rest Frame }\\lambda\\ [\\mathrm{\\mathring{A}}] \\\\ \\text{(Redshift = 0.456)} \\end{matrix}$');
+
+        // NU ---
+        expect(
+            getXLabel('frequency', 'Hz', 'Observed Frame')
+        ).toBe('$\\text{Observed Frame }\\nu\\ [\\mathrm{Hz}]$');
+        expect(
+            getXLabel('frequency', 'MHz', 'Observed Frame')
+        ).toBe('$\\text{Observed Frame }\\nu\\ [\\mathrm{MHz}]$');
+        expect(
+            getXLabel('frequency', '1/s', 'Observed Frame') // '1/s' is an unrecognized nu unit
+        ).toBe('Observed Frame frequency [1/s]'); // falls back to plain string with column name and as-is unit
+
+    });
+
+    test('getYLabel', () => {
+        // F_LAMBDA ---
+        [// CGS units with Angstrom subunit
+            'erg/s/cm^2/A', 'erg/s/cm^2/Angstrom', 'erg/s/cm**2/Angstrom', 'erg/s/cm2/Angstrom', 'erg.s**-1.cm**-2.Angstrom**-1'
+        ].forEach((unit)=>{
+            expect(getYLabel(unit, 'signal')).toBe('$F_{\\lambda}\\ [\\mathrm{erg/s/cm^{2}/\\mathring{A}}]$');
+        });
+
+        [// scalar (1e-16) prefixed units
+            '1e-16erg/s/cm^2/Angstrom', '1e-16erg.s**-1.cm**-2.Angstrom**-1',
+        ].forEach((unit)=>{
+            expect(getYLabel(unit, 'signal')).toBe('$F_{\\lambda}\\ [10^{-16}\\,\\mathrm{erg/s/cm^{2}/\\mathring{A}}]$');
+        });
+
+        [// SI units with micron subunit
+            'W/m^2/um', 'W/m^2/microns', 'W/m**2/microns', 'W.m**-2.microns**-1',
+        ].forEach((unit)=>{
+            expect(getYLabel(unit, 'signal')).toBe('$F_{\\lambda}\\ [\\mathrm{W/m^{2}/\\mu m}]$');
+        });
+
+        [// invalid or unrecognized units
+            'erg/s/cm^2/Ang', // unrecognized subunit Ang
+            '1e-16erg.s**-1.cm^-2.Angstrom**-1', // mixed power expression
+            '1abe-16erg.s**-1.cm**-2.Angstrom**-1' // bad scalar prefix
+        ].forEach((unit)=>{
+            expect(getYLabel(unit, 'signal')).toBe(`signal [${unit}]`); // falls back to plain string with column name and as-is unit
+        });
+
+        // Other measurements ---
+        [// F_NU in CGS units with Hz subunit
+            'erg/s/cm^2/Hz', 'erg.s**-1.cm**-2.Hz**-1'
+        ].forEach(()=>{
+            expect(getYLabel('erg/s/cm^2/Hz', 'signal')).toBe('$F_{\\nu}\\ [\\mathrm{erg/s/cm^{2}/Hz}]$');
+        });
+        // F_NU in Jy
+        expect(getYLabel('Jy', 'signal')).toBe('$F_{\\nu}\\ [\\mathrm{Jy}]$');
+        // F in CGS units
+        expect(getYLabel('erg/s/cm^2', 'signal')).toBe('$\\nu \\cdot F_{\\nu}\\ [\\mathrm{erg/s/cm^{2}}]$');
     });
 
     test('getMeasurementLabel', () => {
-        expect(getMeasurementLabel('Hz')).toBe('𝛎');
-        expect(getMeasurementLabel('A')).toBe('λ');
-        expect(getMeasurementLabel('Angstrom')).toBe('λ'); // 'Angstrom' is an alias for 'A'
+        expect(getMeasurementLabel('Hz')).toBe('$\\nu$');
+        expect(getMeasurementLabel('A')).toBe('$\\lambda$');
+        expect(getMeasurementLabel('Angstrom')).toBe('$\\lambda$'); // 'Angstrom' is an alias for 'A'
         expect(getMeasurementLabel('Ang')).toBe(''); // unrecognized unit
-        expect(getMeasurementLabel('m')).toBe('λ');
-        expect(getMeasurementLabel('erg/s/cm^2/Hz')).toBe('F𝛎');
-        expect(getMeasurementLabel('Jy')).toBe('F𝛎');
-        expect(getMeasurementLabel('erg/s/cm^2/A')).toBe('Fλ');
-        expect(getMeasurementLabel('erg/s/cm^2')).toBe('𝛎·F𝛎');
+        expect(getMeasurementLabel('m')).toBe('$\\lambda$');
+        expect(getMeasurementLabel('erg/s/cm^2/Hz')).toBe('$F_{\\nu}$');
+        expect(getMeasurementLabel('Jy')).toBe('$F_{\\nu}$');
+        expect(getMeasurementLabel('erg/s/cm^2/A')).toBe('$F_{\\lambda}$');
+        expect(getMeasurementLabel('erg/s/cm^2')).toBe('$\\nu \\cdot F_{\\nu}$');
     });
 });
