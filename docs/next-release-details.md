@@ -3,10 +3,10 @@
 ## Version 2025.5
 - 2025.5.0 - (tentative planed Nov 15, 2025),  _docker tag_: `nightly`
 
-## No notes yet
+## Plans: S3, and more
 
 #### Major Features
-_add new features here_
+_add details features here_
 
 #### Bug fix
 _add bug fix list here_
