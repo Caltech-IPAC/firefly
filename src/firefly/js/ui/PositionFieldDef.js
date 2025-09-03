@@ -36,12 +36,18 @@ function positionValidateInternal(s, hard, nullAllowed= true) {
         // validate RA
         if (isNaN(ra)) {
             const errRA = raParseErr || 'Unable to parse RA';
-            if (errRA) throw `${errMsgRoot}${errRA}`;
+            if (errRA) {
+                if (hard) throw `${errMsgRoot}${errRA}`;
+                return {valid:false,inputType};
+            }
         }
         // validate DEC
         if (isNaN(dec)) {
             const errDec = decParseErr || 'Unable to parse DEC';
-            if (errDec) throw `${errMsgRoot}${errDec}`;
+            if (errDec) {
+                if (hard) throw `${errMsgRoot}${errDec}`;
+                return {valid:false,inputType};
+            }
         }
     }
     return {valid:true};
