@@ -36,7 +36,8 @@
  - Fixed: Target panel selection issues: Firefly-1820, Firefly-1821 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1832)) 
 
 ### _Patches 2025.4_
-original release
+- 2025.4.1
+    - Fixed: Target entry bug- IRSA-7239 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1835))
 
 ### _All Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.4+label%3abug)
