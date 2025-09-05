@@ -131,7 +131,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             _log.error(e, e.toString());
             throw new DataAccessException("Catalog Query Failed - network Error", e);
         } catch (NoDataFoundException e) {
-            _log.briefInfo("no data found for search");
+            _log.info("no data found for search");
             outFile = null;
         } catch (Exception e) {
             _log.error(e, e.toString());

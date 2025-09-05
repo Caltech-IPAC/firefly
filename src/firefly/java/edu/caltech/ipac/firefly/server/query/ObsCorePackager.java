@@ -143,7 +143,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                     }
                 }
             }
-            fileInfos.forEach(fileInfo -> fileInfo.setRequestInfo(HttpServiceInput.createWithCredential(fileInfo.getInternalFilename())));
+            fileInfos.forEach(fileInfo -> fileInfo.setRequestInfo(new HttpServiceInput(fileInfo.getInternalFilename())));
         }
         catch(Exception e) {
             e.printStackTrace();

@@ -25,11 +25,15 @@ public class MessageEventWorker implements ServerEventManager.EventWorker {
 
     public void deliver(ServerEvent sev) {
         if (sev != null) {
-            Messenger.publish(new Message.Event(sev));
+            if (sev.getTarget().getScope() == ServerEvent.Scope.SELF) {     // if the event is scoped to SELF, then just process it locally
+                processEvent(sev);
+            } else {
+                Messenger.publish(new Message.Event(sev));
+            }
         }
     }
 
-    public void processEvent(final ServerEvent sev) {
+    void processEvent(final ServerEvent sev) {
         ServerEventManager.processEvent(sev);
     }
 }

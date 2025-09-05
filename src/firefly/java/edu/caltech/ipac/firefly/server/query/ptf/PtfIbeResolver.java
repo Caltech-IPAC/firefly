@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query.ptf;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -108,6 +107,6 @@ public class PtfIbeResolver {
 
     private HttpServiceInput getAddtlInputs(String url) {
         if(isTestMode) return new HttpServiceInput();//or overwrite in test unit
-        return HttpServiceInput.createWithCredential(url);
+        return new HttpServiceInput(url);
     }
 }

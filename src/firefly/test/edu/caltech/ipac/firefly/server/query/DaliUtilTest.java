@@ -45,7 +45,7 @@ public class DaliUtilTest extends ConfigTest {
 		req.setParam(MAXREC, "100");
 		req.setParam(REQUEST, "doQuery");
 		req.setParam(UPLOAD, ufile.getAbsolutePath());
-		HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+		HttpServiceInput input = new HttpServiceInput("/test");
 
 		DaliUtil.populateKnownInputs(input, req);
 
@@ -60,7 +60,7 @@ public class DaliUtilTest extends ConfigTest {
 		try {
 			TableServerRequest req = new TableServerRequest();
 			req.setParam(MAXREC, Integer.MAX_VALUE+"");
-			HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+			HttpServiceInput input = new HttpServiceInput("/test");
 			DaliUtil.populateKnownInputs(input, req);
 			fail("Expect MAXREC to throw IllegalArgumentException");
 		} catch (Exception e) {
@@ -73,7 +73,7 @@ public class DaliUtilTest extends ConfigTest {
 		TableServerRequest req = new TableServerRequest();
 		req.setParam(UPLOAD, ufile.getAbsolutePath());
 		req.setParam(UPLOAD_COLUMNS, "ra,dec");
-		HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+		HttpServiceInput input = new HttpServiceInput("/test");
 
 		DaliUtil.populateKnownInputs(input, req);
 		DataGroup table = readAnyFormat(input.getFiles().get("ufile1"));
@@ -87,7 +87,7 @@ public class DaliUtilTest extends ConfigTest {
 		TableServerRequest req = new TableServerRequest();
 		req.setParam(UPLOAD, ufile.getAbsolutePath());
 		req.setParam(UPLOAD_COLUMNS, "\"n,obs\", \"Sp, Type\"");
-		HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+		HttpServiceInput input = new HttpServiceInput("/test");
 
 		DaliUtil.populateKnownInputs(input, req);
 		DataGroup table = readAnyFormat(input.getFiles().get("ufile1"));
@@ -100,7 +100,7 @@ public class DaliUtilTest extends ConfigTest {
 	public void uploadUri() throws DataAccessException {
 		TableServerRequest req = new TableServerRequest();
 		req.setParam(UPLOAD, "VOS://example.authority!tempSpace/foo.vot");	// uppercase VOS to check for case-insensitive matching
-		HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+		HttpServiceInput input = new HttpServiceInput("/test");
 
 		DaliUtil.populateKnownInputs(input, req);
 
@@ -111,7 +111,7 @@ public class DaliUtilTest extends ConfigTest {
 	public void nameAs() throws DataAccessException {
 		TableServerRequest req = new TableServerRequest();
 		req.setParam(UPLOAD, "vos://example.authority!tempSpace/foo.vot");
-		HttpServiceInput input = HttpServiceInput.createWithCredential("/test");
+		HttpServiceInput input = new HttpServiceInput("/test");
 
 		DaliUtil.handleUpload(input, req, "mytbl");
 

@@ -172,8 +172,8 @@ public class AppServerCommands {
 
             String backToUrl = params.getRequired(ServerParams.BACK_TO_URL);
 
-            SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
             UserInfo info = requestOwner.getUserInfo();
+            LOG.debug("GetUserInfo: " + info);
 
             JSONObject data = new JSONObject();
             data.put(UserInfo.GUEST, info.isGuestUser());
@@ -182,9 +182,12 @@ public class AppServerCommands {
                 data.put(UserInfo.FIRSTNAME, info.getFirstName());
                 data.put("loginName", info.getLoginName());
             }
-            data.put("login_url", ssoAdapter.getLoginUrl(backToUrl));
-            data.put("logout_url", ssoAdapter.getLogoutUrl(backToUrl));
-            data.put("profile_url", ssoAdapter.getProfileUrl(backToUrl));
+            SsoAdapter ssoAdapter = requestOwner.getSsoAdapter();
+            if (ssoAdapter != null) {
+                data.put("login_url", ssoAdapter.getLoginUrl(backToUrl));
+                data.put("logout_url", ssoAdapter.getLogoutUrl(backToUrl));
+                data.put("profile_url", ssoAdapter.getProfileUrl(backToUrl));
+            }
             JSONObject map = new JSONObject();
             map.put( "success", true);
             map.put("data", data);

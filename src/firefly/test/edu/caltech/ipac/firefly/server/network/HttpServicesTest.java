@@ -3,10 +3,13 @@ package edu.caltech.ipac.firefly.server.network;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.core.Util;
+import edu.caltech.ipac.firefly.server.RequestAgent;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.visualize.plot.CircleTest;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.PutMethod;
@@ -16,6 +19,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -28,6 +32,7 @@ import java.util.HashMap;
 
 import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeaders;
+import static edu.caltech.ipac.firefly.server.security.SsoAdapter.SSO_FRAMEWORK_NAME;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.*;
 
@@ -42,14 +47,19 @@ public class HttpServicesTest extends ConfigTest {
 
     private HttpServiceInput input;
 
+    @BeforeClass
+    public static void init() {
+        AppProperties.setProperty(SSO_FRAMEWORK_NAME, "josso");
+        AppProperties.setProperty("sso.req.auth.hosts", "localhost,httpbin.org,acme.org,.ipac.caltech.edu");
+        AppProperties.setProperty("sso.send.user.id", "true");
+    }
+
     @Before
     public void setUp() {
         input = new HttpServiceInput()
                 .setCookie("cookie1", "cookie1_val").setCookie("cookie2", "cookie2_val")
                 .setParam("param1", TEST_HOST_URL+"param1_val").setParam("param2", TEST_HOST_URL+"param2_val")
                 .setHeader("Header1", "header1_val").setHeader("Header2", "header2_val");
-
-        setupServerContext(null);
     }
 
     @After
@@ -142,6 +152,7 @@ public class HttpServicesTest extends ConfigTest {
         assertFalse(status.isRedirected());
 
         HttpServices.getData(nInput.setFollowRedirect(false), (method -> {
+            assertNotNull(method.getRequestHeader("X-User-Id"));
             assertTrue(HttpServices.isRedirected(method));
             assertEquals("redirect to www.acme.org", method.getResponseHeader("location").getValue(), "http://www.acme.org");
             return HttpServices.Status.ok();
@@ -151,7 +162,7 @@ public class HttpServicesTest extends ConfigTest {
     @Test
     public void testGetWithAuth(){
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getWithAuth(input.setRequestUrl(GET_URL), HttpServices.defaultHandler(results));
+        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GET_URL), HttpServices.defaultHandler(results));
         validateResults(status, results);
     }
 
@@ -162,7 +173,10 @@ public class HttpServicesTest extends ConfigTest {
                 .setParam("url", "https://irsa.ipac.caltech.edu/docs/help_desk.html")
                 .setParam("status_code", "301");
 
-        HttpServices.Status status = HttpServices.getWithAuth(nInput, 3, method -> HttpServices.Status.ok());
+        HttpServices.Status status = HttpServices.getData(nInput, 3, method -> {
+            assertNotNull(method.getRequestHeader("X-User-Id"));
+            return HttpServices.Status.ok();
+        });
         assertEquals(200, status.getStatusCode());    // 200 OK
     }
 
@@ -172,7 +186,7 @@ public class HttpServicesTest extends ConfigTest {
         HttpServiceInput nInput = input.setRequestUrl("https://mockbin.org/bin/c8bc6283-9129-4aef-8768-1488a85cae09");
 //                "https://mockbin.org/bin/8066cc72-aff6-4443-8812-f4983bcd43c8"    // setup to redirect to another bin
 
-        HttpServices.Status status = HttpServices.getWithAuth(nInput, 1, method -> {
+        HttpServices.Status status = HttpServices.getData(nInput, 1, method -> {
             fail("Should not get here");
             return HttpServices.Status.ok();
         });

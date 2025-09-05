@@ -545,7 +545,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
     }
 
     protected HttpServices.Status doExecuteMethod(DavMethod method) throws IOException {
-        HttpServiceInput input = HttpServiceInput.createWithCredential(getWsHostUrl());
+        HttpServiceInput input = new HttpServiceInput(getWsHostUrl());
         return HttpServices.executeMethod(method, input);
     }
 

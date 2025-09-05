@@ -48,13 +48,14 @@ public class FluxAction {
      * @param value
      * @param path
      */
-    public void setValue(Object value, String... path) {
+    public FluxAction setValue(Object value, String... path) {
 
         if (path == null || path.length == 0) {
             throw new IllegalArgumentException("path may not be null");
         }
         String[] npath = path.length == 1 ? null : Arrays.copyOfRange(path, 0, path.length - 1);
         JsonTableUtil.getPath(getPayload(), npath).put(path[path.length-1], value);
+        return this;
     }
 
     @Override

@@ -110,7 +110,7 @@ public class JobUtil {
         String paramStr= urlObs == null ? "" : urlObs.getQuery();
         String urlBase= (!isEmpty(paramStr) && url.contains("?"))  ? url.split("\\?")[0] : url;
 
-        HttpServiceInput input = HttpServiceInput.createWithCredential(urlBase);
+        HttpServiceInput input = new HttpServiceInput(urlBase);
         if (!isEmpty(paramStr)) input.setRequestUrl(input.getRequestUrl()+"?"+paramStr);
         LOG.info("Importing job histories from %s; svcId=%s svcType=%s".formatted(input.getRequestUrl(), svcId, svcType));
         Ref<List<JobInfo>> jobList = new Ref<>();

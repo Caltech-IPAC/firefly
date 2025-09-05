@@ -14,6 +14,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.servlet.http.Cookie;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,97 +42,38 @@ public class RequestOwner implements Cloneable {
     public static String USER_KEY = "usrkey";
     public static int USER_KEY_EXPIRY = AppProperties.getIntProperty("userkey.expiry", 3600 * 24 * 365);         // 1 year
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
-    private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
-    private RequestAgent requestAgent;
+    private static final boolean IGNORE_AUTH = AppProperties.getBooleanProperty("ignore.auth", false);
     private Date startTime;
-    private HashMap<String, Object> attributes = new HashMap<String, Object>();         // TODO: seem like it's not used.  cleanup on next dev cycle
     private String eventChannel;
     private String eventConnID;
-    // ------ these are lazy-load variables.. make sure you access it via getter. --------
-    private WorkspaceManager wsManager;
-
+    private String usrKey;
     //------------------------------------------------------------------------------------
+    private transient RequestAgent requestAgent;
     private transient SsoAdapter ssoAdapter;
-    private transient String usrKey;
     private transient UserInfo userInfo;
 
-
-
-    public RequestOwner(){}
+    RequestOwner(){}
 
     public void init(RequestAgent ra) {
+        if (ra == null) {
+            LOG.warn("RequestOwner.init was passed a null RequestAgent");
+        }
         this.requestAgent = ra;
         startTime = new Date();
-        attributes = new HashMap<>();
-        ssoAdapter = null;
-        wsManager = null;
-        id(ra);
         if (ra != null) {
             setWsConnInfo(ra.getHeader("FF-connID"), ra.getHeader("FF-channel"));
         }
+        ssoAdapter = SsoAdapter.getAdapter();       // ensure ssoAdapter is initialized
+        id(ra);     // ensure usrKey and userInfo are initialized
     }
 
-    /**
-     * A userKey uniquely identifies the user.  It is managed by the server and sent to the client as a cookie.
-     * If the user is authenticated, the userKey is derived from the user's login name(email).
-     * If the user is not authenticated and no key exists, a new one is generated.
-     */
-    private void id(RequestAgent ra) {
-        // exceptional case where ra is null, such as in unit tests.
-        if (ra == null) {
-            userInfo = UserInfo.newGuestUser();
-            usrKey = newUserKey();
-            return;
-        }
-
-        // authenticated path
-        userInfo = getAuthUser();
-        if (userInfo != null) {
-            usrKey = userKeyFrom(userInfo.getLoginName());
-            notifyClient(userInfo);
-            return;
-        }
-
-        // guest user path
-        userInfo = UserInfo.newGuestUser();
-        usrKey = getUserKeyFromClient();
-        if (isEmpty(usrKey)) {
-            usrKey = newUserKey();
-            updateClientUserKey(usrKey);
-        }
+    public RequestAgent getRequestAgent() { return requestAgent; }
+    public SsoAdapter getSsoAdapter() { return ssoAdapter; }
+    public String getRemoteIP() {
+        return requestAgent.getRemoteIP();
     }
-
-    public void extendUserKeyExpiry() {
-        ifNotEmpty(getUserKeyFromClient()).apply(this::updateClientUserKey);
-    }
-
-
-    public RequestAgent getRequestAgent() {
-        return requestAgent;
-    }
-
-    public SsoAdapter getSsoAdapter() {
-        if (ssoAdapter == null) {
-            ssoAdapter = SsoAdapter.getAdapter();
-        }
-        return ssoAdapter;
-    }
-
-    public void setWsConnInfo(String connID, String channel) {
-        eventConnID = connID;
-        eventChannel = channel;
-    }
-
-    public WorkspaceManager getWsManager() {
-        if (wsManager == null) {
-            UserInfo userInfo = getUserInfo();
-            if (userInfo.isGuestUser()) {
-                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(getUserKey()));
-            } else {
-                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName()));
-            }
-        }
-        return wsManager;
+    public Date getStartTime() {
+        return startTime;
     }
 
     /**
@@ -141,57 +83,42 @@ public class RequestOwner implements Cloneable {
     public void setUserKey(String userKey) {
         usrKey = userKey;
     }
-
     public String getUserKey() {
         return usrKey;
     }
-
-    public String getRemoteIP() {
-        return requestAgent.getRemoteIP();
+    public void extendUserKeyExpiry() {
+        ifNotEmpty(getUserKeyFromClient()).apply(this::updateClientUserKey);
     }
 
-    public Date getStartTime() {
-        return startTime;
+    public boolean isAuthUser() { return getAuthUser() != null; }
+    public UserInfo getUserInfo() { return userInfo; }
+
+    public void setWsConnInfo(String connID, String channel) {
+        eventConnID = connID;
+        eventChannel = channel;
+    }
+    public String getEventChannel() { return eventChannel; }
+    public String getEventConnID() { return eventConnID; }
+
+    /**
+     * return host url including protocol
+     */
+    public String getHostUrl() {
+        return ifNotNull(requestAgent).get(a -> a.getHostUrl());
+    }
+    public String getBaseUrl() {
+        return ifNotNull(requestAgent).get(a -> a.getBaseUrl());
     }
 
     public Map<String, String> getCookieMap() {
-        Map<String, String> cmap = null;
-        if(requestAgent!=null) {
-            Map<String, Cookie> cookies = requestAgent.getCookies();
-            cmap = new HashMap<>(cookies.size());
-            for (Cookie c : cookies.values()) {
-                String v = c == null ? null : c.getValue();
-                if (v != null) {
-                    cmap.put(c.getName(), c.getValue());
-                }
+        if (requestAgent == null) return Collections.emptyMap();
+        Map<String, String> cmap = new HashMap<>();
+        requestAgent.getCookies().forEach((name, cookie) -> {
+            if (cookie != null && cookie.getValue() != null) {
+                cmap.put(name, cookie.getValue());
             }
-        }
+        });
         return cmap;
-    }
-
-
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
-
-    public Object getAttribute(String key) {
-        return attributes.get(key);
-    }
-
-    public void setAttribute(String key, Object value) {
-        attributes.put(key, value);
-    }
-
-    public void sendRedirect(String url) {
-        requestAgent.sendRedirect(url);
-    }
-
-    public boolean isAuthUser() {
-        return ifNotNull(getSsoAdapter()).get(SsoAdapter::getAuthToken) != null;
-    }
-
-    public UserInfo getUserInfo() {
-        return userInfo;
     }
 
     /**
@@ -203,13 +130,11 @@ public class RequestOwner implements Cloneable {
     private RequestOwner copy(RequestOwner source, RequestOwner target) {
         target.requestAgent = source.requestAgent;
         target.startTime = source.startTime;
-        target.attributes = source.attributes;
         target.userInfo = source.userInfo;
         target.usrKey = source.usrKey;
         target.ssoAdapter = source.ssoAdapter;
         target.eventChannel = source.eventChannel;
         target.eventConnID = source.eventConnID;
-        target.wsManager = source.wsManager;
         return target;
     }
 
@@ -222,31 +147,53 @@ public class RequestOwner implements Cloneable {
         copy(ro, this);
     }
 
-    public String getBaseUrl() {
-        return requestAgent.getBaseUrl();
-    }
-
-    /**
-     * return host url including protocol
-     */
-    public String getHostUrl() {
-        return requestAgent.getHostUrl();
-    }
-
 //====================================================================
 //
 //====================================================================
 
     /**
+     * A userKey uniquely identifies the user.  It is managed by the server and sent to the client as a cookie.
+     * If the user is authenticated, the userKey is derived from the user's login name(email).
+     * If the user is not authenticated and no key exists, a new one is generated.
+     * This function ensure usrKey and userInfo are initialized.
+     */
+    private void id(RequestAgent ra) {
+        // exceptional case where ra is null, such as in unit tests.
+        if (ra == null) {
+            userInfo = UserInfo.newGuestUser();
+            usrKey = newUserKey();
+            LOG.info("id(): RequestAgent is null, this is not expected in production.");
+            return;
+        }
+
+        userInfo = getAuthUser();
+        if (userInfo != null) {         // authenticated
+            usrKey = userKeyFrom(userInfo.getLoginName());
+        } else {                        // guest user
+            userInfo = UserInfo.newGuestUser();
+            usrKey = getUserKeyFromClient();
+            if (isEmpty(usrKey)) {
+                usrKey = newUserKey();
+                updateClientUserKey(usrKey);
+            }
+        }
+        if (eventConnID != null) {
+            notifyClient(userInfo);
+        }
+        LOG.trace("User: " + userInfo,
+                " ConnId: " + eventConnID,          // when lowLevelDoFetch is used directly, ConnId and Channel is null.  may need to reevaluate.
+                " Channel: " + eventChannel,
+                " URL: " + ra.getRequestUrl(),
+                " RemoteIP: " + ra.getRemoteIP(),
+                " Referrer: " + ra.getHeader("Referer"));
+    }
+
+    /**
      *  @return the authenticated user info, or null if not authenticated.
      */
     private UserInfo getAuthUser() {
-        if (ignoreAuth || !isAuthUser()) return null;
-        UserInfo userInfo = getSsoAdapter().getUserInfo();
-        if (userInfo == null) {
-            getSsoAdapter().clearAuthInfo();
-        }
-        return userInfo;
+        if (IGNORE_AUTH) return null;
+        return ifNotNull(getSsoAdapter()).get(SsoAdapter::getUserInfo);
     }
 
     private String getUserKeyFromClient() {
@@ -255,15 +202,13 @@ public class RequestOwner implements Cloneable {
     }
 
     private String newUserKey() {
-        int tries = 0;
-        String userKey;
-        do {
-            userKey = UUID.randomUUID().toString();
-            if (tries++ > 1000) {
-                throw new RuntimeException("Unable to generate a new userKey after 1000 tries.");
+        for (int tries = 0; tries < 1000; tries++) {
+            String userKey = UUID.randomUUID().toString();
+            if (!UserCache.exists(new StringKey(userKey))) {
+                return userKey;
             }
-        } while (UserCache.exists(new StringKey(userKey)));
-        return userKey;
+        }
+        throw new RuntimeException("Unable to generate a new userKey after 1000 tries.");
     }
 
     private String userKeyFrom(String val) {
@@ -272,29 +217,26 @@ public class RequestOwner implements Cloneable {
 
     private void notifyClient(UserInfo userInfo) {
         // send UserInfo to client
-        FluxAction action = new FluxAction(SET_USERINFO_ACTION);
-        action.setValue(userInfo.getLoginName(), "loginName");
-        action.setValue(userInfo.getFirstName(), "firstName");
-        action.setValue(userInfo.getLastName(), "lastName");
-        action.setValue(userInfo.getInstitute(), "institute");
+        FluxAction action = new FluxAction(SET_USERINFO_ACTION)
+            .setValue(userInfo.getLoginName(), "loginName")
+            .setValue(userInfo.getFirstName(), "firstName")
+            .setValue(userInfo.getLastName(), "lastName")
+            .setValue(userInfo.getInstitute(), "institute");
+
         if (getSsoAdapter() != null) {
             action.setValue(getSsoAdapter().getLoginUrl(""), "login_url");
             action.setValue(getSsoAdapter().getLogoutUrl(""), "logout_url");
         }
-        LOG.debug("notifyClient new User info: " + userInfo);
+
         ServerEventManager.fireAction(action);
     }
 
     private void updateClientUserKey(String userKey) {
-        if (requestAgent != null) {
-            Cookie cookie = new Cookie(USER_KEY, userKey);
-            cookie.setMaxAge(USER_KEY_EXPIRY);      // to live for two weeks
-            cookie.setPath(requestAgent.getContextPath());
-            requestAgent.sendCookie(cookie);
-        }
+        if (requestAgent == null) return;
+        Cookie cookie = new Cookie(USER_KEY, userKey);
+        cookie.setMaxAge(USER_KEY_EXPIRY);
+        cookie.setPath(requestAgent.getContextPath());
+        requestAgent.sendCookie(cookie);
     }
 
-    public String getEventChannel() { return eventChannel; }
-
-    public String getEventConnID() { return eventConnID; }
 }

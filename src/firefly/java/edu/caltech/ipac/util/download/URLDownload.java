@@ -360,7 +360,7 @@ public class URLDownload {
             Map<String, String> h= new HashMap<>();
             if (requestHeaders!=null) h.putAll(requestHeaders);
             if (ops.useCredentials) {
-                var inputs= HttpServiceInput.createWithCredential(url.toString());
+                var inputs= new HttpServiceInput(url.toString());
                 var credentials= inputs.getHeaders();
                 if (credentials!=null && credentials.size()>0) {
                     if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);

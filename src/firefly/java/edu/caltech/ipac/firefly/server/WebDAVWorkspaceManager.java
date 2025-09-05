@@ -106,7 +106,7 @@ public class WebDAVWorkspaceManager extends WebDAVWorkspaceManagerBase {
 
     public WebDAVWorkspaceManager(Partition partition, String wsId, boolean initialize) {
 
-        Map<String, String> cookies = HttpServiceInput.createWithCredential(getWsHostUrl()).getCookies();          // should look at this again.
+        Map<String, String> cookies = new HttpServiceInput(getWsHostUrl()).getCookies();          // should look at this again.
 
         this.creds = new WsCredentials(wsId, cookies);
         this.partition = partition;
