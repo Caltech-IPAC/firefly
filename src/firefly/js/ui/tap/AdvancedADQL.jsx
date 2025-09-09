@@ -530,18 +530,21 @@ async function addAvailKeyNodes({serviceUrl, title, cols, treeData, setTreeData}
     });
 }
 
-function JoinNode({targetTable, keyId, desc, treeData, setTreeData}) {
+function JoinNode({ targetTable, keyId, desc, treeData, setTreeData }) {
+    const text = `${targetTable} [${keyId}]${desc ?? ''}`;
 
     const jumpTo = useCallback(() => {
         const nodeKey = searchNodeBy(treeData, (n) => n.title === targetTable);
-        if (nodeKey) {
-            const nTree = updateSet(treeData, 'expandedKeys', treeData.expandedKeys.push(nodeKey));
-            setTreeData(nTree);
-        }
-    });
-    // <img src={INFO_ICO} onClick={jumpTo} style={{height:16, verticalAlign:'middle'}}/>  // can't get it to work.
-    return <div>{targetTable} [{keyId}]{desc}</div>;
+        if (!nodeKey) return;
+        const nTree = updateSet(treeData, 'expandedKeys', treeData.expandedKeys.push(nodeKey));
+        setTreeData(nTree);
+    }, [treeData, setTreeData, targetTable]);
+
+    return (
+        <span title={text}>{text}</span>
+    );
 }
+
 
 function addChildNodes(data, key, children) {
     for (let idx = 0; idx < data.length; idx++) {
