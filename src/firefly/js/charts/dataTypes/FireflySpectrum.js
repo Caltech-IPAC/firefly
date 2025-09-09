@@ -10,7 +10,7 @@ import {getDataChangesForMappings, updateHighlighted, updateSelection, getMinSca
 import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
-import {getXLabel, getUnitInfo} from './SpectrumUnitConversion.js';
+import {getXLabel, getYLabel} from './SpectrumUnitConversion.js';
 
 export const spectrumType = 'spectrum';
 
@@ -162,7 +162,7 @@ export function getSpectrumProps(tbl_id, spectrumDM) {
     const redshiftLabel = refPos===REF_POS.CUSTOM ? `Custom Redshift = ${spectralFrame.redshift}` : '';
 
     const xLabel = getXLabel(spectralAxis.value, spectralAxis.unit, sfLabel, redshiftLabel);
-    const yLabel = getUnitInfo(fluxAxis.unit, y)?.label;
+    const yLabel = getYLabel(fluxAxis.unit, y);
 
     const mode = isSED ? 'markers' : 'lines+markers';
 

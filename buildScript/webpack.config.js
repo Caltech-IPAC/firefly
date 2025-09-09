@@ -164,6 +164,13 @@ export default function makeWebpackConfig(config) {
             type: 'asset/source',
         },
         {
+            resourceQuery: /url/,
+            type: 'asset/resource',
+            generator: {
+                filename: '[name].[hash][ext]'  // to keep the original filename with hash
+            }
+        },
+        {
             test    : /\.css$/,
             resourceQuery: { not: [/raw/] }, // to exclude raw css assets from being processed by other loaders
             use: [ { loader: 'style-loader' }, { loader: 'css-loader' } ]

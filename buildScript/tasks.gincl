@@ -219,7 +219,6 @@ task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
         // see DM-11341 for details
         copy {
             from ("$fireflyPath/src/firefly/html/") {
-                include 'plotly*min.js'
                 include 'gpu-browser*min*.js'
             }
             into warDir

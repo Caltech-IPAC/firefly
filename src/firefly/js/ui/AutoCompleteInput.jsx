@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {bool, string, object, shape, arrayOf, func, oneOf, element} from 'prop-types';
+import {bool, string, object, shape, arrayOf, func, oneOf, element, node} from 'prop-types';
 import {Autocomplete, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {isArray, isEmpty, omit} from 'lodash';
 
@@ -85,7 +85,7 @@ AutoCompleteInput.propTypes= {
         nullAllowed: bool,
     }),
     options: arrayOf(object),       // {value,label,...anything-else}
-    label: string,
+    label: node,
     title: string,
     orientation: oneOf(['horizontal', 'vertical']),
     required: bool,

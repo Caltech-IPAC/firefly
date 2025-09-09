@@ -1,8 +1,9 @@
 import React, {useEffect} from 'react';
 import {ScopedCssBaseline, extendTheme, CssVarsProvider, useColorScheme, GlobalStyles} from '@mui/joy';
-import {getBoolean, isDefined, toBoolean} from '../util/WebUtil';
-import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 
+import {isDefined, toBoolean} from '../util/WebUtil';
+import {latexRootStyles, LatexProvider} from 'firefly/util/LatexUtil';
+import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {defaultTheme} from './ThemeSetup.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {logger} from '../util/Logger.js';
@@ -14,6 +15,7 @@ import '@fontsource/inter/500.css'; // Medium
 import '@fontsource/inter/600.css'; // Semi-Bold
 import '@fontsource/inter/700.css'; // Bold
 import '@fontsource/inter/800.css'; // Bolder
+
 
 export function FireflyRoot({sx, children, ctxProperties={}}) {
 
@@ -28,7 +30,8 @@ export function FireflyRoot({sx, children, ctxProperties={}}) {
         <AppPropertiesCtx.Provider value={ctxProperties}>
             <CssVarsProvider defaultMode='system' theme={theme}>
                 <GlobalStyles styles={{
-                    html: {fontSize:'87.5%'}
+                    html: {fontSize:'87.5%'},
+                    ...latexRootStyles
                 }}/>
                 <ScopedCssBaseline sx={{
                     flexGrow:1,
@@ -38,7 +41,9 @@ export function FireflyRoot({sx, children, ctxProperties={}}) {
                     WebkitFontSmoothing: 'unset',
                     ...sx
                 }}>
-                    <App>{children}</App>
+                    <LatexProvider>
+                        <App>{children}</App>
+                    </LatexProvider>
                 </ScopedCssBaseline>
             </CssVarsProvider>
         </AppPropertiesCtx.Provider>

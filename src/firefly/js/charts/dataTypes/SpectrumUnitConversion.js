@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {sprintf} from '../../externalSource/sprintf.js';
-import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
+import {latexStr} from 'firefly/util/LatexUtil';
+
 
 /**
  * Return true if 'from' unit can be converted to 'to'.
@@ -46,64 +47,102 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
 }
 
 /**
- * returns an object containing the axis label and an array of options for unit conversion.
- * @param {string} unit         the unit to get the info for
- * @param {string} cname        the name (or expression) of the column being evaluated
- * @returns {Object}
+ * returns an array of options for unit conversion.
+ * @param {string} unit         the unit to get the conversion options for
+ * @returns {Array<{value: string, label: LatexDelimited}>}
  */
-export function getUnitInfo(unit, cname) {
+export function getUnitOptions(unit) {
     let options = [];
-    let label = '';
-
     const {unit: unitKey, factor} = normalizeUnit(unit);
     if (unitKey) {
         const measurementKey = UnitMetadata[unitKey]?.type;
-        let unitLabel = UnitMetadata[unitKey]?.label || unitKey;
         options = Object.entries(UnitMetadata)
             .filter(([,meta]) => meta?.type === measurementKey) // can only convert units of the same measurement type
-            .map(([key, meta]) => ({value: key, label: meta.label || key}));
+            .map(([key, meta]) => ({
+                value: key,
+                label: latexStr(unitInLatex(meta.label || key))
+            }));
 
-        if (factor) { // add the original unit with its factor as the label and as the first option in conversion dropdown
-            unitLabel = `${factor} ${unitLabel}`;
-            options = [{value: `${factor}${unitKey}`, label: unitLabel}, ...options];
+        if (factor) { // add the original unit with its factor as the first option in conversion dropdown
+            const unitLatex = unitInLatex(UnitMetadata[unitKey]?.label || unitKey);
+            const factorOption = {
+                value: `${factor}${unitKey}`,
+                label: latexStr(`${factorInLatex(factor)}\\,${unitLatex}`)
+            };
+            options = [factorOption, ...options];
         }
+    }
+    return options;
+}
 
+/**
+ * returns the axis label for a unit and column name and whether the label is a Latex fragment.
+ * @param {string} unit         the unit to get the info for
+ * @param {string} cname        the name (or expression) of the column being evaluated
+ * @returns {{label: LatexFragment|string, isLatex: boolean}}
+ */
+function getAxisLabel(unit, cname) {
+    let label = '';
+    const {unit: unitKey, factor} = normalizeUnit(unit);
+    if (unitKey) {
+        let unitLatex = unitInLatex(UnitMetadata[unitKey]?.label || unitKey);
+        if (factor) unitLatex = `${factorInLatex(factor)}\\,${unitLatex}`;
+        const measurementKey = UnitMetadata[unitKey]?.type;
         const measurementLabel = Measurement[measurementKey]?.symbol;
-        if (measurementLabel) label = `${measurementLabel} [${unitLabel}]`;
+        if (measurementLabel) label = `${measurementLabel}\\ [${unitLatex}]`;
     }
     else {
         cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;  // remove enclosing double-quotes if exists
         if (cname) label = cname + (unit ? ` [${unit}]` : '');
     }
-
-    return {options, label};
+    return {label, isLatex: !!unitKey};
 }
 
 
 /**
- * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
+ * returns X axis label for Plotly chart using the required information like unit, spectral frame options, redshift, etc.
  * @param {string} cname         the name of the column being evaluated
  * @param {string} unit          the unit to get the info for
  * @param {string} sfLabel       the label of spectral frame selected
  * @param {string} redshiftLabel the label of redshift if rest frame, optional
- * @returns {string}
+ * @returns {LatexDelimited|string}
  */
 export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
-    const unitLabel = getUnitInfo(unit, cname).label;
-    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+    const {label: axisLabel, isLatex} = getAxisLabel(unit, cname);
+    if (isLatex) {
+        const sfAndAxisLabel = `\\text{${sfLabel} }${axisLabel}`;
+        return redshiftLabel
+            ? latexStr(`\\begin{matrix} ${sfAndAxisLabel} \\\\ \\text{(${redshiftLabel})} \\end{matrix}`)
+            : latexStr(sfAndAxisLabel);
+    }
+    else {
+        const sfAndAxisLabel = `${sfLabel} ${axisLabel}`;
+        return redshiftLabel ? `${sfAndAxisLabel}<br>(${redshiftLabel})` : sfAndAxisLabel;
+    }
+};
+
+/**
+ * returns Y axis label for Plotly chart using the required information like unit and column name.
+ * @param unit
+ * @param cname
+ * @returns {LatexDelimited|string}
+ */
+export const getYLabel = (unit, cname) => {
+    const {label: axisLabel, isLatex} = getAxisLabel(unit, cname);
+    return isLatex ? latexStr(axisLabel) : axisLabel;
 };
 
 
 /**
  * Returns the measurement label for a given unit.
  * @param unit {string} - the unit to get the measurement label for
- * @returns {string}
+ * @returns {LatexDelimited}
  */
 export const getMeasurementLabel = (unit) => {
     const {unit: unitKey} = normalizeUnit(unit);
     if (!unitKey) return '';
     const measurementKey = UnitMetadata[unitKey]?.type;
-    return Measurement[measurementKey]?.symbol || '';
+    return latexStr(Measurement[measurementKey]?.symbol) || '';
 };
 
 
@@ -247,36 +286,34 @@ const UnitXref = {
     },
 };
 
-
 /**
- * @typedef {string} MeasurementKey - unique identifier for a measurement type, used as a key in Measurement.
+ * @typedef {string} MeasurementKey
+ * Unique identifier for a measurement type, used as a key in Measurement.
  */
-
 /**
  * @typedef {Object} Measurement
  * @property {MeasurementKey} key - the key of the measurement type
  * @property {string} value - the value of the measurement type
- * @property {string} symbol - the symbol for the measurement type, used in chart axis labels and UI labels
+ * @property {LatexFragment} symbol - the symbol for the measurement type, used in chart axis labels and UI labels
  */
 
 /**Type of measurements by which units are grouped.
  * @type {Object.<MeasurementKey, Measurement>}
  */
 const Measurement = {
-    NU: {key: 'NU', value: 'frequency', symbol: '𝛎'},
-    LAMBDA: {key: 'LAMBDA', value: 'wavelength', symbol: 'λ'},
-    // TODO: use LaTex to make 𝛎 and λ subscripts of F
-    F_NU: {key: 'F_NU', value: 'flux_density_frequency', symbol: 'F𝛎'},
-    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', symbol: 'Fλ'},
-    F: {key: 'F', value: 'inband_flux', symbol: '𝛎·F𝛎'},
+    NU: {key: 'NU', value: 'frequency', symbol: '\\nu'},
+    LAMBDA: {key: 'LAMBDA', value: 'wavelength', symbol: '\\lambda'},
+    F_NU: {key: 'F_NU', value: 'flux_density_frequency', symbol: 'F_{\\nu}'},
+    F_LAMBDA: {key: 'F_LAMBDA', value: 'flux_density_wavelength', symbol: 'F_{\\lambda}'},
+    F: {key: 'F', value: 'inband_flux', symbol: '\\nu \\cdot F_{\\nu}'},
 };
 
 
 /**
  * @typedef {Object} UnitMetadata
  * @property {MeasurementKey} type - the type of measurement this unit belongs to, one of the keys in `Measurement`.
- * @property {string} label - the label for the unit, used in dropdown options and axis labels. If undefined, the key
- * is used as the label.
+ * @property {LatexFragment} label - the label for the unit, used in dropdown options and axis labels. If undefined,
+ * the key is used as the label.
  * @property {Array<string>} aliases - list of aliases for the unit, used for matching besides the key and label.
  */
 
@@ -301,7 +338,7 @@ const UnitMetadata = {
     // wavelength -------------
     A : {
         type: Measurement.LAMBDA.key,
-        label: WAVELENGTH_UNITS.angstrom.symbol,
+        label: '\\mathring{A}',
         aliases: ['Angstrom', 'angstrom']
     },
     nm : {
@@ -309,7 +346,7 @@ const UnitMetadata = {
     },
     um : {
         type: Measurement.LAMBDA.key,
-        label: WAVELENGTH_UNITS.um.symbol,
+        label: '\\mu m',
         aliases: ['micron', 'microns']
     },
     mm : {
@@ -324,12 +361,12 @@ const UnitMetadata = {
     // flux density in frequency space -------------
     'W/m^2/Hz' : {
         type: Measurement.F_NU.key,
-        label: 'W/m²/Hz',
+        label: 'W/m^{2}/Hz',
         // aliases are generated at runtime for this and all the flux units below
     },
     'erg/s/cm^2/Hz' : {
         type: Measurement.F_NU.key,
-        label: 'erg/s/cm²/Hz',
+        label: 'erg/s/cm^{2}/Hz',
     },
     Jy : {
         type: Measurement.F_NU.key,
@@ -337,24 +374,24 @@ const UnitMetadata = {
     // flux density in wavelength space -------------
     'erg/s/cm^2/A' : {
         type: Measurement.F_LAMBDA.key,
-        label: `erg/s/cm²/${WAVELENGTH_UNITS.angstrom.symbol}`,
+        label: 'erg/s/cm^{2}/\\mathring{A}',
     },
     'W/m^2/um' : {
         type: Measurement.F_LAMBDA.key,
-        label: `W/m²/${WAVELENGTH_UNITS.um.symbol}`,
+        label: 'W/m^{2}/\\mu m',
     },
     // inband flux (independent of frequency or wavelength) -------------
     'W/m^2' : {
         type: Measurement.F.key,
-        label: 'W/m²',
+        label: 'W/m^{2}',
     },
     'erg/s/cm^2' : {
         type: Measurement.F.key,
-        label: 'erg/s/cm²',
+        label: 'erg/s/cm^{2}',
     },
     'Jy*Hz' : {
         type: Measurement.F.key,
-        label: 'Jy·Hz',
+        label: 'Jy \\cdot Hz',
     },
 };
 
@@ -366,6 +403,29 @@ const splitFactorUnit = (u) => {
     const factor = match?.[1] ?? '';
     const unit = (match?.[2] ?? u).trim(); // fallback to the whole string
     return {factor, unit};
+};
+
+/**
+ * Converts a unit label to its LaTeX representation (wrapped in \mathrm{}).
+ * @param unit {LatexFragment|string}
+ * @returns {LatexFragment}
+ */
+const unitInLatex = (unit) => `\\mathrm{${unit}}`;
+
+/**
+ * Converts a numeric factor string to its LaTeX representation.
+ * E.g. '1e-10' -> '10^{-10}', '2.5e3' -> '2.5 \\times 10^{3}', '2.567' -> '2.567'
+ * @param factor {string}
+ * @returns {LatexFragment}
+ */
+const factorInLatex = (factor) => {
+    const [number, exponent] = factor.split(/[eE]/);
+    if (exponent) {
+        const exponentInt = Number(exponent);
+        if (Number(number) === 1) return `10^{${exponentInt}}`;
+        return `${number} \\times 10^{${exponentInt}}`;
+    }
+    return factor;
 };
 
 
