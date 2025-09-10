@@ -226,7 +226,7 @@ public class VoTableReader {
             // location is a URL, download it first.
             File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir(null));
             try {
-                HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
+                HttpServices.getData( new HttpServiceInput(url), tmpFile);
                 voTablePath = tmpFile.getPath();
             } catch (Exception e) {
                 LOG.error(e, "Unable to fetch URL: " + location);

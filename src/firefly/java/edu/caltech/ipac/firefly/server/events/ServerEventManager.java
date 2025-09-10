@@ -101,7 +101,7 @@ public class ServerEventManager {
     }
 
     public static void addEventQueue(ServerEventQueue queue) {
-        Logger.briefInfo("Channel: create new Queue for: "+ queue.getQueueID() );
+        Logger.info("Channel: create new Queue for: "+ queue.getQueueID() );
         localEventQueues.add(queue);
         allEventQueues.setQueueListForNode(localEventQueues);
     }

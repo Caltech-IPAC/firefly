@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -38,15 +40,28 @@ public class HttpServiceInput implements Cloneable, Serializable {
 
     public HttpServiceInput() {}
 
+    /**
+     * Constructs an instance with the given request URL.
+     * The request will be created with credentials validated
+     * through the configured {@link SsoAdapter}.
+     * @param requestUrl  the target URL to access
+     */
     public HttpServiceInput(String requestUrl) {
-        this.requestUrl = requestUrl;
+        setRequestUrl(requestUrl);
     }
 
     public String getRequestUrl() {
         return requestUrl;
     }
     public HttpServiceInput setRequestUrl(String requestUrl) {
+        return setRequestUrl(requestUrl, true);
+    }
+    public HttpServiceInput setRequestUrl(String requestUrl, boolean applyCredential) {
         this.requestUrl = requestUrl;
+        if (applyCredential) {
+            ifNotNull(ServerContext.getRequestOwner().getSsoAdapter())
+                    .apply(a -> a.setAuthCredential(this));
+        }
         return this;
     }
 
@@ -170,7 +185,7 @@ public class HttpServiceInput implements Cloneable, Serializable {
             sb.append("\n\tparams: ").append(params.toString());
         }
         if (headers != null) {
-            sb.append("\n\theaders: ").append(headers.toString());
+            sb.append("\n\theaders: {").append(headers.entrySet().stream().map(e -> "%s=%s".formatted(e.getKey(), sanitizeHeader(e.getKey(), e.getValue()))).collect(Collectors.joining())).append("}");
         }
         if (cookies != null) {
             sb.append("\n\tcookies: ").append(cookies.toString());
@@ -203,35 +218,9 @@ public class HttpServiceInput implements Cloneable, Serializable {
         }
     }
 
-    /**
-     * @return this HttpServiceInput with necessary credentials added
-     */
-    public HttpServiceInput applyCredential() {
-        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
-        if (ssoAdapter != null) {
-            ssoAdapter.setAuthCredential(this);
-        }
-        return this;
-    }
-
 //====================================================================
 //  convenience functions
 //====================================================================
-
-    @Deprecated     // does not make sense because credential should only be passed to a known backend service(url)
-    public static HttpServiceInput createWithCredential() {
-        return createWithCredential(null);
-    }
-
-    /**
-     * returns an HttpServiceInput that contains the required credential to access the given backend service.
-     * This credential information is based on the implementer of SsoAdapter.
-     * @param requestUrl  URL to access
-     * @return
-     */
-    public static HttpServiceInput createWithCredential(String requestUrl) {
-        return new HttpServiceInput(requestUrl).applyCredential();
-    }
 
     public String getUniqueKey() {
         String key = isEmpty(requestUrl) ? "" : requestUrl;

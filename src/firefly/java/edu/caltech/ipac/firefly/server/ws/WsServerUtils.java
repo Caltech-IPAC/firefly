@@ -210,7 +210,7 @@ public class WsServerUtils {
 
         String url = getMeta(wsParams).getUrl();
         Map<String, String> cookies = getCredentials().getCookies();
-        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        HttpServiceInput input = new HttpServiceInput(url);
 
         input.setUserId("x");
         input.setPasswd("x");

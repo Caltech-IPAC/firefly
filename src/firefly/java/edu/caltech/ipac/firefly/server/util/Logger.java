@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
+import edu.caltech.ipac.firefly.server.RequestAgent;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
@@ -35,7 +36,7 @@ public class Logger {
     public static final String DOWNLOAD_LOGGER = "dl";
     public static final String VIS_LOGGER = "visu";
 
-    private enum Type { NORMAL(""), BRIEF("brief."), STATISTICS("statistics.");
+    private enum Type { NORMAL(""), STATISTICS("statistics.");
                             String prefix;
                             Type(String prefix) {this.prefix = prefix;}
                         }
@@ -79,16 +80,8 @@ public class Logger {
         getLogger().debug(msgs);
     }
 
-    public static void briefDebug(String msg) {
-        getLogger().briefDebug(msg);
-    }
-
     public static void info(String... msg) {
         getLogger().info(msg);
-    }
-
-    public static void briefInfo(String msgs) {
-        getLogger().briefInfo(msgs);
     }
 
     public static void warn(String... msgs) {
@@ -159,45 +152,6 @@ public class Logger {
     }
 
 
-    private static void doLog(String msg, boolean isStatic, int stackCount) {
-        if (stackCount > 0) {
-            doLog(msg, isStatic, stackCount-1);
-        } else {
-            if (isStatic) {
-                Logger.getLogger("test").info(msg);
-                Logger.getLogger("test").briefInfo(msg);
-                Logger.getLogger(DOWNLOAD_LOGGER).stats("test", msg);
-            } else {
-                Logger.info(msg);
-                Logger.briefInfo(msg);
-                Logger.stats(DOWNLOAD_LOGGER, "test", msg);
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        long ctime;
-
-        for(int j = 0; j < 5; j++) {
-
-            int count = j*20;
-            System.out.println("\nfor stack count:" + count);
-            
-            ctime= System.currentTimeMillis();
-            for(int i = 0; i < 1000; i++) {
-                doLog("just a test", true, count);
-            }
-            System.out.println("static elapsed time:" + (System.currentTimeMillis() - ctime));
-
-            ctime= System.currentTimeMillis();
-            for(int i = 0; i < 1000; i++) {
-                doLog("just a test", false, count);
-            }
-            System.out.println("dynamic elapsed time:" + (System.currentTimeMillis() - ctime));
-
-        }
-    }
-
 //====================================================================
 //
 //====================================================================
@@ -223,21 +177,9 @@ public class Logger {
         }
 
         public void trace(String... msgs) { log(Type.NORMAL, Level.TRACE, msgs); }
-        /**
-         * @deprecated
-         * Same as debug().  Use debug() instead.
-         */
-        @Deprecated
-        public void briefDebug(String msgs) { debug(msgs); }
+        public void trace(Supplier<String> func) { log(Type.NORMAL, Level.TRACE, null, func); }
 
         public void debug(String... msgs) { log(Type.NORMAL, Level.DEBUG, msgs); }
-
-        /**
-         * @deprecated
-         * Same as info().  Use info() instead.
-         */
-        @Deprecated
-        public void briefInfo(String msgs) { info(msgs); }
 
         public void info(String... msgs) { log(Type.NORMAL, Level.INFO, msgs);}
 

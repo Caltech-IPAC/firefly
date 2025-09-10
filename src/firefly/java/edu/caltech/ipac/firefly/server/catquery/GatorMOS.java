@@ -103,7 +103,7 @@ public class GatorMOS extends EmbeddedDbProcessor {
      */
     private static HttpServiceInput createInput(TableServerRequest treq) throws DataAccessException {
 
-        HttpServiceInput input = HttpServiceInput.createWithCredential(GATOR_HOST + SRV_URL);
+        HttpServiceInput input = new HttpServiceInput(GATOR_HOST + SRV_URL);
         input.setParam("searchForm", "MO")
              .setParam("spatial", "cone");
 

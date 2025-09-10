@@ -65,7 +65,7 @@ public class AsyncTapQuery extends UwsJobProcessor {
         var uploadTable= request.getParam(UPLOAD_TNAME);
         boolean runIdSupported = !SVC_RUNID_NOT_SUPPORTED.contains(serviceUrl);
 
-        HttpServiceInput inputs = HttpServiceInput.createWithCredential(serviceUrl + "/async");
+        HttpServiceInput inputs = new HttpServiceInput(serviceUrl + "/async");
         DaliUtil.handleMaxrec(inputs, request);
         DaliUtil.handleUpload(inputs, request, uploadTable);
 

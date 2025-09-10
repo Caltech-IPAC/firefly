@@ -32,8 +32,9 @@ public class RequestAgent {
 
     private Map<String, Cookie> cookies;
     private String requestUrl;      // the request url
-    private String baseUrl;         // the url up to the the app's path
+    private String baseUrl;         // the url up to the app's path
     private String hostUrl;         // the url up to the host name including port
+    private String host;
     private String remoteIP;
     private String sessId;
     private String contextPath;
@@ -41,13 +42,14 @@ public class RequestAgent {
 
     public RequestAgent() {}
 
-    public RequestAgent(Map<String, Cookie> cookies, String hostUrl, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
+    public RequestAgent(Map<String, Cookie> cookies, String host, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
         this.cookies = cookies;
         this.requestUrl = requestUrl;
         this.baseUrl = baseUrl;
         this.remoteIP = remoteIP;
         this.sessId = sessId;
         this.contextPath = contextPath;
+        this.host = host;
     }
 
     public String getServletPath() {
@@ -83,6 +85,10 @@ public class RequestAgent {
     public String getHostUrl() { return hostUrl;}
 
     void setHostUrl(String hostUrl) { this.hostUrl = hostUrl;}
+
+    public String getHost() { return host;}
+
+    void setHost(String host) { this.host = host;}
 
     public String getRequestUrl() {
         return requestUrl;
@@ -199,6 +205,7 @@ public class RequestAgent {
 
             setBaseUrl(baseUrl);
             setHostUrl(hostUrl);
+            setHost(host);
             setRequestUrl(requestUrl);
             setContextPath(request.getContextPath());
             setRemoteIP(remoteIP);

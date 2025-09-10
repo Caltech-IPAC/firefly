@@ -43,7 +43,7 @@ public class TempTable {
         try {
             stmt.executeUpdate("drop table "+tempTableName+";");
         } catch (SQLException e) {
-            Logger.briefDebug("No "+tempTableName+" table to drop: "+e.getMessage());
+            Logger.debug("No "+tempTableName+" table to drop: "+e.getMessage());
         } finally {
             closeStatement(stmt);
         }

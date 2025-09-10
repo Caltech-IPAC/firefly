@@ -151,7 +151,7 @@ public class QueryUtil {
                 return f;
             } else {
                 boolean checkForUpdates = request.getBooleanParam(URL_CHECK_FOR_NEWER, true);
-                HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
+                HttpServiceInput inputs = new HttpServiceInput(url.toString());
                 StringKey key = new StringKey(inputs.getUniqueKey());
                 File res  = (File) CacheManager.getCache().get(key);
                 String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
@@ -849,7 +849,7 @@ public class QueryUtil {
                 insertDecimateInfo(retval, decimateInfo, decimateKey, minWeight, maxWeight);
 
                 java.util.Date endTime = new java.util.Date();
-                Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
+                Logger.info(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
             }
         }
 

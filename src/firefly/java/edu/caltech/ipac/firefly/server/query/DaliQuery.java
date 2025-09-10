@@ -34,7 +34,7 @@ public class DaliQuery extends EmbeddedDbProcessor {
 
         try {
             File outFile = createTempFile(req, ".vot");
-            HttpServices.Status status = HttpServices.getWithAuth(inputs, HttpServices.defaultHandler(outFile));
+            HttpServices.Status status = HttpServices.getData(inputs, outFile);
             if (status.isError()) {
                 throw DaliUtil.createDax("Failed to retrieve the result from", inputs.getRequestUrl(), status.getException());
             }
@@ -57,7 +57,7 @@ public class DaliQuery extends EmbeddedDbProcessor {
      * @throws DataAccessException when encountering an error
      */
     public HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
-        HttpServiceInput inputs = HttpServiceInput.createWithCredential(getSvcUrl(request));
+        HttpServiceInput inputs = new HttpServiceInput(getSvcUrl(request));
         DaliUtil.populateKnownInputs(inputs, request);
         return inputs;
     }

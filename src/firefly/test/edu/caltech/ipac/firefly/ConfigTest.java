@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import org.apache.logging.log4j.Level;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.File;
@@ -37,10 +38,10 @@ public class ConfigTest {
     public static final Logger.LoggerImpl LOG = Logger.getLogger("test");
 
     /**
-     * Run before each test class get instantiated
+     * Run before each test
      */
-    @BeforeClass
-    public static void initializeTest() {
+    @Before
+    public void initializeTest() {
 
         Logger.setLogLevel(Level.OFF);
         // Turn off logging initially.

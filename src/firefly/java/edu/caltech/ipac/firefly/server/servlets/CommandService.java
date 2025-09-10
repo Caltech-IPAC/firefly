@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
@@ -68,13 +69,10 @@ public class CommandService extends BaseHttpServlet {
             String cmd = sp.getCommandKey();
             ServerCommandAccess.HttpCommand command = ServerCommandAccess.getCommand(cmd);
             command.processRequest(req, res, sp);
-            var sso= ServerContext.getRequestOwner().getSsoAdapter();
-            String userInfoStr= "";
-            if (sso!=null) {
-                var ui= sso.getUserInfo();
-                if (ui!=null) userInfoStr= ui.toString();
-            }
-            Logger.debug(String.format("CommandService: %s (%s): %dms", cmd, userInfoStr, System.currentTimeMillis() - start));
+
+            UserInfo userInfo= ServerContext.getRequestOwner().getUserInfo();
+            String userInfoStr= userInfo.isGuestUser() ? "Guest" : userInfo.toString();
+            Logger.debug("CommandService: %s %dms (%s)".formatted(cmd, System.currentTimeMillis() - start, userInfoStr));
         } catch (Exception ex) {
             LOGGER.error(ex);
             HashMap<String, String> errors = new HashMap<>();

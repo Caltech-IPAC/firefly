@@ -166,7 +166,7 @@ public class OidcAdapter implements SsoAdapter {
 
         Token token = null;
         try {
-            LOGGER.briefDebug("auth token:" + results);
+            LOGGER.debug("auth token:" + results);
 
             JSONParser parser = new JSONParser();
             JSONObject ans = (JSONObject) parser.parse(results.toString());
@@ -195,7 +195,7 @@ public class OidcAdapter implements SsoAdapter {
 
         if (HttpServices.getData(url, results).isError()) return null;
         try {
-            LOGGER.briefDebug("user_info:" + results);
+            LOGGER.debug("user_info:" + results);
             JSONParser parser = new JSONParser();
             JSONObject ans = (JSONObject) parser.parse(results.toString());
             String email = getString(ans, EMAIL, "");

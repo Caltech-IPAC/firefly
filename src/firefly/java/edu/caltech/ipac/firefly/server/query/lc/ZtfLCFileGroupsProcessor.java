@@ -125,14 +125,14 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
                 extName = extName.replace(".fits",cutoutInfo+".fits");
 
                 String url = ZtfSciimsFileRetrieve.createCutoutURLString_l1(baseUrl, filefracday,field,filtercode,ccdid,imgtypcode,qid, ZtfSciimsFileRetrieve.FILE_TYPE.SCI, subLon, subLat, subSize);
-                logger.briefInfo("cutout url: " + url);
+                logger.info("cutout url: " + url);
                 // strip out filename when using file resolver
                 fi = new FileInfo(url, extName, 0);
-                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
+                fi.setRequestInfo(new HttpServiceInput(url));
             } else {
                 String url = baseUrl + fName;
                 fi = new FileInfo(url, extName,0);
-                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
+                fi.setRequestInfo(new HttpServiceInput(url));
             }
             if (fi != null) {
                 fiArr.add(fi);
