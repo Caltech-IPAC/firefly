@@ -191,6 +191,10 @@ export function doFileNameAndTypeAnalysis({url, ct, wrapWithMessage=true, name, 
     let item= undefined;
     const imExt= [ 'jpeg', 'jpg', 'png', 'gif'];
 
+    if ( (isGzipType(ct) && url?.includes('.fits')) || url?.endsWith('fits.gz')) {
+        return;// special case, a gzip file that is a fits, should go to the server
+    }
+
     if (isUsableDownloadType(ext,ct)) item= makeDownloadType(url,ext,ct,wrapWithMessage, name, obsTitle);
     else if (imExt.some( (e) => ext.includes(e)) || isSimpleImageType(ct)) item= makePngEntry(url, name, obsTitle);
     // else if (ext.endsWith('txt') || isPlainTextType(ct)) item= makeTextEntry(url, name, obsTitle);
