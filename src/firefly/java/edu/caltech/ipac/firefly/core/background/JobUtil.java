@@ -15,14 +15,17 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
@@ -59,15 +62,26 @@ public class JobUtil {
     }
 
     /**
-     * Generates a unique Job ID for a job. In a clustered environment, this ID is unique across all instances.
-     * The ID consists of up to 8 characters from the host name and the current time in milliseconds,
-     * limited to a one-year range. The resulting format is "HOSTNAME_TIMESTAMP", with a maximum of 20 characters.
-     * @return the next unique job ID for this host
+     * Generates a random UUID and encodes it in Base64 (URL-safe) format for use as a job ID.
+     * A UUID is 128 bits (16 bytes). Standard Base64 encoding produces 24 characters with
+     * '=' padding. By using URL-safe Base64 without padding, the result is always 22 characters.
+     * The character set includes: A–Z, a–z, 0–9, '-' and '_'.
+     * This makes the ID safe for use in job IDs, filenames, and URLs without escaping.
+     * Example:
+     *   ulFVNmC5TJiCaC7ttM16zA
+     *   zFjSgcltR9K0uM24I1YVdg
+     *
+     * @return a 22-character, URL-safe Base64 string derived from a random UUID
      */
     static String nextJobId() {
-        String hname = hostName();
-        hname = hname.length() < 9 ? hname : hname.substring(hname.length() - 8);
-        return "%s_%d".formatted(hname, System.currentTimeMillis() % yearMs);
+        UUID uuid = UUID.randomUUID();
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        buffer.putLong(uuid.getMostSignificantBits());
+        buffer.putLong(uuid.getLeastSignificantBits());
+
+        return Base64.getUrlEncoder()
+                .withoutPadding()   // no '=' padding, URL/job-safe
+                .encodeToString(buffer.array());
     }
 
     public static String hostName() {
