@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.SPECTRADM_UTYPE;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.*;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -68,7 +69,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
             ifNotEmpty(treq.getParam(RequestOwner.USER_KEY)).apply((uk) -> ServerContext.getRequestOwner().setUserKey(uk));
             updateJob(ji -> ji.getAux().setJobUrl(source));
 
-            File inFile = QueryUtil.resolveFileFromSource(source, treq);
+            File inFile = QueryUtil.resolveFileFromSource(source, true, tmpFileForUrl(source, treq.getRequestId() + "_", getSessUploadDir(treq)));
             DataGroup table = TableUtil.readAnyFormat(inFile);
 
             setJobResults(inFile);
