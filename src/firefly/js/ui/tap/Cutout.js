@@ -199,7 +199,11 @@ export function findCutoutTarget(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_
 
     if (pointIn(drawObj.pts, positionWP)) return result;
     const fallback = makeWorldPtUsingCenterColumns(table, row);
-    return {requestedType: result.requestedType, foundType: fallback ? ROW_POSITION : undefined, positionWP: fallback};
+    return {
+        requestedType: result?.requestedType,
+        foundType: result?.foundType ?? (fallback ? ROW_POSITION : undefined),
+        positionWP: result?.positionWP ?? (fallback || undefined)
+    };
 }
 
 export function getCutoutErrorStr(foundType, requestedType) {
