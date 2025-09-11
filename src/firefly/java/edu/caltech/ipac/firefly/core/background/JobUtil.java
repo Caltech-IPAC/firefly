@@ -12,6 +12,7 @@ import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URI;
@@ -49,6 +50,10 @@ public class JobUtil {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
     public static final List<String> runIdIgnoreList = new ArrayList<>();
+    private static final char[] ALPHABET =
+            "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
+    private static final int BASE = ALPHABET.length;
+
 
     static {
         runIdIgnoreList.add("TAP_SCHEMA");      // Firefly uses this when querying the tap schema
@@ -62,15 +67,19 @@ public class JobUtil {
     }
 
     /**
-     * Generates a random UUID and encodes it in Base64 (URL-safe) format for use as a job ID.
-     * A UUID is 128 bits (16 bytes). Standard Base64 encoding produces 24 characters with
-     * '=' padding. By using URL-safe Base64 without padding, the result is always 22 characters.
-     * The character set includes: A–Z, a–z, 0–9, '-' and '_'.
-     * This makes the ID safe for use in job IDs, filenames, and URLs without escaping.
+     /**
+     * Generates a random UUID and encodes it in Base58 for a compact, human-friendly,
+     * and URL/file-system safe identifier.
+     * A UUID is 128 bits (16 bytes). In hexadecimal form it is 32 characters.
+     * Base58 uses the alphabet:
+     *   123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+     * It avoids visually confusing characters (0, O, I, l) and excludes punctuation.
+     * The result is typically 21–22 characters long.
+     * This makes the ID compact, human-friendly, and safe for use in job IDs,
+     * filenames, and URLs without escaping.
      * Example:
-     *   ulFVNmC5TJiCaC7ttM16zA
-     *   zFjSgcltR9K0uM24I1YVdg
-     *
+     *   4hYQePYk74yT3UqpXzGrkK
+     *   7YpTuwWbPBJ4yF5CkKcUZm
      * @return a 22-character, URL-safe Base64 string derived from a random UUID
      */
     static String nextJobId() {
@@ -78,10 +87,19 @@ public class JobUtil {
         ByteBuffer buffer = ByteBuffer.allocate(16);
         buffer.putLong(uuid.getMostSignificantBits());
         buffer.putLong(uuid.getLeastSignificantBits());
+        byte[] bytes = buffer.array();
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()   // no '=' padding, URL/job-safe
-                .encodeToString(buffer.array());
+        // Convert to BigInteger for easy base conversion
+        BigInteger value = new BigInteger(1, bytes);
+
+        StringBuilder sb = new StringBuilder();
+        while (value.compareTo(java.math.BigInteger.ZERO) > 0) {
+            java.math.BigInteger[] divRem = value.divideAndRemainder(BigInteger.valueOf(BASE));
+            value = divRem[0];
+            int digit = divRem[1].intValue();
+            sb.append(ALPHABET[digit]);
+        }
+        return sb.reverse().toString();
     }
 
     public static String hostName() {
@@ -89,15 +107,13 @@ public class JobUtil {
     }
 
     /**
-     * The directory name is derived from the 8th to the 11th number of System.currentTimeMillis. (~ 2.78 hours each increment)
-     * Since the job ID is limited to yearMs(11 digits), we'll take the first 4 digits.
-     * @param jobId the job ID
+     * Take the 22-character Base58 job ID and derive a directory name structure so files don’t all pile into one folder.
+     * Using prefix-based sharding; first 2 chars from job ID: 64² = 4096 possibilities.
      * @return the directory name for the given job ID
      */
     public static String jobIdToDir(String jobId) {
-        if (isEmpty(jobId)) return jobId;
-        String[] parts = jobId.split("_");
-        return isEmpty(parts[1]) ? jobId : parts[0] + "_" + parts[1].substring(0, 4);
+        if (isEmpty(jobId) || jobId.length() < 2) return "no_id";
+        return jobId.substring(0, 2);
     }
 
     public static String toJson(JobInfo info) {
