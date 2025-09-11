@@ -166,7 +166,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
             DataGroup dg = DsvTableIO.parse(csv, CSVFormat.DEFAULT.withCommentMarker('#'));
             if (dg == null) {
-                    _log.briefInfo("no data found for search");
+                    _log.info("no data found for search");
                     return null;
             }
 
@@ -256,7 +256,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
         _postBuilder.addParam("photoScope", nearestOnly ? "nearPrim":"allPrim");
         _postBuilder.addParam("radius",radiusArcMin);
         _postBuilder.addParam("photoUpType", "ra-dec");
-        _log.briefInfo(UPLOAD_SQL);
+        _log.info(UPLOAD_SQL);
         _postBuilder.addParam("uquery",UPLOAD_SQL);
         _postBuilder.addParam("firstcol", "1"); // first column is in_row_id
 

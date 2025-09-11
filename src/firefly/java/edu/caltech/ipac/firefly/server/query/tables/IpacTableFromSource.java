@@ -161,7 +161,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             boolean isExternal = isExternalSource(source);
             inf = QueryUtil.resolveFileFromSource(source, req);
             if (inf == null) {
-                isExternal = isExternalSource(source);
+                isExternal = isExternalSource(altSource);
                 inf = QueryUtil.resolveFileFromSource(altSource, req);
             }
             if (isExternal) req.setMeta(TableMeta.DATA_ORIGIN, "external");
@@ -180,7 +180,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         if (sourceBase == null) return false;
         String hostBase = getBaseDomain(ServerContext.getRequestOwner().getBaseUrl());
         boolean isExternal = !sourceBase.equals(hostBase);
-        Logger.getLogger().debug("Is external source: " + isExternal + " sourceBase: " + sourceBase + " hostBase: " + hostBase);
+        if (isExternal) Logger.getLogger().trace("External source detected. sourceBase: " + sourceBase + " hostBase: " + hostBase);
         return isExternal;
     }
 

@@ -12,17 +12,21 @@ import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
@@ -46,6 +50,10 @@ public class JobUtil {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
     public static final List<String> runIdIgnoreList = new ArrayList<>();
+    private static final char[] ALPHABET =
+            "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
+    private static final int BASE = ALPHABET.length;
+
 
     static {
         runIdIgnoreList.add("TAP_SCHEMA");      // Firefly uses this when querying the tap schema
@@ -59,15 +67,39 @@ public class JobUtil {
     }
 
     /**
-     * Generates a unique Job ID for a job. In a clustered environment, this ID is unique across all instances.
-     * The ID consists of up to 8 characters from the host name and the current time in milliseconds,
-     * limited to a one-year range. The resulting format is "HOSTNAME_TIMESTAMP", with a maximum of 20 characters.
-     * @return the next unique job ID for this host
+     /**
+     * Generates a random UUID and encodes it in Base58 for a compact, human-friendly,
+     * and URL/file-system safe identifier.
+     * A UUID is 128 bits (16 bytes). In hexadecimal form it is 32 characters.
+     * Base58 uses the alphabet:
+     *   123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+     * It avoids visually confusing characters (0, O, I, l) and excludes punctuation.
+     * The result is typically 21–22 characters long.
+     * This makes the ID compact, human-friendly, and safe for use in job IDs,
+     * filenames, and URLs without escaping.
+     * Example:
+     *   4hYQePYk74yT3UqpXzGrkK
+     *   7YpTuwWbPBJ4yF5CkKcUZm
+     * @return a 22-character, URL-safe Base64 string derived from a random UUID
      */
     static String nextJobId() {
-        String hname = hostName();
-        hname = hname.length() < 9 ? hname : hname.substring(hname.length() - 8);
-        return "%s_%d".formatted(hname, System.currentTimeMillis() % yearMs);
+        UUID uuid = UUID.randomUUID();
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        buffer.putLong(uuid.getMostSignificantBits());
+        buffer.putLong(uuid.getLeastSignificantBits());
+        byte[] bytes = buffer.array();
+
+        // Convert to BigInteger for easy base conversion
+        BigInteger value = new BigInteger(1, bytes);
+
+        StringBuilder sb = new StringBuilder();
+        while (value.compareTo(java.math.BigInteger.ZERO) > 0) {
+            java.math.BigInteger[] divRem = value.divideAndRemainder(BigInteger.valueOf(BASE));
+            value = divRem[0];
+            int digit = divRem[1].intValue();
+            sb.append(ALPHABET[digit]);
+        }
+        return sb.reverse().toString();
     }
 
     public static String hostName() {
@@ -75,15 +107,13 @@ public class JobUtil {
     }
 
     /**
-     * The directory name is derived from the 8th to the 11th number of System.currentTimeMillis. (~ 2.78 hours each increment)
-     * Since the job ID is limited to yearMs(11 digits), we'll take the first 4 digits.
-     * @param jobId the job ID
+     * Take the 22-character Base58 job ID and derive a directory name structure so files don’t all pile into one folder.
+     * Using prefix-based sharding; first 2 chars from job ID: 64² = 4096 possibilities.
      * @return the directory name for the given job ID
      */
     public static String jobIdToDir(String jobId) {
-        if (isEmpty(jobId)) return jobId;
-        String[] parts = jobId.split("_");
-        return isEmpty(parts[1]) ? jobId : parts[0] + "_" + parts[1].substring(0, 4);
+        if (isEmpty(jobId) || jobId.length() < 2) return "no_id";
+        return jobId.substring(0, 2);
     }
 
     public static String toJson(JobInfo info) {
@@ -110,7 +140,7 @@ public class JobUtil {
         String paramStr= urlObs == null ? "" : urlObs.getQuery();
         String urlBase= (!isEmpty(paramStr) && url.contains("?"))  ? url.split("\\?")[0] : url;
 
-        HttpServiceInput input = HttpServiceInput.createWithCredential(urlBase);
+        HttpServiceInput input = new HttpServiceInput(urlBase);
         if (!isEmpty(paramStr)) input.setRequestUrl(input.getRequestUrl()+"?"+paramStr);
         LOG.info("Importing job histories from %s; svcId=%s svcType=%s".formatted(input.getRequestUrl(), svcId, svcType));
         Ref<List<JobInfo>> jobList = new Ref<>();

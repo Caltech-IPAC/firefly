@@ -86,7 +86,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
                     pfilename = new PtfIbeResolver().getListPfilenames(new long[]{pid})[0];
                 } catch (Exception e) {
                     //PID didn't work, swallow it
-                    logger.briefInfo("PID " + pid + " didn't give any result ");
+                    logger.info("PID " + pid + " didn't give any result ");
                     continue;
                 }
             } else {
@@ -97,7 +97,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
             String fileName = pfilename;//createBaseFileString_l2(fieldDir, fieldId, fId, ccdId);
 
-            logger.briefInfo("filename=" + fileName);
+            logger.info("filename=" + fileName);
 
             File f = new File(fileName);
             String extName = doFolders ? fileName : f.getName();
@@ -118,7 +118,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
                 extName = extName.replace(".fits",cutoutInfo+".fits");
                 String url = createCutoutURLString_l2(baseUrl, pfilename, subLon, subLat, subSize);
-                logger.briefInfo("cutout url: " + url);
+                logger.info("cutout url: " + url);
 
 
 //                // strip out filename when using file resolver
@@ -131,11 +131,11 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 //                }
 
                 fi = new FileInfo(url, extName, 0);
-                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
+                fi.setRequestInfo(new HttpServiceInput(url));
             } else {
                 String url = baseUrl + fileName;
                 fi = new FileInfo(url, extName, 0);
-                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
+                fi.setRequestInfo(new HttpServiceInput(url));
             }
             if (fi != null) {
                 fiArr.add(fi);

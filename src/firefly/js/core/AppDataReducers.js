@@ -7,6 +7,8 @@ import * as AppDataCntlr from './AppDataCntlr.js';
 import {mergeObjectOnly, updateSet} from '../util/WebUtil.js';
 import BrowserCache from '../util/BrowserCache.js';
 import {smartMerge} from '../tables/TableUtil.js';
+import {Logger} from '../util/Logger.js';
+const logger = Logger('AppData');
 
 const APP_PREFERENCES= 'APP_PREFERENCES';
 
@@ -125,6 +127,7 @@ function removePreference(state,action) {
 
 function setUserInfo(state,action) {
     const userInfo = action.payload;
+    logger.debug('setUserInfo:', userInfo);
     return Object.assign({}, state, {userInfo});
 }
 

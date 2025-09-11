@@ -82,7 +82,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         // send abort request.  ignore if there's error
         if (isEmpty(jobUrl)) return;
         String phaseUrl = jobUrl.trim().replaceAll("/$", "") + "/phase" ;        // remove trailing slash
-        Status status = HttpServices.postData(HttpServiceInput.createWithCredential(phaseUrl).setParam("PHASE", "ABORT"),
+        Status status = HttpServices.postData(new HttpServiceInput(phaseUrl).setParam("PHASE", "ABORT"),
                 res -> {
                     String location = getResHeader(res, "Location", null);      // expecting a 303 redirect to the job URL
                     if (location == null) {
@@ -224,7 +224,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (jobUrl == null) return;
         if (getPhase(jobUrl) == Phase.PENDING) {
             jobUrl = jobUrl.trim().replaceAll("/$", "");        // cleanup URL
-            HttpServices.postData(HttpServiceInput.createWithCredential(jobUrl + "/phase").setParam("PHASE", "RUN"));
+            HttpServices.postData(new HttpServiceInput(jobUrl + "/phase")
+                    .setParam("PHASE", "RUN")
+                    .setFollowRedirect(false)                   // ignore redirect back to job URL.  we have it already.
+            );
         }
     }
 
@@ -290,8 +293,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             File outFile = File.createTempFile("results-", ".vot", workDir);
 
             // Must followRedirect because TAP specifically say this endpoint may be redirected.
-            // Using 'getWithAuth' because it will handle credential when redirected
-            HttpServices.Status status = getWithAuth(url, HttpServices.defaultHandler(outFile));
+            HttpServices.Status status = HttpServices.getData(url, outFile);
             if (status.isError()) {
                 throw createDax("Failed to retrieve the result from", url, status.getException());
             }
@@ -307,7 +309,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (isEmpty(jobUrl)) return null;
 
         Ref<JobInfo> jInfo = new Ref<>();
-        HttpServices.Status status = getWithAuth(jobUrl, method -> {
+        HttpServices.Status status = HttpServices.getData(jobUrl, method -> {
             try {
                 Document doc = parse(getResponseBodyAsStream(method));
                 jInfo.set(convertToJobInfo(doc));
@@ -324,7 +326,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static Phase getPhase(String jobUrl) throws DataAccessException {
 
         ByteArrayOutputStream phase = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getWithAuth(new HttpServiceInput(jobUrl + "/phase"), defaultHandler(phase));
+        HttpServices.Status status = HttpServices.getData(new HttpServiceInput(jobUrl + "/phase"), phase);
         if (status.isError()) {
             throw createDax("Error getting phase", jobUrl, status.getException());
         }
@@ -341,7 +343,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (jobError != null) return jobError; // error is a part of the job resource
         else { // error document maybe present at /error endpoint of the job
             String errorUrl = jobUrl + "/error";
-            HttpServices.Status status = HttpServices.getWithAuth(errorUrl, method -> {
+            HttpServices.Status status = HttpServices.getData(errorUrl, method -> {
                 try {
                     return new HttpServices.Status(200, parseError(method, errorUrl));
                 } catch (Exception e) {
@@ -354,13 +356,13 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
     public long getTimeout(String jobUrl) {
         ByteArrayOutputStream duration = new ByteArrayOutputStream();
-        HttpServices.postData(HttpServiceInput.createWithCredential(jobUrl + "/executionduration"), duration);
+        HttpServices.postData(new HttpServiceInput(jobUrl + "/executionduration"), duration);
         return Long.parseLong(duration.toString());
     }
 
     public void setTimeout(String jobUrl, long duration) {
         HttpServices.postData(
-                HttpServiceInput.createWithCredential(jobUrl + "/executionduration")
+                new HttpServiceInput(jobUrl + "/executionduration")
                         .setParam("EXECUTIONDURATION",
                                 String.valueOf(duration)), new ByteArrayOutputStream()
         );

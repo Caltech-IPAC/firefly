@@ -64,7 +64,7 @@ public class IBE {
 
         Map<String, String> paramMap = ibeDataSource.getMulipleQueryParam(param);
         paramMap.remove(POS);
-        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        HttpServiceInput input = new HttpServiceInput(url);
         paramMap.forEach(input::setParam);
         input.setFile(POS, posFile);
 
@@ -151,7 +151,7 @@ public class IBE {
                 plotId = sourceParams.get("plotId");
             }
 
-            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential(url.toString());
+            HttpServiceInput addtlInfo = new HttpServiceInput(url.toString());
 
             return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, addtlInfo);
         } catch (DataAccessException e) {
@@ -162,7 +162,7 @@ public class IBE {
 
     private void downloadViaUrlToFile(URL url, File results) throws IOException {
         try {
-            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential(url.toString());
+            HttpServiceInput addtlInfo = new HttpServiceInput(url.toString());
             addtlInfo.setHeader("Accept", "text/plain");
 
             URLDownload.getDataToFile(url, results, addtlInfo.getCookies(), addtlInfo.getHeaders());

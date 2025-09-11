@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.security;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
@@ -13,6 +14,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -25,6 +28,8 @@ public interface SsoAdapter {
 
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
     String SSO_FRAMEWORK_ADAPTER = "sso.framework.adapter";
+    String byClz = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
+    String byName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
 
     // common properties keys used by SsoAdapter implementers
     String LOGIN_URL         = "sso.login.url";
@@ -90,13 +95,13 @@ public interface SsoAdapter {
 //====================================================================
 
     static boolean requireAuthCredential(String reqUrl, String... reqAuthHosts) {
-        if (reqUrl == null) return true;
+        if (reqUrl == null) return false;
 
         if (!isEmpty(reqUrl)) {
             try {
                 String reqHost = new URL(ServerContext.resolveUrl(reqUrl)).getHost().toLowerCase();
-                String host = ServerContext.getRequestOwner().getHostUrl();
-                if (reqHost.equals(host.toLowerCase())) {
+                String host = ifNotNull(ServerContext.getRequestOwner().getRequestAgent()).get(a -> a.getHost().toLowerCase());
+                if (reqHost.equals(host)) {
                     return true;
                 } else if(reqAuthHosts != null) {
                     for (String domain : reqAuthHosts) {
@@ -105,16 +110,12 @@ public interface SsoAdapter {
                         }
                     }
                 }
-            } catch (MalformedURLException e) {
-                // ignore..
-            }
+            } catch (Exception ignored) {}
         }
         return false;
     }
 
     static SsoAdapter getAdapter() {
-        String byClz = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
-        String byName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
         try {
             if (!isEmpty(byClz)) {
                 return AdapterClassResovler.getAdapter(byClz);
