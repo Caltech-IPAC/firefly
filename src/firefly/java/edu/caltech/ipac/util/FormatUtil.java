@@ -10,7 +10,8 @@ package edu.caltech.ipac.util;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.table.DataGroup;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
 
 import javax.annotation.Nonnull;
 import java.io.BufferedReader;
@@ -99,6 +100,17 @@ public class FormatUtil {
         if (format != null) {
             LOGGER.debug("Format: %s resolved via mime-type/magic number".formatted(format));
             return format;
+        }
+
+
+        if (("application/x-bzip2".equals(mime) || "application/x-gzip".equals(mime)) &&
+                inFile.getName().toLowerCase().contains("fit")) {
+            // special case and a very heavy operation: we can handle fits bz2 or gzip files but don't try unless we are pretty sure
+            // in archives: legacy files are often named a.fits.gz or a.fits.bz2
+            try (var ignored = new Fits(inFile)) {
+                return FITS;
+            }
+            catch (FitsException ignore) {}
         }
 
         format = guessBySamplingContent(inFile);

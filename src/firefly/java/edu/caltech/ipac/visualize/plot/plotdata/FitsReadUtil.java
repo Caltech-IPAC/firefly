@@ -98,9 +98,13 @@ public class FitsReadUtil {
             throws IOException {
         String fBase= FileUtil.getBase(originalFile);
         String dir= originalFile.getParent();
-        var gzType= FileUtil.isGZipFile(originalFile) ? "---gzip" : "";
+        var compressType= FileUtil.isGZipFile(originalFile)
+                ? "---gzip"
+                : FileUtil.isBz2OrGzipFile(originalFile)
+                ? "---bz2"
+                : "";
         var hduType=  FitsReadUtil.hasCompressedImageHDUS(HDUs) ? "---hdu" : "";
-        File retFile= new File(dir+"/"+ fBase+gzType+hduType+"-uncompressed"+".fits");
+        File retFile= new File(dir+"/"+ fBase+compressType+hduType+"-uncompressed"+".fits");
         Fits fits= new Fits();
         for (BasicHDU<?> hdu : HDUs) {
             fits.addHDU( hdu instanceof CompressedImageHDU ?  ((CompressedImageHDU) hdu).asImageHDU() : hdu );

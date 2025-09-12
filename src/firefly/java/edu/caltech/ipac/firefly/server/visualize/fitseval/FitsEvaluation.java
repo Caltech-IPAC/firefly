@@ -37,7 +37,7 @@ public class FitsEvaluation {
         FitsReadUtil.UncompressFitsInfo uFitsInfo= null;
         try  {
             BasicHDU<?>[] HDUs= fits.read();
-            if (FileUtil.isGZipFile(f) || FitsReadUtil.hasCompressedImageHDUS(HDUs)) {
+            if (FileUtil.isBz2OrGzipFile(f) || FitsReadUtil.hasCompressedImageHDUS(HDUs)) {
                 uFitsInfo = FitsReadUtil.createdUncompressVersionOfFile(HDUs,f);
             }
 

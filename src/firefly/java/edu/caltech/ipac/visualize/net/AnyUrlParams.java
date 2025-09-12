@@ -19,7 +19,8 @@ public class AnyUrlParams extends BaseNetParams {
             Arrays.asList(
                     "ul", FileUtil.FITS, FileUtil.GZ, FileUtil.TAR, FileUtil.PDF, FileUtil.GZ, FileUtil.REG,
                     "votable", FileUtil.VOT, FileUtil.XML, FileUtil.TBL, FileUtil.CSV, FileUtil.TSV, FileUtil.TXT,
-                    FileUtil.jpeg, FileUtil.jpg, FileUtil.png, FileUtil.bmp, FileUtil.gif, FileUtil.tiff, FileUtil.tif);
+                    FileUtil.jpeg, FileUtil.jpg, FileUtil.png, FileUtil.bmp, FileUtil.gif, FileUtil.tiff, FileUtil.tif,
+                    FileUtil.FITS+"."+FileUtil.GZ, FileUtil.FITS+"."+FileUtil.BZ2);
 
     private final static int MAX_LENGTH = 30;
     private final URL _url;
@@ -84,7 +85,7 @@ public class AnyUrlParams extends BaseNetParams {
         }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");
-        String ext= FileUtil.getExtension(fileStr);
+        String ext= FileUtil.getExtension(fileStr,true);
         var fileExt= _localFileExtensions.contains(ext) ? ext : _localFileExtensions.getFirst();
         return retval + "." + fileExt;
     }
