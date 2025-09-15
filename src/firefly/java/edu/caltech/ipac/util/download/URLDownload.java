@@ -432,7 +432,7 @@ public class URLDownload {
             logDownload(outFileData, conn.getURL().toString(), elapse);
 
             if (responseCode >= 300 && responseCode < 400) {
-                if (redirectCnt > 0 && (responseCode == 301 || responseCode == 302 || responseCode == 303)) {
+                if (redirectCnt > 0 && Arrays.asList(301,302,303,307,308).contains(responseCode)) {
                     return redirect(conn, outfile, reqProp, ops, redirectCnt - 1);
                 }
                 outFileData.putAttribute("Location", conn.getHeaderField("Location"));
@@ -758,11 +758,10 @@ public class URLDownload {
         /**
          * convenience function
          * set no size limit,
-         * sets true: onlyIfModified, uncompress, use credentials
-         * set false: allowRedirect
+         * sets true: onlyIfModified, uncompress, use credentials, allowRedirect
          * @return Options
          */
-        public static Options def() {return new Options(true,true,0,false,true,0,null);}
+        public static Options def() {return new Options(true,true,0,true,true,0,null);}
 
         /**
          * convenience function
