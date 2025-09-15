@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.util.StringUtils;
 
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -24,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 @ServerEndpoint(value = "/sticky/firefly/events")
 public class WebsocketConnector implements ServerEventQueue.EventConnector {
@@ -49,7 +50,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             Map<String, List<String>> params = session.getRequestParameterMap();
             userKey = ServerContext.getRequestOwner().getUserKey();
             channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID).get(0)) : null;
-            channelID = StringUtils.isEmpty(channelID) ? userKey : channelID;
+            channelID = isEmpty(channelID) ? userKey : channelID;
             eventQueue = new ServerEventQueue(session.getId(), channelID, userKey, this);
             ServerEvent connected = new ServerEvent(Name.EVT_CONN_EST, ServerEvent.Scope.SELF, "{\"connID\": \"" + session.getId() + "\", \"channel\": \"" + channelID + "\"}");
             send(ServerEventQueue.convertToJson(connected));
@@ -65,7 +66,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     public void onMessage(String message) {
         try {
 
-            if (StringUtils.isEmpty(message)) {
+            if (isEmpty(message)) {
                 LOG.trace(PREFIX+" PING from "+makeChannelStr(session));
                 return;  // ignore empty messages
             }
@@ -167,18 +168,16 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         List<ServerEventQueue> conns = ServerEventManager.getAllEventQueue();
         for (ServerEventQueue seq : conns) {
             // need to notify clients that are affected by update
-            if (seq.getChannel().equals(channelID) || seq.getUserKey().equals(userKey)) {
+            String cChannel = isEmpty(seq.getChannel()) ? "__NULL__" : seq.getChannel();
+            String cUserKey = isEmpty(seq.getUserKey()) ? "__NULL__" : seq.getUserKey();
+            if (cChannel.equals(channelID) || cUserKey.equals(userKey)) {
                 // Creates a map of all the channels and its connections that is visible to this user.
                 // This user has knowledge of all connections started by this user, as well as connections associated with this user's channel.
                 Map<String, List<String>> connInfo = new HashMap<>();
                 conns.stream()
                         .filter(q -> q.getChannel().equals(channelID) || q.getUserKey().equals(userKey))
                         .forEach(q -> {
-                            List<String> l = connInfo.get(q.getChannel());
-                            if (l == null) {
-                                l = new ArrayList<>();
-                                connInfo.put(q.getChannel(), l);
-                            }
+                            List<String> l = connInfo.computeIfAbsent(q.getChannel(), k -> new ArrayList<>());
                             if (!l.contains(q.getConnID())) l.add(q.getConnID());
                         });
                 FluxAction action = new FluxAction(type, connInfo);

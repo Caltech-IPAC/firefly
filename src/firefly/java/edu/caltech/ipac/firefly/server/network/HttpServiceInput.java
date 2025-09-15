@@ -4,8 +4,10 @@
 
 package edu.caltech.ipac.firefly.server.network;
 
+import com.google.common.net.HttpHeaders;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.KeyVal;
 
 import java.io.File;
@@ -44,9 +46,13 @@ public class HttpServiceInput implements Cloneable, Serializable {
      * Constructs an instance with the given request URL.
      * The request will be created with credentials validated
      * through the configured {@link SsoAdapter}.
+     * It will also set the default headers.  Remove or modify as needed.
      * @param requestUrl  the target URL to access
      */
     public HttpServiceInput(String requestUrl) {
+        // set default headers
+        setHeader(HttpHeaders.USER_AGENT, VersionUtil.getUserAgentString());
+        setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
         setRequestUrl(requestUrl);
     }
 
@@ -56,6 +62,14 @@ public class HttpServiceInput implements Cloneable, Serializable {
     public HttpServiceInput setRequestUrl(String requestUrl) {
         return setRequestUrl(requestUrl, true);
     }
+    /**
+     * Sets the request URL.  If {@code applyCredential} is {@code true},
+     * the configured {@link SsoAdapter} will be used to set authentication
+     * credentials on this input based on the request URL.
+     * @param requestUrl       the target URL to access
+     * @param applyCredential  if {@code true}, apply credentials from the configured {@code SsoAdapter}
+     * @return this {@code HttpServiceInput} instance for method chaining
+     */
     public HttpServiceInput setRequestUrl(String requestUrl, boolean applyCredential) {
         this.requestUrl = requestUrl;
         if (applyCredential) {

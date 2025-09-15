@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.network;
 
-import com.google.common.net.HttpHeaders;
-import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -12,6 +10,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -214,8 +213,6 @@ public class HttpServices {
             input = input == null ? new HttpServiceInput() : input;
 
             method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive. we don't plan to reuse this connection.
-            method.setRequestHeader("User-Agent", VersionUtil.getUserAgentString());
-            method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
                 method.setFollowRedirects(input.isFollowRedirect());    // httpclient 3.x, post are not allowed to follow redirect
             }
@@ -378,7 +375,21 @@ public class HttpServices {
                     String location = HttpServices.getResHeader(method, "Location", null);
                     if (location != null) {
                         if (maxFollow > 0) {
-                            return getData(new HttpServiceInput(location), maxFollow-1, handler);       // follow redirect is default to true.
+                            HttpServiceInput redirect = new HttpServiceInput(location);
+                            // carry over cookies
+                            Header[] setCookies = method.getResponseHeaders("Set-Cookie");
+                            if (setCookies != null && setCookies.length > 0) {
+                                String cookieHeader = Arrays.stream(setCookies)
+                                        .map(h -> h.getValue().split(";", 2)[0])
+                                        .collect(Collectors.joining("; "));
+                                redirect.setHeader("Cookie", cookieHeader);
+                            }
+                            // carry over previous headers
+                            input.getHeaders().entrySet().stream()
+                                    .filter(h -> isForwardHeader(h.getKey()))
+                                    .forEach(h -> redirect.setHeader(h.getKey(), h.getValue()));
+
+                            return getData(redirect, maxFollow-1, handler);
                         } else {
                             return new Status(421, "ERR_TOO_MANY_REDIRECTS");
                         }
@@ -393,14 +404,28 @@ public class HttpServices {
         }
     }
 
+    private static boolean isForwardHeader(String headerName) {
+        String lower = headerName.toLowerCase();
+        return switch (lower) {
+            case "user-agent", "accept", "accept-language" -> true;
+            default -> false;
+        };
+    }
+
     public static boolean isOk(HttpMethod method) {
         int status = method.getStatusCode();
         return status >= 200 && status < 300;
     }
 
     public static boolean isRedirected(HttpMethod method) {
-        int status = method.getStatusCode();
-        return status >= 300 && status < 400;
+        return  switch (method.getStatusCode()) {
+            case HttpStatus.SC_MOVED_PERMANENTLY,   // 301
+                HttpStatus.SC_MOVED_TEMPORARILY,    // 302
+                HttpStatus.SC_SEE_OTHER,            // 303
+                HttpStatus.SC_TEMPORARY_REDIRECT,   // 307
+                308    -> true;                     // 308 SC_PERMANENT_REDIRECT not defined in v3
+            default -> false;
+        };
     }
 
     public static String getReqHeader(HttpMethod method, String key, String def) {
