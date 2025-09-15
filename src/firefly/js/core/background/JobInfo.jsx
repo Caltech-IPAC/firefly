@@ -167,11 +167,13 @@ function OptionalBlock({label, value, asLink, isOpen}) {
     return (
         <CollapsibleItem componentKey={`JobInfo-${label}`} header={label} isOpen={isOpen}>
             <Stack spacing={.5}>
-                {Object.entries(value).map(([k, v]) => {
-                        const isLink = asLink ?? /^https?:\/\//.test(v?.toLowerCase?.());
-                        return <KeywordBlock key={k} label={k} value={v} asLink={isLink}/>;
-                    }
-                )}
+                {Object.entries(value).map(([k, v]) =>
+                    v?.split(':::').map((val, idx) => {           // matches ':::' delimiter used by Server's JobInfo.parameters
+                        const isLink = asLink ?? /^https?:\/\//.test(val?.toLowerCase?.());
+                        return <KeywordBlock key={k+idx} label={k} value={val} asLink={isLink}/>;
+                        })
+                    )
+                }
             </Stack>
         </CollapsibleItem>
     );

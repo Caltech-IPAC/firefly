@@ -36,6 +36,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
  */
 
 public class SrvParam {
+    public static final String PARAM_DELIM= ":::";          // avoid chars used in params like SQL, regex pattern, etc
 
     private final Map<String, String[]> paramMap;
 
@@ -43,7 +44,7 @@ public class SrvParam {
 
     public Map<String, String> flatten() {
         HashMap<String, String> p = new HashMap<>();
-        paramMap.forEach((k, v) -> p.put(k, String.join(",", v)));
+        paramMap.forEach((k, v) -> p.put(k, String.join(PARAM_DELIM, v)));
         return p;
     }
 

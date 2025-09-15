@@ -38,6 +38,7 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
+import static edu.caltech.ipac.firefly.server.SrvParam.PARAM_DELIM;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -420,7 +421,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 NodeList plist = params.getElementsByTagName(prefix + PARAMETER);
                 for (int i = 0; i < plist.getLength(); i++) {
                     Node p = plist.item(i);
-                    jobInfo.getParams().put(getAttr(p, "id"), p.getTextContent());
+                    String key = getAttr(p, "id");
+                    String val = jobInfo.getParams().get(key);
+                    val = isEmpty(val) ? p.getTextContent() : val + PARAM_DELIM + p.getTextContent();
+                    jobInfo.getParams().put(key, val);
                 }
             });
 
