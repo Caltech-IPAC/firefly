@@ -256,6 +256,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return size;
     }
 
+    public boolean isEmpty() {return size()==0;}
+
     public void setSize(int size) {
         this.size = size;
     }

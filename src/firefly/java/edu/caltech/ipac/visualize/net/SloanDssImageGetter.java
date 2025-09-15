@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.visualize.net;
 
-
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
@@ -16,58 +15,54 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
-/**
- * @author Trey Roby
- * @version $Id: SloanDssImageGetter.java,v 1.4 2012/08/21 21:30:41 roby Exp $
- */
 public class SloanDssImageGetter {
 
     private static final String server = AppProperties.getProperty("sdss.host", "https://skyserver.sdss.org");
-    private static final String cgiapp = "/vo/dr7siap/siap.asmx/getSiapInfo";
+    private static final String RELEASE= "17";
+    private static final String path = "/vo/dr"+RELEASE+"siap/siap.asmx/getSiapInfo";
+    private static final String NOT_COVERED=  String.format("SDSS (dr%s): Area not covered", RELEASE);
+    private static final String NOT_COVERED_DETAIL =  "votable returned not results, probably area is not covered: ";
+    private static final String SDSS_SRV_ERR= "The SDSS server is reporting a severe error: %s (%d)";
 
     public static FileInfo get(SloanDssImageParams params, File outFile) throws FailedRequestException, IOException {
         try {
-            String req = makeSDssRequest(params);
+            URL url= new URI(makeSDssRequest(params)).toURL();
             SloanDssImageParams qParam= params.makeQueryKey();
-            File  f= CacheHelper.makeFile(qParam.getUniqueString() + ".xml");
-            FileInfo fi= URLDownload.getDataToFile(new URL(req), f);
+            FileInfo fi= URLDownload.getDataToFile(url, CacheHelper.makeFile(qParam.getUniqueString() + ".xml"));
             if (fi.getResponseCode()!=200) {
-                String htmlErr= f.canRead() ? FileUtil.readFile(f) : "Sloan DSS Image Error";
-                throw new FailedRequestException( htmlErr, "The SDss server is reporting an error", null);
+                var detail= String.format(SDSS_SRV_ERR, fi.getResponseCodeMsg(), fi.getResponseCode());
+                throw new FailedRequestException( getHtmlErr(fi.getFile(), detail), detail);
             }
-            DataGroup[] dgAry= VoTableReader.voToDataGroups(f.getAbsolutePath());
-            DataGroup dataGroup= dgAry[0];
-            if (dataGroup.size() >0) {
-                URLDownload.getDataToFile(new URL((String)dataGroup.get(0).getDataElement("url")), outFile);
-                return new FileInfo(outFile);
-            }
-            else {
-                throw new FailedRequestException("SDSS: Area not covered",
-                        "votable returned not results, probably area is not covered: ");
-            }
+            DataGroup dataGroup= VoTableReader.voToDataGroups(fi.getFile().getPath())[0]; // should only be one but get first
+            if (dataGroup.isEmpty()) throw new FailedRequestException(NOT_COVERED, NOT_COVERED_DETAIL);
+            URL imageUrl= new URI(dataGroup.get(0).getStringData("url")).toURL();
+            return URLDownload.getDataToFile(imageUrl, outFile);
         } catch (SocketTimeoutException timeOutE) {
-            if (outFile.exists() && outFile.canWrite()) outFile.delete();
+            if (outFile.canWrite()) outFile.delete();
             throw timeOutE;
-        } catch (MalformedURLException me) {
+        } catch (URISyntaxException me) {
             throw new FailedRequestException( "Invalid URL", "Details in exception", me );
         }
-
     }
 
     private static String makeSDssRequest(SloanDssImageParams params) {
-        return server + cgiapp +
+        return server + path +
                 "?POS=" + params.getRaJ2000String() + "," + params.getDecJ2000String() +
                 "&size=" + params.getSizeInDeg() +
                 "&bandpass=" + params.getBand().toString().toLowerCase() +
                 "&format=image/fits";
     }
 
+    private static String getHtmlErr(File f, String detail) throws IOException {
+        return f.canRead() ? FileUtil.readFile(f) : detail;
+    }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         SloanDssImageParams params = new SloanDssImageParams("test", "test");
         params.setSizeInDeg(0.1F);
         params.setBand(SloanDssImageParams.SDSSBand.r);
