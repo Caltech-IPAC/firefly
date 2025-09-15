@@ -131,6 +131,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
         '#auxiliary': 'Auxiliary',
         '#progenitor': 'Progenitor',
         '#thumbnail': 'Thumbnail',
+        '#calibration': 'Calibration',
         '#preview': 'Preview',
         '#package': 'Package',
         '#weight': 'Weight'
@@ -150,7 +151,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
             options = []; //fallback only to "All data" only below
         }
         //ensure '*' ("All data") is always included, even as a fallback when semList is empty
-        options.push({ label: 'All data', value: '*' });
+        options.push({ label: 'All Data', value: '*' });
         return options;
     }, [semList, labelMap]);
 

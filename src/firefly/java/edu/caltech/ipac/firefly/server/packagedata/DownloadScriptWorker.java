@@ -4,10 +4,8 @@
 
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import java.io.File;
-import java.util.*;
-import java.util.function.Function;
-
+import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -20,17 +18,17 @@ import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
-import edu.caltech.ipac.firefly.core.background.Job;
-import edu.caltech.ipac.firefly.core.background.JobInfo;
+
+import java.io.File;
+import java.util.List;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
 import static edu.caltech.ipac.firefly.server.util.DownloadScript.makeScriptFilename;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * Downloads a script with products from the List<FileInfo>
@@ -83,18 +81,18 @@ public final class DownloadScriptWorker implements Job.Worker {
 
         File curlScript = makeScript(result, Curl, dataDesc);
         File wgetScript = makeScript(result, Wget, dataDesc);
-        File urlsFile = makeScript(result, URLsOnly, dataDesc);
+        File urlsFile = makeScript(result, URLList, dataDesc);
 
         // handle 'save to Workspace' option:  pushes downloaded script (.sh or .txt) to workspace  (LLY: should probably ignore.  what is the use case?)
         if (!isEmpty(wsDestPath)) {
             Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + makeScriptFilename(Curl, suggestedName)), curlScript));
             Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + makeScriptFilename(Wget, suggestedName)), wgetScript));
-            Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + makeScriptFilename(URLsOnly, suggestedName)), urlsFile));
+            Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + makeScriptFilename(URLList, suggestedName)), urlsFile));
         }
 
         String curlScriptUrl = getDownloadURL(curlScript, makeScriptFilename(Curl, suggestedName));
         String wgetScriptUrl = getDownloadURL(wgetScript, makeScriptFilename(Wget, suggestedName));
-        String urlsFileUrl = getDownloadURL(urlsFile, makeScriptFilename(URLsOnly, suggestedName));
+        String urlsFileUrl = getDownloadURL(urlsFile, makeScriptFilename(URLList, suggestedName));
 
         sendJobUpdate(ji -> {
             String summary = String.format("%,d files were processed.", totalFiles);

@@ -29,19 +29,19 @@ public class DownloadScriptTest {
     }
 
     @Test
-    public void urlsOnly() throws Exception {
+    public void urlList() throws Exception {
         List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(
                 new FileInfo("https://example.com/file1.txt", "mydata/file1.txt", 0),
                 new FileInfo("https://example.com/file2.txt", "mydata/file1.txt", 0)
         )));
 
-        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, URLsOnly);
+        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, URLList);
 
         List<String> lines = Files.readAllLines(tempScript.toPath());
 
         assertTrue("File1 URL should be present", lines.contains("https://example.com/file1.txt"));
         assertTrue("File2 URL should be present", lines.contains("https://example.com/file2.txt"));
-        assertFalse("Script header should not exist in URLsOnly mode", lines.stream().anyMatch(line -> line.startsWith("#!")));
+        assertFalse("Script header should not exist in URLList mode", lines.stream().anyMatch(line -> line.startsWith("#!")));
     }
 
     @Test
