@@ -26,7 +26,7 @@ import java.net.URL;
  */
 public class SloanDssImageGetter {
 
-    private static final String server = AppProperties.getProperty("sdss.host", "https://cas.sdss.org");
+    private static final String server = AppProperties.getProperty("sdss.host", "https://skyserver.sdss.org");
     private static final String cgiapp = "/vo/dr7siap/siap.asmx/getSiapInfo";
 
     public static FileInfo get(SloanDssImageParams params, File outFile) throws FailedRequestException, IOException {
