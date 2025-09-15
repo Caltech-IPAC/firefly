@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -380,6 +381,18 @@ public class SrvParam {
 //====================================================================
 //  Table related convenience methods
 //====================================================================
+
+    /**
+     * @return a ServerRequest object built from the parameters in this SrvParam object
+     */
+    public ServerRequest convertToServerRequest() {
+        ServerRequest sr = new ServerRequest();
+        for(Map.Entry<String,String[]> entry : paramMap.entrySet()) {
+            sr.setParam(entry.getKey(), entry.getValue());
+        }
+        return sr;
+    }
+
     public TableServerRequest getTableServerRequest() {
         String reqString = getRequired(ServerParams.REQUEST);
         return QueryUtil.convertToServerRequest(reqString);

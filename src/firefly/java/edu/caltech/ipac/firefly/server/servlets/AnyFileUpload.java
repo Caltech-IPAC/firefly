@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
@@ -34,9 +33,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.*;
 
 /**
  * Date: Feb 16, 2011
@@ -94,7 +94,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         SrvParam sp = new SrvParam(req.getParameterMap());
 
         if (ServletFileUpload.isMultipartContent(req)) {        // this is a multipart request.. extract params from parts
-            ServletFileUpload upload = new ServletFileUpload( new DiskFileItemFactory(64 * 1024, ServerContext.getUploadDir()));        // set factory to raise in-memory usage
+            ServletFileUpload upload = new ServletFileUpload( new DiskFileItemFactory(64 * 1024, getUploadDir("tmpDiskStore")));        // set factory to raise in-memory usage
             for (FileItemIterator iter = upload.getItemIterator(req); iter.hasNext(); ) {
                 FileItemStream item = iter.next();
                 if (item.isFormField()) {
@@ -243,10 +243,8 @@ public class AnyFileUpload extends BaseHttpServlet {
                 fname= (statusFileInfo.getFile()!=null) ? statusFileInfo.getFile().getName() : null;
             }
             else {
-                int idx = fromUrl.lastIndexOf('/');
-                fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-                fname = fname.contains("?") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-                statusFileInfo = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+                statusFileInfo = fetchFile(fromUrl, sp);
+                fname = statusFileInfo.getExternalName();
             }
             if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo.getResponseCode()));
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);
@@ -267,7 +265,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         } else if (uploadedItem != null) {
             // it's a stream from multipart.. write it to disk
             String name = uploadedItem.getName();
-            File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
+            File tmpFile = File.createTempFile("upload_", "_" + name, getSessUploadDir(sp.convertToServerRequest()));
             FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
             uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
             statusFileInfo= new FileInfo(uploadFileInfo.getFile());
@@ -278,6 +276,17 @@ public class AnyFileUpload extends BaseHttpServlet {
         return new Result(statusFileInfo,uploadFileInfo);
     }
 
+    private static FileInfo fetchFile(String fromUrl, SrvParam sp) {
+        try {
+            return new FileInfo(resolveFileFromSource(
+                    fromUrl,
+                    true,
+                    tmpFileForUrl(fromUrl, "fromUrl_", getSessUploadDir(sp.convertToServerRequest()))
+            ));
+        } catch (Exception e) {
+            return new FileInfo(null, "", 400, e.getMessage());
+        }
+    }
 
     private static class Result {
         final FileInfo statusFileInfo;
