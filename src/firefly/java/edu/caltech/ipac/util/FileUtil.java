@@ -19,6 +19,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -48,6 +49,7 @@ public class FileUtil
     public final static String FIT  = "fit";
     public final static String FITS = "fits";
     public final static String GZ   = "gz";
+    public final static String BZ2   = "bz2";
     public final static String PS   = "ps";
     public final static String PDF  = "pdf";
     public final static String HTML = "html";
@@ -84,19 +86,37 @@ public class FileUtil
 
   private final static String  ADD_START= "---";
 
+
+    /**
+     * Get the extension of a filename.
+     * @param  s a file name such as <code>a.dat</code> or <code>a.dat.gz</code>
+     * @param useCompressFullExt - if true and the file is compress with a gz, bz2 or zip extension
+     *                           then return the two part extension such as <code>dat.gz</code>. A false would return
+     *                           <code>gz</code>
+     * @return String the extension of the file. An empty string is returned if there is no extension;
+     */
+    public static String getExtension(String s, boolean useCompressFullExt) {
+        if (!useCompressFullExt) return getExtension(s);;
+        var lastExtension= getExtension(s);
+        if (lastExtension.isEmpty()) return "";
+        if (Arrays.asList(BZ2, GZ, ZIP).contains(lastExtension)) {
+            var firstExt= getExtension(getBase(s));
+            if (!firstExt.isEmpty()) return firstExt+"."+lastExtension;
+        }
+        return lastExtension;
+    }
+
     /**
      * Get the extension of a filename.
      * @param  s a file name such as <code>a.dat</code>
-     * @return String the extension of the file.
-     *                A null is returned if there is no extension;
+     * @return String the extension of the file. An empty string is returned if there is no extension;
      *
      */
   public static String getExtension(String s)
   {
     String ext = "";
     int i = s.lastIndexOf('.');
-    if (i > 0 &&  i < s.length() - 1)
-    {
+    if (i > 0 &&  i < s.length() - 1) {
       ext = s.substring(i+1).toLowerCase();
     }
     return ext;
@@ -105,14 +125,23 @@ public class FileUtil
     /**
      * Get the extension of a file.
      * @param  f a file such as <code>a.dat</code>
-     * @return String the extension of the file.
-     *                A null is returned if there is no extension
-     *
+     * @return String the extension of the file. An empty string is returned if there is no extension;
      */
-  public static String getExtension(File f)
-  {
-    return getExtension(f.getName());
-  }
+    public static String getExtension(File f) { return getExtension(f,false); }
+
+
+    /**
+     * Get the extension of a filename.
+     * @param  f a file name such as <code>a.dat</code> or <code>a.dat.gz</code>
+     * @param useCompressFullExt - if true and the file is compress with a gz, bz2 or zip extension
+     *                           then return the two part extension such as <code>dat.gz</code>. A false would return
+     *                           <code>gz</code>
+     * @return String the extension of the file. An empty string is returned if there is no extension;
+     */
+    public static String getExtension(File f, boolean useCompressFullExt) {
+        return f==null ? "" : getExtension(f.getName(), useCompressFullExt);
+    }
+
 
     public static boolean isExtension(File f, String ext) {
         return isExtension(f.getName(),ext);
@@ -472,9 +501,8 @@ public class FileUtil
             int b1 = is.read();
             is.reset();
 
-            if (b0 == -1 || b1 == -1) {
-                return false; // too short
-            }
+            if (b0 == -1 || b1 == -1) return false; // too short
+
             int value = (b1 << 8) | b0;
             return (value == GZIPInputStream.GZIP_MAGIC); //0x8b1f
         } catch (IOException e) {
