@@ -20,6 +20,7 @@ import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx
 import {SwitchInputField} from '../SwitchInputField';
 import {ValidationField} from '../ValidationField';
 import {ConstraintContext} from './Constraints';
+import {ROW_POSITION} from './Cutout';
 import {showResultTitleDialog} from './ResultTitleDialog';
 import {SiaUI} from './SiaUI';
 import {getMaxrecHardLimit, makeNumberedTitle} from './TapUtil';
@@ -399,8 +400,11 @@ const noRowLimitMsg = (
 );
 
 function getCutoutType(siaState) {
-    return siaState?.constraintFragments?.get('spatial')?.cutoutType ??
-        siaState?.constraintFragments?.get('location')?.cutoutType;
+    const spatial= siaState?.constraintFragments?.get('spatial');
+    const location= siaState?.constraintFragments?.get('location');
+    if (spatial?.siaConstraints?.length) return spatial.cutoutType;
+    if (location?.siaConstraints?.length) return location.cutoutType;
+    return ROW_POSITION;
 }
 
 
