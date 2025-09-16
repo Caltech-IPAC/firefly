@@ -7,7 +7,7 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable
+import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable, isDataProductsTable
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
@@ -73,6 +73,8 @@ function setupObsCorePackaging(tbl_id) {
         enabled= getDataServiceOption('enableObsCoreDownload');
     }
     if (!enabled) return;
+
+    if (!isDataProductsTable(tbl_id)) return;
 
     const dlProps = getDataServiceOptionByTable('obsCoreDownloadProps', table, {}) || {};
 
