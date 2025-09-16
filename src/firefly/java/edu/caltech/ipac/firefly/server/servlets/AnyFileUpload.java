@@ -34,13 +34,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.getSessUploadDir;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.getUploadDir;
+
 /**
  * Date: Feb 16, 2011
- *
  *  Possible Parameters:
  *  wcCmd
  *  URL - url string
@@ -93,8 +95,8 @@ public class AnyFileUpload extends BaseHttpServlet {
         // processes the parameters...
         SrvParam sp = new SrvParam(req.getParameterMap());
 
-        if (ServletFileUpload.isMultipartContent(req)) {        // this is a multipart request.. extract params from parts
-            ServletFileUpload upload = new ServletFileUpload( new DiskFileItemFactory(64 * 1024, ServerContext.getUploadDir()));        // set factory to raise in-memory usage
+        if (ServletFileUpload.isMultipartContent(req)) {        // this is a multipart request... extract params from parts
+            ServletFileUpload upload = new ServletFileUpload( new DiskFileItemFactory(64 * 1024, getUploadDir("tmpDiskStore")));        // set factory to raise in-memory usage
             for (FileItemIterator iter = upload.getItemIterator(req); iter.hasNext(); ) {
                 FileItemStream item = iter.next();
                 if (item.isFormField()) {
@@ -107,7 +109,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             }
         }
 
-        // handle upload file request.. results in saved as an UploadFileInfo
+        // handle upload file request... results in saved as an UploadFileInfo
         String analysisType = sp.getOptional(FILE_ANALYSIS);
         boolean analyzeFile= analysisType != null && !analysisType.equalsIgnoreCase("false");
 
@@ -126,7 +128,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 File f= uploadFileInfo.getFile();
                 String name= f.getName()+".gz";
                 File gzFile= new File(f.getParentFile(),name);
-                f.renameTo(gzFile);
+                var ignore= f.renameTo(gzFile);
                 FileUtil.gUnzipFile(gzFile,f,10240);
             }
 
@@ -233,10 +235,10 @@ public class AnyFileUpload extends BaseHttpServlet {
         FileInfo statusFileInfo;
 
         if (wsCmd != null) {
-            // from workspace.. get the file using workspace api
+            // from workspace... get the file using workspace api
             uploadFileInfo = getFileFromWorkspace(sp);
             statusFileInfo= new FileInfo(uploadFileInfo.getFile());
-        } else if (fromUrl != null) { // from a URL.. get it
+        } else if (fromUrl != null) { // from a URL... get it
             String fname;
             if (hipsCache) {
                 statusFileInfo= HiPSRetrieve.retrieveHiPSData(fromUrl,null,false);
@@ -246,7 +248,8 @@ public class AnyFileUpload extends BaseHttpServlet {
                 int idx = fromUrl.lastIndexOf('/');
                 fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
                 fname = fname.contains("?") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-                statusFileInfo = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+                File dir= getSessUploadDir(sp.convertToServerRequest());
+                statusFileInfo = LockingVisNetwork.retrieveURL(new URI(fromUrl.trim()).toURL(), dir);
             }
             if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo.getResponseCode()));
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);
@@ -265,9 +268,9 @@ public class AnyFileUpload extends BaseHttpServlet {
             uploadFileInfo= new UploadFileInfo(fileOnServer, f,name,null);
             statusFileInfo= new FileInfo(uploadFileInfo.getFile());
         } else if (uploadedItem != null) {
-            // it's a stream from multipart.. write it to disk
+            // it's a stream from multipart... write it to disk
             String name = uploadedItem.getName();
-            File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
+            File tmpFile = File.createTempFile("upload_", "_" + name, getSessUploadDir(sp.convertToServerRequest()));
             FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
             uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
             statusFileInfo= new FileInfo(uploadFileInfo.getFile());
@@ -278,14 +281,5 @@ public class AnyFileUpload extends BaseHttpServlet {
         return new Result(statusFileInfo,uploadFileInfo);
     }
 
-
-    private static class Result {
-        final FileInfo statusFileInfo;
-        final UploadFileInfo uploadFileInfo;
-
-        public Result(FileInfo statusFileInfo, UploadFileInfo uploadFileInfo) {
-            this.statusFileInfo = statusFileInfo;
-            this.uploadFileInfo = uploadFileInfo;
-        }
-    }
+    private record Result(FileInfo statusFileInfo, UploadFileInfo uploadFileInfo) { }
 }

@@ -8,6 +8,7 @@ import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.astro.target.IpacTableTargetsParser;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
@@ -98,7 +99,23 @@ public class QueryUtil {
     }
 
     /**
-     * returns a hierarchical temporary directory.
+     * @return a hierarchical upload directory based on the user's session ID.
+     */
+    public static File getSessUploadDir(ServerRequest tsr) {
+        return getUploadDir(getSessPrefix(tsr));
+    }
+
+    /**
+     * @return returns a subdirectory under the main upload directory.  The directory is created if it does not exist.
+     */
+    public static File getUploadDir(String subDir) {
+        File dir = new File(ServerContext.getUploadDir(), subDir);
+        dir.mkdirs();
+        return dir;
+    }
+
+    /**
+     * returns a hierarchical temporary directory. If the request is part of a job, then the job work dir is returned.
      * @return
      */
     public static File getTempDir(TableServerRequest tsr) {
@@ -130,15 +147,22 @@ public class QueryUtil {
         return sessId.substring(0, 3);
     }
 
+    public static File resolveFileFromSource(String source,TableServerRequest request) throws DataAccessException {
+        return resolveFileFromSource(source,
+                request.getBooleanParam(URL_CHECK_FOR_NEWER, true),
+                tmpFileForUrl(source, request.getRequestId() + "_", QueryUtil.getTempDir(request))
+        );
+    }
 
     /**
-     * resolve the file given a 'source' string.  it could be a local path, or a url.
-     * if it's a url, download it into the application's workarea
+     * resolve the file given a 'source' string.  it could be a local path, or a URL.
+     * if it's a URL, download it into the application's workarea
      * @param source source file
-     * @param request table request
+     * @param checkForUpdates check for updates if the source is a URL and the file has been cached.
+     * @param outFile a file to save the downloaded file.  it will be called only if the source is a URL.
      * @return file
      */
-    public static File resolveFileFromSource(String source,TableServerRequest request) throws DataAccessException {
+    public static File resolveFileFromSource(String source, boolean checkForUpdates, File outFile) throws DataAccessException {
         if (source == null) return null;
         try {
             URL url = makeUrl(source);
@@ -150,28 +174,27 @@ public class QueryUtil {
 
                 return f;
             } else {
-                boolean checkForUpdates = request.getBooleanParam(URL_CHECK_FOR_NEWER, true);
                 HttpServiceInput inputs = new HttpServiceInput(url.toString());
                 StringKey key = new StringKey(inputs.getUniqueKey());
                 File res  = (File) CacheManager.getCache().get(key);
-                String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
-                ext = isEmpty(ext) ? ".ul" : "." + ext;
-                File nFile = File.createTempFile(request.getRequestId(), ext, QueryUtil.getTempDir(request));
+                if (outFile == null) {
+                    throw new DataAccessException("Disk Error: Failed to create temporary file");       // should not happen
+                }
 
                 if (res == null) {
-                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(),
+                    FileInfo finfo = URLDownload.getDataToFile(url, outFile, inputs.getCookies(), inputs.getHeaders(),
                             URLDownload.Options.defWithRedirect());
                     checkForFailures(finfo);
-                    res = nFile;
+                    res = outFile;
                     CacheManager.getCache().put(key, res);
                 } else if (checkForUpdates) {
-                    FileUtil.writeStringToFile(nFile, "workaround");
-                    nFile.setLastModified(res.lastModified());
+                    FileUtil.writeStringToFile(outFile, "workaround");
+                    outFile.setLastModified(res.lastModified());
                     URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
-                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(), ops);
+                    FileInfo finfo = URLDownload.getDataToFile(url, outFile, inputs.getCookies(), inputs.getHeaders(), ops);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);
-                        res = nFile;
+                        res = outFile;
                         CacheManager.getCache().put(key, res);
                     }
                 }
@@ -182,6 +205,19 @@ public class QueryUtil {
         } catch (Exception ex) {
             throw new DataAccessException(ex.getMessage());
         }
+    }
+
+    /**
+     * @param urlStr  the URL string
+     * @param prefix  the prefix of the temporary file
+     * @param dir  the directory to create the temporary file
+     * @return a temporary file used to download a URL.  The file extension is based on the URL's file extension, or .ul if none
+     */
+    public static File tmpFileForUrl(String urlStr, String prefix, File dir) {
+        URL url = makeUrl(urlStr);
+        String pExt = url == null ? null : FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""), true);
+        String ext = isEmpty(pExt) ? ".ul" : "." + pExt;
+        return Util.Try.it(() -> File.createTempFile(prefix, ext, dir)).get();
     }
 
     public static String combineErrorMsg(String main, String cause) {

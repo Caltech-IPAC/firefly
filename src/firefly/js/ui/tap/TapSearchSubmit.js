@@ -21,6 +21,7 @@ import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints';
+import {ROW_POSITION} from './Cutout';
 
 
 export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additionalClauses = '',
@@ -103,7 +104,9 @@ export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additio
 }
 
 function getCutoutType(tapBrowserState) {
-  return tapBrowserState?.constraintFragments?.get('spatial')?.cutoutType;
+    const spatial= tapBrowserState?.constraintFragments?.get('spatial');
+    if (spatial?.adqlConstraint) return spatial.cutoutType;
+    else return ROW_POSITION;
 }
 
 
