@@ -47,7 +47,12 @@ public class LockingVisNetwork {
     }
 
     public static FileInfo retrieveURL(URL url) throws FailedRequestException {
+        return retrieveURL(url,null);
+    }
+
+    public static FileInfo retrieveURL(URL url, File downloadDir) throws FailedRequestException {
         AnyUrlParams p= new AnyUrlParams(url, url.toString(),null);
+        if (downloadDir!=null) p.setFileDir(downloadDir);
         return retrieveURL(p);
     }
 
