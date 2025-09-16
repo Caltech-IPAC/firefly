@@ -186,11 +186,6 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
     r.setMaskBits(maskValue);
     r.setPlotId(imageOverlayId);
     r.setPlotAsMask(true);
-    r.setMaskColors([color]);
-    if (plot) {
-        r.setMaskRequiredWidth(plot.dataWidth);
-        r.setMaskRequiredHeight(plot.dataHeight);
-    }
     r.setMultiImageIdx(imageNumber);
 
     //TODO check flip and set handle flip case

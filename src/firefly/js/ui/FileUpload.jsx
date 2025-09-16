@@ -202,7 +202,8 @@ const getUploadUrl= (fileOrUrl) =>
     isString(fileOrUrl) ? fileOrUrl?.trim() : fileOrUrl?.name ? fileOrUrl.name.trim() : undefined;
 
 function doUpload(isFromURL, fileOrUrl, fileAnalysis, params={}) {
-    if (isFromURL && !validateUrl('',getUploadUrl(fileOrUrl)).valid) {
+    if (isFromURL && isString(fileOrUrl)) fileOrUrl= fileOrUrl?.trim();
+    if (isFromURL && !fileOrUrl?.toLowerCase().startsWith('s3://') && !validateUrl('',getUploadUrl(fileOrUrl)).valid) {
         return Promise.resolve({status:404,message:'bad Url'});
     }
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;

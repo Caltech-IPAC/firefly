@@ -15,6 +15,8 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.download.S3Download;
+import edu.caltech.ipac.util.download.UriRef;
 import nom.tam.fits.FitsFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -25,13 +27,12 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.websocket.server.HandshakeRequest;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +51,6 @@ import java.util.concurrent.TimeUnit;
 public class ServerContext {
     public static final ExecutorService SHORT_TASK_EXEC = Executors.newCachedThreadPool();        // an expandable thread pools.. for short tasks.
     public static final ScheduledExecutorService SCHEDULE_TASK_EXEC = Executors.newSingleThreadScheduledExecutor();
-
 
     private static final String HIPS_DIR_PREFIX        = "${hips-dir}";
     private static final String CACHE_DIR_PREFIX       = "${cache-dir}";
@@ -80,6 +80,7 @@ public class ServerContext {
     public static final String STATS_LOG_DIR= "stats.log.dir";
 
 
+    private final static UriRef.CloudEnvironment cloudEnvironment= findEnvironment();
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
     private static String webappConfigPath;
     private static String contextName;      // synonymous to appName.. during build, we set display-name to app_name
@@ -806,6 +807,8 @@ public class ServerContext {
         return (f!=null &&f.getPath().startsWith(VIS_UPLOAD_PATH_STR));
     }
 
+    public static UriRef.CloudEnvironment getCloudEnvironment() {return cloudEnvironment;}
+    public static boolean isRunningInCloud() {return cloudEnvironment!= UriRef.CloudEnvironment.ON_PRIM;}
 
 
     private static class AssertLogger implements Assert.Logger {
@@ -872,6 +875,20 @@ public class ServerContext {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static UriRef.CloudEnvironment findEnvironment() {
+        String cloudEnvironment = System.getProperty("cloud.environment", "detect"); // can be "GWS", "AWS", "ON_PRIM" or "detect"
+        // GWS is not supported yet so ignore
+        if ("detect".equals(cloudEnvironment)) {
+            if (S3Download.isRunningInAws()) return UriRef.CloudEnvironment.AWS;
+            return UriRef.CloudEnvironment.ON_PRIM;
+        }
+        try {
+            return Enum.valueOf(UriRef.CloudEnvironment.class, cloudEnvironment.toUpperCase());
+        } catch (Exception e) {
+            return UriRef.CloudEnvironment.ON_PRIM;
         }
     }
 

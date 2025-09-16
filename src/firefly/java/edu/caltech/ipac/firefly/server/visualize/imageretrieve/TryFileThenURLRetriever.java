@@ -30,7 +30,7 @@ public class TryFileThenURLRetriever implements FileRetriever {
             retval= new LocalFileRetriever().getFile(request);
         } catch (Exception e) {
             try {
-                retval= new URLFileRetriever().getFile(request);
+                retval= new URIFileRetriever().getFile(request);
             } catch (Exception e1) {
                 e1.initCause(e);
                 throw new FailedRequestException("File not found", "Both file and URL search failed",e1);

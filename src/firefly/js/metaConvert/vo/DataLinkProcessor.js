@@ -1,4 +1,4 @@
-import {FileAnalysisType, TableDataType} from '../../data/FileAnalysis';
+import {TableDataType} from '../../data/FileAnalysis';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
 import { getDataLinkData, isSimpleImageType, isVoTable } from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -134,7 +134,7 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
                                       doFileAnalysis, name, dropDownText, activateParams}) {
 
-    const {semantics,size,url, dlAnalysis:{isSimpleImage}, contentType, description}= dlData;
+    const {semantics,size,url, cloudAccess, dlAnalysis:{isSimpleImage}, contentType, description}= dlData;
     const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
@@ -172,13 +172,13 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
-            const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
+            const request= makeObsCoreRequest(url,cloudAccess,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
                 activateParams, menuKey, activeMenuLookupKey, options, dlData, originalTitle:dropDownText||name});
             return dpdtAnalyze({name, activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, dlData});
         }
         else {
-            return createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size, dlData);
+            return createGuessDataType(name,menuKey,url,cloudAccess, contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size, dlData);
         }
     }
 }
@@ -498,6 +498,7 @@ function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
  * @param name
  * @param menuKey
  * @param url
+ * @param {CloudAccessData} cloudAccess
  * @param ct
  * @param semantics
  * @param activateParams
@@ -508,10 +509,10 @@ function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
  * @param [dlData]
  * @return {DataProductsDisplayType}
  */
-export function createGuessDataType(name, menuKey, url,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
+export function createGuessDataType(name, menuKey, url,cloudAccess,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
     const {imageViewerId}= activateParams;
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
-        const request= makeObsCoreRequest(url,positionWP,name,table,row);
+        const request= makeObsCoreRequest(url,cloudAccess,positionWP,name,table,row);
         return dpdtImage({name,
             activate: createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
             extraction: createSingleImageExtraction(request, dlData?.sourceObsCoreData, dlData),

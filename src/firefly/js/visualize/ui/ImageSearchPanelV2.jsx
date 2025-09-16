@@ -707,7 +707,7 @@ function makeRequests(request, imageMasterData, plotId, plotGroupId){
 
     } else if (request.imageSource === 'url') {
         const url = get(request, 'txURL');
-        return [{dataType:'image', request: addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)}];
+        return [{dataType:'image', request: addStdParams(WebPlotRequest.makeURIPlotRequest(url), plotId, plotGroupId)}];
 
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);

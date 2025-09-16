@@ -111,9 +111,6 @@ function modifyRequest(pvCtx, r, band, useCtxMods) {
     if (retval.getRotationAngle()) retval.setRotationAngle(0);
     if (!pvCtx || !useCtxMods) return retval;
 
-    if (pvCtx.defThumbnailSize!==DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
-        retval.setThumbnailSize(pvCtx.defThumbnailSize);
-    }
 
     const cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
     if (cPref) {

@@ -4,10 +4,8 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.Counters;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.download.CacheHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +28,6 @@ public class VisContext {
     static public void init() {
         if (_initialized) return;
         System.setProperty("java.awt.headless", "true");
-        CacheHelper.setCacheDir(ServerContext.getVisCacheDir());
         initFootprints();
         initCounters();
         _initialized = true;

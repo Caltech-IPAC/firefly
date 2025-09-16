@@ -11,8 +11,6 @@ import java.util.EventListener;
  */
 public interface DownloadListener extends EventListener {
     void dataDownloading(DownloadEvent ev);
-    default void beginDownload(DownloadEvent ev) {};
-    default void downloadCompleted(DownloadEvent ev) {};
 }
 
 

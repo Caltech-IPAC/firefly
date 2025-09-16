@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.*;
-import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
 import java.io.File;
@@ -113,7 +113,7 @@ public class IbeImageGetter {
           IBE ibe= new IBE(ibeSource);
 
 
-          File queryTbl= File.createTempFile("IbeQuery-", ".tbl", CacheHelper.getDir());
+          File queryTbl= File.createTempFile("IbeQuery-", ".tbl", FileCacheHelper.getDir());
 
           IbeQueryParam queryParam= ibeSource.makeQueryParam(queryMap);
           queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());

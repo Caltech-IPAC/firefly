@@ -14,7 +14,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
 import java.io.File;
@@ -53,7 +53,7 @@ public class AtlasIbeImageGetter {
             IbeQueryParam queryParam = ibeSource.makeQueryParam(queryMap);
             queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());
             queryParam.setMcen(true);
-            File queryTbl = File.createTempFile("Ibe2Query-", ".tbl", CacheHelper.getDir());
+            File queryTbl = File.createTempFile("Ibe2Query-", ".tbl", FileCacheHelper.getDir());
             ibe.query(queryTbl, queryParam);
             DataGroup data = IpacTableReader.read(queryTbl);
 

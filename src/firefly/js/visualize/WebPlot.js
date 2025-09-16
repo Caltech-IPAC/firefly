@@ -673,7 +673,6 @@ function getInitZoomLevel(viewDim,  req, dataWidth, dataHeight, pixelScaleDeg) {
     }
     switch (zt) {
         case ZoomType.TO_HEIGHT: // this is not implemented, do FULL_SCREEN
-        case ZoomType.FULL_SCREEN:
         case ZoomType.TO_WIDTH_HEIGHT:
             return Math.min(width /  dataWidth, height /  dataHeight);
         case ZoomType.TO_WIDTH:

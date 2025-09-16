@@ -3,16 +3,16 @@
  */
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
+import edu.caltech.ipac.util.download.RetrieveUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Locale;
 
 
-public abstract class ImageServiceParams extends BaseNetParams implements LockingVisNetwork.CanCallService {
+public abstract class ImageServiceParams extends BaseNetParams implements RetrieveUtil.CanCallService {
     public enum ImageSourceTypes { ISSA, TWOMASS, TWOMASS6, IRIS, MSX, WISE, DSS, SDSS, ZTF, PTF, ATLAS }
 
     private WorldPt wp;

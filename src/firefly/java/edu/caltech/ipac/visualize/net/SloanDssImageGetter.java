@@ -8,7 +8,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -33,7 +33,7 @@ public class SloanDssImageGetter {
         try {
             URL url= new URI(makeSDssRequest(params)).toURL();
             SloanDssImageParams qParam= params.makeQueryKey();
-            FileInfo fi= URLDownload.getDataToFile(url, CacheHelper.makeFile(qParam.getUniqueString() + ".xml"));
+            FileInfo fi= URLDownload.getDataToFile(url, FileCacheHelper.makeFile(qParam.getUniqueString() +"."+FileUtil.XML));
             if (fi.getResponseCode()!=200) {
                 var detail= String.format(SDSS_SRV_ERR, fi.getResponseCodeMsg(), fi.getResponseCode());
                 throw new FailedRequestException( getHtmlErr(fi.getFile(), detail), detail);

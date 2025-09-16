@@ -11,7 +11,7 @@ import {
 } from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
-    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs
+    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS
 } from './VoConst.js';
 import {
     columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
@@ -181,8 +181,14 @@ export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourc
                 semantics, local_semantics: localSemantics, service_def: serviceDefRef,
                 content_type: contentType, content_qualifier: contentQualifier,
                 access_url: url, description, content_length: size, error_message,
-                label: labelDLExt, bandpass_name: bandpassNameDLExt
+                label: labelDLExt, bandpass_name: bandpassNameDLExt, [CLOUD_ACCESS]: cloudAccessStr,
             } = rowObj;
+
+            let cloudAccess= undefined;
+            try {
+                if (cloudAccessStr) cloudAccess= JSON.parse(cloudAccessStr);
+            }
+            catch (e) {} // eslint-disable-line
 
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
             const serDef= getServiceDescriptorForId(dataLinkTable,serviceDefRef,idx);
@@ -194,7 +200,7 @@ export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourc
                 contentType:contentType?.toLowerCase(), contentQualifier, semantics, localSemantics, url, error_message,
                 description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis,
                 sourceObsCoreData, relatedDLEntries: {}, positionWP, rowWP, sRegion,
-                labelDLExt, bandpassNameDLExt
+                labelDLExt, bandpassNameDLExt, cloudAccess
             };
         });
 

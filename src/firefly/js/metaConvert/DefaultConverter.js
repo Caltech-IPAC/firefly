@@ -1,7 +1,8 @@
 import {isEmpty} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCellValue, getColumn} from '../tables/TableUtil.js';
-import {getDataSourceColumn} from '../voAnalyzer/TableAnalysis.js';
+import {RequestType} from '../visualize/RequestType';
+import {getDataSourceColumn, getObsCoreCloudAccess} from '../voAnalyzer/TableAnalysis.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import RangeValues from '../visualize/RangeValues.js';
@@ -23,6 +24,7 @@ export function makeRequestForUnknown(table, row, includeSingle, includeStandard
     const {tableMeta: meta} = table;
 
     const dataSource = findADataSourceColumn(table);
+    const cloudAccess= getObsCoreCloudAccess(table,row);
     if (!dataSource) return {};
 
 
@@ -43,11 +45,11 @@ export function makeRequestForUnknown(table, row, includeSingle, includeStandard
 
     const retval = {};
     if (includeSingle) {
-        retval.single = makeRequest(table, dataSource.name, positionWP, row);
+        retval.single = makeRequest(table, dataSource.name, positionWP, row, cloudAccess);
     }
 
     if (includeStandard) {
-        retval.standard = [makeRequest(table, dataSource.name, positionWP, row)];
+        retval.standard = [makeRequest(table, dataSource.name, positionWP, row, cloudAccess)];
         retval.highlightPlotId = retval.standard[0].getPlotId();
     }
 
@@ -115,7 +117,7 @@ export function findADataSourceColumn(table) {
  */
 function makeMovingRequest(table, row, dataSource, positionWP, plotId) {
     const url = getCellValue(table, row, dataSource);
-    const r = WebPlotRequest.makeURLPlotRequest(url, 'Fits Image');
+    const r = WebPlotRequest.makeURIPlotRequest(url, 'Fits Image');
     r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
     r.setPlotId(plotId);
@@ -127,23 +129,25 @@ function makeMovingRequest(table, row, dataSource, positionWP, plotId) {
 
 /**
  *
- * @param table
- * @param dataSource
- * @param positionWP
- * @param row
+ * @param {TableModel} table
+ * @param {String} dataSource
+ * @param {WorldPt} positionWP
+ * @param {number} row
+ * @param {CloudAccessData} cloudAccess
  * @return {*}
  */
-function makeRequest(table, dataSource, positionWP, row) {
+function makeRequest(table, dataSource, positionWP, row, cloudAccess) {
     if (!table || !dataSource) return null;
 
     let r;
     const source = getCellValue(table, row, dataSource);
     if (dataSource.toLocaleUpperCase() === FILE) {
-        r = WebPlotRequest.makeFilePlotRequest(source, 'DataProduct');
+        r = WebPlotRequest.makeFilePlotRequest(source, 'Data Product');
     } else {
-        r = WebPlotRequest.makeURLPlotRequest(source, 'DataProduct');
+        const {region,bucket_name,key}= cloudAccess?.aws ?? {};
+        r = WebPlotRequest.makeNetReferencePlotRequest(source, region, bucket_name, key, 'Data Product');
     }
-    r.setZoomType(ZoomType.FULL_SCREEN);
+
     r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setPlotId(source);
     if (positionWP) r.setOverlayPosition(positionWP);

@@ -6,7 +6,7 @@ import {findPlot, primePlotType} from '../PlotViewUtil';
 
 
 const makeMockPv = (plotId, plotGroupId, plotCnt, primeIdx=0) => {
-    const req= WebPlotRequest.makeURLPlotRequest('http://a/b/c.fits');
+    const req= WebPlotRequest.makeURIPlotRequest('http://a/b/c.fits');
     req.setPlotGroupId(plotGroupId);
     req.setPlotId(plotId);
     const pv= makePlotView(plotId, req);
