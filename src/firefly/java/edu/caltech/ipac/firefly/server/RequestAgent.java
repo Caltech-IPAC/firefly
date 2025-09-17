@@ -12,6 +12,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,6 +112,10 @@ public class RequestAgent {
 
     public String getHeader(String name, String def) {
         return null;
+    }
+
+    public Map<String, String> getHeaders() {
+        return Collections.emptyMap();
     }
 
     public void sendRedirect(String url) {}
@@ -220,6 +226,21 @@ public class RequestAgent {
             } else {
                 return def;
             }
+        }
+
+        @Override
+        public Map<String, String> getHeaders() {
+            if (request == null) return Collections.emptyMap();
+            Enumeration<String> headerNames = request.getHeaderNames();
+            if (headerNames == null) return Collections.emptyMap();
+
+            Map<String, String> headers = new HashMap<>();
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                String headerValue = request.getHeader(headerName);
+                headers.put(headerName, headerValue);
+            }
+            return headers;
         }
 
         @Override

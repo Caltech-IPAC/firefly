@@ -40,6 +40,7 @@ import javax.xml.rpc.ServiceException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -242,6 +243,15 @@ public class JOSSOAdapter {
             // ignore..
         }
         return false;
+    }
+
+    public static void printHeaders() {
+        Map<String, String> headers = ServerContext.getRequestOwner().getRequestAgent().getHeaders();
+        System.out.println("--- Request Headers ---");
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+        System.out.println("-----------------------");
     }
 
     /**
