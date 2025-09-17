@@ -173,28 +173,6 @@ public class ObsCorePackager extends FileGroupsProcessor {
             Map<String, ServDescUrl> serDefUrls = new HashMap<>();
 
             for (DataGroup dg : groups) {
-                boolean makeDataLinkFolder = false;
-                int countValidDLFiles = 0;
-                //do one initial pass through semantics column to determine if we need to create a folder for datalink files
-                for (int i=0; i < dg.size(); i++) {
-                    String sem = Objects.toString(dg.getData(SEMANTICS, i), null);
-                    if (sem == null) {
-                        continue;
-                    }
-
-                    if (products != null) { // Check if products exist and contains sem
-                        if (Arrays.asList(products).contains(sem) || Arrays.asList(products).contains("*")) { //* refers to all data products
-                            countValidDLFiles++;
-                        }
-                    }
-                    else countValidDLFiles++;
-
-                    if (countValidDLFiles > 1) {
-                        makeDataLinkFolder = true;
-                        break;
-                    }
-                }
-
                 for (int i=0; i < dg.size(); i++) {
                     //if (indices != null && !indices.contains(i)) continue;
                     String accessUrl = Objects.toString(dg.getData(ACCESS_URL, i), null);
@@ -228,10 +206,10 @@ public class ObsCorePackager extends FileGroupsProcessor {
                         String extension = "unknown";
                         extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(productUrl);
                         ext_file_name += "." + extension;
-                        ext_file_name = (isFlattenedStructure || (!makeDataLinkFolder)) ?
+                        ext_file_name = (isFlattenedStructure)  ?
                                 ext_file_name : prepend_file_name + "/" + ext_file_name;
                     } else {
-                        ext_file_name = (isFlattenedStructure || (!makeDataLinkFolder)) ?
+                        ext_file_name = (isFlattenedStructure) ?
                                 ext_file_name : (prepend_file_name + "/" + (fileName != null ? fileName : ""));
                     }
 
