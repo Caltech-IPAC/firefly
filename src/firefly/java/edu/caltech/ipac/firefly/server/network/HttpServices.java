@@ -132,7 +132,6 @@ public class HttpServices {
 
             // quick and dirty fix to pass along credential to IRSA backend services
             if (JOSSOAdapter.requireAuthCredential(url)) {
-                JOSSOAdapter.printHeaders();
                 String auth = ServerContext.getRequestOwner().getRequestAgent().getHeader("Authorization");
                 if (auth != null && auth.startsWith("Basic")) {
                     method.setRequestHeader("Authorization", auth);

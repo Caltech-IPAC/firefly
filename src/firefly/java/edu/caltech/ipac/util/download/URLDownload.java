@@ -154,7 +154,6 @@ public class URLDownload {
             if (conn instanceof HttpURLConnection) {
                 // quick and dirty fix to pass along credential to IRSA backend services
                 if (JOSSOAdapter.requireAuthCredential(url.toString())) {
-                    JOSSOAdapter.printHeaders();
                     String auth = ServerContext.getRequestOwner().getRequestAgent().getHeader("Authorization");
                     if (auth != null && auth.startsWith("Basic")) {
                         Logger.getLogger().debug("auth: " + auth);
