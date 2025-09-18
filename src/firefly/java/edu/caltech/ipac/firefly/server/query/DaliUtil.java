@@ -12,13 +12,12 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HttpMethod;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -122,7 +121,7 @@ public class DaliUtil {
     }
 
     /**
-     * Parse the error message from the given HttpMethod. Also takes into account whether the URL is an
+     * Reads the response body and extracts the error message from the given HttpMethod. Also takes into account whether the URL is an
      * error document or not.
      *
      * @param method the HttpMethod that contains the error response
@@ -130,38 +129,35 @@ public class DaliUtil {
      * @return a string containing the parsed error message
      */
     public static String parseError(HttpMethod method, String url) {
-        boolean isErrorDoc = HttpServices.isOk(method); // url is an error document (at /error) if isOK() is true
-        String httpErrMsg = isErrorDoc ? "" : String.format("Request to %s failed: %s", url, method.getStatusText());
-
-        String errMsg;
-        String contentType = HttpServices.getResHeader(method, "Content-Type", "");
-        boolean parseAsText = contentType.startsWith("text/plain") || contentType.startsWith("application/json");
         try {
-            if (parseAsText) {
-                // error can be parsed as text
-                errMsg = HttpServices.getResponseBodyAsString(method);
-                if (errMsg.length() > 1000) {
-                    errMsg = errMsg.substring(0, 1000) + "...";
-                }
-            } else {
-                // error is VOTable doc
-                try (InputStream is = HttpServices.getResponseBodyAsStream(method)) {
-                    String voError = VoTableReader.getError(is, url);
-                    if (voError == null) {
-                        voError = isErrorDoc
-                                ? "Non-compliant VOTable in error document at " + url
-                                : httpErrMsg; // give generic HTTP error message over the VOTable error
-                    }
-                    errMsg = voError;
-                }
-            }
-        } catch (Exception e) {
-            errMsg = isErrorDoc
-                    ? String.format("Error retrieving error document from %s: %s", url, e.getMessage())
-                    : httpErrMsg; // give generic HTTP error message over the exception in parsing
+            return parseError(method.getResponseBody(), HttpServices.getResHeader(method, "Content-Type", ""));
+        } catch (IOException e) {
+            return "Error retrieving error from %s: %s".formatted(url, e.getMessage());
         }
-        return errMsg;
     }
+
+    /**
+     * Parse the error message from the given response.  This may be plain text or a VOTable error document.
+     * @param response  the response that contains the error message
+     * @return a string containing the parsed error message
+     */
+    public static String parseError(byte[] response, String contentType) {
+        if (isEmpty(response)) return "Not found. The data may no longer be accessible.";
+        boolean parseAsText = contentType.startsWith("text/plain") || contentType.startsWith("application/json");
+        if (parseAsText) {
+            String msg = new String(response);
+            return msg.length() > 1000 ? msg.substring(0, 1000) + "..." : msg;
+        }
+        try {
+            // check for VOTable error doc
+            String voError = VoTableReader.getError(new ByteArrayInputStream(response), null);
+            if (voError == null) voError = "Non-compliant VOTable in error document";
+            return voError;
+        } catch (Exception e) {
+            return "Unrecognized error message format";
+        }
+    }
+
 
 }
 

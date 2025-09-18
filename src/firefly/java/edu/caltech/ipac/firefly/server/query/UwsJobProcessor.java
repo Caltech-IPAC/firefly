@@ -26,6 +26,7 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -307,16 +308,25 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     }
 
     public static JobInfo getUwsJobInfo(String jobUrl) throws DataAccessException {
-        if (isEmpty(jobUrl)) return null;
+        if (isEmpty(jobUrl)) throw new DataAccessException("Job URL is missing");
 
         Ref<JobInfo> jInfo = new Ref<>();
         HttpServices.Status status = HttpServices.getData(jobUrl, method -> {
+            if (!isOk(method)) {
+                String error = parseError(method, jobUrl);
+                return new HttpServices.Status(404, error);
+            }
+            // Some services (e.g., IRSA TAP) may return errors without proper status codes.
+            // Preserve the response body, so it can be parsed for error if needed.
+            byte[] response = null;
             try {
-                Document doc = parse(getResponseBodyAsStream(method));
+                response = method.getResponseBody();
+                Document doc = parse(new ByteArrayInputStream(response));
                 jInfo.set(convertToJobInfo(doc));
                 return HttpServices.Status.ok();
             } catch (Exception e) {
-                return new HttpServices.Status(400, e.getMessage());
+                String error = parseError(response, getResHeader(method, "Content-Type", ""));
+                return new HttpServices.Status(404, error);
             }
         });
         if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
