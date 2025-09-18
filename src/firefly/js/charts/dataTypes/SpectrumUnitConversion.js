@@ -375,6 +375,7 @@ const UnitMetadata = {
     'erg/s/cm^2/A' : {
         type: Measurement.F_LAMBDA.key,
         label: 'erg/s/cm^{2}/\\mathring{A}',
+        aliases: ['erg.Angstrom**-1.s**-1.cm**-2'], // non-standard order of subunits for Euclid SpectrumDM until astropy bug is fixed
     },
     'W/m^2/um' : {
         type: Measurement.F_LAMBDA.key,

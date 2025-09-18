@@ -7,7 +7,7 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable
+import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable, isDataProductsTable
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
@@ -74,6 +74,8 @@ function setupObsCorePackaging(tbl_id) {
     }
     if (!enabled) return;
 
+    if (!isDataProductsTable(tbl_id)) return;
+
     const dlProps = getDataServiceOptionByTable('obsCoreDownloadProps', table, {}) || {};
 
     const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {} ;
@@ -131,6 +133,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
         '#auxiliary': 'Auxiliary',
         '#progenitor': 'Progenitor',
         '#thumbnail': 'Thumbnail',
+        '#calibration': 'Calibration',
         '#preview': 'Preview',
         '#package': 'Package',
         '#weight': 'Weight'
@@ -150,7 +153,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
             options = []; //fallback only to "All data" only below
         }
         //ensure '*' ("All data") is always included, even as a fallback when semList is empty
-        options.push({ label: 'All data', value: '*' });
+        options.push({ label: 'All Data', value: '*' });
         return options;
     }, [semList, labelMap]);
 

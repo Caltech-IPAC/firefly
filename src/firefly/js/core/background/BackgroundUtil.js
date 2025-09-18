@@ -171,7 +171,7 @@ export function getErrMsg(jobInfo) {
     return jobInfo?.errorSummary?.message;
 }
 
-export const SCRIPT_ATTRIB = new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
+export const SCRIPT_ATTRIB = new Enum(['URLList', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
 
 export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, downloadType, onComplete}) {
 

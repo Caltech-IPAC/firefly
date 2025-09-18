@@ -9,20 +9,12 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.URLDownload;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Function;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
@@ -41,7 +33,9 @@ public class DownloadScript {
         *
         *    Date: %s
         *
-        *    Download %s from %s
+        *    Script to download %s data from %s
+        *
+        *    The script below defines a subroutine to download the files
         *
         ************************************************
         
@@ -222,8 +216,8 @@ static final String funcTmpl = """
 
         try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(outFile), IpacTableUtil.FILE_IO_BUFFER_SIZE))) {
 
-            if (is(URLsOnly, attribs)) {      // most tools do not natively support comments; maybe we should exclude them.
-                writer.printf("# Date: %s --- Download %s from %s \n", new Date(), dataDesc, FROM_ORG);
+            if (is(URLList, attribs)) {      // most tools do not natively support comments; maybe we should exclude them.
+                writer.printf("# Date: %s --- Download %s data from %s \n", new Date(), dataDesc, FROM_ORG);
                 urlInfos.forEach(pi -> writer.println(pi.getHref()));
                 return;
             }
@@ -248,7 +242,7 @@ static final String funcTmpl = """
     }
 
     public static String makeScriptFilename(ScriptAttributes type, String suggName) {
-        String ext = type.equals(URLsOnly) ? "txt" : "sh";
+        String ext = type.equals(URLList) ? "txt" : "sh";
         return "%s-%s.%s".formatted(suggName, type.name().toLowerCase(), ext);
     };
 

@@ -109,7 +109,7 @@ public class EmailNotification implements JobCompletedHandler {
                 String sugName = ifNotNull(jobInfo.getAux().getTitle()).getOrElse("Download");
                 String curlScript = getDownloadURL(makeScript(jobInfo, Curl), makeScriptFilename(Curl, sugName), jobInfo.getMeta().getAppUrl());
                 String wgetScript = getDownloadURL(makeScript(jobInfo, Wget), makeScriptFilename(Wget, sugName), jobInfo.getMeta().getAppUrl());
-                String directUrls = getDownloadURL(makeScript(jobInfo, ScriptAttributes.URLsOnly), makeScriptFilename(URLsOnly, sugName), jobInfo.getMeta().getAppUrl());
+                String directUrls = getDownloadURL(makeScript(jobInfo, ScriptAttributes.URLList), makeScriptFilename(URLList, sugName), jobInfo.getMeta().getAppUrl());
                 String msg = zipSuccess.formatted(name, curlScript, wgetScript, directUrls, contact);
                 EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg);
             } catch (Exception e) {
@@ -118,7 +118,7 @@ public class EmailNotification implements JobCompletedHandler {
 
         } else if (type == Job.Type.SCRIPT) {
 
-            String msg = success.formatted(name, getUrl(jobInfo, Curl), getUrl(jobInfo, Wget), getUrl(jobInfo, URLsOnly), contact);
+            String msg = success.formatted(name, getUrl(jobInfo, Curl), getUrl(jobInfo, Wget), getUrl(jobInfo, URLList), contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                     .getOrElse(e -> Logger.getLogger().error(e));
         } else {
@@ -130,7 +130,7 @@ public class EmailNotification implements JobCompletedHandler {
     }
 
     public static String getUrl(JobInfo jobInfo, ScriptAttributes type) {
-        String matcher = type == URLsOnly ? "list" : type.name().toLowerCase();
+        String matcher = type == URLList ? "list" : type.name().toLowerCase();
         return jobInfo.getResults().stream()
                 .filter(r -> r.id().contains(matcher))
                 .map(r -> r.href()).findFirst().orElse(null);

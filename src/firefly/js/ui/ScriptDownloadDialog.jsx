@@ -39,7 +39,7 @@ class ScripDownloadPanel extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {urlsOnly: false};
+        this.state = {urlList: false};
         this.onSubmit = this.onSubmit.bind(this);
     }
 
@@ -56,8 +56,8 @@ class ScripDownloadPanel extends PureComponent {
     storeUpdate() {
         if (!this.isUnmounted) {
             const fields = FieldGroupUtils.getGroupFields('ScriptDownloadDialog');
-            const urlsOnly = FieldGroupUtils.getFldValue(fields, 'URLsOnly');
-            this.setState({urlsOnly});
+            const urlList = FieldGroupUtils.getFldValue(fields, 'URLList');
+            this.setState({urlList});
         }
     }
 
@@ -73,7 +73,7 @@ class ScripDownloadPanel extends PureComponent {
 
     render() {
         const {help_id, jobId} = this.props;
-        const {urlsOnly} = this.state;
+        const {urlList} = this.state;
         return (
             <div style = {{margin: '4px'}}>
                 <FormPanel
@@ -84,7 +84,7 @@ class ScripDownloadPanel extends PureComponent {
                     help_id={help_id}>
 
                     <FieldGroup groupKey={'ScriptDownloadDialog'}>
-                        <div style={{visibility: (urlsOnly ? 'hidden' : 'visible')}}>
+                        <div style={{visibility: (urlList ? 'hidden' : 'visible')}}>
                             <ListBoxInputField
                                 fieldKey ='downloader'
                                 initialState = {{
@@ -112,10 +112,10 @@ class ScripDownloadPanel extends PureComponent {
                         </div>
 
                         <CheckboxGroupInputField
-                            fieldKey='URLsOnly'
+                            fieldKey='URLList'
                             initialState= {{label : ' '}}
                             options={[
-                                        {label: 'Download just a list of URLs', value: 'URLsOnly'}
+                                        {label: 'Download just a list of URLs', value: 'URLList'}
                                     ]}
                         />
                     </FieldGroup>
