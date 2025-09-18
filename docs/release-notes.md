@@ -36,8 +36,16 @@
  - Fixed: Target panel selection issues: Firefly-1820, Firefly-1821 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1832)) 
 
 ### _Patches 2025.4_
-- 2025.4.1
-    - Fixed: Target entry bug- IRSA-7239 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1835))
+#### 2025.4.2
+  - Fixed: Wrong warning cutouts and serach by ID- Firefly-1850 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1846))
+  - Fixed: Prepare download button show when it should not- IRSA-7231 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1845))
+  - Fixed: several issue found in SPHEREx- IRSA-7251, IRSA-7250, IRSA-7249 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1843))
+  - Fixed: SDSS url out of date- ([commit](https://github.com/Caltech-IPAC/firefly/commit/12d16237c02edd1e3f040d23ed3b976f5178ec8b))
+  - Fixed: Username display issue- Firefly-1837 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1837))
+  - Fixed: Uploading from URL: should be in a shared upload directory on server- Firefly-1841 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1839))
+  - Improved Render Euclid spectral units in charts- Firefly-1847 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1844))
+#### 2025.4.1
+  - Fixed: Target entry bug- IRSA-7239 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1835))
 
 ### _All Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.4+label%3abug)
