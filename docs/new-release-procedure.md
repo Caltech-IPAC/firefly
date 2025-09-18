@@ -14,21 +14,23 @@
 ### Ensure release passes Test
    - `gradle :firefly:test`
    
-### Commit and Tag
+### Commit, Tag, push tags
    - Commit your changes - _example message:_ "Release 2024.1.0: document updates"
-   - Tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
+   - Push your changes
+   - Tagging: `buildScript/next-release-tag.sh`
+      -  `next-releaase-tag.sh` will tag and push
+         - Tags are make in the form `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _Example:_ 
       - the second release from branch `rc-2024.1` with the git tagged with `release-2024.1.1`
       - `git tag release-2024.1.1`
-   
-### Push
-   - Push to GitHub
-   - push the rc: _example:_ `git push origin rc-2024.1`
-   - push the tags: `git push origin --tags`   
+   - the script will also create docker tag for the next step
 
 ### Build docker images and deploy it to IRSA Kubernetes
    - Best to use Jenkins: https://irsajenkins.ipac.caltech.edu/job/firefly/build
-   - Build the docker with the following docker tags: `rc-yyyy.m,yyyy.m,yyyy.m.r,latest` (comma-separated without spaces)
+   - Build the docker images with Jenkins
+   - _Important_ -`buildscript/next-releaase-tag.sh` should produce the docker tags
+    - just cut and paste them
+         - it wil prouce the following docker tags: `rc-yyyy.m,yyyy.m,yyyy.m.r,latest` (comma-separated without spaces)
    - _example:_ from the example above the release would be built with: `rc-2024.3`, `2024.3`,`2024.3.1`, `latest`
    - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
