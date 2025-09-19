@@ -5,7 +5,7 @@
 import {isUndefined} from 'lodash';
 import {DtoR, RtoD, computeDistance} from '../VisUtil.js';
 import { GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
-    ARC, SFL, CEA, TPV, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
+    ARC, SFL, CEA, TPV, STG, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
 import {findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
     ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J, NONCELESTIAL} from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
@@ -122,11 +122,11 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
     /**
      * CTYPEi indicates the coordinate type and projection. According to the standard specified by the paper: Representations of world coordinates in FITS
      * E. W. Greisen1 and M. R. Calabretta2 (paper I). The CTYPEn has linear and non-linear.  Non-linear coordinate systems will be signaled by CTYPEi
-     * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a ’-’, and the remaining three characters
-     * specify an algorithm code for computing the world coordinate value, for example ’ABCD-XYZ’. We explicitly allow the
-     * possibility that the coordinate type may augment the algorithm code, for example ’FREQ-F2W’ and ’VRAD-F2W’ may denote
+     * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a '-', and the remaining three characters
+     * specify an algorithm code for computing the world coordinate value, for example 'ABCD-XYZ'. We explicitly allow the
+     * possibility that the coordinate type may augment the algorithm code, for example 'FREQ-F2W' and 'VRAD-F2W' may denote
      * somewhat different algorithms (see Paper III). Coordinate types with names of less than four characters are padded on the right
-     * with ’-’, and algorithm codes with less than three characters are padded on the right with blanks, for example ’RA---UV ’.
+     * with '-', and algorithm codes with less than three characters are padded on the right with blanks, for example 'RA---UV '.
      * However, we encourage the use of three-letter algorithm codes. Particular coordinate types and algorithm codes must be established by convention.
      * CTYPEi values that are not in “4–3” form should be interpreted as linear axes. It is possible that there may be old FITS files with a linear axis for
      * which CTYPEi is, by chance, in 4–3 form. However, it is very unlikely that it will match a recognized algorithm code (use of
@@ -152,6 +152,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
             case '-CEA': p.maptype = CEA; break;
             case '-SFL': p.maptype = SFL; break;
             case '-GLS': p.maptype = SFL; break;
+            case '-STG': p.maptype = STG; break;
             case '----':
             case '':     p.maptype = LINEAR; break;
             default :    p.maptype = UNRECOGNIZED;

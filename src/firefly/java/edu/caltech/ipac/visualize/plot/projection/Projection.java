@@ -17,37 +17,37 @@ import java.io.Serializable;
 public class Projection implements Serializable {
 
 
-    public static final double dtr = Math.PI/180.;
-    public static final double rtd = 180./Math.PI;
-    final static double DtoR = Math.PI/180.0;
-    final static double RtoD = 180.0/Math.PI;
-    static public final int GNOMONIC     = 1001;
+    public static final double dtr = Math.PI / 180.;
+    public static final double rtd = 180. / Math.PI;
+    final static double DtoR = Math.PI / 180.0;
+    final static double RtoD = 180.0 / Math.PI;
+    static public final int GNOMONIC = 1001;
     static public final int ORTHOGRAPHIC = 1002;
-    static public final int NCP          = 1003;
-    static public final int AITOFF       = 1004;
-    static public final int CAR          = 1005;
-    static public final int LINEAR       = 1006;
-    static public final int PLATE        = 1007;
-    static public final int ARC          = 1008;
-    static public final int SFL          = 1009;
-    static public final int CEA          = 1010;
-    static public final int TPV          = 1011;
-    static public final int UNSPECIFIED  = 1998;
+    static public final int NCP = 1003;
+    static public final int AITOFF = 1004;
+    static public final int CAR = 1005;
+    static public final int LINEAR = 1006;
+    static public final int PLATE = 1007;
+    static public final int ARC = 1008;
+    static public final int SFL = 1009;
+    static public final int CEA = 1010;
+    static public final int TPV = 1011;
+    static public final int STG = 1012;
+    static public final int UNSPECIFIED = 1998;
     static public final int UNRECOGNIZED = 1999;
 
-    private double      _scale1;
-    private double      _scale2;
-    private double      _pixelScaleArcSec;
+    private double _scale1;
+    private double _scale2;
+    private double _pixelScaleArcSec;
     private CoordinateSys _coordSys;
     private ProjectionParams _params;
 
-    public Projection(ProjectionParams params, CoordinateSys coordSys)
-    {
-        _params= params;
-        _scale1= 1/_params.cdelt1;
-        _scale2= 1/_params.cdelt2;
-        _pixelScaleArcSec= Math.abs(_params.cdelt1) * 3600.0;
-        _coordSys= coordSys;
+    public Projection(ProjectionParams params, CoordinateSys coordSys) {
+        _params = params;
+        _scale1 = 1 / _params.cdelt1;
+        _scale2 = 1 / _params.cdelt2;
+        _pixelScaleArcSec = Math.abs(_params.cdelt1) * 3600.0;
+        _coordSys = coordSys;
     }
 
     public CoordinateSys getCoordinateSys() { return _coordSys; }
@@ -55,6 +55,7 @@ public class Projection implements Serializable {
 
     /**
      * Get the pixel scale in degrees
+     *
      * @return double Pixel scale in ArcSec
      */
     public double getPixelScaleArcSec() { return _pixelScaleArcSec; }
@@ -63,22 +64,22 @@ public class Projection implements Serializable {
     public double getPixelHeightDegree() { return Math.abs(_params.cdelt2); }
 
     public ImagePt getDistanceCoords(ImagePt pt, double x, double y) {
-          ImagePt outpt= new ImagePt (
-               pt.getX()+(x * _scale1), pt.getY()+(y * _scale2) );
-          return outpt;
+        ImagePt outpt = new ImagePt(
+                pt.getX() + (x * _scale1), pt.getY() + (y * _scale2));
+        return outpt;
     }
 
     public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
-          ImageWorkSpacePt outpt= new ImageWorkSpacePt (
-               pt.getX()+(x * _scale1), pt.getY()+(y * _scale2) );
-          return outpt;
+        ImageWorkSpacePt outpt = new ImageWorkSpacePt(
+                pt.getX() + (x * _scale1), pt.getY() + (y * _scale2));
+        return outpt;
     }
 
-    public ProjectionPt getImageCoords( double ra, double dec) throws ProjectionException {
+    public ProjectionPt getImageCoords(double ra, double dec) throws ProjectionException {
         return getImageCoordsInternal(ra, dec, true);
     }
 
-    public ProjectionPt getImageCoordsSilent( double ra, double dec) {
+    public ProjectionPt getImageCoordsSilent(double ra, double dec) {
         try {
             return getImageCoordsInternal(ra, dec, false);
         } catch (ProjectionException e) { // exception will not happen since parameter turns if off
@@ -87,60 +88,61 @@ public class Projection implements Serializable {
     }
 
 
+    /**
+     * Convert World coordinates to "Skyview Screen" coordinates
+     * "Skyview Screen" coordinates have 0,0 in center of lower left pixel
+     *
+     * @param ra  double precision
+     * @param dec double precision
+     * @return ImagePt with X,Y in "Skyview Screen" coordinates
+     */
+    private ProjectionPt getImageCoordsInternal(double ra, double dec, boolean useProjException) throws ProjectionException {
+        ProjectionPt image_pt = null;
 
-    /** Convert World coordinates to "Skyview Screen" coordinates
-    *    "Skyview Screen" coordinates have 0,0 in center of lower left pixel
-    * @param ra double precision 
-    * @param dec double precision 
-    * @return ImagePt with X,Y in "Skyview Screen" coordinates
-    */
+        switch (_params.maptype) {
+            case (GNOMONIC):
+                image_pt = GnomonicProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (TPV):
+                image_pt = TpvProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (STG):
+                image_pt = StereographicProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (PLATE):
+                image_pt = PlateProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (ORTHOGRAPHIC):
+                image_pt = OrthographicProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (NCP):
+                image_pt = NCPProjection.RevProject(ra, dec, _params);
+                break;
+            case (ARC):
+                image_pt = ARCProjection.RevProject(ra, dec, _params);
+                break;
+            case (AITOFF):
+                image_pt = AitoffProjection.RevProject(ra, dec, _params);
+                break;
+            case (LINEAR):
+                image_pt = LinearProjection.RevProject(ra, dec, _params);
+                break;
+            case (CAR):
+                image_pt = CartesianProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (CEA):
+                image_pt = CylindricalProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (SFL):
+                image_pt = SansonFlamsteedProjection.RevProject(ra, dec, _params, useProjException);
+                break;
+            case (UNSPECIFIED):
+                if (useProjException) throw new ProjectionException("image contains no projection information");
+            default:
+                if (useProjException) throw new ProjectionException("projection is not implemented");
+        }
 
-    private ProjectionPt getImageCoordsInternal(double ra, double dec, boolean useProjException) throws ProjectionException
-    {
-	ProjectionPt image_pt = null;
-
-	switch (_params.maptype)
-	{
-	case (GNOMONIC):
-	    image_pt = GnomonicProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (TPV):
-        image_pt = TpvProjection.RevProject( ra, dec, _params, useProjException);
-        break;
-	case (PLATE):
-	    image_pt = PlateProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (ORTHOGRAPHIC):
-	    image_pt = OrthographicProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (NCP):
-	    image_pt = NCPProjection.RevProject( ra, dec, _params);
-	    break;
-	case (ARC):
-	    image_pt = ARCProjection.RevProject( ra, dec, _params);
-	    break;
-	case (AITOFF):
-	    image_pt = AitoffProjection.RevProject( ra, dec, _params);
-	    break;
-	case (LINEAR):
-	    image_pt = LinearProjection.RevProject( ra, dec, _params);
-	    break;
-	case (CAR):
-	    image_pt = CartesianProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (CEA):
-	    image_pt = CylindricalProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (SFL):
-	    image_pt = SansonFlamsteedProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
-	case (UNSPECIFIED):
-        if (useProjException) throw new ProjectionException("image contains no projection information");
-	default:
-        if (useProjException) throw new ProjectionException("projection is not implemented");
-	}
-	    
-	return (image_pt);
+        return (image_pt);
     }
 
 //    public ProjectionPt getImageCoords(WorldPt worldPt)
@@ -150,12 +152,12 @@ public class Projection implements Serializable {
 //	return (image_pt);
 //    }
 
-    public WorldPt getWorldCoords( double x, double y) throws ProjectionException {
+    public WorldPt getWorldCoords(double x, double y) throws ProjectionException {
         return getWorldCoordsInternal(x, y, true);
     }
 
 
-    public WorldPt getWorldCoordsSilent( double x, double y) {
+    public WorldPt getWorldCoordsSilent(double x, double y) {
         try {
             return getWorldCoordsInternal(x, y, false);
         } catch (ProjectionException e) { // exception will not happen since parameter turns if off
@@ -164,62 +166,63 @@ public class Projection implements Serializable {
     }
 
 
+    /**
+     * Convert "ProjectionPt" coordinates to World coordinates
+     * "ProjectionPt" coordinates have 0,0 in center of lower left pixel
+     * (same as "Skyview Screen" coordinates)
+     *
+     * @param x double precision in "ProjectionPt" coordinates
+     * @param y double precision in "ProjectionPt" coordinates
+     */
+    private WorldPt getWorldCoordsInternal(double x, double y, boolean useProjException) throws ProjectionException {
+        Pt pt = null;
 
-    /** Convert "ProjectionPt" coordinates to World coordinates
-    *    "ProjectionPt" coordinates have 0,0 in center of lower left pixel
-    *    (same as "Skyview Screen" coordinates)
-    * @param x double precision in "ProjectionPt" coordinates
-    * @param y double precision in "ProjectionPt" coordinates
-    */
+        switch (_params.maptype) {
+            case (GNOMONIC):
+                pt = GnomonicProjection.FwdProject(x, y, _params);
+                break;
+            case (TPV):
+                pt = TpvProjection.FwdProject(x, y, _params);
+                break;
+            case (STG):
+                pt = StereographicProjection.FwdProject(x, y, _params);
+                break;
+            case (PLATE):
+                pt = PlateProjection.FwdProject(x, y, _params);
+                break;
+            case (ORTHOGRAPHIC):
+                pt = OrthographicProjection.FwdProject(x, y, _params, useProjException);
+                break;
+            case (NCP):
+                pt = NCPProjection.FwdProject(x, y, _params);
+                break;
+            case (ARC):
+                pt = ARCProjection.FwdProject(x, y, _params);
+                break;
+            case (AITOFF):
+                pt = AitoffProjection.FwdProject(x, y, _params, useProjException);
+                break;
+            case (LINEAR):
+                pt = LinearProjection.FwdProject(x, y, _params);
+                break;
+            case (CAR):
+                pt = CartesianProjection.FwdProject(x, y, _params, useProjException);
+                break;
+            case (CEA):
+                pt = CylindricalProjection.FwdProject(x, y, _params, useProjException);
+                break;
+            case (SFL):
+                pt = SansonFlamsteedProjection.FwdProject(x, y, _params, useProjException);
+                break;
+            case (UNSPECIFIED):
+                if (useProjException) throw new ProjectionException("image contains no projection information");
+            default:
+                if (useProjException) throw new ProjectionException("projection is not implemented");
+        }
 
-    private WorldPt getWorldCoordsInternal(double x, double y, boolean useProjException)  throws ProjectionException {
-	Pt pt = null;
-
-	switch (_params.maptype)
-	{
-	case (GNOMONIC):
-	    pt = GnomonicProjection.FwdProject( x, y, _params);
-	    break;
-    case (TPV):
-        pt = TpvProjection.FwdProject( x, y, _params);
-        break;
-	case (PLATE):
-	    pt = PlateProjection.FwdProject( x, y, _params);
-	    break;
-	case (ORTHOGRAPHIC):
-	    pt = OrthographicProjection.FwdProject( x, y, _params, useProjException);
-	    break;
-	case (NCP):
-	    pt = NCPProjection.FwdProject( x, y, _params);
-	    break;
-	case (ARC):
-	    pt = ARCProjection.FwdProject( x, y, _params);
-	    break;
-	case (AITOFF):
-	    pt = AitoffProjection.FwdProject( x, y, _params, useProjException);
-	    break;
-	case (LINEAR):
-	    pt = LinearProjection.FwdProject( x, y, _params);
-	    break;
-	case (CAR):
-	    pt = CartesianProjection.FwdProject( x, y, _params, useProjException);
-	    break;
-	case (CEA):
-	    pt = CylindricalProjection.FwdProject( x, y, _params, useProjException);
-	    break;
-	case (SFL):
-	    pt = SansonFlamsteedProjection.FwdProject( x, y, _params, useProjException);
-	    break;
-	case (UNSPECIFIED):
-	    if (useProjException) throw new ProjectionException("image contains no projection information");
-	default:
-	    if (useProjException) throw new ProjectionException("projection is not implemented");
-	}
-
-	WorldPt world_pt = (pt!=null) ? new WorldPt(pt.getX(), pt.getY(), _coordSys) : null;
-	return (world_pt);
+        WorldPt world_pt = (pt != null) ? new WorldPt(pt.getX(), pt.getY(), _coordSys) : null;
+        return (world_pt);
     }
-
 
 //    public WorldPt getWorldCoords( ProjectionPt imagePt)
 //	throws ProjectionException
@@ -228,62 +231,62 @@ public class Projection implements Serializable {
 //	return (world_pt);
 //    }
 
-    public boolean isImplemented()
-    {
-	boolean retval;
+    public boolean isImplemented() {
+        boolean retval;
 
-	switch (_params.maptype)
-	{
-	    case (GNOMONIC):
-        case (TPV):
-	    case (PLATE):
-	    case (ORTHOGRAPHIC):
-	    case (NCP):
-	    case (ARC):
-	    case (AITOFF):
-	    case (LINEAR):
-	    case (CAR):
-	    case (CEA):
-	    case (SFL):
-		retval = true;
-		break;
-	    default:
-		retval = false;
-	}
-	return (retval);
+        switch (_params.maptype) {
+            case (GNOMONIC):
+            case (TPV):
+            case (STG):
+            case (PLATE):
+            case (ORTHOGRAPHIC):
+            case (NCP):
+            case (ARC):
+            case (AITOFF):
+            case (LINEAR):
+            case (CAR):
+            case (CEA):
+            case (SFL):
+                retval = true;
+                break;
+            default:
+                retval = false;
+        }
+        return (retval);
     }
 
     public boolean isSpecified()
     {
-	if (_params.maptype == UNSPECIFIED)
-	    return false;
-	else
-	    return true;
+        if (_params.maptype == UNSPECIFIED)
+            return false;
+        else
+            return true;
     }
 
     public boolean isWrappingProjection()
     {
-	boolean retval;
+        boolean retval;
 
-	switch (_params.maptype)
-	{
-	    case (GNOMONIC):
-        case (TPV):
-	    case (CAR):
-	    case (CEA):
-	    case (SFL):
-	    case (NCP):
-	    case (PLATE):
-	    case (ORTHOGRAPHIC):
-	    case (ARC):
-	    case (LINEAR):
-		retval = false;
-		break;
-	    case (AITOFF):
-	    default:
-		retval = true;
-	}
-	return (retval);
+        switch (_params.maptype)
+        {
+            case (GNOMONIC):
+            case (TPV):
+            case (STG):
+            case (CAR):
+            case (CEA):
+            case (SFL):
+            case (NCP):
+            case (PLATE):
+            case (ORTHOGRAPHIC):
+            case (ARC):
+            case (LINEAR):
+                retval = false;
+                break;
+            case (AITOFF):
+            default:
+                retval = true;
+        }
+        return (retval);
     }
 
 //    public static void main(String args[])
@@ -427,6 +430,9 @@ public class Projection implements Serializable {
             case (Projection.TPV):
                 retval = "TPV";
                 break;
+            case (Projection.STG):
+                retval = "STG";
+                break;
             case (Projection.ORTHOGRAPHIC):
                 retval = "ORTHOGRAPHIC";
                 break;
@@ -464,7 +470,4 @@ public class Projection implements Serializable {
         }
         return (retval);
     }
-
-
-
 }

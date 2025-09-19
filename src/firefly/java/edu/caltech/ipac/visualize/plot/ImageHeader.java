@@ -172,6 +172,8 @@ public class ImageHeader implements Serializable
 			maptype = Projection.SFL;
 		else if (ctype1_trim.endsWith("-GLS"))
 			maptype = Projection.SFL;
+		else if (ctype1_trim.endsWith("-STG"))
+			maptype = Projection.STG;
 		else if (ctype1_trim.endsWith("----"))
 			maptype = Projection.LINEAR;
 		else if (ctype1_tail.equals("    "))

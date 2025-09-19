@@ -16,6 +16,7 @@ import {NCPProjection} from './NCPProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
 import {PlateProjection} from './PlateProjection.js';
 import {SansonFlamsteedProjection} from './SansonFlamsteedProjection.js';
+import {StereographicProjection} from './StereographicProjection.js';
 import {TpvProjection} from './TpvProjection.js';
 
 
@@ -33,6 +34,7 @@ export const ARC          = 1008;
 export const SFL          = 1009; // TESTED
 export const CEA          = 1010;
 export const TPV          = 1011;
+export const STG          = 1012;
 export const UNSPECIFIED  = 1998; // TESTED
 export const UNRECOGNIZED = 1999; // TESTED
 
@@ -109,6 +111,13 @@ const projTypes= {
 		revProject: SansonFlamsteedProjection.revProject,
         implemented : true,
         wrapping : true
+	},
+	[STG] : {
+		name: 'STG',
+		fwdProject: StereographicProjection.fwdProject,
+		revProject: StereographicProjection.revProject,
+		implemented : true,
+		wrapping : false
 	},
 	[LINEAR] : {
 		name: 'LINEAR',
