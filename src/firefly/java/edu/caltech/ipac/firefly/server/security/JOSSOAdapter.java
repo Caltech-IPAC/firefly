@@ -13,6 +13,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.axis.client.Stub;
+import org.apache.axis.transport.http.HTTPConstants;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationRequestType;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationResponseType;
 import org.josso.gateway.ws._1_2.protocol.AssertionNotValidErrorType;
@@ -43,6 +45,7 @@ import org.josso.gateway.ws._1_2.wsdl.SSOSessionManagerWSLocator;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.rpc.ServiceException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,6 +74,7 @@ public class JOSSOAdapter implements SsoAdapter {
     public static String TO_BE_DELETE = "-";
     private static final Map<String, CachedUserInfo> cache = new ConcurrentHashMap<>();
     private static volatile long lastCleanup = 0;
+    private static String ssoServicesUrl = null;
 
 
     public JOSSOAdapter() {
@@ -85,7 +89,7 @@ public class JOSSOAdapter implements SsoAdapter {
     private long checkSession(String token) {
 
         try {
-            SSOSessionManager man = getIdSessLoc().getSSOSessionManagerSoap();
+            SSOSessionManager man = getIdSess();
             SessionResponseType sessRes = man.getSession(new SessionRequestType(REQUESTER, token));
             SSOSessionType session = sessRes.getSSOSession();
             long msecLeft = session == null ? 0 :
@@ -108,7 +112,7 @@ public class JOSSOAdapter implements SsoAdapter {
 
         RoleList roles = new RoleList();
         try {
-            SSOIdentityManager man = getIdManLoc().getSSOIdentityManagerSoap();
+            SSOIdentityManager man = getIdMan();
             FindRolesBySSOSessionIdResponseType roleWrap = man.findRolesBySSOSessionId(
                                 new FindRolesBySSOSessionIdRequestType(REQUESTER, token));
             SSORoleType[] roleTypes = roleWrap.getRoles();
@@ -146,7 +150,7 @@ public class JOSSOAdapter implements SsoAdapter {
 
         try {
 
-            SSOIdentityManager man = getIdManLoc().getSSOIdentityManagerSoap();
+            SSOIdentityManager man = getIdMan();
 
             FindUserInSessionResponseType userWrap = man.findUserInSession(
                     new FindUserInSessionRequestType(REQUESTER, token));
@@ -187,7 +191,7 @@ public class JOSSOAdapter implements SsoAdapter {
         if (assertionKey == null) return null;
         
         try {
-            SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
+            SSOIdentityProvider idProv = getIdProv();
             ResolveAuthenticationAssertionResponseType tokenReq = idProv.resolveAuthenticationAssertion(
                                         new ResolveAuthenticationAssertionRequestType(REQUESTER, assertionKey));
             Token token = tokenReq == null ? null : new Token(tokenReq.getSsoSessionId());
@@ -208,7 +212,7 @@ public class JOSSOAdapter implements SsoAdapter {
     private boolean logout(String token) {
         try {
             if (!isEmpty(token)) {
-                SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
+                SSOIdentityProvider idProv = getIdProv();
                 idProv.globalSignoff(new GlobalSignoffRequestType(REQUESTER, token));
                 return true;
             }
@@ -228,7 +232,7 @@ public class JOSSOAdapter implements SsoAdapter {
 
     private String createSession(String name, String passwd) {
         try {
-            SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
+            SSOIdentityProvider idProv = getIdProv();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(
                     new AssertIdentityWithSimpleAuthenticationRequestType(REQUESTER, "josso", name, passwd));
             String assertId = rval.getAssertionId();
@@ -339,37 +343,54 @@ public class JOSSOAdapter implements SsoAdapter {
         }
     }
 
-    private static SSOIdentityManagerWSLocator getIdManLoc() {
-        String ssoServicesUrl = SSO_SERVICES_URL;
-        if (!SSO_SERVICES_URL.startsWith("http")) {
-            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
+    private static String getSsoServicesUrl() {
+        if (ssoServicesUrl == null) {
+            ssoServicesUrl = SSO_SERVICES_URL.startsWith("http")
+                    ? SSO_SERVICES_URL
+                    : ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
         }
+        return ssoServicesUrl;
+    }
+
+    private static void checkSoapAuth(Remote remote) {
+        if (remote instanceof Stub stub) {
+            HttpServiceInput input = new HttpServiceInput(getSsoServicesUrl());
+            Map<String, String> headers = input.getRequestHeaders();
+            if (!headers.isEmpty()) stub._setProperty(HTTPConstants.REQUEST_HEADERS, input.getRequestHeaders() );
+        }
+    }
+
+    private static SSOIdentityManager getIdMan() throws ServiceException {
+        String endpoint = getSsoServicesUrl() + "services/SSOIdentityManagerSoap";
         SSOIdentityManagerWSLocator idManLoc = new SSOIdentityManagerWSLocator();
-        idManLoc.setSSOIdentityManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityManagerSoap");
-        LOGGER.debug("JOSSO IdentityManager endpoint:" + ssoServicesUrl + "services/SSOIdentityManagerSoap");
-        return idManLoc;
+        idManLoc.setSSOIdentityManagerSoapEndpointAddress(endpoint);
+        LOGGER.debug("JOSSO IdentityManager endpoint:" + endpoint);
+
+        SSOIdentityManager man = idManLoc.getSSOIdentityManagerSoap();
+        checkSoapAuth(man);
+        return man;
     }
 
-    private static SSOIdentityProviderWSLocator getIdProvLoc() {
-        String ssoServicesUrl = SSO_SERVICES_URL;
-        if (!SSO_SERVICES_URL.startsWith("http")) {
-            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
-        }
+    private static SSOIdentityProvider getIdProv() throws ServiceException {
+        String endpoint = getSsoServicesUrl() + "services/SSOIdentityProviderSoap";
         SSOIdentityProviderWSLocator idProvLoc = new SSOIdentityProviderWSLocator();
-        idProvLoc.setSSOIdentityProviderSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityProviderSoap");
-        LOGGER.debug("JOSSO IdentityProvider endpoint:" + ssoServicesUrl + "services/SSOIdentityProviderSoap");
-        return idProvLoc;
+        idProvLoc.setSSOIdentityProviderSoapEndpointAddress(endpoint);
+        LOGGER.debug("JOSSO IdentityProvider endpoint:" + endpoint);
+
+        SSOIdentityProvider prov = idProvLoc.getSSOIdentityProviderSoap();
+        checkSoapAuth(prov);
+        return prov;
     }
 
-    private static SSOSessionManagerWSLocator getIdSessLoc() {
-        String ssoServicesUrl = SSO_SERVICES_URL;
-        if (!SSO_SERVICES_URL.startsWith("http")) {
-            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
-        }
+    private static SSOSessionManager getIdSess() throws ServiceException {
+        String endpoint = getSsoServicesUrl() + "services/SSOSessionManagerSoap";
         SSOSessionManagerWSLocator idSessLoc = new SSOSessionManagerWSLocator();
-        idSessLoc.setSSOSessionManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOSessionManagerSoap");
-        LOGGER.debug("JOSSO SessionManager endpoint:" + ssoServicesUrl + "services/SSOSessionManagerSoap");
-        return idSessLoc;
+        idSessLoc.setSSOSessionManagerSoapEndpointAddress(endpoint);
+        LOGGER.debug("JOSSO SessionManager endpoint:" + endpoint);
+
+        SSOSessionManager man = idSessLoc.getSSOSessionManagerSoap();
+        checkSoapAuth(man);
+        return man;
     }
 
     private static class CachedUserInfo {

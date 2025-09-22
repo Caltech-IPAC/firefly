@@ -221,14 +221,14 @@ public class HttpServices {
 
             handleAuth(httpClient, method, input.getUserId(), input.getPasswd());
 
-            handleCookies(method, input.getCookies());
-
-            handleHeaders(method, input.getHeaders());
+            handleHeaders(method, input.getRequestHeaders());
 
             handleParams(method, input.getParamPairs(), input.getFiles());
 
             logRequestStart(method, input);
 
+            // don't parse, validate, or manage cookies
+            method.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
             httpClient.executeMethod(method);
             if (handler != null) {
                 status = handler.handleResponse(method);
@@ -456,16 +456,6 @@ public class HttpServices {
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(userId, password);
                 client.getState().setCredentials(AuthScope.ANY, credentials);
             }
-        }
-    }
-
-    private static void handleCookies(HttpMethod method, Map<String,String> cookies) {
-        if (cookies != null && cookies.size() > 0) {
-            String cookieStr = cookies.entrySet().stream()
-                    .map((e) -> e.getKey() + "=" + e.getValue())
-                    .collect(Collectors.joining(";"));
-            method.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
-            method.setRequestHeader("Cookie", cookieStr);
         }
     }
 

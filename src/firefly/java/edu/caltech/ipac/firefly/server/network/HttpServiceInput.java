@@ -17,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -161,6 +162,22 @@ public class HttpServiceInput implements Cloneable, Serializable {
         return this;
     }
 
+    /**
+     * Returns the request headers including cookies (if any).
+     * Note that the returned map is a {@link Hashtable} to accommodate
+     * libraries that require it, such as Apache Axis.
+     * @return a map of request headers
+     */
+    public Map<String, String> getRequestHeaders() {
+        Map<String, String> hdrs = headers == null ? new Hashtable<>() : new Hashtable<>(headers);
+        String cookieStr = getCookieString();
+        if (!isEmpty(cookieStr)) {
+            hdrs.put(HttpHeaders.COOKIE, cookieStr);
+        }
+        return hdrs;
+    }
+
+
     public Map<String, String> getCookies() {
         return cookies;
     }
@@ -169,6 +186,10 @@ public class HttpServiceInput implements Cloneable, Serializable {
         if (cookies == null) cookies = new HashMap<>();
         cookies.put(key, value);
         return this;
+    }
+    public String getCookieString() {
+        if (cookies == null || cookies.isEmpty()) return null;
+        return cookies.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("; "));
     }
 
     public Map<String, File> getFiles() {
