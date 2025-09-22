@@ -35,9 +35,7 @@ public class UserCache<T> extends DistribMapCache<T> {
         return new UserCache<>(usrKey);
     }
 
-    private UserCache(String userKey) {
-        super(userKey, USER_KEY_EXPIRY);
-    }
+    private UserCache(String userKey) { super(userKey); }  // based on userKey, with the cache data expiring after the default configured time.
 
     public static boolean exists(StringKey userKey) {
         try(Jedis redis = RedisService.getConnection()) {
