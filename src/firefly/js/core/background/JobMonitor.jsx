@@ -36,6 +36,7 @@ import {FormWatcher} from '../../templates/router/RouteHelper';
 import {logger} from '../../util/Logger';
 
 export const jobMonitorPath = '/jobMonitor';
+const jobIdColIdx = 7;  // the index of the jobId column in the table
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const pollInterval = getAppOptions()?.background?.historyPollInterval || 30000;       // every 30 seconds
@@ -203,7 +204,7 @@ function JobMonitorTable({help_id, ...props}) {
     useEffect(() => {
         const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id);
         if (hlJobId) {
-            const highlightedRow = table.tableData.data.findIndex((row) => row[6] === hlJobId);
+            const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === hlJobId);
             if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
         }
         dispatchTableAddLocal(table, undefined, false);
@@ -253,7 +254,7 @@ function ControlRenderer({cellInfo}) {
     if (!job?.meta?.jobId) return null;
 
     return  (
-        <Stack mx={2} direction='row' justifyContent='right'>
+        <Stack mx={1} direction='row' justifyContent='right'>
             <Progress job={job}/>
             <Results job={job}/>
             <InfoPopup job={job}/>
@@ -374,7 +375,7 @@ function convertToTableModel(jobs, tbl_id) {
             job.startTime && moment.utc(job.startTime).format('YYYY-MM-DD HH:mm:ss'),
             job.endTime && moment.utc(job.endTime).format('YYYY-MM-DD HH:mm:ss'),
             job.phase,
-            job.meta?.jobId
+            job.meta?.jobId         // remember to adjust jobIdColIdx if columns changed
         ]);
 
     const phaseIdx = columns.findIndex((c) => c.name === 'Phase');
