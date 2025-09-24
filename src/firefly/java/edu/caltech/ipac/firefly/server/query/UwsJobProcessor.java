@@ -84,21 +84,16 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         // send abort request.  ignore if there's error
         if (isEmpty(jobUrl)) return;
         String phaseUrl = jobUrl.trim().replaceAll("/$", "") + "/phase" ;        // remove trailing slash
-        Status status = HttpServices.postData(new HttpServiceInput(phaseUrl).setParam("PHASE", "ABORT"),
+        Status status = HttpServices.postData(new HttpServiceInput(phaseUrl).setParam("PHASE", "ABORT").setFollowRedirect(false),
                 res -> {
-                    String location = getResHeader(res, "Location", null);      // expecting a 303 redirect to the job URL
-                    if (location == null) {
-                        String error = ifNotEmpty(parseError(res, phaseUrl)).getOrElse("Unknown error");
-                        int errorCode = isOk(res) ? 400 : res.getStatusCode();
-                        return new Status(errorCode, "Failed to abort: " + error);
-                    } else {
-                        JobInfo jobInfo = Try.it(() -> getUwsJobInfo(jobUrl)).get();
-                        if (jobInfo == null || JobUtil.isActive(jobInfo)) {
-                            String msg = ifNotNull(jobInfo.getError().msg()).getOrElse("Job cannot be aborted");
-                            return new Status(400, "Failed to abort: %s".formatted(msg) );
-                        }
-                        return Status.ok();         // aborted or no longer active
+                    // expecting a 303 redirect to the job URL
+                    // instead, we will query the jobUrl directly to see if it's aborted
+                    JobInfo jobInfo = Try.it(() -> getUwsJobInfo(jobUrl)).get();
+                    if (jobInfo == null || jobInfo.getPhase() != Phase.ABORTED) {
+                        String msg = ifNotNull(jobInfo.getError().msg()).getOrElse("Job cannot be aborted");
+                        return new Status(400, "Failed to abort: %s".formatted(msg) );
                     }
+                    return Status.ok();         // aborted or no longer active
                 }
         );
         if (status.isError()) {

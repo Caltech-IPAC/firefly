@@ -48,7 +48,6 @@ public class JobUtil {
     public static final List<String> RUNID_IGNORE = Arrays.stream(AppProperties.getProperty("uws.runid.ignore", "")
                                                             .split(",")).map(String::trim).toList();        // strings separated by comma
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
     public static final List<String> runIdIgnoreList = new ArrayList<>();
     private static final char[] ALPHABET =
             "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();

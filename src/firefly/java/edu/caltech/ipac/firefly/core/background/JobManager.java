@@ -74,6 +74,7 @@ public class JobManager {
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
     private static final int JOB_EXPIRY_HOURS = AppProperties.getIntProperty("job.expiry.hours", 24*14);        // Time in hours to keep a job after it has ended.  Default to 14 days.
+    private static final int JOB_ARCHIVED_EXPIRY_HOURS = AppProperties.getIntProperty("job.archived.expiry.hours", 24*14);   // Time in hours to keep an archived job after it has ended.  Default to 14 days.
     public static final int JOB_SCAN_BATCH_SIZE = AppProperties.getIntProperty("job.scan.batch_size", 10_000);   // batch size for scanning job keys in Redis.  Default to 10,000.  Larger value return more keys per call but use more CPU and memory per iteration.  this is a good size for larger redis store.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
@@ -196,7 +197,7 @@ public class JobManager {
 
     public static void removeJob(String jobId) {
         ifNotNull(getJobInfo(jobId)).apply(ji -> {
-            allJobInfos.remove(cacheKey(ji));
+            ji.setPhase(ARCHIVED);
             removeLocalJob(ji);
         });
     }
@@ -573,6 +574,11 @@ public class JobManager {
             if (!job.getMeta().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
                 LOG.info("Removing non-monitored job: " + k);
                 allJobInfos.remove(k);      // remove non-monitored job after 1 hour
+            } else if (job.getPhase() == ARCHIVED) {
+                if (job.getEndTime().plus(JOB_ARCHIVED_EXPIRY_HOURS, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                    LOG.info("Removing expired archived job: " + k);
+                    allJobInfos.remove(k);
+                }
             } else if (!CLEANUP_PHASES_EXCLUDES.contains(job.getPhase()) && job.getEndTime().plus(JOB_EXPIRY_HOURS, ChronoUnit.HOURS).isBefore(Instant.now())) {
                 LOG.info("Removing expired job: " + k);
                 allJobInfos.remove(k);
