@@ -42,8 +42,8 @@ import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProviderWSLocator;
 import org.josso.gateway.ws._1_2.wsdl.SSOSessionManager;
 import org.josso.gateway.ws._1_2.wsdl.SSOSessionManagerWSLocator;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import javax.xml.rpc.ServiceException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;

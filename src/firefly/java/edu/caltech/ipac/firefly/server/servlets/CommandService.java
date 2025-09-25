@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;

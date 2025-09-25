@@ -19,8 +19,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 import edu.caltech.ipac.firefly.core.background.Job;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 

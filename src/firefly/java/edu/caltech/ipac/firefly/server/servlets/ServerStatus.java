@@ -24,8 +24,8 @@ import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;

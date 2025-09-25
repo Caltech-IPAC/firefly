@@ -8,8 +8,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Check application health by performing a simple task, then return HTTP code 200 if succeed.

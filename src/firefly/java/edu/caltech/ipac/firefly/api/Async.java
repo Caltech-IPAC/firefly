@@ -15,9 +15,9 @@ import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;

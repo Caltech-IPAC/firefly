@@ -6,9 +6,9 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Date: 10/24/16

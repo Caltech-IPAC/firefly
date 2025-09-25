@@ -15,8 +15,8 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.URLParms;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;

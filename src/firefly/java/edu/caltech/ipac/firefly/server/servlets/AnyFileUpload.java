@@ -25,13 +25,15 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.fileupload2.core.FileItemInput;
+import org.apache.commons.fileupload2.core.FileItemInputIterator;
+import org.apache.commons.fileupload2.jakarta.JakartaServletDiskFileUpload;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -52,7 +54,7 @@ import static edu.caltech.ipac.firefly.server.util.QueryUtil.getUploadDir;
  *  filename - string
  *  cacheKey
  *  fileAnalysis - one of "Brief", "Normal", "Details", "false"
- *  analyzerId - id string of pass to file analysis, ignored f fileAnalysis is not specified
+ *  analyzerId - id string of pass to file analysis, ignored if fileAnalysis is not specified
  *  >> posted file
  *
  * @author loi
@@ -80,8 +82,6 @@ public class AnyFileUpload extends BaseHttpServlet {
             FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID,HIPS_CACHE,
             WEB_PLOT_REQUEST, FILE_ANALYSIS, ServerParams.COMMAND);
 
-
-
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         doFileUpload(req, res);
     }
@@ -90,31 +90,35 @@ public class AnyFileUpload extends BaseHttpServlet {
 
         StopWatch.getInstance().start("doFileUpload");
 
-        FileItemStream uploadedItem = null;
+        FileItemInput uploadedItem = null;
 
         // processes the parameters...
         SrvParam sp = new SrvParam(req.getParameterMap());
 
-        if (ServletFileUpload.isMultipartContent(req)) {        // this is a multipart request... extract params from parts
-            ServletFileUpload upload = new ServletFileUpload( new DiskFileItemFactory(64 * 1024, getUploadDir("tmpDiskStore")));        // set factory to raise in-memory usage
-            for (FileItemIterator iter = upload.getItemIterator(req); iter.hasNext(); ) {
-                FileItemStream item = iter.next();
+        if (JakartaServletFileUpload.isMultipartContent(req)) {  // this is a multipart request... extract params from parts
+            // Create the upload handler
+            JakartaServletDiskFileUpload upload = new JakartaServletDiskFileUpload();
+
+            // Optional: set maximum file size
+            upload.setFileSizeMax(64L * 1024 * 1024);  // 64 MB
+
+            FileItemInputIterator iter = upload.getItemIterator(req);
+            while (iter.hasNext()) {
+                FileItemInput item = iter.next();
                 if (item.isFormField()) {
-                    sp.setParam(item.getFieldName(), FileUtil.readFile(item.openStream()));
+                    sp.setParam(item.getFieldName(), FileUtil.readFile(item.getInputStream()));
                 } else {
                     uploadedItem = item;
-                    break;
-                    // file should be the last param.  param after file will be ignored.
+                    break;  // file should be the last param
                 }
-            }
-        }
+            }        }
 
         // handle upload file request... results in saved as an UploadFileInfo
         String analysisType = sp.getOptional(FILE_ANALYSIS);
         boolean analyzeFile= analysisType != null && !analysisType.equalsIgnoreCase("false");
 
         try {
-            Result result= retrieveFile(sp,uploadedItem);
+            Result result= retrieveFile(sp, uploadedItem);
             UploadFileInfo uploadFileInfo = result.uploadFileInfo;
             FileInfo statusFileInfo= result.statusFileInfo;
             int responseCode= statusFileInfo.getResponseCode();
@@ -174,10 +178,10 @@ public class AnyFileUpload extends BaseHttpServlet {
         return (file!=null && responseCode!=200 && responseCode!=304);
     }
 
-
     private static UploadFileInfo makeUploadFileInfo(FileInfo statusFileInfo, String fname) {
         File file= statusFileInfo.getFile();
-        return new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname!=null ? fname : file.getName(),
+        return new UploadFileInfo(ServerContext.replaceWithPrefix(file), file,
+                fname!=null ? fname : file.getName(),
                 statusFileInfo.getContentType(), statusFileInfo.getResponseCode());
     }
 
@@ -193,7 +197,6 @@ public class AnyFileUpload extends BaseHttpServlet {
         } catch (Exception e) {
             return FileAnalysisReport.ReportType.Details;
         }
-
     }
 
     private static UploadFileInfo getFileFromWorkspace(SrvParam sp) throws IOException, FailedRequestException {
@@ -203,7 +206,6 @@ public class AnyFileUpload extends BaseHttpServlet {
         String fileName = params1.getRelPath().substring((params1.getRelPath().lastIndexOf("/") + 1));
         return new UploadFileInfo(rPathInfo, uf, fileName, null);
     }
-
 
     private static String callAnalysis(SrvParam sp, FileInfo statusFileInfo,
                                        UploadFileInfo uploadFileInfo, String fileCacheKey) throws Exception {
@@ -222,9 +224,8 @@ public class AnyFileUpload extends BaseHttpServlet {
         return returnVal;
     }
 
+    private static Result retrieveFile(SrvParam sp, FileItemInput uploadedItem) throws Exception {
 
-    private static Result retrieveFile(SrvParam sp, FileItemStream uploadedItem) throws Exception {
-        
         String wsCmd = sp.getOptional(WS_CMD);
         String fromUrl = sp.getOptional(URL);
         WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
@@ -271,11 +272,10 @@ public class AnyFileUpload extends BaseHttpServlet {
             // it's a stream from multipart... write it to disk
             String name = uploadedItem.getName();
             File tmpFile = File.createTempFile("upload_", "_" + name, getSessUploadDir(sp.convertToServerRequest()));
-            FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
+            FileUtil.writeToFile(uploadedItem.getInputStream(), tmpFile, (current) -> updateFeedback(name, current));
             uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
             statusFileInfo= new FileInfo(uploadFileInfo.getFile());
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Invalid parameters to AnyFileUpload");
         }
         return new Result(statusFileInfo,uploadFileInfo);
