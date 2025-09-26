@@ -165,7 +165,7 @@ COPY firefly/docker/local.xml conf/Catalina/localhost
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps-ref/
 
 # Enable GZIP compression in Tomcat's HTTP connector
-RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" compressionMinSize="1024" noCompressionUserAgents="gozilla, traviata" compressableMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2"/' \
+RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" useSendfile="false" compressibleMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2"/' \
     $CATALINA_HOME/conf/server.xml
 
 # preinstall DuckDB extensions; remember to update version when DuckDB is updated

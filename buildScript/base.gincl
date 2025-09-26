@@ -1,5 +1,6 @@
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.Files
 
 def deleteLink(String filePath) {
     Path path = Paths.get(filePath)
@@ -21,10 +22,11 @@ task purge {
     description = 'Removes all build files from this project, including node_modules, Maven cache, and Gradle cache.'
 
     doLast {
-        println('Removing build directories.')
+        println('Removing build directories, including node_modules, Maven cache, and Gradle cache.')
         delete "${rootDir}/build",
                 "${rootDir}/jars/build",
-                "${rootDir}/node_modules"
+                "${rootDir}/node_modules",
+                "${rootDir}/.gradle"
 
         println('Removing Maven and Gradle caches...')
         delete "${System.getProperty('user.home')}/.m2/repository",
@@ -38,7 +40,7 @@ task purge {
 }
 
 task clean {
-    description= 'Removes all build files except node_module(installed JS libraries).'
+    description= 'Removes all build files except installed libraries, e.g. node_modules, Maven cache.'
     doLast {
         println('Removing all build directories.')
         delete "${rootDir}/build", "${rootDir}/jars/build"

@@ -26,6 +26,7 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileItemInput;
 import org.apache.commons.fileupload2.core.FileItemInputIterator;
 import org.apache.commons.fileupload2.jakarta.JakartaServletDiskFileUpload;
@@ -41,7 +42,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.getSessUploadDir;
-import static edu.caltech.ipac.firefly.server.util.QueryUtil.getUploadDir;
 
 /**
  * Date: Feb 16, 2011
@@ -96,11 +96,11 @@ public class AnyFileUpload extends BaseHttpServlet {
         SrvParam sp = new SrvParam(req.getParameterMap());
 
         if (JakartaServletFileUpload.isMultipartContent(req)) {  // this is a multipart request... extract params from parts
-            // Create the upload handler
-            JakartaServletDiskFileUpload upload = new JakartaServletDiskFileUpload();
 
-            // Optional: set maximum file size
-            upload.setFileSizeMax(64L * 1024 * 1024);  // 64 MB
+            DiskFileItemFactory factory = DiskFileItemFactory.builder()
+                    .setBufferSize(1024 * 1024).get();               // 1MB threshold before writing to disk
+
+            JakartaServletDiskFileUpload upload = new JakartaServletDiskFileUpload(factory);
 
             FileItemInputIterator iter = upload.getItemIterator(req);
             while (iter.hasNext()) {
