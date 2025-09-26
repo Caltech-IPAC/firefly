@@ -85,7 +85,7 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
         if (setFilterCount || setSelectedCount) {
             if (setSelectedCount) {
                 // principal columns are preselected
-                const si = get(tbl, 'origTableModel.selectInfo') || get(tbl, 'selectInfo');
+                const si = tbl?.selectInfo ?? tbl?.origTableModel?.selectInfo;
                 const selectInfoCls = si? new SelectInfo(si) : SelectInfo.newInstance(si);
                 setSelectedCount(selectInfoCls.getSelectedCount());
             }
@@ -100,10 +100,11 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
                             const filterInfo = get(tableModel, 'request.filters', '');
                             setFilterCount && setFilterCount(filterInfo ? filterInfo.split(';').length : 0);
                         }
-                        selectInfo = get(tableModel, 'origTableModel.selectInfo');
+                        selectInfo = tableModel?.selectInfo ?? tableModel?.origTableModel?.selectInfo;
                     } else {
                         if (action.payload.tbl_id === tbl_id) {
-                            selectInfo = get(getTblById(tbl_id), 'origTableModel.selectInfo');
+                            const tableModel = getTblById(tbl_id);
+                            selectInfo = tableModel?.selectInfo ?? tableModel?.origTableModel?.selectInfo;
                         }
                     }
                     const selectInfoCls = selectInfo ? new SelectInfo(selectInfo) : SelectInfo.newInstance(selectInfo);
