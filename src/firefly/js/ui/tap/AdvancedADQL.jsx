@@ -213,12 +213,16 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
             const keys = keysInfo?.tableData?.data?.filter((row) => row[0] === keyId);
 
             targetTable  = maybeQuote(targetTable, true);
-            let val = ` INNER JOIN ${targetTable} ON `;
+            let val = '';
             keys.forEach((row, idx) => {
                 const fromColumn   = maybeQuote(fixCname(row[4], row[1]));
                 const targetColumn = maybeQuote(fixCname(row[5], row[2]));
                 val += `${idx>0 ? ' AND' : ''} ${fromColumn} = ${targetColumn}`;
             });
+            if ( keys.length > 1 ) {
+                val = '( ' + val + ' )';
+            }
+            val = ` INNER JOIN ${targetTable} ON ` + val;
             insertAtCursor(textArea, val, adqlKey, groupKey, prismLiveRef.current);
         }
     };
