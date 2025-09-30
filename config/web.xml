@@ -27,23 +27,6 @@
         <url-pattern>/firefly_loader.js</url-pattern>
     </filter-mapping>
 
-    <!--GZipFilter-->
-    <filter>
-        <filter-name>GZipFilter</filter-name>
-        <filter-class>net.sf.ehcache.constructs.web.filter.GzipFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>GZipFilter</filter-name>
-        <url-pattern>*.html</url-pattern>
-        <url-pattern>*.css</url-pattern>
-        <url-pattern>*.js</url-pattern>
-        <url-pattern>/sticky/CmdSrv</url-pattern>
-        <url-pattern>/CmdSrv/sync</url-pattern>
-        <url-pattern>/CmdSrv/async</url-pattern>
-        <url-pattern>/CmdSrv/async/*</url-pattern>
-        <url-pattern>/sticky/firefly/events</url-pattern>
-    </filter-mapping>
-
     <!--CORS Filter-->
     <filter>
         <filter-name>CorsFilter</filter-name>

@@ -13,7 +13,7 @@ import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.StringKey;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;

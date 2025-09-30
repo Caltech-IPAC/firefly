@@ -1,0 +1,48 @@
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.Files
+
+def deleteLink(String filePath) {
+    Path path = Paths.get(filePath)
+    if (Files.exists(path) && Files.isSymbolicLink(path)) {
+            println("Deleting symlink: $filePath")
+            Files.delete(path)   // deletes symlink only
+    }
+}
+
+allprojects {
+    defaultTasks 'preselect'
+}
+
+task preselect {
+    description= 'A placeholder task to designate the task to run for each project.  Similar to defaultTasks.'
+}
+
+task purge {
+    description = 'Removes all build files from this project, including node_modules, Maven cache, and Gradle cache.'
+
+    doLast {
+        println('Removing build directories, including node_modules, Maven cache, and Gradle cache.')
+        delete "${rootDir}/build",
+                "${rootDir}/jars/build",
+                "${rootDir}/node_modules",
+                "${rootDir}/.gradle"
+
+        println('Removing Maven and Gradle caches...')
+        delete "${System.getProperty('user.home')}/.m2/repository",
+                "${System.getProperty('user.home')}/.gradle/caches"
+
+        deleteLink("${rootDir}/yarn.lock")
+        deleteLink("${rootDir}/package.json")
+        deleteLink("${rootDir}/config/test")
+
+    }
+}
+
+task clean {
+    description= 'Removes all build files except installed libraries, e.g. node_modules, Maven cache.'
+    doLast {
+        println('Removing all build directories.')
+        delete "${rootDir}/build", "${rootDir}/jars/build"
+    }
+}

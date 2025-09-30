@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

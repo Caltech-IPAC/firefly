@@ -19,14 +19,13 @@ import nom.tam.fits.FitsFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.annotation.WebListener;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.websocket.server.HandshakeRequest;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -399,15 +398,6 @@ public class ServerContext {
     public static RequestAgent getHttpRequestAgent(HttpServletRequest request, HttpServletResponse response) {
         // this is an abstraction point.  this class can be loaded from configuration.
         return new RequestAgent.HTTP(request, response);
-    }
-
-    public static RequestAgent getWsRequestAgent(HandshakeRequest request, HandshakeResponse response) {
-        // this is an abstraction point.  this class can be loaded from configuration.
-        if (request instanceof HttpServletRequest) {
-            return new RequestAgent.HTTP((HttpServletRequest) request, (HttpServletResponse) response);
-        } else {
-            return null;
-        }
     }
 
     //====================================================================

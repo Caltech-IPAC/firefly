@@ -38,7 +38,7 @@ RUN apt-get update \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
 
-COPY --from=tomcat:9.0-jre21-temurin-jammy /usr/local/tomcat /usr/local/tomcat
+COPY --from=tomcat:11.0.11-jre21-temurin-jammy /usr/local/tomcat /usr/local/tomcat
 
 
 ENV CATALINA_HOME=/usr/local/tomcat \
@@ -106,7 +106,7 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jre21-temurin-jammy
+FROM tomcat:11.0.11-jre21-temurin-jammy
 
 ARG build_dir
 ARG user=tomcat
@@ -163,6 +163,13 @@ COPY firefly/docker/local.xml conf/Catalina/localhost
 
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps-ref/
+
+# Turn on GZIP compression by adding these attributes to the Tomcat connector:
+# - compression="on" → turn on response compression
+# - useSendfile="false" →  avoids bypassing compression for static files
+# - compressibleMimeType → list of text-based formats to compress (HTML, CSS, JS, JSON, VOTable, XML, CSV, SVG, Fonts)
+RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" useSendfile="false" compressibleMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2"/' \
+    $CATALINA_HOME/conf/server.xml
 
 # preinstall DuckDB extensions; remember to update version when DuckDB is updated
 ARG DUCKDB_TARGET=v1.1.3/linux_amd64_gcc4
