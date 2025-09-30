@@ -164,7 +164,10 @@ COPY firefly/docker/local.xml conf/Catalina/localhost
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps-ref/
 
-# Enable GZIP compression in Tomcat's HTTP connector
+# Turn on GZIP compression by adding these attributes to the Tomcat connector:
+# - compression="on" → turn on response compression
+# - useSendfile="false" →  avoids bypassing compression for static files
+# - compressibleMimeType → list of text-based formats to compress (HTML, CSS, JS, JSON, VOTable, XML, CSV, SVG, Fonts)
 RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" useSendfile="false" compressibleMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2"/' \
     $CATALINA_HOME/conf/server.xml
 
