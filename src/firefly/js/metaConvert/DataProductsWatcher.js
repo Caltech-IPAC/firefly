@@ -28,6 +28,7 @@ import {
 } from './DataProductsCntlr.js';
 import {dpdtMessage, dpdtSimpleMsg, DPtypes} from './DataProductsType.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from 'firefly/metaConvert/DataProductConst';
 
 const MAX_GRID_SIZE= 50;
 
@@ -48,7 +49,7 @@ const getDataProductsWatcherDef = () => ({
               ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
 });
 
-export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', factoryKey, paused=true}) {
+export function startDataProductsWatcher({dataTypeViewerId= DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, factoryKey, paused=true}) {
     dispatchAddTableTypeWatcherDef( { ...getDataProductsWatcherDef(), id: dataTypeViewerId, options:{dataTypeViewerId, factoryKey, paused} });
 }
 
@@ -68,7 +69,7 @@ let ignoreCustomDataChange= false;
  * @param params.paused
  */
 function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
-    const {options:{dataTypeViewerId= 'DataProductsType', factoryKey}} = params;
+    const {options:{dataTypeViewerId= DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, factoryKey}} = params;
     let firstTime= params.firstTime ?? true;
     const dpId= params.options.dpId || dataTypeViewerId;
     let {paused= true, zoomOnNextViewSizeChange=false} = params;

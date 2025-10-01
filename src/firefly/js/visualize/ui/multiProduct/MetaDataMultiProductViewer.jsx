@@ -8,6 +8,7 @@ import {setFactoryTemplateOptions, getDefaultFactoryOptions} from '../../../meta
 import {startDataProductsWatcher} from '../../../metaConvert/DataProductsWatcher.js';
 import {StatefulTabsCtx} from '../../../ui/panel/TabPanel';
 import {MultiProductViewer} from './MultiProductViewer.jsx';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from 'firefly/metaConvert/DataProductConst';
 
 const startedWatchers=[];
 
@@ -25,7 +26,7 @@ function startWatcher(dpId, options) {
  * If you ar have more that on MultiProductViewer you should lay the out directly
  */
 export const MetaDataMultiProductViewer= memo(({
-                                                   viewerId='DataProductsType', dataProductTableId,
+                                                   viewerId=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dataProductTableId,
                                                    autoStartWatcher=true, enableExtraction= false, noProductMessage,
                                                    dataProductsFactoryOptions= getDefaultFactoryOptions()}) => {
     const {statefulTabComponentKey} = useContext(StatefulTabsCtx);

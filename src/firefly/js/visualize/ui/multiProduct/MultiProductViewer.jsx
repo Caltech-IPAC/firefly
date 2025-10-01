@@ -23,11 +23,12 @@ import {
 import {createMakeDropdownFunc} from './DPDropdown.jsx';
 import {AdvancedMessage, ProductDownload, ProductMessage, TextFileViewer} from './MPMessages.jsx';
 import {MultiProductChoice} from './MultiProductChoice.jsx';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from 'firefly/metaConvert/DataProductConst';
 
 const getInitList= () => dataProductRoot().map( ({dpId}) => dpId);
 
 
-export function MultiProductViewer ({viewerId= 'DataProductsType', metaDataTableId, ...props}) {
+export function MultiProductViewer ({viewerId= DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, metaDataTableId, ...props}) {
     const [initList, setInitList]= useState(getInitList());
     const dpId= viewerId;
     const activateParams=  getActivateParams(dataProductRoot(),dpId);
