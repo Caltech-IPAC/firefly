@@ -6,6 +6,8 @@ package edu.caltech.ipac.util.download;
  */
 
 
+import edu.caltech.ipac.util.StringUtils;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -70,6 +72,7 @@ public record S3Ref(String region, String bucket, String key) {
                 URL url = new URI(s).toURL();
                 var path = url.getPath();
                 if (path.length() < 2) return null;
+                if (!StringUtils.isEmpty(url.getQuery())) return null;
                 var host = url.getHost().toLowerCase();
                 if (!host.endsWith(AMAZON) || !host.contains("s3.")) return null;
                 var cleanPath = path.substring(1);
