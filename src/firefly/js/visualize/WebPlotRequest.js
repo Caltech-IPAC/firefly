@@ -4,7 +4,6 @@ import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
-import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import CoordinateSys from 'firefly/visualize/CoordSys.js';
@@ -38,6 +37,8 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
  * @public
  * @global
  */
+
+/** @type ServiceType */
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'UNKNOWN'],
                                               { ignoreCase: true });
 /**
@@ -57,6 +58,8 @@ export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'M
  * @public
  * @global
  */
+
+/** @type TitleOptions */
 export const TitleOptions= new Enum([
     'NONE',  // use what it in the title
     'PLOT_DESC', // use the plot description key
@@ -87,6 +90,8 @@ export const AnnotationOps= new Enum([
  * @prop TRUE_LABELS_FALSE
  * @type {Enum}
  */
+
+/** type GridOnStatus */
 export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE'], { ignoreCase: true });
 
 export const DEFAULT_THUMBNAIL_SIZE= 70;
@@ -118,10 +123,14 @@ export const WPConst= {
     RESOLVER : 'Resolver',
     PROGRESS_KEY : 'ProgressKey',
     FLIP_Y : 'FlipY',
-    THUMBNAIL_SIZE : 'thumbnailSize',
     URL_CHECK_FOR_NEWER: 'urlCheckForNewer',
-    MASK_REQUIRED_WIDTH: 'MaskRequiredWidth',
-    MASK_REQUIRED_HEIGHT: 'MaskRequiredHeight',
+    S3_URI : 'S3Uri',
+    S3_BUCKET: 'S3Bucket',
+    S3_REGION: 'S3Region',
+    S3_KEY: 'S3Key',
+    GCS_PROJECT: 'GCSProject',
+    GCS_BUCKET: 'GCSBucket',
+    GCS_OBJ_NAME: 'GCSObjName',
     FILTER: 'filter',
 
 // keys - client side operations
@@ -210,19 +219,13 @@ export class WebPlotRequest extends ServerRequest {
             wpr.setAttributes(obj.attributes);
             wpr.setParams(cleanupObj(obj));
 
-
-            let typeGuess;
-            if (obj.id) typeGuess= RequestType.PROCESSOR;
-            else if (obj[WPConst.FILE]) typeGuess= RequestType.FILE;
-            else if (obj[WPConst.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
-            else if (obj[WPConst.SERVICE])   typeGuess= RequestType.SERVICE;
-            else if (obj[WPConst.URLKEY]) typeGuess= RequestType.URL;
-            else if (obj[WPConst.HIPS_ROOT_URL]) typeGuess= RequestType.HiPS;
-
+            const typeGuess= getTypeGuess(obj);
             if (typeGuess && !wpr.params[WPConst.TYPE]) wpr.setRequestType(typeGuess);
 
             // setting safe urls
+            if (wpr.params[WPConst.S3_URI]) wpr.setS3URI(wpr.params[WPConst.URLKEY]);
             if (wpr.params[WPConst.URLKEY]) wpr.setURL(wpr.params[WPConst.URLKEY]);
+            if (wpr.params[WPConst.S3_KEY]) wpr.setSafeParam(WPConst.S3_KEY,wpr.params[WPConst.URLKEY]);
             if (wpr.params[WPConst.HIPS_ROOT_URL]) wpr.setHipsRootUrl(wpr.params[WPConst.HIPS_ROOT_URL]);
 
             return wpr;
@@ -249,10 +252,18 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    static makeURLPlotRequest(url, userDesc) {
-        const req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
+    static makeURIPlotRequest(url, userDesc) {
+        const req = new WebPlotRequest(RequestType.URI, userDesc||'Fits from URL: ' + url);
         req.setTitleOptions(TitleOptions.FILE_NAME);
         req.setURL(url);
+        return req;
+    }
+
+    static makeNetReferencePlotRequest(uri, region, bucket_name, key, userDesc) {
+        const req = new WebPlotRequest(RequestType.URI, userDesc||'Fits from URL: ' + uri);
+        req.setTitleOptions(TitleOptions.FILE_NAME);
+        req.setURL(uri);
+        if (bucket_name && key) req.setS3Params(region,bucket_name,key);
         return req;
     }
 
@@ -517,7 +528,6 @@ export class WebPlotRequest extends ServerRequest {
      * <li>ZoomType.LEVEL is the default when there is not width and height, when set you may optionally call
      * setInitialZoomLevel the zoom will default to be 1x</li>
      * <li>if ZoomType.TO_WIDTH then you must call setZoomToWidth and set a width </li>
-     * <li>if ZoomType.FULL_SCREEN then you must call setZoomToWidth with a width and
      * setZoomToHeight with a height</li>
      * <li>if ZoomType.ARCSEC_PER_SCREEN_PIX then you must call setZoomArcsecPerScreenPix</li>
      * </ul>
@@ -584,12 +594,6 @@ export class WebPlotRequest extends ServerRequest {
      */
     getRotationAngle() { return this.getFloatParam(WPConst.ROTATION_ANGLE); }
 
-    /**
-     * set if this image should be flipped on the Y axis
-     * todo- deprecate- this is done on the client now
-     * @param flipY boolean, true to flip, false not to flip
-     */
-    setFlipY(flipY) { this.setParam(WPConst.FLIP_Y,flipY+''); }
 
 //======================================================================
 //----------------------- Retrieval Settings --------------------------------
@@ -677,26 +681,6 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     /**
-     * @param {string} objectName string astronomical object to search
-     */
-    setObjectName(objectName) { this.setParam(WPConst.OBJECT_NAME, objectName); }
-
-    /**
-     * @return {string} astronomical object, string
-     */
-    getObjectName() { return this.getParam(WPConst.OBJECT_NAME); }
-
-    /**
-     * @param resolver Resolver, name resolver type
-     */
-    setResolver(resolver) { this.setParam(WPConst.RESOLVER, resolver.toString()); }
-
-    /**
-     * @return Resolver, name resolver type
-     */
-    getResolver() { return parseResolver(this.getParam(WPConst.RESOLVER)); }
-
-    /**
      *
      * @param {WorldPt|undefined} worldPt WorldPt
      */
@@ -736,19 +720,6 @@ export class WebPlotRequest extends ServerRequest {
      */
     getGridOn() { return GridOnStatus.get(this.getParam(WPConst.GRID_ON)) ||GridOnStatus.FALSE; }
 
-    /**
-     * @param thumbnailSize int
-     */
-    setThumbnailSize(thumbnailSize) { this.setParam(WPConst.THUMBNAIL_SIZE, thumbnailSize+''); }
-
-    /**
-     * @return int
-     */
-    getThumbnailSize() { return this.getIntParam(WPConst.THUMBNAIL_SIZE, DEFAULT_THUMBNAIL_SIZE); }
-
-    setHeaderKeyForTitle(headerKey) { this.setParam(WPConst.HEADER_KEY_FOR_TITLE, headerKey); }
-    getHeaderKeyForTitle() { return this.getParam(WPConst.HEADER_KEY_FOR_TITLE); }
-
     setRequestKey(key) { this.setParam(WPConst.PROGRESS_KEY,key); }  // alias of setProgressKey
     getRequestKey() { return this.getParam(WPConst.PROGRESS_KEY); } // alias of getProgressKey
 
@@ -778,27 +749,29 @@ export class WebPlotRequest extends ServerRequest {
     setPlotAsMask(plotAsMask) { this.setParam(WPConst.PLOT_AS_MASK, plotAsMask+''); }
     isPlotAsMask() { return this.getBooleanParam(WPConst.PLOT_AS_MASK); }
 
-
-    setMaskColors(colors) {
-        if (isArray(colors)) {
-            this.setParam(WPConst.MASK_COLORS, join(colors, ';'));
-        }
-        else {
-            this.setParam(WPConst.MASK_COLORS, colors);
-        }
+    setS3Params(region, bucket, key) {
+        this.setParam(WPConst.S3_REGION, region);
+        this.setParam(WPConst.S3_BUCKET, bucket);
+        this.setSafeParam(WPConst.S3_KEY, key);
     }
 
-    getMaskColors() {
-        const retList= [];
-        if (this.containsParam(WPConst.MASK_COLORS)) {
-            return this.getParam(WPConst.MASK_COLORS).split(';');
-        }
-        return retList;
+    setGcsParams(project, bucket, objName) {
+        this.setParam(WPConst.GCS_PROJECT, project);
+        this.setParam(WPConst.GCS_BUCKET, bucket);
+        this.setSafeParam(WPConst.GCS_OBJ_NAME, objName);
     }
 
-    setMaskRequiredWidth(width) { this.setParam(WPConst.MASK_REQUIRED_WIDTH, width+''); }
+    setS3URI(s3Uri) { this.setSafeParam(WPConst.S3_URI, s3Uri); }
 
-    setMaskRequiredHeight(height) { this.setParam(WPConst.MASK_REQUIRED_HEIGHT, height+''); }
+    getS3URI() { return this.getSafeParam(WPConst.S3_URI); }
+
+    getS3Region() { return this.getParam(WPConst.S3_REGION); }
+    getS3Bucket() { return this.getParam(WPConst.S3_BUCKET); }
+    getS3Key() { return this.getSafeParam(WPConst.S3_KEY); }
+
+    getGcsProject() { return this.getParam(WPConst.GCS_PROJECT); }
+    getGcsBucket() { return this.getParam(WPConst.GCS_BUCKET); }
+    getGcsObjName() { return this.getSafeParam(WPConst.GCS_OBJ_NAME); }
 
     setHipsRootUrl(url) { this.setSafeParam(fixHiPSRoot(WPConst.HIPS_ROOT_URL), url);}
     getHipsRootUrl() { return fixHiPSRoot(this.getSafeParam(WPConst.HIPS_ROOT_URL));}
@@ -836,7 +809,7 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      * Return the request area
-     * i am using circle but it is really size not radius - todo: fix this
+     * i am using circle but it is really size not radius
      *
      * @return an area to select
      */
@@ -855,7 +828,7 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * Set an attribute that will be included in the WebPlot.attributes object
+     * Set an attribute that will be included in the attributes object
      * @param {object} attObj - an object with name and string values that will be added to the attributes
      * @see PlotAttribute a set of predefined attribute names
      */
@@ -866,7 +839,6 @@ export class WebPlotRequest extends ServerRequest {
         Object.keys(attObj).forEach( (k) => {
             this.setParam(get(plotAttKeysEnum.get(k), 'key',k),attObj[k].toString());
         });
-        this.attributeCache= null;
     }
 
     /**
@@ -875,13 +847,10 @@ export class WebPlotRequest extends ServerRequest {
      */
     getAttributes() {
         // The return is computed as follows:
-        //    - all keys that are not part of the stand param keys
-        //    - and all keys the are plot attribute keys.
+        //    - all keys that are not part of the standard param keys
+        //    - and all keys are plot attribute keys.
         //    - this allows some param keys to be treated at attributes
-        if (!this.attributeCache) {
-            this.attributeCache= {...omit(this.params, paramKeys), ...pick(this.params, plotAttKeys)};
-        }
-        return this.attributeCache;
+        return {...omit(this.params, paramKeys), ...pick(this.params, plotAttKeys)};
     }
 
 
@@ -1015,6 +984,23 @@ function makeDataOnlyRequestString(r) {
     r.setRotateNorth(false);
     r.setRotate(0);
     return r.toString();
+}
+
+function getTypeGuess(reqObj) {
+    if (!reqObj) return;
+    const hasURL= Boolean(reqObj[WPConst.URL]);
+    const hasS3URI= Boolean(reqObj[WPConst.S3_URI]);
+    const hasS3BucketKey= Boolean(reqObj[WPConst.S3_BUCKET]) && Boolean(reqObj[WPConst.S3_KEY]);
+    const hasGcsBucketKey= Boolean(reqObj[WPConst.GCS_BUCKET]) && Boolean(reqObj[WPConst.GCS_OBJ_NAME]);
+
+    if (reqObj.id) return RequestType.PROCESSOR;
+    else if (reqObj[WPConst.FILE]) return RequestType.FILE;
+    else if (reqObj[WPConst.SURVEY_KEY]) return RequestType.SERVICE;
+    else if (reqObj[WPConst.SERVICE])   return RequestType.SERVICE;
+    else if (hasURL && !hasS3URI && !hasS3BucketKey) return RequestType.URI;
+    else if (hasURL || hasS3URI || hasS3BucketKey)   return RequestType.URI;
+    else if (hasGcsBucketKey) return RequestType.URI;
+    else if (reqObj[WPConst.HIPS_ROOT_URL]) return RequestType.HiPS;
 }
 
 /**

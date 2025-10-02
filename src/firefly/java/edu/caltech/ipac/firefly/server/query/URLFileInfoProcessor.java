@@ -7,11 +7,11 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
-import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.UriRefParams;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,8 +59,10 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
         try {
             if (url==null) throw new MalformedURLException("Invalid URL");
 
-            AnyUrlParams params = new AnyUrlParams(url,progressKey,plotId);
-            if (dir!=null) params.setFileDir(dir);
+            UriRefParams params = new UriRefParams(url);
+            params.setPlotId(plotId);
+            params.setStatusKey(progressKey);
+            params.setDownloadDir(dir);
 
             if (addtlInfo != null) {
                 params.setAddtlInfo(addtlInfo);
@@ -68,7 +70,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             if (ServerContext.getRequestOwner().isAuthUser()) {
                 params.setLoginName(ServerContext.getRequestOwner().getUserInfo().getLoginName());
             }
-            retval= LockingVisNetwork.retrieveURL(params);
+            retval= LockingRetrieve.downloadWithCacheMsg(params);
             if (retval.getResponseCode()>=500) {
                 File f= new File(retval.getInternalFilename());
                 if (f.length()<800) {

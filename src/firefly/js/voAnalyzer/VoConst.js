@@ -11,6 +11,7 @@ export const CONTENT_TYPE = 'content_type';
 export const CONTENT_LENGTH = 'content_length';
 export const CONTENT_QUALIFIER = 'content_qualifier';
 export const ACCESS_URL = 'access_url';
+export const CLOUD_ACCESS = 'cloud_access';
 export const ACCESS_FORMAT = 'access_format';
 export const S_REGION = 's_region';
 export const DESCRIPTION = 'description';
@@ -140,7 +141,8 @@ export const OBSTAPCOLUMNS = [
     ['pol_xel', 'meta.number', 'Char.PolarizationAxis.numBins'],
     ['facility_name', 'meta.id;instr.tel', 'Provenance.ObsConfig.Facility.name'],
     ['obs_title', 'meta.title;obs', 'DataID.title'],
-    ['instrument_name', 'meta.id;instr', 'Provenance.ObsConfig.Instrument.name']
+    ['instrument_name', 'meta.id;instr', 'Provenance.ObsConfig.Instrument.name'],
+    [CLOUD_ACCESS, '', '']
 ];
 export const SSA_COV_UTYPE = 'char.spatialaxis.coverage.location.value';
 export const SSA_TITLE_UTYPE = 'dataid.title';

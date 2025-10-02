@@ -180,7 +180,7 @@ public class ZipHandler {
                 String extName = ofNullable(fi.getExternalName()).orElse("").trim();
                 String suffix = fi.getSuffix();
                 if (extName.isEmpty() || extName.endsWith("/")) {
-                    String suggestedFilename = URLDownload.getSugestedFileName(uc);
+                    String suggestedFilename = URLDownload.getSuggestedFileName(uc);
                     suggestedFilename = isEmpty(suggestedFilename) ? getFileNameFromUrl(url) : suggestedFilename;
                     extName = extName + suggestedFilename;
                     fi.setExternalName(extName);

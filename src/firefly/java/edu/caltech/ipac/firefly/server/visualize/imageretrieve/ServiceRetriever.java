@@ -7,7 +7,7 @@ import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
-import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry;
@@ -110,7 +110,7 @@ public class ServiceRetriever implements FileRetriever {
             params.setSizeInDeg(sizeInDegrees);
         }
         params.setWorldPt(circle.center());
-        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> SloanDssImageGetter.get((SloanDssImageParams) p,f));
+        FileInfo fi = LockingRetrieve.serviceWithCacheMsg(params, (p, f) -> SloanDssImageGetter.get((SloanDssImageParams) p,f));
         fi.setDesc(ServiceDesc.get(request));
         return fi;
     }
@@ -125,7 +125,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setWidth(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setHeight(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setSurvey(surveyKey);
-        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> DssImageGetter.get((DssImageParams) p,f));
+        FileInfo fi= LockingRetrieve.serviceWithCacheMsg(params, (p, f) -> DssImageGetter.get((DssImageParams) p,f));
         fi.setDesc(ServiceDesc.get(request));
         return fi;
     }
@@ -187,7 +187,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.radius());
         params.setDataType(r.getParam(ImageMasterDataEntry.PARAMS.DATA_TYPE.getKey()));
-        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasIbeImageGetter.get((AtlasImageParams) p));
+        FileInfo fi = LockingRetrieve.serviceWithCacheMsg(params, (p, f) -> AtlasIbeImageGetter.get((AtlasImageParams) p));
         fi.setDesc(ServiceDesc.get(r));
         return fi;
     }
@@ -224,7 +224,7 @@ public class ServiceRetriever implements FileRetriever {
     }
 
     private FileInfo retrieveViaIbe(WebPlotRequest r, ImageServiceParams params, List<RelatedData> rdList) throws FailedRequestException {
-        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get((ImageServiceParams) p));
+        FileInfo fi= LockingRetrieve.serviceWithCacheMsg(params, (p, f) -> IbeImageGetter.get((ImageServiceParams) p));
         fi.setDesc(ServiceDesc.get(r));
         if (rdList!=null) fi.addRelatedDataList(rdList);
         return fi;

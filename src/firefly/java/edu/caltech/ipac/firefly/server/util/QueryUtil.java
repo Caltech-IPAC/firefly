@@ -42,7 +42,9 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.RetrieveUtil;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.util.download.UriRef;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -165,8 +167,8 @@ public class QueryUtil {
     public static File resolveFileFromSource(String source, boolean checkForUpdates, File outFile) throws DataAccessException {
         if (source == null) return null;
         try {
-            URL url = makeUrl(source);
-            if (url == null) {
+            UriRef uri= UriRef.make(source);
+            if (uri==null) {
                 // file path based source
                 File f = ServerContext.convertToFile(source);
                 if (f == null) return null;
@@ -174,7 +176,7 @@ public class QueryUtil {
 
                 return f;
             } else {
-                HttpServiceInput inputs = new HttpServiceInput(url.toString());
+                HttpServiceInput inputs = new HttpServiceInput(source);
                 StringKey key = new StringKey(inputs.getUniqueKey());
                 File res  = (File) CacheManager.getCache().get(key);
                 if (outFile == null) {
@@ -182,7 +184,7 @@ public class QueryUtil {
                 }
 
                 if (res == null) {
-                    FileInfo finfo = URLDownload.getDataToFile(url, outFile, inputs.getCookies(), inputs.getHeaders(),
+                    FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(),
                             URLDownload.Options.defWithRedirect());
                     checkForFailures(finfo);
                     res = outFile;
@@ -191,7 +193,7 @@ public class QueryUtil {
                     FileUtil.writeStringToFile(outFile, "workaround");
                     outFile.setLastModified(res.lastModified());
                     URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
-                    FileInfo finfo = URLDownload.getDataToFile(url, outFile, inputs.getCookies(), inputs.getHeaders(), ops);
+                    FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(), ops);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);
                         res = outFile;

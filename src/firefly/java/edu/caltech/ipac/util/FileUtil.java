@@ -926,6 +926,13 @@ public class FileUtil
         return retHost;
     }
 
+    public static String makeHostDomain(String hostname) {
+        if (StringUtils.isEmpty(hostname)) return "";
+        int idx= hostname.indexOf(".");
+        if (idx<0 || idx<hostname.length()-1) return hostname;
+        return hostname.substring(idx+1);
+    }
+
     public static String appendSuffixBeforeExtension(String fName, String suffix) {
         if (fName == null || suffix == null) return fName;
 

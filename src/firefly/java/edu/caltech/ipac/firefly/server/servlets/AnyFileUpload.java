@@ -10,9 +10,9 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
@@ -37,7 +37,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -123,7 +122,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             FileInfo statusFileInfo= result.statusFileInfo;
             int responseCode= statusFileInfo.getResponseCode();
 
-            if (responseCode>=400) {
+            if (responseCode>=400 || responseCode<200) {
                 res.sendError(responseCode, statusFileInfo.getResponseCodeMsg());
                 return;
             }
@@ -250,7 +249,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
                 fname = fname.contains("?") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
                 File dir= getSessUploadDir(sp.convertToServerRequest());
-                statusFileInfo = LockingVisNetwork.retrieveURL(new URI(fromUrl.trim()).toURL(), dir);
+                statusFileInfo = LockingRetrieve.downloadWithCacheMsg(fromUrl, dir);
             }
             if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo.getResponseCode()));
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);

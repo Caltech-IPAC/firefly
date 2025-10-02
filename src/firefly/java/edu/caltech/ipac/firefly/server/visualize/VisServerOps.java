@@ -332,7 +332,6 @@ public class VisServerOps {
                 cropRequest[i].setTitle(state.isThreeColor() ?
                         "Cropped Plot (" + bands[i].toString() + ")" :
                         "Cropped Plot");
-                cropRequest[i].setThumbnailSize(state.getPrimaryRequest().getThumbnailSize());
                 PlotStateUtil.initRequestFromState(cropRequest[i], state, bands[i]);
             }
 

@@ -71,7 +71,7 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
         title = `${datatitle} ` + `${bandpass}`;
     }
     const plot_desc = `SHA-${aorKey}`;
-    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+    const reqParams = WebPlotRequest.makeURIPlotRequest(url, plot_desc);
     const req = addCommonReqParams(reqParams, title, wp);
 
 

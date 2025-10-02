@@ -137,7 +137,6 @@ public class FinderChartRequestUtil {
         wpReq.setPostCropAndCenter(true);
         wpReq.setRotateNorth(true);
         wpReq.setInitialColorTable(1);
-        wpReq.setHideTitleDetail(true);
         wpReq.setPreferenceColorKey("FcColorKey");
         wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
         wpReq.setTitle(getComboTitle(key));

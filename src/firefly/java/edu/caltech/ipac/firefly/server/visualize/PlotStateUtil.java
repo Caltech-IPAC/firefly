@@ -41,7 +41,6 @@ public class PlotStateUtil {
         if (oldReq.isPlotAsMask()) {
             req.setPlotAsMask(true);
             req.setMaskBits(req.getMaskBits());
-            req.setMaskColors(req.getMaskColors().toArray(new String[3]));
         }
     }
 

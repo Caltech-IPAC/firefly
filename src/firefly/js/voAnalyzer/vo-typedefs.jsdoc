@@ -195,3 +195,29 @@
  * @prop {string}  [order]
  * @prop {string}  [relOrder]
  */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} CloudAccessData
+ * @prop {AwsCloudAccessData} [aws]
+ * @prop {GcsCloudAccessData} [gcs]
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} AwsCloudAccessData
+ * @prop {String} region
+ * @prop {String} bucket_name
+ * @prop {String} key
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} GcsCloudAccessData
+ * @prop {String} project
+ * @prop {String} bucket_name
+ * @prop {String} object_name
+ */

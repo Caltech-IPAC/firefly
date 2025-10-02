@@ -470,7 +470,6 @@ export function makeServerRequestBuilder(table, colToUse, headerParams, rv = nul
             }
         }
         const wpReq = WebPlotRequest.makeProcessorRequest(sr, title);
-        // wpReq.setZoomType(ZoomType.FULL_SCREEN);
         wpReq.setInitialColorTable(colorTableId);
         wpReq.setTitle(title);
         wpReq.setPlotId(plotId);

@@ -13,7 +13,8 @@ import CoordinateSys from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {isTableExclusiveToPlot} from '../visualize/saga/CatalogWatcher';
 import {
-    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION, SERVICE_DESC_COL_NAMES,
+    ACCESS_FORMAT, ACCESS_URL, CLOUD_ACCESS, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION,
+    SERVICE_DESC_COL_NAMES,
     SSA_COV_UTYPE, SSA_TITLE_UTYPE
 } from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
@@ -142,6 +143,7 @@ function getObsCoreTableColumn(tableOrId, name) {
     const entry = getObsTabColEntry(name);
     if (!entry) return;
     const table = getTableModel(tableOrId);
+    if (!entry.utype) return getColumn(table, name);
     const tblRec = VoTableRecognizer.newInstance(table);
     let cols = tblRec.getTblColumnsOnUType(entry.utype);
     if (cols.length) {
@@ -320,6 +322,22 @@ export const getObsReleaseDate = (tableOrId, rowIdx) => {
  * @return {string}
  */
 export const getObsCoreAccessURL = (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId, rowIdx, ACCESS_URL);
+
+
+/**
+ * return the cloud access object in the cloud_access column
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {CloudAccessData|undefined} the parsed cloud access object
+ */
+export function getObsCoreCloudAccess(tableOrId, rowIdx) {
+    const caStr= getObsCoreCellValue(tableOrId, rowIdx, CLOUD_ACCESS);
+    if (!caStr) return;
+    try {
+        return JSON.parse(caStr);
+    }
+    catch (e) {} // eslint-disable-line
+}
 
 /**
  * return dataproduct_type cell data.

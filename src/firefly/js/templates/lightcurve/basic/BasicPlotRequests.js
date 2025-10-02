@@ -18,7 +18,7 @@ export function basicURLPlotRequest(table, rowIdx, cutoutSize, params = {}) {
         const plot_desc = `Table-${time || 'null'}-${dataSource || 'null'}`;
 
 
-        const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+        const reqParams = WebPlotRequest.makeURIPlotRequest(url, plot_desc);
         const title = `Table-${time || 'null'}`;
 
         return addCommonReqParams(reqParams, title, null);

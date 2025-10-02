@@ -107,6 +107,10 @@ dependencies {
 
     // embedded redis server; version ~ 6.2
     implementation 'com.github.codemonstur:embedded-redis:1.4.3'
+
+    // amazon s3 support
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.33.11'
+
 }
 
 

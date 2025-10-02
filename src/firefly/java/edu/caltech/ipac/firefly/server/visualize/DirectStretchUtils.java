@@ -368,8 +368,7 @@ public class DirectStretchUtils {
             return sum;
         }
     }
-
-    private static class Stretch3CTile {
+private static class Stretch3CTile {
         byte[][] result;
         byte[][] resultHalf;
         byte[][] resultQuarter;

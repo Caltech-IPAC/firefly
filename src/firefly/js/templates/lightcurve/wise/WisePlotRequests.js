@@ -38,7 +38,7 @@ export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
     const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSizeInDeg}&gzip=false` : '';
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w${band}-int-1b.fits${centerandsize}`;
     const plot_desc = `WISE-${frameId}`;
-    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+    const reqParams = WebPlotRequest.makeURIPlotRequest(url, plot_desc);
     const title = 'WISE-' + frameId + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
     return addCommonReqParams(reqParams, title, makeWorldPt(ra, dec, CoordinateSys.EQ_J2000));
 }

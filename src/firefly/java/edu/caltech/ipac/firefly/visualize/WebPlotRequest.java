@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -14,7 +13,6 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -63,7 +61,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String MULTI_IMAGE_EXTS = "MultiImageExts";
     public static final String ZOOM_TO_WIDTH = "ZoomToWidth";
     public static final String ZOOM_TO_HEIGHT = "ZoomToHeight";
-    public static final String ZOOM_ARCSEC_PER_SCREEN_PIX = "ZoomArcsecPerScreenPix";
     public static final String POST_CROP = "PostCrop";
     public static final String POST_CROP_AND_CENTER = "PostCropAndCenter";
     public static final String POST_CROP_AND_CENTER_TYPE = "PostCropAndCenterType";
@@ -77,25 +74,26 @@ public class WebPlotRequest extends ServerRequest {
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";
     public static final String FLIP_X = "FlipX";
-    public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
     public static final String URL_CHECK_FOR_NEWER = "urlCheckForNewer"; // todo: convert, doc, add to allKeys
+    public static final String S3_URI= "S3Uri";
+    public static final String S3_BUCKET= "S3Bucket";
+    public static final String S3_REGION= "S3Region";
+    public static final String S3_KEY= "S3Key";
+    public static final String GCS_PROJECT= "GCSProject";
+    public static final String GCS_BUCKET= "GCSBucket";
+    public static final String GCS_OBJ_NAME= "GCSObjName";
 
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
-    public static final String MASK_COLORS= "MaskColors";
-    public static final String MASK_REQUIRED_WIDTH= "MaskRequiredWidth";
-    public static final String MASK_REQUIRED_HEIGHT= "MaskRequiredHeight";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
     public static final String PREFERENCE_COLOR_KEY = "PreferenceColorKey";
-    public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
     public static final String OVERLAY_POSITION = "OverlayPosition";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
-    public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
     public static final String PLOT_ID = "plotId";
 
     public static final String DATA_HELP_URL= "DATA_HELP_URL";
@@ -184,27 +182,8 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public static WebPlotRequest makeURLPlotRequest(String url) {
-        WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Fits from URL: " + url);
+        WebPlotRequest req = new WebPlotRequest(RequestType.URI, "Fits from URL: " + url);
         req.setURL(url);
-        return req;
-    }
-
-    public static WebPlotRequest makeWorkspaceRequest(String filePath, String userDesc) {
-        WebPlotRequest req = new WebPlotRequest(RequestType.WORKSPACE, userDesc==null? filePath : userDesc);
-        req.setTitleOptions(TitleOptions.FILE_NAME);
-        req.setFileName(filePath);
-        return req;
-    };
-
-    public static WebPlotRequest makeTblFilePlotRequest(String fileName) {
-        WebPlotRequest req = new WebPlotRequest(RequestType.FILE, "Table: " + fileName);
-        req.setParam(FILE, fileName);
-        return req;
-    }
-
-    public static WebPlotRequest makeTblURLPlotRequest(String url) {
-        WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Table from URL: " + url);
-        req.setParam(URL, url);
         return req;
     }
 
@@ -281,16 +260,7 @@ public class WebPlotRequest extends ServerRequest {
         req.setParam("filter", filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
         req.setParam(SURVEY_KEY_BAND, band + "");
         req.setTitle(survey + "," + band);
-        // TODO drawingSubGroupId TO BE SET OUTSIDE here! ATLAS has many dataset and it will depend on the app to group those images, example: See ImageSelectPanelResult.js, Finderrchart...
-        //req.setDrawingSubGroupId(survey.split(".")[1]); // 'spitzer.seip_science'
         return req;
-    }
-
-    //======================== All Sky =====================================
-
-
-    public static WebPlotRequest makeAllSkyPlotRequest() {
-        return new WebPlotRequest(RequestType.ALL_SKY, "All Sky Image");
     }
 
 
@@ -364,7 +334,6 @@ public class WebPlotRequest extends ServerRequest {
 
     /**
      * Certain zoom types require the width of the viewable area to determine the zoom level
-     * used with ZoomType.FULL_SCREEN, ZoomType.TO_WIDTH
      *
      * @param width the width in pixels
      * @see ZoomType
@@ -379,7 +348,6 @@ public class WebPlotRequest extends ServerRequest {
 
     /**
      * Certain zoom types require the height of the viewable area to determine the zoom level
-     * used with ZoomType.FULL_SCREEN, ZoomType.TO_HEIGHT (to height, no yet implemented)
      *
      * @param height the height in pixels
      * @see ZoomType
@@ -418,7 +386,6 @@ public class WebPlotRequest extends ServerRequest {
      * <li>ZoomType.STANDARD is the default, when set you may optionally call
      * setInitialZoomLevel the zoom will default to be 1x</li>
      * <li>if ZoomType.TO_WIDTH then you must call setZoomToWidth and set a width </li>
-     * <li>if ZoomType.FULL_SCREEN then you must call setZoomToWidth with a width and
      * setZoomToHeight with a height</li>
      * <li>if ZoomType.ARCSEC_PER_SCREEN_PIX then you must call setZoomArcsecPerScreenPix</li>
      * </ul>
@@ -641,6 +608,31 @@ public class WebPlotRequest extends ServerRequest {
 
     public boolean getUrlCheckForNewer() { return getBooleanParam(URL_CHECK_FOR_NEWER);}
 
+    public void setS3Params(String region, String bucket, String key) {
+        setParam(S3_REGION, region);
+        setParam(S3_BUCKET, bucket);
+        setSafeParam(S3_KEY, key);
+    }
+
+    public void setGcsParams(String project, String bucket, String objName) {
+        setParam(GCS_PROJECT, project);
+        setParam(S3_BUCKET, bucket);
+        setSafeParam(GCS_OBJ_NAME, objName);
+    }
+
+    public String getS3Region() { return getParam(S3_REGION); }
+    public String getS3Bucket() { return getParam(S3_BUCKET); }
+    public String getS3Key() { return getSafeParam(S3_KEY); }
+
+    public String getGcsProject() { return getParam(GCS_PROJECT); }
+    public String getGcsBucket() { return getParam(GCS_BUCKET); }
+    public String getGcsObjName() { return getSafeParam(GCS_OBJ_NAME); }
+
+    public void setS3Uri(String s3Uri) { setParam(S3_URI, s3Uri); }
+    public String getS3Uri() { return getSafeParam(S3_URI); }
+
+
+
     public void setServiceType(ServiceType service) {
         setParam(SERVICE, service.toString());
     }
@@ -751,26 +743,6 @@ public class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-    public void setHideTitleDetail(boolean hideTitleZoomLevel)  {
-        setParam(HIDE_TITLE_DETAIL, hideTitleZoomLevel + "");
-    }
-
-    public boolean getHideTitleDetail() {
-        return getBooleanParam(HIDE_TITLE_DETAIL);
-    }
-
-    public void setThumbnailSize(int thumbnailSize) {
-        setParam(THUMBNAIL_SIZE, thumbnailSize+"");
-    }
-
-    public int getThumbnailSize() {
-        return containsParam(THUMBNAIL_SIZE) ? getIntParam(THUMBNAIL_SIZE) : DEFAULT_THUMBNAIL_SIZE;
-    }
-    public void setHeaderKeyForTitle(String headerKey) {
-        setParam(HEADER_KEY_FOR_TITLE, headerKey);
-    }
-
-
     public String getHeaderKeyForTitle() {
         return getParam(HEADER_KEY_FOR_TITLE);
     }
@@ -781,15 +753,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public void setDrawingSubGroupId(String id) { setParam(DRAWING_SUB_GROUP_ID,id); }
 
-    public String getDrawingSubGroupId() { return getParam(DRAWING_SUB_GROUP_ID); }
-
-    public void setDownloadFileNameRoot(String nameRoot) {
-        setParam(DOWNLOAD_FILENAME_ROOT, nameRoot);
-    }
-
-    public String getDownloadFileNameRoot() { return getParam(DOWNLOAD_FILENAME_ROOT); }
-
-
     public void setPlotId(String id) { setParam(PLOT_ID,id); }
 
     public String getPlotId() { return getParam(PLOT_ID); }
@@ -799,32 +762,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public void setPlotAsMask(boolean plotAsMask) { setParam(PLOT_AS_MASK, plotAsMask+"");}
     public boolean isPlotAsMask() { return getBooleanParam(PLOT_AS_MASK);}
-
-
-    public void setMaskColors(String[] colors) { setParam(MASK_COLORS, StringUtils.combineAry(";", colors)); }
-
-    public List<String> getMaskColors() {
-        if (containsParam(MASK_COLORS)) {
-            String data= getParam(MASK_COLORS);
-            List<String> retval= StringUtils.parseStringList(data,";");
-            if (retval.size()==0 && data.length()>0) {
-                retval= new ArrayList<>(1);
-                retval.add(data);
-            }
-            return retval;
-        }
-        else {
-            return Collections.emptyList();
-        }
-    }
-
-    public void setMaskRequiredWidth(int width) { setParam(MASK_REQUIRED_WIDTH, width+""); }
-
-    public int getMaskRequiredWidth() { return getIntParam(MASK_REQUIRED_WIDTH,0); }
-
-    public void setMaskRequiredHeight(int height) { setParam(MASK_REQUIRED_HEIGHT, height+""); }
-
-    public int getMaskRequiredHeight() { return getIntParam(MASK_REQUIRED_HEIGHT,0); }
 
 
     public List<Order> getPipelineOrder() {
@@ -881,17 +818,13 @@ public class WebPlotRequest extends ServerRequest {
                         if (containsParam(WORLD_PT)) {
                             s += getServiceType().toString() + "- " + getRequestArea();
                         }
-                        else {
-                            s += getServiceType().toString() + "- Obj name: " + getObjectName() +
-                            ", radius: " +getParam(SIZE_IN_DEG);
-                        }
                         break;
                 }
                 break;
             case FILE:
                 s += " File: " + getFileName();
                 break;
-            case URL:
+            case URI:
                 s += " URL: " + getURL();
                 break;
             case ALL_SKY:

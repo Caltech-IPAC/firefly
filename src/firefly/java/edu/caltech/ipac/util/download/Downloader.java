@@ -25,8 +25,6 @@ import static edu.caltech.ipac.util.FileUtil.MEG;
  */
 public class Downloader {
 
-    private enum ListenerCall { INCREMENT, START, DONE}
-
     private DataInputStream _in;
     private OutputStream _out;
     private final long _downloadSize;
@@ -61,14 +59,6 @@ public class Downloader {
             messStr = "";
         }
         try {
-            if (total > 1024) {
-                outStr = "Starting download of " +
-                        FileUtil.getSizeAsString(total);
-            } else {
-                outStr = "Starting download";
-            }
-            fireDownloadListeners(0, total, null, outStr, ListenerCall.START);
-
             int read;
             byte[] buffer = new byte[BUFFER_SIZE];
             int progInc= 1;
@@ -94,7 +84,7 @@ public class Downloader {
                                 "URL does not have a content length header but the " +
                                         "downloaded data exceeded the max size of " +_maxDownloadSize);
                     }
-                    fireDownloadListeners(totalRead, total, timeStats, outStr, ListenerCall.INCREMENT);
+                    fireDownloadListeners(totalRead, total, timeStats, outStr);
                 }
                 _out.write(buffer, 0, read);
             }
@@ -105,10 +95,6 @@ public class Downloader {
             }
         } finally {
             FileUtil.silentClose(_out);
-            if (totalRead > 0) {
-                outStr = "Download Completed.";
-                fireDownloadListeners(total, total, timeStats, outStr, ListenerCall.DONE);
-            }
         }
         _out = null;
         _in = null;
@@ -183,11 +169,7 @@ public class Downloader {
     }
 
 
-    protected void fireDownloadListeners(long current,
-                                         long max,
-                                         TimeStats timeStats,
-                                         String mess,
-                                         ListenerCall type) {
+    private void fireDownloadListeners(long current, long max, TimeStats timeStats, String mess) {
         if (downloadListener==null) return;
         DownloadEvent ev;
         if (timeStats != null) {
@@ -200,17 +182,7 @@ public class Downloader {
         } else {
             ev = new DownloadEvent(this, current, max, 0, 0, "", "", mess);
         }
-        switch (type) {
-            case INCREMENT:
-                downloadListener.dataDownloading(ev);
-                break;
-            case START:
-                downloadListener.beginDownload(ev);
-                break;
-            case DONE:
-                downloadListener.downloadCompleted(ev);
-                break;
-        }
+        downloadListener.dataDownloading(ev);
     }
 
 //======================================================================

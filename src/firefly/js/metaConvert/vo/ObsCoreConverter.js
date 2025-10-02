@@ -2,7 +2,7 @@ import {isEmpty, isUndefined} from 'lodash';
 import { getCellValue, getMetaEntry, hasRowAccess } from '../../tables/TableUtil.js';
 import {logger} from '../../util/Logger';
 import {
-    getObsCoreAccessURL, getObsReleaseDate, getProdTypeGuess, getSearchTarget, isFormatDataLink,
+    getObsCoreAccessURL, getObsCoreCloudAccess, getObsReleaseDate, getProdTypeGuess, getSearchTarget, isFormatDataLink,
     isFormatPng, isFormatVoTable, makeWorldPtUsingCenterColumns, obsCoreTableHasOnlyImages
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -175,7 +175,7 @@ function doErrorChecks(table, row, prodType, dataSource) {
 async function getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors,
                                                doFileAnalysis= true, options, useForTableGrid=false}) {
 
-    const {size,titleStr,dataSource,prodType,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
+    const {size,titleStr,dataSource,prodType,isDataLinkRow,cloudAccess,isPng}= getObsCoreRowMetaInfo(table,row);
     const errMsg= doErrorChecks(table,row,prodType,dataSource);
     if (errMsg) return errMsg;
 
@@ -201,10 +201,10 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
 
 
         const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
-        const request= makeObsCoreRequest(dataSource, positionWP, titleStr,table,row);
+        const request= makeObsCoreRequest(dataSource, cloudAccess, positionWP, titleStr,table,row);
         const primDPType= doFileAnalysis ?
             await uploadAndAnalyze({request,table,row,activateParams,serviceDescMenuList,originalTitle:request.getTitle()}) :
-            createGuessDataType(titleStr,'guess-0',dataSource,prodType,undefined,activateParams, positionWP,table,row,size);
+            createGuessDataType(titleStr,'guess-0',dataSource,cloudAccess, prodType,undefined,activateParams, positionWP,table,row,size);
         return makeSingleDataProductWithMenu(activateParams.dpId, primDPType,size, serviceDescMenuList);
     }
 }
@@ -227,6 +227,7 @@ export function getObsCoreRowMetaInfo(table,row) {
     if (!table || row<0) return {};
     const titleStr= createObsCoreImageTitle(table,row);
     const dataSource= getObsCoreAccessURL(table,row);
+    const cloudAccess= getObsCoreCloudAccess(table,row);
     const prodType= getProdTypeGuess(table,row);
     const isVoTable= isFormatVoTable(table, row);
     const isDataLinkRow= isFormatDataLink(table,row);
@@ -234,7 +235,7 @@ export function getObsCoreRowMetaInfo(table,row) {
     const obsId= getCellValue(table,row,'obs_id') || '';
     const size= Number(getCellValue(table,row,'access_estsize')) || 0;
 
-    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLinkRow,isPng:isFormatPng(table,row)};
+    return {iName,obsId,size,titleStr,dataSource,cloudAccess,prodType,isVoTable,isDataLinkRow,isPng:isFormatPng(table,row)};
 }
 
 function relatedBandWarning() {

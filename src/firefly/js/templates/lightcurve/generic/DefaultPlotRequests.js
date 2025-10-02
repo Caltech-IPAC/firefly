@@ -14,7 +14,7 @@ export function makeURLPlotRequest(table, rowIdx, cutoutSize, params) {
     const url = getCellValue(table, rowIdx, dataSource );
     const time = getCellValue(table, rowIdx, timeCol);
     const plot_desc = `Mission-${time||'null'}-${dataSource||'null'}-${ra||'null'}-${dec||'null'}-${coordSys||'null'}`;
-    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+    const reqParams = WebPlotRequest.makeURIPlotRequest(url, plot_desc);
     const title= `Mission-${time||'null'}`;
     const sys = COORD_SYSTEM_OPTIONS.includes(coordSys) ? CoordinateSys.parse(coordSys) : null;
     const wpt = (getColumnIdx(table, ra) < 0 || getColumnIdx(table, dec) < 0 || !sys) ? undefined :

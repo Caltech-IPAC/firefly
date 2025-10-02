@@ -57,7 +57,7 @@ function computeFileNameBaseTitle(r,state, band, preTitle, extStr) {
             if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle, extStr);
             else if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle, extStr);
             break;
-        case RequestType.URL:
+        case RequestType.URI:
             retval= computeTitleFromURL(r.getURL(),r,preTitle, extStr);
             break;
 

@@ -109,7 +109,7 @@ public class StopWatch {
         private boolean isRunning = false;
         private Logger.LoggerImpl logger;
 
-        Tracker(String desc, Logger.LoggerImpl logger) {
+        public Tracker(String desc, Logger.LoggerImpl logger) {
             this.desc = desc;
             this.logger = logger;
         }

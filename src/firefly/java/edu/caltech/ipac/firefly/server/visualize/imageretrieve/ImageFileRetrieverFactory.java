@@ -3,9 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import org.reflections.Reflections;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import org.reflections.Reflections;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +19,6 @@ import java.util.Set;
 public final class ImageFileRetrieverFactory {
 
     private static final ImageFileRetrieverFactory _instance= new ImageFileRetrieverFactory();
-    private final Map<RequestType, FileRetriever> _types= new HashMap<>();
     private final Map<String, FileRetriever> reqType= new HashMap<>();
 
     private ImageFileRetrieverFactory() {
@@ -29,9 +29,9 @@ public final class ImageFileRetrieverFactory {
             FileRetrieverImpl rAnna = fileRetrieve.getAnnotation(FileRetrieverImpl.class);
             String requestId = rAnna.id();
             try {
-                reqType.put(requestId, (FileRetriever) fileRetrieve.newInstance());
-            } catch (IllegalAccessException | InstantiationException e) {
-                e.printStackTrace();
+                reqType.put(requestId, (FileRetriever) fileRetrieve.getDeclaredConstructor().newInstance());
+            } catch (Exception e) {
+                Logger.error(e, "Error instantiating FileRetrieverImpl");
             }
         }
     }
@@ -43,12 +43,7 @@ public final class ImageFileRetrieverFactory {
             rType= request.getRequestType();
         }
         else {
-            if (request.containsParam(WebPlotRequest.FILE))             rType= RequestType.FILE;
-            else if (request.containsParam(WebPlotRequest.SURVEY_KEY))  rType= RequestType.SERVICE;
-            else if (request.containsParam(WebPlotRequest.SERVICE))     rType= RequestType.SERVICE;
-            else if (request.containsParam(WebPlotRequest.URL))         rType= RequestType.URL;
-            else if (request.hasID())                                   rType= RequestType.PROCESSOR;
-            else                                                        rType= RequestType.ALL_SKY;
+            rType= guessRequestType(request);
         }
 
         String fileRetrieverKey= rType.toString();
@@ -60,5 +55,23 @@ public final class ImageFileRetrieverFactory {
 
     public static void addRetriever(String key, FileRetriever retriever) {
         _instance.reqType.put(key, retriever);
+    }
+
+    public static RequestType guessRequestType(WebPlotRequest r) {
+
+        var hasURL= r.containsParam(WebPlotRequest.URL);
+        var hasS3URI= r.containsParam(WebPlotRequest.S3_URI);
+        var hasS3BucketKey= r.containsParam(WebPlotRequest.S3_BUCKET) && r.containsParam(WebPlotRequest.S3_KEY);
+        var hasGcsBucketKey= r.containsParam(WebPlotRequest.GCS_BUCKET) && r.containsParam(WebPlotRequest.GCS_OBJ_NAME);
+
+
+        if (r.containsParam(WebPlotRequest.FILE))             return RequestType.FILE;
+        else if (r.containsParam(WebPlotRequest.SURVEY_KEY))  return RequestType.SERVICE;
+        else if (r.containsParam(WebPlotRequest.SERVICE))     return RequestType.SERVICE;
+        else if (hasURL && !hasS3URI && !hasS3BucketKey)      return RequestType.URI;
+        else if (hasURL || hasS3URI || hasS3BucketKey)        return RequestType.URI;
+        else if (hasGcsBucketKey)                             return RequestType.URI;
+        else if (r.hasID())                                   return RequestType.PROCESSOR;
+        else                                                  return RequestType.ALL_SKY;
     }
 }

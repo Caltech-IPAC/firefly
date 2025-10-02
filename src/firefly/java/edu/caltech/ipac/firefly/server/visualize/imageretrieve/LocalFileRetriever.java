@@ -36,7 +36,7 @@ public class LocalFileRetriever implements FileRetriever {
         return getFileByName(request.getFileName());
     }
 
-    public FileInfo getFileByName(String fileName) throws FailedRequestException, GeomException, SecurityException {
+    public FileInfo getFileByName(String fileName) throws FailedRequestException, SecurityException {
         String fStr= StringUtils.crunch(fileName);
         if (fStr!=null) {
             Cache sessionCache= CacheManager.getUserCache();
