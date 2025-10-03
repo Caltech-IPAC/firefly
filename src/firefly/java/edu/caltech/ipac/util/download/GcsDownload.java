@@ -6,7 +6,6 @@ package edu.caltech.ipac.util.download;
 
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.util.Logger;
 
 import java.io.File;
 import java.util.Map;
@@ -23,12 +22,11 @@ public class GcsDownload {
                                    Map<String, String> requestHeaders,
                                    URLDownload.Options options) throws FailedRequestException {
 
-        Logger.warn("Unexpected use of GCS: GCS has not been implemented yet. Using URLDownload instead.");
         //todo implement GCS
         return URLDownload.getDataToFile(ref.toUrl(), outfile, cookies, requestHeaders, options);
     }
 
 
 
-    public static boolean isRunningInAws() {return false; } // todo - implement
+    public static boolean isRunningInGcs() {return false; } // todo - implement
 }

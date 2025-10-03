@@ -80,7 +80,7 @@ public record S3Ref(String region, String bucket, String key) {
 
                 if (workingHost.startsWith("s3.")) { // s3 path style
                     var region = workingHost.substring(3);
-                    var sAry = cleanPath.split("/");
+                    var sAry = cleanPath.split("/",2);
                     if (sAry.length != 2) return null;
                     return new S3Ref(region, sAry[0], sAry[1]);
                 } else { // s3 host style

@@ -131,7 +131,7 @@ public class URIFileRetriever implements FileRetriever {
     private static UriRef makeGcsUriRef(WebPlotRequest request) {
         var bucket= request.getGcsBucket();
         var objName= request.getGcsObjName();
-        if (bucket!=null && objName!=null) return UriRef.make(new GcsRef(null,bucket,objName));
+        if (bucket!=null && objName!=null) return UriRef.make(new GcsRef(null,bucket,objName,null));
         return null;
     }
 

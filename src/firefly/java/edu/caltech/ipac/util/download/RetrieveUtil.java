@@ -74,10 +74,11 @@ public class RetrieveUtil {
                                     Map<String, String> requestHeaders,
                                     URLDownload.Options ops) throws FailedRequestException {
         if (uri==null) return new FileInfo(404);
-        return switch (uri.getType()) {
-            case S3Cloud -> S3Download.getData(uri.getS3Ref(), outFile, cookies, requestHeaders, ops);
-            case GcsCloud -> GcsDownload.getData(uri.getGcsRef(), outFile, cookies, requestHeaders, ops);
-            case OnPrimUrl -> URLDownload.getDataToFile(uri.getURL(), outFile, cookies, requestHeaders, ops);
+        return switch (uri.ref()) {
+            case S3Ref s3-> S3Download.getData(s3, outFile, cookies, requestHeaders, ops);
+            case GcsRef gcs -> GcsDownload.getData(gcs, outFile, cookies, requestHeaders, ops);
+            case URL url -> URLDownload.getDataToFile(url, outFile, cookies, requestHeaders, ops);
+            default -> new FileInfo(404);
         };
     }
 

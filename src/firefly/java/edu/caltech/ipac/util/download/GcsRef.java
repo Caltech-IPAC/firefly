@@ -16,7 +16,7 @@ import java.util.Objects;
  * @author Trey Roby
  *
  */
-public record GcsRef(String projectId, String bucket, String objName) {
+public record GcsRef(String projectId, String bucket, String objName, URL sourceUrl) {
 
     private static final String GOOGLE = "storage.googleapis.com";
 
@@ -36,7 +36,7 @@ public record GcsRef(String projectId, String bucket, String objName) {
 
     public URL toUrl() {
         try {
-            return new URI(toUrlStr()).toURL();
+            return sourceUrl!=null ? sourceUrl : new URI(toUrlStr()).toURL();
         } catch (MalformedURLException | URISyntaxException e) {
             return null;
         }
@@ -64,14 +64,14 @@ public record GcsRef(String projectId, String bucket, String objName) {
                 if (cleanPath.length() < 2) return null;
                 var host = url.getHost().toLowerCase();
                 if (GOOGLE.equals(host)) {
-                    var sAry = cleanPath.split("/");
+                    var sAry = cleanPath.split("/",2);
                     if (sAry.length != 2) return null;
-                    return new GcsRef(null, sAry[0], sAry[1]);
+                    return new GcsRef(null, sAry[0], sAry[1], url);
                 }
                 else if (host.endsWith(GOOGLE)) {
-                    var sAry = cleanPath.split("\\.");
+                    var sAry = cleanPath.split("\\.",2);
                     if (sAry.length != 2) return null;
-                    return new GcsRef(null, sAry[0], cleanPath);
+                    return new GcsRef(null, sAry[0], cleanPath, url);
                 }
                 return null;
             } catch (MalformedURLException | URISyntaxException e) {
