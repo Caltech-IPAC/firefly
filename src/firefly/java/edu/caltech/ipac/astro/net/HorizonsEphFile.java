@@ -30,7 +30,7 @@ public class HorizonsEphFile {
         String urlStr=  HorizonsEphPairs.horizonsServer + CGI_CMD;
         HttpResultInfo info;
         try {
-            info = URLDownload.getDataFromURL(new URL(urlStr),buildParamString(params),null,null);
+            info = URLDownload.getDataFromURL(new URL(urlStr),buildParamString(params), null);
         } catch (MalformedURLException e) {
             throw new FailedRequestException("bad url: " + urlStr);
         }

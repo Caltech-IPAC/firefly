@@ -201,7 +201,7 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
 
 
         const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
-        const request= makeObsCoreRequest(dataSource, cloudAccess, positionWP, titleStr,table,row);
+        const request= makeObsCoreRequest({url:dataSource, cloudAccess, positionWP, titleStr,table,row, expectStaticFile:true});
         const primDPType= doFileAnalysis ?
             await uploadAndAnalyze({request,table,row,activateParams,serviceDescMenuList,originalTitle:request.getTitle()}) :
             createGuessDataType(titleStr,'guess-0',dataSource,cloudAccess, prodType,undefined,activateParams, positionWP,table,row,size);

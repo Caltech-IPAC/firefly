@@ -32,14 +32,18 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -54,10 +58,10 @@ import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeade
 public class URLDownload {
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-
-    private static boolean DISABLE_SSL_VERIFICATION = false; // used for some testing
+    private static final int MAX_REDIRECT= 2;
 
     static {
+        boolean DISABLE_SSL_VERIFICATION = false;
         if (DISABLE_SSL_VERIFICATION) disableSSLCertificateChecking();
     }
 
@@ -154,6 +158,16 @@ public class URLDownload {
         }
     }
 
+    private static URL makeURL(String urlStr) {
+        try {
+            return new URI(urlStr).toURL();
+        } catch (MalformedURLException | URISyntaxException e) {
+            return null;
+        }
+    }
+
+    private static URL urlFromLocation(HttpURLConnection conn) { return makeURL(conn.getHeaderField("Location")); }
+
     /**
      * Create a URLConnection and add cookies and headers. Log and error on failure.
      * This method is not typically used outside of URLDownload. Don't use this method unless you have good reason.
@@ -184,7 +198,7 @@ public class URLDownload {
                     conn.setRequestProperty("Authorization", "Basic " + authStringEnc);
                 }
             }
-            if (requestHeaders != null && requestHeaders.size() > 0) {
+            if (requestHeaders != null && !requestHeaders.isEmpty()) {
                 for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
                     conn.setRequestProperty(entry.getKey(), entry.getValue());
                 }
@@ -196,26 +210,11 @@ public class URLDownload {
         }
     }
 
-    public static ConnCtx makeConnectionCtx(URL url,
-                                              Map<String, String> cookies,
-                                              Map<String, String> requestHeaders) throws IOException {
-          URLConnection conn= makeConnection(url,cookies,requestHeaders);
-          return new ConnCtx(url, cookies, requestHeaders, conn);
-      }
-
-      private static class ConnCtx {
-          public final URL url;
-          public final Map<String, String> cookies;
-          public final Map<String, String> requestHeaders;
-          public final URLConnection conn;
-          public ConnCtx( URL url, Map<String, String> cookies, Map<String, String> requestHeaders, URLConnection conn) {
-              this.url= url;
-              this.cookies= cookies;
-              this.requestHeaders= requestHeaders;
-              this.conn= conn;
-          }
-      }
-
+    public static HttpURLConnection makeURLConnection(URL url,
+                                                      Map<String, String> cookies,
+                                                      Map<String, String> requestHeaders) throws IOException {
+        return (HttpURLConnection)makeConnection(url, cookies, requestHeaders);
+    }
 
     private static void addCookiesToConnection(URLConnection conn, Map<String, String> cookies) {
         if (!(conn instanceof HttpURLConnection) || cookies == null) return;
@@ -231,65 +230,130 @@ public class URLDownload {
 //------------------ Public getDataFromURL ---------------------------------------
 //================================================================================
 
+    public static HttpResultInfo getDataFromURL(URL url,
+                                                Map<String, String> postData,
+                                                Map<String, String> requestHeaders) throws FailedRequestException {
+        return getDataFromURL(url,postData,null,requestHeaders, null, Options.def());
+    }
+
     /**
      * @param url - the url to download
      * @param postData - a string of the data to post, may be null
      * @param cookies   a map of cookies as name value pairs, may be null
      * @param requestHeaders a map of header as name value pairs, may be null
-     * @return the results are in the HttpResultInfo object, call getData() or getResultAsString()
+     * @param  outByteBuffer write output to byte buffer, if used then HttpResultInfo.getResult() will return null
+     * @return the results are in the HttpResultInfo object, call getData() or getResultAsString() or use outByteBuffer
      * @throws FailedRequestException if it fails
      */
     public static HttpResultInfo getDataFromURL(URL url,
                                                 Map<String, String> postData,
                                                 Map<String, String> cookies,
-                                                Map<String, String> requestHeaders) throws FailedRequestException {
+                                                Map<String, String> requestHeaders,
+                                                ByteBuffer outByteBuffer,
+                                                Options ops) throws FailedRequestException {
         URLConnection conn= null;
         try {
-            conn= makeConnection(url,cookies,requestHeaders);
+            Map<String, String> h= new HashMap<>();
+            if (requestHeaders!=null) h.putAll(requestHeaders);
+            if (ops.useCredentials) {
+                var inputs= new HttpServiceInput(url.toString());
+                var credentials= inputs.getHeaders();
+                if (credentials!=null && !credentials.isEmpty()) {
+                    if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
+                }
+            }
+            conn= makeConnection(url,cookies,h);
             Map<String,List<String>> reqProp= conn.getRequestProperties();
             pushPostData(conn, postData);
 
-            logHeader(url.toString(), postData, conn, reqProp);
-            ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
-            netCopy(makeAnyInStream(conn, false), out, conn, 0, null);
-            byte[] results = out.toByteArray();
-            logCompletedDownload(conn.getURL(), results.length);
-            return new HttpResultInfo(results,getResponseCode(conn),conn.getContentType(), getSuggestedFileName(conn));
+            byte[] results = null;
+            if (outByteBuffer!=null) {
+                netCopy(makeAnyInStream(conn, false), outByteBuffer, conn.getContentLength(), ops);
+            }
+            else {
+                ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+                netCopy(makeAnyInStream(conn, false), out, conn, 0, ops.dl);
+                results = out.toByteArray();
+            }
+            if (!ops.logErrorsOnly) logHeader(url.toString(), postData, conn, reqProp);
+
+            Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
+            var result= new HttpResultInfo(results,getResponseCode(conn),null, conn.getContentType(), getSuggestedFileName(conn));
+            if (hSet!=null) {
+                for (Map.Entry<String, List<String>> e : hSet) {
+                    result.putAttribute(e.getKey()!=null ? e.getKey() : "<none>",combineValues(e.getValue()));
+                }
+            }
+            if (!ops.logErrorsOnly) logCompletedDownload(conn.getURL(), result.getContentLength());
+            return result;
         } catch (SSLException e) {
-            return new HttpResultInfo(null,495,null,null);
+            return new HttpResultInfo(null,495,ResponseMessage.getNetworkCallFailureMessage(e), null,null);
         } catch (IOException e) {
             logError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
         }
     }
 
-    public static HttpResultInfo getHeaderFromURL(URL url,
-                                                  Map<String, String> cookies,
-                                                  Map<String, String> requestHeaders,
-                                                  int timeoutInSec ) throws FailedRequestException {
-        URLConnection conn= null;
+    public static HttpResultInfo getHeader(URL url,
+                                           Map<String, String> cookies,
+                                           Map<String, String> requestHeaders,
+                                           int timeoutInSec ) throws FailedRequestException {
         try {
-            conn= makeConnection(url,cookies,requestHeaders);
+            HttpURLConnection conn= makeURLConnection(url,cookies,requestHeaders);
+            return getHeaderFromConnection(conn,timeoutInSec,MAX_REDIRECT,cookies,requestHeaders);
+        } catch (SSLException e) {
+            return new HttpResultInfo(null,495,ResponseMessage.getNetworkCallFailureMessage(e), null,null);
+        } catch (SocketTimeoutException e) {
+            return new HttpResultInfo(null,408,ResponseMessage.getNetworkCallFailureMessage(e), null,null);
+        } catch (UnknownHostException e) {
+            return new HttpResultInfo(null,404,ResponseMessage.getNetworkCallFailureMessage(e), null,null);
+        } catch (IOException e) {
+            logError(url, null, e);
+            throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, -1);
+        }
+    }
+
+    private static HttpResultInfo getHeaderFromConnection(HttpURLConnection conn,
+                                                          int timeoutInSec,
+                                                          int redirectCnt,
+                                                          Map<String, String> cookies,
+                                                          Map<String, String> requestHeaders) throws FailedRequestException {
+        try {
             if (timeoutInSec>0) {
                 conn.setConnectTimeout(timeoutInSec * 1000);
                 conn.setReadTimeout(timeoutInSec * 1000);
             }
-            ((HttpURLConnection)conn).setRequestMethod("HEAD");
-            logHeader(url.toString(), null, conn, conn.getRequestProperties());
-            Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
-            HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),conn.getContentType(), getSuggestedFileName(conn));
+            conn.setRequestMethod("HEAD");
+            conn.connect();
+            Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? Collections.emptySet() : conn.getHeaderFields().entrySet();
+            HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),null, conn.getContentType(), getSuggestedFileName(conn));
 
-            if (hSet!=null) {
-                for (Map.Entry<String, List<String>> e : hSet) {
-                    result.putAttribute(e.getKey()!=null ? e.getKey() : "<none>",combineValues(e.getValue()));
-                }
+            for (var e : hSet) {
+                result.putAttribute(e.getKey()!=null ? e.getKey() : "<none>",combineValues(e.getValue()));
             }
-            FileUtil.silentClose(conn.getInputStream());
+
+            conn.disconnect();
+            result.putAttribute("Location", conn.getURL().toString());
+            if (redirectCnt<MAX_REDIRECT) result.setRedirected(true);
+            var responseCode= getResponseCode(conn);
+            if (responseCode >= 300 && responseCode < 400) {
+                if (redirectCnt > 0 && Arrays.asList(301,302,303,307,308).contains(responseCode)) {
+                    HttpURLConnection newConn = makeURLConnection(urlFromLocation(conn), cookies, requestHeaders);
+                    return getHeaderFromConnection(newConn, 2, redirectCnt-1, cookies, requestHeaders);
+                }
+                result.putAttribute("Location", conn.getHeaderField("Location"));
+                throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
+                        "Response Code: " + responseCode, responseCode);
+            }
             return result;
         } catch (SSLException e) {
-            return new HttpResultInfo(null,495,null,null);
+            return new HttpResultInfo(495, ResponseMessage.getNetworkCallFailureMessage(e));
+        } catch (SocketTimeoutException e) {
+            return new HttpResultInfo(408, ResponseMessage.getNetworkCallFailureMessage(e));
+        } catch (UnknownHostException e) {
+            return new HttpResultInfo(404, ResponseMessage.getNetworkCallFailureMessage(e));
         } catch (IOException e) {
-            logError(url, null, e);
+            logError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
         }
     }
@@ -312,7 +376,7 @@ public class URLDownload {
                                                   File outfile, DownloadListener dl,
                                                   int timeoutInSec) throws FailedRequestException {
         try {
-            Options ops= new Options(true,true,0L,false,false, timeoutInSec, dl);
+            Options ops= new Options(true, true, 0L, false, false, timeoutInSec, dl, false, false);
             return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, ops, postData,0);
         } catch (IOException e) {
             logError(url, postData, e);
@@ -367,11 +431,11 @@ public class URLDownload {
             if (ops.useCredentials) {
                 var inputs= new HttpServiceInput(url.toString());
                 var credentials= inputs.getHeaders();
-                if (credentials!=null && credentials.size()>0) {
+                if (credentials!=null && !credentials.isEmpty()) {
                     if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
                 }
             }
-            return getDataToFile(makeConnection(url, cookies, h), outfile, ops, null, ops.allowRedirect?2:0);
+            return getDataToFile(makeConnection(url, cookies, h), outfile, ops, null, ops.allowRedirect?MAX_REDIRECT:0);
         } catch (IOException e) {
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
@@ -425,16 +489,20 @@ public class URLDownload {
             //------
             //---From here on the server should be responding
             //------
-            logHeader(originalUrl, postData, conn, sendHeaders);
+            conn.connect();
+            if (!ops.logErrorsOnly) logHeader(originalUrl, postData, conn, sendHeaders);
             validFileSize(conn, ops.maxFileSize);
-            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
+//            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
+//            Downloader.download(makeAnyInStream(conn, ops.uncompress), outfile, conn.getContentLength(), ops.maxFileSize, ops.dl);
+//            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
+            netCopy(makeAnyInStream(conn, ops.uncompress), outfile, conn.getContentLength(), ops);
             long elapse = System.currentTimeMillis() - start;
             int responseCode = getResponseCode(conn);
             outFileData = new FileInfo(outfile, getSuggestedFileName(conn), responseCode,
                     ResponseMessage.getHttpResponseMessage(responseCode), conn.getContentType());
             if (conn.getContentEncoding() != null)
                 outFileData.putAttribute("content-encoding", conn.getContentEncoding());
-            logDownload(outFileData, conn.getURL().toString(), elapse);
+            if (!ops.logErrorsOnly || responseCode>=300) logDownload(outFileData, conn.getURL().toString(), elapse);
 
             if (responseCode >= 300 && responseCode < 400) {
                 if (redirectCnt > 0 && Arrays.asList(301,302,303,307,308).contains(responseCode)) {
@@ -446,9 +514,11 @@ public class URLDownload {
             }
             return outFileData;
         } catch (SSLException e) {
-            return new FileInfo(495);
+            return new FileInfo(495, ResponseMessage.getNetworkCallFailureMessage(e));
+        } catch (SocketTimeoutException e) {
+            return new FileInfo(408, ResponseMessage.getNetworkCallFailureMessage(e));
         } catch (UnknownHostException e) {
-            return new FileInfo(404);
+            return new FileInfo(404, ResponseMessage.getNetworkCallFailureMessage(e));
         } catch (IOException e) {
             logError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e, getResponseCode(conn));
@@ -462,9 +532,9 @@ public class URLDownload {
                                              Options ops,
                                              int redirectCnt) throws FailedRequestException, IOException {
 
-        outfile.delete();
+        var ignore= outfile.delete();
         String urlStr= conn.getHeaderField("Location");
-        HttpURLConnection newConn= (HttpURLConnection)makeConnection(new URL(urlStr), null, null);
+        HttpURLConnection newConn= (HttpURLConnection)makeConnection(makeURL(urlStr), null, null);
         for(Map.Entry<String,List<String>> entry : reqProp.entrySet()) {
             for(String s : entry.getValue()) newConn.setRequestProperty(entry.getKey(), s);
         }
@@ -481,7 +551,7 @@ public class URLDownload {
             return postData.get("");
         }
         for(Map.Entry<String,String> entry : postData.entrySet()) {
-            if (sBuff.length()>0) sBuff.append("&");
+            if (!sBuff.isEmpty()) sBuff.append("&");
             sBuff.append(entry.getKey()).append("=").append(entry.getValue());
         }
         return sBuff.toString();
@@ -563,6 +633,15 @@ public class URLDownload {
 
     }
 
+    public static void netCopy(DataInputStream in, File outfile, long contentLength, Options ops)
+            throws FailedRequestException, IOException {
+        Downloader.doDownload(in, outfile, contentLength, ops.maxFileSize, ops.dl);
+    }
+
+    public static void netCopy(DataInputStream in, ByteBuffer outBuff, long contentLength, Options ops)
+            throws FailedRequestException, IOException {
+        Downloader.doDownload(in, outBuff, contentLength, ops.maxFileSize, ops.dl);
+    }
 
 
     public static void netCopy(DataInputStream in,
@@ -606,7 +685,7 @@ public class URLDownload {
     public static void logHeader(String originalUrl, URLConnection conn) { logHeader(originalUrl,null, conn, null); }
 
     private static void logHeader(String originalUrl,  Map<String,String> postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
-        StringBuffer workBuff;
+        StringBuilder workBuff;
         try {
             String verb= "";
             if (conn instanceof HttpURLConnection) verb= ((HttpURLConnection)conn).getRequestMethod();
@@ -621,7 +700,7 @@ public class URLDownload {
                 }
                 if (sendHeaders!=null) {
                     for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
-                        workBuff = new StringBuffer(100);
+                        workBuff = new StringBuilder(100);
                         key= (se.getKey() == null) ? "<none>" : se.getKey();
                         workBuff.append(StringUtils.pad(20,key));
                         workBuff.append(": ");
@@ -661,7 +740,7 @@ public class URLDownload {
             if (hSet!=null) {
                 List<String> values;
                 for (Map.Entry<String, List<String>> e : hSet) {
-                    workBuff = new StringBuffer(100);
+                    workBuff = new StringBuilder(100);
                     key = e.getKey();
                     if (key == null) key = "<none>";
                     workBuff.append(StringUtils.pad(20, key));
@@ -767,35 +846,40 @@ public class URLDownload {
         return workBuff.toString();
     }
 
-    public record Options (boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect,
-                           boolean useCredentials, int timeoutInSec, DownloadListener dl) {
+    public static class Options {
+        private boolean onlyIfModified;
+        private boolean uncompress;
+        private long maxFileSize;
+        private boolean allowRedirect;
+        private boolean useCredentials;
+        private int timeoutInSec;
+        private DownloadListener dl;
+        private boolean logErrorsOnly;
+        private boolean expectStaticFile;
 
-        /**
-         * convenience function
-         * set no size limit,
-         * sets true: onlyIfModified, uncompress, use credentials, allowRedirect
-         * @return Options
-         */
-        public static Options def() {return new Options(true,true,0,true,true,0,null);}
-
-        /**
-         * convenience function
-         * set no size limit,
-         * sets true: onlyIfModified, uncompress, use credentials, allowRedirect
-         * @return Options
-         */
-        public static Options defWithRedirect() {return new Options(true,true,0,true,true,0,null);}
-
-        /**
-         * convenience function
-         * set no size limit,
-         * sets true: uncompress, allowRedirect, use credentials
-         * @param onlyIfModified - check for file modification
-         * @return Options
-         */
-        public static Options modifiedOp(boolean onlyIfModified) {
-            return new Options (onlyIfModified,true,0,true,true,0,null);
+        public Options(boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect,
+                       boolean useCredentials, int timeoutInSec, DownloadListener dl,
+                       boolean logErrorsOnly, boolean expectStaticFile) {
+            this.onlyIfModified= onlyIfModified;
+            this.uncompress= uncompress;
+            this.maxFileSize= maxFileSize;
+            this.allowRedirect= allowRedirect;
+            this.useCredentials= useCredentials;
+            this.timeoutInSec= timeoutInSec;
+            this.dl= dl;
+            this.logErrorsOnly= logErrorsOnly;
+            this.expectStaticFile= expectStaticFile;
         }
+
+        /**
+         * convenience function
+         * set no size limit,
+         * sets true: onlyIfModified, uncompress, use credentials, allowRedirect
+         * @return Options
+         */
+        public static Options def() {return new Options(true, true, 0, true, true, 0, null, false, false);}
+
+
 
         /**
          * convenience function
@@ -806,19 +890,22 @@ public class URLDownload {
          * @return Options
          */
         public static Options modifiedAndTimeoutOp(boolean onlyIfModified, int timeoutInSec) {
-            return new Options (onlyIfModified,true,0,true,true,timeoutInSec,null);
+            return new Options(onlyIfModified, true, 0, true, true, timeoutInSec, null, false, false);
         }
 
-        /**
-         * convenience function
-         * sets true: onlyIfModified,  uncompress, allowRedirect, use credentials
-         * @param maxFileSize download size limit
-         * @param dl download listener
-         * @return Options
-         */
-        public static Options listenerOp(long maxFileSize, DownloadListener dl) {
-            return new Options (true,true,maxFileSize,true,true,0,dl);
-        }
+        public void setOnlyIfModified(boolean onlyIfModified) { this.onlyIfModified = onlyIfModified; }
+        public void setUncompress(boolean uncompress) { this.uncompress = uncompress; }
+        public void setMaxFileSize(long maxFileSize) { this.maxFileSize = maxFileSize; }
+        public void setAllowRedirect(boolean allowRedirect) { this.allowRedirect = allowRedirect; }
+        public void setUseCredentials(boolean useCredentials) { this.useCredentials = useCredentials; }
+        public void setTimeoutInSec(int timeoutInSec) { this.timeoutInSec = timeoutInSec; }
+        public void setDl(DownloadListener dl) { this.dl = dl; }
+        public void setLogErrorsOnly(boolean logErrorsOnly) { this.logErrorsOnly = logErrorsOnly; }
+        public void setExpectStaticFile(boolean expectStaticFile) { this.expectStaticFile = expectStaticFile; }
+
+        public DownloadListener dl() { return dl; }
+        public boolean onlyIfModified() { return onlyIfModified; }
+        public boolean expectStaticFile() { return expectStaticFile; }
     }
 
 }

@@ -172,7 +172,8 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
-            const request= makeObsCoreRequest(url,cloudAccess,positionWP,name,sourceTable,sourceRow);
+            const request= makeObsCoreRequest({url,cloudAccess,positionWP,titleStr:name,
+                table:sourceTable,row:sourceRow,expectStaticFile:true});
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
                 activateParams, menuKey, activeMenuLookupKey, options, dlData, originalTitle:dropDownText||name});
             return dpdtAnalyze({name, activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, dlData});
@@ -512,7 +513,7 @@ function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
 export function createGuessDataType(name, menuKey, url,cloudAccess,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
     const {imageViewerId}= activateParams;
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
-        const request= makeObsCoreRequest(url,cloudAccess,positionWP,name,table,row);
+        const request= makeObsCoreRequest({url,cloudAccess,positionWP,titleStr:name,table,row, expectStaticFile:true});
         return dpdtImage({name,
             activate: createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
             extraction: createSingleImageExtraction(request, dlData?.sourceObsCoreData, dlData),

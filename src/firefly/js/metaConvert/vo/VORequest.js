@@ -9,19 +9,21 @@ import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
 
 /**
  *
- * @param dataSource
- * @param {CloudAccessData} cloudAccess
- * @param positionWP
- * @param titleStr
- * @param {TableModel} table
- * @param {number} row
+ * @param {Object} p
+ * @param p.url
+ * @param {CloudAccessData} [p.cloudAccess]
+ * @param p.positionWP
+ * @param p.titleStr
+ * @param {TableModel} p.table
+ * @param {number} p.row
+ * @param {boolean|undefined} [p.expectStaticFile]
  * @return {undefined|WebPlotRequest}
  */
-export function makeObsCoreRequest(dataSource, cloudAccess, positionWP, titleStr, table, row) {
-    if (!dataSource) return undefined;
-    const {gcs={},aws={}}= cloudAccess ?? {};
+export function makeObsCoreRequest({ url, cloudAccess={}, positionWP, titleStr, table, row, expectStaticFile=false}) {
+    if (!url) return undefined;
+    const {gcs={},aws={}}= cloudAccess;
     const {region,bucket_name:awsBucketName,key}= aws;
-    const r = WebPlotRequest.makeNetReferencePlotRequest(dataSource, region,awsBucketName,key, 'VO DataProduct');
+    const r = WebPlotRequest.makeNetReferencePlotRequest(url, region,awsBucketName,key, 'VO DataProduct');
     if (gcs.bucket_name && gcs.object_name) {
         r.setGcsParams(gcs.project,gcs.bucket_name,gcs.object_name);
     }
@@ -38,6 +40,7 @@ export function makeObsCoreRequest(dataSource, cloudAccess, positionWP, titleStr
     }
     r.setPlotId(uniqueId('obscore-'));
     r.setWorldPt(positionWP);
+    r.setExpectStaticFile(expectStaticFile);
 
 
     const emMinCol = getColumn(table, 'em_max', true);

@@ -1,7 +1,6 @@
 import {isEmpty} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCellValue, getColumn} from '../tables/TableUtil.js';
-import {RequestType} from '../visualize/RequestType';
 import {getDataSourceColumn, getObsCoreCloudAccess} from '../voAnalyzer/TableAnalysis.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
@@ -150,6 +149,7 @@ function makeRequest(table, dataSource, positionWP, row, cloudAccess) {
 
     r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setPlotId(source);
+    r.setExpectStaticFile(true);
     if (positionWP) r.setOverlayPosition(positionWP);
 
     return r;

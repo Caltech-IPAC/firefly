@@ -22,8 +22,8 @@ public class GcsDownload {
                                    Map<String, String> requestHeaders,
                                    URLDownload.Options options) throws FailedRequestException {
 
-        //todo implement GCS
-        return URLDownload.getDataToFile(ref.toUrl(), outfile, cookies, requestHeaders, options);
+        //todo implement GCS, for now use ConcurrentDownload
+        return ConcurrentDownload.getData(ref.toUrl(), outfile, cookies, requestHeaders, options);
     }
 
 

@@ -64,8 +64,11 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
 
     public FileInfo(int responseCode) {
-        this(null,"", responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+        this(responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+    }
 
+    public FileInfo(int responseCode, String message) {
+        this(null,"", responseCode, message);
     }
 
     private FileInfo(File file, String externalName, String desc, int responseCode, String responseCodeMsg, String contentType) {
@@ -99,7 +102,11 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 //======================================================================
 
     public void putAttribute(String key, String value) { attributes.put(key,value); }
-    public String getAttribute(String key) {return attributes.get(key); }
+    public String getAttribute(String key) {
+        var matchingKey= attributes.keySet().stream().filter(k -> k.equalsIgnoreCase(key)).findFirst().orElse(null);
+        if (matchingKey!=null) return attributes.get(matchingKey);
+        return null;
+    }
     public Map<String,String> getAttributeMap() {return new HashMap<>(attributes);}
 
 

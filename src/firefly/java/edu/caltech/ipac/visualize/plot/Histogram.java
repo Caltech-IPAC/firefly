@@ -36,24 +36,17 @@ public class Histogram implements HasSizeOf {
     private final double irafMax;
     private final double largeBinPercent;
 
-    private final static ExecutorService exeService= Executors.newWorkStealingPool();
 
 
     public Histogram(float[] float1dArray, double datamin, double datamax) {
 
-//        StopWatch.getInstance().start("minMax");
+        ExecutorService exeService= Executors.newWorkStealingPool();
 
         if (Double.isNaN(datamin) || Double.isNaN(datamax)) {
-            MinMax minMax = findMinMax(float1dArray);
+            MinMax minMax = findMinMax(float1dArray,exeService);
             datamin = minMax.min;
             datamax = minMax.max;
         }
-
-
-//        StopWatch.getInstance().stop("minMax");
-//        Logger.briefInfo("minMax="+t);
-//        StopWatch.getInstance().printLog("minMax", StopWatch.Unit.SECONDS);
-
         double histDatamax;
         double histDatamin;
 
@@ -68,7 +61,7 @@ public class Histogram implements HasSizeOf {
 
             boolean redo_flag = false;
             histBinsize =getHistBinSize(histMax);
-            HistEntry histEntry= makeHistogramEntry(float1dArray,histMin,histBinsize);
+            HistEntry histEntry= makeHistogramEntry(float1dArray,histMin,histBinsize,exeService);
             hist= histEntry.hist;
             histDatamin = histEntry.histDatamin;
             histDatamax = histEntry.histDatamax;
@@ -116,12 +109,11 @@ public class Histogram implements HasSizeOf {
         irafMin = datamin;
         irafMax = datamax;
         largeBinPercent= computeLargeBinPercent(float1dArray.length);
-//        StopWatch.getInstance().stop("histogram");
-//        t= StopWatch.getInstance().getTracker("histogram").getElapsedTime(StopWatch.Unit.SECONDS);
-//        Logger.briefInfo("histogram="+t+ ", count=" +count);
+        exeService.shutdown();
     }
 
-    private static HistEntry makeHistogramEntry(float[] float1dArray, double histMin, double histBinsize) {
+    private static HistEntry makeHistogramEntry(float[] float1dArray, double histMin,
+                                                double histBinsize, ExecutorService exeService) {
 
         var hist = new int[HISTSIZ2 + 1];
         var overflowCount = 0;
@@ -172,7 +164,7 @@ public class Histogram implements HasSizeOf {
     private record HistEntry(int[] hist, int overflowCount, int underflowCount, double histDatamin, double histDatamax) {};
     private record MinMax(double min, double max) {};
 
-    private MinMax findMinMax(float[] float1dArray) {
+    private MinMax findMinMax(float[] float1dArray, ExecutorService exeService) {
         double datamin= Double.MAX_VALUE;
         double datamax= -Double.MAX_VALUE;
         try {

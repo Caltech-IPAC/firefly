@@ -64,6 +64,7 @@ public class LockingRetrieve {
         if (ref == null) throw new FailedRequestException("uri is not valid much be URL, String, S3Ref, or UriRef");
         var params= new UriRefParams(ref,downloadDir);
         params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
+        params.setExpectStaticFile(true);
         params.setStatusKey(uri.toString());
         return downloadWithCacheMsg(params);
     }

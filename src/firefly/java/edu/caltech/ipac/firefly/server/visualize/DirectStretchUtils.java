@@ -32,8 +32,13 @@ import static edu.caltech.ipac.firefly.visualize.Band.RED;
  */
 public class DirectStretchUtils {
 
-    private final static ExecutorService exeService= Executors.newWorkStealingPool();
     public enum CompressType {FULL, HALF, HALF_FULL, QUARTER_HALF, QUARTER_HALF_FULL}
+
+
+    private static ExecutorService makeExecutorService () {
+        return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+
 
     public static StretchDataInfo getStretchData(PlotState state, ActiveFitsReadGroup frGroup, int tileSize, CompressType ct)
             throws Exception {
@@ -155,9 +160,11 @@ public class DirectStretchUtils {
             taskList.getFirst().call();
         }
         else {
-            var results= exeService.invokeAll(taskList);
-            if (!results.stream().filter(Future::isCancelled).toList().isEmpty()) {
-                throw new InterruptedException("Not all tiles completed");
+            try (ExecutorService exeService= makeExecutorService()) {
+                var results= exeService.invokeAll(taskList);
+                if (!results.stream().filter(Future::isCancelled).toList().isEmpty()) {
+                    throw new InterruptedException("Not all tiles completed");
+                }
             }
         }
     }

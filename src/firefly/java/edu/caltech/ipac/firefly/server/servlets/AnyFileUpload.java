@@ -167,14 +167,19 @@ public class AnyFileUpload extends BaseHttpServlet {
 //
 //====================================================================
 
-    private static String codeFailMsg(int responseCode) {
-        return "Upload failed with response code: "+ responseCode;
+    private static String codeFailMsg(FileInfo statusFileInfo) {
+        var stat= statusFileInfo.getResponseCode();
+        if (statusFileInfo.getFile()==null && (stat==200 || stat==304)){
+            return "Upload failed with response code: "+ statusFileInfo.getResponseCode() + " but empty file";
+        }
+        var msg= statusFileInfo.getResponseCodeMsg()!=null? ": "+statusFileInfo.getResponseCodeMsg():"";
+        return "Upload failed with response code: "+ statusFileInfo.getResponseCode() + msg;
     }
 
     private static boolean isUrlFail(FileInfo statusFileInfo) {
         int responseCode= statusFileInfo.getResponseCode();
         File file= statusFileInfo.getFile();
-        return (file!=null && responseCode!=200 && responseCode!=304);
+        return (file==null || (responseCode!=200 && responseCode!=304));
     }
 
     private static UploadFileInfo makeUploadFileInfo(FileInfo statusFileInfo, String fname) {
@@ -251,7 +256,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 File dir= getSessUploadDir(sp.convertToServerRequest());
                 statusFileInfo = LockingRetrieve.downloadWithCacheMsg(fromUrl, dir);
             }
-            if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo.getResponseCode()));
+            if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo));
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);
 
         } else if (fromWPR!= null) {

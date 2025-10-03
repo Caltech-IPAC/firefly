@@ -58,7 +58,7 @@ public class HorizonsEphPairs {
 
         try {
             String urlStr = horizonsServer + path + "?sstr="+ URLEncoder.encode(idOrName, "UTF-8");
-            var result = URLDownload.getDataFromURL(new URL(urlStr), null,null,null);
+            var result = URLDownload.getDataFromURL(new URL(urlStr), null, null);
             if (result.getResponseCode() != 200) {
                 throw new FailedRequestException("failed to retrieve ephemeris pairs, response code: " + result.getResponseCode());
             }

@@ -29,7 +29,7 @@ public class PTFNameResolver {
         String obj= null;
         String urlStr= CGI_CMD+objName;
         try {
-            obj= URLDownload.getDataFromURL(new URL(urlStr), null, null, reqHeaders).getResultAsString();
+            obj= URLDownload.getDataFromURL(new URL(urlStr), null, reqHeaders).getResultAsString();
             if (obj.endsWith("\n")) obj= obj.substring(0,obj.indexOf("\n"));
 
             String[] sAry= obj.split(" +", 3);

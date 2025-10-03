@@ -334,7 +334,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     private static boolean queryForHasMoc(HiPSMasterListEntry entry) {
         String urlStr= entry.getMapInfo().get(PARAMS.URL.getKey()) + "/Moc.fits";
         try {
-            HttpResultInfo r= URLDownload.getHeaderFromURL(new URL(urlStr), null, null, 1);
+            HttpResultInfo r= URLDownload.getHeader(new URL(urlStr), null, null, 1);
             return (r.getResponseCode()==200);
         } catch (FailedRequestException | MalformedURLException e) {
             return false;

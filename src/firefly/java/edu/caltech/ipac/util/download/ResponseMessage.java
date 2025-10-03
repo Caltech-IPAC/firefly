@@ -7,6 +7,7 @@ package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 
+import javax.net.ssl.SSLException;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -114,13 +115,16 @@ public class ResponseMessage {
             return "URL file not found";
         }
         else if (e instanceof UnknownHostException) {
-            return "Unknown host: "+ e.getMessage();
+            return getHttpResponseMessage(404) + ": UnknownHostException";
         }
         else if (e instanceof SocketTimeoutException) {
-            return "Retrieval timed out";
+            return getHttpResponseMessage(408) + ": SocketTimeoutException";
         }
         else if (e instanceof SocketException) {
             return "Could not connect to service";
+        }
+        else if (e instanceof SSLException) {
+            return getHttpResponseMessage(495) + ": SSLException";
         }
         else if (e instanceof IOException) {
             return (e.getCause() instanceof EOFException) ? "No data returned" : "IO problem";
@@ -128,6 +132,6 @@ public class ResponseMessage {
         else {
             return e.getMessage();
         }
-
     }
+
 }
