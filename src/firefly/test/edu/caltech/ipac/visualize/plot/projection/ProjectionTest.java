@@ -211,6 +211,53 @@ public class ProjectionTest {
 
     }
 
+
+    @Test
+    public void testStgProjection() throws ProjectionException, Exception {
+//        // Uncomment to regenerate sample for js test.
+//        String path = FileLoader.getDataPath(ProjectionTest.class);
+//        String[] fNames = {"roman-SGT_200x240.fits"};
+//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
+
+        Fits fits = new Fits(new File(FileLoader.getDataPath(ProjectionTest.class) + "roman-SGT_200x240.fits"));
+        FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
+
+        FitsRead reader = fitsReadArray[0];
+        CoordinateSys cs = CoordinateSys.EQ_J2000;
+        ImageHeader imageHeader = new ImageHeader(reader.getHeader());
+        Projection proj = imageHeader.createProjection(cs);
+
+        // WorldPt worldCoords = proj.getWorldCoords(10.7759522, 41.19942861);
+        // System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
+
+        // x, y are zero-based, hence not quite corners
+        // should match astropy's wcs.pixel_to_world([1, 1, 200, 200], [1, 240, 240, 1])
+        // <SkyCoord (ICRS): (ra, dec) in deg
+        //    [(9.78256769, -44.25126713), (9.78255745, -44.24867384),
+        //     (9.77954305, -44.2486799 ), (9.77955316, -44.2512732 )]>
+        double[] x_vals = {1.0, 1.0, 200.0, 200.0};
+        double[] y_vals = {1.0, 240.0, 240.0, 1.0};
+        double[] ra_vals = {9.78256769, 9.78255745, 9.77954305, 9.77955316};
+        double[] dec_vals = {-44.25126713, -44.24867384, -44.2486799, -44.2512732};
+
+        for (int i = 0; i < x_vals.length; i++){
+            double ra = ra_vals[i];
+            double dec = dec_vals[i];
+            double x =  x_vals[i];
+            double y = y_vals[i];
+
+            ProjectionPt pix = proj.getImageCoords(ra, dec);
+
+            Assert.assertEquals(pix.getX(),  x, 1E-01);
+            Assert.assertEquals(pix.getY(), y,1E-01);
+
+            WorldPt pix2 = proj.getWorldCoords(x, y);
+
+            Assert.assertEquals(pix2.getLon(), ra, 1E-06);
+            Assert.assertEquals(pix2.getLat(), dec, 1E-06);
+        }
+    }
+
     /**
      * This main method is used to create unit test reference files.
      *

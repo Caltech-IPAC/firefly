@@ -33,6 +33,7 @@ export default [
             globals: {
                 ...globals.browser,
                 ...globals.jest,
+                ...globals.node
             },
             parser: babelParser,
             ecmaVersion: 2020,
