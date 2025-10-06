@@ -123,7 +123,7 @@ public class WebPlotFactory {
                 ModFileWriter mfw = entry.getValue();
                 if (mfw != null) {
                     pi.state().setImageIdx(0, entry.getKey());
-                    mfw.writeFile(state);
+                    mfw.writeFile(state, pi.fitsReadGroup());
                 }
             }
         }

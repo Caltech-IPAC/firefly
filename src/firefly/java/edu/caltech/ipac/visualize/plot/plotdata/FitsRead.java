@@ -358,7 +358,9 @@ public class FitsRead implements Serializable, HasSizeOf {
     }
 
     public void writeSimpleFitsFile(File f) throws IOException{
-        createNewFits().write(f);
+        Fits fits = createNewFits();
+        fits.write(f);
+        fits.close();
     }
 
     public void clearHDU() { this.hdu= null; }
