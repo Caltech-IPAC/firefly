@@ -295,6 +295,42 @@ public class ImageHeaderTest  extends ConfigTest {
         Assert.assertEquals(expectedWorldPtMap.get("y"), worldPt.getY(), delta  );
 
     }
+
+    @Test
+    public void testPC1996MatrixKeywords() throws FitsException {
+        // Create a test header with 1996 PC keywords
+        Header testHeader = new Header();
+        testHeader.addValue("SIMPLE", true,  "file does conform to FITS standard");
+        testHeader.addValue("BITPIX", -32,    "number of bits per data pixel");
+        testHeader.addValue("NAXIS", 2,      "number of data axes");
+        testHeader.addValue("NAXIS1", 100,   "length of data axis 1");
+        testHeader.addValue("NAXIS2", 100,   "length of data axis 2");
+
+        testHeader.addValue("CRPIX1", 50.0,  "reference pixel on axis 1");
+        testHeader.addValue("CRPIX2", 50.0,  "reference pixel on axis 2");
+        testHeader.addValue("CRVAL1", 180.0, "coordinate 1 value at reference pixel");
+        testHeader.addValue("CRVAL2", 0.0,   "coordinate 2 value at reference pixel");
+        testHeader.addValue("CDELT1", 0.1,  "coordinate 1 increment at reference pixel");
+        testHeader.addValue("CDELT2",  0.1,  "coordinate 2 increment at reference pixel");
+        testHeader.addValue("CTYPE1", "RA---TAN",  "coordinate type/projection for axis 1");
+        testHeader.addValue("CTYPE2", "DEC--TAN",  "coordinate type/projection for axis 2");
+
+        // legacy 1996 PC matrix keywords
+        testHeader.addValue("PC001001", -1.0, "PC matrix element");
+        testHeader.addValue("PC001002", 0.0, "PC matrix element");
+        testHeader.addValue("PC002001", 0.0, "PC matrix element");
+        testHeader.addValue("PC002002", 1.0, "PC matrix element");
+
+        ImageHeader imageHeader = new ImageHeader(testHeader);
+
+        // Verify that PC matrix values were properly parsed
+        Assert.assertEquals(-0.1, imageHeader.cd1_1, 1E-10);
+        Assert.assertEquals(0.0, imageHeader.cd1_2, 1E-10);
+        Assert.assertEquals(0.0, imageHeader.cd2_1, 1E-10);
+        Assert.assertEquals(0.1, imageHeader.cd2_2, 1E-10);
+        Assert.assertTrue(imageHeader.using_cd);
+    }
+
     private void validate(ImageHeader expectedImageHeader, ImageHeader calculatedImageHeader) throws FitsException, IllegalAccessException{
 
         //validate projection
