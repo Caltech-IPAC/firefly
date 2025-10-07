@@ -195,6 +195,18 @@ export function dispatchFormCancel(payload) {
     flux.process({ type : FORM_CANCEL, payload});
 }
 
+/**
+ * Load any file that Firefly can recognize either from a url or a file already uploaded to the server.
+ * @param {object} payload
+ * @param {string} [payload.fileOnServer] the path of the file already uploaded to server (mutually exclusive with url)
+ * @param {string} [payload.url] the url of the remote file to load (mutually exclusive with fileOnServer)
+ * @param {string} [payload.displayName] the name to display for this file when loaded in the UI
+ * @param {boolean} [payload.immediate] whether to load the file immediately without displaying the metadata preview in "Upload" tab
+ */
+export function dispatchExternalUpload(payload) {
+    flux.process({ type : EXTERNAL_UPLOAD, payload});
+}
+
 /*---------------------------- EXPORTED FUNCTIONS -----------------------------*/
 
 
