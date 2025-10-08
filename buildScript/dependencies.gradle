@@ -7,12 +7,6 @@ def libPath = "$fireflyPath/jars"
 //project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
 
 repositories {
-    maven {
-        url "https://maven.repository.redhat.com/ga/"
-        content {
-            includeGroup "org.josso"
-        }
-    }
     flatDir {
         name 'firefly_repo'
         dirs  "$libPath/build",
@@ -40,9 +34,6 @@ dependencies {
     // apache commons
     implementation 'commons-io:commons-io:2.4', 'commons-lang:commons-lang:2.2', 'org.apache.commons:commons-csv:1.0', 'org.apache.commons:commons-compress:1.28.0'
 
-    // axis  Web Services SOAP
-    implementation 'axis:axis:1.4'
-
     // log4j
     implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
 
@@ -50,32 +41,28 @@ dependencies {
     implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.20.0'
 
     // openidconnect
-    implementation ('net.minidev:json-smart:2.3')
-    implementation ('com.nimbusds:nimbus-jose-jwt:4.37.1') { transitive = false }
+    implementation ('net.minidev:json-smart:2.4.9')
+    implementation ('com.nimbusds:nimbus-jose-jwt:9.37.2') { transitive = false }
 
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') { transitive = false }
 
     // jedis; support redis versions: 5.0 to 7.2 Family of releases
     implementation ('redis.clients:jedis:4.4.8') { exclude group: 'org.slf4j' }
 
-    // ehcache.  exclude core because it contains duplicated older CacheManager
-    implementation ('net.sf.ehcache:ehcache:2.7.4')
-    implementation ('net.sf.ehcache:ehcache-web:2.0.4') {exclude group: 'net.sf.ehcache', module: 'ehcache-core'}
+    // ehcache
+    implementation ('net.sf.ehcache:ehcache:2.10.9.2')
 
     // java mail
     implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
 
-    // josso
-    implementation ('org.josso:josso-ws:1.8.5') { transitive = false }
-
     // xstream
-    implementation ('com.thoughtworks.xstream:xstream:1.4.20')
+    implementation ('com.thoughtworks.xstream:xstream:1.4.21')
 
     // webdav includes httpclient 3.1
     implementation 'org.apache.jackrabbit:jackrabbit-webdav:2.8.10'
 
     // embedded db drivers
-    implementation 'org.hsqldb:hsqldb:2.4.0', 'com.h2database:h2:1.4.200', 'org.xerial:sqlite-jdbc:3.20.0'
+    implementation 'org.hsqldb:hsqldb:2.7.1', 'com.h2database:h2:2.2.224', 'org.xerial:sqlite-jdbc:3.41.2.2'
 
     // reflections used by SearchProcessorImpl annotation
     implementation 'org.reflections:reflections:0.9.11'
@@ -87,7 +74,7 @@ dependencies {
     implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
 
     // spring jdbc
-    implementation 'org.springframework:spring-jdbc:2.5.5'
+    implementation ('org.springframework:spring-jdbc:2.5.6.SEC03')
 
     // starlink
     implementation ':starlink-registry-1.2+2016.05.03'

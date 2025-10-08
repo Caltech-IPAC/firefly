@@ -38,7 +38,6 @@ public interface SsoAdapter {
 
 
     enum SsoFramework {
-        josso(JOSSOAdapter.class),
         oidc(OidcAdapter.class),
         mod_auth_openidc(AuthOpenidcMod.class),
         PAT(PersonalAccessToken.class);
