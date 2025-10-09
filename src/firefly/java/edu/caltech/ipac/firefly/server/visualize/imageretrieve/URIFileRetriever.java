@@ -56,6 +56,7 @@ public class URIFileRetriever implements FileRetriever {
         var progressKey = makeProgressKey(request);
         UriRefParams params= new UriRefParams(list, progressKey,request.getPlotId());
         params.setOptimalUriRef(RetrieveUtil.getOptimalUri(params.getUriList(), ServerContext.getCloudEnvironment()));
+        params.setExpectStaticFile(request.getExpectStaticFile());
         return doGetFile(params, request, handleAllErrors);
     }
 

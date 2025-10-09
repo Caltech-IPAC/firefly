@@ -28,7 +28,7 @@ public class NedNameResolver {
     public static ResolveResult resolveName(String objName) throws FailedRequestException {
         try {
             Map<String,String> postData= CollectionUtil.stringMap("",String.format(POST_TEMPLATE, objName));
-            String jsonStr= URLDownload.getDataFromURL(new URL(NED_URL_STR),postData , null,header).getResultAsString();
+            String jsonStr= URLDownload.getDataFromURL(new URL(NED_URL_STR),postData , header).getResultAsString();
             JsonHelper helper= JsonHelper.parse(jsonStr);
             long resultCode= helper.getValue(0L, "ResultCode");
             if (resultCode != 2 && resultCode != 3) throw makeEx(objName, "resultCode="+resultCode,null);

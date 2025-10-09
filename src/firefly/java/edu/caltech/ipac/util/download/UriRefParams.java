@@ -4,7 +4,6 @@
 package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.net.URL;
@@ -20,8 +19,9 @@ public class UriRefParams extends BaseNetParams {
     private boolean _checkForNewer= false;
     private String _desc = null;
     private File _dir = null; // if null, the use the default dir
-    private long _maxSizeToDownload= 2*FileUtils.ONE_GB;
+    private long _maxSizeToDownload= 0;
     private HttpServiceInput addtlInfo;
+    private boolean expectStaticFile= false;
 
 
     public UriRefParams(URL url) { this(Collections.singletonList(UriRef.make(url)),null,null); }
@@ -47,7 +47,7 @@ public class UriRefParams extends BaseNetParams {
 
     public String getUniqueString() {
         var desc= addtlInfo!=null ? addtlInfo.getDesc() : null;
-        return RetrieveUtil.makeCacheFileString(uriList.getFirst(), _loginName, desc);
+        return RetrieveUtil.makeUniqueFileName(uriList.getFirst(), _loginName, desc);
     }
 
 
@@ -56,6 +56,9 @@ public class UriRefParams extends BaseNetParams {
     public long getMaxSizeToDownload() {return _maxSizeToDownload;}
     public void setDownloadDir(File dir) {_dir= dir;}
     public File getDownloadDir() {return _dir;}
+
+    public void setExpectStaticFile(boolean expectStaticFile) { this.expectStaticFile= expectStaticFile; }
+    public boolean getExpectStaticFile() { return expectStaticFile; }
 
     public void setCheckForNewer(boolean check) { _checkForNewer= check; }
     public boolean getCheckForNewer() { return _checkForNewer; }

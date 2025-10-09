@@ -83,6 +83,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String GCS_PROJECT= "GCSProject";
     public static final String GCS_BUCKET= "GCSBucket";
     public static final String GCS_OBJ_NAME= "GCSObjName";
+    public static final String EXPECT_STATIC_FILE= "ExpectStaticFile";
 
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
@@ -600,9 +601,11 @@ public class WebPlotRequest extends ServerRequest {
         setSafeParam(URL, url);
     }
 
-    public String getURL() {
-        return getSafeParam(URL);
-    }
+    public String getURL() { return getSafeParam(URL); }
+
+    public void setExpectStaticFile(Boolean isStaticFile) {this.setParam(EXPECT_STATIC_FILE, isStaticFile+"" ); }
+    public boolean getExpectStaticFile() { return getBooleanParam(EXPECT_STATIC_FILE); }
+
 
     public void setUrlCheckForNewer(boolean check) { setSafeParam(URL_CHECK_FOR_NEWER,check+"");}
 

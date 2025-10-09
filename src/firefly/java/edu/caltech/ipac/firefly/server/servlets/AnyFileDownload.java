@@ -6,17 +6,19 @@ package edu.caltech.ipac.firefly.server.servlets;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.util.download.UriRef;
+import edu.caltech.ipac.util.download.UriRefParams;
 import edu.caltech.ipac.visualize.net.URLParms;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -155,14 +157,11 @@ public class AnyFileDownload extends BaseHttpServlet {
         SrvParam sp= new SrvParam(req.getParameterMap());
         String urlStr= sp.getRequired(EXT_URL);
         URL url= new URL(urlStr);
-        String fileName= "download.tmp";
-        if (url.getFile().length()>2) {
-            fileName= new File(url.getFile()).getName();
-        }
-        File dFile= File.createTempFile("tmp-","-"+fileName ,ServerContext.getUploadDir());
         FileInfo fi;
         try {
-            fi = URLDownload.getDataToFile(url, dFile, null, null, URLDownload.Options.defWithRedirect());
+            UriRefParams params= new UriRefParams(UriRef.make(url), ServerContext.getUploadDir());
+            params.setExpectStaticFile(true);
+            fi = LockingRetrieve.downloadWithCacheMsg(url, ServerContext.getUploadDir());
         } catch (FailedRequestException e) {
             res.sendError(404, e.toString());
             return;
@@ -184,7 +183,9 @@ public class AnyFileDownload extends BaseHttpServlet {
             return;
         }
 
+        String fileName= "download-"+System.currentTimeMillis()+".tmp";
         if (fi.getExternalName()!=null && fi.getExternalName().length()>2) {
+            if (url.getFile().length()>2) fileName= new File(url.getFile()).getName();
             String ext = FileUtil.getExtension(fileName);
             if (ext.length() > 4 || ext.length() < 3 || fileName.indexOf('&') > -1 || fileName.indexOf('=') > -1) {
                 String ftest = fi.getExternalName();

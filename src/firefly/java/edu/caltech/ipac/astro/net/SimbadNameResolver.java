@@ -31,7 +31,7 @@ public class SimbadNameResolver {
         Map<String,String> magData= CollectionUtil.stringMap(tapParams, "query", String.format(MAG_ADQL,URLParms.encode(objName)) );
         try {
             URL url= new URL(SIMBAD_URL_STR);
-            String resolveJsonStr= URLDownload.getDataFromURL(url,resolveData , null, null).getResultAsString();
+            String resolveJsonStr= URLDownload.getDataFromURL(url,resolveData , null).getResultAsString();
             JsonHelper json= JsonHelper.parse(resolveJsonStr);
             double ra = getRow0DoubleValue(json, 0,Double.NaN);
             double dec = getRow0DoubleValue(json, 1, Double.NaN);
@@ -43,7 +43,7 @@ public class SimbadNameResolver {
             sa.setParallax(getRow0DoubleValue(json, 5, Double.NaN));
 
             try {
-                String magJsonStr= URLDownload.getDataFromURL(url,magData , null, null).getResultAsString();
+                String magJsonStr= URLDownload.getDataFromURL(url,magData , null).getResultAsString();
                 json= JsonHelper.parse(magJsonStr);
                 sa.setBMagnitude(getRow0DoubleValue(json, 0, Double.NaN));
                 sa.setVMagnitude(getRow0DoubleValue(json, 1, Double.NaN));

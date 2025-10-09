@@ -310,14 +310,15 @@ public class FileUtil
     }
 
     public static void copyFile(File fromFile, File toFile) throws IOException {
-        DataInputStream in=null;
-        DataOutputStream out=null;
-        try {
-            in=new DataInputStream(new BufferedInputStream(
-                                new FileInputStream(fromFile), BUFFER_SIZE));
-            out=new DataOutputStream(
-                  new BufferedOutputStream( new FileOutputStream(toFile),BUFFER_SIZE));
+        try (BufferedOutputStream out=new BufferedOutputStream(new FileOutputStream(toFile), BUFFER_SIZE)) {
+            copyFile(fromFile,out);
+        } catch (EOFException e) {
+            // do nothing we are done
+        }
+    }
 
+    public static void copyFile(File fromFile, BufferedOutputStream out) throws IOException {
+        try (var in=new DataInputStream(new BufferedInputStream( new FileInputStream(fromFile), BUFFER_SIZE))) {
             byte[] buffer = new byte[BUFFER_SIZE];
             int read;
             while ((read = in.read(buffer)) != -1) {
@@ -325,9 +326,6 @@ public class FileUtil
             }
         } catch (EOFException e) {
             // do nothing we are done
-        } finally {
-            silentClose(in);
-            silentClose(out);
         }
     }
 

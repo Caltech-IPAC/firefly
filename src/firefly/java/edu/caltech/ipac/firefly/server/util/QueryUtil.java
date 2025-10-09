@@ -183,16 +183,17 @@ public class QueryUtil {
                     throw new DataAccessException("Disk Error: Failed to create temporary file");       // should not happen
                 }
 
+                URLDownload.Options ops= URLDownload.Options.def();
                 if (res == null) {
-                    FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(),
-                            URLDownload.Options.defWithRedirect());
+                    FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(),ops);
                     checkForFailures(finfo);
                     res = outFile;
                     CacheManager.getCache().put(key, res);
                 } else if (checkForUpdates) {
                     FileUtil.writeStringToFile(outFile, "workaround");
                     outFile.setLastModified(res.lastModified());
-                    URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
+                    ops.setOnlyIfModified(false);
+                    ops.setExpectStaticFile(true);
                     FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(), ops);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);

@@ -58,7 +58,7 @@ export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTa
     }
     else if (activateServiceDef && noInputRequired) {
         const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,options));
-        const request = makeObsCoreRequest(url, undefined, positionWP, titleStr, sourceTable, sourceRow);
+        const request = makeObsCoreRequest({url, positionWP, titleStr, table:sourceTable, row:sourceRow});
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
             menuKey, activeMenuLookupKey, serDef, dlData, originalTitle:name, options});
         const tName= (titleStr || name);
@@ -71,7 +71,7 @@ export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTa
             activate, url:request.getURL(), serDef, menuKey, dlData,
             activeMenuLookupKey, request, sRegion, semantics, size, serviceDefRef});
     } else {
-        const request = makeObsCoreRequest(accessURL, undefined, positionWP, titleStr, sourceTable, sourceRow);
+        const request = makeObsCoreRequest({url:accessURL, positionWP, titleStr, table:sourceTable, row:sourceRow});
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
             menuKey, activeMenuLookupKey, dlData, serDef, originalTitle:name,options});
         const tName = `${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
@@ -182,7 +182,7 @@ export function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, a
         }
     }
     const url= makeUrlFromParams(accessURL, serDef, dlData?.rowIdx ?? idx, getComponentInputs(serDef,cutoutOptions,params));
-    const request = makeObsCoreRequest(url, undefined, positionWP, titleToUse, sourceTable, sourceRow);
+    const request = makeObsCoreRequest({url, positionWP, titleStr:titleToUse, table:sourceTable, row:sourceRow});
     if (foundType!==requestedType) {
         request.setAttributes({[PlotAttribute.USER_WARNINGS]: getCutoutErrorStr(foundType,requestedType)});
     }

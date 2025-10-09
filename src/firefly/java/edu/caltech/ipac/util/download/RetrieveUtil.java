@@ -46,7 +46,10 @@ public class RetrieveUtil {
 
         try {
             File fileName= (fileInfo==null) ? FileCacheHelper.makeFile(params.getDownloadDir(), params.getUniqueString()) : fileInfo.getFile();
-            var ops= URLDownload.Options.listenerOp(params.getMaxSizeToDownload(), dl);
+            var ops= URLDownload.Options.def();
+            ops.setDl(dl);
+            ops.setExpectStaticFile(params.getExpectStaticFile());
+            ops.setMaxFileSize(params.getMaxSizeToDownload());
             Map<String,String> cookies = new HashMap<>(ServerContext.getRequestOwner().getCookieMap());
             if (params.getAddtlCookies()!=null) cookies.putAll(params.getAddtlCookies());
             fileInfo= download(params.getUriRef(), fileName, cookies, params.getHeaders(), ops);
@@ -60,7 +63,6 @@ public class RetrieveUtil {
 
 
     /**
-     *
      * @param uri - this a string url, a URL, a string s3 ref, or a s3 ref object
      * @param outFile output file
      * @param cookies map of cookies
@@ -77,15 +79,17 @@ public class RetrieveUtil {
         return switch (uri.ref()) {
             case S3Ref s3-> S3Download.getData(s3, outFile, cookies, requestHeaders, ops);
             case GcsRef gcs -> GcsDownload.getData(gcs, outFile, cookies, requestHeaders, ops);
-            case URL url -> URLDownload.getDataToFile(url, outFile, cookies, requestHeaders, ops);
+            case URL url -> ops.expectStaticFile()
+                    ? ConcurrentDownload.getData(url, outFile, cookies, requestHeaders, ops)
+                    : URLDownload.getDataToFile(url, outFile, cookies, requestHeaders, ops);
             default -> new FileInfo(404);
         };
     }
 
 
-    public static String makeCacheFileString(UriRef uri, String userLoginName, String desc) {
+    public static String makeUniqueFileName(UriRef uri, String userLoginName, String desc) {
 
-        if (uri==null) return "no network resource";
+        if (uri==null) return "no-network-resource.empty";
         String loc;
         String path;
         String outLoc;
@@ -110,7 +114,7 @@ public class RetrieveUtil {
                 outLoc = loc;
                 prefix= "GCS-";
             }
-            default -> {return "no network resource";}
+            default -> {return "no-network-resource.empty";}
         }
 
         String fileStr= path.replace('&','-');

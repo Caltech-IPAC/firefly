@@ -9,16 +9,17 @@ package edu.caltech.ipac.util.download;
  */
 
 
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
-
-import static edu.caltech.ipac.util.FileUtil.MEG;
 
 /**
  * @author Trey Roby
@@ -27,6 +28,8 @@ public class Downloader {
 
     private DataInputStream _in;
     private OutputStream _out;
+    private ByteBuffer mappedOutBuf;
+    private final File outfile;
     private final long _downloadSize;
     private long _maxDownloadSize= 0L;
     private DownloadListener downloadListener= null;
@@ -36,17 +39,48 @@ public class Downloader {
         _in = in;
         _out = out;
         _downloadSize = contentLength;
+        outfile= null;
+    }
+
+    public Downloader(DataInputStream in, File outfile, long contentLength) {
+        _in = in;
+        _out = null;
+        this.outfile = outfile;
+        _downloadSize = contentLength;
+    }
+
+    public static void doDownload(DataInputStream in,
+                                  File outfile,
+                                  long contentLength,
+                                  long maxSize,
+                                  DownloadListener listener) throws IOException, FailedRequestException {
+        var downloader = new Downloader(in, outfile, contentLength);
+        downloader.setDownloadListener(listener);
+        downloader.setMaxDownloadSize(maxSize);
+        downloader.download();
+    }
+
+    public static void doDownload(DataInputStream in,
+                                  ByteBuffer mappedOutBuf,
+                                  long contentLength,
+                                  long maxSize,
+                                  DownloadListener listener) throws IOException, FailedRequestException {
+        var downloader = new Downloader(in, (OutputStream) null, contentLength);
+        downloader.setDownloadListener(listener);
+        downloader.setMaxDownloadSize(maxSize);
+        downloader.mappedOutBuf= mappedOutBuf;
+        downloader.download();
     }
 
     public void setMaxDownloadSize(long maxDownloadSize) { _maxDownloadSize= maxDownloadSize; }
 
     public void download() throws IOException, FailedRequestException {
 
-        Assert.tst((_out != null && _in != null),
-                   "Attempting to call URLDownload twice, an instance is " +
-                           "only good for one call");
+        FileChannel fc = outfile!= null
+                ? FileChannel.open(outfile.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+                : null;
 
-        int cnt = 1;
+
         long total = _downloadSize;
         String messStr;
         String outStr;
@@ -61,13 +95,11 @@ public class Downloader {
         try {
             int read;
             byte[] buffer = new byte[BUFFER_SIZE];
-            int progInc= 1;
+            long sTime= System.currentTimeMillis();
             while ((read = _in.read(buffer)) != -1) {
                 totalRead += read;
-                if (totalRead> cnt*MEG) {
-                    if (cnt>9 && progInc==1) progInc=5; // message update every 5
-                    else if (cnt>19 && progInc==5) progInc=10; // message update every 10
-                    cnt+=progInc;
+                if (System.currentTimeMillis() - sTime > 750) {
+                    sTime = System.currentTimeMillis();
                     if (startDate == null) startDate = new Date();
                     if (total > 0) {
                         timeStats = computeTimeStats(startDate, totalRead, total);
@@ -86,7 +118,19 @@ public class Downloader {
                     }
                     fireDownloadListeners(totalRead, total, timeStats, outStr);
                 }
-                _out.write(buffer, 0, read);
+                if (_out!=null) _out.write(buffer, 0, read);
+                if (fc!=null) {
+                    ByteBuffer fcBuff = ByteBuffer.wrap(buffer);
+                    while (fcBuff.hasRemaining()) {
+                        int ignore= fc.write(fcBuff);
+                    }
+                }
+                if (mappedOutBuf!=null) {
+                    ByteBuffer b = ByteBuffer.wrap(buffer,0,read);
+                    while (b.hasRemaining()) {
+                        mappedOutBuf.put(b);
+                    }
+                }
             }
 
         } catch (EOFException e) {
@@ -95,6 +139,7 @@ public class Downloader {
             }
         } finally {
             FileUtil.silentClose(_out);
+            if (fc!=null) fc.close();
         }
         _out = null;
         _in = null;
