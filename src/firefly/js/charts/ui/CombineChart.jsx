@@ -57,7 +57,8 @@ const POPUP_ID = 'CombineChart-popup';
 export const CombineChart = ({chartIds, selectedChartId, showChartSelectionTable=true,
                                  deriveTraceTitle, onCombineComplete, slotProps}) => {
     const doCombine = async () => {
-        const params = await getParamsFromDialog({chartIds, selectedChartId, showChartSelectionTable, deriveTraceTitle, slotProps});
+        const params = await getParamsFromDialog({chartIds, selectedChartId, showChartSelectionTable,
+            deriveTraceTitle, ...slotProps?.dialog});
         const combinedChartData = combineChart(params);
 
         dispatchChartAdd({
@@ -73,7 +74,7 @@ export const CombineChart = ({chartIds, selectedChartId, showChartSelectionTable
     };
 
     return (chartIds?.length > 1)
-        ? <CombineChartButton onClick={doCombine} {...slotProps?.button}/>
+        ? <CombineChartButton onClick={doCombine} tip={'Combine charts (that are pinned)'} {...slotProps?.button}/>
         : null;
 };
 
@@ -88,7 +89,11 @@ CombineChart.propTypes = {
     deriveTraceTitle: PropTypes.func,
     slotProps: PropTypes.shape({
         button: PropTypes.object,
-        dialog: PropTypes.object,
+        dialog: PropTypes.shape({
+            dialogTitle: PropTypes.string,
+            initTitleFieldValue: PropTypes.string,
+            sx: PropTypes.object,
+        }),
     }),
 };
 
@@ -120,7 +125,7 @@ function getChartTitle(cdata, defTitle) {
     return cdata.layout?.title?.text || defTitle;
 }
 
-function generateTraceTitles(chartId, deriveTraceTitle) {
+function getTraceTitles(chartId, deriveTraceTitle) {
     const {data=[], layout} = getChartData(chartId);
     const chartTitle = layout?.title?.text ?? chartId;
     const traceTitles = [];
@@ -133,14 +138,17 @@ function generateTraceTitles(chartId, deriveTraceTitle) {
 
     if (data.length === 1) {
         //one trace chart doesn't require any suffix
-        traceTitles.push(traceTitleBase);
+        traceTitles.push({label: 'Trace name:', initValue: traceTitleBase});
     }
     else {
         //multi trace chart needs trace info to be suffixed
         data.forEach((traceData, idx) => {
             let traceTitle = traceData?.name;
             if (!traceTitle)  traceTitle = `trace ${idx}`;
-            traceTitles.push(`${traceTitleBase}: ${traceTitle}`);
+            traceTitles.push({
+                label: `Trace name for "${traceTitle}":`,
+                initValue: `${traceTitleBase}: ${traceTitle}`
+            });
         });
     }
     return traceTitles;
@@ -174,9 +182,13 @@ function createTableModel(chartIds, selectedChartId, showAll, tbl_id) {
     return table;
 }
 
+const activeChartTypography = {color:'warning'};
+
 const ChartSelectionTable = ({tbl_id, chartIds, selectedChartId}) => {
     const [showAll, setShowAll] = useState(false);
     const showAllHint = 'Show all charts even ones that may not combine well';
+
+    const activeChartTitle = getChartTitle(getChartData(selectedChartId));
 
     useEffect(() => {
         const selTbl = createTableModel(chartIds, selectedChartId ?? chartIds[0], showAll, tbl_id);
@@ -184,7 +196,12 @@ const ChartSelectionTable = ({tbl_id, chartIds, selectedChartId}) => {
     }, [showAll]);
 
     return (
-        <Stack height={125} flexShrink={0}>
+        <Stack spacing={1}>
+            <Typography>
+                <Typography level='title-sm'>Active chart: </Typography>
+                <Typography {...activeChartTypography}>{activeChartTitle}</Typography>
+            </Typography>
+            <Typography level='title-sm'>Select charts to combine with it:</Typography>
             {/*--- temporarily removed to only combine charts with similar axes
                 <div style={{display: 'inline-flex', alignItems: 'center'}}>
                     <label htmlFor='showAll'>Show All Charts: </label>
@@ -192,13 +209,16 @@ const ChartSelectionTable = ({tbl_id, chartIds, selectedChartId}) => {
                     <span className='CombineChart__hints'>({showAllHint})</span>
                 </div>
                 ----------*/}
-            <TablePanel {...{tbl_id, showToolbar: false, showUnits: false, showTypes: false}}/>
+            <Stack height={'8rem'} flexShrink={0}>
+                <TablePanel {...{tbl_id, showToolbar: false, showUnits: false, showTypes: false}}/>
+            </Stack>
         </Stack>
     );
 };
 
 
-const CombineChartDialog = ({onComplete, chartIds, selectedChartId, showChartSelectionTable, deriveTraceTitle}) => {
+const CombineChartDialog = ({onComplete, chartIds, selectedChartId, showChartSelectionTable,
+                                deriveTraceTitle, initTitleFieldValue, sx}) => {
     const tbl_id = 'combinechart-tbl-id';
     const groupKey = 'combinechart-props';
 
@@ -254,15 +274,17 @@ const CombineChartDialog = ({onComplete, chartIds, selectedChartId, showChartSel
             ...dimensionsSx,
             resize: 'both',
             overflow: 'hidden',
-            position: 'relative'
+            position: 'relative',
+            '.MuiInput-root': {minWidth: '20rem'},
+            ...sx
         }}>
             <Stack spacing={1} height={1}>
                 <Stack spacing={2} overflow='auto' flexGrow={1}>
                     <FailedChartWarnings errors={rejectedChartReasons}/>
                     {showChartSelectionTable && <ChartSelectionTable {...{chartIds: resolvedChartIds, selectedChartId, tbl_id}} />}
-                    <Title initialState={{value: 'combined'}}/>
+                    <Title initialState={{value: initTitleFieldValue || 'combined'}} label={'Title of combined chart:'}/>
                     <CascadePlots {...{doCascading}}/>
-                    <SelChartProps {...{chartIds: chartIdsToCombine, groupKey, showOrder: doCascading, deriveTraceTitle}}/>
+                    <SelChartProps {...{chartIds: chartIdsToCombine, groupKey, showOrder: doCascading, deriveTraceTitle, showChartSelectionTable}}/>
                 </Stack>
 
                 <Stack direction='row' justifyContent='space-between' alignItems='center'>
@@ -291,7 +313,8 @@ const CascadePlots = ({doCascading}) => {
     const paddingValidator = (val) => Validate.floatRange(-1,1,0,'Cascade Padding', val, false);
     return (
         <Stack spacing={1}>
-            <SwitchInputField fieldKey='doCascading' label={'Apply cascading:'} initialState={{value: false}}/>
+            <SwitchInputField fieldKey='doCascading' label={'Normalize & shift traces before overplotting:'}
+                              initialState={{value: false}}/>
             {doCascading &&
                 <Stack spacing={.5} pl={1}>
                     <Typography>Y-axis: (y - min(y)) / (max(y) - min(y)) + (<b>i</b> * <b>P</b>)</Typography>
@@ -300,6 +323,7 @@ const CascadePlots = ({doCascading}) => {
                                      label='Padding (P):'
                                      orientation={'horizontal'}
                                      validator={paddingValidator}
+                                     sx={{'& .MuiInput-root': {minWidth: '6rem'}}}
                     />
                 </Stack>
             }
@@ -312,24 +336,24 @@ let totalTraces = 0;
 const SelChartOpt = ({chartId, groupKey, header, traceTitles, idx}) => {
     const key = `cOpt-${idx}`;
 
-    const TraceOpt = ({traceNum, title}) => {
+    const TraceOpt = ({traceNum, traceTitle}) => {
         const {Name} = useBasicOptions({activeTrace: traceNum, groupKey});
-        return <Name initialState={{value: title}}/>;
+        return <Name initialState={{value: traceTitle?.initValue}} label={traceTitle?.label}/>;
     };
     const isOpen = !isSpectralOrder(chartId);
     return (
         <CollapsibleItem componentKey={key} header={header} isOpen={isOpen}>
             <Stack spacing={1}>
-                {traceTitles.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
+                {traceTitles.map((traceTitle, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, traceTitle}}/>)}
             </Stack>
         </CollapsibleItem>
     );
 };
 
-function SelChartProps ({chartIds, groupKey, showOrder, deriveTraceTitle}) {
+function SelChartProps ({chartIds, groupKey, showOrder, deriveTraceTitle, showChartSelectionTable}) {
     const getSelCharInfo = (id) => {
         const chartTitle = getChartTitle(getChartData(id));
-        const traceTitles = generateTraceTitles(id, deriveTraceTitle);
+        const traceTitles = getTraceTitles(id, deriveTraceTitle);
         return [id, chartTitle, traceTitles];
     };
 
@@ -343,7 +367,9 @@ function SelChartProps ({chartIds, groupKey, showOrder, deriveTraceTitle}) {
                     chartIds.map(getSelCharInfo).map(([chartId, chartTitle, traceTitles], idx) => {
                         const header = (
                             <Stack direction='row' spacing={1} alignItems='baseline'>
-                                <Typography {...(idx===0 && {fontWeight: 'lg'})}>{chartTitle}</Typography>
+                                <Typography {...(showChartSelectionTable && idx===0 ? activeChartTypography : {})}>
+                                    {chartTitle}
+                                </Typography>
                                 {showOrder && <Typography level='body-sm'>(i={idx})</Typography>}
                             </Stack>
                         );
@@ -358,9 +384,12 @@ function SelChartProps ({chartIds, groupKey, showOrder, deriveTraceTitle}) {
 function getParamsFromDialog(props) {
     return new Promise((resolve) => {
         const onComplete = (params) => resolve(params);
-        const content = <CombineChartDialog {...{onComplete, ...props}}/>;
-        showPopup({ID: POPUP_ID, content, title: 'Add charts to current chart', modal: true,
-            ...props?.slotProps?.dialog});
+        showPopup({
+            ID: POPUP_ID,
+            content: <CombineChartDialog {...{onComplete, ...props}}/>,
+            title: props?.dialogTitle || 'Select additional charts to combine with active chart',
+            modal: true
+        });
     });
 }
 

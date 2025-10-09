@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {set} from 'lodash';
+import {defaultsDeep, set} from 'lodash';
 
 import {getActiveTableId, getTblById, getTblInfoById} from 'firefly/tables/TableUtil';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
@@ -38,7 +38,7 @@ export function CompareRowCharts({fetchRowChart, activatePinnedCharts, rowLimit=
         }
     }, [tblId, selectedRowIdxs]);
 
-    const buttonTip = 'Compare selected rows';
+    const buttonTip = 'Combine charts (from the selected rows)';
     if (selectedRowIdxs.length > rowLimit) {
         const content = `Number of rows selected for chart comparison exceeds the limit! Please select ${rowLimit} rows or lesser.`;
         return (<CombineChartButton onClick={()=>showInfoPopup(content)} tip={buttonTip} {...slotProps?.button}/>);
@@ -50,11 +50,10 @@ export function CompareRowCharts({fetchRowChart, activatePinnedCharts, rowLimit=
             showChartSelectionTable={false} //because user already selected rows before opening dialog
             onCombineComplete={activatePinnedCharts}
             deriveTraceTitle={deriveTraceTitle}
-            slotProps={{
+            slotProps={defaultsDeep(slotProps, {
                 button: {tip: buttonTip},
-                dialog: {title: 'Combine charts in the selected rows'},
-                ...slotProps
-            }}/>
+                dialog: {dialogTitle: 'Combine charts from the selected rows'}
+            })}/>
     );
 }
 
