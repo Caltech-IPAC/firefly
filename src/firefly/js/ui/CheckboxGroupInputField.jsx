@@ -62,6 +62,51 @@ CheckboxGroupInputFieldView.propTypes= {
     }),
 };
 
+/**
+ * Reusable "Select All" checkbox component.
+ *
+ * Usage:
+ * - Render alongside a <CheckboxGroupInputField />.
+ * - Pass the same `fieldKey` and `options` props to both components.
+ * - When toggled, this checkbox will update the shared field group state to
+ *   either include all options or clear everything.
+ *
+ * Note: `options` must contain at least one value.
+ *  - If no options are available, callers should not render this component.
+ *  - As a failsafe, if `options` is empty, this component will render nothing (null).
+ *
+ */
+export const SelectAllCheckbox = memo(({fieldKey, label = 'Select all', groupKey, options = [], ...props}) => {
+    const { viewProps, fireValueChange } = useFieldGroupConnector({
+        fieldKey, groupKey, initialState: { value: '', label: '' },
+    });
+
+    if (!options || options.length === 0) {
+        return null;
+    }
+
+    const allValues = options.map((o) => o.value);
+    const curValueArr = getCurrentValueArr(viewProps.value);
+    const isAllSelected = allValues.length > 0 && allValues.every((v) => curValueArr.includes(v));
+
+    const handleSelectAllChange = (ev) => {
+        const checked = ev.target.checked;
+        const nextVal = checked ? allValues : [];
+        const {valid, message} = viewProps.validator(nextVal.toString());
+        fireValueChange({value: nextVal.toString(), message, valid});
+    };
+
+    return (
+            <Checkbox
+                size='sm'
+                name={fieldKey}
+                checked={isAllSelected}
+                onChange={handleSelectAllChange}
+                label={label}
+                {...props}
+            />
+    );
+});
 
 
 function handleOnChange(ev, viewProps, fireValueChange) {
@@ -88,6 +133,8 @@ function handleOnChange(ev, viewProps, fireValueChange) {
         viewProps.onChange(ev);
     }
 }
+
+
 
 export const CheckboxGroupInputField = memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);

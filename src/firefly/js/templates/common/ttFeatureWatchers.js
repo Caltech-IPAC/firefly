@@ -13,14 +13,15 @@ import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef} from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
-import {useStoreConnector} from 'firefly/ui/SimpleComponent';
+import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,} from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
 import {fetchSemanticList} from 'firefly/metaConvert/vo/DatalinkFetch';
 import {checkForDatalinkServDesc} from 'firefly/ui/dynamic/ServiceDefTools';
-import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
-import {Stack} from '@mui/joy';
+import {CheckboxGroupInputField, SelectAllCheckbox} from 'firefly/ui/CheckboxGroupInputField';
+import {FormControl, FormLabel, Stack, Typography} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
+import {FieldGroup} from 'firefly/ui/FieldGroup';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -105,6 +106,45 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
+function ProductTypesBlock({tbl_id, dynamicOptions, cutoutValue}) {
+    const [getProductTypes] = useFieldGroupValue('productTypes', tbl_id);
+    const productTypes = getProductTypes();
+
+    const isCutoutSelected = productTypes?.split(',').map((val) => val.trim()).includes('#cutout') ?? false;
+
+    return (<Stack spacing={2}>
+            <FormControl>
+                <Stack direction='row' alignItems='center' spacing={1}>
+                    <FormLabel>Products to Download:</FormLabel>
+                    <SelectAllCheckbox
+                        fieldKey='productTypes'
+                        groupKey={tbl_id}
+                        label='Select all'
+                        options={dynamicOptions}
+                    />
+                </Stack>
+                <Stack spacing={1} mt={1}>
+                    <CheckboxGroupInputField
+                        fieldKey='productTypes'
+                        groupKey={tbl_id}
+                        options={dynamicOptions}
+                        //initialState={{ value: dynamicOptions.map((o) => o.value).toString() }} //this is if we want to keep default all  vals selected
+                        initialState={{ value: '' }}
+                        alignment='horizontal'
+                    />
+                    {isCutoutSelected && (
+                        <Typography level='body-sm' sx={{ ml: 1 }}>
+                            Note: the current cutout size is {cutoutValue} deg
+                            (you may change this via the cutout dialog).
+                        </Typography>
+                    )}
+                </Stack>
+            </FormControl>
+        </Stack>);
+}
+
+
+
 export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showFileStructure=false,
                                                downloadType='package', dataSource, fileName}) => {
     const tbl_id = table_id || getActiveTableId();
@@ -142,20 +182,16 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
 
     //dynamically generate options from semList
     const dynamicOptions = useMemo(() => {
-        let options;
         if (semList.length > 0) {
-            //use semList if available
-            options = semList.map((value) => ({
-                label: labelMap[value] || value.replace(/^#/, ''), //strip "#" if using raw value as fallback for a cleaner label in the UI
+            return semList.map((value) => ({
+                label: labelMap[value] || value.replace(/^#/, ''),
                 value
             }));
-        } else {
-            options = []; //fallback only to "All data" only below
         }
-        //ensure '*' ("All data") is always included, even as a fallback when semList is empty
-        options.push({ label: 'All Data', value: '*' });
-        return options;
+        return [];
     }, [semList, labelMap]);
+
+
 
     const tblModel = getTableModel(tbl_id);
 
@@ -190,37 +226,35 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
         <>
             {loading && <ToolbarButton enabled={false} variant={'soft'} color='warning' text={downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}/>}
             {!loading &&
-                <Stack>
-                    <DownloadButton key={keysToWatch}
-                        buttonText = {downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}>
-                        <DownloadOptionPanel {...{
-                            updateSearchRequest,
-                            groupKey: tbl_id,
-                            tbl_id,
-                            downloadType,
-                            dlParams: {
-                                FileGroupProcessor:'ObsCorePackager',
-                                worker: downloadType === 'script' ? 'DownloadScriptWorker' : 'PackagingWorker',
-                                dlCutout: 'orig',
-                                position,
-                                cutoutValue,
-                                generateDownloadFileName,
-                                datalinkServiceDescriptor: isDatalinkSerDesc,
-                                viewerId,
-                                DataSource: dataSource,
-                                help_id:'table.obsCorePackage',
-                                Title: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
-                            }}}>
-                            {!isDatalink && <Stack spacing={1}>
-                                <CheckboxGroupInputField
-                                    fieldKey='productTypes'
-                                        options={dynamicOptions}
-                                        initialState={{value: '*'}}
-                                        label='Products to Download: ' />
-                            </Stack>}
-                        </DownloadOptionPanel>
-                    </DownloadButton>
-                </Stack>
+                <FieldGroup groupKey={tbl_id}>
+                    <Stack>
+                        <DownloadButton key={keysToWatch}
+                            buttonText = {downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}>
+                            <DownloadOptionPanel {...{
+                                updateSearchRequest,
+                                groupKey: tbl_id,
+                                tbl_id,
+                                downloadType,
+                                dlParams: {
+                                    FileGroupProcessor:'ObsCorePackager',
+                                    worker: downloadType === 'script' ? 'DownloadScriptWorker' : 'PackagingWorker',
+                                    dlCutout: 'orig',
+                                    position,
+                                    cutoutValue,
+                                    generateDownloadFileName,
+                                    datalinkServiceDescriptor: isDatalinkSerDesc,
+                                    viewerId,
+                                    DataSource: dataSource,
+                                    help_id:'table.obsCorePackage',
+                                    Title: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
+                                }}}>
+                                {!isDatalink && dynamicOptions?.length > 0 &&
+                                    (<ProductTypesBlock tbl_id={tbl_id} dynamicOptions={dynamicOptions} cutoutValue={cutoutValue}/>
+                                )}
+                            </DownloadOptionPanel>
+                        </DownloadButton>
+                    </Stack>
+                </FieldGroup>
             }
         </>
     );
