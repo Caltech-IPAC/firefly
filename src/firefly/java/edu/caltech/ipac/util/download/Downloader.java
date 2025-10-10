@@ -120,7 +120,7 @@ public class Downloader {
                 }
                 if (_out!=null) _out.write(buffer, 0, read);
                 if (fc!=null) {
-                    ByteBuffer fcBuff = ByteBuffer.wrap(buffer);
+                    ByteBuffer fcBuff = ByteBuffer.wrap(buffer,0,read);
                     while (fcBuff.hasRemaining()) {
                         int ignore= fc.write(fcBuff);
                     }

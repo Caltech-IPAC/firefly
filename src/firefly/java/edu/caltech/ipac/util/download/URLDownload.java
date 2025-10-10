@@ -494,8 +494,8 @@ public class URLDownload {
             validFileSize(conn, ops.maxFileSize);
 //            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
 //            Downloader.download(makeAnyInStream(conn, ops.uncompress), outfile, conn.getContentLength(), ops.maxFileSize, ops.dl);
-//            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
-            netCopy(makeAnyInStream(conn, ops.uncompress), outfile, conn.getContentLength(), ops);
+            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
+//            netCopy(makeAnyInStream(conn, ops.uncompress), outfile, conn.getContentLength(), ops);
             long elapse = System.currentTimeMillis() - start;
             int responseCode = getResponseCode(conn);
             outFileData = new FileInfo(outfile, getSuggestedFileName(conn), responseCode,
@@ -635,6 +635,7 @@ public class URLDownload {
 
     public static void netCopy(DataInputStream in, File outfile, long contentLength, Options ops)
             throws FailedRequestException, IOException {
+        //todo -don't use! this one does not work yet
         Downloader.doDownload(in, outfile, contentLength, ops.maxFileSize, ops.dl);
     }
 
