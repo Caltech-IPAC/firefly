@@ -469,10 +469,11 @@ function filterOptions(options, opts) {
 
 /*
  * This function returns a collection of components using `useCallback`, ensuring they are not recreated between re-renders.
- * To modify this behavior, you can set the `deps` parameter accordingly.
+ * To modify this behavior, you can set the `deps` parameter accordingly. By default, `deps` is set to activeTrace so that
+ * components re-render when the active trace changes.
  */
 export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, groupKey, isXNotNumeric,
-                                  isYNotNumeric, xNoLog, yNoLog, orientation='horizontal'}, deps=[]) => {
+                                  isYNotNumeric, xNoLog, yNoLog, orientation='horizontal'}, deps=[pActiveTrace]) => {
     const {activeTrace, data, layout, fireflyLayout, color, ...rest} = getChartProps(chartId, tbl_id, pActiveTrace);
     xNoLog = xNoLog ?? rest.xNoLog;
     yNoLog = yNoLog ?? rest.yNoLog;
