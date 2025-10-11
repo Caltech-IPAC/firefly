@@ -354,9 +354,9 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     // hoverinfo 'skip' disables hover layer - hence we can not highlight clicking on a point or select points in the chart
     // if we support it, we need to exclude select button from the tools appearing on select
     // also, we might want to disable showing highlighted and selected points in the chart
-    if (get(data, `${traceNum}.hoverinfo`, 'text') === 'text') {
+    const y = get(changes, [`data.${traceNum}.y`]);
+    if (y && get(data, `${traceNum}.hoverinfo`, 'text') === 'text') {
         const text = x.map((xval, idx) => {
-            const y = get(changes, [`data.${traceNum}.y`]);
             const yval = y[idx];
             const xerr = hasXErrors ? formatError(xval, xErr[idx], xErrLow[idx], xErrHigh[idx]) : '';
             const yerr = hasYErrors ? formatError(yval, yErr[idx], yErrLow[idx], yErrHigh[idx]) : '';
