@@ -273,8 +273,12 @@ async function showDatalinkTable() {
     const {tbl_id, serviceId} = result;
 
     const {tbl_ui_id, leftButtons = []} = getTableUiByTblId(tbl_id) ?? {};
-    leftButtons.unshift(() => <PrepareDownload tbl_id={tbl_id} viewerId={serviceId} downloadType={'script'} dataSource={serviceId}/>);
-    dispatchTableUiUpdate({ tbl_ui_id, leftButtons });
+
+    if (leftButtons.some((lb) => lb.prepareDownloadBtn)) return;
+
+    leftButtons.unshift(() => <PrepareDownload tbl_id={tbl_id} viewerId={serviceId} downloadType={'script'}
+                                               dataSource={serviceId}/>);
+    dispatchTableUiUpdate({tbl_ui_id, leftButtons});
     showPinMessage('Pinning to Table Area');
 }
 

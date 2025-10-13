@@ -150,7 +150,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
             return showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
 
-        const {valid, message} = validateOnSubmit?.(formInputs) ?? {valid : true};
+        const {valid, message} = validateOnSubmit?.(formInputs, groupKey) ?? {valid : true};
         if (!valid) {
             showInfoPopup(message ?? 'Invalid form input(s)', 'Error in form inputs');
             return false; // to prevent FormPanel to submit
