@@ -27,7 +27,7 @@ public class ImageHeader implements Serializable
     public static final String EXTINCT=  "EXTINCT";
 
     public static final String PALOMAR_ID=  "Palomar Transient Factory";
-	public static final int MAX_SIP_LENGTH = 10;
+    public static final int MAX_SIP_LENGTH = 10;
 
     public final int EQ = 0;
     public final int EC = 1;
@@ -61,20 +61,20 @@ public class ImageHeader implements Serializable
     public double x_pixel_offset, y_pixel_offset;
     public double x_pixel_size, y_pixel_size;
     public double plt_scale;
-    public double ppo_coeff[], amd_x_coeff[], amd_y_coeff[];
+    public double[] ppo_coeff, amd_x_coeff, amd_y_coeff;
 
     /* the following are for SIRTF distortion corrections to the */
     /* GNOMONIC projection (ctype1 ending in -SIP)*/
 
-	public double a_order, ap_order, b_order, bp_order;
-	public double a[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double ap[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double b[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double a_order, ap_order, b_order, bp_order;
+    public double[][] a = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double[][] ap = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double[][] b = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double[][] bp = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
-    public double pv1[]= null;
-	public double pv2[]= null;
-	public boolean using_tpv= false;
+    public double[] pv1 = null;
+    public double[] pv2 = null;
+    public boolean using_tpv= false;
     public String keyword;
 
     public ImageHeader()
@@ -83,583 +83,612 @@ public class ImageHeader implements Serializable
 
     public ImageHeader(Header header)
     {
-	this(header, 0L, 0);
+        this(header, 0L, 0);
     }
 
     public ImageHeader(Header header, long HDU_offset, int _plane_number)
     {
-	int i, j;
-	boolean got_cd1_1, got_cd1_2, got_cd2_1, got_cd2_2;
-	boolean got_pc1_1, got_pc1_2, got_pc2_1, got_pc2_2;
-	double pc1_1 = Double.NaN;
-	double pc1_2 = Double.NaN;
-	double pc2_1 = Double.NaN;
-	double pc2_2 = Double.NaN;
-	boolean axes_reversed = false;
-	double twist;
-	double rah,ram,ras, dsign,decd,decm,decs;
-	double dec_deg,ra_hours;
-	String ctype1_trim = null;
+        int i, j;
+        boolean got_cd1_1, got_cd1_2, got_cd2_1, got_cd2_2;
+        boolean got_pc1_1, got_pc1_2, got_pc2_1, got_pc2_2;
+        double pc1_1 = Double.NaN;
+        double pc1_2 = Double.NaN;
+        double pc2_1 = Double.NaN;
+        double pc2_2 = Double.NaN;
+        boolean axes_reversed = false;
+        double twist;
+        double rah,ram,ras, dsign,decd,decm,decs;
+        double dec_deg,ra_hours;
+        String ctype1_trim = null;
 
-	long header_size = FitsReadUtil.getHeaderSize(header);
+        long header_size = FitsReadUtil.getHeaderSize(header);
 
-	data_offset = HDU_offset + header_size;
-	plane_number = _plane_number;
+        data_offset = HDU_offset + header_size;
+        plane_number = _plane_number;
 
-	bitpix = header.getIntValue("BITPIX");
-	naxis = header.getIntValue("NAXIS");
-	naxis1 = header.getIntValue("NAXIS1");
-	naxis2 = header.getIntValue("NAXIS2");
-	if (naxis > 2)
-	    naxis3 = header.getIntValue("NAXIS3");
-	else
-	    naxis3 = 1;
-	crpix1 = header.getDoubleValue("CRPIX1", Double.NaN);
-	crpix2 = header.getDoubleValue("CRPIX2", Double.NaN);
-	crval1 = header.getDoubleValue("CRVAL1", Double.NaN);
-	crval2 = header.getDoubleValue("CRVAL2", Double.NaN);
-	cdelt1 = header.getDoubleValue("CDELT1");
-	cdelt2 = header.getDoubleValue("CDELT2");
-	crota1 = header.getDoubleValue("CROTA1");
-	crota2 = header.getDoubleValue("CROTA2");
+        bitpix = header.getIntValue("BITPIX");
+        naxis = header.getIntValue("NAXIS");
+        naxis1 = header.getIntValue("NAXIS1");
+        naxis2 = header.getIntValue("NAXIS2");
+        if (naxis > 2)
+            naxis3 = header.getIntValue("NAXIS3");
+        else
+            naxis3 = 1;
+        crpix1 = header.getDoubleValue("CRPIX1", Double.NaN);
+        crpix2 = header.getDoubleValue("CRPIX2", Double.NaN);
+        crval1 = header.getDoubleValue("CRVAL1", Double.NaN);
+        crval2 = header.getDoubleValue("CRVAL2", Double.NaN);
+        cdelt1 = header.getDoubleValue("CDELT1");
+        cdelt2 = header.getDoubleValue("CDELT2");
+        crota1 = header.getDoubleValue("CROTA1");
+        crota2 = header.getDoubleValue("CROTA2");
 
-	/**
-	 * CTYPEi indicates the coordinate type and projection. According to the standard specified by the paper: Representations of world coordinates in FITS
-	 * E. W. Greisen1 and M. R. Calabretta2 (paper I). The CTYPEn has linear and non-linear.  Non-linear coordinate systems will be signaled by CTYPEi
-	 * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a ’-’, and the remaining three characters
-	 * specify an algorithm code for computing the world coordinate value, for example ’ABCD-XYZ’. We explicitly allow the
-	 * possibility that the coordinate type may augment the algorithm code, for example ’FREQ-F2W’ and ’VRAD-F2W’ may denote
-	 * somewhat different algorithms (see Paper III). Coordinate types with names of less than four characters are padded on the right
-	 * with ’-’, and algorithm codes with less than three characters are padded on the right with blanks, for example ’RA---UV ’.
-	 * However, we encourage the use of three-letter algorithm codes. Particular coordinate types and algorithm codes must be established by convention.
-	 * CTYPEi values that are not in “4–3” form should be interpreted as linear axes. It is possible that there may be old FITS files with a linear axis for
-	 * which CTYPEi is, by chance, in 4–3 form. However, it is very unlikely that it will match a recognized algorithm code (use of
-	 * three-letter codes will reduce the chances). In such a case the axis should be treated as linear.
-	 *
-	 */
-	if (header.containsKey("CTYPE1"))
-	{
-	    ctype1 = header.getStringValue("CTYPE1") + "        ";
-	    ctype2 = header.getStringValue("CTYPE2") + "        ";
-	    ctype1_trim = ctype1.trim();
-	    String ctype1_tail = ctype1.substring(4, 8);
+        /*
+         * CTYPEi indicates the coordinate type and projection. According to the standard specified by the paper: Representations of world coordinates in FITS
+         * E. W. Greisen1 and M. R. Calabretta2 (paper I). The CTYPEn has linear and non-linear.  Non-linear coordinate systems will be signaled by CTYPEi
+         * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a ’-’, and the remaining three characters
+         * specify an algorithm code for computing the world coordinate value, for example ’ABCD-XYZ’. We explicitly allow the
+         * possibility that the coordinate type may augment the algorithm code, for example ’FREQ-F2W’ and ’VRAD-F2W’ may denote
+         * somewhat different algorithms (see Paper III). Coordinate types with names of less than four characters are padded on the right
+         * with ’-’, and algorithm codes with less than three characters are padded on the right with blanks, for example ’RA---UV ’.
+         * However, we encourage the use of three-letter algorithm codes. Particular coordinate types and algorithm codes must be established by convention.
+         * CTYPEi values that are not in “4–3” form should be interpreted as linear axes. It is possible that there may be old FITS files with a linear axis for
+         * which CTYPEi is, by chance, in 4–3 form. However, it is very unlikely that it will match a recognized algorithm code (use of
+         * three-letter codes will reduce the chances). In such a case the axis should be treated as linear.
+         *
+         */
+        if (header.containsKey("CTYPE1"))
+        {
+            ctype1 = header.getStringValue("CTYPE1") + "        ";
+            ctype2 = header.getStringValue("CTYPE2") + "        ";
+            ctype1_trim = ctype1.trim();
+            String ctype1_tail = ctype1.substring(4, 8);
 
-		// Either CTYPEi = 'LINEAR' or ctypei is defined but the value is not specified, default to linear
-	    if (ctype1_trim=="" || ctype1_trim.equalsIgnoreCase("LINEAR")){
-			maptype = Projection.LINEAR;
-		}
-		else if (ctype1_trim.indexOf("-TAN") >= 0)
-			maptype = Projection.GNOMONIC;
-		else if (ctype1_trim.indexOf("-TPV") >= 0) {
-			maptype = Projection.TPV;
-			using_tpv= true;
-		}
-		else if (ctype1_trim.indexOf("-SIN") >= 0)
-			maptype = Projection.ORTHOGRAPHIC;
-		else if (ctype1_trim.endsWith("-NCP"))
-			maptype = Projection.NCP;
-		else if (ctype1_trim.endsWith("-ARC"))
-			maptype = Projection.ARC;
-		else if (ctype1_trim.endsWith("-AIT"))
-			maptype = Projection.AITOFF;
-		else if (ctype1_trim.endsWith("-ATF"))
-			maptype = Projection.AITOFF;
-		else if (ctype1_trim.endsWith("-CAR"))
-			maptype = Projection.CAR;
-		else if (ctype1_trim.endsWith("-CEA"))
-			maptype = Projection.CEA;
-		else if (ctype1_trim.endsWith("-SFL"))
-			maptype = Projection.SFL;
-		else if (ctype1_trim.endsWith("-GLS"))
-			maptype = Projection.SFL;
-		else if (ctype1_trim.endsWith("-STG"))
-			maptype = Projection.STG;
-		else if (ctype1_trim.endsWith("----"))
-			maptype = Projection.LINEAR;
-		else if (ctype1_tail.equals("    "))
-			maptype = Projection.LINEAR;
-		else
-			maptype = Projection.UNRECOGNIZED;
+            // Either CTYPEi = 'LINEAR' or ctypei is defined but the value is not specified, default to linear
+            if (ctype1_trim.isEmpty() || ctype1_trim.equalsIgnoreCase("LINEAR")){
+                maptype = Projection.LINEAR;
+            }
+            else if (ctype1_trim.contains("-TAN"))
+                maptype = Projection.GNOMONIC;
+            else if (ctype1_trim.contains("-TPV")) {
+                maptype = Projection.TPV;
+                using_tpv= true;
+            }
+            else if (ctype1_trim.contains("-SIN"))
+                maptype = Projection.ORTHOGRAPHIC;
+            else if (ctype1_trim.endsWith("-NCP"))
+                maptype = Projection.NCP;
+            else if (ctype1_trim.endsWith("-ARC"))
+                maptype = Projection.ARC;
+            else if (ctype1_trim.endsWith("-AIT"))
+                maptype = Projection.AITOFF;
+            else if (ctype1_trim.endsWith("-ATF"))
+                maptype = Projection.AITOFF;
+            else if (ctype1_trim.endsWith("-CAR"))
+                maptype = Projection.CAR;
+            else if (ctype1_trim.endsWith("-CEA"))
+                maptype = Projection.CEA;
+            else if (ctype1_trim.endsWith("-SFL"))
+                maptype = Projection.SFL;
+            else if (ctype1_trim.endsWith("-GLS"))
+                maptype = Projection.SFL;
+            else if (ctype1_trim.endsWith("-STG"))
+                maptype = Projection.STG;
+            else if (ctype1_trim.endsWith("----"))
+                maptype = Projection.LINEAR;
+            else if (ctype1_tail.equals("    "))
+                maptype = Projection.LINEAR;
+            else
+                maptype = Projection.UNRECOGNIZED;
 
-	    if ((ctype1_trim.startsWith("DEC")) ||
-		(ctype1_trim.startsWith("MM")) ||
-		(ctype1_trim.startsWith("GLAT")) ||
-		(ctype1_trim.startsWith("LAT")) ||
-		(ctype1_trim.startsWith("ELAT")))
-	    {
-		/* flag that axes are reversed */
-		axes_reversed = true;
-	    }
-	}
-	else
-	    maptype = Projection.UNSPECIFIED;
+            if ((ctype1_trim.startsWith("DEC")) ||
+                    (ctype1_trim.startsWith("MM")) ||
+                    (ctype1_trim.startsWith("GLAT")) ||
+                    (ctype1_trim.startsWith("LAT")) ||
+                    (ctype1_trim.startsWith("ELAT")))
+            {
+                /* flag that axes are reversed */
+                axes_reversed = true;
+            }
+        }
+        else
+            maptype = Projection.UNSPECIFIED;
 
-	if (header.containsKey("DSKYGRID"))
-	    maptype = Projection.ORTHOGRAPHIC;
+        if (header.containsKey("DSKYGRID"))
+            maptype = Projection.ORTHOGRAPHIC;
 
-	if (maptype == Projection.CAR)
-	{
-	/* wcs projection routines require crpix1 in -180 to 180 hemisphere */
-	    double halfway = Math.abs(180.0 / cdelt1);
-	    if (crpix1 > halfway)
-		crpix1 -= 2 * halfway;
-	    if (crpix1 < -halfway)
-		crpix1 += 2 * halfway;
-	}
+        if (maptype == Projection.CAR)
+        {
+            /* wcs projection routines require crpix1 in -180 to 180 hemisphere */
+            double halfway = Math.abs(180.0 / cdelt1);
+            if (crpix1 > halfway)
+                crpix1 -= 2 * halfway;
+            if (crpix1 < -halfway)
+                crpix1 += 2 * halfway;
+        }
 
-	got_cd1_1 = header.containsKey("CD1_1");
-	if (got_cd1_1)
-	{
-	    cd1_1 = header.getDoubleValue("CD1_1");
-	}
-	else
-	{
-	    got_cd1_1 = header.containsKey("CD001001");
-	    if (got_cd1_1)
-	    {
-		cd1_1 = header.getDoubleValue("CD001001");
-	    }
-	}
-	got_pc1_1 = header.containsKey("PC1_1");
-	if (got_pc1_1)
-	{
-	    pc1_1 = header.getDoubleValue("PC1_1");
-	}
+        got_cd1_1 = header.containsKey("CD1_1");
+        if (got_cd1_1)
+        {
+            cd1_1 = header.getDoubleValue("CD1_1");
+        }
+        else
+        {
+            got_cd1_1 = header.containsKey("CD001001");
+            if (got_cd1_1)
+            {
+                cd1_1 = header.getDoubleValue("CD001001");
+            }
+        }
+        got_pc1_1 = header.containsKey("PC1_1");
+        if (got_pc1_1)
+        {
+            pc1_1 = header.getDoubleValue("PC1_1");
+        }
+        else
+        {
+            got_pc1_1 = header.containsKey("PC001001");
+            if (got_pc1_1)
+            {
+                pc1_1 = header.getDoubleValue("PC001001");
+            }
+        }
 
-	got_cd1_2 = header.containsKey("CD1_2");
-	if (got_cd1_2)
-	{
-	    cd1_2 = header.getDoubleValue("CD1_2");
-	}
-	else
-	{
-	    got_cd1_2 = header.containsKey("CD001002");
-	    if (got_cd1_2)
-	    {
-		cd1_2 = header.getDoubleValue("CD001002");
-	    }
-	}
-	got_pc1_2 = header.containsKey("PC1_2");
-	if (got_pc1_2)
-	{
-	    pc1_2 = header.getDoubleValue("PC1_2");
-	}
+        got_cd1_2 = header.containsKey("CD1_2");
+        if (got_cd1_2)
+        {
+            cd1_2 = header.getDoubleValue("CD1_2");
+        }
+        else
+        {
+            got_cd1_2 = header.containsKey("CD001002");
+            if (got_cd1_2)
+            {
+                cd1_2 = header.getDoubleValue("CD001002");
+            }
+        }
+        got_pc1_2 = header.containsKey("PC1_2");
+        if (got_pc1_2)
+        {
+            pc1_2 = header.getDoubleValue("PC1_2");
+        }
+        else
+        {
+            got_pc1_2 = header.containsKey("PC001002");
+            if (got_pc1_2)
+            {
+                pc1_2 = header.getDoubleValue("PC001002");
+            }
+        }
 
-	got_cd2_1 = header.containsKey("CD2_1");
-	if (got_cd2_1)
-	{
-	    cd2_1 = header.getDoubleValue("CD2_1");
-	}
-	else
-	{
-	    got_cd2_1 = header.containsKey("CD002001");
-	    if (got_cd2_1)
-	    {
-		cd2_1 = header.getDoubleValue("CD002001");
-	    }
-	}
-	got_pc2_1 = header.containsKey("PC2_1");
-	if (got_pc2_1)
-	{
-	    pc2_1 = header.getDoubleValue("PC2_1");
-	}
+        got_cd2_1 = header.containsKey("CD2_1");
+        if (got_cd2_1)
+        {
+            cd2_1 = header.getDoubleValue("CD2_1");
+        }
+        else
+        {
+            got_cd2_1 = header.containsKey("CD002001");
+            if (got_cd2_1)
+            {
+                cd2_1 = header.getDoubleValue("CD002001");
+            }
+        }
+        got_pc2_1 = header.containsKey("PC2_1");
+        if (got_pc2_1)
+        {
+            pc2_1 = header.getDoubleValue("PC2_1");
+        }
+        else
+        {
+            got_pc2_1 = header.containsKey("PC002001");
+            if (got_pc2_1)
+            {
+                pc2_1 = header.getDoubleValue("PC002001");
+            }
+        }
 
-	got_cd2_2 = header.containsKey("CD2_2");
-	if (got_cd2_2)
-	{
-	    cd2_2 = header.getDoubleValue("CD2_2");
-	}
-	else
-	{
-	    got_cd2_2 = header.containsKey("CD002002");
-	    if (got_cd2_2)
-	    {
-		cd2_2 = header.getDoubleValue("CD002002");
-	    }
-	}
-	got_pc2_2 = header.containsKey("PC2_2");
-	if (got_pc2_2)
-	{
-	    pc2_2 = header.getDoubleValue("PC2_2");
-	}
+        got_cd2_2 = header.containsKey("CD2_2");
+        if (got_cd2_2)
+        {
+            cd2_2 = header.getDoubleValue("CD2_2");
+        }
+        else
+        {
+            got_cd2_2 = header.containsKey("CD002002");
+            if (got_cd2_2)
+            {
+                cd2_2 = header.getDoubleValue("CD002002");
+            }
+        }
+        got_pc2_2 = header.containsKey("PC2_2");
+        if (got_pc2_2)
+        {
+            pc2_2 = header.getDoubleValue("PC2_2");
+        }
+        else
+        {
+            got_pc2_2 = header.containsKey("PC002002");
+            if (got_pc2_2)
+            {
+                pc2_2 = header.getDoubleValue("PC002002");
+            }
+        }
 
-	if ((!got_cd1_1 ) &&
-	    (!got_cd1_2 ) &&
-	    (!got_cd2_1 ) &&
-	    (!got_cd2_2 ))
-	{
-	    /* no CD matrix values in header - look for PC matrix values */
-	    if (got_pc1_1 )
-	    {
-		cd1_1 = cdelt1 * pc1_1;
-		got_cd1_1 = true;
-	    }
-	    if (got_pc1_2 )
-	    {
-		cd1_2 = cdelt1 * pc1_2;
-		got_cd1_2 = true;
-	    }
-	    if (got_pc2_1 )
-	    {
-		cd2_1 = cdelt2 * pc2_1;
-		got_cd2_1 = true;
-	    }
-	    if (got_pc2_2 )
-	    {
-		cd2_2 = cdelt2 * pc2_2;
-		got_cd2_2 = true;
-	    }
-	}
+        if ((!got_cd1_1 ) &&
+                (!got_cd1_2 ) &&
+                (!got_cd2_1 ) &&
+                (!got_cd2_2 ))
+        {
+            /* no CD matrix values in header - look for PC matrix values */
+            if (got_pc1_1 )
+            {
+                cd1_1 = cdelt1 * pc1_1;
+                got_cd1_1 = true;
+            }
+            if (got_pc1_2 )
+            {
+                cd1_2 = cdelt1 * pc1_2;
+                got_cd1_2 = true;
+            }
+            if (got_pc2_1 )
+            {
+                cd2_1 = cdelt2 * pc2_1;
+                got_cd2_1 = true;
+            }
+            if (got_pc2_2 )
+            {
+                cd2_2 = cdelt2 * pc2_2;
+                got_cd2_2 = true;
+            }
+        }
 
-	if (using_tpv) {
-		pv1= getPVArray(header,"1");
-		pv2= getPVArray(header,"2");
-	}
-
-
-	datamax = header.getDoubleValue("DATAMAX", Double.NaN);
-	datamin = header.getDoubleValue("DATAMIN", Double.NaN);
-	bscale = header.getDoubleValue("BSCALE", 1.0);
-	bzero = header.getDoubleValue("BZERO", 0.0);
-	bunit = header.getStringValue("BUNIT");
-	if (bunit == null)
-	    bunit = "DN";
-
-
-
-	origin = header.getStringValue(ORIGIN);
-	if (origin == null)
-	{
-	    origin = "";
-	}
-	if (origin.startsWith(PALOMAR_ID))
-	{
-	    exptime = header.getDoubleValue(EXPTIME, 0.0);
-	    imagezpt = header.getDoubleValue(IMAGEZPT, 0.0);
-	    airmass = header.getDoubleValue(AIRMASS, 0.0);
-	    extinct = header.getDoubleValue(EXTINCT, 0.0);
-	}
-
-	file_equinox = header.getDoubleValue("EQUINOX", 0.0);
-	if (file_equinox == 0.0)
-	    file_equinox = header.getDoubleValue("EPOCH", 2000.0);
-	radecsys = header.getStringValue("RADECSYS");
-	if (radecsys == null)
-	{
-	    radecsys = header.getStringValue("RADESYS");
-	}
-
+        if (using_tpv) {
+            pv1= getPVArray(header,"1");
+            pv2= getPVArray(header,"2");
+        }
 
 
-	blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
-	if (SUTDebug.isDebug())
-	    System.out.println("blank_value = " + blank_value);
+        datamax = header.getDoubleValue("DATAMAX", Double.NaN);
+        datamin = header.getDoubleValue("DATAMIN", Double.NaN);
+        bscale = header.getDoubleValue("BSCALE", 1.0);
+        bzero = header.getDoubleValue("BZERO", 0.0);
+        bunit = header.getStringValue("BUNIT");
+        if (bunit == null)
+            bunit = "DN";
 
-	String telescope = header.getStringValue("TELESCOP");
-	if ((telescope != null) && (telescope.startsWith("ISO")))
-	{
-	    /* ISO images have bad CD matrix - try not to use it */
-	    if ((cdelt1 != 0) &&
-		(cdelt2 != 0))
-	    {
-		//System.out.println("ISO image - using CDELTn");
-		got_cd1_1 = false;  // prevent use of CD matrix
-	    }
-	}
 
-	if ((!Double.isNaN(crval2)) &&
-	    (!Double.isNaN(crval1)) &&
-	    (!Double.isNaN(crpix1)) &&
-	    (!Double.isNaN(crpix2)) &&
-	    (maptype != Projection.UNRECOGNIZED) &&
-		((got_cd1_1 ) ||
-		(got_cd1_2 ) ||
-		(got_cd2_1 ) ||
-		(got_cd2_2 )) )
-	{
-	    if (axes_reversed)
-	    {
-		double temp;
-		temp = crval1;
-		crval1 = crval2;
-		crval2 = temp;
 
-		temp = cd2_2;
-		cd2_2 = cd1_2;
-		cd1_2 = cd1_1;
-		cd1_1 = cd2_1;
-		cd2_1 = temp;
-	    }
-	    /* save values for Greisen's formulas */
-	    using_cd = true;
-	    /* invert matrix */
-	    double determinant = cd1_1 * cd2_2 - cd1_2 * cd2_1;
-	    dc1_1 = cd2_2 / determinant;
-	    dc1_2 = - cd1_2 / determinant;
-	    dc2_1 = - cd2_1 / determinant;
-	    dc2_2 = cd1_1 / determinant;
+        origin = header.getStringValue(ORIGIN);
+        if (origin == null)
+        {
+            origin = "";
+        }
+        if (origin.startsWith(PALOMAR_ID))
+        {
+            exptime = header.getDoubleValue(EXPTIME, 0.0);
+            imagezpt = header.getDoubleValue(IMAGEZPT, 0.0);
+            airmass = header.getDoubleValue(AIRMASS, 0.0);
+            extinct = header.getDoubleValue(EXTINCT, 0.0);
+        }
 
-	    twist = Math.atan2(-cd1_2, cd2_2);
-	    crota2 = twist * Projection.rtd;
+        file_equinox = header.getDoubleValue("EQUINOX", 0.0);
+        if (file_equinox == 0.0)
+            file_equinox = header.getDoubleValue("EPOCH", 2000.0);
+        radecsys = header.getStringValue("RADECSYS");
+        if (radecsys == null)
+        {
+            radecsys = header.getStringValue("RADESYS");
+        }
 
-	    if (false)  /* patch out, now that CD matrix is handeld */
-	    {
-	    /* average the two methods  to lessen the effect of skew */
-	    twist = (Math.atan2(-cd2_1, -cd1_1) + twist) / 2.0;
-	    if (Math.abs(cd1_1) > Math.abs(cd1_2))
-	    {
-		cdelt1 = cd1_1 / Math.cos(twist);
-		cdelt2 = cd2_2 / Math.cos(twist);
-	    }
-	    else
-	    {
-		cdelt1 = cd2_1 / Math.sin(twist);
-		cdelt2 = - cd1_2 / Math.sin(twist);
-	    }
-	    }
-	}
-	else
-	{
-	    if (axes_reversed)
-	    {
-		double temp;
-		temp = crval1;
-		crval1 = crval2;
-		crval2 = temp;
 
-		temp = cdelt1;
-		cdelt1 = cdelt2;
-		cdelt2 = temp;
-		/* dont know what to do with twist */
-		/* will have to wait until I have a sample image */
-	    }
 
-	}
+        blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
+        if (SUTDebug.isDebug())
+            System.out.println("blank_value = " + blank_value);
 
-    /* now do SIRTF distortion corrections */
-    if ((ctype1_trim != null) && (ctype1_trim.endsWith("-SIP")))
-    {
-	map_distortion = true;
+        String telescope = header.getStringValue("TELESCOP");
+        if ((telescope != null) && (telescope.startsWith("ISO")))
+        {
+            /* ISO images have bad CD matrix - try not to use it */
+            if ((cdelt1 != 0) &&
+                    (cdelt2 != 0))
+            {
+                //System.out.println("ISO image - using CDELTn");
+                got_cd1_1 = false;  // prevent use of CD matrix
+            }
+        }
 
-	a_order = header.getIntValue("A_ORDER");
-	if (a_order>= 0)
-	{
-		int len= (int)Math.min(a_order+1, MAX_SIP_LENGTH);
-	    for (i = 0; i < len; i++)
-	    {
-		for (j = 0; j < len; j++)
-		{
-		    a[i][j] = 0.0;
-		    if (i + j <= a_order)
-		    {
-			keyword = "A_" + i + "_" + j;
-			a[i][j] = header.getDoubleValue(keyword, 0.0);
+        if ((!Double.isNaN(crval2)) &&
+                (!Double.isNaN(crval1)) &&
+                (!Double.isNaN(crpix1)) &&
+                (!Double.isNaN(crpix2)) &&
+                (maptype != Projection.UNRECOGNIZED) &&
+                ((got_cd1_1 ) ||
+                        (got_cd1_2 ) ||
+                        (got_cd2_1 ) ||
+                        (got_cd2_2 )) )
+        {
+            if (axes_reversed)
+            {
+                double temp;
+                temp = crval1;
+                crval1 = crval2;
+                crval2 = temp;
+
+                temp = cd2_2;
+                cd2_2 = cd1_2;
+                cd1_2 = cd1_1;
+                cd1_1 = cd2_1;
+                cd2_1 = temp;
+            }
+            /* save values for Greisen's formulas */
+            using_cd = true;
+            /* invert matrix */
+            double determinant = cd1_1 * cd2_2 - cd1_2 * cd2_1;
+            dc1_1 = cd2_2 / determinant;
+            dc1_2 = - cd1_2 / determinant;
+            dc2_1 = - cd2_1 / determinant;
+            dc2_2 = cd1_1 / determinant;
+
+            twist = Math.atan2(-cd1_2, cd2_2);
+            crota2 = twist * Projection.rtd;
+
+            if (false)  /* patch out, now that CD matrix is handled */
+            {
+                /* average the two methods  to lessen the effect of skew */
+                twist = (Math.atan2(-cd2_1, -cd1_1) + twist) / 2.0;
+                if (Math.abs(cd1_1) > Math.abs(cd1_2))
+                {
+                    cdelt1 = cd1_1 / Math.cos(twist);
+                    cdelt2 = cd2_2 / Math.cos(twist);
+                }
+                else
+                {
+                    cdelt1 = cd2_1 / Math.sin(twist);
+                    cdelt2 = - cd1_2 / Math.sin(twist);
+                }
+            }
+        }
+        else
+        {
+            if (axes_reversed)
+            {
+                double temp;
+                temp = crval1;
+                crval1 = crval2;
+                crval2 = temp;
+
+                temp = cdelt1;
+                cdelt1 = cdelt2;
+                cdelt2 = temp;
+                /* dont know what to do with twist */
+                /* will have to wait until I have a sample image */
+            }
+
+        }
+
+        /* now do SIRTF distortion corrections */
+        if ((ctype1_trim != null) && (ctype1_trim.endsWith("-SIP")))
+        {
+            map_distortion = true;
+
+            a_order = header.getIntValue("A_ORDER");
+            if (a_order>= 0)
+            {
+                int len= (int)Math.min(a_order+1, MAX_SIP_LENGTH);
+                for (i = 0; i < len; i++)
+                {
+                    for (j = 0; j < len; j++)
+                    {
+                        a[i][j] = 0.0;
+                        if (i + j <= a_order)
+                        {
+                            keyword = "A_" + i + "_" + j;
+                            a[i][j] = header.getDoubleValue(keyword, 0.0);
 			/*
 			System.out.println("a[" + i + "][" + j + "] = " + a[i][j]);
 			*/
-		    }
-		}
-	    }
-	}
+                        }
+                    }
+                }
+            }
 
-	b_order = header.getIntValue("B_ORDER");
-	if (b_order>= 0)
-	{
-		int len= (int)Math.min(b_order+1, MAX_SIP_LENGTH);
-	    for (i = 0; i < len; i++)
-	    {
-		for (j = 0; j < len; j++)
-		{
-		    b[i][j] = 0.0;
-		    if (i + j <= b_order)
-		    {
-			keyword = "B_" + i + "_" + j;
-			b[i][j] = header.getDoubleValue(keyword, 0.0);
+            b_order = header.getIntValue("B_ORDER");
+            if (b_order>= 0)
+            {
+                int len= (int)Math.min(b_order+1, MAX_SIP_LENGTH);
+                for (i = 0; i < len; i++)
+                {
+                    for (j = 0; j < len; j++)
+                    {
+                        b[i][j] = 0.0;
+                        if (i + j <= b_order)
+                        {
+                            keyword = "B_" + i + "_" + j;
+                            b[i][j] = header.getDoubleValue(keyword, 0.0);
 			/*
 			System.out.println("b[" + i + "][" + j + "] = " + b[i][j]);
 			*/
-		    }
-		}
-	    }
-	}
-	ap_order = header.getIntValue("AP_ORDER");
-	if (ap_order>= 0)
-	{
-		int len= (int)Math.min(ap_order+1, MAX_SIP_LENGTH);
-	    for (i = 0; i < len; i++)
-	    {
-		for (j = 0; j < len; j++)
-		{
-		    ap[i][j] = 0.0;
-		    if (i + j <= ap_order)
-		    {
-			keyword = "AP_" + i + "_" + j;
-			ap[i][j] = header.getDoubleValue(keyword, 0.0);
+                        }
+                    }
+                }
+            }
+            ap_order = header.getIntValue("AP_ORDER");
+            if (ap_order>= 0)
+            {
+                int len= (int)Math.min(ap_order+1, MAX_SIP_LENGTH);
+                for (i = 0; i < len; i++)
+                {
+                    for (j = 0; j < len; j++)
+                    {
+                        ap[i][j] = 0.0;
+                        if (i + j <= ap_order)
+                        {
+                            keyword = "AP_" + i + "_" + j;
+                            ap[i][j] = header.getDoubleValue(keyword, 0.0);
 			/*
 			System.out.println("ap[" + i + "][" + j + "] = " + ap[i][j]);
 			*/
-		    }
-		}
-	    }
-	}
-	bp_order = header.getIntValue("BP_ORDER");
-	if (bp_order>= 0)
-	{
-		int len= (int)Math.min(bp_order+1, MAX_SIP_LENGTH);
-	    for (i = 0; i < len; i++)
-	    {
-		for (j = 0; j < len; j++)
-		{
-		    bp[i][j] = 0.0;
-		    if (i + j <= bp_order)
-		    {
-			keyword = "BP_" + i + "_" + j;
-			bp[i][j] = header.getDoubleValue(keyword, 0.0);
+                        }
+                    }
+                }
+            }
+            bp_order = header.getIntValue("BP_ORDER");
+            if (bp_order>= 0)
+            {
+                int len= (int)Math.min(bp_order+1, MAX_SIP_LENGTH);
+                for (i = 0; i < len; i++)
+                {
+                    for (j = 0; j < len; j++)
+                    {
+                        bp[i][j] = 0.0;
+                        if (i + j <= bp_order)
+                        {
+                            keyword = "BP_" + i + "_" + j;
+                            bp[i][j] = header.getDoubleValue(keyword, 0.0);
 			/*
 			System.out.println("bp[" + i + "][" + j + "] = " + bp[i][j]);
 			*/
-		    }
-		}
-	    }
-	}
+                        }
+                    }
+                }
+            }
 
-    }
-    if (using_cd)
-    {
-	/* need an approximation of cdelt1 and cdelt2 */
-	CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
-	    this.getJsys(), this.file_equinox);
-	Projection proj = createProjection(in_coordinate_sys);
-	try
-	{
-	WorldPt proj_center = proj.getWorldCoords(crpix1 - 1, crpix2 - 1);
-	WorldPt one_to_right = proj.getWorldCoords(crpix1, crpix2 - 1);
-	WorldPt one_up = proj.getWorldCoords(crpix1 - 1, crpix2);
+        }
+        if (using_cd)
+        {
+            /* need an approximation of cdelt1 and cdelt2 */
+            CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
+                    this.getJsys(), this.file_equinox);
+            Projection proj = createProjection(in_coordinate_sys);
+            try
+            {
+                WorldPt proj_center = proj.getWorldCoords(crpix1 - 1, crpix2 - 1);
+                WorldPt one_to_right = proj.getWorldCoords(crpix1, crpix2 - 1);
+                WorldPt one_up = proj.getWorldCoords(crpix1 - 1, crpix2);
 
-	cdelt1 = - VisUtil.computeDistance( proj_center, one_to_right);
-	cdelt2 = VisUtil.computeDistance( proj_center, one_up);
-	if (SUTDebug.isDebug())
-	{
-	System.out.println("CENTER lon = " + proj_center.getLon() +
-	    "  lat = " + proj_center.getLat() +
-	    "  one_right lon = " + one_to_right.getLon() +
-	    "  lat = " + one_to_right.getLat() +
-	    "  cdelt1 = " + cdelt1 +
-	    "  one_up lon = " + one_up.getLon() +
-	    "  lat = " + one_up.getLat() +
-	    "  cdelt2 = " + cdelt2);
-	}
-	}
-	catch (ProjectionException pe)
-	{
-	    cdelt1 = 0;
-	    cdelt2 = 0;
-	}
-    }
+                cdelt1 = - VisUtil.computeDistance( proj_center, one_to_right);
+                cdelt2 = VisUtil.computeDistance( proj_center, one_up);
+                if (SUTDebug.isDebug())
+                {
+                    System.out.println("CENTER lon = " + proj_center.getLon() +
+                            "  lat = " + proj_center.getLat() +
+                            "  one_right lon = " + one_to_right.getLon() +
+                            "  lat = " + one_to_right.getLat() +
+                            "  cdelt1 = " + cdelt1 +
+                            "  one_up lon = " + one_up.getLon() +
+                            "  lat = " + one_up.getLat() +
+                            "  cdelt2 = " + cdelt2);
+                }
+            }
+            catch (ProjectionException pe)
+            {
+                cdelt1 = 0;
+                cdelt2 = 0;
+            }
+        }
 
-	/* now do Digital Sky Survey plate solution coefficients */
+        /* now do Digital Sky Survey plate solution coefficients */
         if (header.containsKey("PLTRAH") && !header.containsKey("CTYPE1"))
-	{
-	    if (SUTDebug.isDebug())
-		System.out.println("ITS a PLATE projection");
-	    maptype = Projection.PLATE;
-	    rah = header.getDoubleValue("PLTRAH");
-	    ram = header.getDoubleValue("PLTRAM");
-	    ras = header.getDoubleValue("PLTRAS");
-	    ra_hours = rah + (ram / 60.0) + (ras / 3600.0);
-	    plate_ra = ra_hours * 15.0 * Projection.dtr;
-	    String decsign = header.getStringValue("PLTDECSN");
-	    if (decsign.charAt(0) == '-')
-		dsign = -1.;
-	    else
-		dsign = 1.;
-	    decd = header.getDoubleValue("PLTDECD");
-	    decm = header.getDoubleValue("PLTDECM");
-	    decs = header.getDoubleValue("PLTDECS");
-	    dec_deg = dsign * (decd+(decm/60.0)+(decs/3600.0));
-	    plate_dec = dec_deg * Projection.dtr;
+        {
+            if (SUTDebug.isDebug())
+                System.out.println("ITS a PLATE projection");
+            maptype = Projection.PLATE;
+            rah = header.getDoubleValue("PLTRAH");
+            ram = header.getDoubleValue("PLTRAM");
+            ras = header.getDoubleValue("PLTRAS");
+            ra_hours = rah + (ram / 60.0) + (ras / 3600.0);
+            plate_ra = ra_hours * 15.0 * Projection.dtr;
+            String decsign = header.getStringValue("PLTDECSN");
+            if (decsign.charAt(0) == '-')
+                dsign = -1.;
+            else
+                dsign = 1.;
+            decd = header.getDoubleValue("PLTDECD");
+            decm = header.getDoubleValue("PLTDECM");
+            decs = header.getDoubleValue("PLTDECS");
+            dec_deg = dsign * (decd+(decm/60.0)+(decs/3600.0));
+            plate_dec = dec_deg * Projection.dtr;
 	/*
 	    fprintf(debug_file,
 	"WCSINIT Plate center RA=%2.0f:%2.0f:%5.3f, Dec=%3.0f:%2.0f:%5.3f\n",
 	    rah,ram,ras,dsign*decd,decm,decs);
 	*/
-	    if (SUTDebug.isDebug())
-		System.out.println(" WCSINIT Plate center RA= " + rah + " " +
-		ram + " " + ras + "  DEC = " + dsign*decd + " " + decm + " " +
-		decs);
+            if (SUTDebug.isDebug())
+                System.out.println(" WCSINIT Plate center RA= " + rah + " " +
+                        ram + " " + ras + "  DEC = " + dsign*decd + " " + decm + " " +
+                        decs);
 
-	    x_pixel_offset = header.getDoubleValue( "CNPIX1");
-	    y_pixel_offset = header.getDoubleValue( "CNPIX2");
-	    plt_scale = header.getDoubleValue( "PLTSCALE");
-	    x_pixel_size = header.getDoubleValue( "XPIXELSZ");
-	    y_pixel_size = header.getDoubleValue( "YPIXELSZ");
-	    ppo_coeff = new double[6];
-	    ppo_coeff[0] = header.getDoubleValue( "PPO1");
-	    ppo_coeff[1] = header.getDoubleValue( "PPO2");
-	    ppo_coeff[2] = header.getDoubleValue( "PPO3");
-	    ppo_coeff[3] = header.getDoubleValue( "PPO4");
-	    ppo_coeff[4] = header.getDoubleValue( "PPO5");
-	    ppo_coeff[5] = header.getDoubleValue( "PPO6");
-	    amd_x_coeff = new double[20];
-	    amd_x_coeff[0] = header.getDoubleValue( "AMDX1");
-	    amd_x_coeff[1] = header.getDoubleValue( "AMDX2");
-	    amd_x_coeff[2] = header.getDoubleValue( "AMDX3");
-	    amd_x_coeff[3] = header.getDoubleValue( "AMDX4");
-	    amd_x_coeff[4] = header.getDoubleValue( "AMDX5");
-	    amd_x_coeff[5] = header.getDoubleValue( "AMDX6");
-	    amd_x_coeff[6] = header.getDoubleValue( "AMDX7");
-	    amd_x_coeff[7] = header.getDoubleValue( "AMDX8");
-	    amd_x_coeff[8] = header.getDoubleValue( "AMDX9");
-	    amd_x_coeff[9] = header.getDoubleValue( "AMDX10");
-	    amd_x_coeff[10] = header.getDoubleValue( "AMDX11");
-	    amd_x_coeff[11] = header.getDoubleValue( "AMDX12");
-	    amd_x_coeff[12] = header.getDoubleValue( "AMDX13");
-	    amd_x_coeff[13] = header.getDoubleValue( "AMDX14");
-	    amd_x_coeff[14] = header.getDoubleValue( "AMDX15");
-	    amd_x_coeff[15] = header.getDoubleValue( "AMDX16");
-	    amd_x_coeff[16] = header.getDoubleValue( "AMDX17");
-	    amd_x_coeff[17] = header.getDoubleValue( "AMDX18");
-	    amd_x_coeff[18] = header.getDoubleValue( "AMDX19");
-	    amd_x_coeff[19] = header.getDoubleValue( "AMDX20");
-	    amd_y_coeff = new double[20];
-	    amd_y_coeff[0] = header.getDoubleValue( "AMDY1");
-	    amd_y_coeff[1] = header.getDoubleValue( "AMDY2");
-	    amd_y_coeff[2] = header.getDoubleValue( "AMDY3");
-	    amd_y_coeff[3] = header.getDoubleValue( "AMDY4");
-	    amd_y_coeff[4] = header.getDoubleValue( "AMDY5");
-	    amd_y_coeff[5] = header.getDoubleValue( "AMDY6");
-	    amd_y_coeff[6] = header.getDoubleValue( "AMDY7");
-	    amd_y_coeff[7] = header.getDoubleValue( "AMDY8");
-	    amd_y_coeff[8] = header.getDoubleValue( "AMDY9");
-	    amd_y_coeff[9] = header.getDoubleValue( "AMDY10");
-	    amd_y_coeff[10] = header.getDoubleValue( "AMDY11");
-	    amd_y_coeff[11] = header.getDoubleValue( "AMDY12");
-	    amd_y_coeff[12] = header.getDoubleValue( "AMDY13");
-	    amd_y_coeff[13] = header.getDoubleValue( "AMDY14");
-	    amd_y_coeff[14] = header.getDoubleValue( "AMDY15");
-	    amd_y_coeff[15] = header.getDoubleValue( "AMDY16");
-	    amd_y_coeff[16] = header.getDoubleValue( "AMDY17");
-	    amd_y_coeff[17] = header.getDoubleValue( "AMDY18");
-	    amd_y_coeff[18] = header.getDoubleValue( "AMDY19");
-	    amd_y_coeff[19] = header.getDoubleValue( "AMDY20");
+            x_pixel_offset = header.getDoubleValue( "CNPIX1");
+            y_pixel_offset = header.getDoubleValue( "CNPIX2");
+            plt_scale = header.getDoubleValue( "PLTSCALE");
+            x_pixel_size = header.getDoubleValue( "XPIXELSZ");
+            y_pixel_size = header.getDoubleValue( "YPIXELSZ");
+            ppo_coeff = new double[6];
+            ppo_coeff[0] = header.getDoubleValue( "PPO1");
+            ppo_coeff[1] = header.getDoubleValue( "PPO2");
+            ppo_coeff[2] = header.getDoubleValue( "PPO3");
+            ppo_coeff[3] = header.getDoubleValue( "PPO4");
+            ppo_coeff[4] = header.getDoubleValue( "PPO5");
+            ppo_coeff[5] = header.getDoubleValue( "PPO6");
+            amd_x_coeff = new double[20];
+            amd_x_coeff[0] = header.getDoubleValue( "AMDX1");
+            amd_x_coeff[1] = header.getDoubleValue( "AMDX2");
+            amd_x_coeff[2] = header.getDoubleValue( "AMDX3");
+            amd_x_coeff[3] = header.getDoubleValue( "AMDX4");
+            amd_x_coeff[4] = header.getDoubleValue( "AMDX5");
+            amd_x_coeff[5] = header.getDoubleValue( "AMDX6");
+            amd_x_coeff[6] = header.getDoubleValue( "AMDX7");
+            amd_x_coeff[7] = header.getDoubleValue( "AMDX8");
+            amd_x_coeff[8] = header.getDoubleValue( "AMDX9");
+            amd_x_coeff[9] = header.getDoubleValue( "AMDX10");
+            amd_x_coeff[10] = header.getDoubleValue( "AMDX11");
+            amd_x_coeff[11] = header.getDoubleValue( "AMDX12");
+            amd_x_coeff[12] = header.getDoubleValue( "AMDX13");
+            amd_x_coeff[13] = header.getDoubleValue( "AMDX14");
+            amd_x_coeff[14] = header.getDoubleValue( "AMDX15");
+            amd_x_coeff[15] = header.getDoubleValue( "AMDX16");
+            amd_x_coeff[16] = header.getDoubleValue( "AMDX17");
+            amd_x_coeff[17] = header.getDoubleValue( "AMDX18");
+            amd_x_coeff[18] = header.getDoubleValue( "AMDX19");
+            amd_x_coeff[19] = header.getDoubleValue( "AMDX20");
+            amd_y_coeff = new double[20];
+            amd_y_coeff[0] = header.getDoubleValue( "AMDY1");
+            amd_y_coeff[1] = header.getDoubleValue( "AMDY2");
+            amd_y_coeff[2] = header.getDoubleValue( "AMDY3");
+            amd_y_coeff[3] = header.getDoubleValue( "AMDY4");
+            amd_y_coeff[4] = header.getDoubleValue( "AMDY5");
+            amd_y_coeff[5] = header.getDoubleValue( "AMDY6");
+            amd_y_coeff[6] = header.getDoubleValue( "AMDY7");
+            amd_y_coeff[7] = header.getDoubleValue( "AMDY8");
+            amd_y_coeff[8] = header.getDoubleValue( "AMDY9");
+            amd_y_coeff[9] = header.getDoubleValue( "AMDY10");
+            amd_y_coeff[10] = header.getDoubleValue( "AMDY11");
+            amd_y_coeff[11] = header.getDoubleValue( "AMDY12");
+            amd_y_coeff[12] = header.getDoubleValue( "AMDY13");
+            amd_y_coeff[13] = header.getDoubleValue( "AMDY14");
+            amd_y_coeff[14] = header.getDoubleValue( "AMDY15");
+            amd_y_coeff[15] = header.getDoubleValue( "AMDY16");
+            amd_y_coeff[16] = header.getDoubleValue( "AMDY17");
+            amd_y_coeff[17] = header.getDoubleValue( "AMDY18");
+            amd_y_coeff[18] = header.getDoubleValue( "AMDY19");
+            amd_y_coeff[19] = header.getDoubleValue( "AMDY20");
 
-	    crpix1 = 0.5 - x_pixel_offset;
-	    crpix2 = 0.5 - y_pixel_offset;
+            crpix1 = 0.5 - x_pixel_offset;
+            crpix2 = 0.5 - y_pixel_offset;
 
-	    if (cdelt1 == 0.0)
-	    {
-		cdelt1 = - plt_scale * x_pixel_size / 1000 / 3600;
-		cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
-	    }
-	}
+            if (cdelt1 == 0.0)
+            {
+                cdelt1 = - plt_scale * x_pixel_size / 1000 / 3600;
+                cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
+            }
+        }
 
-
-	if (cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
-		cdelt2 = -cdelt2;
-		crpix2 = naxis2 - crpix2+ 1;
-	}
-
-
+        if (cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
+            cdelt2 = -cdelt2;
+            crpix2 = naxis2 - crpix2+ 1;
+        }
     }
 
     public String getProjectionName()
@@ -670,119 +699,117 @@ public class ImageHeader implements Serializable
 
     public int getCoordSys()
     {
-	int retval = -1;
+        int retval = -1;
 
-	if (maptype == Projection.PLATE || maptype == Projection.LINEAR )
-			retval =  EQ;
+        if (maptype == Projection.PLATE || maptype == Projection.LINEAR )
+            retval =  EQ;
 
-	//non-linear case
-	//CTYPEi the first four characters are:	RA-- and DEC-, GLON and GLAT, or ELON and ELAT, for equatorial, galactic, and ecliptic coordinates, respectively.
-		if (ctype1 != null)
-	{
-	    String s = ctype1.substring(0, 2);
-	    if (s.equals("RA"))
-		retval =  EQ;
-	    else if (s.equals("DE"))
-		retval =  EQ;
-	    else if (s.equals("LL"))
-		retval =  EQ;
-	    else if (s.equals("GL"))
-		retval =  GA;
-	    else if (s.equals("LO"))
-		retval =  GA;
-	    else if (s.equals("EL"))
-		retval =  EC;
-	}
+        //non-linear case
+        //CTYPEi the first four characters are:	RA-- and DEC-, GLON and GLAT, or ELON and ELAT, for equatorial, galactic, and ecliptic coordinates, respectively.
+        if (ctype1 != null)
+        {
+            String s = ctype1.substring(0, 2);
+            if (s.equals("RA"))
+                retval =  EQ;
+            else if (s.equals("DE"))
+                retval =  EQ;
+            else if (s.equals("LL"))
+                retval =  EQ;
+            else if (s.equals("GL"))
+                retval =  GA;
+            else if (s.equals("LO"))
+                retval =  GA;
+            else if (s.equals("EL"))
+                retval =  EC;
+        }
 
-	return retval;
+        return retval;
     }
 
     public double getEquinox()
     {
-	return file_equinox;
+        return file_equinox;
     }
 
     public int getJsys()
     {
-	int jsys;
+        int jsys;
 
-	switch (getCoordSys())
-	{
-	    case EQ:
-		if ((radecsys != null) &&
-		    (radecsys.substring(0,3).equals("FK4")))
-		    jsys = CoordConv.EQUATORIAL_B;
-		else if ((radecsys != null) &&
-		    ((radecsys.substring(0,3).equals("FK5")) ||
-		    (radecsys.substring(0,4).equals("ICRS"))))
-		    jsys = CoordConv.EQUATORIAL_J;
-		else if (file_equinox < 2000.0)
-		    jsys = CoordConv.EQUATORIAL_B;
-		else
-		    jsys = CoordConv.EQUATORIAL_J;
-		break;
-	    case EC:
-		if ((radecsys != null) &&
-		    (radecsys.substring(0,3).equals("FK4")))
-		    jsys = CoordConv.ECLIPTIC_B;
-		else if ((radecsys != null) &&
-		    (radecsys.substring(0,3).equals("FK5")))
-		    jsys = CoordConv.ECLIPTIC_J;
-		else if (file_equinox < 2000.0)
-		    jsys = CoordConv.ECLIPTIC_B;
-		else
-		    jsys = CoordConv.ECLIPTIC_J;
-		break;
-	    case GA:
-		jsys = CoordConv.GALACTIC;
-		break;
-	    case SGAL:
-		jsys = CoordConv.SUPERGALACTIC;
-		break;
-	    default:
-		jsys = -1;
-	}
-	return jsys;
+        switch (getCoordSys())
+        {
+            case EQ:
+                if ((radecsys != null) &&
+                        (radecsys.startsWith("FK4")))
+                    jsys = CoordConv.EQUATORIAL_B;
+                else if ((radecsys != null) &&
+                        ((radecsys.startsWith("FK5")) ||
+                                (radecsys.startsWith("ICRS"))))
+                    jsys = CoordConv.EQUATORIAL_J;
+                else if (file_equinox < 2000.0)
+                    jsys = CoordConv.EQUATORIAL_B;
+                else
+                    jsys = CoordConv.EQUATORIAL_J;
+                break;
+            case EC:
+                if ((radecsys != null) &&
+                        (radecsys.startsWith("FK4")))
+                    jsys = CoordConv.ECLIPTIC_B;
+                else if ((radecsys != null) &&
+                        (radecsys.startsWith("FK5")))
+                    jsys = CoordConv.ECLIPTIC_J;
+                else if (file_equinox < 2000.0)
+                    jsys = CoordConv.ECLIPTIC_B;
+                else
+                    jsys = CoordConv.ECLIPTIC_J;
+                break;
+            case GA:
+                jsys = CoordConv.GALACTIC;
+                break;
+            case SGAL:
+                jsys = CoordConv.SUPERGALACTIC;
+                break;
+            default:
+                jsys = -1;
+        }
+        return jsys;
     }
 
     public double[] getPVArray(Header header, String idxStr) {
-    	double retval[]= new double[40];
-		for(int i=0; i<40; i++) {
-			retval[i]= header.getDoubleValue("PV"+idxStr+"_"+i, i==1?1D:0D);
-		}
-		return retval;
-	}
+        double[] retval = new double[40];
+        for(int i=0; i<40; i++) {
+            retval[i]= header.getDoubleValue("PV"+idxStr+"_"+i, i==1?1D:0D);
+        }
+        return retval;
+    }
 
     public Projection createProjection(CoordinateSys csys) {
         return new Projection(createProjectionParams(this),csys);
     }
 
 
-	public Projection createProjection() {
+    public Projection createProjection() {
         return createProjection(determineCoordSys());
     }
 
 
 
-	public CoordinateSys determineCoordSys() {
-		int sys= getJsys();
-		CoordinateSys imageCoordSys= CoordinateSys.makeCoordinateSys( sys, getEquinox() );
+    public CoordinateSys determineCoordSys() {
+        int sys= getJsys();
+        CoordinateSys imageCoordSys= CoordinateSys.makeCoordinateSys( sys, getEquinox() );
 
-		// tmp
-		if ((getEquinox() == 2000.0) && (sys == -1) ) {      // tmp
-			imageCoordSys= CoordinateSys.EQ_J2000;  // tmp
-		}                                           // tmp
-		// tmp
+        // tmp
+        if ((getEquinox() == 2000.0) && (sys == -1) ) {      // tmp
+            imageCoordSys= CoordinateSys.EQ_J2000;  // tmp
+        }                                           // tmp
+        // tmp
 
-		return imageCoordSys;
-	}
+        return imageCoordSys;
+    }
 
 
 
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
-
-
 
         params.bitpix= hdr.bitpix;
         params.naxis = hdr.naxis;
@@ -817,9 +844,9 @@ public class ImageHeader implements Serializable
         params.dc2_1= hdr.dc2_1;
         params.dc2_2= hdr.dc2_2;
         params.using_cd= hdr.using_cd;
-		params.using_tpv= hdr.using_tpv;
-		params.pv1= hdr.pv1;
-		params.pv2= hdr.pv2;
+        params.using_tpv= hdr.using_tpv;
+        params.pv1= hdr.pv1;
+        params.pv2= hdr.pv2;
 
         params.plate_ra= hdr.plate_ra;
         params.plate_dec= hdr.plate_dec;
@@ -843,42 +870,35 @@ public class ImageHeader implements Serializable
         params.map_distortion= hdr.map_distortion;
         params.keyword= hdr.keyword;
 
-
-
-
         return params;
-
     }
 
     public String toString()
     {
-	StringBuffer sb = new StringBuffer();
-	sb.append(
-	    "\n  bitpix = " + bitpix + " naxis = " + naxis +
-	    " naxis1 = " + naxis1 + " naxis2 = " + naxis2 +
-	    " naxis3 = " + naxis3);
-	sb.append(
-	    "\n  crpix1 = " + crpix1 + " crpix2 = " + crpix2 +
-	    "\n  crval1 = " + crval1 + " crval2 = " + crval2 +
-	    "\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 +
-	    " crota2 = " + crota2);
-	if (using_cd)
-	{
-	    sb.append(
-		"\n  cd1_1 = " + cd1_1 + " cd1_2 = " + cd1_2 + " cd2_1 = " +
-		cd2_1 + " cd2_2 = " + cd2_2);
-	    sb.append(
-		"\n  dc1_1 = " + dc1_1 + " dc1_2 = " + dc1_2 + " dc2_1 = " +
-		dc2_1 + " dc2_2 = " + dc2_2);
-	}
-	sb.append(
-	    "\n  file_equinox = " + file_equinox + "  ctype1 = " + ctype1 +
-	    " ctype2 = " + ctype2);
-	sb.append("\n  maptype = " + Projection.getProjectionName(maptype));
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        sb.append(
+                "\n  bitpix = " + bitpix + " naxis = " + naxis +
+                        " naxis1 = " + naxis1 + " naxis2 = " + naxis2 +
+                        " naxis3 = " + naxis3);
+        sb.append(
+                "\n  crpix1 = " + crpix1 + " crpix2 = " + crpix2 +
+                        "\n  crval1 = " + crval1 + " crval2 = " + crval2 +
+                        "\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 +
+                        " crota2 = " + crota2);
+        if (using_cd)
+        {
+            sb.append(
+                    "\n  cd1_1 = " + cd1_1 + " cd1_2 = " + cd1_2 + " cd2_1 = " +
+                            cd2_1 + " cd2_2 = " + cd2_2);
+            sb.append(
+                    "\n  dc1_1 = " + dc1_1 + " dc1_2 = " + dc1_2 + " dc2_1 = " +
+                            dc2_1 + " dc2_2 = " + dc2_2);
+        }
+        sb.append(
+                "\n  file_equinox = " + file_equinox + "  ctype1 = " + ctype1 +
+                        " ctype2 = " + ctype2);
+        sb.append("\n  maptype = " + Projection.getProjectionName(maptype));
+        return sb.toString();
     }
 
 }
-
-
-

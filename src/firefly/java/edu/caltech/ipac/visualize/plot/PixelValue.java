@@ -175,7 +175,7 @@ public class PixelValue {
 			case  64 -> fits_file.readLong();
 			default ->  blankValueDouble;
 		};
-		return (isInt(h) && value == blankValueDouble) ? Double.NaN : value;
+		return (h.bitpix()>0 && value == blankValueDouble) ? Double.NaN : value;
 	}
 
 	private static long readValueLong(RandomAccessFile fits_file, long file_pointer) throws IOException{

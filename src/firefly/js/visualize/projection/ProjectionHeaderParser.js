@@ -16,6 +16,10 @@ const CD1_1_HEADERS= ['CD1_1','CD001001'];
 const CD1_2_HEADERS= ['CD1_2','CD001002'];
 const CD2_1_HEADERS= ['CD2_1','CD002001'];
 const CD2_2_HEADERS= ['CD2_2','CD002002'];
+const PC1_1_HEADERS= ['PC1_1','PC001001'];
+const PC1_2_HEADERS= ['PC1_2','PC001002'];
+const PC2_1_HEADERS= ['PC2_1','PC002001'];
+const PC2_2_HEADERS= ['PC2_2','PC002002'];
 
 function getHeaderListD(parse, list, def, altWcs) {
 	const key= list.find( (i) =>  parse.header[i+altWcs]);
@@ -187,10 +191,10 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
         parse.isDefinedHeaderList(CD2_2_HEADERS);
 
 
-    p.pc1_1 = parse.getDoubleValue('PC1_1'+altWcs, undefined);
-    p.pc1_2 = parse.getDoubleValue('PC1_2'+altWcs, undefined);
-    p.pc2_1 = parse.getDoubleValue('PC2_1'+altWcs, undefined);
-    p.pc2_2 = parse.getDoubleValue('PC2_2'+altWcs, undefined);
+    p.pc1_1 = getHeaderListD(parse, PC1_1_HEADERS, undefined, altWcs);
+    p.pc1_2 = getHeaderListD(parse, PC1_2_HEADERS, undefined, altWcs);
+    p.pc2_1 = getHeaderListD(parse, PC2_1_HEADERS, undefined, altWcs);
+    p.pc2_2 = getHeaderListD(parse, PC2_2_HEADERS, undefined, altWcs);
 
     const defined_pc = isFinite(p.pc1_1) || isFinite(p.pc1_2) || isFinite(p.pc2_1) || isFinite(p.pc2_2);
 
