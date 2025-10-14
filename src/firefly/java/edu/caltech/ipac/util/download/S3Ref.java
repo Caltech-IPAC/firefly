@@ -6,11 +6,10 @@ package edu.caltech.ipac.util.download;
  */
 
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 
@@ -68,28 +67,25 @@ public record S3Ref(String region, String bucket, String key) {
             String bucket = path.substring(0, idx);
             return new S3Ref(null, bucket, key);
         } else if (s.toLowerCase().startsWith("https")) {
-            try {
-                URL url = new URI(s).toURL();
-                var path = url.getPath();
-                if (path.length() < 2) return null;
-                if (!StringUtils.isEmpty(url.getQuery())) return null;
-                var host = url.getHost().toLowerCase();
-                if (!host.endsWith(AMAZON) || !host.contains("s3.")) return null;
-                var cleanPath = path.substring(1);
-                var workingHost = host.substring(0, host.length() - amazonLen - 1);
+            URL url= Util.Try.it(() -> new URI(s).toURL()).getOrElse((URL)null);
+            if (url == null) return null;
+            var path = url.getPath();
+            if (path.length() < 2) return null;
+            if (!StringUtils.isEmpty(url.getQuery())) return null;
+            var host = url.getHost().toLowerCase();
+            if (!host.endsWith(AMAZON) || !host.contains("s3.")) return null;
+            var cleanPath = path.substring(1);
+            var workingHost = host.substring(0, host.length() - amazonLen - 1);
 
-                if (workingHost.startsWith("s3.")) { // s3 path style
-                    var region = workingHost.substring(3);
-                    var sAry = cleanPath.split("/",2);
-                    if (sAry.length != 2) return null;
-                    return new S3Ref(region, sAry[0], sAry[1]);
-                } else { // s3 host style
-                    var sAry = workingHost.split("\\.s3\\.");
-                    if (sAry.length != 2) return null;
-                    return new S3Ref(sAry[1], sAry[0], cleanPath);
-                }
-            } catch (MalformedURLException | URISyntaxException e) {
-                return null;
+            if (workingHost.startsWith("s3.")) { // s3 path style
+                var region = workingHost.substring(3);
+                var sAry = cleanPath.split("/",2);
+                if (sAry.length != 2) return null;
+                return new S3Ref(region, sAry[0], sAry[1]);
+            } else { // s3 host style
+                var sAry = workingHost.split("\\.s3\\.");
+                if (sAry.length != 2) return null;
+                return new S3Ref(sAry[1], sAry[0], cleanPath);
             }
         }
         return null;

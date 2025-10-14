@@ -51,6 +51,7 @@ const defOptions = {
             sources: getDefaultMOCList(),
             label: 'Featured MOC '
         },
+        adhocMocIncludeAdditionSources: 'irsa',
         mergedListPriority: 'Irsa'
     },
     coverage : { }

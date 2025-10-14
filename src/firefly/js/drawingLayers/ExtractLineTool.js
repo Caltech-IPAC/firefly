@@ -247,7 +247,7 @@ function getMode(plot) {
 function start(drawLayer, action) {
     const {imagePt,plotId,shiftDown}= action.payload;
     if (drawLayer.selectionType===LINE_SELECTION || drawLayer.selectionType===COLUMN_SELECTION) {
-        const newDl= {...drawLayer, ...setupSelect(imagePt,drawLayer)};
+        const newDl= {...drawLayer, ...setupSelect(plotId,imagePt,drawLayer)};
         return drag(newDl, action);
     }
     const plot= primePlot(visRoot(),plotId);
@@ -256,7 +256,7 @@ function start(drawLayer, action) {
     const cc= CsysConverter.make(plot);
     let retObj= {};
     if (mode==='select' || shiftDown) {
-        retObj= setupSelect(imagePt,drawLayer);
+        retObj= setupSelect(plotId,imagePt,drawLayer);
     }
     else if (mode==='edit') {
         const ptAry= getPtAry(plot);
@@ -281,7 +281,7 @@ function start(drawLayer, action) {
             return Object.assign(retObj, makeBaseReturnObj(retObj.firstPt, retObj.currentPt, drawAry));
         }
         else {
-            retObj= setupSelect(imagePt,drawLayer) ;
+            retObj= setupSelect(plotId,imagePt,drawLayer) ;
         }
     }
     if (retObj.startSelectCnt>2) {
@@ -332,9 +332,12 @@ function end(action) {
 }
 
 
-function setupSelect(imagePt, drawLayer) {
-    return {firstPt: imagePt, currentPt: imagePt,  activePt:undefined,
-        moveHead: true, helpWarning:false, startSelectCnt:drawLayer.startSelectCnt+1};
+function setupSelect(plotId, imagePt, drawLayer) {
+    return {
+        firstPt: imagePt, currentPt: imagePt,  activePt:undefined, selectPlotId: plotId,
+        moveHead: true, helpWarning:false,
+        startSelectCnt: drawLayer.selectPlotId===plotId ? drawLayer.startSelectCnt+1 : 0
+    };
 }
 
 function findClosestPtIdx(ptAry, pt) {

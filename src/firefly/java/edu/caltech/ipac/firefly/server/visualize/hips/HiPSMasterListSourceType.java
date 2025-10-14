@@ -11,5 +11,6 @@ import java.util.List;
 public interface HiPSMasterListSourceType {
 
     List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source);
+    default List<HiPSMasterListEntry> getAdditionalMOCS(String source) {return null;}
     String getUrl();
 }

@@ -39,13 +39,15 @@ import static edu.caltech.ipac.firefly.data.ServerParams.HIPS_LIST_SOURCE_NAME;
  * @author Cindy Wang
  */
 @SearchProcessorImpl(id = "HiPSSearch", params =
-        {@ParamDoc(name = ServerParams.HIPS_DATATYPES, desc = "types of HiPS data to search"),
-         @ParamDoc(name = ServerParams.HIPS_SOURCES, desc = "HiPS sources"),
-         @ParamDoc(name = HIPS_LIST_SOURCE, desc = "HiPS list source url"),
-         @ParamDoc(name = ENSURE_SOURCE, desc = "if true then only ensure the source and an empty table is return"),
-         @ParamDoc(name = ServerParams.ADHOC_SOURCE, desc = "a comma list of IVOA ids to make the source, the HIPS_SOURCE parameter much include adhoc"),
-         @ParamDoc(name = ServerParams.SORT_ORDER, desc = "HiPS order, source based"),
-         @ParamDoc(name = ServerParams.HIPS_TABLE_TYPE, desc = "hips or moc, default hips")
+        {
+                @ParamDoc(name = ServerParams.HIPS_DATATYPES, desc = "types of HiPS data to search"),
+                @ParamDoc(name = ServerParams.HIPS_SOURCES, desc = "HiPS sources"),
+                @ParamDoc(name = HIPS_LIST_SOURCE, desc = "HiPS list source url"),
+                @ParamDoc(name = ENSURE_SOURCE, desc = "if true then only ensure the source and an empty table is return"),
+                @ParamDoc(name = ServerParams.ADHOC_SOURCE, desc = "a comma list of IVOA ids to make the source, the HIPS_SOURCE parameter much include adhoc"),
+                @ParamDoc(name = ServerParams.ADHOC_MOC_INCLUDE, desc = "always use the additional mocs from these sources in adhoc"),
+                @ParamDoc(name = ServerParams.SORT_ORDER, desc = "HiPS order, source based"),
+                @ParamDoc(name = ServerParams.HIPS_TABLE_TYPE, desc = "hips or moc, default hips")
         })
 public class HiPSMasterList extends EmbeddedDbProcessor {
     public final static String INFO_ICON_STUB = "<img data-src='info'/>";
@@ -113,10 +115,15 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         String[] prioritySources = (hipsMergePriority != null) ? hipsMergePriority.split(",") : null;
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
         List<String> adhocSources= Collections.emptyList();
+        List<String> adhocMocInclude= Collections.emptyList();
+        boolean usingAdhoc= false;
 
         if (workingSources!=null && Arrays.asList(workingSources).contains("adhoc") && adhocSrcParam!=null) {
-            adhocSources= Arrays.asList(adhocSrcParam.split(","));
+            adhocSources= new ArrayList<>(Arrays.asList(adhocSrcParam.split(",")));
             workingSources= new String[] {ServerParams.ALL};
+            usingAdhoc= true;
+            var v= request.getParam(ServerParams.ADHOC_MOC_INCLUDE);
+            if (v!=null) adhocMocInclude= Arrays.asList(v.split(","));
         }
 
         if (workingSources == null || workingSources.length == 0 ||
@@ -146,7 +153,21 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                     if (hipsL != null) {
                         allSourceData.addAll(hipsL);
                     }
+                    if (!hipsTable) {
+                        List<HiPSMasterListEntry> mocL = hipsls.getAdditionalMOCS(source);
+                        if (mocL != null) {
+                            if (usingAdhoc && adhocMocInclude.contains(source)) {
+                                var moreMocs= mocL
+                                        .stream()
+                                        .map( v -> v.getMapInfo().get(PARAMS.IVOID.getKey()))
+                                        .toList();
+                                adhocSources.addAll(moreMocs);
+                            }
+                            allSourceData.addAll(mocL);
+                        }
+                    }
                 }
+
             }
 
             if (allSourceData.isEmpty()) {

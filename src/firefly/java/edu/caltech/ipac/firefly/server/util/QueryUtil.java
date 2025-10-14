@@ -193,7 +193,6 @@ public class QueryUtil {
                     FileUtil.writeStringToFile(outFile, "workaround");
                     outFile.setLastModified(res.lastModified());
                     ops.setOnlyIfModified(false);
-                    ops.setExpectStaticFile(true);
                     FileInfo finfo = RetrieveUtil.download(uri, outFile, inputs.getCookies(), inputs.getHeaders(), ops);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);

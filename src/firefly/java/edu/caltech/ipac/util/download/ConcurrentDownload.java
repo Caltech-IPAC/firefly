@@ -49,10 +49,11 @@ public class ConcurrentDownload {
             newHeaders.put("If-Modified-Since", outfile.lastModified()+"");
         }
 
-        HttpResultInfo result= URLDownload.getHeader(url,cookies,newHeaders,6);
+        HttpResultInfo result= URLDownload.getHeader(url,cookies,newHeaders,8);
 
         var status= result.getResponseCode();
         if (status>=400 && status!=HttpURLConnection.HTTP_BAD_METHOD) {
+            logHeadFail(url,result);
             return new FileInfo(result.getResponseCode(), result.getResponseCodeMsg());
         }
         if (status == HttpURLConnection.HTTP_NOT_MODIFIED) return notModified(url,outfile,result);
@@ -65,7 +66,7 @@ public class ConcurrentDownload {
             else {
                 return URLDownload.getDataToFile(finalUrl,outfile,cookies,requestHeaders,ops);
             }
-        } catch (MalformedURLException | URISyntaxException e) {
+        } catch (MalformedURLException | URISyntaxException | IllegalArgumentException e) {
             throw new FailedRequestException("redirect URL could not be parsed");
         }
     }
@@ -74,10 +75,6 @@ public class ConcurrentDownload {
     private static FileInfo doMultiThreadedDownload(URL url, File outfile, Map<String, String> cookies,
                                                     Map<String, String> requestHeaders, URLDownload.Options ops,
                                                     HttpResultInfo headResult) throws FailedRequestException{
-
-
-
-
         StopWatch.Tracker tracker = new StopWatch.Tracker("Multi-threaded Download", null);
         tracker.starts();
         var len= headResult.getContentLength();
@@ -90,11 +87,10 @@ public class ConcurrentDownload {
             ForkJoinPool exeService= exeMap.computeIfAbsent(
                     ServerContext.getRequestOwner().getUserKey(),
                     k -> makeExecutorService());
-            File outDir= outfile.getParentFile();
             try (var outRaf = new RandomAccessFile(outfile, "rw") ) {
                 outRaf.setLength(len);
             } catch (IOException e) {
-                throw new FailedRequestException("could not creaste output file");
+                throw new FailedRequestException("could not create output file");
             }
 
             try (var outRaf = new RandomAccessFile(outfile, "rw") ) {
@@ -110,7 +106,7 @@ public class ConcurrentDownload {
                     resultsList.add( exeService.submit(pd::download));
                 }
 
-                 DownloadListener dl = ops.dl();
+                DownloadListener dl = ops.dl();
                 for (var i = 0; !isDone(resultsList); i++) {
                     if (dl != null && i % 8 == 0) {
                         callListener(dl, transferredBytes(pdList), len);
@@ -119,12 +115,11 @@ public class ConcurrentDownload {
                 }
 
                 if (pdList.stream().allMatch( pd -> pd.getStatus()==HttpURLConnection.HTTP_PARTIAL)) {
-                    callListener(dl, len, len);
+                    outRaf.close(); //closing explicitly here - I want the tme to reflect any flushing
                     callListener(dl, len, 0);
                     tracker.stops();
                     double dlSeconds = tracker.getElapsedTime(StopWatch.Unit.SECONDS);
-                    outRaf.close();
-                    logSuccess(headResult,outfile,url,dlSeconds,pdList.size());
+                    logSuccess(headResult,outfile,url,dlSeconds,pdList.size(),headResult);
                     return new FileInfo(outfile, headResult.getExternalName(), 200, headResult.getContentType());
                 }
             } catch (IOException e) {
@@ -185,7 +180,7 @@ public class ConcurrentDownload {
 
     private static long transferredBytes(ArrayList<PartialDownload> pdList) {
         var total=0L;
-        for (var pd : pdList) {total+= pd.getTransferredBytes(); }
+        for (var pd : pdList) {total+= pd.getTransferredBytes();}
         return total;
     }
 
@@ -215,16 +210,53 @@ public class ConcurrentDownload {
         log.info(send+file);
     }
 
-    private static void logSuccess(HttpResultInfo r, File outfile, URL url,  double dSeconds, int parts) {
+    private static void logSuccess(HttpResultInfo r, File outfile, URL url,  double dSeconds, int parts, HttpResultInfo headerR) {
         String formatedSize= FileUtil.getSizeAsString(r.getContentLength());
-        String send= String.format( "Download (%.1f sec, %s, %d parts): %s\n", dSeconds, formatedSize, parts, url.toString() );
-        String stat= String.format(
-                "        length: %d, contentType: %s, encoding: %s, disposition %s\n",
-                r.getContentLength(), r.getContentType(), r.getContentEncoding(), r.getContentDisposition() );
-        String file= "        File: "+ outfile.toPath();
-        log.info(send+stat+file);
+        String lastMod= r.getAttribute("Last-Modified")!=null ? ", Last-Modified: " +r.getAttribute("Last-Modified") : "";
+        log.info(
+                String.format( "DOWNLOAD (%.1f sec, %s, %d parts): Content-Type: %s, Content-Length: %s%s",
+                        dSeconds, formatedSize, parts, r.getContentType(), r.getContentLength(), lastMod),
+                "url:  "+ url.toString(),
+                "file: "+ outfile.toPath(),
+                "headers sent: " + sendHeadersToStr(headerR),
+                "more headers: "+otherHeadersToStr(r)
+        );
     }
 
+    private static String otherHeadersToStr(HttpResultInfo r) {
+        StringBuilder out= new StringBuilder();
+        int cnt=0;
+        for(var a : r.getAttributes().entrySet()) {
+            var k = a.getKey();;
+            if (!r.isReservedKey(k) && !k.equalsIgnoreCase("<none>") &&
+                    !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
+                    !k.equalsIgnoreCase("Last-Modified") ) {
+                if (cnt>0) out.append(", ");
+                out.append(String.format("%s: %s", k, a.getValue()));
+                cnt++;
+            }
+        }
+        return out.toString();
+    }
+
+    private static String sendHeadersToStr(HttpResultInfo r) {
+        if (r.getSendHeaders()==null) return "";
+        StringBuilder out= new StringBuilder();
+        int cnt=0;
+        for(var a : r.getSendHeaders().entrySet()) {
+            var k = a.getKey();
+            if (cnt>0) out.append(", ");
+            out.append(String.format("%s: %s", k, a.getValue()));
+            cnt++;
+        }
+        return out.toString();
+    }
+
+    private static void logHeadFail(URL url, HttpResultInfo r) {
+        String send= String.format( "FAIL: Concurrent Download Header (%d, %s): %s",
+                r.getResponseCode(), r.getResponseCodeMsg(), url);
+        log.info(send,"headers sent: " + sendHeadersToStr(r));
+    }
 
     private static void logFail(Exception e, File outfile, URL url, int statusCode, String statusMessage, double seconds) {
         if (e!=null) log.error(e);
@@ -295,7 +327,6 @@ public class ConcurrentDownload {
         }
 
         public int getStatus() { return status; }
-        public int getIndex() { return index; }
         public long getTransferredBytes() { return transferredBytes; }
 
         Void download() {
@@ -312,7 +343,7 @@ public class ConcurrentDownload {
                 contentRange= out.getAttribute("Content-Range");
                 if (this.status!=HttpURLConnection.HTTP_PARTIAL) logPartError(index, url,range,this.status,contentRange);
             } catch (Throwable e) {
-                log.error(e,"Error: part: " +index+ " range: "+range);
+                log.error(e,"part error exception: " +index+ " range: "+range);
             }
             return null;
         }

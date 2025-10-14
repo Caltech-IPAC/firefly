@@ -24,18 +24,13 @@ import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static edu.caltech.ipac.firefly.server.network.HttpServices.BUFFER_SIZE;
 
 public class S3Download {
 
@@ -227,8 +222,8 @@ public class S3Download {
             try (ResponseInputStream<GetObjectResponse> s3Object = client.getObject(getObjectRequest)) {
                 var hInfo= getResponseInfo(s3Object.response());
                 extName= URLDownload.getSuggestedFileName(hInfo.contentDisposition());
-                OutputStream out= new BufferedOutputStream(new FileOutputStream(outfile), BUFFER_SIZE);
-                URLDownload.netCopy(new DataInputStream(s3Object),out,hInfo.contentLength,0, options.dl());
+                Downloader.download(new DataInputStream(s3Object),
+                        outfile, hInfo.contentLength, options.maxFileSize(), options.dl());
                 return new FileInfo(outfile, extName, 200, ResponseMessage.getHttpResponseMessage(200), hInfo.contentType());
             } catch (S3Exception e) {
                 int status= e.statusCode();

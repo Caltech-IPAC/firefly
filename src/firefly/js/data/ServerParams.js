@@ -95,6 +95,7 @@ export const ServerParams = {
         HIPS_LIST_SOURCE_NAME: 'hipsListSourceName',
         ENSURE_SOURCE: 'ensureSource',
         ADHOC_SOURCE : 'adhocSource',
+        ADHOC_MOC_INCLUDE: 'AdhocMOCInclude',
         HIPS_DATATYPES: 'hipsDataTypes',
         HIPS_DEFSOURCES: 'defHipsSources',
         HIPS_TABLE_TYPE: 'hipsTableType',

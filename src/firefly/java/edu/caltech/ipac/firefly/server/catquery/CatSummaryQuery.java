@@ -3,29 +3,26 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
@@ -70,14 +67,8 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
         
         try {
 
-            URLConnection conn = URLDownload.makeConnection(url, null, null);
-            conn.addRequestProperty("accept", "*/*");
-            ByteArrayOutputStream baos = new  ByteArrayOutputStream();
-            DataInputStream in= new DataInputStream(new BufferedInputStream(
-                        conn.getInputStream()));
-            URLDownload.logHeader(conn);
-            URLDownload.netCopy(in, baos, conn, 0, null);
-            String jsonContent = baos.toString();
+            var headers= Collections.singletonMap("accept", "*.*");
+            String jsonContent  = URLDownload.getDataFromURL(url,null,headers).getResultAsString();
             HashMap<String, Integer> keyValues = parse(jsonContent);
             DataType setType = new DataType("set", String.class);
             setType.setWidth(15);

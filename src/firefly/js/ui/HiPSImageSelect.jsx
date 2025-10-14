@@ -114,6 +114,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         ivoid: getIvoaId(),
                         title: getTitle(),
                         hipsUrl: rootUrl,
+                        mocFile: rootUrl.toLowerCase().endsWith('fits') ? '' : undefined,
                         plot: primePlot(pv),
                         visible: true
                     } ) :
@@ -229,10 +230,12 @@ function HiPSSurveyTable({groupKey, variant, extraHiPSListName , moc=false}) {
     useEffect ( () => {
         if (!getTblById(activeHipsTblId)) {
             const mocSources= getAppOptions().hips?.adhocMocSource?.sources ?? getDefaultMOCList();
+            const adhocMocIncludeAdditionSources= getAppOptions().hips?.adhocMocIncludeAdditionSources ?? '';
             const req = makeHiPSRequest(
                 moc===true? 'moc' : 'hips',
                 finalSources,
                 moc ? mocSources : undefined,
+                moc ? adhocMocIncludeAdditionSources : undefined,
                 activeHipsTblId);
 
             req && dispatchTableFetch(req);

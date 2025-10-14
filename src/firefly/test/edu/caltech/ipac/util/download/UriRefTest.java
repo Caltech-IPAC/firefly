@@ -39,7 +39,7 @@ public class UriRefTest {
 
             var srRefwithQ= UriRef.make("https://s3.us-west-2.amazonaws.com/amzn-s3-demo-bucket1/puppy.jpg?a=2");
             assertEquals(UriRef.ResourceType.OnPrimUrl, srRefwithQ.getType());
-        } catch (URISyntaxException | MalformedURLException e) {
+        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new RuntimeException(e);
         }
 

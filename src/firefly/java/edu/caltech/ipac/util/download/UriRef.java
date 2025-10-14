@@ -1,8 +1,8 @@
 package edu.caltech.ipac.util.download;
 
-import java.net.MalformedURLException;
+import edu.caltech.ipac.firefly.core.Util;
+
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 
@@ -93,11 +93,7 @@ public record UriRef(Object ref, Object sourceForRef) {
 
     private static URL makeURLFromStr(String urlStr) {
         if (urlStr == null) return null;
-        try {
-            return new URI(urlStr.trim()).toURL();
-        } catch (URISyntaxException | MalformedURLException ignore) {
-            return null;
-        }
+        return Util.Try.it(() -> new URI(urlStr.trim()).toURL()).getOrElse((URL)null);
     }
 
 }
