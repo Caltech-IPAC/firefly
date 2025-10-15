@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.server;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -157,6 +158,7 @@ public class Counters {
         addToList(retList, "Auth Token", (ssoAdapter != null && ssoAdapter.getAuthToken() != null) ? ssoAdapter.getAuthToken().getId() : null);
         addToList(retList, "Session ID", ServerContext.getRequestOwner().getRequestAgent().getSessId());
         addToList(retList, "User Key", ServerContext.getRequestOwner().getUserKey());
+        addToList(retList, "JVM Architecture", AppProperties.getProperty("os.arch", "unknown"));
 
         retList.add("");
         addMemoryStatus(retList, sInfo);

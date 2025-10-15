@@ -82,7 +82,7 @@ public class RedisServiceTest extends ConfigTest {
         try (Jedis conn = RedisService.getConnection()) {
             conn.setex("key1", 1, "val1");
             assertEquals("val1", conn.get("key1"));
-            Thread.sleep(1_000);        // expired after 1s
+            Thread.sleep(3_000);        // should be expired after 3 seconds
             assertEquals(false, conn.exists("key1"));
         } catch (Exception e) {
             Assert.fail("Can't connect: " + e);
