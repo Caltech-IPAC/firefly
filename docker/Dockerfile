@@ -1,53 +1,96 @@
-ARG build_dir=firefly
-ARG target=firefly:warAll
-ARG env=local
-ARG BranchOverride=''
+ARG BUILDPLATFORM=linux/amd64
 
-FROM eclipse-temurin:21-jdk-jammy AS deps
+# ==============================
+# Stage 1: Base dependencies
+# ==============================
+FROM --platform=${BUILDPLATFORM} eclipse-temurin:21-jdk-jammy AS base
 
-RUN apt-get update && apt-get install -y curl git htmldoc unzip wget ca-certificates gnupg
+RUN echo "============> Build platform: $(uname -m)"
 
-RUN apt-get update \
-# use node v18.x (from https://github.com/nodesource/distributions because it may not be available via apt-get)
-    && curl -fsSL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh \
-    && bash nodesource_setup.sh \
+RUN apt-get update && apt-get install -y \
+      curl git unzip wget ca-certificates gnupg htmldoc \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
-    && npm install yarn -g  \
+    && npm install -g yarn \
 # gradle version 8.10  Not available via apt-get
     && cd /usr/local \
-    && wget  -q https://services.gradle.org/distributions/gradle-8.10-bin.zip \
+    && wget -q https://services.gradle.org/distributions/gradle-8.10-bin.zip \
     && unzip -q gradle-8.10-bin.zip \
-    && ln -sf /usr/local/gradle-8.10/bin/gradle /usr/local/bin/  \
+    && ln -sf /usr/local/gradle-8.10/bin/gradle /usr/local/bin/gradle \
     && rm gradle-8.10-bin.zip \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
 
-WORKDIR "/opt/work"
+WORKDIR /opt/work
 
-FROM deps AS node_module
 
-WORKDIR "/opt/work/lib"
+# =====================================
+# Stage 2: Node modules and maven cache
+# =====================================
+FROM --platform=${BUILDPLATFORM} base AS deps
+
+RUN echo "============> Build platform: $(uname -m)"
+
+WORKDIR /opt/work/lib
 COPY firefly/package.json firefly/yarn.lock ./
+# 900000= 15 minutes because QEMU(arm64 emulator) is super slow.
 RUN yarn install --ignore-platform --frozen-lockfile
 
+# Copy only minimal build descriptors (no source) so we can resolve base
+WORKDIR /opt/work/firefly
+COPY firefly/settings.gradle firefly/gradle.properties firefly/build.gradle ./
+COPY firefly/buildScript/ ./buildScript
+COPY firefly/src/firefly/build.gradle src/firefly/build.gradle
 
-FROM node_module AS dev_env
+# Warm up local Gradle/Maven caches (no build yet)
+# `gradle dependencies` downloads all declared jars
+RUN gradle --no-daemon --quiet --refresh-dependencies firefly:dependencies || true
 
-RUN apt-get update \
-    && apt-get install -y vim procps python3 \
+
+# =====================================
+# Stage 3: Builder (Gradle, amd64 only)
+# =====================================
+FROM --platform=${BUILDPLATFORM} base AS builder
+
+ARG build_dir=firefly
+ARG target=firefly:warAll
+ARG env=local
+ARG BranchOverride=''
+ARG checkoutFirefly
+
+RUN echo "============> Build platform: $(uname -m)"
+
+WORKDIR /opt/work
+COPY . .
+COPY --from=deps /opt/work/lib/node_modules ./firefly/node_modules
+COPY --from=deps /root/.gradle /root/.gradle
+
+
+WORKDIR /opt/work/${build_dir}
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
+RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly:checkoutFirefly ; fi
+RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
+
+
+# ==============================
+# Dev environment
+# ==============================
+FROM base AS dev_env
+
+RUN apt-get update && apt-get install -y vim procps python3 \
 # cleanup
-    && rm -rf /var/lib/apt/lists/*;
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=tomcat:11.0.11-jre21-temurin-jammy /usr/local/tomcat /usr/local/tomcat
-
+COPY --from=deps /opt/work/lib/node_modules ./firefly/node_modules
+COPY --from=deps /root/.gradle /root/.gradle
 
 ENV CATALINA_HOME=/usr/local/tomcat \
     USE_ADMIN_AUTH=false \
-    DEBUG=true
-
-ENV work_dir=firefly
-ENV project=firefly
-ENV env=local
+    DEBUG=true \
+    work_dir=firefly \
+    project=firefly \
+    env=local
 
 WORKDIR ${CATALINA_HOME}
 
@@ -61,34 +104,15 @@ RUN mkdir -p /firefly/workarea /firefly/logs/statistics /firefly/alerts \
 
 CMD ./devMode.sh
 
-
-FROM node_module AS builder
-
-ARG build_dir
-ARG target
-ARG env
-ARG BranchOverride
-ARG checkoutFirefly
-
-
-WORKDIR /opt/work
-COPY . .
-COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
-
-WORKDIR /opt/work/${build_dir}
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly:checkoutFirefly ; fi
-RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
-
-
-# Beginning of runtime image script
-
+# ==============================
+# Stage 4: Runtime image
+# ==============================
 # Description:
 # A tomcat application server running as UID 91(tomcat) by default.
 # It's designed to support running as a different user via -u or --user param.
 #
 #-----------------------------------------------------------------------------
-# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
+# To build: docker build -t ipac/firefly
 # For help in running: docker run --rm  ipac/firefly --help
 #-----------------------------------------------------------------------------
 #
@@ -108,20 +132,14 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 
 FROM tomcat:11.0.11-jre21-temurin-jammy
 
-ARG build_dir
+ARG build_dir=firefly
 ARG user=tomcat
 ARG group=tomcat
 ARG uid=91
 ARG gid=91
-
-
-# - add packages: vim, wget, etc
-# - add any other standard apt packages here
-# - this is a big part of the layer so do it early
-# - emacs removed because it is so big: to readd emacs: emacs-nox
-RUN apt-get update && apt-get install -y \
-        vim procps wget unzip python3 \
-        && rm -rf /var/lib/apt/lists/*;
+ARG TARGETARCH
+ARG TARGETOS
+ARG DUCKDB_VERSION=v1.1.3
 
 # These are the users replaceable environment variables, basically runtime arguments
 #          - Set the available memory on the command line with --memory="4g"
@@ -144,14 +162,22 @@ ENV JVM_CORES=0\
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 
-ARG IMAGE_NAME=''
+# - add packages: vim, wget, etc
+# - add any other standard apt packages here
+# - this is a big part of the layer so do it early
+# - emacs removed because it is so big: to readd emacs: emacs-nox
+RUN apt-get update && apt-get install -y \
+        vim procps wget unzip python3 \
+        && rm -rf /var/lib/apt/lists/*;
 
 WORKDIR ${CATALINA_HOME}
 
 # set up directory protections, copy stuff around, add tomcat user and group
-RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts \
-  && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
-  && rm -r logs && ln -s /firefly/logs logs
+RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea \
+           /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts \
+    && groupadd -g ${gid} ${group} \
+    && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
+    && rm -r logs && ln -s /firefly/logs logs
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt firefly/docker/*.py ${CATALINA_HOME}/
@@ -172,14 +198,13 @@ RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080"
     $CATALINA_HOME/conf/server.xml
 
 # preinstall DuckDB extensions; remember to update version when DuckDB is updated
-ARG DUCKDB_TARGET=v1.1.3/linux_amd64_gcc4
+ENV DUCKDB_TARGET=${DUCKDB_VERSION}/${TARGETOS}_${TARGETARCH}
 RUN mkdir -p temp/$DUCKDB_TARGET \
     && wget -P temp/$DUCKDB_TARGET http://community-extensions.duckdb.org/$DUCKDB_TARGET/magic.duckdb_extension.gz \
     && gunzip -f temp/$DUCKDB_TARGET/magic.duckdb_extension.gz
 
 # Add permission to files and directories needed for runtime
 # increase max header size to avoid failing on large auth token
-WORKDIR ${CATALINA_HOME}
 RUN chmod a+x *.sh \
   && chmod -R a+w *.txt temp work /local/www /firefly ${CATALINA_HOME}/webapps \
   && sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
@@ -189,6 +214,4 @@ EXPOSE 8080 5050
 
 USER tomcat
 
-#CMD ["/bin/bash", "./launchTomcat.sh"]
-#ENTRYPOINT ["/bin/bash", "-c", "./launchTomcat.sh ${*}", "--"]
 ENTRYPOINT ["python3", "./entrypoint.py"]

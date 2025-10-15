@@ -4,6 +4,8 @@ services:
     build:
       context: ../
       dockerfile: firefly/docker/Dockerfile
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM:-linux/amd64}
     ports:
       - "8080:8080"
     env_file:
