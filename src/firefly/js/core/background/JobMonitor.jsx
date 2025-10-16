@@ -34,8 +34,13 @@ import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import {FormWatcher} from '../../templates/router/RouteHelper';
 import {logger} from '../../util/Logger';
+import {SwitchInputField} from 'firefly/ui/SwitchInputField';
+import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
 
 export const jobMonitorPath = '/jobMonitor';
+export const jobMonitorGroupKey = 'jobMonitor';
+export const useLocalTimeKey = 'useLocalTime';
+
 const jobIdColIdx = 7;  // the index of the jobId column in the table
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
@@ -148,7 +153,7 @@ function JobSummary({jobs, overflow, ...props}) {
         </Stack>
     );
     return (
-        <Stack direction='row' gap={5} {...props}>
+        <Stack direction='row' gap={5} justifyContent='space-between' {...props}>
             <Typography level='title-md' color='primary'>Job Summary</Typography>
             <Stack direction='row' gap={10}>
                 <Entry label='Total' value={total + (overflow ? '(+)' : '')}/>
@@ -156,7 +161,25 @@ function JobSummary({jobs, overflow, ...props}) {
                 <Entry label='Failed' value={failed}/>
                 {(archived>0) && <Entry label='Archived' value={archived} title={getPhaseTips(Phase.ARCHIVED)}/>}
             </Stack>
+            <LocalOrUTC/>
         </Stack>
+    );
+}
+
+export function LocalOrUTC() {
+    const parts = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(new Date());
+    const tzAbbr = parts.find((p) => p.type === 'timeZoneName').value;
+    return (
+        <SwitchInputField fieldKey={useLocalTimeKey}
+                          groupKey={jobMonitorGroupKey}
+                          label='Time Zone:'
+                          startDecorator='UTC'
+                          endDecorator={tzAbbr}
+                          size='sm'
+                          slotProps={{
+                              input: {color: 'primary', sx: {alignItems:'flex-start'}}
+                          }}
+        />
     );
 }
 
@@ -198,17 +221,18 @@ function Notification({email='', notifEnabled, ...props}) {
 
 function JobMonitorTable({help_id, ...props}) {
     const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
+    const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
     const [hlJobId, setHlJobId] = useState();
 
     const tbl_id = 'JobHistoryTable';
     useEffect(() => {
-        const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id);
+        const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id, useLocalTime);
         if (hlJobId) {
             const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === hlJobId);
             if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
         }
         dispatchTableAddLocal(table, undefined, false);
-    }, [jobMap]); // refreshed only when jobMap changes
+    }, [jobMap, useLocalTime]); // refreshed only when jobMap changes
 
     useEffect(() => {
         return watchTableChanges(tbl_id,
@@ -353,7 +377,14 @@ function DownloadBtn({job, index=0}) {
     );
 }
 
-function convertToTableModel(jobs, tbl_id) {
+export function toDateString(date, useLocalTime) {
+    if (!date) return '';
+    let d = moment.utc(date);
+    if (useLocalTime) d = d.local();
+    return d.format('YYYY-MM-DD HH:mm:ss');
+}
+
+function convertToTableModel(jobs, tbl_id, useLocalTime) {
     const cProps = {align: 'center'};
     const columns = [
         {name: 'Title', width: 22},
@@ -371,9 +402,9 @@ function convertToTableModel(jobs, tbl_id) {
             getJobTitle(job),
             job.meta?.svcId,
             job.meta?.type,
-            job.creationTime && moment.utc(job.creationTime).format('YYYY-MM-DD HH:mm:ss'),
-            job.startTime && moment.utc(job.startTime).format('YYYY-MM-DD HH:mm:ss'),
-            job.endTime && moment.utc(job.endTime).format('YYYY-MM-DD HH:mm:ss'),
+            toDateString(job.creationTime, useLocalTime),
+            toDateString(job.startTime, useLocalTime),
+            toDateString(job.endTime, useLocalTime),
             job.phase,
             job.meta?.jobId         // remember to adjust jobIdColIdx if columns changed
         ]);
