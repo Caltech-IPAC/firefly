@@ -4,7 +4,7 @@
 
 
 import {debounce} from 'lodash';
-import React, {forwardRef, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {Divider, Stack} from '@mui/joy';
@@ -22,14 +22,14 @@ const defDecStyle= {
 };
 
 
-export const MultiItemViewerView=forwardRef( (props, ref) =>  {
+export function MultiItemViewerView(props)  {
 
     const {current:gridContainerElement}= useRef({element:undefined});
     const [,setWindowWidth]= useState(window?.innerWidth??1000);
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, makeCustomLayout, gridDefFunc,
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
-        scrollGrid=false,
+        scrollGrid=false, ref,
         makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
     let wrapperStyle;
 
@@ -104,7 +104,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
             </div>
         </div>
     );
-});
+}
 
 MultiItemViewerView.propTypes= {
     viewerId : PropTypes.string.isRequired,

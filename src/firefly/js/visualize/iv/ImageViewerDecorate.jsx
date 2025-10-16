@@ -11,6 +11,7 @@ import {isEmpty,omit} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
 import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import {getTblById} from '../../tables/TableUtil';
+import {wrapResizeMonitor} from '../../ui/ResizeMonitor';
 import {EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, GRID, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
@@ -28,7 +29,6 @@ import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
 import {PlotTitle} from './PlotTitle.jsx';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getNumFilters} from '../../tables/FilterInfo';
 import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import {expand} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
@@ -268,7 +268,7 @@ const ImageViewerDecorate= memo((props) => {
         return () => clearTimeout(id);
     },[mousePlotId]);
 
-    const showDelete= pv.plotViewCtx.userCanDeletePlots;
+   const showDelete= pv.plotViewCtx.userCanDeletePlots;
     const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
     const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
     const plot= primePlot(pv);
@@ -329,4 +329,4 @@ ImageViewerDecorate.propTypes= {
     makeToolbar: func,
 };
 
-export const ImageViewerView= wrapResizer(ImageViewerDecorate);
+export const ImageViewerView= wrapResizeMonitor(ImageViewerDecorate,0);

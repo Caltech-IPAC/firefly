@@ -4,10 +4,10 @@
 
 
 import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
-import {isUndefined,isArray} from 'lodash';
+import {isUndefined} from 'lodash';
 import React, {useEffect, useState} from 'react';
-import sizeMe from 'react-sizeme';
 import {getAppOptions} from '../../../api/ApiUtil.js';
+import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../../ui/ResizeMonitor';
 import {makeImagePt} from '../../Point';
 import {allowPinnedCharts} from '../../../charts/ChartUtil';
 import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
@@ -202,22 +202,17 @@ function afterPointsChartRedraw(pv, chart,pl,chartXAxis, imPtAry) {
 function ExtractionChart({plotlyDivStyle, plotlyData, plotlyLayout, afterRedraw, size:{width,height}}) {
     return (
         <div style={{width:'100%', display:'flex', flexDirection: 'column', overflow:'hidden'}}>
-            <PlotlyWrapper data={plotlyData} layout={{width,height,...plotlyLayout}}  style={plotlyDivStyle}
-                           autoSizePlot={true}
-                           autoDetectResizing={true}
-                           chartId={CHART_ID}
-                           divUpdateCB={() => undefined}
-                           newPlotCB={ (chart,pl) => afterRedraw(chart,pl) } />
+                <PlotlyWrapper data={plotlyData} layout={{width,height,...plotlyLayout}}  style={plotlyDivStyle}
+                               autoSizePlot={true}
+                               autoDetectResizing={true}
+                               chartId={CHART_ID}
+                               divUpdateCB={() => undefined}
+                               newPlotCB={ (chart,pl) => afterRedraw(chart,pl) } />
         </div>
     );
 }
 
-export const wrapResizerForExtraction = sizeMe( {
-        monitorWidth: true, monitorHeight: false, monitorPosition: false,
-        refreshRate: 100, refreshMode: 'debounce', noPlaceholder: false
-    } );
-
-const ExtractionChartResizeable= wrapResizerForExtraction(ExtractionChart);
+const ExtractionChartResizeable= wrapResizeMonitor(ExtractionChart,CHART_RESIZE_DEBOUNCE);
 
 function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
     const plot= primePlot(pv);

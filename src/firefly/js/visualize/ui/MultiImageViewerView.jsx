@@ -4,7 +4,7 @@
 
 
 import {Stack} from '@mui/joy';
-import React, {forwardRef, useRef} from 'react';
+import React, {useRef} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import {SINGLE, GRID, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
@@ -28,12 +28,12 @@ function makeState() {
     };
 }
 
-export const MultiImageViewerView = forwardRef( (props, ref) => {
+export function MultiImageViewerView(props)  {
 
     const {current:elementWrapper}= useRef({element:undefined});
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
     const {Toolbar, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
-        handleToolbar=true, layoutType=GRID, scrollGrid, viewerId}= props;
+        handleToolbar=true, layoutType=GRID, scrollGrid, viewerId, ref}= props;
 
     const viewer= getViewer(getMultiViewRoot(),viewerId);
     const {bottomUIComponent}= viewer ?? {};
@@ -92,7 +92,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
             </div>
         );
     }
-});
+}
 
 MultiImageViewerView.propTypes= {
     visRoot : PropTypes.object,

@@ -85,14 +85,14 @@ export function DropDownMenuWrapper({x,y,content,beforeVisible, visible,zIndex})
     if (!visible) return false;
     if (!x && !y && !content) return false;
     return (
-        <DropDownDirCtx.Provider value={{dropdownVertical: above ? 'above' : 'below'}}>
+        <DropDownDirCtx value={{dropdownVertical: above ? 'above' : 'below'}}>
             <Box {...{className:'ff-MenuWrapper', position:'absolute', left:0, top:0, visibility:'hidden', zIndex,
                 ref:(c) => setElement(c)}} >
                 <Box sx={{padding: .5}} className={DROP_DOWN_WRAPPER_CLASSNAME}>
                     {content}
                 </Box>
             </Box>
-        </DropDownDirCtx.Provider>
+        </DropDownDirCtx>
     );
 }
 

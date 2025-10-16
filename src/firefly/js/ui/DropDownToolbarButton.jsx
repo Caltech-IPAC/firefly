@@ -95,9 +95,9 @@ export const hideDefaultToolbarDropdown= () => dispatchHideDialog(DROP_DOWN_KEY)
 function DropDownWithCtx({dropdownDirection, dropDown}) {
     const {dropdownVertical='below'}= useContext(DropDownDirCtx);
     return (
-        <DropDownDirCtx.Provider value={{dropdownDirection, dropdownVertical}}>
+        <DropDownDirCtx value={{dropdownDirection, dropdownVertical}}>
             {dropDown}
-        </DropDownDirCtx.Provider>
+        </DropDownDirCtx>
     );
 }
 

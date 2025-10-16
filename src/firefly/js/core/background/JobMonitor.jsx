@@ -89,7 +89,7 @@ export function showJobMonitor(show=true) {
 
 export function makeBackgroundMonitorMenuItem() {
     const label = getAppOptions()?.background?.history?.label || 'Job Monitor';
-    const TabRenderer =  React.forwardRef((props, ref) => {
+    const TabRenderer = ({ref, ...props}) => {
         const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
         const loading = Object.values(jobs).some((j) => isExecuting(j));
         return (
@@ -98,7 +98,7 @@ export function makeBackgroundMonitorMenuItem() {
                 {label}
             </Tab>
         );
-    });
+    };
     return { label, TabRenderer, action: 'BackgroundMonitorCmd', primary: true , path: jobMonitorPath};
 }
 

@@ -2,8 +2,8 @@ import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Box, ChipDelete, Divider, Stack} from '@mui/joy';
 import {get, isEmpty, isUndefined} from 'lodash';
+import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../ui/ResizeMonitor';
 
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {PlotlyChartArea} from './PlotlyChartArea.jsx';
 import {PlotlyToolbar} from './PlotlyToolbar.jsx';
 import {dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getChartData, getErrors} from '../ChartsCntlr.js';
@@ -121,7 +121,7 @@ const ChartArea = (props) => {
 };
 
 
-const ResizableChartArea= wrapResizer(ResizableChartAreaInternal);
+const ResizableChartArea= wrapResizeMonitor(ResizableChartAreaInternal,CHART_RESIZE_DEBOUNCE);
 
 
 function ErrorPanel({errors}) {

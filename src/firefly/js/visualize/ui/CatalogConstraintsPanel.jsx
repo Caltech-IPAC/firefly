@@ -66,24 +66,26 @@ export class CatalogConstraintsPanel extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        const {catname, createDDRequest, dd_short, showFormType = true} = this.props;
+        const {catname='', createDDRequest, dd_short, showFormType = true} = this.props;
 
         resetConstraints(this.props.groupKey, this.props.fieldKey);
         this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true, this.afterFetchDD); //short form as default
     }
 
     UNSAFE_componentWillReceiveProps(np) {
-        const ddShort = makeFormType(np.showFormType, np.dd_short);
+        const {catname:propCatname='',processId:propProcessId='GatorDD'}= this.props;
+        const {catname:npCatname='',processId:npProcessId='GatorDD', showFormType:npShowFormType= true}= np;
 
-        if (np.processId !== this.props.processId) {
-            this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);
-        } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
-            if (np.catname !== this.props.catname) {
+        const ddShort = makeFormType(npShowFormType, np.dd_short);
+        if (npProcessId !== propProcessId) {
+            this.fetchDD(npCatname, ddShort, np.createDDRequest, true, this.afterFetchDD);
+        } else if (npCatname !== propCatname || np.dd_short !== this.props.dd_short) {
+            if (npCatname !== propCatname) {
                 resetConstraints(np.groupKey, np.fieldKey);
             }
-            this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);   //column selection or constraint needs update
+            this.fetchDD(npCatname, ddShort, np.createDDRequest, true, this.afterFetchDD);   //column selection or constraint needs update
         } else if (this.state.tableModel) {      // TODO: when will this case happen
-            const tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
+            const tblid = np.tbl_id ? np.tbl_id : getTblId(npCatname, ddShort);
             if (tblid && tblid !== this.state.tableModel.tbl_id) {
                 this.afterFetchDD({tableModel: getTblById(tblid)});
             }
@@ -99,7 +101,7 @@ export class CatalogConstraintsPanel extends PureComponent {
     render() {
         const {tableModel} = this.state;
         const {error} = tableModel || {};
-        const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey, showSqlSection= false} = this.props;
+        const {catname='', dd_short, fieldKey, showFormType=true, createDDRequest, groupKey, showSqlSection= false} = this.props;
 
         const resetButton = () => {
             const ddShort = makeFormType(showFormType, dd_short);
@@ -157,7 +159,7 @@ export class CatalogConstraintsPanel extends PureComponent {
      * @param {boolean} clearSelections
      * @param {func} afterFetch
      */
-    fetchDD(catName, dd_short, createDDRequest, clearSelections = false, afterFetch) {
+    fetchDD(catName='', dd_short, createDDRequest, clearSelections = false, afterFetch) {
 
         const {groupKey, fieldKey} = this.props;
         const tblid = getTblId(catName, dd_short);
@@ -347,11 +349,6 @@ CatalogConstraintsPanel.propTypes = {
     showSqlSection: PropTypes.bool,
 };
 
-CatalogConstraintsPanel.defaultProps = {
-    catname: '',
-    processId: 'GatorDD',
-    showFormType: true
-};
 
 /**
  * @summary component to display the data restrictions into a tabular format

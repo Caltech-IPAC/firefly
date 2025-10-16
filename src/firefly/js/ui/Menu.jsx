@@ -8,7 +8,7 @@ import {
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import {debounce, isFunction} from 'lodash';
-import React, {forwardRef, useCallback, useContext, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {
     COMMAND, dispatchAddPreference, dispatchSetMenu, getAppOptions,
@@ -209,7 +209,7 @@ function setupTabCss(theme,size) {
 }
 
 
-function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, setElement}) {
+function MenuTabBar({menuTabItems=[], size, selected, displayMask, setElement}) {
     const tabSelected= selected || ResultCmd;
     const variant='soft';
     const color='primary';
@@ -533,7 +533,7 @@ export const workingIndicator= (
     />);
 
 
-const ResultsTab= forwardRef(({size, color, variant},ref) =>{
+function ResultsTab({size, color, variant,ref}) {
     const {tableLoadingCnt, imageLoadingCnt}= useStoreConnector(getCounts);
     const loading= (tableLoadingCnt+imageLoadingCnt)>0;
 
@@ -558,7 +558,7 @@ const ResultsTab= forwardRef(({size, color, variant},ref) =>{
     );
 
     return <ResultsTip>{tab}</ResultsTip>;
-});
+}
 
 function ResultsTip({useBadge=false,children}) {
     const {haveResults,tableCnt,tableLoadingCnt, imageCnt, imageLoadingCnt, bgTableCnt, pinChartCnt}= useStoreConnector(getCounts);

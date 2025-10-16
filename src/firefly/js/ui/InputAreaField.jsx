@@ -1,4 +1,4 @@
-import React, {forwardRef} from 'react';
+import React from 'react';
 import {omit} from 'lodash';
 import PropTypes from 'prop-types';
 
@@ -15,11 +15,10 @@ function onChange(ev, validator, fireValueChange) {
 }
 
 
-export const InputAreaFieldConnected =
-    forwardRef( ({showWarning=true, actOn=['changes'], visible=true ,...rest}, ref) => {
-        const {viewProps, fireValueChange}=  useFieldGroupConnector({showWarning,actOn,visible,...rest});
-        return (<InputAreaFieldView ref={ref} {...viewProps} onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
-    });
+export function InputAreaFieldConnected({showWarning=true, actOn=['changes'], visible=true, ref, ...rest}) {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({showWarning,actOn,visible,...rest});
+    return (<InputAreaFieldView ref={ref} {...viewProps} onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
+}
 
 
 InputAreaFieldConnected.propTypes = {
