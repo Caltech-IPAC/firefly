@@ -2,8 +2,10 @@
 # this path does not need to include the upload or cache directory
 visualize.fits.search.path=@visualize.fits.search.path@:@alerts.dir@:@work.directory@/@app-name@:@wise.filesystem_basepath@:@planck.filesystem_basepath@:@ptf.filesystem_basepath@:@ztf.filesystem_basepath@:@lcogt.filesystem_basepath@:@lsst.filesystem_basepath@
 
+irsa.base.url=@irsa.base.url@
 irsa.gator.hostname=@irsa.gator.hostname@
 irsa.gator.dd.hostname=@irsa.gator.dd.hostname@
+irsa.moc.list.path=@irsa.moc.list.path@
 wise.ibe.host=@wise.ibe.host@
 twomass.ibe.host=@twomass.ibe.host@
 ztf.ibe.host=@ztf.ibe.host@

@@ -247,7 +247,8 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 function replaceValue(v,defaultToActiveTarget, computedState) {
     if (!defaultToActiveTarget) return v;
     if ((computedState.displayValue || computedState.message) && !computedState.valid) return '';
-    if (v?.trim() && v===computedState.value && computedState.valid && isValidPoint(parseWorldPt(v))) return v;
+    if (isString(v)) v= v.trim();
+    if (v && v===computedState.value && computedState.valid && isValidPoint(parseWorldPt(v))) return v;
     return getActiveTarget()?.worldPt?.toString() ?? v;
 }
 

@@ -299,7 +299,9 @@ export function createHiPSMocLayerFromPreloadedTable({tbl_id,title, fitsPath, mo
 
 export async function createHiPSMocLayer({ivoid, title, hipsUrl, plot, visible=false, mocFile = 'Moc.fits',
                                          color, mocGroupDefColorId}) {
-    const mocUrl = (mocFile && isString(mocFile))  ? hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile : hipsUrl;
+    const mocUrl = (mocFile && isString(mocFile))
+        ? hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile
+        : hipsUrl;
     const tbl_id = makeMocTableId(ivoid);
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
 

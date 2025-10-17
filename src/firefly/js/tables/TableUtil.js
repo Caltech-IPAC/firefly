@@ -1020,8 +1020,11 @@ export function isSubHighlightRow(tableOrId, rowIdx, hlRowIdx) {
     const highlightedRow= hlRowIdx ?? tableModel.highlightedRow;
 
     const makeCellKey= (row) => colNameAry.map((cname) => getCellValue(tableModel, row, cname)).join('|');
-        
-    return makeCellKey(highlightedRow) === makeCellKey(rowIdx);
+
+    const hKey= makeCellKey(highlightedRow);
+    const rKey= makeCellKey(rowIdx);
+    if (!hKey && !rKey) return false;
+    return hKey===rKey;
 }
 
 export function hasSubHighlightRows(tableOrId) {

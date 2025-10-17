@@ -79,7 +79,9 @@ export function getHiPSMergePriority() {
 }
 
 
-export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources, tbl_id,
+export function makeHiPSRequest(tableType,
+                                sources=getHiPSSources(), mocSources,
+                                adhocMocIncludeAdditionSources, tbl_id,
                                 types=HiPSData) {
     const sourceMergePriority = getHiPSMergePriority();
     const sp = sourceMergePriority?.join?.(',') || sourceMergePriority;
@@ -91,6 +93,7 @@ export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources,
             [ServerParams.HIPS_MERGE_PRIORITY]: sp,
         };
     if (mocSources) params[ServerParams.ADHOC_SOURCE]= mocSources.join(',');
+    if (adhocMocIncludeAdditionSources) params[ServerParams.ADHOC_MOC_INCLUDE]= adhocMocIncludeAdditionSources;
 
     return makeTblRequest('HiPSSearch', 'HiPS Maps', params,
         {

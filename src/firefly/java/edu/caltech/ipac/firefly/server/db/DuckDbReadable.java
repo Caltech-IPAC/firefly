@@ -215,8 +215,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
                 File tmp = File.createTempFile("duck-", "."+getName(), QueryUtil.getTempDir(treq));
                 execUpdate(exportSql.formatted(selectSql, tmp.getAbsolutePath(), voTable.toString(StandardCharsets.UTF_8).replaceAll("'", "''")));
                 if (tmp.canRead()) {
-                    Downloader downloader = new Downloader(new DataInputStream(new FileInputStream(tmp)), out, tmp.length());
-                    downloader.download();
+                    Downloader.download(new DataInputStream(new FileInputStream(tmp)), out);
                     tmp.delete();
                 }
             } catch (Exception e) {
@@ -244,8 +243,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
                 File tmp = File.createTempFile("export-", "."+getName(), ServerContext.getTempWorkDir());
                 execUpdate("COPY (%s) TO '%s' (HEADER, DELIMITER '%c')".formatted(sql, tmp.getAbsolutePath(), getDelimiter()));
                 if (tmp.canRead()) {
-                    Downloader downloader = new Downloader(new DataInputStream(new FileInputStream(tmp)), out, tmp.length());
-                    downloader.download();
+                    Downloader.download(new DataInputStream(new FileInputStream(tmp)), out);
                     tmp.delete();
                 }
             } catch (Exception e) {

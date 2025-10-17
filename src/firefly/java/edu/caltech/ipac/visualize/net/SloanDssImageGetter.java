@@ -8,8 +8,8 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 public class SloanDssImageGetter {
@@ -45,7 +44,7 @@ public class SloanDssImageGetter {
         } catch (SocketTimeoutException timeOutE) {
             if (outFile.canWrite()) outFile.delete();
             throw timeOutE;
-        } catch (URISyntaxException me) {
+        } catch (Exception me) {
             throw new FailedRequestException( "Invalid URL", "Details in exception", me );
         }
     }

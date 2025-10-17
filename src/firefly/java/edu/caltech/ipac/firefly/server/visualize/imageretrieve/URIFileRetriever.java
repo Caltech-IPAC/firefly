@@ -103,8 +103,8 @@ public class URIFileRetriever implements FileRetriever {
         }
         try  {
             return new URI(urlStr).toURL();
-        } catch (URISyntaxException | MalformedURLException e) {
-            throw new FailedRequestException("Could not find file", "request.getURL() returned URISyntaxException", e);
+        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new FailedRequestException("Could not find file", "request.getURL() returned Exception", e);
         }
     }
 
