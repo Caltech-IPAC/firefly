@@ -15,7 +15,7 @@ services:
     build:
       context: ../
       dockerfile: firefly/docker/Dockerfile
-      target: deps
+      target: base
     command: bash -c "cd firefly && gradle firefly:test"
     volumes: &volInfo
       - ../firefly_test_data:/opt/work/firefly_test_data
