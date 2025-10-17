@@ -779,7 +779,7 @@ public class URLDownload {
     private static void logSuccess(HttpResultInfo r, URL url, double dSeconds, Map<String,List<String>> sendHeaders, Map<String, String> postData) {
         String formatedSize= FileUtil.getSizeAsString(r.getContentLength());
         String lastMod= r.getAttribute("Last-Modified")!=null ? ", Last-Modified: " +r.getAttribute("Last-Modified") : "";
-        String postStr= postData.isEmpty() ? "" :  "\n        Post Data :" +  postDataToString(postData);
+        String postStr= (postData==null || postData.isEmpty()) ? "" :  "\n        Post Data :" +  postDataToString(postData);
         String send= "send headers: "+sendHeadersToCompactStr(sendHeaders)  + postStr;
 
         _log.info(
