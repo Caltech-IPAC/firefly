@@ -6,7 +6,7 @@ import React, {useCallback, useEffect, useRef} from 'react';
 import {Box, Typography} from '@mui/joy';
 import {arrayOf, array, bool, func, instanceOf, number, object, objectOf, shape, string} from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
+import {wrapResizeMonitor} from '../../ui/ResizeMonitor';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
 import {
@@ -279,7 +279,7 @@ BasicTableViewInternal.defaultProps = {
     currentPage: -1
 };
 
-export const BasicTableView = wrapResizer(BasicTableViewInternal);
+export const BasicTableView = wrapResizeMonitor(BasicTableViewInternal);
 
 export const BasicTableViewWithConnector = React.memo((props) => {
     const {tbl_ui_id=uniqueTblUiId()} = props;

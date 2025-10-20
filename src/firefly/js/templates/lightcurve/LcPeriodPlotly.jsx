@@ -25,13 +25,13 @@ import {getActiveTableId, getColumnIdx, getTblById} from '../../tables/TableUtil
 import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable, getUploadFileName} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId, startPeriodogramPopup} from './LcPeriodogram.jsx';
-import {getTypeData, getMissionInfo, getMissionEntries} from './LcUtil.jsx';
+import {getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import BrowserInfo from '../../util/BrowserInfo.js';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
+import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../ui/ResizeMonitor.jsx';
 import './LCPanels.css';
 
 const pfinderkey = LC.FG_PERIOD_FINDER;
@@ -126,7 +126,7 @@ export class LcPeriodPlotly extends PureComponent {
         uploadedFile = layoutInfo.missionEntries.uploadFileName;
         const uploadedFilename =  get(layoutInfo, 'missionEntries.uploadFileName');
         const fields = FieldGroupUtils.getGroupFields(pfinderkey);
-        this.state = Object.assign({}, pick(layoutInfo, ['mode']), {displayMode: props.displayMode, fields});
+        this.state = Object.assign({}, pick(layoutInfo, ['mode']), {displayMode: props.displayMode??'period', fields});
 
         this.getNextState = () => {
             const layout = pick(getLayouInfo(), ['mode', 'displayMode']);
@@ -151,7 +151,7 @@ export class LcPeriodPlotly extends PureComponent {
         if (this.iAmMounted) {
             const nextState = this.getNextState();
 
-            const {displayMode} = nextState;
+            const {displayMode='period'} = nextState;
             if (displayMode && displayMode.startsWith('period') && nextState) {
                 this.setState(nextState);
             }
@@ -160,7 +160,7 @@ export class LcPeriodPlotly extends PureComponent {
 
 
     render() {
-        const {mode, displayMode, fields} = this.state;
+        const {mode, displayMode='period', fields} = this.state;
         let {expanded} = mode || {};
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
@@ -180,10 +180,6 @@ LcPeriodPlotly.propTypes = {
     timeColName: PropTypes.string.isRequired,
     fluxColName: PropTypes.string.isRequired,
     displayMode: PropTypes.string
-};
-
-LcPeriodPlotly.defaultProps = {
-    displayMode: 'period'
 };
 
 /**
@@ -440,7 +436,7 @@ class PhaseFoldingChartInternal extends PureComponent {
 
 }
 
-export const PhaseFoldingChart = wrapResizer(PhaseFoldingChartInternal);
+export const PhaseFoldingChart = wrapResizeMonitor(PhaseFoldingChartInternal,CHART_RESIZE_DEBOUNCE);
 
 //<ReactHighcharts config={this.state.config} isPureConfig={true} ref='chart'/>
 

@@ -11,11 +11,11 @@ import {
     TabList, ListItemDecorator, Box, Stack, Sheet, ChipDelete, Tooltip
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
-import sizeMe from 'react-sizeme';
 import {omit, isString} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
+import {wrapResizeMonitor} from '../ResizeMonitor';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 import {DropDown} from '../DialogRootContainer.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
@@ -241,7 +241,7 @@ export function switchTab(componentKey, selected) {
  Internal use only
 ----------------------------------------------------------------------------------------------*/
 
-const ResizeTabHeader = sizeMe({refreshRate: 16})(TabHeader);
+const ResizeTabHeader = wrapResizeMonitor(TabHeader,16);
 
 function TabHeader({children, slotProps}) {
     const toolbarEl = useRef(null);

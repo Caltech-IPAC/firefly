@@ -59,10 +59,6 @@ WorkspaceDropdown.propTypes = {
     name: PropTypes.oneOf([dropdownName])
 };
 
-WorkspaceDropdown.defaultProps = {
-    name: dropdownName
-};
-
 
 function hideSearchPanel() {
     dispatchHideDropDown();

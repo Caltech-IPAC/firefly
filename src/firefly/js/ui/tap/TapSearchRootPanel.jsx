@@ -193,7 +193,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
 
     return (
         <Box width={1} height={1}>
-            <ConstraintContext.Provider value={ctx}>
+            <ConstraintContext value={ctx}>
                 <FormPanel  onSuccess={(request) => onTapSearchSubmit({request, serviceUrl, tapBrowserState: tapState})}
                             cancelText=''
                             help_id = {tapHelpId('form')}
@@ -215,7 +215,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
                         lockedSchemaName, srvNameKey,
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
-            </ConstraintContext.Provider>
+            </ConstraintContext>
         </Box>
     );
 

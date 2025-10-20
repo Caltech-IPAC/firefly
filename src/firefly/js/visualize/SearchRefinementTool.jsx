@@ -146,7 +146,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     const cenWpt= parseWorldPt(getWP()??wp);
 
     return (
-        <ConnectionCtx.Provider value={{controlConnected:true, setControlConnected: () => undefined}}>
+        <ConnectionCtx value={{controlConnected:true, setControlConnected: () => undefined}}>
             <FieldGroup groupKey={GROUP_KEY} style={{display:'flex', flexDirection:'column'}}>
                 <Stack {...{alignItems: 'center', minWidth: 480}}>
                     <HelpLines {...{whichOverlay, usingToggle}}/>
@@ -188,7 +188,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                     </Stack>
                 </Stack>
             </FieldGroup>
-        </ConnectionCtx.Provider>
+        </ConnectionCtx>
     );
 }
 

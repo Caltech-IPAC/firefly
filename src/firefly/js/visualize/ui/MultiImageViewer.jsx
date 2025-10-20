@@ -51,10 +51,11 @@ export class MultiImageViewer extends PureComponent {
 
     componentDidUpdate(prevProps) {
         const {props}= this;
+        const {canReceiveNewPlots= NewPlotMode.create_replace.key, controlViewerMounting=true}= props;
         if (this.props.viewerId!==prevProps.viewerId) {
             const {renderTreeId}= this.context;
-            if (this.props.controlViewerMounting) {
-                dispatchAddViewer(props.viewerId, props.canReceiveNewPlots, IMAGE,true, renderTreeId);
+            if (controlViewerMounting) {
+                dispatchAddViewer(props.viewerId, canReceiveNewPlots, IMAGE,true, renderTreeId);
                 dispatchViewerUnmounted(prevProps.viewerId);
             }
 
@@ -76,17 +77,18 @@ export class MultiImageViewer extends PureComponent {
 
     componentWillUnmount() {
         this.iAmMounted= false;
+        const {controlViewerMounting=true, viewerId}= this.props;
         if (this.removeListener) this.removeListener();
-        if (this.props.controlViewerMounting) dispatchViewerUnmounted(this.props.viewerId);
-        activeViewerMap.delete(this.props.viewerId);
+        if (controlViewerMounting) dispatchViewerUnmounted(viewerId);
+        activeViewerMap.delete(viewerId);
     }
 
     componentDidMount() {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        const {viewerId, canReceiveNewPlots}= this.props;
+        const {controlViewerMounting= true, viewerId, canReceiveNewPlots=NewPlotMode.create_replace.key}= this.props;
         const {renderTreeId}= this.context;
-        if (this.props.controlViewerMounting) dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
+        if (controlViewerMounting) dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
     }
 
     storeUpdate() {
@@ -132,7 +134,6 @@ MultiImageViewer.propTypes= {
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
     tableId : PropTypes.string,
-    showWhenExpanded : PropTypes.bool,
     controlViewerMounting : PropTypes.bool
 };
 
@@ -147,10 +148,3 @@ MultiImageViewer.propTypes= {
 // forceRowSize is defined if overrides forceColSize parameter.
 
 MultiImageViewer.contextType= RenderTreeIdCtx;
-
-
-MultiImageViewer.defaultProps= {
-    canReceiveNewPlots : NewPlotMode.create_replace.key,
-    showWhenExpanded : false,
-    controlViewerMounting : true,
-};

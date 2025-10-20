@@ -85,11 +85,11 @@ export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, 
     },[]);
 
     return (
-        <FieldGroupCtx.Provider value={ctx}>
+        <FieldGroupCtx value={ctx}>
             <Box className={className} sx={sx} style={style} groupkey={groupKey}>
                 {children}
             </Box>
-        </FieldGroupCtx.Provider>
+        </FieldGroupCtx>
     );
 });
 

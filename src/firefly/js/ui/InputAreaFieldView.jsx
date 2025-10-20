@@ -1,4 +1,4 @@
-import React, {forwardRef, useContext} from 'react';
+import React, {useContext} from 'react';
 import PropTypes, {bool, object, shape} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import Textarea from '@mui/joy/Textarea';
@@ -6,12 +6,12 @@ import {FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {inputFieldTooltipProps, inputFieldValue} from 'firefly/ui/InputFieldView';
 
 
-export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value,
+export function InputAreaFieldView({ visible=true,label,tooltip,value,
                                                   button, valid=true,onChange, onBlur,
                                                   showWarning=true, connectedMarker=false,
                                                  placeholderHighlight,
-                                                  message='', type, placeholder, sx, slotProps,
-                                                  orientation='vertical', minRows=2, maxRows}, ref ) => {
+                                                  message='', type, placeholder, sx, slotProps, ref,
+                                                  orientation='vertical', minRows=2, maxRows}) {
     const connectContext= useContext(ConnectionCtx);
     if (!visible) return null;
 
@@ -47,7 +47,7 @@ export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value
             {Boolean(button) && button}
         </Stack>
     );
-});
+}
 
 InputAreaFieldView.propTypes= {
     valid   : PropTypes.bool,

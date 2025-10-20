@@ -86,11 +86,11 @@ export function FireflyLayout({footer, useDefaultExpandedView,
                 <Alerts />
                 <Slot component={AppConfigDrawer} slotProps={slotProps?.drawer}/>
             </Stack>
-            <InitArgsCtx.Provider value={{initArgs}}>
+            <InitArgsCtx value={{initArgs}}>
                 <MainPanel {...{footer, useDefaultExpandedView, dropDownComponent}}>
                     {children}
                 </MainPanel>
-            </InitArgsCtx.Provider>
+            </InitArgsCtx>
         </Sheet>
     );
 }

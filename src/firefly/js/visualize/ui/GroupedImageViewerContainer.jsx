@@ -39,7 +39,7 @@ export class GroupedImageViewerContainer extends PureComponent {
     }
 
     render() {
-        const {viewerId, imageExpandedMode=false, closeable=true, insideFlex=false,
+        const {viewerId= DEFAULT_FITS_VIEWER_ID, imageExpandedMode=false, closeable=true, insideFlex=false,
                sparseGridTitleLocation= 'top', threeColorOn, style,
                Toolbar= MultiViewStandardToolbar}= this.props;
 
@@ -96,8 +96,4 @@ GroupedImageViewerContainer.propTypes = {
     threeColorOn : PropTypes.bool,
     style: PropTypes.object,
     sparseGridTitleLocation : PropTypes.oneOf(['top', 'left', 'off', ''])
-};
-
-GroupedImageViewerContainer.defaultProps = {
-    viewerId: DEFAULT_FITS_VIEWER_ID
 };

@@ -172,9 +172,10 @@ export class PlotlyWrapper extends Component {
             detectedResize= true;
         }
 
+
         const {data,layout, config, dataUpdate, layoutUpdate}= this.props;
-        const { maskOnLayout, maskOnRestyle, maskOnResize, maskOnNewPlot,
-                autoSizePlot, doingResize, autoDetectResizing }= np;
+        const { maskOnLayout=true, maskOnRestyle=false, maskOnResize=true, maskOnNewPlot=true,
+                autoSizePlot=false, doingResize=false, autoDetectResizing=false }= np;
 
         const treatAsResize= doingResize || (autoDetectResizing && detectedResize);
 
@@ -426,15 +427,4 @@ PlotlyWrapper.propTypes = {
     autoDetectResizing : PropTypes.bool,
     doingResize: PropTypes.bool,
     thumbnail: PropTypes.bool
-};
-
-PlotlyWrapper.defaultProps = {
-    maskOnLayout : true,
-    maskOnRestyle : false,
-    maskOnResize : true,
-    maskOnNewPlot : true,
-
-    autoSizePlot : false,
-    autoDetectResizing : false,
-    doingResize: false
 };

@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useState, useTransition} from 'react';
+import React, {use, useCallback, useContext, useEffect, useState, useTransition} from 'react';
 import {isEmpty, isUndefined, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
@@ -122,8 +122,7 @@ export function useBindFieldGroupToStore(groupKey) {
  * setValue(4,{value:false, message: '4 is not valid'}
  */
 export function useFieldGroupValue(fieldKey, gk) {
-    const context= useContext(FieldGroupCtx);
-    const groupKey= gk || context.groupKey;
+    const groupKey= gk || use(FieldGroupCtx).groupKey;
     const setValueToState= useState(undefined)[1]; // use state here is just to force re-renders on value change
     let mounted= true;
     let value= getFieldVal(groupKey,fieldKey);

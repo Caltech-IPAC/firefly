@@ -236,7 +236,7 @@ export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, sx,
                                                sizeLabel= 'Search Area:', ...restOfProps}) => {
     const [controlConnected, setControlConnected] = useState(false);
     return (
-        <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
+        <ConnectionCtx value={{controlConnected, setControlConnected}}>
             <Stack {...{width: 700, pb: 3, ...sx}}>
                 <Stack >
                     <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, polygonKey,
@@ -249,7 +249,7 @@ export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, sx,
                     }} />
                 </Stack>
             </Stack>
-        </ConnectionCtx.Provider>
+        </ConnectionCtx>
     );
 };
 

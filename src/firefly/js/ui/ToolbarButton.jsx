@@ -4,8 +4,8 @@
 
 import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import {isString} from 'lodash';
-import React, {useRef, useEffect, forwardRef, useCallback, useImperativeHandle} from 'react';
-import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
+import React, {useRef, useEffect, useCallback, useImperativeHandle} from 'react';
+import {bool, element, func, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import ArrowDropDownRoundedIcon from '@mui/icons-material/ArrowDropDownRounded';
@@ -41,27 +41,29 @@ function makeImage(icon,style={},className='') {
 
 /**
  *
- * @param icon icon to display
- * @param text text to display, if icon specified, icon task precidents
- * @param tip tooltip
- * @param badgeCount if greater than 0 a badge is shown on the button
- * @param enabled if false, show faded view
- * @param dropDownCB callback for the dropdown, will pass the div element
- * @param onClick function to call on click
- * @param visible if false then don't show button
- * @param active
- * @param imageStyle
- * @param lastTextItem
- * @param style - a style to apply
+ * @param {Object} props
+ * @param props.icon icon to display
+ * @param props.text text to display, if icon specified, icon task takes precedents
+ * @param props.tip tooltip
+ * @param props.badgeCount if greater than 0 a badge is shown on the button
+ * @param props.enabled if false, show faded view
+ * @param props.dropDownCB callback for the dropdown, will pass the div element
+ * @param props.onClick function to call on click
+ * @param props.visible if false then don't show button
+ * @param props.active
+ * @param props.imageStyle
+ * @param props.lastTextItem
+ * @param props.ref
+ * @param props.style - a style to apply
  * @return {object}
  */
-export const ToolbarButton = forwardRef((props,fRef) => {
+export function ToolbarButton(props) {
     const {
         icon,text='',badgeCount=0,badgeAlert=false, enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon, value,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false, pressed=false,
-        component, slotProps={}, dropPosition={}, dropDownCB, onClick} = props;
+        component, slotProps={}, dropPosition={}, dropDownCB, onClick, ref:fRef} = props;
 
     const tip= props.tip || props.title || '';
     const buttonPressed= pressed || active;
@@ -162,7 +164,7 @@ export const ToolbarButton = forwardRef((props,fRef) => {
     return (!badgeCount&&!badgeAlert) ? b : <Badge {...{badgeContent:badgeAlert?'!':badgeCount,
         color:badgeAlert?'danger':undefined,
         sx:{'& .MuiBadge-badge': {top:'.7rem', right:'.4rem'}}}}> {b} </Badge>;
-} );
+}
 
 ToolbarButton.propTypes= {
     icon : oneOfType([element,string]),
@@ -189,6 +191,7 @@ ToolbarButton.propTypes= {
     shortcutKey: string,
     color: string,
     iconButtonSize : string,
+    ref: object,
     slotProps: shape({
         root: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
         tooltip: object,

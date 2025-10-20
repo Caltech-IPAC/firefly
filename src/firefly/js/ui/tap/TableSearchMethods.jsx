@@ -15,12 +15,12 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
     const [controlConnected, setControlConnected] = useState(false);
 
     return (
-        <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
+        <ConnectionCtx value={{controlConnected, setControlConnected}}>
             <Box sx={{...sx, height: '100%', overflow: 'auto'}} >
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel), tableName,
                     columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities,obsCoreMetadataModel}}/>
             </Box>
-        </ConnectionCtx.Provider>
+        </ConnectionCtx>
     );
 };
 
