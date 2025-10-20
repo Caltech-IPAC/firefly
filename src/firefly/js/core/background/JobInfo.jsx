@@ -13,6 +13,8 @@ import {Box, Card, Skeleton, Stack, Typography} from '@mui/joy';
 import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {PrismADQLAware} from '../../ui/tap/AdvancedADQL';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
+import {jobMonitorGroupKey, toDateString, useLocalTimeKey} from '../../core/background/JobMonitor';
 
 const dialogID = 'show-job-info';
 
@@ -104,6 +106,8 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
 const toDate = (d) => d && new Date(d);
 
 function JobInfoDetails({jobInfo={}}) {
+    const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
+
     const {ownerId, phase, executionDuration} = jobInfo;
     const startTime = toDate(jobInfo.startTime);
     const endTime = toDate(jobInfo.endTime);
@@ -117,11 +121,11 @@ function JobInfoDetails({jobInfo={}}) {
         <Stack direction='row' spacing={4}>
             <Stack>
                 <KeywordBlock label='Phase' title='Referred to as "phase" in UWS' value={phase} mb={1}/>
-                <KeywordBlock label='Created' title='Referred to as "creationTime" in UWS' value={creationTime?.toISOString()}  {...dateProps}/>
-                <KeywordBlock label='Start Time' title='Referred to as "startTime" in UWS' value={startTime?.toISOString()} {...dateProps}/>
-                <KeywordBlock label='End Time' title='Referred to as "endTime" in UWS' value={endTime?.toISOString()} {...dateProps}/>
-                <KeywordBlock label='Planned end' title='Referred to as "quote" in UWS' value={quote?.toISOString()} {...dateProps}/>
-                <KeywordBlock label='Destruction' title='Referred to as "destruction" in UWS' value={destruction?.toISOString()} {...dateProps}/>
+                <KeywordBlock label='Created' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
+                <KeywordBlock label='Start Time' title='Referred to as "startTime" in UWS' value={toDateString(startTime, useLocalTime)} {...dateProps}/>
+                <KeywordBlock label='End Time' title='Referred to as "endTime" in UWS' value={toDateString(endTime, useLocalTime)} {...dateProps}/>
+                <KeywordBlock label='Planned end' title='Referred to as "quote" in UWS' value={toDateString(quote, useLocalTime)} {...dateProps}/>
+                <KeywordBlock label='Destruction' title='Referred to as "destruction" in UWS' value={toDateString(destruction, useLocalTime)} {...dateProps}/>
             </Stack>
             <Stack>
                 <JobIdWrapper jobInfo={jobInfo}/>
