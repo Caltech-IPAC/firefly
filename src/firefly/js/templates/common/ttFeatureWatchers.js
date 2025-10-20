@@ -22,6 +22,8 @@ import {CheckboxGroupInputField, SelectAllCheckbox} from 'firefly/ui/CheckboxGro
 import {FormControl, FormLabel, Stack, Typography} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
+import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
+import {makeFoVString} from 'firefly/visualize/ZoomUtil';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -112,6 +114,8 @@ function ProductTypesBlock({tbl_id, dynamicOptions, cutoutValue}) {
 
     const isCutoutSelected = productTypes?.split(',').map((val) => val.trim()).includes('#cutout') ?? false;
 
+    const defaultValue = dynamicOptions.find((o) => o.value === '#this')?.value ?? '';
+
     return (<Stack spacing={2}>
             <FormControl>
                 <Stack direction='row' alignItems='center' spacing={1}>
@@ -129,18 +133,29 @@ function ProductTypesBlock({tbl_id, dynamicOptions, cutoutValue}) {
                         groupKey={tbl_id}
                         options={dynamicOptions}
                         //initialState={{ value: dynamicOptions.map((o) => o.value).toString() }} //this is if we want to keep default all  vals selected
-                        initialState={{ value: '' }}
+                        initialState={{value: defaultValue}}
                         alignment='horizontal'
                     />
                     {isCutoutSelected && (
                         <Typography level='body-sm' sx={{ ml: 1 }}>
-                            Note: the current cutout size is {cutoutValue} deg
+                            Note: the current cutout size is {makeFoVString(Number(cutoutValue))}
                             (you may change this via the cutout dialog).
                         </Typography>
                     )}
                 </Stack>
             </FormControl>
         </Stack>);
+}
+
+function validateProductSelection(formInputs, groupKey) {
+    const productTypes = getFieldVal(groupKey, 'productTypes');
+    const hasProductBlock = !!productTypes || formInputs?.productTypes !== undefined;
+
+    //if product types (checkboxes) exist but no selection was made
+    if (hasProductBlock && (!productTypes?.trim())) {
+        return {valid: false, message: 'Please select at least one product type to download.'};
+    }
+    return {valid: true};
 }
 
 
@@ -235,6 +250,7 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                                 groupKey: tbl_id,
                                 tbl_id,
                                 downloadType,
+                                validateOnSubmit: validateProductSelection,
                                 dlParams: {
                                     FileGroupProcessor:'ObsCorePackager',
                                     worker: downloadType === 'script' ? 'DownloadScriptWorker' : 'PackagingWorker',
