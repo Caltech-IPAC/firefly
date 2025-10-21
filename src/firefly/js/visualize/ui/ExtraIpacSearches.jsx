@@ -36,7 +36,7 @@ const FormTemplate= ({children, onSuccess,groupKey, help_id}) => (
 
 
 export const ClassicCatalogUploadPanel= () => (
-    <FormTemplate groupKey='CLASSIC_UPLOAD' onSuccess={(request) => doLoadTable(request)} help_id= 'catalogs.owncatalogs'>
+    <FormTemplate groupKey='CLASSIC_UPLOAD' onSuccess={(request) => doLoadTable(request)} help_id= 'upload.intro'>
         <div style={{width:'100%'}}>
             <div style={{width:750, height:'calc(100% - 40px)', padding: 20, display: 'flex', flexDirection:'column', justifyContent: 'space-between'}}>
                 <div style={{width: '70%'}}>
