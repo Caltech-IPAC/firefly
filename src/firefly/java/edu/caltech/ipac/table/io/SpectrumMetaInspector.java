@@ -57,7 +57,9 @@ public class SpectrumMetaInspector {
 
     private static final String[] errColNames= new String[] {
             "err", "error", "errors", "flerr", "flerrs",
-            "flux_error", "flamerr", "err_Flux", "flux_error", "flux_unc"};
+            "flux_error", "flamerr", "err_Flux", "flux_error", "flux_unc",
+            "uncertainty", "unc", "sigma", "noise", "uncrt", "stddev"
+    };
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi", "flamerr1"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo", "flamerr2"};
     private static final String[] orderColNames= new String[] {"order", "ord", "spec_order"};

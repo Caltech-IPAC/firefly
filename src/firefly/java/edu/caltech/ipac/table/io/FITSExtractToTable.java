@@ -61,9 +61,18 @@ public class FITSExtractToTable {
         return getFirstNonNaN(valueList).getClass();
     }
 
-    private static String addSize(String desc, int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
+    private static String appendCombineType(String desc, int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
         if (ptSizeX<2 && ptSizeY < 2) return desc;
-        return desc+ " ("+ptSizeX+"x"+ptSizeY+","+ct.toString()+")";
+
+        var ctDesc= switch (ct) {
+            case AVG,SUM,OR -> ct.toString();
+            case SQRT_SUM_N2 -> "sqrt(sum(pix^2))";
+            case INVERSE_SUM_INVERSE_N -> "1/Sum(1/pix)";
+            case SQRT_SUM_SQ_AVG -> "sqrt(sum(pix^2))/n";
+            case SUM_DIV_N2 -> "sum(pix)/(n^2)";
+            case N2_DIV_SUM_INVERSE_N -> "(n^2)/sum(1/pix)";
+        };
+        return desc+ " ("+ptSizeX+"x"+ptSizeY+","+ctDesc+")";
     }
 
     private static double rnd(double d, int decimalPlaces) {
@@ -86,8 +95,8 @@ public class FITSExtractToTable {
         // guess an error
         String errCol= null;
         for(FitsExtract.ExtractionResults result: results) {
-            String extName= result.extName();
-            if (extName!=null && extName.toLowerCase().startsWith("err")) {
+            String extName= result.extName()!=null ? result.extName().toLowerCase() : "";
+            if (FitsExtract.uncertainty.stream().anyMatch(name -> name.toLowerCase().contains(extName))) {
                 errCol= makeKeyByHDU(result);
                 break;
             }
@@ -108,12 +117,14 @@ public class FITSExtractToTable {
     }
 
     public static DataGroup getCubeZaxisAsTable(ImagePt pt, WorldPt wpt, String filename, int refHduNum,
-                                                boolean allMatchingHDUs, int ptSize, FitsExtract.CombineType ct,
+                                                boolean allMatchingHDUs, int ptSize,
+                                                FitsExtract.CombineType ct,
+                                                FitsExtract.SecondaryHduCombine secondaryCombine,
                                                 double[] wlAry, String wlUnit, Map<Integer,String> fluxUnit)
             throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllZAxisAryFromRelatedCubes(
-                pt, f, refHduNum, allMatchingHDUs, ptSize, ct);
+                pt, f, refHduNum, allMatchingHDUs, ptSize, ct, secondaryCombine);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.getFirst().aryData().size();
         dataTypes.add(new DataType("plane","Plane", Integer.class));
@@ -124,7 +135,7 @@ public class FITSExtractToTable {
         String refKey= null;
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
-            desc= addSize(desc,ptSize,ptSize,ct);
+            desc= appendCombineType(desc,ptSize,ptSize,result.ct());
             String key= makeKeyByHDU(result);
             String u= fluxUnit.get(result.hduNum());
             Class<?> dataType= getDataType(result.aryData());
@@ -178,14 +189,16 @@ public class FITSExtractToTable {
 
     public static DataGroup getDataSelectAsTable(List<DataExtractParams> extractParamsList, WorldPt[] wptAry,
                                                  boolean allMatchingHDUs, int ptSizeX, int ptSizeY,
-                                                 FitsExtract.CombineType ct, boolean isLine)
+                                                 FitsExtract.CombineType ct,
+                                                 FitsExtract.SecondaryHduCombine secondaryCombine,
+                                                 boolean isLine)
             throws IOException, FitsException {
 
         List<TitledExtractionResult> allExtractions=extractParamsList.stream().map( p -> {
                     try {
                         File f= ServerContext.convertToFile(p.filename);
                         List<FitsExtract.ExtractionResults> extractionResults= FitsExtract.getAllPointsFromRelatedHDUs(
-                                p.ptAry, f, p.refHduNum, p.plane, allMatchingHDUs, ptSizeX, ptSizeY, ct);
+                                p.ptAry, f, p.refHduNum, p.plane, allMatchingHDUs, ptSizeX, ptSizeY, ct, secondaryCombine);
                         return new TitledExtractionResult(p.title, p.ptAry, p.wlAry, p.wlUnit,
                                 extractionResults, f, p.refHduNum, p.plane);
                     } catch (IOException e) {
@@ -295,11 +308,7 @@ public class FITSExtractToTable {
                 String key= makeKeyByHDU(result,title,titleResult.plane);
                 String bunit= FitsReadUtil.getBUnit(result.header());
                 Class<?> dataType= getDataType(result.aryData());
-                FitsExtract.CombineType activeCt= ct;
-                if (titleResult.refHduNum!=result.hduNum() && (dataType==Long.class || dataType==Integer.class)) {
-                    activeCt= FitsExtract.CombineType.OR;
-                }
-                desc= addSize(desc,ptSizeX,ptSizeY,activeCt);
+                desc= appendCombineType(desc,ptSizeX,ptSizeY,result.ct());
                 DataType dt = new DataType(key,dataType, desc, bunit, null,null);
                 dataTypes.add(dt);
             }

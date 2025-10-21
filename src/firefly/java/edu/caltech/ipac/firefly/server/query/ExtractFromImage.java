@@ -27,7 +27,7 @@ import static edu.caltech.ipac.firefly.core.Util.Try;
         {
                 @ParamDoc(name="extractionType", desc="should be one of z-axis, line, or points"),
                 @ParamDoc(name="pt", desc="image point"),
-                @ParamDoc(name="wpt", desc="world point"),
+                @ParamDoc(name=ServerParams.WPT, desc="world point"),
                 @ParamDoc(name="ptAry[i]", desc="for point selection"),
                 @ParamDoc(name="wptAry", desc="for point selection, added to the created table"),
                 @ParamDoc(name="wlAry[i]", desc="an array of wavelength to add to the table, added to the created table"),
@@ -37,6 +37,8 @@ import static edu.caltech.ipac.firefly.core.Util.Try;
                 @ParamDoc(name="refHDUNum[i]", desc="hdu number to extract"),
                 @ParamDoc(name="extractionSizeX", desc="number of the x size of the extract"),
                 @ParamDoc(name="extractionSizeY", desc="number of the y size of the extract"),
+                @ParamDoc(name=ServerParams.COMBINE_OP, desc="how to combine point"),
+                @ParamDoc(name="secondaryCombine", desc="auto or same"),
                 @ParamDoc(name="allMatchingHDUs", desc="extract every HDU that matches the refHDU")
         })
 public class ExtractFromImage extends EmbeddedDbProcessor {
@@ -56,6 +58,7 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         int ptSizeX = req.getIntParam(EXTRACTION_SIZE_X, 1);
         int ptSizeY = req.getIntParam(EXTRACTION_SIZE_Y, 1);
         FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,req.getParam(ServerParams.COMBINE_OP,"AVG"));
+        FitsExtract.SecondaryHduCombine secondCombine= Enum.valueOf(FitsExtract.SecondaryHduCombine.class,req.getParam("secondaryCombine","AUTO"));
         boolean allMatchingHDUs = req.getBooleanParam(ALL_MATCHING_HDUS, true);
         try {
             if (extType == null || extType.equals("z-axis")) {
@@ -68,13 +71,13 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
                 checkZAxisParams(pt, filename, refHduNum);
                 Map<Integer,String> fluxUnit= makeMapOfUnitsFromParam(req);
                 return FITSExtractToTable.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs,
-                        ptSizeX, ct, wlAry,wlUnit,fluxUnit);
+                        ptSizeX, ct, secondCombine, wlAry,wlUnit,fluxUnit);
             }
             else if (extType.equals("line") || extType.equals("points")) {
                 var extractParamsList = getDataExtractParams(req);
                 WorldPt[] wptAry = SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 return FITSExtractToTable.getDataSelectAsTable(extractParamsList, wptAry, allMatchingHDUs,
-                        ptSizeX, ptSizeY, ct, extType.equals("line"));
+                        ptSizeX, ptSizeY, ct, secondCombine, extType.equals("line"));
             }
         } catch (IOException | FitsException e) {
             throw new IllegalArgumentException("Could not make a table from extracted data");
