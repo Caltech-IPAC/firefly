@@ -76,6 +76,16 @@ export function getUnitOptions(unit) {
 }
 
 /**
+ * returns the representation of a given unit in the conversion options. `value` of unit in `{label, value}[]` options.
+ * @param unit
+ * @returns {string|UnitKey|null}
+ */
+export function getUnitOptionValue(unit) {
+    const {unit: unitKey, factor} = normalizeUnit(unit);
+    return factor ? `${factor}${unitKey}` : unitKey;
+}
+
+/**
  * returns the axis label for a unit and column name and whether the label is a Latex fragment.
  * @param {string} unit         the unit to get the info for
  * @param {string} cname        the name (or expression) of the column being evaluated
