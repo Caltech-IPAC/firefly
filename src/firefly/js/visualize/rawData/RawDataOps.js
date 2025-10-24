@@ -1,4 +1,5 @@
 import {isArray, isArrayBuffer} from 'lodash';
+import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions';
 import {Band} from '../Band.js';
 import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
 import {createCanvas, isImageBitmap, MEG} from '../../util/WebUtil.js';
@@ -294,7 +295,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
     }
     else {
         if (fatal) {
-            Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
+            Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (dataCompress!==FULL) {
                 // Logger('RawDataOps').warn(`requesting again: ${dataCompress}`);
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
@@ -381,7 +382,7 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
         if (fatal) {
             Logger('RawDataOps').warn(`request again: dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+                payload:{plotId, description:'Failed: Could not retrieve image render data (requestAgain)' }});
         }
         else {
             Logger('RawDataOps').warn(`should never happen: request again: non fatal failure BYTE_DATA_REFRESH: ${dataCompress}`);

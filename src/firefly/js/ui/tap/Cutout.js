@@ -77,12 +77,12 @@ export function setCutoutSize(dataProductsComponentKey, cutoutSize, tbl_id) {
 
 /**
  *  equivalent to setPreferCutout, setCutoutSize, setCutoutTargetOverride
- * @param dataProductsComponentKey
- * @param tbl_id
- * @param serDef
- * @param cutoutType
- * @param cutoutSize
- * @param overrideTarget
+ * @param {String} dataProductsComponentKey
+ * @param {String} tbl_id
+ * @param {ServiceDescriptorDef} serDef
+ * @param {String} cutoutType - one of SEARCH_POSITION, ROW_POSITION, USER_ENTERED_POSITION
+ * @param {number} cutoutSize
+ * @param {WorldPt} overrideTarget
  * @param preferCutout
  */
 export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, serDef, cutoutType,

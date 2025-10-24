@@ -1,6 +1,6 @@
 import {allBandAry, Band} from '../Band.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {addRawDataToCache, getEntry, removeRawData} from './RawDataThreadCache.js';
+import {addRawDataToCache, getEntry, getEntryCount, removeRawData} from './RawDataThreadCache.js';
 import PlotState from '../PlotState.js';
 import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
 import {lowLevelDoFetch} from '../../util/WebUtil.js';
@@ -8,11 +8,12 @@ import {
     abortFetch, getRealDataDim, getTransferable,
     makeFetchOptions, populateRawImagePixelDataInWorker, TILE_SIZE } from './RawDataCommon.js';
 
-const {FETCH_DATA, STRETCH, COLOR, GET_FLUX, REMOVE_RAW_DATA, FETCH_STRETCH_BYTE_DATA, ABORT_FETCH}= RawDataThreadActions;
+const {FETCH_DATA, STRETCH, COLOR, GET_FLUX, REMOVE_RAW_DATA, FETCH_STRETCH_BYTE_DATA, ABORT_FETCH, CLOSE_WHEN_IDLE}= RawDataThreadActions;
 
 
 
 export function doRawDataWork({type,payload}) {
+    let scheduleClose= false;
     try {
         payload= deserialize(payload);
 
@@ -23,6 +24,13 @@ export function doRawDataWork({type,payload}) {
             case REMOVE_RAW_DATA: {
                 abortFetch(payload);
                 return Promise.resolve({data:{type:REMOVE_RAW_DATA, entryCnt:removeRawData(payload.plotImageId)}});
+            }
+            case CLOSE_WHEN_IDLE: {
+                if (!scheduleClose) {
+                    scheduleClose=true;
+                    doScheduleClose(payload?.workerKey);
+                }
+                return Promise.resolve({data:{success:true, type: RawDataThreadActions.CLOSE_WHEN_IDLE}});
             }
 
             case FETCH_DATA:
@@ -45,6 +53,18 @@ function deserialize(payload) {
 
 
 
+function doScheduleClose(workerKey) {
+    let idleCnt= 0;
+    const id= setInterval( () => {
+        if (!getEntryCount()) idleCnt++;
+        else idleCnt=0;
+        if (idleCnt===2) {
+           clearInterval(id);
+           self.close();
+        }
+
+    }, 1000);
+}
 
 async function doColorChange(payload) {
     const {plotImageId,plotState,colorTableId, threeColor, bias, contrast, rootUrl, useRed=true,useGreen=true,useBlue=true} = payload;
@@ -175,10 +195,10 @@ export async function callStretchedByteData(plotImageId,plotStateSerialized,plot
 
     const response= await lowLevelDoFetch(cmdSrvUrl, options, false );
     if (!response.ok) {
+        const message= `Fatal: Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`;
+        console.log('callStretchedByteData: '+message);
         return {
-            success:false,
-            message: `Fatal: Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`,
-            allTileAry:[]
+            success:false, message, allTileAry:[]
         };
     }
     const byte1d= new Uint8ClampedArray(await response.arrayBuffer());

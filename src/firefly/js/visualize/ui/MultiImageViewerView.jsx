@@ -83,7 +83,7 @@ export function MultiImageViewerView(props)  {
     }
     else {
         return (
-            <div style={style} ref={(e) => elementWrapper.element= e}>
+            <div className={'MultiImageViewer'} style={style} ref={(e) => elementWrapper.element= e}>
                 <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
                 <Stack style={ mouseReadoutEmbedded?{position:'absolute', left:3, bottom:3, right:scrollGrid?15:6}:{}} >
                     {bottomUIComponent?.()}

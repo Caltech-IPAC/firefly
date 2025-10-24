@@ -465,7 +465,7 @@ export function matchPlotViewByPositionGroup(vr, sourcePv, plotViewAry, matchAny
     const srcType= primePlotType(sourcePv);
     if (vr.positionLock) {
         plotViewAry= plotViewAry.map( (pv) => {
-            return (pv.plotId!==sourcePv.plotId && (primePlotType(pv)===srcType || matchAnyType)) ?
+            return (pv.plotId!==sourcePv?.plotId && (primePlotType(pv)===srcType || matchAnyType)) ?
                 operationFunc(pv) : pv;
         });
     }

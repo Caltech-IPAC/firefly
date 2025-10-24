@@ -1,5 +1,5 @@
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil';
-import {doFetchTable, getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
+import {doFetchTable, getCellValue, getColumnByRef, getMetaEntry} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {logger} from '../../util/Logger';
 import {visRoot} from '../../visualize/ImagePlotCntlr';
@@ -426,7 +426,10 @@ export function makeDlUrl(dlServDesc, table, row) {
     if (!dlServDesc) return undefined;
     const {serDefParams, accessURL}= dlServDesc;
     const sendParams={};
-    serDefParams?.filter( ({ref}) => ref).forEach( (p) => sendParams[p.name]= getCellValue(table, row, p.colName));
+    serDefParams?.filter( ({ref}) => ref).forEach( (p) => {
+        const colName= p.colName || getColumnByRef(table, p.ref)?.name;
+        sendParams[p.name]=getCellValue(table, row, colName);
+    });
     const newUrl= new URL(accessURL);
     Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
     return newUrl.toString();
