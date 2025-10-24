@@ -5,7 +5,13 @@ import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
 import {
-    canUnitConv, getUnitConvExpr, getMeasurementLabel, getUnitOptions, getXLabel, getYLabel
+    canUnitConv,
+    getUnitConvExpr,
+    getMeasurementLabel,
+    getUnitOptions,
+    getXLabel,
+    getYLabel,
+    getUnitOptionValue
 } from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
@@ -307,9 +313,11 @@ function Units({activeTrace, value, axis, ...rest}) {
     const unitProp = axis === 'x' ? 'xUnit' : 'yUnit';
     const label = axis === 'x' ? 'Spectral axis units:' : 'Flux axis units:';
     const options = getUnitOptions(value);
+    const initValue = getUnitOptionValue(value);
 
     return options?.length > 1
-        ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} initialState={{value}}
+        ? <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`}
+                             initialState={{value: initValue}}
                              options={options.map(({label, ...opt}) =>
                                  ({...opt, label: <MathJax>{label}</MathJax>}))}
                              {...{label, ...rest}}/>
