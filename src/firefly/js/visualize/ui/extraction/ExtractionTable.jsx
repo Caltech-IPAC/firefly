@@ -64,6 +64,30 @@ export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractio
         showInfoPopup('Plot no longer exist. Cannot extract.');
         return;
     }
+
+    const params= {pt,pv,filename,refHDUNum,extractionSize,combineOp,save,doOverlay};
+
+    if (extractionSize===1) {
+        return Promise.resolve([makeZAsixExtractionTable(params)]);
+    }
+    return new Promise((resolve) => {
+        showFieldGroupPopup({groupKey:'ExtractOptions', keepState:true,
+            successText:'Pin Chart/Table', title:'Secondary HDUs',
+            content:(
+                <Stack m={2} minWidth={300}>
+                    <ApertureSecondaryCombine/>
+                </Stack>
+            ),
+            onSuccess:({secondaryCombine}) => {
+                resolve([makeZAsixExtractionTable({...params,secondaryCombine})]);
+            }
+        });
+    });
+
+}
+
+export function makeZAsixExtractionTable({pt, pv, filename, refHDUNum, extractionSize, combineOp, secondaryCombine, save = false, doOverlay = true})  {
+    const plot= primePlot(pv);
     const wlUnit = getWaveLengthUnits(plot);
     const wpt = CCUtil.getWorldCoords(plot, pt);
     const fluxUnit = getHduPlotStartIndexes(pv)
@@ -81,6 +105,7 @@ export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractio
             wlAry: hasWLInfo(plot) ? JSON.stringify(getAllWaveLengthsForCube(pv, pt)) : undefined,
             wlUnit,
             fluxUnit: JSON.stringify(fluxUnit),
+            secondaryCombine: secondaryCombine==='AUTO' ? 'AUTO' : 'SAME',
             filename,
             refHDUNum,
             extractionSizeX: extractionSize,
@@ -90,11 +115,16 @@ export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractio
         },
         {tbl_id});
     if (save) dataTableReq.pageSize = 0;
+
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
-    return Promise.resolve([tbl_id]);
+    return tbl_id;
+
 }
+
+
+
 
 export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both', pointSize, combineOp, isLine=false}) {
     const plot= primePlot(pv);
@@ -109,13 +139,29 @@ export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both
         doOverlay, isLine, allMatchingHDUs: true};
     const {canDoMultiImage}= getExtractableImageList(pv,true);
     if (!canDoMultiImage) {
-        return Promise.resolve([makeDataExtractionTable(params)]);
+        if (extractionSizeX===1&&extractionSizeY===1) {
+            return Promise.resolve([makeDataExtractionTable(params)]);
+
+        }
+        return new Promise((resolve) => {
+            showFieldGroupPopup({groupKey:'ExtractOptions', keepState:true,
+                successText:'Pin Chart/Table', title:'Secondary HDUs',
+                content:(
+                    <Stack m={2} minWidth={300}>
+                        <ApertureSecondaryCombine/>
+                    </Stack>
+                ),
+                onSuccess:({secondaryCombine}) => {
+                    resolve([makeDataExtractionTable({...params,secondaryCombine})]);
+                }
+            });
+        });
     }
     const {pvAry}= getExtractableImageList(pv,false);
 
 
     return new Promise((resolve) => {
-        const handleAnswer= ({hdus= 'all', titleType='full', whatToExtract, pvAry:extractPvAry}) => {
+        const handleAnswer= ({hdus= 'all', titleType='full', whatToExtract, pvAry:extractPvAry, secondaryCombine}) => {
             const allMatchingHDUs= hdus==='all';
             if (whatToExtract==='allDiff') {
                 const tblIdAry= extractPvAry.map( (pv) => {
@@ -123,25 +169,25 @@ export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both
                     const cc= CysConverter.make(primePlot(pv));
                     const newBaseImPtAry= baseImPtAry.map((pt) => cc.getImageCoords(ccBase.getWorldCoords(pt)));
                     return makeDataExtractionTable({baseImPtAry:newBaseImPtAry, pv, extractionSizeX, extractionSizeY,
-                        combineOp, save, doOverlay, isLine, exclusiveToPlot:true, allMatchingHDUs});
+                        combineOp, save, doOverlay, isLine, exclusiveToPlot:true, allMatchingHDUs, secondaryCombine});
                 } );
                 resolve(tblIdAry);
             }
             else {
                 const tbl_id= (whatToExtract==='allSame')
-                    ? makeDataExtractionTable({...params, allMatchingHDUs, pvAry: extractPvAry, truncatedHeaders:titleType!=='full'})
-                    : makeDataExtractionTable({...params, allMatchingHDUs});
+                    ? makeDataExtractionTable({...params, allMatchingHDUs, pvAry: extractPvAry, truncatedHeaders:titleType!=='full', secondaryCombine})
+                    : makeDataExtractionTable({...params, allMatchingHDUs, secondaryCombine});
                 resolve([tbl_id]);
             }
         };
         showFieldGroupPopup({groupKey:'ExtractOptions', keepState:true, successText:'Pin Chart/Table',
-            content:<ExtractTableOptions pvAry={pvAry} />,
+            content:<ExtractTableOptions pvAry={pvAry} usingAperture={extractionSizeX>1||extractionSizeY>1} />,
             onSuccess:handleAnswer,  title:'Extract Image Type'});
     });
 }
 
 
-const ExtractTableOptions= ({pvAry:initPvAry}) => {
+const ExtractTableOptions= ({pvAry:initPvAry, usingAperture}) => {
     const whatToExtract= useFieldGroupValue('whatToExtract')[0]();
     const allHdus= useFieldGroupValue('hdus')[0]()==='all';
     const [getPvAry,setPvAry]= useFieldGroupValue('pvAry');
@@ -202,6 +248,7 @@ const ExtractTableOptions= ({pvAry:initPvAry}) => {
                         options={[{label:'Use full image titles in column headers', value: 'full'}]}
                         initialState= {{value: '' }} />
                 }
+                <ApertureSecondaryCombine usingAperture={usingAperture}/>
             </Stack>
             <Stack>
                 {(wcsWarning || maxHduWarning) &&
@@ -231,11 +278,22 @@ const ExtractTableOptions= ({pvAry:initPvAry}) => {
     );
 };
 
+export function ApertureSecondaryCombine({usingAperture=true}) {
+    if (!usingAperture) return;
+    return (
+        <CheckboxGroupInputField
+            fieldKey='secondaryCombine'
+            options={[{label:'Aperture combine: Combine other HDUs by extension type', value: 'AUTO'}]}
+            initialState= {{value: 'AUTO' }} />
+        );
+}
+
 
 export function makeDataExtractionTable({baseImPtAry, pv, pvAry, extractionSizeX, extractionSizeY,
                                        combineOp, save = false, doOverlay = true,
                                             truncatedHeaders=false,
                                             allMatchingHDUs= true,
+                                            secondaryCombine,
                                             exclusiveToPlot=false, isLine}) {
     const plot= primePlot(pv);
     const tbl_id = getNextTblId();
@@ -254,6 +312,7 @@ export function makeDataExtractionTable({baseImPtAry, pv, pvAry, extractionSizeX
         extractionType: isLine ? 'line' : 'points',
         extractionSizeX,
         extractionSizeY,
+        secondaryCombine: secondaryCombine==='AUTO' ? 'AUTO' : 'SAME',
         [ServerParams.COMBINE_OP]: combineOp,
         allMatchingHDUs,
         titleAry: JSON.stringify(headers),

@@ -155,13 +155,13 @@ public class VisServerOps {
     public static List<Number> getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum,
                                               int drillSize, FitsExtract.CombineType ct) {
         return getDataAry("point data", state,
-                (f) -> FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, hduNum, drillSize, ct));
+                (f) -> FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, drillSize, ct));
     }
 
     public static List<Number> getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum,
                                                int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
         return getDataAry("line data", state,
-                (f) -> FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, hduNum, ptSizeX, ptSizeY, ct));
+                (f) -> FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, ptSizeX, ptSizeY, ct));
     }
 
     public static List<PixelValue.Result> getFlux(PlotState[] stateAry, ImagePt ipt) {

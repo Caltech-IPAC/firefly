@@ -404,6 +404,7 @@ public class FitsReadUtil {
     public static String getExtType(Header h, String defVal) { return h.getStringValue("EXTTYPE",defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
     public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h,null);}
+    public static String getExtTypeOrName(Header h) { return getExtType(h,null)!=null ? getExtType(h,null) : getExtName(h);}
 
 
 
