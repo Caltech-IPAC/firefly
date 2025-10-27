@@ -62,9 +62,6 @@ public class IpacTableWriter {
     }
 
     private static void save(PrintWriter out, DataGroup dataGroup) throws IOException {
-
-
-        shrinkToFitData(dataGroup);
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
 
@@ -126,11 +123,14 @@ public class IpacTableWriter {
                     dt.setTypeDesc(typeToDesc(dt.getDataType()));
                 });
 
+        //shrink data *after* headers have been modified, to get the correct width for each column
+        shrinkToFitData(dataGroup, modHeaders);
+
         // print column headers
         IpacTableUtil.writeHeader(out, modHeaders);
 
         for (int i = 0; i < totalRow; i++) {
-            IpacTableUtil.writeRow(out, headers, dataGroup.get(i));
+            IpacTableUtil.writeRow(out, modHeaders, dataGroup.get(i));
         }
         out.flush();
     }
@@ -138,8 +138,8 @@ public class IpacTableWriter {
     /**
      * this method will shrink the Column's width to fit the maximum's width of the data
      */
-    private static void shrinkToFitData(DataGroup dataGroup) {
-        for (DataType dt : dataGroup.getDataDefinitions()) {
+    private static void shrinkToFitData(DataGroup dataGroup, List<DataType> modHeaders) {
+        for (DataType dt : modHeaders) {
             String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
             int maxWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
             for (int i=0; i<dataGroup.size(); i++) {

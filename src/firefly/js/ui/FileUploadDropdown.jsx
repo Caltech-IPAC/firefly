@@ -27,7 +27,7 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
                                       }) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
-    const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
+    const helpId = getAppOptions()?.uploadPanelHelpId ?? 'upload.intro';
     return (
         <Box position='relative' sx={{width: 1, height:1, ...sx}}>
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
