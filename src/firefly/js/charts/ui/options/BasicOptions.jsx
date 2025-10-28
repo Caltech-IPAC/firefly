@@ -21,7 +21,7 @@ import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
-import {colorsOnTypes, getChartProps, toRGBA, TRACE_COLORS, uniqueChartId} from '../../ChartUtil.js';
+import {colorsOnTypes, getChartProps, toRGBA, TRACE_COLORS, uniqueChartId, isSpectrum} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/MultiViewCntlr.js';
 
@@ -117,10 +117,10 @@ export function basicFieldReducer({chartId, activeTrace}) {
             if (action.type === VALUE_CHANGE) {
                 fieldKey = get(action.payload, 'fieldKey');
                 ['x','y'].forEach((a) => {
-                    if (fieldKey === `_tables.data.${activeTrace}.${a}`) {
-                        // if needed in other chart types, uncomment the following line and only disable it for spectrum
-                        // (because spectrumReducer changes axes labels as _tables.data changes, and they need to be persisted)
-                        // inFields = updateSet(inFields, [`layout.${a}axis.title.text`, 'value'], undefined);
+                    if (fieldKey === `_tables.data.${activeTrace}.${a}`) { // column name or expression changed
+                        // unset the axis title so that the chart generates a title based on the changed column name
+                        // but not in spectrum because spectrumReducer changes axes labels itself which need to be persisted
+                        if (!isSpectrum(chartId)) inFields = updateSet(inFields, [`layout.${a}axis.title.text`, 'value'], undefined);
 
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.min`, 'value'], undefined);
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.max`, 'value'], undefined);
