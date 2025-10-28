@@ -11,7 +11,7 @@ import {
 } from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
-    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS
+    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS, ipacMultiSpectrum,
 } from './VoConst.js';
 import {
     columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
@@ -114,12 +114,13 @@ const gNameMatches = (group, name) => group?.name.toLowerCase() === name?.toLowe
 export function getServiceDescriptors(tableOrId, removeAsync = true) {
     const table = getTableModel(tableOrId);
     if (!table || !isArray(table.resources)) return false;
+    const supportedUtypes = [adhocServiceUtype,cisxAdhocServiceUtype].map( (s) => s.toLowerCase());
     const sResources = table.resources.filter(
         (r) => {
-            if (!r?.utype || r?.type.toLowerCase() !== 'meta') return false;
-            const utype = r.utype.toLowerCase();
-            return (utype === adhocServiceUtype || utype === cisxAdhocServiceUtype) &&
-                r.params.some((p) => (p.name === 'accessURL' && p.value));
+            if (!r?.utype || r?.type?.toLowerCase() !== 'meta') return false;
+            const hasSupportUtype= supportedUtypes.includes(r.utype.toLowerCase());
+            const hasAccessUrl= r.params.some((p) => (p.name === 'accessURL' && p.value));
+            return (hasSupportUtype && hasAccessUrl);
         });
     if (!sResources.length) return false;
     const sdAry = sResources.map(({desc, params, ID, groups, utype}, idx) => (

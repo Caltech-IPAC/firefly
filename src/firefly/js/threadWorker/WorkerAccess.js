@@ -1,7 +1,9 @@
+import {makeAbortFetchAction} from '../visualize/rawData/RawDataThreadActionCreators';
 import Worker from './firefly-thread.worker.js';
 import {uniqueId} from 'lodash';
 // import {WorkerSim} from './WorkerSim.js';
 import {Logger} from '../util/Logger.js';
+import {RawDataThreadActions} from './WorkerThreadActions';
 
 
 const logger= Logger('WorkerAccess');
@@ -89,13 +91,6 @@ export function getNextWorkerKey() {
 
 
 export function removeWorker(workerKey) {
-    [...promiseMap.values()]
-        .filter( (v) => v.workerKey===workerKey)
-        .forEach( (v) => {
-            promiseMap.delete(v.callKey);
-            v.reject({success:false, fatal:false});
-        });
-
-    getWorker(workerKey).terminate();
+    void postToWorker( { type: RawDataThreadActions.CLOSE_WHEN_IDLE, workerKey, payload:{workerKey}});
     workerMap.delete(workerKey);
 }

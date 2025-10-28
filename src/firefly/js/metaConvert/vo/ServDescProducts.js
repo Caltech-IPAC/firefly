@@ -111,8 +111,8 @@ export function canMakeCutoutProduct(serDef,table,sourceRow,options){
 }
 
 
-export function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activateParams, dlData,
-                             options, titleStr, menuKey}) {
+export function makeCutoutProduct({ name='unknown', serDef, sourceTable, sourceRow, idx=0, activateParams={}, dlData,
+                             options, titleStr='unknown', menuKey='optional'}) {
 
     const {accessURL, standardID, serDefParams, sdSourceTable} = serDef;
     const key= options.dataProductsComponentKey;

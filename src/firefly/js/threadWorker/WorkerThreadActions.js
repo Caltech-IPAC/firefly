@@ -9,4 +9,5 @@ export const RawDataThreadActions= {
     COLOR: 'COLOR',
     GET_FLUX: 'GET_FLUX',
     REMOVE_RAW_DATA: 'REMOVE_RAW_DATA',
+    CLOSE_WHEN_IDLE: 'CLOSE_WHEN_IDLE',
 };

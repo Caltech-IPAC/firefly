@@ -319,7 +319,7 @@ export function updatePlotViewScrollXY(plotView,newScrollPt) {
  * @return {Array.<PlotView>} new plotView array after return a plotview
  */
 export function replacePlotView(plotViewAry,newPlotView) {
-    return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
+    return plotViewAry.map( (pv) => pv.plotId===newPlotView?.plotId ? newPlotView : pv);
 }
 
 /**
