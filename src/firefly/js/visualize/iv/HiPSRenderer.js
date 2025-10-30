@@ -3,10 +3,11 @@
  */
 
 import {isNil} from 'lodash';
+import {callWhileAwaiting} from '../../util/WebUtil';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
+import { dispatchAddWorkingTask } from '../../core/AppDataCntlr.js';
 import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
@@ -33,11 +34,10 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
     let abortRender= false;
     let firstRenderTime= 0;
     let renderComplete=  false;
-    const {offscreenCanvas, plotView}= screenRenderParams;
+    const {offscreenCanvas}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
     offscreenCtx.imageSmoothingEnabled = !isMaxOrder;
     const allImageCancelFuncs= [];
-    let plotTaskId;
 
 
 
@@ -121,7 +121,6 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
 
             if (doRenderNow()) renderToScreen();
             renderComplete= (renderedCnt === totalCnt);
-            if (renderComplete) removeTask();
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
@@ -133,11 +132,11 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             }
             addFailedImage(src);
             if (doRenderNow()) {
-                removeTask();
                 renderComplete= true;
                 renderToScreen();
             }
         });
+        return p;
     };
 
     /**
@@ -179,13 +178,6 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
         }
     };
 
-    const removeTask= () => {
-        if (plotTaskId) {
-            setTimeout( () => getTaskCount(plotView.plotId) && dispatchRemoveTaskCount(plotView.plotId,plotTaskId) ,0);
-        }
-    };
-
-
     //  ------------------------------------------------------------
     //  -------------------------  return public functions
     //  this object has no properties, just functions to render
@@ -202,13 +194,12 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
          */
         drawAllTilesAsync(tilesToLoad, plot) {
             if (abortRender) return;
-            plotTaskId= makeTaskId('hips-render');
-            setTimeout( () => {
-                if (!abortRender && !renderComplete) dispatchAddTaskCount(plot.plotId,plotTaskId);
-            }, 500);
             const {bias,contrast}= plot.rawData.bandData[0];
             const colorTableId= colorId(plot);
-            tilesToLoad.forEach( (tile) => drawTileAsync(createImageUrl(plot,tile), tile, colorTableId,bias,contrast) );
+            const promiseAry= tilesToLoad.map( (tile) => drawTileAsync(createImageUrl(plot,tile), tile, colorTableId,bias,contrast) );
+            void callWhileAwaiting(Promise.allSettled(promiseAry),
+                (p) => dispatchAddWorkingTask(plot.plotId,p), 500 );
+
         },
 
         /**
@@ -248,7 +239,6 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             abortRender = true;
             if (isBaseImage && !renderComplete && renderedCnt>0) renderToScreen(screenRenderParams);
             if (!renderComplete) allImageCancelFuncs.forEach( (f) => f && f() );
-            removeTask();
         }
     };
 }

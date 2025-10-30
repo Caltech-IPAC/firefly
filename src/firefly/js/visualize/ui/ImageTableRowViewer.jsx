@@ -8,14 +8,16 @@ import {debounce, difference, isEmpty, isNil, isString, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr';
 import {getComponentState} from '../../core/ComponentCntlr';
 import {CutoutButton, SHOWING_CUTOUT, SHOWING_FULL} from '../../ui/CutoutSizeDialog';
-import {IfWorkingMask} from '../../ui/panel/MaskPanel';
+import {IfWorkingMaskById} from '../../ui/panel/MaskPanel';
 
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
-import {callWhileWaitingToResolve} from '../../util/WebUtil';
+import {callWhileAwaiting} from '../../util/WebUtil';
+import {ImageViewerPlaceHolder} from '../iv/ImageViewer';
 import {onPlotComplete} from '../PlotCompleteMonitor';
 import {UserZoomTypes} from '../ZoomUtil';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -44,12 +46,10 @@ const IMAGE_TABLE_ERROR = 'Unable to load images because the required data table
 const FORCE_RELOAD='FORCE_RELOAD';
 const TABLE_ROW='TABLE_ROW';
 const PAGE='PAGE';
-const ALL='_ALL_';
 
 export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id, defaultWcsMatchType,
                                        defaultImageCnt= 5, imageExpandedMode, insideFlex=true, cutoutWpt,
                                         closeExpanded, maxImageCnt= MAX_IMAGE_CNT, tblErrorMsg=IMAGE_TABLE_ERROR}) {
-    const [requestPromiseMap, setRequestPromiseMap] = useState(new Map());
     const table= useStoreConnector(() => getTblById(tbl_id));
     const tblLoaded = useStoreConnector(() => isFullyLoaded(tbl_id));
     const imageCnt= useFieldGroupValue(IMAGE_CNT_KEY,viewerId)[0]() ?? defaultImageCnt;
@@ -58,8 +58,6 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     const cutoutState= useStoreConnector(() =>getComponentState(viewerId));
     const hasTable= Boolean(table);
 
-    const setRequestPromise= (plotId,promise) =>
-        setRequestPromiseMap(new Map([...requestPromiseMap, [plotId,promise]]));
 
     //flags to ensure that effects are fired only when active plot or highlighted row was changed through UI interaction
     //and not when they were changed through the synchronisation code
@@ -72,13 +70,11 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     const onSlideChange = (current, next) => setCurrentSlideIdx(next);
 
 
-    const layoutParams= {viewerId, imageCnt:Number(imageCnt), table, makeRequestFromRow, setRequestPromise, cutoutWpt};
+    const layoutParams= {viewerId, imageCnt:Number(imageCnt), table, makeRequestFromRow, cutoutWpt};
 
     useEffect( ()=>{
         if (hasTable) recenterImages(viewerId) ;
     }, [viewerId, hasTable]);
-
-    useEffect( ()=> void setRequestPromiseMap(new Map()), [table?.request?.source]);
 
     useEffect(() => {
         if (isEmpty(cutoutState) || !table || !tblLoaded) return;
@@ -143,7 +139,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     const sliderRef = useRef(null);
     const makeCustomLayout = (viewerItemIds, makeItemViewer) => (
         <ImageSlider {...{sliderRef, viewerId, table, imageCnt: Number(imageCnt),
-            viewerItemIds, makeItemViewer, slideOnArrowClick, onSlideChange, requestPromiseMap}}/>
+            viewerItemIds, makeItemViewer, slideOnArrowClick, onSlideChange}}/>
     );
 
     if (imageExpandedMode) {
@@ -169,7 +165,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
                     wcsMatchType, activePlotId, makeCustomLayout, mouseReadoutEmbedded: false,
                     forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
             />
-            <IfWorkingMask {...{promise:requestPromiseMap.get(ALL), message:'Searching Images',
+            <IfWorkingMaskById {...{id:'ImageTableRowViewer', message:'Searching Images',
                            gridSize:{rows:1, cols:Number(imageCnt)}, sx:{top:34, bottom:20} }}/>
         </div>
     );
@@ -192,7 +188,7 @@ ImageTableRowViewer.propTypes= {
 
 
 
-function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideOnArrowClick, onSlideChange, requestPromiseMap}) {
+function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideOnArrowClick, onSlideChange}) {
 
     const SliderArrow = ({ onClick, isNext }) => {
         // `onClick` prop is inserted by react-slick
@@ -246,10 +242,7 @@ function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, 
                             ? <Box sx={{display: 'inline-block', position: 'absolute', top: 0, width: 1, height: 1}}>
                                 {makeItemViewer(makePlotId(viewerId,i))}
                             </Box>
-                            : <IfWorkingMask {...{
-                                promise:requestPromiseMap.get(makePlotId(viewerId,i)),
-                                message:'Searching Image',
-                                sx:{top:1, bottom: 1, left:2, right:2}  }} />
+                            : <ImageViewerPlaceHolder plotId={makePlotId(viewerId,i)}/>
                         }
                     </div>
                 ))}
@@ -394,7 +387,7 @@ function layoutImages({previousCallAbort, ...params}) {
 }
 
 async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
-                                  midSlideIdx, cutoutWpt, setRequestPromise, loadType=PAGE, isProcessAborted}) {
+                                  midSlideIdx, cutoutWpt, loadType=PAGE, isProcessAborted}) {
 
     if (!table || isNil(midSlideIdx) || (table?.totalRows??0) < 1) return;
     const viewer= getViewer(getMultiViewRoot(),viewerId);
@@ -406,7 +399,8 @@ async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
     const promiseAry= exclusiveNewPlotIds.map( async (plotId) => {
         const rowNum = getPlotIdRowNum(viewerId,plotId);
         const wpRequestPromise= makeRequestFromRow(viewerId, table.tbl_id, rowNum, cutoutWpt); //todo - needs documentation
-        const wpRequest= await callWhileWaitingToResolve(wpRequestPromise, 2000, (p) => loadType===PAGE && setRequestPromise(plotId,p));
+        const wpRequest= await callWhileAwaiting(wpRequestPromise,
+            (promise) => loadType===PAGE && dispatchAddWorkingTask(plotId,promise,'Searching Image'), 400 );
         if (!wpRequest) return;
 
         const pv = getPlotViewById(vr, plotId);
@@ -422,7 +416,9 @@ async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
     });
 
     // wait for all the request to resolve
-    await callWhileWaitingToResolve(Promise.all(promiseAry), 500, (p) => loadType!==PAGE && setRequestPromise(ALL, p));
+
+    await callWhileAwaiting(Promise.all(promiseAry),
+        (promise) => loadType!==PAGE && dispatchAddWorkingTask('ImageTableRowViewer',promise), 500);
     if (isProcessAborted()&& loadType!==FORCE_RELOAD) return;
 
     if (xor(viewer.itemIdAry,newPlotIdAry).length>0) { //check if any of the two arrays has a unique element

@@ -1,5 +1,5 @@
 import {uniq} from 'lodash';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../core/AppDataCntlr';
+import {dispatchAddWorkingTask} from '../core/AppDataCntlr';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {flux} from '../core/ReduxFlux';
@@ -214,7 +214,13 @@ async function addTableIndex(tbl_id,dispatcher) {
         dispatcher( { type: ENABLE_HPX_INDEX, payload:{ tbl_id, csys, ready:false }});
         return;
     }
-    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
+    const p= doAddTableIndex(tbl_id,dispatcher,table, csys, runId, maxInitialLoadNorder, tableUsingRadians, selectAll);
+    dispatchAddWorkingTask(DEFAULT_COVERAGE_PLOT_ID,p);
+    await p;
+}
+
+async function doAddTableIndex(tbl_id,dispatcher,table, csys,runId, maxInitialLoadNorder,
+                               tableUsingRadians, selectAll) {
     dispatcher( { type: ORDER_DATA_READY, payload:{ready:false,tbl_id} });
 
     if (table.totalRows>1_000_000) {
@@ -225,7 +231,7 @@ async function addTableIndex(tbl_id,dispatcher) {
 
     let partialIndexData= shouldUsePartialIndexType(table);
     if (partialIndexData) orderData= await fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId);
-    
+
     if (!orderData) {
         if (partialIndexData) console.log('HpxIndexCntlr: partial table indexing failed, using full');
         partialIndexData= false;
@@ -244,7 +250,6 @@ async function addTableIndex(tbl_id,dispatcher) {
     dispatcher( { type: ENABLE_HPX_INDEX,
         payload:{ tbl_id, orderData, tableUsingRadians, lonAry, latAry, csys, selectionOrderData,
             selectAll, partialIndexData, maxInitialLoadNorder} });
-    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
 }
 
 function shouldUsePartialIndexType(table) {

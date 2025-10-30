@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, {use, useCallback, useContext, useEffect, useState, useTransition} from 'react';
 import {isEmpty, isUndefined, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
@@ -313,4 +314,10 @@ export function Slot({component, slotProps={}, ...defProps}) {
     const {component:Component=component, ...nProps} = slotProps;
     const props = smartMerge(defProps, nProps);
     return Component ? <Component {...props}/> : false;
+}
+
+
+export function checkProps(props,f) {
+    if (f?.propTypes && f?.name && props) PropTypes.checkPropTypes(f.propTypes,props,'props',f.name);
+    return props;
 }

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {SECTIONS, WorkingType} from './AppDataCntlr.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 import * as AppDataCntlr from './AppDataCntlr.js';
 import {mergeObjectOnly, updateSet} from '../util/WebUtil.js';
@@ -23,11 +24,11 @@ export function appDataReducer(state, action={}) {
         case AppDataCntlr.ACTIVE_TARGET  :
             return updateActiveTarget(state,action);
 
-        case AppDataCntlr.REMOVE_TASK_COUNT  :
-            return removeTaskCount(state,action);
+        case AppDataCntlr.REMOVE_WORKING_TASK  :
+            return removeWorkingTask(state,action);
 
-        case AppDataCntlr.ADD_TASK_COUNT  :
-            return addTaskCount(state,action);
+        case AppDataCntlr.ADD_WORKING_TASK  :
+            return addWorkingTask(state,action);
 
         case AppDataCntlr.ADD_PREF  :
             return addPreference(state,action);
@@ -85,27 +86,23 @@ const updateActiveTarget= function(state,action) {
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
 };
 
-const addTaskCount= function(state,action) {
-    const {componentId,taskId, replace}= action.payload;
-    if (!componentId && !taskId) return state;
-    let taskArray= state.taskCounters[componentId] || [];
-    if (replace) {
-        taskArray= taskArray.includes(taskId) ? taskArray : [...taskArray,taskId];
-    }
-    else {
-        taskArray= [...taskArray,taskId];
-    }
-    const taskCounters= Object.assign({}, state.taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
+const addWorkingTask= function(state, action) {
+    const {componentId,promise,message,display=WorkingType.NO_HINT}= action.payload;
+    if (!componentId && !promise) return state;
+    const newEntry= {promise,message,display};
+    let taskAry= state.activeTask[componentId] || [];
+    taskAry= taskAry.some((t) => t.promise===promise)
+        ? taskAry.map( (t) => t.promise===promise ? newEntry : t)
+        : [...taskAry,newEntry];
+    return {...state, activeTask:{...state.activeTask, [componentId]:taskAry}};
 };
 
-const removeTaskCount= function(state,action) {
-    const {componentId,taskId}= action.payload;
-    if (!componentId && !taskId) return state;
-    let taskArray= state.taskCounters[componentId] || [];
-    taskArray= taskArray.filter( (id) => id!==taskId);
-    const taskCounters= Object.assign({}, state.taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
+const removeWorkingTask= function(state, action) {
+    const {componentId,promise}= action.payload;
+    if (!componentId && !promise) return state;
+    let taskAry= state.activeTask[componentId] || [];
+    taskAry= taskAry.filter( (t) => t.promise!==promise);
+    return {...state, activeTask:{...state.activeTask, [componentId]:taskAry}};
 };
 
 function addPreference(state,action) {
@@ -151,7 +148,7 @@ function getInitState() {
      * @prop {Object.<String,Array>} connections  channel:[] ... keyed by channel, contains an array of connId(s).
      * @prop {WorldPt} activeTarget
      * @prop {string} rootUrlPath
-     * @prop {Array} taskCounters
+     * @prop {Object.<String,Array.<{promise:Promise,message:String,display:String}>>} activeTask
      * @prop {Object} commandState
      * @prop {Object.<String,String>} preferences,
      * @prop {Object} appOptions : {}
@@ -164,7 +161,7 @@ function getInitState() {
         connections: {},      // channel:[] ... keyed by channel, contains an array of connId(s).
         activeTarget: null,
         rootUrlPath : null,
-        taskCounters: [],
+        activeTask: {},
         commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
         preferences:initPreferences(),  // preferences, will be backed by local storage
         appOptions : {},
