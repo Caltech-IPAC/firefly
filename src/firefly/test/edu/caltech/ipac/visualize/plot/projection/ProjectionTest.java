@@ -142,7 +142,7 @@ public class ProjectionTest {
 //        // Uncomment to regenerate sample for js test.
 //        String path = "/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
 //        String[] fNames = {"ztf-TPV.fits"};
-//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
+//        FitsHeaderToJson.writeImageHeaderAndProjectionToJson(path + fNames[0]);
 
         Fits fits = new Fits(new File(FileLoader.getDataPath(ProjectionTest.class) + "ztf-TPV.fits"));
         FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
@@ -176,7 +176,7 @@ public class ProjectionTest {
 //        // Uncomment ro regenerate sample for js test.
 //        String path = "/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
 //        String[] fNames = {"ztf-TPV-IRSA-2895.fits"};
-//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
+//        FitsHeaderToJson.writeImageHeaderAndProjectionToJson(path + fNames[0]);
         Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV-IRSA-2895.fits"));
         FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
 
@@ -217,7 +217,7 @@ public class ProjectionTest {
 //        // Uncomment to regenerate sample for js test.
 //        String path = FileLoader.getDataPath(ProjectionTest.class);
 //        String[] fNames = {"roman-SGT_200x240.fits"};
-//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
+//        FitsHeaderToJson.writeImageHeaderAndProjectionToJson(path + fNames[0]);
 
         Fits fits = new Fits(new File(FileLoader.getDataPath(ProjectionTest.class) + "roman-SGT_200x240.fits"));
         FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
@@ -239,6 +239,58 @@ public class ProjectionTest {
         double[] y_vals = {1.0, 240.0, 240.0, 1.0};
         double[] ra_vals = {9.78256769, 9.78255745, 9.77954305, 9.77955316};
         double[] dec_vals = {-44.25126713, -44.24867384, -44.2486799, -44.2512732};
+
+        for (int i = 0; i < x_vals.length; i++){
+            double ra = ra_vals[i];
+            double dec = dec_vals[i];
+            double x =  x_vals[i];
+            double y = y_vals[i];
+
+            ProjectionPt pix = proj.getImageCoords(ra, dec);
+
+            Assert.assertEquals(pix.getX(),  x, 1E-01);
+            Assert.assertEquals(pix.getY(), y,1E-01);
+
+            WorldPt pix2 = proj.getWorldCoords(x, y);
+
+            Assert.assertEquals(pix2.getLon(), ra, 1E-06);
+            Assert.assertEquals(pix2.getLat(), dec, 1E-06);
+        }
+    }
+
+    @Test
+    public void testHpxProjection() throws ProjectionException, Exception {
+//        // Uncomment to regenerate sample for js test.
+//        String path = FileLoader.getDataPath(ProjectionTest.class);
+//        String[] fNames = {"1904-66_HPX.fits"};
+//        FitsHeaderToJson.writeImageHeaderAndProjectionToJson(path + fNames[0]);
+
+        Fits fits = new Fits(new File(FileLoader.getDataPath(ProjectionTest.class) + "1904-66_HPX.fits"));
+        FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
+
+        FitsRead reader = fitsReadArray[0];
+        CoordinateSys cs = CoordinateSys.EQ_J2000;
+        ImageHeader imageHeader = new ImageHeader(reader.getHeader());
+        Projection proj = imageHeader.createProjection(cs);
+
+        // WorldPt worldCoords = proj.getWorldCoords(10.7759522, 41.19942861);
+        // System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
+
+        // x, y are zero-based
+        // pixels = [[0, 0], [96, 96], [191, 191], [50, 100], [150, 50]]
+        // for px in pixels:
+        //    world = w.pixel_to_world_values(px[0], px[1])
+        //    print(f"{{ x: {px[0]}, y: {px[1]}, ra: {world[0]:.10f}, dec: {world[1]:.10f}, description: 'pixel [{px[0]}, {px[1]}]' }},")
+        //
+        // { x: 0, y: 0, ra: 271.8237002434, dec: -73.3775525505, description: 'pixel [0, 0]' },
+        // { x: 96, y: 96, ra: 284.9625000000, dec: -66.2658333333, description: 'pixel [96, 96]' },
+        // { x: 191, y: 191, ra: 292.3720498853, dec: -58.6988166522, description: 'pixel [191, 191]' },
+        // { x: 50, y: 100, ra: 287.6424997453, dec: -69.1505503841, description: 'pixel [50, 100]' },
+        // { x: 150, y: 50, ra: 277.4507610386, dec: -63.1904350229, description: 'pixel [150, 50]' },
+        double[] x_vals = {0.0, 96.0, 191.0, 50.0, 150.0};
+        double[] y_vals = {0.0, 96.0, 191.0, 100.0, 50.0};
+        double[] ra_vals = {271.8237002434, 284.9625000000, 292.3720498853, 287.6424997453, 277.4507610386};
+        double[] dec_vals = {-73.3775525505, -66.2658333333, -58.6988166522, -69.1505503841, -63.1904350229};
 
         for (int i = 0; i < x_vals.length; i++){
             double ra = ra_vals[i];

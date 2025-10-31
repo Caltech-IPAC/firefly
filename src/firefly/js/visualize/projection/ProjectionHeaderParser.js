@@ -5,7 +5,7 @@
 import {isUndefined} from 'lodash';
 import {DtoR, RtoD, computeDistance} from '../VisUtil.js';
 import { GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
-    ARC, SFL, CEA, TPV, STG, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
+    ARC, SFL, CEA, TPV, STG, HPX, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
 import {findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
     ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J, NONCELESTIAL} from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
@@ -27,13 +27,14 @@ function getHeaderListD(parse, list, def, altWcs) {
 }
 
 
-function getPVArray(parse, idx, altWcs) {
+function getPVArrayTPV(parse, idx, altWcs) {
     const retval= [];
     for(let i=0; i<40; i++) {
         retval[i]= parse.getDoubleValue('PV'+idx+'_'+i+altWcs, i===1?1:0);
     }
     return retval;
 }
+
 
 function getSIPArray(parse, rootKey, length, altWcs) {
     let keyword;
@@ -157,6 +158,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
             case '-SFL': p.maptype = SFL; break;
             case '-GLS': p.maptype = SFL; break;
             case '-STG': p.maptype = STG; break;
+            case '-HPX': p.maptype = HPX; break;
             case '----':
             case '':     p.maptype = LINEAR; break;
             default :    p.maptype = UNRECOGNIZED;
@@ -207,10 +209,15 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
     }
 
     if (p.maptype===TPV) {
-        p.pv1= getPVArray(parse,1, altWcs);
-        p.pv2= getPVArray(parse,2, altWcs);
+        p.pv1= getPVArrayTPV(parse,1, altWcs);
+        p.pv2= getPVArrayTPV(parse,2, altWcs);
+    } else if (p.maptype===HPX) {
+        p.pv2= [];
+        for(let i=1; i<3; i++) {
+            // default values PV2_1=4, PV2_2=3
+            p.pv2[i-1]= parse.getDoubleValue('PV2_'+i+altWcs, i===1?4:3);
+        }
     }
-
 
     p.datamax = parse.getDoubleValue('DATAMAX', NaN);
     p.datamin = parse.getDoubleValue('DATAMIN', NaN);
@@ -473,9 +480,3 @@ export function makeDirectFileAccessData(header,cubePlane) {
     }
     return miniHeader;
 }
-
-
-
-
-
-

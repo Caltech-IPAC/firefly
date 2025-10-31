@@ -11,6 +11,7 @@ import {ARCProjection} from './ARCProjection.js';
 import {CartesianProjection} from './CartesianProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
 import {GnomonicProjection} from './GnomonicProjection.js';
+import {HpxProjection} from './HpxProjection.js';
 import {LinearProjection} from './LinearProjection.js';
 import {NCPProjection} from './NCPProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
@@ -35,6 +36,7 @@ export const SFL          = 1009; // TESTED
 export const CEA          = 1010;
 export const TPV          = 1011;
 export const STG          = 1012;
+export const HPX          = 1013;
 export const UNSPECIFIED  = 1998; // TESTED
 export const UNRECOGNIZED = 1999; // TESTED
 
@@ -119,6 +121,13 @@ const projTypes= {
 		implemented : true,
 		wrapping : false
 	},
+    [HPX] : {
+        name: 'HPX',
+        fwdProject: HpxProjection.fwdProject,
+        revProject: HpxProjection.revProject,
+        implemented : true,
+        wrapping : false
+    },
 	[LINEAR] : {
 		name: 'LINEAR',
 		fwdProject: LinearProjection.fwdProject,

@@ -174,6 +174,8 @@ public class ImageHeader implements Serializable
                 maptype = Projection.SFL;
             else if (ctype1_trim.endsWith("-STG"))
                 maptype = Projection.STG;
+            else if (ctype1_trim.endsWith("-HPX"))
+                maptype = Projection.HPX;
             else if (ctype1_trim.endsWith("----"))
                 maptype = Projection.LINEAR;
             else if (ctype1_tail.equals("    "))
@@ -343,9 +345,12 @@ public class ImageHeader implements Serializable
             }
         }
 
+
         if (using_tpv) {
             pv1= getPVArray(header,"1");
             pv2= getPVArray(header,"2");
+        } else if (maptype == Projection.HPX) {
+            pv2= getPVArrayHPX(header);
         }
 
 
@@ -779,6 +784,13 @@ public class ImageHeader implements Serializable
         for(int i=0; i<40; i++) {
             retval[i]= header.getDoubleValue("PV"+idxStr+"_"+i, i==1?1D:0D);
         }
+        return retval;
+    }
+
+    public double[] getPVArrayHPX(Header header) {
+        double[] retval = new double[2];
+        retval[0] = header.getDoubleValue("PV2_1", 4.0);
+        retval[1] =  header.getDoubleValue("PV2_2", 3.0);
         return retval;
     }
 
