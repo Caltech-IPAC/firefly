@@ -3,7 +3,7 @@
  */
 
 package edu.caltech.ipac.visualize.plot.projection;
-/**
+/*
  * User: roby
  * Date: 7/17/18
  * Time: 1:20 PM
@@ -26,7 +26,7 @@ public class ProjectionUtil {
     public static boolean isSameProjection(FitsRead firstFitsRead, FitsRead secondFitsread) {
         boolean result = false;
 
-        if (firstFitsRead.getProjectionType()== secondFitsread.getProjectionType()) {
+        if (firstFitsRead.getProjectionType() == secondFitsread.getProjectionType()) {
             ImageHeader H1 = new ImageHeader(firstFitsRead.getHeader());
             ImageHeader H2 = new ImageHeader(secondFitsread.getHeader());
             if (H1.maptype == Projection.PLATE) {
@@ -104,7 +104,7 @@ public class ProjectionUtil {
                         (H1.crota2 == H2.crota2) &&
                         (H1.getJsys() == H2.getJsys()) &&
                         (H1.file_equinox == H2.file_equinox)) {
-                        /* OK so far - now check distortion correction */
+            /* OK so far - now check distortion correction */
             if (H1.map_distortion &&
                     H2.map_distortion) {
                 result = checkDistortion(H1, H2);
@@ -129,7 +129,7 @@ public class ProjectionUtil {
 
             result = true;
 
-              /* OK so far - now check coefficients */
+            /* OK so far - now check coefficients */
             for (int i = 0; i < 6; i++) {
                 if (H1.ppo_coeff[i] != H2.ppo_coeff[i]) {
                     result = false;
@@ -158,13 +158,13 @@ public class ProjectionUtil {
      * Convert celestial coordinates to native spherical coordinates.
      * This is a convenience method that handles the transformation setup.
      *
-     * @param lng celestial longitude (RA) in degrees
-     * @param lat celestial latitude (Dec) in degrees
+     * @param lng    celestial longitude (RA) in degrees
+     * @param lat    celestial latitude (Dec) in degrees
      * @param crval1 reference celestial longitude (CRVAL1) in degrees
      * @param crval2 reference celestial latitude (CRVAL2) in degrees
-     * @return array of [phi, theta] in degrees, or null if transformation fails
+     * @return LonLat with phi and theta in degrees, or null if transformation fails
      */
-    public static double[] celestialToNative(double lng, double lat, double crval1, double crval2) {
+    public static LonLat celestialToNative(double lng, double lat, double crval1, double crval2) {
         double[] celref = new double[4];
         double[] euler = new double[5];
 
@@ -188,13 +188,13 @@ public class ProjectionUtil {
      * Convert native spherical coordinates to celestial coordinates.
      * This is a convenience method that handles the transformation setup.
      *
-     * @param phi native longitude in degrees
-     * @param theta native latitude in degrees
+     * @param phi    native longitude in degrees
+     * @param theta  native latitude in degrees
      * @param crval1 reference celestial longitude (CRVAL1) in degrees
      * @param crval2 reference celestial latitude (CRVAL2) in degrees
-     * @return array of [lng, lat] in degrees, or null if transformation fails
+     * @return LonLat with celestial longitude and latitude in degrees, or null if transformation fails
      */
-    public static double[] nativeToCelestial(double phi, double theta, double crval1, double crval2) {
+    public static LonLat nativeToCelestial(double phi, double theta, double crval1, double crval2) {
         double[] celref = new double[4];
         double[] euler = new double[5];
 
@@ -218,10 +218,10 @@ public class ProjectionUtil {
      * Initialize celestial transformation parameters.
      * Computes the Euler angles and celestial pole position needed for coordinate transformations.
      *
-     * Based on WCSLIB's celset function.
+     * <p>Based on WCSLIB's celset function.</p>
      *
-     * @param celref array of [crval1, crval2, lonpole, latpole] - modified in place
-     * @param euler array of 5 elements for Euler angles - set by this method
+     * @param celref           array of [crval1, crval2, lonpole, latpole] - modified in place
+     * @param euler            array of 5 elements for Euler angles - set by this method
      * @param useProjException if true, throw exceptions; if false, return false on error
      * @return true if successful, false if error (when useProjException is false)
      * @throws ProjectionException if useProjException is true and computation fails
@@ -343,17 +343,16 @@ public class ProjectionUtil {
     /**
      * Forward spherical transformation: celestial coordinates to native coordinates.
      *
-     * Based on WCSLIB's sphfwd function.
+     * <p>Based on WCSLIB's sphfwd function.</p>
      *
-     * @param lng celestial longitude in degrees
-     * @param lat celestial latitude in degrees
+     * @param lng   celestial longitude in degrees
+     * @param lat   celestial latitude in degrees
      * @param euler Euler angles from celset
-     * @return array of [phi, theta] in degrees
+     * @return LonLat with phi and theta in degrees
      */
-    private static double[] sphfwd(double lng, double lat, double[] euler) {
+    private static LonLat sphfwd(double lng, double lat, double[] euler) {
         double tol = 1.0e-5;
         double phi, theta;
-        double[] result = new double[2];
         double coslat, coslng, dlng, dphi, sinlat, sinlng, x, y, z;
 
         coslat = cosd(lat);
@@ -403,24 +402,21 @@ public class ProjectionUtil {
             }
         }
 
-        result[0] = phi;
-        result[1] = theta;
-        return result;
+        return new LonLat(phi, theta);
     }
 
     /**
      * Reverse spherical transformation: native coordinates to celestial coordinates.
      * Based on WCSLIB's sphrev function.
      *
-     * @param phi native longitude in degrees
+     * @param phi   native longitude in degrees
      * @param theta native latitude in degrees
      * @param euler Euler angles from celset
-     * @return array of [lng, lat] in degrees
+     * @return LonLat with celestial longitude and latitude in degrees
      */
-    private static double[] sphrev(double phi, double theta, double[] euler) {
+    private static LonLat sphrev(double phi, double theta, double[] euler) {
         double tol = 1.0e-5;
         double lng, lat;
-        double[] retval = new double[2];
         double cosphi, costhe, dlng, dphi, sinphi, sinthe, x, y, z;
 
         costhe = cosd(theta);
@@ -471,9 +467,7 @@ public class ProjectionUtil {
             }
         }
 
-        retval[0] = lng;
-        retval[1] = lat;
-        return retval;
+        return new LonLat(lng, lat);
     }
 
     // ========================================================================

@@ -51,13 +51,13 @@ public class HpxProjection {
         double K = getK(hdr);
 
         // Convert to native coordinates (phi, theta)
-        double[] nativeCoords = ProjectionUtil.celestialToNative(ra, dec, hdr.crval1, hdr.crval2);
+        LonLat nativeCoords = ProjectionUtil.celestialToNative(ra, dec, hdr.crval1, hdr.crval2);
         if (nativeCoords == null) {
             return null;
         }
 
-        double theta = nativeCoords[1] * DtoR;  // native latitude in radians
-        double phi = nativeCoords[0] * DtoR;    // native longitude in radians
+        double phi = nativeCoords.lon() * DtoR;    // native longitude in radians
+        double theta = nativeCoords.lat() * DtoR;  // native latitude in radians
 
         // Normalize phi to [-pi, pi]
         while (phi > Math.PI) phi -= 2.0 * Math.PI;
@@ -278,13 +278,13 @@ public class HpxProjection {
         // phi and theta are now in degrees (native coordinates)
 
         // Convert to celestial coordinates
-        double[] celestialCoords = ProjectionUtil.nativeToCelestial(phi, theta, hdr.crval1, hdr.crval2);
+        LonLat celestialCoords = ProjectionUtil.nativeToCelestial(phi, theta, hdr.crval1, hdr.crval2);
         if (celestialCoords == null) {
             return null;
         }
 
-        double lon = celestialCoords[0];
-        double lat = celestialCoords[1];
+        double lon = celestialCoords.lon();
+        double lat = celestialCoords.lat();
 
         return new Pt(lon, lat);
     }
