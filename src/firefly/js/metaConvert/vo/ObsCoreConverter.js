@@ -53,7 +53,7 @@ export function makeObsCoreConverter(table,converterTemplate,options={}) {
 
 function ensureOnlyImageInTable(table, options) {
     const {guaranteeOnlyImages=false, limitViewerDisplay}= options;
-    return guaranteeOnlyImages || obsCoreTableHasOnlyImages(table) || limitViewerDisplay!==IMAGE_ONLY;
+    return guaranteeOnlyImages || obsCoreTableHasOnlyImages(table) || limitViewerDisplay===IMAGE_ONLY;
 }
 
 function confirmHasRelatedBands(table,onlyImagesInTable, options) {
