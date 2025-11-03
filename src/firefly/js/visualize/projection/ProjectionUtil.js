@@ -295,19 +295,8 @@ export function sphrev(phi, theta, euler) {
     }
     lng = euler[0] + dlng;
 
-    // Normalize the celestial longitude. 
-    if (euler[0] >= 0.0) {
-        if (lng < 0.0) lng += 360.0;
-    } else {
-        if (lng > 0.0) lng -= 360.0;
-    }
-
-    // Normalize.
-    if (lng > 360.0) {
-        lng -= 360.0;
-    } else if (lng < -360.0) {
-        lng += 360.0;
-    }
+    // Normalize the celestial longitude.
+    lng = wrapLngDeg(lng);
 
     if (dphi % 180.0===0.0) {
         lat = theta + cosphi*euler[1];
@@ -328,4 +317,66 @@ export function sphrev(phi, theta, euler) {
     retval[0] = lng;
     retval[1] = lat;
     return retval;
+}
+
+
+/**
+ * Convert sky coord (ra, dec) into native celestial phi,theta.
+ * @param aDeg - ra
+ * @param dDeg - dec
+ * @param a0Deg - CRVAL1 in degrees
+ * @param d0Deg - CRVAL2 in degrees
+ * @param useProjException
+ * @returns {Array|null}  phi, theta in degrees
+ */
+export function celestialToNative(aDeg, dDeg, a0Deg, d0Deg, useProjException=false) {
+    const celref= [];
+    const euler= [];
+    celref[0] = a0Deg;
+    celref[1] = d0Deg;
+    celref[2] = 999.0;
+    celref[3] = 999.0;
+
+    const celsetSuccess = celset(celref, euler, useProjException);
+    if (!celsetSuccess && !useProjException)  return null;
+
+    return sphfwd(aDeg, dDeg, euler);
+}
+
+
+/**
+ * Convert native spherical coordinates phi and theta into celestial coordinates.
+ * @param phiDeg - phi in degrees
+ * @param thetaDeg - theta in degrees
+ * @param a0Deg - CRVAL1 in degrees
+ * @param d0Deg - CRVAL2 in degrees
+ * @param useProjException
+ * @returns {Array|null} ra, dec in degrees
+ */
+export function nativeToCelestial(phiDeg, thetaDeg, a0Deg, d0Deg, useProjException=false) {
+    const celref= [];
+    const euler= [];
+    celref[0] = a0Deg;
+    celref[1] = d0Deg;
+    celref[2] = 999.0;
+    celref[3] = 999.0;
+
+    const celsetSuccess = celset(celref, euler, useProjException);
+    if (!celsetSuccess && !useProjException)  return null;
+
+    return sphrev(phiDeg, thetaDeg, euler);
+}
+
+
+export function wrapLngDeg(a) {
+    // Wrap to [0, 360)
+    let m = a % 360;
+    if (m < 0) m += 360;
+    // Handle edge cases due to floating-point precision:
+    // - m might be exactly 360 or very close to it
+    // - m might be very close to 0
+    const epsilon = 1e-10;
+    if (m >= 360 - epsilon) m = 0;
+    if (Math.abs(m) < epsilon) m = 0;
+    return m;
 }

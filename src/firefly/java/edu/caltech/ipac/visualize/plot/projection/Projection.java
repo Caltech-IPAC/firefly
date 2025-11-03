@@ -33,6 +33,7 @@ public class Projection implements Serializable {
     static public final int CEA = 1010;
     static public final int TPV = 1011;
     static public final int STG = 1012;
+    static public final int HPX = 1013;
     static public final int UNSPECIFIED = 1998;
     static public final int UNRECOGNIZED = 1999;
 
@@ -115,6 +116,9 @@ public class Projection implements Serializable {
             case (ORTHOGRAPHIC):
                 image_pt = OrthographicProjection.RevProject(ra, dec, _params, useProjException);
                 break;
+            case (HPX):
+                image_pt = HpxProjection.RevProject(ra, dec, _params);
+                break;
             case (NCP):
                 image_pt = NCPProjection.RevProject(ra, dec, _params);
                 break;
@@ -193,6 +197,9 @@ public class Projection implements Serializable {
             case (ORTHOGRAPHIC):
                 pt = OrthographicProjection.FwdProject(x, y, _params, useProjException);
                 break;
+            case (HPX):
+                pt = HpxProjection.FwdProject(x, y, _params);
+                break;
             case (NCP):
                 pt = NCPProjection.FwdProject(x, y, _params);
                 break;
@@ -240,6 +247,7 @@ public class Projection implements Serializable {
             case (STG):
             case (PLATE):
             case (ORTHOGRAPHIC):
+            case (HPX):
             case (NCP):
             case (ARC):
             case (AITOFF):
@@ -278,6 +286,7 @@ public class Projection implements Serializable {
             case (NCP):
             case (PLATE):
             case (ORTHOGRAPHIC):
+            case (HPX):
             case (ARC):
             case (LINEAR):
                 retval = false;
@@ -435,6 +444,9 @@ public class Projection implements Serializable {
                 break;
             case (Projection.ORTHOGRAPHIC):
                 retval = "ORTHOGRAPHIC";
+                break;
+            case (Projection.HPX):
+                retval = "HPX";
                 break;
             case (Projection.NCP):
                 retval = "NCP";
