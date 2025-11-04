@@ -5,7 +5,7 @@
 
 import {isFunction, isEmpty, isArray} from 'lodash';
 import {makeScreenPt,makeImagePt} from '../Point.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import {Style} from './DrawingDef.js';
 import DrawUtil from './DrawUtil.js';
@@ -31,7 +31,6 @@ export class Drawer {
         this.selectCanvas= undefined;
         this.highlightCanvas= undefined;
         this.drawingCanceler= undefined;
-        this.plotTaskId= makeTaskId('drawer');
         this.isPointData= false;
         this.drawerId= drawerCnt++; // only used for debugging
         this.deferredDrawingCompletedCB= undefined;
@@ -217,7 +216,6 @@ export class Drawer {
         DrawUtil.clearCanvas(primaryCanvas);
         DrawUtil.clearCanvas(selectCanvas);
         DrawUtil.clearCanvas(highlightCanvas);
-        this.removeTask();
     }
 
 
@@ -289,9 +287,9 @@ export class Drawer {
                                          getMaxChunk(drawData,this.isPointData),
                                          this.deferredDrawingCompletedCB, canvas);
                 this.cancelRedraw();
-                this.drawingCanceler= makeDrawingDeferred(this,params);
-                this.removeTask();
-                if (drawData.length>15000) this.addTask();
+                const {drawingCanceler, completedPromise}= makeDrawingDeferred(this,params);
+                this.drawingCanceler= drawingCanceler;
+                if (drawData.length>15000) dispatchAddWorkingTask(cc.plotId, completedPromise);
                 return params.id;
             }
             else {
@@ -300,9 +298,6 @@ export class Drawer {
                                           cc,drawData,Number.MAX_SAFE_INTEGER);
                 this.doDrawing(params);
             }
-        }
-        else {
-            this.removeTask();
         }
     }
 
@@ -330,7 +325,6 @@ export class Drawer {
             }
             if (params.next.done) { //loop finished
                 params.done= true;
-                this.removeTask();
             }
         }
 
@@ -348,24 +342,6 @@ export class Drawer {
         }
 
     }
-
-
-    removeTask() {
-        const {plot,plotTaskId}= this;
-        if (plot && plotTaskId) {
-            setTimeout( () => getTaskCount(plot.plotId) && dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
-        }
-    }
-
-    addTask() {
-        const {plot}= this;
-        if (plot) {
-            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
-        }
-    }
-
-
-
 
     static makeDrawer() {
         return new Drawer();
@@ -427,16 +403,26 @@ function initOffScreenCanvas(width, height) {
 
 
 function makeDrawingDeferred(drawer,params) {
-    // let i=0;
+    let pResolve= undefined;
+    const completedPromise= new Promise( (resolve) => pResolve = resolve );
+
+
     const id= window.setInterval( () => {
-        if (params.done) window.clearInterval(id);
-        // console.time('drawing ' +i);
+        if (params.done) {
+            window.clearInterval(id);
+            pResolve?.(true);
+        }
         drawer.doDrawing(params);
-        // console.timeEnd('drawing ' +i);
-        // i++;
     },0);
     params.id= id;
-    return () => window.clearInterval(id);
+
+    return {
+        drawingCanceler:  () => {
+            window.clearInterval(id);
+            pResolve?.(false);
+        },
+        completedPromise
+    };
 
 }
 

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useState, useEffect, useRef, useDeferredValue} from 'react';
+import {Box} from '@mui/joy';
+import React, {memo, useState, useEffect, useRef, useDeferredValue, use, Suspense} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
@@ -12,9 +13,10 @@ import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState, addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {getPlotUIExtensionList} from '../../core/ExternalAccessUtils.js';
-import {getTaskCount} from '../../core/AppDataCntlr.js';
+import {getWorkingTask} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {dlRoot} from '../DrawLayerCntlr';
+import {ImageViewStatusPanel} from './ImageViewerStatus';
 
 
 const omitList= ['plotViewAry','activePlotId'];
@@ -34,7 +36,7 @@ function hasStateChanged(plotId, newState,oldState) {
     if (!oldState) return true;
     if (newState===oldState) return false;
     if (!shallowequal(newState.drawLayersAry,oldState.drawLayersAry)) return true;
-    if (newState.extRoot!==oldState.extRoot || newState.taskCount!==oldState.taskCount) return true;
+    if (newState.extRoot!==oldState.extRoot) return true;
     return hasVisRootChanged(plotId,newState.vr,oldState.vr);
 }
 
@@ -53,7 +55,6 @@ function getStoreState(plotId, oldState) {
         plotView: getPlotViewById(vr,plotId),
         drawLayersAry: getAllDrawLayersForPlot(dlRoot(),plotId),
         extRoot: extensionRoot(),
-        taskCount: getTaskCount(plotId)
     };
     return hasStateChanged(plotId,newState,oldState) ? newState : oldState;
 }
@@ -64,15 +65,11 @@ const TEN_SECONDS= 10000;
 export const ImageViewer= memo( ({showWhenExpanded=false, plotId, makeToolbar}) => {
 
     const [mousePlotId, setMousePlotId] = useState(lastMouseCtx().plotId);
-    const {plotView,vr,drawLayersAry,taskCount} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
+    const {plotView,vr,drawLayersAry} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
     const {current:timeoutRef} = useRef({timeId:undefined});
 
     const deferredDrawLayersAry= useDeferredValue(drawLayersAry);
-    const deferredTaskCount= useDeferredValue(taskCount);
     const deferredMousePlotId= useDeferredValue(mousePlotId);
-    // const deferredDrawLayersAry= drawLayersAry;
-    // const deferredTaskCount= taskCount;
-    // const deferredMousePlotId= mousePlotId;
 
     useEffect(() => {
         const removeListener= addImageMouseListener((mState) => {
@@ -103,7 +100,6 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, makeToolbar}) 
                          visRoot:vr,
                          drawLayersAry: deferredDrawLayersAry,
                          mousePlotId: deferredMousePlotId,
-                         workingIcon: deferredTaskCount>0,
                          extensionList: getPlotUIExtensionList(plotId)}} />
     );
 });
@@ -113,3 +109,24 @@ ImageViewer.propTypes= {
     plotId : PropTypes.string.isRequired,
     showWhenExpanded : PropTypes.bool,
 };
+
+
+export function ImageViewerPlaceHolder({plotId}){
+    const {promise,message}= useStoreConnector( () => getWorkingTask(plotId)  ) ?? {};
+    const Empty= ({promise}) => void (promise && use(promise));
+    const workingPanel= (
+        <ImageViewStatusPanel {...{
+            maskShowing:true, messageShowing:Boolean(message),useMessageAlpha:true,
+            slotProps :{ message: { text: message} },
+            sx: {left:2, right:2},
+        }}/>
+    );
+    return (
+        <Box sx={{ position:'absolute', left:0, right:0, top:0, bottom:0}}>
+            <Suspense fallback={workingPanel}>
+                <Empty promise={promise}/>
+            </Suspense>
+        </Box>
+    );
+
+}

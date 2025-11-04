@@ -5,6 +5,7 @@
 import {CircularProgress, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
+import {hasWorkingTask} from '../../core/AppDataCntlr';
 import {sprintf} from '../../externalSource/sprintf';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {HALF, QUARTER} from '../rawData/RawDataCommon.js';
@@ -15,8 +16,9 @@ import {primePlot} from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
-export const PlotTitle= memo(({plotView:pv, brief, working}) => {
-        const dataCompress= useStoreConnector(() => getDataCompress(primePlot(pv).plotImageId));
+export const PlotTitle= memo(({plotView:pv, brief}) => {
+        const {dataCompress,working}= useStoreConnector(() =>
+            ({working:hasWorkingTask(pv?.plotId), dataCompress:getDataCompress(pv?.plotId)}));
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const zlRet= getZoomDesc(pv);
@@ -109,7 +111,6 @@ const tipEntry= (label,value) => (
 
 PlotTitle.propTypes= {
     plotView : PropTypes.object,
-    working : PropTypes.bool,
     brief : PropTypes.bool.isRequired
 };
 

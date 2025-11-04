@@ -1,7 +1,8 @@
 import {number, shape, string, object} from 'prop-types';
 import React, {Suspense, use} from 'react';
 import {Box, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
-import * as ifWorking from '../InputFieldView';
+import {getWorkingTask} from '../../core/AppDataCntlr';
+import {useStoreConnector} from '../SimpleComponent';
 
 export function TableMask({cols=5, withToolbar=true, ...props}) {
     return (
@@ -52,6 +53,10 @@ export function FormMask({rows=10, sx, ...props}) {
     );
 }
 
+export function IfWorkingMaskById({id, message, gridSize, sx}) {
+    const {promise,message:inMsg}= useStoreConnector( () => getWorkingTask(id)  ) ?? {};
+    return <IfWorkingMask {...{promise,message:inMsg||message,gridSize,sx}}/>;
+}
 
 export function IfWorkingMask({promise, message, gridSize, sx}) {
     const Empty= ({promise}) => void (promise && use(promise));

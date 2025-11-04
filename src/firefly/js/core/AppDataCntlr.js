@@ -21,8 +21,8 @@ export const COMMAND = 'COMMAND';
 export const APP_LOAD = `${APP_DATA_PATH}.appLoad`;
 export const REINIT_APP= `${APP_DATA_PATH}.reinitApp`;
 export const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
-export const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
-export const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
+export const ADD_WORKING_TASK = `${APP_DATA_PATH}.addWorkingTask`;
+export const REMOVE_WORKING_TASK = `${APP_DATA_PATH}.removeTaskCount`;
 export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 export const APP_OPTIONS = `${APP_DATA_PATH}.appOptions`;
 export const MENU_UPDATE = `${APP_DATA_PATH}.menuUpdate`;
@@ -45,6 +45,9 @@ export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
 /** grab focus */
 export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
+export const WorkingType= {MASK:'MASK_ONLY', MESSAGE_ONLY:'MESSAGE_ONLY',
+    MASK_WITH_MESSAGE:'MASK_WITH_MESSAGE', NO_HINT:'NO_HINT'};
+
 /** the extension to add to a channel string to make a viewer channel */
 const CHANNEL_VIEWER_EXTENSION = '__viewer';
 const channel_matcher = new RegExp(`(.+)${CHANNEL_VIEWER_EXTENSION}(?:-(.+))?`);
@@ -59,7 +62,8 @@ function actionCreators() {
         [GRAB_WINDOW_FOCUS]:     grabWindowFocus,
         [HELP_LOAD]:  onlineHelpLoad,
         [LOAD_SEARCHES]:  loadSearches,
-        [MENU_UPDATE]: setMenu
+        [MENU_UPDATE]: setMenu,
+        [ADD_WORKING_TASK]: addWorkingTask,
     };
 }
 
@@ -88,27 +92,14 @@ export function dispatchAppOptions(appOptions) {
 
 
 /**
- * @param componentId the id or array of ids of the component to record the task count
- * @param taskId id of task, you create with makeTaskId()
- * @param [replace=true] if true, replace the taskId in the list
+ *
+ * @param {String} componentId
+ * @param {Promise} promise
+ * @param {String} message
+ * @param {String} display
  */
-export function dispatchAddTaskCount(componentId,taskId, replace= true) {
-    flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId, replace}});
-}
-
-
-let taskCnt= 0;
-export function makeTaskId(key='task') {
-    taskCnt++;
-    return `${key}-${taskCnt}`;
-}
-
-/**
- * @param componentId the id or array of ids of the component to record the task count
- * @param taskId id of task, create with makeTaskId()
- */
-export function dispatchRemoveTaskCount(componentId,taskId) {
-    flux.process({type: REMOVE_TASK_COUNT, payload: {componentId,taskId}});
+export function dispatchAddWorkingTask(componentId, promise, message='', display=WorkingType.NO_HINT) {
+    flux.process({type: ADD_WORKING_TASK, payload: {componentId,promise,message,display}});
 }
 
 /**
@@ -247,9 +238,16 @@ export function getAlerts() {
 
 export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
 
-export function getTaskCount(componentId) {
+export function getWorkingTask(componentId) {
     const state= flux.getState()[APP_DATA_PATH];
-    return state.taskCounters[componentId] ? state.taskCounters[componentId].length : 0;
+    if (!state?.activeTask[componentId]?.length) return {promise: undefined};
+    return state.activeTask[componentId].length ===1
+        ? state.activeTask[componentId][0]
+        : {promise:Promise.allSettled(state.activeTask[componentId].map( (t) => t.promise)), message:''};
+}
+
+export function hasWorkingTask(componentId) {
+    return Boolean(componentId && flux.getState()[APP_DATA_PATH].activeTask[componentId]?.length);
 }
 
 export function getPreference(name, def) {
@@ -400,6 +398,18 @@ function setMenu(action) {
             }
         }
         dispatch(action);
+    };
+}
+
+function addWorkingTask(action) {
+    return (dispatch) => {
+        const {componentId,promise}= action.payload;
+        dispatch(action);
+        if (promise) {
+            Promise.allSettled([promise]).then(() => {
+                flux.process({type: REMOVE_WORKING_TASK, payload: {componentId,promise}});
+            });
+        }
     };
 }
 

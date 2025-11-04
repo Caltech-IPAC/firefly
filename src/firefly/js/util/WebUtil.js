@@ -964,11 +964,11 @@ export function tokenSub(valObs, str='') {
  * The function wraps a promise. If the promise has not resolved in the waitUntilMS milliseconds then the
  * whileWaitingFunc function is called. The passed promise is returned.
  * @param {Promise} p - promise to return
- * @param {Number} waitUntilMS - the timeout to wait to call the whileWaiting function
  * @param {Function} whileWaitingFunc - if defined call with the passed promise
+ * @param {Number} waitUntilMS - the timeout to wait to call the whileWaiting function
  * @return {Promise<*>}
  */
-export function callWhileWaitingToResolve(p, waitUntilMS, whileWaitingFunc) {
+export function callWhileAwaiting(p, whileWaitingFunc, waitUntilMS=0) {
     if (!p) return undefined;
     const delay = (ms) => new Promise((resolve) => setTimeout(() => resolve('timeout'), ms));
     Promise.race([p, delay(waitUntilMS) ])

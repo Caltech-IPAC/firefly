@@ -3,22 +3,11 @@
  */
 import {Box, Card, Skeleton, Typography} from '@mui/joy';
 import React, {useEffect, memo, useState} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {bool, object, shape, string} from 'prop-types';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
+import {checkProps} from '../../ui/SimpleComponent';
 import BrowserInfo from '../../util/BrowserInfo.js';
 
-const statusText= {
-    position:'absolute',
-    left:0,
-    top:0,
-    width:'100%',
-    minHeight : '15%',
-    color:'black',
-    display:'flex',
-    alignItems:'center',
-    justifyContent:'flex-start',
-    flexDirection:'row',
-};
 export const ctxBG= (theme, opacity=80) =>
     BrowserInfo.supportsCssColorMix() ?
         `color-mix(in srgb, ${theme.vars.palette.warning.softBg} ${opacity}%, transparent)` :
@@ -27,10 +16,6 @@ export const ctxBG= (theme, opacity=80) =>
 
 
 
-const statusContainer= { position:'absolute', top: 0, left:0, width:'100%', height:'100%' };
-const statusTextCell= { py: 1, textAlign:'center', flex:'1 1 auto' };
-const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
-const statusTextCellWithClear= {...statusTextCell,  flex: '10 10 auto'};
 
 export const ImageViewerStatus= memo(
     ({message='',working,useMessageAlpha=false, buttonCB, buttonText='OK', messageWaitTimeMS=0, maskWaitTimeMS=0, top=0} ) => {
@@ -56,21 +41,19 @@ export const ImageViewerStatus= memo(
         return () => void (alive= false);
     }, [messageWaitTimeMS, maskWaitTimeMS] );
 
-    const workingStatusTextCell= buttonCB ? statusTextCellWithClear : statusTextCell;
-
     return (
-        <Box sx={{...statusContainer, top}}>
-            {working && showing.maskShowing && <div style={maskWrapper}> <Skeleton/> </div> }
-            { showing.messageShowing &&
-                <Card {...{color:'warning', variant:'soft',
-                    sx: (theme) => !useMessageAlpha ? statusText : { ...statusText, backgroundColor: ctxBG(theme,65)} }}>
-                    <Typography level='body-lg' sx={workingStatusTextCell}>{message}</Typography>
-                    { buttonCB && <CompleteButton text={buttonText} style={{flex: '2 2 auto'}} onSuccess={buttonCB}/> }
-                </Card>
+        <ImageViewStatusPanel {...{
+            maskShowing:showing.maskShowing&&working, messageShowing:showing.messageShowing, useMessageAlpha,
+            sx:{top},
+            slotProps :{
+                button: { text:buttonText, onClick: buttonCB, sx: {}},
+                message: { text: message}
             }
-        </Box>
+        }}/>
     );
 });
+
+
 
 ImageViewerStatus.displayName = 'ImageViewerStatus';
 ImageViewerStatus.propTypes= {
@@ -81,4 +64,53 @@ ImageViewerStatus.propTypes= {
     useMessageAlpha: PropTypes.bool,
     buttonCB: PropTypes.func,
     buttonText: PropTypes.string
+};
+
+export function ImageViewStatusPanel(props) {
+    const {maskShowing=false, messageShowing, useMessageAlpha, sx, slotProps={}}=
+        checkProps(props,ImageViewStatusPanel);
+
+    const {sx:messageSx={}, text:messageText=''}= slotProps.message ?? {};
+    const {sx:buttonSx={}, onClick:buttonCB, text:buttonText='OK'}= slotProps.button ?? {};
+
+    const finalMsgSx= { py: 1, textAlign:'center', flex:buttonCB ?'10 10 auto' : '1 1 auto' , ...messageSx};
+    const statusTextSx= {
+        position:'absolute', left:0, top:0, width:1, minHeight : '15%', color:'black', display:'flex',
+        alignItems:'center', justifyContent:'flex-start', flexDirection:'row', zIndex: maskShowing ? 10 : 'auto'
+    };
+
+    return (
+        <Box sx={{position:'absolute', top: maskShowing && messageShowing? 2: 0, left:0, width:'100%', height:'100%', ...sx}}>
+            {maskShowing && <Box sx={{ position:'absolute', left:0, top:0, width:1, height:1}}> <Skeleton/> </Box> }
+            { messageShowing &&
+                <Card {...{
+                    color:'warning', variant:'soft', position:'relative',
+                    zIndex: maskShowing ? 10 : 'auto',
+                    sx: (theme) =>
+                        !useMessageAlpha ? statusTextSx : { ...statusTextSx, backgroundColor: ctxBG(theme,65)}
+                }}>
+                    <Typography level='body-lg' sx={finalMsgSx}>{messageText}</Typography>
+                    { buttonCB && <CompleteButton text={buttonText} sx={{flex: '2 2 auto',...buttonSx}} onSuccess={buttonCB}/> }
+                </Card>
+            }
+        </Box>
+    );
+}
+
+ImageViewStatusPanel.propTypes= {
+    maskShowing: bool,
+    messageShowing: bool,
+    useMessageAlpha: bool,
+    sx: object,
+    slotProps: shape({
+        message: shape({
+            sx: object,
+            text: string,
+        }),
+        button: shape({
+            sx: object,
+            text: string,
+            okClick: Function,
+        })
+    })
 };

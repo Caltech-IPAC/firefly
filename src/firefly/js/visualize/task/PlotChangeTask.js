@@ -22,7 +22,7 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
 import {RangeValues} from '../RangeValues.js';
 import {loadStretchData, queueChangeLocalRawDataColor} from '../rawData/RawDataOps.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr.js';
 import {Band} from '../Band.js';
 import {makeCubeCtxAry, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
 import {parseAnyPt} from 'firefly/visualize/Point';
@@ -76,12 +76,6 @@ export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction
 
 
 
-let taskCnt= 0;
-function makeTaskId() {
-    taskCnt++;
-    return `plot_change_task-${taskCnt}`;
-}
-
 
 
 /**
@@ -117,42 +111,40 @@ export function colorChangeActionCreator(rawAction) {
             return;
         }
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
-            const taskId= makeTaskId();
+            let promise;
             if (!isThreeColor(plot)) {
-                dispatchAddTaskCount(plot.plotId,taskId);
-                queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId));
+                promise= queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId));
             }
             else {
-                queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                    makeOnComplete(dispatcher, plotId, taskId));
-
-
+                promise= queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                    makeOnComplete(dispatcher, plotId));
             }
+            dispatchAddWorkingTask(plot.plotId,promise);
         }
         else {
-            const taskId= makeTaskId();
+            let promise;
             if (!isThreeColor(plot)) {
-                dispatchAddTaskCount(plot.plotId,taskId);
-                queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId));
+                promise= queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId));
             }
             else {
-                queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                    makeOnComplete(dispatcher, plotId, taskId));
+                promise= queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                    makeOnComplete(dispatcher, plotId));
             }
+            dispatchAddWorkingTask(plot.plotId,promise);
             operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
                 const p= primePlot(pv);
                 if (!p) return;
                 if (isThreeColor(p)!==basePlotThreeColor) return;
-                const taskId= makeTaskId();
+                let promise;
                 if (!isThreeColor(p)) { // only do others that are not three color
-                    dispatchAddTaskCount(p.plotId,taskId);
-                    queueChangeLocalRawDataColor(p,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, pv.plotId, taskId));
+                    promise= queueChangeLocalRawDataColor(p,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, pv.plotId));
                 }
                 else {
-                    queueChangeLocalRawDataColor(p,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                        makeOnComplete(dispatcher, pv.plotId, taskId));
+                    promise= queueChangeLocalRawDataColor(p,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                        makeOnComplete(dispatcher, pv.plotId));
 
                 }
+                dispatchAddWorkingTask(plot.plotId,promise);
             });
 
         }
@@ -369,9 +361,8 @@ function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
 }
 
 
-function makeOnComplete(dispatcher, plotId, taskId)  {
+function makeOnComplete(dispatcher, plotId)  {
     return (abort, colorChangeResults) => {
-        dispatchRemoveTaskCount(plotId,taskId);
         if (abort) return;
         dispatcher( {
             type: ImagePlotCntlr.COLOR_CHANGE,

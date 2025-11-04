@@ -1,5 +1,5 @@
 import pointInPolygon from 'point-in-polygon';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr';
 import {FilterInfo} from '../../tables/FilterInfo';
 import {
     DATA_NORDER, ensureDataForSelection, getAllWptsIdxsForTile, getHpxIndexData, getValuesForOrder, HPX_WORKING_KEY,
@@ -9,6 +9,7 @@ import {dispatchTableFilter, dispatchTableSelect} from '../../tables/TablesCntlr
 import {getTblById} from '../../tables/TableUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
 import BrowserInfo from '../../util/BrowserInfo';
+import {callWhileAwaiting} from '../../util/WebUtil';
 import CoordSys from '../../visualize/CoordSys';
 import CysConverter from '../../visualize/CsysConverter';
 import {dlRoot} from '../../visualize/DrawLayerCntlr';
@@ -253,9 +254,8 @@ async function getSelectedHealPix(tbl_id, cc, pt0, pt1, tileList, norder, contai
         if (match) selectedTiles.push(tile);
     });
 
-    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
-    idxData= await ensureDataForSelection(tbl_id,norder,selectedTiles);
-    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
+    idxData= await callWhileAwaiting(ensureDataForSelection(tbl_id,norder,selectedTiles),
+        (p) => dispatchAddWorkingTask(DEFAULT_COVERAGE_PLOT_ID,p));
 
     // const selectedTableIdxList = [];
     const hpxSelectList= [];

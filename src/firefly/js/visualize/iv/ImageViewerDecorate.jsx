@@ -5,7 +5,7 @@
 
 import {Box, Stack} from '@mui/joy';
 import React, {memo, useEffect, useState} from 'react';
-import {object, array, bool, string, func} from 'prop-types';
+import {object, array, string, func} from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
@@ -252,7 +252,7 @@ function ZoomGroup({visRoot, pv, show}) {
 }
 
 const ImageViewerDecorate= memo((props) => {
-    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,makeToolbar,
+    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, makeToolbar,
         size:{width,height}}= props;
 
     const [showDelAnyway, setShowSelAnyway]= useState(false);
@@ -307,7 +307,7 @@ const ImageViewerDecorate= memo((props) => {
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
                     {ctxToolbar}
-                    {(plot) ? <PlotTitle brief={brief}  plotView={pv} working={workingIcon} /> : undefined}
+                    {(plot) ? <PlotTitle brief={brief}  plotView={pv}/> : undefined}
                     <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
                 </Stack>
                 <VisInlineToolbarView pv={pv} showDelete={showDelete} deleteVisible={showDel}/>
@@ -325,7 +325,6 @@ ImageViewerDecorate.propTypes= {
     extensionList : array.isRequired,
     mousePlotId : string,
     size : object.isRequired,
-    workingIcon: bool,
     makeToolbar: func,
 };
 

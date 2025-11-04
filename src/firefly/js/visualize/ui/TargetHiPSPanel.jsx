@@ -12,7 +12,7 @@ import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import PropTypes, {arrayOf, bool, func, number, object, oneOf, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import {getTblById, makeFileRequest, onTableLoaded} from '../../api/ApiUtilTable.jsx';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
@@ -26,6 +26,7 @@ import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.js
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
+import {callWhileAwaiting} from '../../util/WebUtil';
 import {CoordinateSys} from '../CoordSys.js';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot, getDlAry
@@ -450,10 +451,11 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                 await  onPlotComplete(plotId);
                 if (abort) return;
                 if (!getTblById(tbl_id)) {
-                    dispatchAddTaskCount(plotId, tbl_id);
-                    const {status, cacheKey}=  await upload(mocUrl, 'details', {hipsCache:true});
+
+                    const {status, cacheKey}= await callWhileAwaiting(
+                        upload(mocUrl, 'details', {hipsCache:true}),
+                        (p) => dispatchAddWorkingTask(plotId, p) );
                     setMocError();
-                    dispatchRemoveTaskCount(plotId, tbl_id);
                     if (abort) return;
                     const request= makeFileRequest(title, cacheKey, undefined, {
                         tbl_id,
@@ -461,9 +463,8 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                         META_INFO: {[MetaConst.IGNORE_MOC]: 'true' }
                     } );
                     dispatchTableFetch(request);
-                    dispatchAddTaskCount(plotId, tbl_id);
-                    await onTableLoaded(tbl_id);
-                    dispatchRemoveTaskCount(plotId, tbl_id);
+                    await callWhileAwaiting(onTableLoaded(tbl_id),
+                        (p) => dispatchAddWorkingTask(plotId, p) );
                     if (abort) return;
                     add= (status === '200');
                 }

@@ -14,7 +14,7 @@ import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getMetaEntry, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, getAppOptions, makeTaskId} from '../core/AppDataCntlr.js';
+import { dispatchAddWorkingTask, getAppOptions} from '../core/AppDataCntlr.js';
 import {doFetchTable} from '../tables/TableUtil';
 import {logger} from '../util/Logger.js';
 import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
@@ -43,7 +43,6 @@ const defColors={};
 function onDetach(dl,action) {
     if (!dl?.updateStatusAry) return;
     Object.entries(dl.updateStatusAry).forEach( ([plotId,obj]) => {
-        removeTask(plotId, obj.updateTaskId);
         obj.abortUpdate();
     });
 }
@@ -92,8 +91,9 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
             if (!tReq) return;
 
             const {plotIdAry=[]}= action.payload;
-            plotIdAry.forEach( (plotId) => addTask(plotId, 'fetchMOC'));
-            doFetchTable(tReq).then(
+            const fetchPromise= doFetchTable(tReq);
+            plotIdAry.forEach( (plotId) => dispatchAddWorkingTask(plotId, fetchPromise));
+            fetchPromise.then(
                 (tableModel) => {
                     if (tableModel.tableData) {
                         dispatchModifyCustomField(tbl_id, {mocTable:tableModel,autoUsesOnlyOutline});
@@ -101,13 +101,11 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
                         visiblePlotIdAry.forEach((pId) => {
                             dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
                         });
-                        plotIdAry?.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
                     }
                 }
             ).catch(
                 (reason) => {
                     logger.error(`Failed to MOC table: ${reason}`, reason);
-                    plotIdAry.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
                 }
             );
 
@@ -205,7 +203,6 @@ class UpdateStatus {
         this.processedTiles = [];        // keep update in each setInterval execution
         this.updateCanceler = null;      // set when new setInterval starts
         this.storedSidePoints = {};
-        this.updateTaskId = '';
     }
 
     startUpdate() {
@@ -213,7 +210,6 @@ class UpdateStatus {
         this.newMocObj = null;
         this.totalTiles = 0;
         this.processedTiles = [];
-        this.updateTaskId = makeTaskId('moc');
     }
 
     abortUpdate() {
@@ -221,7 +217,6 @@ class UpdateStatus {
             this.updateCanceler();
             this.updateCanceler = null;
         }
-        this.updateTaskId = '';
         this.done = false;
         if (this.newMocObj) {
             this.newMocObj.mocGroup = null;
@@ -390,19 +385,6 @@ function changeMocDrawingColor(dl, pId) {
     });
 }
 
-function removeTask(plotId, taskId) {
-    if (plotId && taskId) {
-        setTimeout( () => dispatchRemoveTaskCount(plotId, taskId) ,0);
-    }
-}
-
-function addTask(plotId, taskId) {
-    if (plotId && taskId) {
-        setTimeout( () => dispatchAddTaskCount(plotId, taskId) ,0);
-    }
-}
-
-
 /**
  * update MOC draw data at specific intervals
  * @param {DrawLayer} inDrawLayer
@@ -480,27 +462,33 @@ function getAlpha(fov, {minFov=25, maxFov=70, minAlpha=.01, maxAlpha=.7}={}) {
  * @returns {Function}
  */
 function makeUpdateDeferred(drawLayerId, plotId) {
+    let id= undefined;
+    let pResolve;
+    const completedPromise= new Promise( (resolve) => pResolve = resolve );
     const dl = getDrawLayerById(dlRoot(), drawLayerId);
-    if (!dl) return () => window.clearInterval(id);
+
+    const shutdown= () => {
+        if (id) window.clearInterval(id);
+        pResolve?.();
+    };
+
+    if (!dl) return {cancel:() => undefined};
     const {updateStatusAry} = dl;
 
     updateStatusAry[plotId].startUpdate();
-    const {updateTaskId}= updateStatusAry[plotId];
-    addTask(plotId, updateTaskId);
 
-    const id = window.setInterval( () => {
+    id = window.setInterval( () => {
         const updateDl= getDrawLayerById(dlRoot(), drawLayerId);
         if (updateDl?.plotIdAry.includes(plotId) && updateDl?.visiblePlotIdAry.includes(plotId)) {
             updateMocData(updateDl, plotId);
         }
         else {
-            removeTask(plotId, updateTaskId);
             updateStatusAry[plotId].abortUpdate();
-            window.clearInterval(id);
+            shutdown();
         }
     }, 0);
 
-    return () => window.clearInterval(id);
+    return {completedPromise,cancel:shutdown};
 }
 
 /**
@@ -529,7 +517,6 @@ function completeAsyncUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdat
         const drawObjAry= LayerUpdateMethod.byTrueAry ? updateStatusAry[pId].processedTiles : [];
         updateDrawLayer(drawObjAry, dl, pId);
     }
-    removeTask(pId, updateStatusAry[pId].updateTaskId);
     updateStatusAry[pId].abortUpdate();
 
 }
@@ -591,7 +578,9 @@ function mocRedraw(drawLayer,action) {
     pIdAry.forEach((pId) => {
         if (visiblePlotIdAry.includes(pId) && updateStatusAry[pId]) {
             abortLastAsyncUpdateIfRunning(updateStatusAry,pId);
-            updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer.drawLayerId, pId));
+            const {cancel,completedPromise}= makeUpdateDeferred(drawLayer.drawLayerId, pId);
+            updateStatusAry[pId].setCanceler(cancel);
+            if (completedPromise) dispatchAddWorkingTask(plotId, completedPromise);
         }
     });
 
