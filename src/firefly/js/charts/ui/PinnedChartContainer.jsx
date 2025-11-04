@@ -86,7 +86,7 @@ export const PinnedChartContainer = (props) => {
                         <ActiveChartsPanel {...props}/>
                     </Tab>
                     {showPinnedTab &&
-                        <Tab name='Pinned Charts' label={<BadgeLabel labelStr='Pinned Charts'/>}>
+                        <Tab name='Pinned Charts' label={<ChartBadgeLabel labelStr='Pinned Charts'/>}>
                             <PinnedChartPanel {...props}/>
                         </Tab>
                     }
@@ -161,7 +161,7 @@ export function pinChart({chartId, autoLayout=false, displayPinMessage=true }) {
     });
 }
 
-export function BadgeLabel({labelStr}) {
+export function ChartBadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_CHART_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
