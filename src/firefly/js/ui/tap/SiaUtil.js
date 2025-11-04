@@ -220,7 +220,9 @@ const metaNameMap = {
     SPECRP: 'specrp',
     TARGET: 'target',
     TIME: 'time',
-    TIMERE: 'timere'
+    TIMERE: 'timere',
+    CLOSEST: 'closest'
+    
 };
 const toColName = (name) => metaNameMap[name] ?? name;
 

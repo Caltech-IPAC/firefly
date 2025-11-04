@@ -15,6 +15,7 @@ import {getActivePlotView, primePlot} from '../../visualize/PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {VisualTargetPanel} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {convertCelestial} from '../../visualize/VisUtil.js';
+import {AutoCompleteInput} from '../AutoCompleteInput';
 import {calcCornerString, PolygonDataArea} from '../CatalogSearchMethodType.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
@@ -49,6 +50,7 @@ import {defaultsDeep} from 'lodash';
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
 const Spatial = 'Spatial';
+const Closest= 'IrsaClosestExt';
 export const spatialPanelId = getPanelPrefix(Spatial);
 export const SPATIAL_TYPE= 'SPATIAL_TYPE';
 export const RadiusSize = 'coneSize';
@@ -111,7 +113,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
-    UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
+    UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType, Closest];
 
 export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, columnsModel, tableName, initArgs={},
                                   obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true,
@@ -320,6 +322,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
 
     const spacialType= getVal(SPATIAL_TYPE) ?? SINGLE;
     const spatialMethod= getVal(SpatialMethod)??CONE_CHOICE_KEY;
+    const closest= getVal(Closest)??'';
     const cornerCalcTypeValue= getVal(cornerCalcType)??'image';
     const spatialRegOpValue= getVal(SpatialRegOp) ?? SpatialRegOpType.CONTAINS_POINT;
     const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled,capabilities?.canUpload);
@@ -357,6 +360,20 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
                     <ConeOrAreaField {...slotProps?.coneOrAreaField}/>
                     {isCone && <TargetPanelForSpacial {...{serviceLabel, serviceId, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {radiusOrPolygon}
+                    {isCone && capabilities?.canUseIrsaClosestExt &&
+                        <AutoCompleteInput orientation='vertical'
+                                           label='Closest Image'
+                                           tooltip='Select how to do closest image, (try facility,instrument)'
+                                           fieldKey={Closest}
+                                           multiple={true}
+                                           loading={false}
+                                           placeholder={closest ? undefined : 'Restrict search to closest'}
+                                           initialState={{value: '' }}
+                                           sx={{maxWidth:'30em'}}
+                                           options={capabilities.closestOptions?.map( (v) => ({label:v, value:v}))}
+                        />
+
+                    }
                 </Stack>
             );
         case NORMAL_UPLOAD_LAYOUT:
@@ -589,17 +606,20 @@ function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, useSIA
     }
 }
 
-function getConeUserArea(wpField,radiusField, worldSys, adqlCoordSys, useSIAV2, errList) {
+function getConeUserArea(wpField,radiusField, worldSys, adqlCoordSys, useSIAV2, closest, errList) {
     const {valid:ptValid,x,y} = checkPoint(worldSys, adqlCoordSys, wpField, errList);
     errList.checkForError(radiusField);
     const size = radiusField?.value;
     const valid= ptValid && size && radiusField.valid;
-    let userArea;
+    let userArea= '';
+    if (!valid) return {userArea, valid};
     if (useSIAV2) {
-        userArea = valid ? `POS=CIRCLE ${x} ${y} ${size}` : '';
+        userArea = `POS=CIRCLE ${x} ${y} ${size}`;
+        if (closest) userArea+= '&closest=' + closest;
+
     }
     else {
-        userArea = valid ? `CIRCLE('${adqlCoordSys}', ${x}, ${y}, ${size})` : '';
+        userArea = `CIRCLE('${adqlCoordSys}', ${x}, ${y}, ${size})`;
     }
     return {userArea, valid};
 }
@@ -630,9 +650,9 @@ function getUploadConeUserArea(tab, upLon, upLat, upColumns, radiusField, adqlCo
  * @param {FieldErrorList} errList
  * @returns {Object}
  */
-function checkUserArea(spatialMethod, wpField, radiusSizeField, polygonCornersStr, worldSys, adqlCoordSys, useSIAv2, errList) {
+function checkUserArea(spatialMethod, wpField, radiusSizeField, polygonCornersStr, worldSys, adqlCoordSys, useSIAv2, closest, errList) {
     if (spatialMethod === CONE_CHOICE_KEY) {
-        return getConeUserArea(wpField, radiusSizeField, worldSys, adqlCoordSys,useSIAv2, errList);
+        return getConeUserArea(wpField, radiusSizeField, worldSys, adqlCoordSys,useSIAv2, closest, errList);
 
     } else if (spatialMethod === POLY_CHOICE_KEY) {
         return getPolygonUserArea(polygonCornersStr, adqlCoordSys, worldSys, useSIAv2, errList);
@@ -672,7 +692,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const {[CenterLonColumns]:cenLonField, [CenterLatColumns]:cenLatField,
         [ServerParams.USER_TARGET_WORLD_PT]:wpField, [RadiusSize]:radiusSizeField,
-        [SPATIAL_TYPE]:spatialTypeField,
+        [SPATIAL_TYPE]:spatialTypeField, [Closest]:irsaClosestExtField,
         [UploadCenterLonColumns]:uploadCenLonColumns,
         [UploadCenterLatColumns]:uploadCenLatColumns }= fldObj;
     const regionOp= fldObj[SpatialRegOp]?.value ?? SpatialRegOpType.CONTAINS_POINT;
@@ -681,6 +701,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const upLonCol= uploadCenLonColumns?.value;
     const upLatCol= uploadCenLatColumns?.value;
     const spatialType= spatialTypeField?.value ?? SINGLE;
+    const closest= irsaClosestExtField?.value ?? '';
 
     let adqlConstraint = '';
     let siaConstraint = '';
@@ -697,7 +718,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
 
     if (useSIAv2) {
         const { valid, userArea}=
-            checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, CoordinateSys.EQ_J2000 , ICRS, true, errList);
+            checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, CoordinateSys.EQ_J2000 , ICRS, true, closest, errList);
         if (valid)  siaConstraint = userArea;
     }
     else if (!obsCoreEnabled) {
@@ -719,7 +740,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         if (spatialType===SINGLE) {
             if (!radiusSizeField?.value && spatialMethod === CONE_CHOICE_KEY) errList.addError('Missing radius input');
             const { valid, userArea}=
-                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, errList);
+                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, undefined, errList);
             if (valid)  adqlConstraint = `CONTAINS(${point},${userArea})=1`;
             else errList.addError('Spatial input not complete');
         }
@@ -748,7 +769,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         } else {
             if (spatialType===SINGLE) {
                 const {valid, userArea} =
-                    checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, errList);
+                    checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, undefined, errList);
                 if (valid) adqlConstraint= makeUserAreaConstraint(regionOp,userArea, ICRS );
                 else errList.addError('Spatial input not complete');
             }

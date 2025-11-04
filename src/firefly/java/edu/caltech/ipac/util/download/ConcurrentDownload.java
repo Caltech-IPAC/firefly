@@ -152,7 +152,7 @@ public class ConcurrentDownload {
 
     private static int getWorkerCnt(long contentLen) {
         long lenMeg= contentLen/FileUtil.MEG;
-        if (lenMeg<90) return 1;
+        if (lenMeg<50) return 1;
         if (lenMeg<200) return 2;
         if (lenMeg<400) return 3;
         if (lenMeg<600) return 4;
@@ -303,6 +303,17 @@ public class ConcurrentDownload {
         }
     }
 
+//    static boolean sameDomain(URL url) {
+//        var urlHost= url.getHost();
+//        var idx= urlHost.indexOf(".");
+//        var urlDomain= (idx==-1) ? urlHost : urlHost.substring(idx);
+//        if (StringUtils.isEmpty(urlDomain)) return true;
+//        var sUrl= Util.Try.it(() -> new URI(ServerContext.getRequestOwner().getBaseUrl()).toURL()).getOrElse((URL)null);
+//        if (sUrl==null) return false;
+//        idx= sUrl.getHost().indexOf(".");
+//        var serverDomain= (idx==-1) ? urlHost : urlHost.substring(idx);
+//        return (serverDomain.toLowerCase().contains(urlDomain.toLowerCase()));
+//    }
 
     private static class PartialDownload {
         private final URL url;

@@ -16,6 +16,17 @@ export function SiaUI({initArgs, serviceUrl, serviceLabel, siaMeta, sx={}}) {
     const showNoMetaError= !hasSomeImportantMeta(siaMeta);
     const serviceId= getSiaServiceId(serviceUrl);
 
+
+    const canUseIrsaClosestExt= obsCoreMetadataModel?.tableData?.data?.some( (row) => row[0]==='closest');
+
+    const closestOptions = canUseIrsaClosestExt
+        ? obsCoreMetadataModel.tableData.data
+            .filter((row) => row?.[0] === 'closest')
+            .map((row) => row?.[1])
+        : [];
+
+
+
     return (
         <Stack spacing={1} width={1} maxWidth='75rem' sx={sx}>
             {showNoMetaError && <Typography color='warning' pl={3}>
@@ -23,7 +34,8 @@ export function SiaUI({initArgs, serviceUrl, serviceLabel, siaMeta, sx={}}) {
             </Typography>}
             <SpatialSearch {...{cols:undefined, serviceUrl, serviceLabel, serviceId, columnsModel:undefined, initArgs, obsCoreEnabled:false,
                 tableName:undefined, useSIAv2,
-                capabilities: {canUsePoint:true, canUseCircle:true, canUsePolygon:true, canUseContains:true}
+                capabilities: {canUsePoint:true, canUseCircle:true, canUsePolygon:true, canUseContains:true,
+                    canUseIrsaClosestExt, closestOptions}
             }}/>
             <ObsCoreSearch {...{obsCoreMetadataModel, serviceId, initArgs, useSIAv2,
                 slotProps:{innerStack: {width:1}} }} />
