@@ -70,7 +70,9 @@ export function coordToString(csys) {
 export function formatTargetForHelp(wp) {
     if (!wp) return '';
     if (!wp.objName || !wp.resolver) return formatPosForHelp(wp);
-    return `<div style="font-size:14px;"><b>${wp.objName}</b> <span style="font-size:10px;">resolved by</span> ${wp.resolver.desc}</span>
+    const objTypeHtml= wp.objType ? `<span style="font-size:10px;">, type: ${wp.objType}</span>` : '';
+    return `<div style="font-size:14px;"><b>${wp.objName}</b> <span style="font-size:10px;">resolved by</span> 
+             ${wp.resolver.desc}${objTypeHtml}
             <div>
               ${formatPosForHelp(wp)}
             </div>`;

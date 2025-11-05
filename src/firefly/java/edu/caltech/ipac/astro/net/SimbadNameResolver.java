@@ -6,6 +6,7 @@ package edu.caltech.ipac.astro.net;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.URLParms;
@@ -36,10 +37,15 @@ public class SimbadNameResolver {
             double ra = getRow0DoubleValue(json, 0,Double.NaN);
             double dec = getRow0DoubleValue(json, 1, Double.NaN);
             if (checkNaN(ra,dec)) throw makeEx(objName,"ra or dec is not parsable",null);
-            ResolveResult sa= new ResolveResult(Resolver.Simbad, objName, new ResolvedWorldPt(ra, dec,objName,Resolver.Simbad));
+
+            var type= getRow0StringValue(json, 3, "");
+            var specType= getRow0StringValue(json, 4, "");
+            var combineType= StringUtils.isEmpty(specType) ? type: type+","+specType;
+            ResolveResult sa= new ResolveResult(Resolver.Simbad, objName,
+                    new ResolvedWorldPt(ra, dec,objName,Resolver.Simbad,combineType));
             sa.setFormalName(getRow0StringValue(json, 2, ""));
-            sa.setType(getRow0StringValue(json, 3, ""));
-            sa.setSpectralType(getRow0StringValue(json, 4, ""));
+            sa.setType(type);
+            sa.setSpectralType(specType);
             sa.setParallax(getRow0DoubleValue(json, 5, Double.NaN));
 
             try {

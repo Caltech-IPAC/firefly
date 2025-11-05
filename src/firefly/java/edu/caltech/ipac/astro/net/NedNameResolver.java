@@ -34,8 +34,9 @@ public class NedNameResolver {
             if (resultCode != 2 && resultCode != 3) throw makeEx(objName, "resultCode="+resultCode,null);
             double ra= helper.getValue(Double.NaN, "Preferred", "Position", "RA");
             double dec= helper.getValue(Double.NaN, "Preferred", "Position", "Dec");
+            var type= helper.getValue("", "Preferred", "ObjType", "Value");
             if (checkNaN(ra,dec)) throw makeEx(objName,"ra or dec is not parsable",null);
-            return new ResolveResult(Resolver.NED, objName, new ResolvedWorldPt(ra, dec,objName,Resolver.NED));
+            return new ResolveResult(Resolver.NED, objName, new ResolvedWorldPt(ra, dec,objName,Resolver.NED,type));
         } catch (MalformedURLException e) {
             throw makeEx(objName, "Could not build NED URL: " + NED_URL_STR,e);
         } catch (IllegalArgumentException e) {

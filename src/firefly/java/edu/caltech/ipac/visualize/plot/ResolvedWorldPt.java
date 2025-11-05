@@ -12,35 +12,39 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public final class ResolvedWorldPt extends WorldPt {
 
-    private final String _objName;
-    private final Resolver _resolver;
+    private final String objName;
+    private final Resolver resolver;
+    private final String objType;
 
-    public ResolvedWorldPt(WorldPt wp, String objName, Resolver resolver) {
-        this(wp.getLon(),wp.getLat(), wp.getCoordSys(), objName, resolver);
+    public ResolvedWorldPt(WorldPt wp, String objName, Resolver resolver, String objType) {
+        this(wp.getLon(),wp.getLat(), wp.getCoordSys(), objName, resolver, objType);
     }
 
-   public ResolvedWorldPt(double lon, double lat, String objName, Resolver resolver) {
-       this(lon, lat, CoordinateSys.EQ_J2000, objName, resolver);
+   public ResolvedWorldPt(double lon, double lat, String objName, Resolver resolver, String objType) {
+       this(lon, lat, CoordinateSys.EQ_J2000, objName, resolver, objType);
    }
    public ResolvedWorldPt(double lon,
                           double lat,
                           CoordinateSys coordSys,
                           String objName,
-                          Resolver resolver) {
+                          Resolver resolver,
+                          String objType) {
        super(lon,lat,coordSys);
-       _objName= objName;
-       _resolver= resolver;
+       this.objName = objName;
+       this.resolver = resolver;
+       this.objType= objType;
    }
 
-    public Resolver getResolver() { return _resolver;}
-    public String getObjName() { return _objName;}
+    public Resolver getResolver() { return resolver;}
+    public String getObjName() { return objName;}
+    public String getObjType() { return objType;}
 
     public boolean equals(Object o) {
         boolean retval= super.equals(o);
         if (retval) {
             retval= false;
             if (o instanceof ResolvedWorldPt p) {
-                retval= p._resolver.equals(_resolver) && ComparisonUtil.equals(p._objName, _objName);
+                retval= p.resolver.equals(resolver) && ComparisonUtil.equals(p.objName, objName);
             }
         }
         return retval;
@@ -48,30 +52,30 @@ public final class ResolvedWorldPt extends WorldPt {
 
     public String toString() {
         String retval;
-        if ((_resolver==Resolver.UNKNOWN || _resolver==Resolver.NONE) && _objName==null) {
+        if ((resolver ==Resolver.UNKNOWN || resolver ==Resolver.NONE) && objName ==null && objType ==null) {
             retval= super.toString();
         }
         else {
-            retval= super.toString()+";"+_objName+";"+_resolver;
+            retval= super.toString()+";"+ objName +";"+ resolver;
+            if (!StringUtils.isEmpty(objType)) retval+=";"+objType;
         }
         return retval;
     }
 
     public static ResolvedWorldPt parse(String serString) {
         if (serString==null) return null;
-        String sAry[]= serString.split(";");
+        String[] sAry= serString.split(";");
         if (sAry.length==3 || sAry.length==2) {
             WorldPt wp= WorldPt.parse(serString);
-            if (wp!=null) {
-                return new ResolvedWorldPt(wp.getLon(),wp.getLat(), wp.getCoordSys(), null, Resolver.NONE);
-            }
+            if (wp==null) return null;
+            return new ResolvedWorldPt(wp.getLon(),wp.getLat(), wp.getCoordSys(), null, Resolver.NONE, null);
         }
-        else  if (sAry.length==5 || sAry.length==4)  {
+        else  if (sAry.length==5 || sAry.length==4 || sAry.length==6)  {
             WorldPt wp= WorldPt.stringAryToWorldPt(sAry);
-            if (wp!=null) {
-                Resolver resolver= sAry.length==5 ? Resolver.parse(sAry[4]) : Resolver.UNKNOWN;
-                return new ResolvedWorldPt(wp, StringUtils.checkNull(sAry[3]),resolver);
-            }
+            if (wp==null) return null;
+            Resolver resolver= sAry.length==5 ? Resolver.parse(sAry[4]) : Resolver.UNKNOWN;
+            String objType= sAry.length==6 ? StringUtils.checkNull(sAry[5]) : null;
+            return new ResolvedWorldPt(wp, StringUtils.checkNull(sAry[3]),resolver,objType);
         }
         return null;
     }

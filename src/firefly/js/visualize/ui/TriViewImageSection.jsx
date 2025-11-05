@@ -7,7 +7,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {hasCoverageData, isCatalog, isDataProductsTable, isOrbitalPathTable} from '../../voAnalyzer/TableAnalysis.js';
+import {
+    hasCoverageData, isCatalog, isDataProductsTable, isObsCoreLike, isOrbitalPathTable
+} from '../../voAnalyzer/TableAnalysis.js';
+import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
@@ -32,9 +35,8 @@ import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
  * @param p
  * @param p.showCoverage
  * @param p.showFits
- * @param p.style
  * @param p.showMeta
- * @param p.selectedTab
+ * @param p.coverageSide
  * @param p.imageExpandedMode if true, then imageExpandedMode overrides everything else
  * @param p.closeable expanded mode should have a close button
  * @param p.dataProductTableId
@@ -54,7 +56,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
     if (showCoverage || showFits || showMeta) {
         return (
             <Tabs key={key} onTabSelect={onTabSelect}
-                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}>
+                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta,dataProductTableId)}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab({id:'coverage'}) }
                 { showMeta && makeMultiProductViewerTab({dataProductTableId,id:'meta'}) }
                 { showFits && makeFitsPinnedTab({id:'fits',asTab:true}) }
@@ -129,9 +131,17 @@ TriViewImageSection.propTypes= {
 };
 
 
-function getDefSelected(showCoverage, showFits, showMeta) {
+function getDefSelected(showCoverage, showFits, showMeta, tbl_id) {
     if (showFits) return 'fits';
-    if (showMeta) return 'meta';
+    if (showMeta) {
+        if (!showCoverage || isObsCoreLike(tbl_id)) return 'meta';
+        const sdAry= getServiceDescriptors(tbl_id);
+        if (sdAry) {
+            if (sdAry.some((sd) => isDataLinkServiceDesc(sd) )) return 'meta'; // treat just like an obbscore table
+            return 'coverage'; // probably a catalog with some secondary data products, a pretty common case
+        }
+        return 'meta'; // probably not obscore but some other data product table (like an upload of images)
+    }
     if (showCoverage) return 'coverage';
 }
 
