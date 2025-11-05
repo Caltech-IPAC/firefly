@@ -366,10 +366,11 @@ export function getProdTypeGuess(tableOrId, rowIdx) {
  * Guess if this table has enough ObsCore attributes to be considered an ObsCore table.
  * - any column contains utype with 'obscore:' prefix
  * - matches 3 or more of ObsCore column names
- * @param {TableModel} tableModel
+ * @param {TableModel|String} tableOrId - a table model or a table id
  * @returns {boolean}
  */
-export function isObsCoreLike(tableModel) {
+export function isObsCoreLike(tableOrId) {
+    const tableModel= getTableModel(tableOrId);
     if (!tableModel) return false;
     const cols = getColumns(tableModel);
     if (cols.findIndex((c) => get(c, 'utype', '').startsWith(obsPrefix)) >= 0) {

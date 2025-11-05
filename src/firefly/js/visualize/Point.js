@@ -151,20 +151,18 @@ export class SimplePt {
  * @param {CoordinateSys} [coordSys=CoordinateSys.EQ_J2000]- the coordinate system constant
  * @param {string} [objName] - the object name the was used for name resolution
  * @param {Resolver} [resolver] - the resolver use to return this point
+ * @param {String} objType - should be short string or undefined
  * @public
  * @global
  */
 class WorldPtObj {
-    constructor(lon,lat,coordSys,objName,resolver) {
+    constructor(lon,lat,coordSys,objName,resolver,objType='') {
         this.x= lon;
         this.y= lat;
         this.cSys = coordSys || CoordinateSys.EQ_J2000;
-        if (objName) {
-            this.objName = objName;
-        }
-        if (resolver) {
-            this.resolver = resolver;
-        }
+        if (objName) this.objName = objName;
+        if (resolver) this.resolver = resolver;
+        this.objType = objType;
         this.type= W_PT;
 
     }
@@ -193,6 +191,8 @@ class WorldPtObj {
     getResolver() { return this.resolver ? this.resolver : undefined; }
 
     getObjName() { return (this.objName) ? this.objName : undefined; }
+    getObjType() { return this.objType;}
+
 
 
     /**
@@ -233,7 +233,7 @@ function stringAryToWorldPt(wpParts) {
     if (len===2 || len===3) return makeWorldPt(x,y,csys);
 
     const resolver= wpParts[4] ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
-    return makeResolvedWorldPt(makeWorldPt(x,y,csys), wpParts[3], resolver);
+    return makeResolvedWorldPt(makeWorldPt(x,y,csys), wpParts[3], resolver, wpParts[5]);
 }
 
 const toDeg= (angle) => angle * (180 / Math.PI);
@@ -283,10 +283,11 @@ export const makeWorldPt=
  * @param {WorldPt} wp
  * @param {String} objName -  object name used to create this worldPt
  * @param [resolver] - the resolver used to create this worldPt
+ * @param {String} objType - should be short string or undefined
  * @return {WorldPt}
  */
-export function makeResolvedWorldPt(wp,objName,resolver=Resolver.UNKNOWN) {
-    return new WorldPtObj(wp.x,wp.y,wp.cSys,objName,resolver);
+export function makeResolvedWorldPt(wp,objName,resolver=Resolver.UNKNOWN,objType) {
+    return new WorldPtObj(wp.x,wp.y,wp.cSys,objName,resolver,objType);
 }
 
 /**
@@ -465,7 +466,7 @@ export const parseWorldPt = function (serializedWP) {
     if (!serializedWP || !isString(serializedWP)) return undefined;
 
     const sAry= serializedWP.split(';');
-    if (sAry.length<2 || sAry.length>5) return undefined;
+    if (sAry.length<2 || sAry.length>6) return undefined;
     return stringAryToWorldPt(sAry);
 };
 

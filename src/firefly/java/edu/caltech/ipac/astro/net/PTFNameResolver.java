@@ -36,7 +36,7 @@ public class PTFNameResolver {
             if (sAry.length!=3) throw new FailedRequestException("Object not found", "server returned bad data: "+ obj);
 
             ResolvedWorldPt wp= new ResolvedWorldPt(Double.parseDouble(sAry[1]), Double.parseDouble(sAry[2]),
-                    objName, Resolver.PTF);
+                    objName, Resolver.PTF,null);
             return new ResolveResult(Resolver.PTF, objName, wp);
         } catch (MalformedURLException e) {
             throw new FailedRequestException("bad url: " + urlStr);
