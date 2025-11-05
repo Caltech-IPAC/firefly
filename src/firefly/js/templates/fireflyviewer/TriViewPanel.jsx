@@ -3,8 +3,7 @@
  */
 
 import {Box, Stack} from '@mui/joy';
-import {
-    BadgeLabel, PinnedChartPanel, usePinnedChartInfo
+import {ChartBadgeLabel, PinnedChartPanel, usePinnedChartInfo
 } from 'firefly/charts/ui/PinnedChartContainer.jsx';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {pick} from 'lodash';
@@ -187,7 +186,7 @@ function makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab,id
                              useOnlyChartsInViewer={false}
                              tbl_group='main' addDefaultChart={true}/>);
 
-    return asTab ? <Tab name={pinnedLabel} removable={false} id={id} label={<BadgeLabel labelStr={pinnedLabel}/>}>{chartpanel}</Tab> : chartpanel;
+    return asTab ? <Tab name={pinnedLabel} removable={false} id={id} label={<ChartBadgeLabel labelStr={pinnedLabel}/>}>{chartpanel}</Tab> : chartpanel;
     }
 
 function searchDesc({showViewsSwitch, leftButtons, centerButtons, rightButtons}) {

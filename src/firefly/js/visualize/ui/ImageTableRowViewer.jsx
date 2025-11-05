@@ -408,6 +408,7 @@ async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
             wpRequest.setRotateNorth(true);
             dispatchPlotImage({
                 plotId, wpRequest,
+                viewerId,
                 setNewPlotAsActive: false,
                 holdWcsMatch: true,
                 pvOptions: {userCanDeletePlots: false}

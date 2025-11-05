@@ -88,7 +88,7 @@ export const makeMultiProductViewerTab= ({id,dataProductTableId}) => {
 };
 
 
-function BadgeLabel({labelStr}) {
+export function ImageBadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),DEFAULT_FITS_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
@@ -109,12 +109,12 @@ export function makeFitsPinnedTab({id,asTab})  {
     return (
         asTab ?
             (<Tab key='fits' name='Pinned Images'  removable={false} id={id}
-                  label={<BadgeLabel labelStr={'Pinned Images'}/>}>
+                  label={<ImageBadgeLabel labelStr={'Pinned Images'}/>}>
                 {viewer}
             </Tab>) :
             viewer
     );
-};
+}
 
 
 TriViewImageSection.propTypes= {
