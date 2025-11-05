@@ -231,7 +231,9 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             const wp = plot.attributes[PlotAttribute.USER_SEARCH_WP];
             if (!wp) return;
             const utWPt = userEnterWorldPt();
-            setUISize(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG],minSize,maxSize,userEnterSearchRadius(),setHiPSRadius);
+            if (Number(getHiPSRadius())!==Number(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG])) {
+                setUISize(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG],minSize,maxSize,userEnterSearchRadius(),setHiPSRadius);
+            }
             if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
                 setTargetWp(wp.toString());
                 dispatchActiveTarget(wp);

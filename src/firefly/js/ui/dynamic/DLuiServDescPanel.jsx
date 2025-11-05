@@ -30,6 +30,8 @@ const DocRows= ({docRows=[], showLabel=true}) => (
     </Box>
 );
 
+const LAST= '__LAST__';
+const optionsCheckBoxDefaults= new Map([['_LAST_',undefined]]);
 
 
 export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc,
@@ -49,15 +51,28 @@ export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShow
     },[standardID,accessURL]);
 
     const coneAreaChoice = useFieldGroupValue(CONE_AREA_KEY)?.[0]() ?? CONE_CHOICE_KEY;
-    let cNames, disableNames;
-    if (concurrentSearchDef?.length && coneAreaChoice) {
-        cNames = concurrentSearchDef
-            .filter((c) => hasSpatialTypes(c.serviceDef) && isSpatialTypeSupported(c.serviceDef, coneAreaChoice))
-            .map((c) => c.desc);
-        disableNames = concurrentSearchDef
-            .filter((c) => hasSpatialTypes(c.serviceDef) && !isSpatialTypeSupported(c.serviceDef, coneAreaChoice))
-            .map((c) => c.desc);
-    }
+
+    const [getSearchOptions,setSearchOptions] = useFieldGroupValue('searchOptions');
+    const {cNames, disableNames}= getNames(concurrentSearchDef,coneAreaChoice);
+    const cNamesDef= cNames?.join(' ');
+
+    useEffect( () => {
+        if (!cNamesDef) return;
+        if (!optionsCheckBoxDefaults.has(cNamesDef)) {
+            optionsCheckBoxDefaults.set(cNamesDef,cNamesDef);
+            optionsCheckBoxDefaults.set(LAST,cNamesDef);
+            setSearchOptions(cNamesDef);
+        }
+        else {
+            if (optionsCheckBoxDefaults.get(LAST)!==cNamesDef) {
+                optionsCheckBoxDefaults.set(LAST,cNamesDef);
+                setSearchOptions(optionsCheckBoxDefaults.get(cNamesDef));
+            }
+            else {
+                optionsCheckBoxDefaults.set(cNamesDef,getSearchOptions());
+            }
+        }
+    }, [getSearchOptions,cNamesDef]);
 
     const disDesc = coneAreaChoice === CONE_AREA_KEY ? 'w/ cone' : 'w/ polygon';
 
@@ -137,6 +152,17 @@ DLuiServDescPanel.propTypes= {
     setSideBarShowing: func,
     sideBarShowing: bool,
 };
+
+function getNames(concurrentSearchDef, coneAreaChoice) {
+    if (!concurrentSearchDef?.length || !coneAreaChoice) return {};
+    const cNames = concurrentSearchDef
+        .filter((c) => hasSpatialTypes(c.serviceDef) && isSpatialTypeSupported(c.serviceDef, coneAreaChoice))
+        .map((c) => c.desc);
+    const disableNames = concurrentSearchDef
+        .filter((c) => hasSpatialTypes(c.serviceDef) && !isSpatialTypeSupported(c.serviceDef, coneAreaChoice))
+        .map((c) => c.desc);
+    return {cNames, disableNames};
+}
 
 
 export const DLuiTabView = ({

@@ -308,9 +308,9 @@ function getLayerChanges(drawLayer, action) {
                 set(mocStyle, [targetPlotId], newStyle);
                 return {mocStyle, drawingDef:newDrawingDef, savedAlpha, requestedStyle, mocObj:newMocObj};
             }
-            if (mocTable) {
+            if (mocTable?.tableData?.data) {
                 const getMocNuniqs = () => {
-                    const {data} = get(mocTable, ['tableData']) || {};
+                    const {data} = mocTable.tableData;
                     return data.map((row) => row[0]);
                 };
                 const mocTiles = getMocNuniqs(mocTable);

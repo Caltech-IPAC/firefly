@@ -105,8 +105,10 @@ export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additio
 
 function getCutoutType(tapBrowserState) {
     const spatial= tapBrowserState?.constraintFragments?.get('spatial');
-    if (spatial?.adqlConstraint) return spatial.cutoutType;
-    else return ROW_POSITION;
+    if (spatial?.adqlConstraint?.length) return spatial.cutoutType;
+    const location= tapBrowserState?.constraintFragments?.get('location');
+    if (location?.adqlConstraint?.length) return location.cutoutType;
+    return ROW_POSITION;
 }
 
 

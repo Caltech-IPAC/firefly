@@ -465,7 +465,7 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
     else if (isDatalink && acceptList.includes(DATA_LINK_TABLES)) {
         const options= [{label:'Load as Datalink Search UI', value:'datalinkUI'}, {label:'Load as Table', value:'table'}];
         let defaultValue= 'table';
-        if (currentDetailsModel?.resources.some( ({utype=''}) => utype.toLowerCase().startsWith('cisx'))) {
+        if (currentDetailsModel?.resources?.some( ({utype=''}) => utype.toLowerCase().startsWith('cisx'))) {
             defaultValue= 'datalinkOp';
         }
         return (

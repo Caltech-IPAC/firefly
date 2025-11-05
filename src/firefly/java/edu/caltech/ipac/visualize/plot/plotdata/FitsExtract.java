@@ -301,14 +301,15 @@ public class FitsExtract {
         var arrayType= arrayTypeFromBitpix(h);
         var isFloat= (arrayType==Float.TYPE || arrayType==Double.TYPE);
         if (hduNum==refHduNum || secondaryCombine==SecondaryHduCombine.SAME) {
-            if (primeCt==CombineType.OR && !isFloat) return CombineType.AVG;
+            if (primeCt==CombineType.OR) return isFloat ? CombineType.AVG : CombineType.OR;
             return primeCt;
         }
 
         String type= FitsReadUtil.getExtTypeOrName(h);
 
         if (type==null || !allHdus.contains(type)) {
-            return (primeCt==CombineType.OR && !isFloat) ? CombineType.AVG : primeCt;
+            if (primeCt==CombineType.OR) return isFloat ? CombineType.AVG : CombineType.OR;
+            return primeCt;
         }
         if (uncertainty.contains(type.toUpperCase())) {
             return primeCt==CombineType.SUM ? CombineType.SQRT_SUM_N2  : CombineType.SQRT_SUM_SQ_AVG;
@@ -317,8 +318,9 @@ public class FitsExtract {
             return primeCt==CombineType.SUM ? CombineType.SUM : CombineType.SUM_DIV_N2;
         }
         if (flags.contains(type.toUpperCase())) {
-            if (isFloat) return primeCt==CombineType.SUM ? CombineType.SUM : CombineType.AVG;
-            return CombineType.OR;
+            return primeCt==CombineType.SUM
+                    ? CombineType.SUM
+                    : isFloat ? CombineType.AVG : CombineType.OR;
         }
         if (weight.contains(type.toUpperCase())) {
             return primeCt==CombineType.SUM ? CombineType.INVERSE_SUM_INVERSE_N: CombineType.N2_DIV_SUM_INVERSE_N     ;
