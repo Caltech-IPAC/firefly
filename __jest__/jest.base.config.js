@@ -9,26 +9,29 @@ module.exports = {
     'coverageDirectory': '../../build/dist/reports/firefly',
     'coverageReporters': ['lcov'],
     'moduleFileExtensions': [
-    'js',
-    'jsx'
-],
+        'js',
+        'jsx'
+    ],
     'moduleDirectories': [
-    'node_modules',
-    'js'
-],
+        'node_modules',
+        'js'
+    ],
     'setupFiles': [
-    '<rootDir>/../../__jest__/InitTest.js'
-],
+        '<rootDir>/../../__jest__/InitTest.js'
+    ],
     'moduleNameMapper': {
         '^.+\\?(raw|url)$': '<rootDir>/../../__jest__/fileMock.js',
         '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/../../__jest__/fileMock.js',
         '\\.(css|less)$': '<rootDir>/../../__jest__/styleMock.js',
         '^firefly/(.*)$': '<rootDir>/js/$1'
-},
+    },
     'transform': {
-    '^.+\\.jsx?$': '<rootDir>/../../__jest__/jest.transform.js'
-},
+        '^.+\\.jsx?$': '<rootDir>/../../__jest__/jest.transform.js'
+    },
+    'transformIgnorePatterns': [
+        'node_modules/(?!(slug|lodash-es|chroma-js)/)'
+    ],
     'globals': {
-    '__PROPS__': {}
-}
+        '__PROPS__': {}
+    }
 };
