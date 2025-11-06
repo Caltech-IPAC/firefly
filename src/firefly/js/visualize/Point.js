@@ -207,6 +207,8 @@ class WorldPtObj {
             retval += ';' + this.objName;
             if (this.resolver) {
                 retval += ';' + this.resolver.key;
+                if (this.objType) retval += ';' + this.objType;
+
             }
         }
         return retval;
