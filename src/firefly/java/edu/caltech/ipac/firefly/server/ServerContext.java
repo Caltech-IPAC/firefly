@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
+import edu.caltech.ipac.firefly.server.servlets.AdminShell;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -43,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  * A static server-centric class used hold server related information.
@@ -867,7 +869,8 @@ public class ServerContext {
 
         public void contextInitialized(ServletContextEvent servletContextEvent) {
             try {
-                System.out.println("contextInitialized...");
+                System.out.println("contextInitializing...");
+                AdminShell.checkAdminShell(servletContextEvent);
                 ServletContext cntx = servletContextEvent.getServletContext();
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
@@ -919,4 +922,5 @@ public class ServerContext {
         return new Info(FileUtil.getHostname(), pMem, FileUtil.getIPString(), maxMem, totMem, freeMem);
     }
     public record Info(String host, long pMemory, String ip, long jvmMax, long jvmTotal, long jvmFree) {}
+
 }

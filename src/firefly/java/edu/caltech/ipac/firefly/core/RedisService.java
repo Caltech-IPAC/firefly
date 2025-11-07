@@ -441,7 +441,9 @@ public class RedisService {
             stats.add("hits", map.getOrDefault("keyspace_hits", "?"));
             stats.add("misses", map.getOrDefault("keyspace_misses", "?"));
             stats.add("evicted", map.getOrDefault("evicted_keys", "?"));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            LOG.error(e, "RedisService getStats failed");
+        }
         return stats;
     }
 

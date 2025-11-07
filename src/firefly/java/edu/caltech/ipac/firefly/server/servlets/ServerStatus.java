@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
@@ -31,8 +32,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -60,6 +59,7 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
  * @version $Id: ServerStatus.java,v 1.1 2009/06/04 00:12:42 loi Exp $
  */
 public class ServerStatus extends BaseHttpServlet {
+    Logger.LoggerImpl LOG = Logger.getLogger();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
@@ -74,14 +74,14 @@ public class ServerStatus extends BaseHttpServlet {
         PrintWriter writer = res.getWriter();
         writer.println("<pre style='font-size: -1'>");
 
-        if (execGC)             System.gc();            // force garbage collection.
-        if (execRedisCleanup)   {
-            long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
-            writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
-            skip(writer);
-        }
-
         try {
+            if (execGC) System.gc();            // force garbage collection.
+            if (execRedisCleanup) {
+                long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
+                writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
+                skip(writer);
+            }
+
             showActions(writer);
 
             // some information may be time-consuming to load, so we should only do it on demand
@@ -100,7 +100,8 @@ public class ServerStatus extends BaseHttpServlet {
             }
 
             writer.println("</pre>");
-
+        }catch (Exception e) {
+            LOG.error(e, "Error generating server status page: " + e.getMessage());
         } finally {
             writer.flush();
             writer.close();
