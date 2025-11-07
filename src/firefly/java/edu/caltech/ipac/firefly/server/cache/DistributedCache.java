@@ -10,7 +10,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
-import redis.clients.jedis.Jedis;
+import io.lettuce.core.api.StatefulRedisConnection;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -69,29 +69,30 @@ public class DistributedCache<T> implements Cache<T> {
 
     public void put(CacheKey key, Object value, int lifespanInSecs) {
             String keystr = key.getUniqueString();
-            try(Jedis redis = RedisService.getConnection()) {
-                if (redis != null) {
-                    if (value == null) {
-                        del(redis, keystr);
+            try {
+                var redis = RedisService.mainConn();
+                if (value == null) {
+                    del(redis, keystr);
+                } else {
+                    if (lifespanInSecs > 0) {
+                        setex(redis, keystr, serialize(value), lifespanInSecs);
                     } else {
-                        if (lifespanInSecs > 0) {
-                            setex(redis, keystr, serialize(value), lifespanInSecs);
-                        } else {
-                            set(redis, keystr, serialize(value));
-                        }
+                        set(redis, keystr, serialize(value));
                     }
                 }
             } catch (Exception ex) { LOG.error(ex); }
     }
 
     public void remove(CacheKey key) {
-        try(Jedis redis = RedisService.getConnection()) {
+        try {
+            var redis = RedisService.mainConn();
             del(redis, key.getUniqueString());
         } catch (Exception ex) { LOG.error(ex); }
     }
 
     public T get(CacheKey key) {
-        try(Jedis redis = RedisService.getConnection()) {
+        try {
+            var redis = RedisService.mainConn();
             T v = deserialize( get(redis, key.getUniqueString()) );
             if (v != null && getValidator != null && !getValidator.test(v)) {
                 del(redis, key.getUniqueString());
@@ -107,7 +108,8 @@ public class DistributedCache<T> implements Cache<T> {
     }
 
     public boolean isCached(CacheKey key) {
-        try(Jedis redis = RedisService.getConnection()) {
+        try {
+            var redis = RedisService.mainConn();
             return exists(redis, key.getUniqueString());
         } catch (Exception ex) { LOG.error(ex); }
         return false;
@@ -115,15 +117,15 @@ public class DistributedCache<T> implements Cache<T> {
 
     @Nonnull
     public List<StringKey> getKeys() {
-        try(Jedis redis = RedisService.getConnection()) {
-            return keys(redis).stream().map(StringKey::new).toList();
+        try {
+            return keys(RedisService.scanConn()).stream().map(StringKey::new).toList();
         } catch (Exception ex) { LOG.error(ex); }
         return List.of();
     }
 
-    public int getSize() {
-        try(Jedis redis = RedisService.getConnection()) {
-            return size(redis);
+    public long getSize() {
+        try {
+            return size(RedisService.mainConn());
         } catch (Exception ex) { LOG.error(ex); }
         return -1;
     }
@@ -132,34 +134,34 @@ public class DistributedCache<T> implements Cache<T> {
 // Implementation of redis string;  override for map, list, and set.
 //====================================================================
 
-    String  get(Jedis redis, String key) {
-        return redis.get(key);
+    String  get(StatefulRedisConnection<String, String> redis, String key) {
+        return redis.sync().get(key);
     }
 
-    void del(Jedis redis, String key) {
-        redis.del(key);
+    void del(StatefulRedisConnection<String, String> redis, String key) {
+        redis.sync().del(key);
     }
 
-    void set(Jedis redis, String key, String value) {
-        redis.set(key, value);
+    void set(StatefulRedisConnection<String, String> redis, String key, String value) {
+        redis.sync().set(key, value);
     }
 
-    void setex(Jedis redis, String key, String value, long lifespanInSecs) {
-        redis.setex(key, lifespanInSecs, value);
+    void setex(StatefulRedisConnection<String, String> redis, String key, String value, long lifespanInSecs) {
+        redis.sync().setex(key, lifespanInSecs, value);
     }
 
     @Nonnull
-    List<String> keys(Jedis redis) {
-        var keys = redis.keys("*");
+    List<String> keys(StatefulRedisConnection<String, String> redis) {
+        var keys = redis.sync().keys("*");
         return keys == null ? List.of() : keys.stream().toList();
     }
 
-    boolean exists(Jedis redis, String key) {
-        return redis.exists(key);
+    boolean exists(StatefulRedisConnection<String, String> redis, String key) {
+        return redis.sync().exists(key) > 0;
     }
 
-    int size(Jedis redis) {
-        return Math.toIntExact(redis.dbSize());
+    long size(StatefulRedisConnection<String, String> redis) {
+        return redis.sync().dbsize();
     }
 
 //====================================================================

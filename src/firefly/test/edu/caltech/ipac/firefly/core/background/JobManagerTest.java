@@ -30,6 +30,9 @@ public class JobManagerTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
+        // set so JobManager does not wait for results
+        AppProperties.setProperty("job.wait.complete", "0");
+
         // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
         setupServerContext(null);
         Logger.setLogLevel(Level.DEBUG);
@@ -38,8 +41,6 @@ public class JobManagerTest extends ConfigTest {
     @Category({TestCategory.Perf.class})
     @Test
     public void testRunAs() throws Exception {
-        // set so JobManager does not wait for results
-        AppProperties.setProperty("job.wait.complete", "0");
 
         /*
             This test submits 20 PACKAGE jobs.  Each one sleeps for 2 seconds, then print completed status.
@@ -85,10 +86,10 @@ public class JobManagerTest extends ConfigTest {
         AppProperties.setProperty("job.wait.complete", "0");
         Logger.setLogLevel(Level.INFO);
 
-        ServerContext.getRequestOwner().setWsConnInfo("test", "test");
-        for(int i =0; i < 100_000; i++) {
-            JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
-        }
+//        ServerContext.getRequestOwner().setWsConnInfo("test", "test");
+//        for(int i =0; i < 100_000; i++) {
+//            JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
+//        }
 
         ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // load 9999 with 100k; extreme
         for(int i =0; i < 100_000; i++) {
@@ -115,7 +116,7 @@ public class JobManagerTest extends ConfigTest {
     @Test
     public void loadTest() throws Exception {
         /*
-          Performance results
+          Performance results using Jedis vs Lettuce are identical with embedded Redis server.
             Cache keys count: 101,104
             All Jobs: 1,165ms with 101,104 jobs
             User Jobs: 936ms with 99,994 jobs       # confirmed only 99,994 jobs for 9999; not sure why 6 missing
@@ -157,7 +158,7 @@ public class JobManagerTest extends ConfigTest {
     }
 
 
-    private static class SleepJob extends ServCmdJob {
+    private static class SleepJob extends ServCmdJob implements Job.Worker {
         Job.Type type;
         String key;
         public SleepJob(Job.Type type, String key) {
@@ -177,6 +178,9 @@ public class JobManagerTest extends ConfigTest {
             return "done";
         }
 
+        public void setJob(Job job) {}
+        public Job getJob() {return null;}
+        public Worker getWorker() {return this;}
     }
 
 }

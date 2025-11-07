@@ -159,7 +159,7 @@ public class CacheManager {
             return false;
         }
 
-        public int getSize() {
+        public long getSize() {
             return 0;
         }
 

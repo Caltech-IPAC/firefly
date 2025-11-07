@@ -4,7 +4,9 @@
 package edu.caltech.ipac.firefly.server;
 
 import com.sun.management.OperatingSystemMXBean;
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -40,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A static server-centric class used hold server related information.
@@ -90,7 +93,7 @@ public class ServerContext {
     private static File appConfigDir;
     private static File webappConfigDir;
     private static File[] visSearchPath = null;
-    private static boolean isInit = false;
+    private static AtomicBoolean isInit = new AtomicBoolean(false);
 
     private volatile static String HIPS_FILE_PATH_STR;
     private volatile static String PERM_FILE_PATH_STR;
@@ -105,12 +108,24 @@ public class ServerContext {
 
     private static final Logger.LoggerImpl log= Logger.getLogger();
 
+    /**
+     * Initialize the ServerContext.  Remember to call shutdown() to clean up
+     * any services started here.
+     * @param contextPath       application context path
+     * @param contextName       application name
+     * @param webappConfigPath  path to the webapp configuration directory
+     */
     public static void init(String contextPath, String contextName, String webappConfigPath) {
-        if (!isInit) {
-            isInit = true;
+        if (!isInit.getAndSet(true)) {
             ServerContext.contextPath = contextPath;
             ServerContext.webappConfigPath = webappConfigPath;
             ServerContext.contextName = contextName;
+
+            try {
+                RedisService.init();    // initialize Redis first because other services depend on it.
+            } catch (Exception e) {
+                log.error(e, "Failed to initialize RedisService: " + e.getMessage());
+            }
 
             configInit();
 
@@ -128,6 +143,8 @@ public class ServerContext {
 
             // initialize search processors
             SearchProcessorFactory.init();
+            Messenger.init();
+            JobManager.init();
 
             // alerts monitoring
             if (AppProperties.getBooleanProperty("alerts.monitorAlerts",true)) AlertsMonitor.startMonitor();
@@ -137,6 +154,13 @@ public class ServerContext {
             FitsFactory.setUseHierarch(true); // this is now the default as of 1.16
             FitsFactory.setLongStringsEnabled(true);
         }
+    }
+
+    public static void shutdown() {
+        log.info("ServerContext shutting down");
+        // shutdown Redis service
+        RedisService.teardown();
+        log.info("ServerContext shutdown complete");
     }
 
     public static void configInit() {
@@ -847,13 +871,6 @@ public class ServerContext {
                 ServletContext cntx = servletContextEvent.getServletContext();
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
-                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-                        () -> JobManager.cleanup(),
-                        JobManager.CLEANUP_INTVL_MINS,
-                        JobManager.CLEANUP_INTVL_MINS,
-                        TimeUnit.MINUTES);
-
-                JobManager.init();  // initialize JobManager on startup
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -862,7 +879,7 @@ public class ServerContext {
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             try {
                 System.out.println("contextDestroyed...");
-//                DbMonitor.cleanup(true, false);
+                ServerContext.shutdown();
                 ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
                 try {
                     SHORT_TASK_EXEC.shutdownNow();

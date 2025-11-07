@@ -6,11 +6,8 @@ package edu.caltech.ipac.firefly.server;
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.server.cache.DistribMapCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
-import redis.clients.jedis.Jedis;
-
-import static edu.caltech.ipac.firefly.server.RequestOwner.USER_KEY_EXPIRY;
+import io.lettuce.core.api.sync.RedisCommands;
 
 /**
  * Date: Jul 21, 2008
@@ -38,8 +35,9 @@ public class UserCache<T> extends DistribMapCache<T> {
     private UserCache(String userKey) { super(userKey); }  // based on userKey, with the cache data expiring after the default configured time.
 
     public static boolean exists(StringKey userKey) {
-        try(Jedis redis = RedisService.getConnection()) {
-            return redis.exists(userKey.getUniqueString());
+        try {
+            var redis = RedisService.mainConn().sync();
+            return redis.exists(userKey.getUniqueString()) > 0;
         } catch (Exception ex) { LOG.error(ex); }
         return false;
     }

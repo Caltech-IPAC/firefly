@@ -5,20 +5,15 @@
 package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.server.servlets.ServerStatus;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.AppProperties;
 import org.apache.logging.log4j.Level;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import redis.clients.jedis.Jedis;
 
-import static edu.caltech.ipac.firefly.core.RedisService.MAX_POOL_SIZE;
-import static edu.caltech.ipac.firefly.core.RedisService.REDIS_HOST;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -31,13 +26,14 @@ import static org.junit.Assert.assertEquals;
  */
 public class RedisServiceTest extends ConfigTest {
 
-    @Before
-    public void setup() {
+    @BeforeClass
+    public static void setup() throws Exception {
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        RedisService.init();
     }
 
-    @After
-    public void teardown() {
+    @AfterClass
+    public static void teardown() {
         RedisService.teardown();
         LOG.trace("tear down");
     }
@@ -45,7 +41,6 @@ public class RedisServiceTest extends ConfigTest {
     @Ignore("Does not work reliably in CI")
     @Test
     public void testExternalRedis() {
-        AppProperties.setProperty(REDIS_HOST, "localhost");     // setup for external Redis
         testRedis();
     }
 
@@ -57,11 +52,11 @@ public class RedisServiceTest extends ConfigTest {
 
     @Test
     public void testExceedMaxConnections() {
-        AppProperties.setProperty(MAX_POOL_SIZE, "20");
         try {
             for (int i=0; i<25; i++) {
-                Jedis conn = RedisService.getConnection();
-                assertEquals("PONG", conn.ping());
+                assertEquals("PONG", RedisService.mainConn().sync().ping());
+                assertEquals("PONG", RedisService.scanConn().sync().ping());
+                assertEquals("PONG", RedisService.pubSubConn().sync().ping());
             }
             Assert.assertTrue(true);    // should finish with some wait time.
         } catch (Exception e) {
@@ -69,29 +64,38 @@ public class RedisServiceTest extends ConfigTest {
         }
     }
 
+    @Test
+    public void testFullStats() {
+        ServerStatus.EntryList stats = RedisService.getFullStats();
+        Assert.assertNotNull(stats);
+    }
+
     private void testRedis() {
 
         // ping test
-        try (Jedis conn = RedisService.getConnection()) {
-            assertEquals("PONG", conn.ping());
+        try {
+            var redis = RedisService.mainConn().sync();
+            assertEquals("PONG", redis.ping());
         } catch (Exception e) {
             Assert.fail("Can't connect: " + e);
         }
 
-        // set with expiry
-        try (Jedis conn = RedisService.getConnection()) {
-            conn.setex("key1", 1, "val1");
-            assertEquals("val1", conn.get("key1"));
+        try {
+            var redis = RedisService.mainConn().sync();
+            redis.setex("key1", 1, "val1");
+            assertEquals("val1", redis.get("key1"));
             Thread.sleep(3_000);        // should be expired after 3 seconds
-            assertEquals(false, conn.exists("key1"));
+            assertEquals(0, (long) redis.exists("key1"));
         } catch (Exception e) {
             Assert.fail("Can't connect: " + e);
         }
+
 
         // lots of connections test
         for (int i=0; i<100; i++) {
-            try (Jedis conn = RedisService.getConnection()) {
-                assertEquals("PONG", conn.ping());
+            try {
+                var redis = RedisService.mainConn().sync();
+                assertEquals("PONG", redis.ping());
             } catch (Exception e) {
                 Assert.fail("Can't connect: " + e);
             }

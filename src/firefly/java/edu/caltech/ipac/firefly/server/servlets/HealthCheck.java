@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
@@ -10,6 +11,8 @@ import edu.caltech.ipac.util.StringUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * Check application health by performing a simple task, then return HTTP code 200 if succeed.
@@ -26,12 +29,18 @@ public class HealthCheck extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         byte[] alloc = null;
+        boolean isConnected= false;
         try {
             // memory check
             int mem = Math.max(Math.min(StringUtils.getInt(req.getParameter("mem"), 5), 1024), 1);
             alloc = new byte[mem * 1024 * 1024];
             // database check
             DbAdapter.getAdapter().execQuery("select 1", null);
+            // Redis check
+            Try.it(RedisService::isConnected).getOrElse(e ->  Logger.info("Redis not connected"));
+            Try.it(() -> RedisService.mainConn().sync().ping()).getOrElse(e ->  Logger.error("Main connection ping failed"));
+            Try.it(() -> RedisService.scanConn().sync().ping()).getOrElse(e ->  Logger.error("Scan connection ping failed"));
+            Try.it(() -> RedisService.pubSubConn().sync().ping()).getOrElse(e ->  Logger.error("PubSub connection ping failed"));
         } catch (OutOfMemoryError oome) {
             Logger.error(oome, "Encountered OutOfMemory during memory check");
             throw oome;

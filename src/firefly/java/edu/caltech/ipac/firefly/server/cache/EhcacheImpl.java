@@ -79,7 +79,7 @@ public class EhcacheImpl<T> implements Cache<T> {
         return cache.getKeys().stream().map(k -> new StringKey(k.toString())).toList();
     }
 
-    public int getSize() {
+    public long getSize() {
         return cache.getSize();
     }
 
