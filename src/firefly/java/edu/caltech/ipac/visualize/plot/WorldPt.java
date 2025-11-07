@@ -64,7 +64,7 @@ public class WorldPt extends Pt {
     public static WorldPt parse(String serString) {
         if (serString==null) return null;
         String sAry[]= serString.split(";");
-        if (sAry.length<2 || sAry.length>5) return null;
+        if (sAry.length<2 || sAry.length>6) return null;
         return stringAryToWorldPt(sAry);
     }
 
