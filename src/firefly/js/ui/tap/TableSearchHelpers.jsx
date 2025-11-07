@@ -306,22 +306,18 @@ export function DebugObsCore({constraintResult, includeSia=true}) {
 
 
 
-export function TitleCustomizeButton({groupKey, tapBrowserState, selectBy}) {
-
+export function TitleCustomizeButton({groupKey, defaultTitle}) {
     const [getUserTitle,setUserTitle]= useFieldGroupValue(USER_ENTERED_TITLE,groupKey);
-    const [getADQL,]= useFieldGroupValue(ADQL_QUERY_KEY,groupKey);
-    const getDefTitle= () =>
-        selectBy === 'adql' ?
-            makeTapSearchTitle(getADQL(), tapBrowserState.serviceUrl) :
-            makeTapSearchTitle(undefined, tapBrowserState.serviceUrl, tapBrowserState.tableName);
 
-    const onClick= () => {
-        const defTitle= getDefTitle();
-        showResultTitleDialog(getUserTitle(), defTitle, (newTitle) => setUserTitle(newTitle===defTitle ? undefined : newTitle) );
+    const onClick = () => {
+        const defTitle = defaultTitle;
+        showResultTitleDialog(getUserTitle(), defTitle, (newTitle) =>
+            setUserTitle(newTitle === defTitle ? undefined : newTitle)
+        );
     };
 
-    const title= getUserTitle() || getDefTitle();
-    if (!title) return undefined;
+    const title = getUserTitle() || defaultTitle;
+    if (!title) return null;
 
     return (
             <Stack direction='row' alignItems='center' sx={{pl:3}}>
@@ -341,12 +337,29 @@ export function TitleCustomizeButton({groupKey, tapBrowserState, selectBy}) {
                     }}
                 >
                     <Typography level='title-md'>Title: </Typography>
-                    {`${getUserTitle() || getDefTitle() || ''}`}
+                    {title}
                 </Typography>
 
             </Stack>
     );
 }
+
+export function TapTitleCustomizeButton({groupKey, tapBrowserState, selectBy}) {
+    const [getADQL,] = useFieldGroupValue(ADQL_QUERY_KEY, groupKey);
+
+    const defaultTitle =
+        selectBy === 'adql'
+            ? makeTapSearchTitle(getADQL(), tapBrowserState.serviceUrl)
+            : makeTapSearchTitle(undefined, tapBrowserState.serviceUrl, tapBrowserState.tableName);
+
+    return (
+        <TitleCustomizeButton
+            groupKey={groupKey}
+            defaultTitle={defaultTitle}
+        />
+    );
+}
+
 
 
 

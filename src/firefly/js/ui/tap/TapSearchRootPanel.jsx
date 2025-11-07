@@ -28,7 +28,7 @@ import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SwitchInputField} from '../SwitchInputField.jsx';
 import {ConstraintContext, getHelperConstraints, getUploadConstraint, isTapUpload} from './Constraints.js';
-import {TitleCustomizeButton} from './TableSearchHelpers';
+import {TapTitleCustomizeButton} from './TableSearchHelpers';
 import {TapViewType} from './TapViewType.jsx';
 import {getAdqlQuery, onTapSearchSubmit} from 'firefly/ui/tap/TapSearchSubmit';
 
@@ -425,7 +425,7 @@ function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, getUserTitl
             },
         }}/>)
     ];
-    extraWidgets.push( <TitleCustomizeButton {...{key:'setTitle', groupKey,
+    extraWidgets.push( <TapTitleCustomizeButton {...{key:'setTitle', groupKey,
         tapBrowserState,selectBy, getADQL: () => getFieldVal(groupKey,ADQL_QUERY_KEY,'') }}/> );
 
     extraWidgets.push(
