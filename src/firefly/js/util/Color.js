@@ -6,6 +6,18 @@ export default { makeSimpleColorMap, getBWBackground, shadeColor};
 export const toRGBA= (color, alpha=1) => chroma.valid(color) ? chroma(color).alpha(alpha).rgba() : [0,0,0,alpha];
 export const toRGB= (color) => chroma.valid(color) ? chroma(color).rgb() : [0,0,0];
 
+export function isBestForegroundLight(colorStr) {
+    const wContrast= chroma.contrast(colorStr,'white');
+    const bContrast= chroma.contrast(colorStr,'black');
+    return wContrast>bContrast;
+}
+
+export function getBestContrast(bgStr, c1, c2) {
+    const contrast1 = chroma.contrast(bgStr, c1);
+    const contrast2 = chroma.contrast(bgStr, c2);
+    return contrast1 > contrast2 ? c1 : c2;
+}
+
 /**
  * @summary extract R,G,B amd alpha value from color string like 'rgba(...)', 'rgb(...)' or '#rrggbb'
  * @param color

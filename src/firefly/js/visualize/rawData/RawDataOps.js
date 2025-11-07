@@ -1,4 +1,5 @@
-import {isArray, isArrayBuffer} from 'lodash';
+import {isArray, isArrayBuffer, isUndefined} from 'lodash';
+import shallowequal from 'shallowequal';
 import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions';
 import {Band} from '../Band.js';
 import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
@@ -45,7 +46,22 @@ function createTileFromImageData(buffer, width,height) {
 
 
 
-function* rawTileGenerator(rawTileDataGroup, colorTableId, mask, maskColor, bias, contrast, bandUse, GPU) {
+/**
+ *
+ * @param {Object} obj
+ * @param obj.rawTileDataGroup
+ * @param [obj.colorTableId]
+ * @param [obj.mask]
+ * @param [obj.maskColor]
+ * @param obj.bias
+ * @param obj.contrast
+ * @param obj.bandUse
+ * @param obj.nanPixelColor
+ * @param obj.GPU
+ * @return {Promise<unknown>}
+ */
+function* rawTileGenerator({rawTileDataGroup, colorTableId=0, mask=false, maskColor=undefined,
+                               bias=.5, contrast=1, bandUse, nanPixelColor, GPU}) {
     const {rawTileDataAry}= rawTileDataGroup;
     const newRawTileDataAry= [];
     const gpu= getGPUOps(GPU);
@@ -55,7 +71,8 @@ function* rawTileGenerator(rawTileDataGroup, colorTableId, mask, maskColor, bias
         let tile;
 
         if (isArrayBuffer(pixelDataStandard) || pixelData3C?.some( (a) => isArrayBuffer(a)) ) {
-            tile= gpu.createTileWithGPU(rawTileDataAry[i],getColorModel(colorTableId),isArray(pixelData3C), mask, maskColor, bias, contrast,bandUse);
+            const cm=getColorModel(colorTableId,nanPixelColor);
+            tile= gpu.createTileWithGPU(rawTileDataAry[i],cm,mask, maskColor, bias, contrast,bandUse);
         }
         else {
             tile= createTileFromImageData(workerTmpTile, width,height);
@@ -63,14 +80,27 @@ function* rawTileGenerator(rawTileDataGroup, colorTableId, mask, maskColor, bias
         newRawTileDataAry[i]= {...inData, workerTmpTile: undefined, rawImageTile:tile};
         if (i<rawTileDataAry.length-1) yield;
     }
-    return {...rawTileDataGroup, rawTileDataAry:newRawTileDataAry, colorTableId};
+    return {...rawTileDataGroup, rawTileDataAry:newRawTileDataAry, colorTableId, nanPixelColor};
 }
 
 
-async function populateTilesAsync(rawTileDataGroup, colorTableId,mask, maskColor, bias,contrast, bandUse) {
+/**
+ *
+ * @param {Object} obj
+ * @param obj.rawTileDataGroup
+ * @param obj.colorTableId
+ * @param [obj.mask]
+ * @param [obj.maskColor]
+ * @param obj.bias
+ * @param obj.contrast
+ * @param obj.bandUse
+ * @param obj.nanPixelColor
+ * @return {Promise<unknown>}
+ */
+async function populateTilesAsync(obj) {
     const chunkSize= 5;
     const GPU= await getGpuJs();
-    const gen= rawTileGenerator(rawTileDataGroup,colorTableId, mask, maskColor, bias, contrast, bandUse, GPU);
+    const gen= rawTileGenerator({...obj, GPU});
     return new Promise((resolve, reject) => {
         const id= setInterval( () => {
 
@@ -97,50 +127,58 @@ const defBandUse= {useRed:true,useGreen:true,useBlue:true};
 
 /**
  *
- * @param plot
- * @param colorTableId
- * @param bias
- * @param contrast
- * @param bandUse
- * @param onComplete function to call with rawData object when done, note this call will only happen if is is not overridden by another call
+ * @param {Object} params
+ * @param params.plot
+ * @param params.colorTableId
+ * @param params.bias
+ * @param params.contrast
+ * @param {Array.<number>} params.nanPixelColor
+ * @param params.bandUse
+ * @param params.onComplete function to call with rawData object when done, note this call will only happen if is is not overridden by another call
  * @return {Promise<ChangeColorResults>}
  */
-export function queueChangeLocalRawDataColor(plot, colorTableId, bias, contrast, bandUse=defBandUse, onComplete) {
-    const {plotImageId}= plot;
+export function queueChangeLocalRawDataColor(params) {
+    const {onComplete, ...changeParams}= params;
+    const {plotImageId,plotId}= params.plot;
     const entry = getEntry(plotImageId);
     if (!entry) return;
     const p= colorChangeDonePromises.get(plotImageId);
     if (!entry.colorChangingInProgress || !p) {
-        changeLocalRawDataColor(plot,colorTableId,bias,contrast,bandUse)
-            .then( (colorChangeResults) => onComplete(false, colorChangeResults));
-        return;
+        return changeLocalRawDataColor(changeParams)
+            .then( (colorChangeResults) => onComplete(plotId, false, colorChangeResults));
     }
     if (nextColorChangeParams.has(plotImageId)) {
-        nextColorChangeParams.get(plotImageId).onComplete(true);
+        nextColorChangeParams.get(plotImageId).onComplete(plotId,true);
+        return;
     }
     else {
        p.then( () => {
-           if (nextColorChangeParams.has(plotImageId) && getPlotViewById(visRoot(),plot.plotId)) {
-               const {plot, colorTableId, bias, contrast, onComplete}= nextColorChangeParams.get(plotImageId);
+           if (nextColorChangeParams.has(plotImageId) && getPlotViewById(visRoot(),plotId)) {
+               const {onComplete, ...nextChangeParams}= nextColorChangeParams.get(plotImageId);
                nextColorChangeParams.delete(plotImageId);
-               changeLocalRawDataColor(plot,colorTableId,bias,contrast,bandUse)
-                   .then( (colorChangeResults) => onComplete(false, colorChangeResults));
+               changeLocalRawDataColor(nextChangeParams)
+                   .then( (colorChangeResults) => onComplete(nextChangeParams.plot.plotId, false, colorChangeResults));
            }
        });
     }
-    nextColorChangeParams.set(plotImageId,{plot, colorTableId,bias, contrast, onComplete});
+    nextColorChangeParams.set(plotImageId,params);
+    return p;
 }
 
 /**
  * color change needs to do the following
- * @param {WebPlot} plot
- * @param {number} colorTableId
- * @param {number} bias
- * @param {number} contrast
- * @param bandUse
+ * @param {Object} obj
+ * @param {WebPlot} obj.plot
+ * @param {number} obj.colorTableId
+ * @param {number} obj.bias
+ * @param {Array.<number>} obj.nanPixelColor
+ * @param {number} obj.contrast
+ * @param {Array.<number>} obj.nanPixelColor
+ * @param [obj.bandUse]
  * @return {ChangeColorResults}
  */
-export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast, bandUse=defBandUse) {
+export async function changeLocalRawDataColor(obj) {
+    const {plot, colorTableId, bias, contrast, nanPixelColor, bandUse=defBandUse}= obj;
     const entry = getEntry(plot.plotImageId);
     if (!entry) return {};
 
@@ -155,8 +193,9 @@ export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast
     });
     colorChangeDonePromises.set(plot.plotImageId, donePromise);
 
+    //todo makeColorAction
     if (shouldUseGpuInWorker()) {
-        const colorResult= await postToWorker(makeColorAction(plot,colorTableId,bias,contrast,bandUse, entry.workerKey));
+        const colorResult= await postToWorker(makeColorAction({...obj, workerKey:entry.workerKey}));
         plotStateSerialized = colorResult.plotStateSerialized;
         rawTileDataGroup= colorResult.rawTileDataGroup;
     }
@@ -165,21 +204,22 @@ export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast
         plotStateSerialized= newPlotState.toJson(true);
         rawTileDataGroup= entry.rawTileDataGroup;
     }
-    entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, colorTableId, undefined, undefined, bias,contrast, bandUse);
+    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, ...obj});
     entry.thumbnailEncodedImage = makeThumbnailCanvas(plot);
     entry.colorChangingInProgress= false;
     colorChangeDonePromises.delete(plot.plotImageId);
     donePromiseResolve?.();
     const plotState= PlotState.parse(plotStateSerialized);
-    return {plotState, bias,contrast,bandUse, colorTableId};
+    return {plotState, bias,contrast,bandUse, nanPixelColor, colorTableId};
 }
 
 
 export function colorTableMatches(plot) {
     if (!plot || isThreeColor(plot)) return true;
     const entry = getEntry(plot.plotImageId);
-    if (!entry?.rawTileDataGroup?.colorTableId) return true;
+    if (isUndefined(entry?.rawTileDataGroup?.colorTableId)) return true;
     if (entry.rawTileDataGroup.colorTableId!==plot.colorTableId) return false;
+    if (!shallowequal(entry.rawTileDataGroup.nanPixelColor, plot.rawData?.bandData?.[0]?.nanPixelColor)) return false;
     // const {bias, contrast}= plot.rawData.bandData[0];
     //todo add check bias and contrast here
     return true;
@@ -191,7 +231,7 @@ export async function changeLocalMaskColor(plot, maskColor) {
     if (!getEntry(plot.plotImageId)) return;
     const newPlotState = plot.plotState.copy();
     const entry = getEntry(plot.plotImageId);
-    entry.rawTileDataGroup = await populateTilesAsync(entry.rawTileDataGroup, 0,  true, maskColor);
+    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:entry.rawTileDataGroup, mask:true, maskColor});
     return { plotState: newPlotState};
 }
 
@@ -407,7 +447,7 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
  */
 async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOptions) {
     const {dataCompress=FULL, backgroundUpdate=false, checkForPlotUpdate=true}= loadingOptions;
-    const {processHeader} = plot.rawData.bandData[0];
+    const {processHeader,nanPixelColor} = plot.rawData.bandData[0];
     const {plotImageId,colorTableId:originalColorTableId}= plot;
     const veryLargeData= plot.dataWidth*plot.dataHeight > MAX_FULL_DATA_SIZE;
     let entry = getEntry(plotImageId);
@@ -447,7 +487,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
             entry.dataType = STRETCH_ONLY;
             const success=  maskOptions ?
                 await completeMaskLoad(latestPlot, stretchResult, maskOptions.maskColor) :
-                await completeLoad(latestPlot, stretchResult, originalColorTableId); //todo - get mask color
+                await completeLoad(latestPlot, stretchResult, originalColorTableId, nanPixelColor); //todo - get mask color
             return {success, fatal:false};
         } else {
             clearLocalStretchData(latestPlot);
@@ -465,20 +505,22 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
  * @param {WebPlot} plot
  * @param {{rawTileDataGroup:RawTileDataGroup, plotStateSerialized:string}} stretchResult
  * @param {number} originalColorTableId
+ * @param nanPixelColor
  * @return {Promise<boolean>}
  */
-async function completeLoad(plot, stretchResult, originalColorTableId) {
+async function completeLoad(plot, stretchResult, originalColorTableId, nanPixelColor) {
     const currPlot= primePlot(visRoot(),plot.plotId);
     if (!currPlot) return false;
     const entry = getEntry(plot.plotImageId);
     if (originalColorTableId===currPlot.colorTableId) {
-        entry.rawTileDataGroup = await populateTilesAsync(stretchResult.rawTileDataGroup, currPlot.colorTableId);
+        entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:stretchResult.rawTileDataGroup, colorTableId:currPlot.colorTableId, nanPixelColor});
     }
     else {
-        const {bias,contrast}= currPlot.rawData.bandData[0];
-        await changeLocalRawDataColor(currPlot, currPlot.colorTableId, bias, contrast);
+        const {bias,contrast,nanPixelColor}= currPlot.rawData.bandData[0];
+        await changeLocalRawDataColor({plot:currPlot, colorTableId:currPlot.colorTableId, bias, contrast, nanPixelColor});
     }
     entry.rawTileDataGroup.colorTableId= currPlot.colorTableId;
+    entry.rawTileDataGroup.nanPixelColor= currPlot.rawData.bandData[0].nanPixelColor;
     entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
     return true;
 }
@@ -487,7 +529,7 @@ async function completeLoad(plot, stretchResult, originalColorTableId) {
 async function completeMaskLoad(plot, stretchResult, maskColor) {
     const {rawTileDataGroup} = stretchResult;
     const entry = getEntry(plot.plotImageId);
-    entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, 0,  true, maskColor);
+    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, mask:true, maskColor});
     return true;
 }
 

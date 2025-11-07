@@ -3,7 +3,7 @@
  */
 import {Box, Card, Skeleton, Typography} from '@mui/joy';
 import React, {useEffect, memo, useState} from 'react';
-import PropTypes, {bool, object, shape, string} from 'prop-types';
+import PropTypes, {bool, func, object, shape, string} from 'prop-types';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {checkProps} from '../../ui/SimpleComponent';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -110,7 +110,7 @@ ImageViewStatusPanel.propTypes= {
         button: shape({
             sx: object,
             text: string,
-            okClick: Function,
+            okClick: func,
         })
     })
 };

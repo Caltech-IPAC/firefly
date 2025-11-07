@@ -563,14 +563,21 @@ export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, grou
             const colorPicker = (
                 <div style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
                      title='Select trace color'
-                     onClick={() => showColorPickerDialog(getFieldVal(groupKey, `data.${activeTrace}.marker.color`), true, false,
-                         (ev) => {
-                             if (ev) {
-                                 const {r, g, b, a} = ev.rgb;
-                                 const rgbStr = `rgba(${r},${g},${b},${a})`;
-                                 dispatchValueChange({fieldKey: `data.${activeTrace}.marker.color`, groupKey, value: rgbStr, valid: true});
-                             }
-                         }, groupKey, 'plots.colorpicker', .5)}>
+                     onClick={() => showColorPickerDialog({
+                             colorStr:getFieldVal(groupKey, `data.${activeTrace}.marker.color`),
+                             callbackOnOKOnly:true,
+                             postTitle: groupKey ? `: ${groupKey}` : '',
+                             helpId: 'plots.colorpicker',
+                             presetAlpha:.5,
+                             cb:(ev) => {
+                                 if (ev) {
+                                     const {r, g, b, a} = ev.rgb;
+                                     const rgbStr = `rgba(${r},${g},${b},${a})`;
+                                     dispatchValueChange({fieldKey: `data.${activeTrace}.marker.color`, groupKey, value: rgbStr, valid: true});
+                                 }
+                             },
+                         }
+                     )}>
                     <ToolbarButton icon={MAGNIFYING_GLASS}/>
                 </div>
             );

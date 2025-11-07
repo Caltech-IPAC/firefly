@@ -65,7 +65,7 @@ import FillIcon from '@mui/icons-material/OpenInFullOutlined';
 import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
-
+import ReverseIcon from '@mui/icons-material/FlipCameraAndroidOutlined';
 
 import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 
@@ -255,6 +255,10 @@ export const StatsButton= (props) => ( <TB {...{ icon: <FunctionsOutlinedIcon/>,
 export const ExpandAll= (props) => ( <TB {...{icon: <UnfoldMoreOutlinedIcon/>, ...props}}/>);
 export const CollapseAll= (props) => ( <TB {...{icon: <UnfoldLessOutlinedIcon/>, ...props}}/>);
 export const ChangeSearch= (props) => ( <TB {...{icon: <ChangeCircleIcon/>, ...props}}/>);
+
+export const ReverseButton= (props) =>(
+    <ToolbarButton {...{
+        icon: (<ReverseIcon sx={{transform: 'scale(.7)'}}/>), ...props }}/>);
 
 export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, ...props}}/>);
 

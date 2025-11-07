@@ -107,8 +107,10 @@ export function makeTableColorTitle(color, drawLayerId, plotId, tbl_id) {
 
 export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
     hideColorPickerDialog();
-    showColorPickerDialog(inDl.drawingDef.color, inDl.canUserChangeColor === ColorChangeType.STATIC, false,
-        (ev) => {
+    showColorPickerDialog({
+        colorStr:inDl.drawingDef.color, postTitle, topComponent,
+        callbackOnOKOnly:inDl.canUserChangeColor === ColorChangeType.STATIC,
+        cb:(ev) => {
             const {r, g, b, a} = ev.rgb;
             const rgbStr = `rgba(${r},${g},${b},${a})`;
 
@@ -129,7 +131,8 @@ export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
                 const dl = getDrawLayersByDisplayGroup(getDlAry(), inDl.displayGroupId);
                 dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({}, dl.drawingDef, {color: rgbStr}), plotId, dl.titleMatching);
             }
-        }, '', undefined, undefined, undefined, postTitle, topComponent);
+        }
+    });
 }
 
 export function getTitleTag(title, maxTitleChars, autoFormatTitle) {

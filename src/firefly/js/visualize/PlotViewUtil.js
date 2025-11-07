@@ -407,13 +407,14 @@ export const primePlotType= (pv) => primePlot(pv)?.plotType ?? 'image';
  * Perform an operation on all the PlotViews in a group except the source, get the plotViewAry and group from the store.
  * The operations are only performed if the group is locked.
  * @param {VisRoot} visRoot - root of the visualization object in store
- * @param {PlotView} sourcePv
+ * @param {PlotView|undefined} sourcePv
  * @param {Function} operationFunc
  * @param {boolean} ignoreThreeColor
  * @param {boolean} anyPlotType
  * @return {Array} new plotView array after the operation
  */
 export function operateOnOthersInOverlayColorGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false, anyPlotType= false) {
+    if (!sourcePv) return;
     const plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     const srcType= primePlotType(sourcePv);
     if (hasOverlayColorLock(sourcePv,plotGroup)) {

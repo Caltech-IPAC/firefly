@@ -86,91 +86,69 @@ export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction
 export function colorChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         const store= getState()[IMAGE_PLOT_KEY];
-        const {plotId,cbarId,bias,contrast, useRed=true, useGreen=true, useBlue=true}= rawAction.payload;
+        const {plotId}= rawAction.payload;
         const pv= getPlotViewById(store,plotId);
-        const plot= primePlot(pv);
-        const basePlotThreeColor= isThreeColor(pv);
-
-        let biasToUse= basePlotThreeColor ? [.5,.5,.5] : .5;
-        let contrastToUse=basePlotThreeColor ? [1,1,1] : 1;
-
         if (!pv) return;
 
-
-        if (basePlotThreeColor) {
-            if (isArray(bias)) biasToUse= bias.map( (b) => (b>1) ? 1 : b< 0 ? 0 : b);
-            if (isArray(contrast)) contrastToUse= contrast.map( (c) => (c>10) ? 10 : c< 0 ? 0 : c);
-        }
-        else {
-            if (isNumber(bias)) biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
-            if (isNumber(contrast)) contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
-        }
-
-        if (isHiPS(plot)) {
-            colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, rawAction.payload.actionScope);
-            return;
-        }
-        if (rawAction.payload.actionScope===ActionScope.SINGLE){
-            let promise;
-            if (!isThreeColor(plot)) {
-                promise= queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId));
-            }
-            else {
-                promise= queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                    makeOnComplete(dispatcher, plotId));
-            }
-            dispatchAddWorkingTask(plot.plotId,promise);
-        }
-        else {
-            let promise;
-            if (!isThreeColor(plot)) {
-                promise= queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId));
-            }
-            else {
-                promise= queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                    makeOnComplete(dispatcher, plotId));
-            }
-            dispatchAddWorkingTask(plot.plotId,promise);
-            operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
-                const p= primePlot(pv);
-                if (!p) return;
-                if (isThreeColor(p)!==basePlotThreeColor) return;
-                let promise;
-                if (!isThreeColor(p)) { // only do others that are not three color
-                    promise= queueChangeLocalRawDataColor(p,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, pv.plotId));
-                }
-                else {
-                    promise= queueChangeLocalRawDataColor(p,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
-                        makeOnComplete(dispatcher, pv.plotId));
-
-                }
-                dispatchAddWorkingTask(plot.plotId,promise);
-            });
-
-        }
-
-
+        isHiPS(primePlot(pv))
+            ? colorChangeHiPS(store, dispatcher, rawAction.payload)
+            : colorChangeImage(store,dispatcher,rawAction.payload);
     };
 
 }
 
+function colorChangeImage(store,dispatcher,payload) {
 
-function colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, actionScope) {
+    const onComplete= (plotId, abort, colorChangeResults) => {
+        if (abort) return;
+        const {bias, contrast, colorTableId, nanPixelColor, bandUse}= colorChangeResults;
+        dispatcher( {
+            type: ImagePlotCntlr.COLOR_CHANGE,
+            payload: { plotId, bias, contrast, colorTableId, nanPixelColor, ...bandUse }
+        });
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+    };
+
+
+    const {plotId,cbarId,nanPixelColor, useRed=true, useGreen=true, useBlue=true}= payload;
+    const pv= getPlotViewById(store,plotId);
+    const plot= primePlot(pv);
+    const basePlotThreeColor= isThreeColor(pv);
+    const {bias,contrast}= getBiasContrast(pv,payload.bias, payload.contrast);
+    const colorParams= {plot,bias,contrast, colorTableId:cbarId, nanPixelColor, onComplete};
+    const bandUse= {useRed,useGreen,useBlue};
+
+    const promise= basePlotThreeColor
+        ? queueChangeLocalRawDataColor({...colorParams, colorTableId:0, bandUse})
+        : queueChangeLocalRawDataColor(colorParams);
+    dispatchAddWorkingTask(plotId,promise);
+    if (payload.actionScope!==ActionScope.SINGLE) {
+        operateOnOthersInOverlayColorGroup(store,pv, (itemPv) => {
+            const p= primePlot(itemPv);
+            if (!p) return;
+            if (isThreeColor(p)!==basePlotThreeColor) return;
+            const promise= isThreeColor(p)
+                ? queueChangeLocalRawDataColor({...colorParams,plot:p,colorTableId:0, bandUse})
+                : queueChangeLocalRawDataColor({...colorParams,plot:p});
+            dispatchAddWorkingTask(p.plotId,promise);
+        });
+    }
+}
+
+
+function colorChangeHiPS(store, dispatcher, payload) {
+    const {plotId,cbarId,actionScope}= payload;
+    const pv= getPlotViewById(store,plotId);
+    const plot= primePlot(pv);
+    const {bias,contrast}= getBiasContrast(pv,payload.bias, payload.contrast);
 
     const doDispatch= (plotId) => {
         dispatcher( {
             type:ImagePlotCntlr.COLOR_CHANGE,
-            payload: {
-                plotId,
-                colorTableId: cbarId,
-                bias: biasToUse,
-                contrast : contrastToUse
-            }});
+            payload: { plotId, colorTableId: cbarId, bias, contrast}});
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
     };
 
-    const pv= getPlotViewById(store,plotId);
-    const plot= primePlot(pv);
     doDispatch(plotId,plot.plotState);
     if (actionScope!==ActionScope.SINGLE){
         operateOnOthersInOverlayColorGroup(store, pv, (pv) => {
@@ -361,18 +339,18 @@ function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
 }
 
 
-function makeOnComplete(dispatcher, plotId)  {
-    return (abort, colorChangeResults) => {
-        if (abort) return;
-        dispatcher( {
-            type: ImagePlotCntlr.COLOR_CHANGE,
-            payload: {
-                plotId,
-                bias: colorChangeResults.bias,
-                contrast : colorChangeResults.contrast,
-                colorTableId: colorChangeResults.colorTableId,
-                ...colorChangeResults.bandUse
-            }});
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
-    };
+function getBiasContrast(pv,bias,contrast) {
+    const threeC= isThreeColor(pv);
+    let biasToUse= threeC ? [.5,.5,.5] : .5;
+    let contrastToUse=threeC ? [1,1,1] : 1;
+
+    if (threeC) {
+        if (isArray(bias)) biasToUse= bias.map( (b) => (b>1) ? 1 : b< 0 ? 0 : b);
+        if (isArray(contrast)) contrastToUse= contrast.map( (c) => (c>10) ? 10 : c< 0 ? 0 : c);
+    }
+    else {
+        if (isNumber(bias)) biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
+        if (isNumber(contrast)) contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
+    }
+    return {bias:biasToUse,contrast:contrastToUse};
 }
