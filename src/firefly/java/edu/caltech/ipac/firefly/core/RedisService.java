@@ -388,16 +388,28 @@ public class RedisService {
             stats.add("status", getRedisHostPortDesc());
 
             // --- CONFIGURATION ---
-            Map<String, String> configMap = redis.configGet(
-                    "maxmemory",
-                    "save",
-                    "dir",
-                    "dbfilename",
-                    "appendfilename"
-            );
+            Map<String, String> configMap = null;
+            try {
+                configMap = redis.configGet(
+                        "maxmemory",
+                        "save",
+                        "dir",
+                        "dbfilename",
+                        "appendfilename"
+                );
+            } catch (Exception e) {
+                // fallback for restricted servers
+                String memoryInfo = redis.info("memory");
+                String serverInfo = redis.info("server");
+                configMap = new LinkedHashMap<>();
+                configMap.put("maxmemory", extract(memoryInfo, "maxmemory"));
+                configMap.put("dir", extract(serverInfo, "dir"));
+                configMap.put("dbfilename", extract(serverInfo, "dbfilename"));
+                configMap.put("appendfilename", extract(serverInfo, "appendfilename"));
+            }
             stats.add(null, "\n> CONFIGURATION :");
             stats.add("PASSWORD-USED", isEmpty(passwd) ? "no" : "yes");
-            configMap.forEach(stats::add);
+            if (configMap != null) configMap.forEach(stats::add);
 
             // --- Connection health ---
             stats.add(null, "\n> CONNECTION :");
@@ -445,6 +457,15 @@ public class RedisService {
             LOG.error(e, "RedisService getStats failed");
         }
         return stats;
+    }
+
+    private static String extract(String info, String key) {
+        for (String line : info.split("\\r?\\n")) {
+            if (line.startsWith(key + ":")) {
+                return line.substring(key.length() + 1).trim();
+            }
+        }
+        return null;
     }
 
     private static String extractKeyspaceValue(Map<String, String> map, String key) {
