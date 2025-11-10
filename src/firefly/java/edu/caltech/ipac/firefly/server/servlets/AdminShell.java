@@ -5,8 +5,14 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,8 +35,13 @@ import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -48,8 +59,12 @@ public class AdminShell {
             return;     // silently ignore if not enabled
         }
 
-        LOG.debug("Admin shell proxy enabled → http://127.0.0.1:8081/");
         var ctx = sce.getServletContext();
+        LOG.debug("Admin shell proxy enabled → http://127.0.0.1:8081/");
+
+        // Pick up IP prefixes from environment or system property
+        String allowedPrefixes = System.getProperty("ALLOWED_IP_PREFIXES", "");
+        LOG.debug("   - Allowed IP prefixes: " + (allowedPrefixes.isBlank() ? "(none)" : allowedPrefixes));
 
         // Register HTTP proxy servlet
         try {
@@ -59,7 +74,19 @@ public class AdminShell {
             reg.setLoadOnStartup(1);
             LOG.debug("   - Registered HTTP Proxy for /admin/shell/*");
         } catch (Exception e) {
-            System.err.println("Error registering HTTP Proxy Servlet: " + e.getMessage());
+            LOG.error(e, "Error registering HTTP Proxy Servlet: " + e.getMessage());
+        }
+
+        // Register IP restriction filter (only if prefixes provided)
+        if (!allowedPrefixes.isBlank()) {
+            try {
+                var ipFilter = ctx.addFilter("AdminShellIpFilter", new IpFilter());
+                ipFilter.setInitParameter("allowedPrefixes", allowedPrefixes);
+                ipFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/admin/shell/*");
+                LOG.debug("   - Added IP restriction filter for /admin/shell/* → " + allowedPrefixes);
+            } catch (Exception e) {
+                LOG.error(e, "Error registering IP restriction filter: " + e.getMessage());
+            }
         }
 
         // Register WebSocket endpoint
@@ -82,6 +109,7 @@ public class AdminShell {
             System.err.println("Error registering WebSocket Endpoint: " + e.getMessage());
         }
     }
+
 
     //====================================================================
     //  HTTP Proxy Servlet that forwards /admin/shell/* requests
@@ -305,4 +333,58 @@ public class AdminShell {
         @FunctionalInterface
         private interface IOSender { void send() throws IOException; }
     }
+
+    //====================================================================
+    //  IP filtering
+    //====================================================================
+
+    public static class IpFilter implements Filter {
+        private List<String> allowedPrefixes = List.of("127.0.0.1");
+
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
+            // Try init-param first (from web.xml or dynamic registration)
+            String param = filterConfig.getInitParameter("allowedPrefixes");
+            if (param == null || param.isBlank()) {
+                param = System.getProperty("ALLOWED_IP_PREFIXES", "");
+            }
+
+            if (!param.isBlank()) {
+                allowedPrefixes = Arrays.stream(param.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+            }
+
+            filterConfig.getServletContext().log("[IpRestrictionFilter] Allowed IP prefixes: " + allowedPrefixes);
+        }
+
+        @Override
+        public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+                throws IOException, ServletException {
+
+            HttpServletRequest request = (HttpServletRequest) req;
+            HttpServletResponse response = (HttpServletResponse) res;
+
+            // Try X-Real-IP → X-Forwarded-For → remoteAddr
+            String ip = Optional.ofNullable(request.getHeader("X-Real-IP"))
+                    .orElseGet(() -> Optional.ofNullable(request.getHeader("X-Forwarded-For"))
+                            .map(xff -> xff.split(",")[0].trim())
+                            .orElse(request.getRemoteAddr()));
+
+            boolean allowed = allowedPrefixes.stream().anyMatch(ip::startsWith);
+
+            if (!allowed) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Access denied for IP: " + ip);
+                return;
+            }
+
+            chain.doFilter(req, res);
+        }
+
+        @Override
+        public void destroy() { }
+    }
+
 }
