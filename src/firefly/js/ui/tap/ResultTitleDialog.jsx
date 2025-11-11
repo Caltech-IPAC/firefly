@@ -48,7 +48,7 @@ function ResultTitlePanel({userTitle, defaultTitle, onChange}) {
             display:'flex', flexDirection:'column', overflow:'auto', resize:'both'}}>
             <Stack {...{alignItems:'center', spacing:1, width:1, height:1, pt:1, flex:'1 1 auto' }} >
                 <Stack width={1} height={1} spacing={4} flex='1 1 auto'>
-                    <ValidationField fieldKey={SEARCH_TITLE_KEY} showFeedback={true} label='Search Title'
+                    <ValidationField fieldKey={SEARCH_TITLE_KEY} showFeedback={true} label='Enter Title'
                                      onKeyPress={(ev,currValue) => {
                                          if (ev.key === 'Enter') {
                                              handleSuccess(currValue,defaultTitle,onChange,true);
@@ -86,6 +86,9 @@ function ResultTitlePanel({userTitle, defaultTitle, onChange}) {
                                 }
                             </Box>
                         </Card>
+                        <Typography level='body-sm'>
+                            Tip: This title helps you identify your search later in the Job Monitor tab.
+                        </Typography>
                     </Stack>
                 </Stack>
                 <Stack {...{textAlign:'center', direction:'row', justifyContent:'space-between', width:1, px:1, pb:1}}>
