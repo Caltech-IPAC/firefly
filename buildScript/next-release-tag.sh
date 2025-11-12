@@ -19,6 +19,17 @@ else
 fi
 
 #
+# get the latest tags from remote
+#
+remote=${REMOTE:-origin}
+# Try to prune stale tags, or else fall back to a simple fetch
+if git fetch "$remote" --tags --prune --prune-tags --quiet 2>/dev/null; then
+  :
+else
+  git fetch "$remote" --tags --force --quiet
+fi
+
+#
 # get a list of all the previous release tags and the determine the next number to use
 #
 matchingReleaseTags=($(git tag | grep 'release-.*'${baseVer}))
