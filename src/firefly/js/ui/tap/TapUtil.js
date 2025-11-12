@@ -676,21 +676,6 @@ export function makeTapSearchTitle(adql, serviceUrl='', tableName) {
     return tName || simpleHost || host;
 }
 
-export function makeNumberedTitle(inTitle) {
-    if (getTblIdsByGroup().map((tbl_id) => getTblById(tbl_id)?.title).every( (t) => t!==inTitle)) {
-       return inTitle;
-    }
-    const numList = getTblIdsByGroup()
-        .map((tbl_id) => getTblById(tbl_id)?.title)
-        .filter((title) => title && title.startsWith(inTitle))
-        .map((title) => title?.substring(inTitle.length).trim().split('-')?.[1])
-        .map(Number)
-        .filter(Boolean);
-
-    const maxNum = numList?.length ? Math.max(...numList) : 0;
-    return inTitle + ` - ${maxNum + 1}`;
-}
-
 /**
  * Assembles an array of objects with column attributes in the format that ColumnFld accepts
  * @param columnsModel

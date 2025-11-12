@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ADQL_QUERY_KEY, getAsEntryForTableName, getServiceHiPS, getServiceId, getServiceLabel,
-    makeNumberedTitle,
     makeTapSearchTitle,
     maybeQuote, TAP_UPLOAD_SCHEMA,
     USER_ENTERED_TITLE
@@ -22,6 +21,7 @@ import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints';
 import {ROW_POSITION} from './Cutout';
+import {makeNumberedTitle} from 'firefly/tables/TableUtil';
 
 
 export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additionalClauses = '',
