@@ -12,7 +12,9 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Ref;
 import org.apache.logging.log4j.Level;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -37,13 +39,14 @@ import static org.junit.Assert.*;
  */
 public class MessengerTest extends ConfigTest {
 
-    @Before
-    public void setup() {
+    @BeforeClass
+    public static void setup() throws Exception {
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        RedisService.init();
     }
 
-    @After
-    public void teardown() {
+    @AfterClass
+    public static void teardown() {
         RedisService.teardown();
         LOG.trace("tear down");
     }
@@ -144,7 +147,7 @@ public class MessengerTest extends ConfigTest {
         Subscriber sub21 = Messenger.subscribe(topic2, msg -> msg = null);
         Subscriber sub22 = Messenger.subscribe(topic2, msg -> msg = null);
 
-        Supplier<List<String>> topics = () -> Util.Try.it(() -> RedisService.getConnection().pubsubChannels())
+        Supplier<List<String>> topics = () -> Util.Try.it(() -> RedisService.mainConn().sync().pubsubChannels())
                                                      .getOrElse(Collections.emptyList());
 
         LOG.debug("2 topics, 2 subs per topic.");
@@ -169,7 +172,7 @@ public class MessengerTest extends ConfigTest {
         assertFalse("has topic1", topics.get().contains(topic1));
         assertFalse("has topic2", topics.get().contains(topic2));
 
-        LOG.debug("Messenger stats: " + RedisService.getStats());
+        LOG.debug("Messenger stats: " + RedisService.getStats(false));
         LOG.debug("testSubscribe.. done!");
 
     }
@@ -188,7 +191,7 @@ public class MessengerTest extends ConfigTest {
             if (numRevc.getCount() == 0) {
                 long stopTime = System.currentTimeMillis();
                 System.out.println("\t elapsed time: " + (stopTime - startTime)/1000.0 + "s");
-                System.out.println("\t Messenger stats: " + RedisService.getStats());
+                System.out.println("\t Messenger stats: " + RedisService.getStats(false));
             }
         });
 

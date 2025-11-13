@@ -46,8 +46,8 @@ dependencies {
 
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') { transitive = false }
 
-    // jedis; support redis versions: 5.0 to 7.2 Family of releases
-    implementation ('redis.clients:jedis:4.4.8') { exclude group: 'org.slf4j' }
+    // Lettuce(Redis client); support Redis server version 2.6+ up to Redis 8.x
+    implementation 'io.lettuce:lettuce-core:7.0.0.RELEASE'
 
     // ehcache
     implementation ('net.sf.ehcache:ehcache:2.10.9.2')

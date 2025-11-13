@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
+import edu.caltech.ipac.firefly.messaging.Subscriber;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
@@ -14,6 +15,7 @@ import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
@@ -30,8 +32,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -59,6 +59,7 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
  * @version $Id: ServerStatus.java,v 1.1 2009/06/04 00:12:42 loi Exp $
  */
 public class ServerStatus extends BaseHttpServlet {
+    Logger.LoggerImpl LOG = Logger.getLogger();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
@@ -73,14 +74,14 @@ public class ServerStatus extends BaseHttpServlet {
         PrintWriter writer = res.getWriter();
         writer.println("<pre style='font-size: -1'>");
 
-        if (execGC)             System.gc();            // force garbage collection.
-        if (execRedisCleanup)   {
-            long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
-            writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
-            skip(writer);
-        }
-
         try {
+            if (execGC) System.gc();            // force garbage collection.
+            if (execRedisCleanup) {
+                long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
+                writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
+                skip(writer);
+            }
+
             showActions(writer);
 
             // some information may be time-consuming to load, so we should only do it on demand
@@ -99,7 +100,8 @@ public class ServerStatus extends BaseHttpServlet {
             }
 
             writer.println("</pre>");
-
+        }catch (Exception e) {
+            LOG.error(e, "Error generating server status page: " + e.getMessage());
         } finally {
             writer.flush();
             writer.close();
@@ -393,16 +395,14 @@ public class ServerStatus extends BaseHttpServlet {
     private static void showMessagingStatus(PrintWriter w) {
         w.println("Redis information: ");
         w.println("-----------------  ");
-        RedisService.getStats().print(w);
+        RedisService.getStats(false).print(w);
 
         w.println("\nMessenger info: ");
         w.println("-----------------  ");
         w.println("  Subscribed Topics: " + Messenger.getSubscribedTopics());
-        for (Map.Entry<String, Messenger.SubscriberHandler> entry : Messenger.getSubscribers().entrySet()) {
+        for (Map.Entry<String,List<Subscriber>> entry : Messenger.getSubscribers().entrySet()) {
             String topic = entry.getKey();
-            Messenger.SubscriberHandler handler = entry.getValue();
-            w.println("  - Topic: " + "%-20s".formatted(topic) + " Status: " + (String.format(handler.getFailSince() == null ? "OK" :
-                    "Failed since " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()).format(handler.getFailSince()))));
+            w.println("  - Topic: %-20s       Subscribers: %d".formatted(topic, entry.getValue().size()));
         }
     }
 

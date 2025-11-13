@@ -70,7 +70,7 @@ public class LocalMapCache<T> implements Cache<T> {
         return new ArrayList<>(keys);
     }
 
-    public int getSize() {
+    public long getSize() {
         return getMappedData().size();
     }
 

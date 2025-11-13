@@ -4,9 +4,10 @@
 package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.firefly.core.RedisService;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.resps.ScanResult;
+import io.lettuce.core.MapScanCursor;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.api.StatefulRedisConnection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,20 +39,24 @@ public class DistribMapCache<T> extends DistributedCache<T> {
         this.ttl = ttl;
     }
 
-    public List<T> getValuesFor(ScanParams scanParams) {
+    public List<T> getValuesFor(ScanArgs scanArgs) {
         List<T> result = new ArrayList<>();
-        try (Jedis jedis = RedisService.getConnection()) {
-            String cursor = ScanParams.SCAN_POINTER_START;
+        try {
+            var redis = RedisService.scanConn().sync();  // use your dedicated scan connection
+            ScanCursor cursor = ScanCursor.INITIAL;
+
             do {
-                ScanResult<Map.Entry<String, String>> scanResult = jedis.hscan(mapKey, cursor, scanParams);
-                for (Map.Entry<String, String> entry : scanResult.getResult()) {
+                MapScanCursor<String, String> scanResult = redis.hscan(mapKey, cursor, scanArgs);
+                for (Map.Entry<String, String> entry : scanResult.getMap().entrySet()) {
                     result.add(deserialize(entry.getValue()));
                 }
-                cursor = scanResult.getCursor();
-            } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+                cursor = scanResult;   // advance cursor
+            } while (!cursor.isFinished());
+
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e, "Error scanning Redis hash {}: {}", mapKey, e.getMessage());
         }
+
         return result;
     }
 
@@ -59,37 +64,38 @@ public class DistribMapCache<T> extends DistributedCache<T> {
 //  override for Redis Map implementation
 //====================================================================
 
-    String get(Jedis redis, String key) {
-        return redis.hget(mapKey, key);
+    String get(StatefulRedisConnection<String, String> redis, String key) {
+        return redis.sync().hget(mapKey, key);
     }
 
-    void del(Jedis redis, String key) {
-        redis.hdel(mapKey, key);
+    void del(StatefulRedisConnection<String, String> redis, String key) {
+        redis.sync().hdel(mapKey, key);
     }
 
-    void set(Jedis redis, String key, String value) {
-        redis.hset(mapKey, key, value);
+    void set(StatefulRedisConnection<String, String> redis, String key, String value) {
+        var sync = redis.sync();
+        sync.hset(mapKey, key, value);
         if (ttl > 0) {
-            redis.expire(mapKey, ttl);  // renew ttl on each update
-        } else if (redis.ttl(mapKey) > 0) {
-            redis.persist(mapKey);      // remove ttl if it was set (only needed for correction)
+            sync.expire(mapKey, ttl);  // renew ttl on each update
+        } else if (sync.ttl(mapKey) > 0) {
+            sync.persist(mapKey);      // remove ttl if it was set (only needed for correction)
         }
     }
 
-    void setex(Jedis redis, String key, String value, long ttl) {
+    void setex(StatefulRedisConnection<String, String> redis, String key, String value, long ttl) {
         set(redis, key, value); // ttl is managed at the map level, not individual keys
     }
 
-    List<String> keys(Jedis redis) {
-        return new ArrayList<>(redis.hkeys(mapKey));
+    List<String> keys(StatefulRedisConnection<String, String> redis) {
+        return new ArrayList<>(redis.sync().hkeys(mapKey));
     }
 
-    boolean exists(Jedis redis, String key) {
-        return redis.hexists(mapKey, key);
+    boolean exists(StatefulRedisConnection<String, String> redis, String key) {
+        return redis.sync().hexists(mapKey, key);
     }
 
-    int size(Jedis redis) {
-        return (int) redis.hlen(mapKey);
+    long size(StatefulRedisConnection<String, String> redis) {
+        return redis.sync().hlen(mapKey);
     }
 
 }

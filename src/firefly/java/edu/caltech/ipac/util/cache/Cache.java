@@ -22,7 +22,7 @@ public interface Cache<T> {
     T get(CacheKey key);
     void remove(CacheKey key);
     boolean isCached(CacheKey key);
-    int getSize();
+    long getSize();
 
     /**
      * returns a list of keys in this cache as string.

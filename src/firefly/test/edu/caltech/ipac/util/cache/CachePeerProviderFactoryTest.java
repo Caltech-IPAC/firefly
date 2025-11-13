@@ -14,6 +14,7 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import org.apache.logging.log4j.Level;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -81,9 +82,10 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
                     "</ehcache>";
 
     @BeforeClass
-    public static void setUp() throws InterruptedException {
+    public static void setUp() throws Exception {
 
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        RedisService.init();
 
         LOG.debug("Initial setup for PubSub, creating 3 peers");
         peer1 = createCM("PubSub", "peer1");
@@ -99,6 +101,19 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
         Thread.sleep(5000);
     }
 
+    @AfterClass
+    public static void tearDown() {
+        if (peer1 != null) peer1.shutdown();
+        if (peer2 != null) peer2.shutdown();
+        if (peer3 != null) peer3.shutdown();
+
+        if (mcPeer1 != null) mcPeer1.shutdown();
+        if (mcPeer2 != null) mcPeer2.shutdown();
+        if (mcPeer3 != null) mcPeer3.shutdown();
+
+        RedisService.teardown();
+        LOG.debug("tear down");
+    }
 
     @Test
     public void pubSub_InitialSetup() throws InterruptedException, RemoteException {

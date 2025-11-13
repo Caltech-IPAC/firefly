@@ -23,7 +23,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
     public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
         JSONObject json=new JSONObject();
         String jsonData;
-        RedisService.sendConnectionStatusIfFailed();
+//        RedisService.sendConnectionStatusIfFailed();      should not be needed anymore
         try {
             String result = doCommand(new SrvParam(sp.getParamMap()));
 
