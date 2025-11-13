@@ -432,6 +432,7 @@ export function dispatchChangeImageVisibility({plotId, imageOverlayId, visible, 
  * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different color bar
  * @param {number} obj.bias bias between 0 - 1, .5 is no bias
  * @param {number} obj.contrast bias between 0 - 2, .1 is no contrast
+ * @param {Array.<number>} obj.nanPixelColor a 3 cell array of [r,g,b]
  * @param {boolean} obj.useRed use this band, only use with 3 color
  * @param {boolean} obj.useGreen use this band, only use with 3 color
  * @param {boolean} obj.useBlue use this band, only use with 3 color
@@ -445,9 +446,10 @@ export function dispatchChangeImageVisibility({plotId, imageOverlayId, visible, 
  * @memberof firefly.action
  */
 export function dispatchColorChange({plotId, cbarId, bias, contrast,
-                                        useRed=true, useGreen=true, useBlue=true,
+                                        useRed=true, useGreen=true, useBlue=true, nanPixelColor= [0,0,0],
                                         actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
-    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, bias, contrast, useRed, useGreen, useBlue, actionScope }});
+    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, bias, contrast, nanPixelColor,
+            useRed, useGreen, useBlue, actionScope }});
 }
 
 /**

@@ -216,18 +216,24 @@ function updateHiPSColor(state,action) {
 
 function updateImageDisplayData(state,action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType, plotGroupAry}= state;
-    const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue, zoomLevel:newZoomFactor, colorTableId=-1}= action.payload;
+    const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast,
+        useRed, useGreen, useBlue, zoomLevel:newZoomFactor, colorTableId, nanPixelColor}= action.payload;
     const inPv= getPlotViewById(state,plotId);
     const inPlot= primePlot(inPv);
 
     let pv= {...inPv, serverCall:'success'};
     const zoomFactor= (action.type===Cntlr.ZOOM_IMAGE) ? newZoomFactor : inPlot.zoomFactor;
     pv= replacePrimaryPlot(pv,
-        WebPlot.replacePlotValues(inPlot,primaryStateJson,zoomFactor, rawData,colorTableId, bias,contrast,useRed,useGreen,useBlue));
+        WebPlot.replacePlotValues(inPlot,primaryStateJson,zoomFactor, rawData,colorTableId, bias,contrast,nanPixelColor,useRed,useGreen,useBlue));
     if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv)) {
         const cId= primePlot(pv).colorTableId;
         pv.plots= pv.plots.map( (p) => {
-            return {...p,colorTableId:cId}; //todo bias and control need to be set here
+            const newP={...p,colorTableId:cId};
+            newP.rawData.bandData[Band.NO_BAND.value]= {...p.rawData.bandData[Band.NO_BAND.value]};
+            if (bias) newP.rawData.bandData[Band.NO_BAND.value].bias=bias;
+            if (contrast) newP.rawData.bandData[Band.NO_BAND.value].contrast=contrast;
+            if (nanPixelColor) newP.rawData.bandData[Band.NO_BAND.value].nanPixelColor=nanPixelColor;
+            return newP;
         });
     }
 

@@ -29,31 +29,50 @@ export function shouldUseGpuInWorker() {
 
 /**
  *
- * @param rawTileDataAry
- * @param colorModel
- * @param {boolean} isThreeColor
- * @param mask
- * @param {String} maskColor
- * @param {number} bias
- * @param {number} contrast
- * @param {boolean} bandUse
- * @param {String} rootUrl
+ * @param {Object} obj
+ * @param obj.rawTileDataGroup
+ * @param obj.colorModel
+ * @param {boolean} obj.isThreeColor
+ * @param obj.mask
+ * @param {String} obj.maskColor
+ * @param {number} obj.bias
+ * @param {number} obj.contrast
+ * @param {boolean} obj.bandUse
+ * @param {String} obj.rootUrl
  * @return {Promise}
  */
-async function populateRawTileDataArray(rawTileDataAry, colorModel, isThreeColor, mask, maskColor, bias, contrast, bandUse, rootUrl) {
+async function populateRawTileDataArray(obj) {
+    const {rawTileDataGroup, colorModel, isThreeColor, mask=false, maskColor, bias, contrast, bandUse={}, rootUrl}= obj;
+    const {rawTileDataAry}= rawTileDataGroup;
     const GPU = USE_GPU ? await getGpuJs(rootUrl) : undefined;
     const createTransitionalTile = USE_GPU ? getGPUOps(GPU).createTransitionalTileWithGPU : createTransitionalTileWithCPU;
     const presult = rawTileDataAry.map((id) => createTransitionalTile(id, colorModel, isThreeColor, mask, maskColor, bias, contrast, bandUse));
     return await Promise.all(presult);
 }
 
-export async function populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, isThreeColor, mask, maskColor, bias, contrast, bandUse, rootUrl) {
+/**
+ *
+ * @param {Object} obj
+ * @param obj.rawTileDataGroup
+ * @param obj.colorTableId
+ * @param obj.isThreeColor
+ * @param obj.mask
+ * @param obj.maskColor
+ * @param obj.bias
+ * @param obj.contrast
+ * @param [obj.bandUse]
+ * @param obj.rootUrl
+ * @param obj.nanPixelColor
+ * @return {Promise}
+ */
+export async function populateRawImagePixelDataInWorker(obj) {
+    const {rawTileDataGroup, colorTableId, mask, nanPixelColor}= obj;
     if (shouldUseGpuInWorker() && !mask) {
-        const colorModel = getColorModel(colorTableId);
-        const rawTileDataAry = await populateRawTileDataArray(rawTileDataGroup.rawTileDataAry, colorModel, isThreeColor,  mask, maskColor, bias, contrast, bandUse, rootUrl);
+        const colorModel = getColorModel(colorTableId,nanPixelColor);
+        const rawTileDataAry = await populateRawTileDataArray({...obj,colorModel});
 
 
-        const localRawTileDataGroup = {...rawTileDataGroup, rawTileDataAry, colorTableId};
+        const localRawTileDataGroup = {...rawTileDataGroup, rawTileDataAry, colorTableId, nanPixelColor};
         const retRawTileDataGroup = {...localRawTileDataGroup};
         retRawTileDataGroup.rawTileDataAry = retRawTileDataGroup.rawTileDataAry.map((rt) =>
             ({
@@ -63,7 +82,7 @@ export async function populateRawImagePixelDataInWorker(rawTileDataGroup, colorT
             }));
         return {localRawTileDataGroup, retRawTileDataGroup};
     } else {
-        const localRawTileDataGroup = {...rawTileDataGroup, colorTableId};
+        const localRawTileDataGroup = {...rawTileDataGroup, colorTableId, nanPixelColor};
         localRawTileDataGroup.rawTileDataAry = localRawTileDataGroup.rawTileDataAry.map((rt) =>
             ({
                 ...rt,
@@ -175,5 +194,6 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
  * @typedef RawTileDataGroup
  * @prop {String} dataCompress - should be 'FULL' or 'HALF' or 'QUARTER'
  * @prop {number} colorTableId
+ * @prop {Array.<Number>} nanPixelColor
  * @prop {Array.<RawTileData>} rawTileData
  */

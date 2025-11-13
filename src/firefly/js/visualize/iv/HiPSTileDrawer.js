@@ -10,14 +10,14 @@ import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from '
 import {makeHipsRenderer} from './HiPSRenderer.js';
 import {isHiPS, isHiPSAitoff} from '../WebPlot';
 import {getHipsColorOps} from './HipsColor.js';
-import {getColorModel} from '../rawData/rawAlgorithm/ColorTable.js';
+import {getColorModel, NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable.js';
 import {brighter, darker} from 'firefly/util/Color.js';
 import {findCellOnScreen} from 'firefly/visualize/iv/HiPSCellFinder.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
 
-const colorId = (plot) => plot?.colorTableId ?? -1;
+const colorId = (plot) => plot?.colorTableId ?? NO_COLOR_TABLE;
 
 /**
  * @typedef DrawTiming
@@ -199,7 +199,7 @@ function drawDisplay({targetCanvas, offscreenCanvas, plot,
  * first look for an allsky image with the correct color, it not found look at see if we have the base allsky image
  * if not found return, if we have the base one then change the color and that version to the cache, then return it
  * @param allSkyURL
- * @param {number} ctId
+ * @param {String} ctId
  * @param {number} bias
  * @param {number} contrast
  * @param hipsColorOps
@@ -209,7 +209,7 @@ function findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps) 
     const cachedAllSkyData= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
     if (cachedAllSkyData) return cachedAllSkyData; // found and returned
     const cachedAllSkyOriginalData= findAllSkyCachedImage(allSkyURL);  //look for the based all sky image (without color change)
-    if (!cachedAllSkyOriginalData || ctId<0) return cachedAllSkyOriginalData;
+    if (!cachedAllSkyOriginalData || ctId===NO_COLOR_TABLE) return cachedAllSkyOriginalData;
        // at this point we have a base all sky image that needs to have the color changed
     const coloredAllSkyCanvas= hipsColorOps.changeHiPSColor(cachedAllSkyOriginalData.order3,ctId,bias,contrast);
     addAllSkyCachedImage(allSkyURL, coloredAllSkyCanvas,ctId,bias,contrast);
@@ -313,7 +313,7 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent, colorMode) {
             ctx.fillStyle = gradient;
         }
     }
-    else if (colorId(plot)===-1) {
+    else if (colorId(plot)===NO_COLOR_TABLE) {
         ctx.fillStyle = 'rgba(0,0,01)';
         // ctx.fillStyle = 'red'; //for testing
     }

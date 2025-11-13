@@ -51,7 +51,7 @@ export const getGPUOps= once((GPU) => {
     const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
 
     async function createTransitionalTileWithGPU(inData, colorModel, isThreeColor, mask, maskColor, bias=.5, contrast=1, bandUse) {
-        const canvas= createTileWithGPU(inData,colorModel,isThreeColor, mask, maskColor, bias,contrast, bandUse);
+        const canvas= createTileWithGPU(inData,colorModel,mask, maskColor, bias,contrast, bandUse);
 
         const g= getGlobalObj();
         if (inWorker() && g.createImageBitmap) { // if in a worker then turn canvas into ImageBitmap to return to main
@@ -69,7 +69,6 @@ export const getGPUOps= once((GPU) => {
      *
      * @param {RawTileData} inData
      * @param colorModel
-     * @param isThreeColor
      * @param {boolean} mask
      * @param {string} maskColor
      * @param bias
@@ -77,8 +76,9 @@ export const getGPUOps= once((GPU) => {
      * @param bandUse
      * @return {HTMLCanvasElement|OffscreenCanvas}
      */
-    function createTileWithGPU(inData, colorModel, isThreeColor, mask= false, maskColor='', bias=.5, contrast=1, bandUse) {
+    function createTileWithGPU(inData, colorModel, mask= false, maskColor='', bias=.5, contrast=1, bandUse) {
         const {width,height, pixelData3C, pixelDataStandard}= inData;
+        const isThreeColor= isArray(pixelData3C);
 
         if (isThreeColor) return createRawDataTile3CRGBDataGPU(pixelData3C.map( (a) => a && get8BitAry(a)), width,height,bias,contrast,bandUse);
         if (mask) return createRawDataTileImage(maskColor, get8BitAry(pixelDataStandard), width,height);

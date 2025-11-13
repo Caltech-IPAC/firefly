@@ -5,11 +5,12 @@
 import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import {isString} from 'lodash';
 import React, {useRef, useEffect, useCallback, useImperativeHandle} from 'react';
-import {bool, element, func, number, object, oneOfType, shape, string} from 'prop-types';
+import {any, bool, element, func, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import ArrowDropDownRoundedIcon from '@mui/icons-material/ArrowDropDownRounded';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
+import {checkProps} from './SimpleComponent';
 
 
 function getShortCutInfo(shortcutKey) {
@@ -64,6 +65,7 @@ export function ToolbarButton(props) {
         disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon, value,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false, pressed=false,
         component, slotProps={}, dropPosition={}, dropDownCB, onClick, ref:fRef} = props;
+    checkProps(props, ToolbarButton);
 
     const tip= props.tip || props.title || '';
     const buttonPressed= pressed || active;
@@ -102,11 +104,13 @@ export function ToolbarButton(props) {
     // <ArrowDropDownRoundedIcon viewBox='8 8 10 10' sx={{position:'absolute', transform:'scale(1.5)', width:10,height:10, left:0, bottom:0}}/>
 
 
+    const tbCheckBoxProps= slotProps.tbCheckBox ?? {};
+    const iconButton= slotProps.iconButton ?? {};
 
     const b=  (
         <Tooltip followCursor={true} title={tip} {...slotProps?.tooltip}>
             <Stack {...{direction:'row', sx, value, alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
-                <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
+                <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick, ...tbCheckBoxProps}}/>
                 {useIconButton ?
                     (<IconButton {...{
                         sx: (theme) => (
@@ -123,6 +127,7 @@ export function ToolbarButton(props) {
                                      ...theme.variants.outlinedActive.neutral,
                                      borderColor: theme.vars.palette.neutral.outlinedHoverBorder,
                                  },
+                                 ...iconButton?.sx
                              }),
 
                         className:'ff-toolbar-iconbutton ' + allowInput,
@@ -133,7 +138,7 @@ export function ToolbarButton(props) {
                         'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
                         {image}
                     </IconButton>) :
-                    <Button {...{color, variant, value,
+                    (Boolean(text || icon || shortcutKey || image) && <Button {...{color, variant, value,
                         'aria-label':tip, disabled:!enabled, onClick:handleClick,
                         size:'md',
                         className:'ff-toolbar-button ' + allowInput,
@@ -146,15 +151,16 @@ export function ToolbarButton(props) {
                             ...makeFontSettings(theme),
                             ...makeBorder(active,theme,color),
                             ['&[aria-pressed="true"]']: {
-                               ...theme.variants.outlinedActive.neutral,
-                               borderColor: theme.vars.palette.neutral.outlinedHoverBorder,
-                             },
+                                ...theme.variants.outlinedActive.neutral,
+                                borderColor: theme.vars.palette.neutral.outlinedHoverBorder,
+                            },
                         }),
                         ...slotProps?.button
                     }}>
-                        {makeTextLabel(text,shortcutKey)}
-                    </Button>
+                        {makeTextLabel(text, shortcutKey)}
+                    </Button>)
                 }
+
                 {useIconButton && useDropDownIndicator &&
                     <DropDownIndicator {...{dropPosition,enabled,onClick:handleClick,className:allowInput}}/>}
             </Stack>
@@ -167,8 +173,8 @@ export function ToolbarButton(props) {
 }
 
 ToolbarButton.propTypes= {
-    icon : oneOfType([element,string]),
-    text : oneOfType([element,string]),
+    icon : any,
+    text : any,
     tip : string,
     value: string,
     title: oneOfType([element,string]),
@@ -183,19 +189,21 @@ ToolbarButton.propTypes= {
     useDropDownIndicator: bool,
     hasCheckBox: bool,
     checkBoxOn: bool,
-    CheckboxOnIcon:  element,
-    CheckboxOffIcon: element,
+    CheckboxOnIcon:  oneOfType([element,object]),
+    CheckboxOffIcon: oneOfType([element,object]),
     onClick : func,
     dropDownCB : func,
     disableHiding: bool,
     shortcutKey: string,
     color: string,
     iconButtonSize : string,
-    ref: object,
+    ref: oneOfType([element,func]),
     slotProps: shape({
         root: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
         tooltip: object,
         button: object,
+        tbCheckBox: object,
+        iconButton: object,
     }),
     active: bool,
     sx: oneOfType([object,func]),
@@ -221,16 +229,16 @@ const DropDownIndicator= ({dropPosition,enabled, onClick,className=''}) => (
     </Box>
 );
 
-function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick}) {
+function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick, sx, slotProps={}}) {
     if (!hasCheckBox) return undefined;
-    if (CheckboxOnIcon && CheckboxOffIcon) {
+    if (CheckboxOnIcon || CheckboxOffIcon) {
         return (
-            <Box onClick={onClick}>
+            <Box onClick={onClick} sx={{minWidth: 20, ...sx}}>
                 {checkBoxOn ? CheckboxOnIcon : CheckboxOffIcon}
             </Box>);
     }
-    return (<Checkbox {...{variant:'plain', checked:checkBoxOn, onClick,
-        sx:{ '.MuiCheckbox-checkbox': { background:'transparent' } }
+    return (<Checkbox {...{variant:'plain', checked:checkBoxOn, onClick, slotProps,
+        sx:{ '.MuiCheckbox-checkbox': { background:'transparent', ...sx} }
     }}/>);
 }
 

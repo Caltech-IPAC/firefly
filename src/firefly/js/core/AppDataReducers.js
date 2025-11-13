@@ -88,7 +88,7 @@ const updateActiveTarget= function(state,action) {
 
 const addWorkingTask= function(state, action) {
     const {componentId,promise,message,display=WorkingType.NO_HINT}= action.payload;
-    if (!componentId && !promise) return state;
+    if (!componentId || !promise) return state;
     const newEntry= {promise,message,display};
     let taskAry= state.activeTask[componentId] || [];
     taskAry= taskAry.some((t) => t.promise===promise)

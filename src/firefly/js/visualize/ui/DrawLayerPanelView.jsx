@@ -210,22 +210,27 @@ function modifyMaskColor(opv) {
 
     const [rV,gV,bV]= toRGB(opv.colorAttributes.color);
     const rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
-    showColorPickerDialog(rgbStr, false, true,
-        (ev, okPushed) => {
-            if (!ev?.rgb) return;
-            const {r,g,b,a}= ev.rgb;
-            const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
+    showColorPickerDialog(
+        {
+            colorStr:rgbStr,
+            callbackOnBoth:true,
+            presetAlpha:.58,
+            cd:(ev) => {
+                if (!ev?.rgb) return;
+                const {r,g,b,a}= ev.rgb;
+                const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
 
 
-            operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
-                const {plotId, imageOverlayId} = aOpv;
-                const colorAttributes= aOpv.colorAttributes.color!==newColor ?
-                                  clone(aOpv.colorAttributes, {color:newColor} ) : aOpv.colorAttributes;
-                dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot:false,
-                    attributes:{colorAttributes,opacity:a}});
-            });
+                operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
+                    const {plotId, imageOverlayId} = aOpv;
+                    const colorAttributes= aOpv.colorAttributes.color!==newColor ?
+                        clone(aOpv.colorAttributes, {color:newColor} ) : aOpv.colorAttributes;
+                    dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot:false,
+                        attributes:{colorAttributes,opacity:a}});
+                });
 
-        }, '', '', .58);
+            },
+        });
 }
 
 function modifyShape(dl, plotId) {

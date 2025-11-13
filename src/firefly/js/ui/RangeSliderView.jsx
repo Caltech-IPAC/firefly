@@ -4,7 +4,7 @@ import {has, isNumber, isString, isObject, isNaN} from 'lodash';
 import {Slider, Stack, Typography, Tooltip} from '@mui/joy';
 
 export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1, vertical=false,
-                                    defaultValue=0, slideValue, sx={},
+                                    defaultValue=0, slideValue, sx={}, onChangeCommitted,
                                     label='', labelWidth, tooltip, decimalDig=3, handleChange}){
     const toRangeBound = (val) => {
         if (minStop && val < minStop ) {
@@ -36,7 +36,9 @@ export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1
                     orientation={vertical ? 'vertical' : 'horizontal'}
                     defaultValue={defaultValue}
                     value={toRangeBound(parseFloat(slideValue))}
-                    onChange={onSliderChange} />
+                    onChange={(ev) => onSliderChange(ev,false)}
+                    onChangeCommitted={(ev) => void onChangeCommitted?.(ev)}
+                />
             </Stack>
         </Tooltip>
     );
@@ -49,13 +51,12 @@ RangeSliderView.propTypes = {
     minStop:  number,
     maxStop:  number,
     className: string,
-    // react keeps showing warnings (i think wrongly) so I am commenting this out
-    // marks: arrayOf(objectOf(
-    //     shape({
-    //         label: string,
-    //         value: number,
-    //     })
-    // )),   // marks shown on slider
+    marks: arrayOf(objectOf(
+        shape({
+            label: string,
+            value: number,
+        })
+    )),   // marks shown on slider
     step: number,
     vertical: bool,
     defaultValue: number,
@@ -67,7 +68,8 @@ RangeSliderView.propTypes = {
     labelWidth: number,
     tooltip:  string,
     decimalDig: number,
-    handleChange: func           // callback on slider change
+    handleChange: func,          // callback on slider change
+    onChangeCommitted: func      // callback on slider mouse up
 };
 
 export function checkMarksObject(props, propName, componentName) {

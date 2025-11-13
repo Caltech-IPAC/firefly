@@ -67,9 +67,9 @@ function doScheduleClose(workerKey) {
 }
 
 async function doColorChange(payload) {
-    const {plotImageId,plotState,colorTableId, threeColor, bias, contrast, rootUrl, useRed=true,useGreen=true,useBlue=true} = payload;
+    const {plotImageId,plotState,colorTableId, threeColor, bias, contrast, rootUrl, useRed=true,useGreen=true,useBlue=true,nanPixelColor} = payload;
     const bandUse= {useRed,useGreen,useBlue};
-    const result= await changeLocalRawDataColor(plotImageId,colorTableId,threeColor, bias, contrast, bandUse, plotState,rootUrl);
+    const result= await changeLocalRawDataColor(plotImageId,colorTableId,threeColor, bias, contrast, bandUse, plotState,rootUrl,nanPixelColor);
     return {data:{...result, type:COLOR, transferable: getTransferable(result)}};
 }
 
@@ -88,7 +88,7 @@ function convertToBits(ary) {
 async function fetchByteDataArray(payload) {
     const {plotImageId,plotStateSerialized, plotState, processHeader, dataWidth, dataHeight,
         bias, contrast, cmdSrvUrl, rootUrl, mask= false, maskBits=0, maskColor='',
-        veryLargeData= false, dataCompress='FULL', colorTableId} = payload;
+        veryLargeData= false, dataCompress='FULL', colorTableId, nanPixelColor} = payload;
 
     try {
         // const start= Date.now();
@@ -128,8 +128,8 @@ async function fetchByteDataArray(payload) {
             entry= getEntry(plotImageId);
         }
         const {retRawTileDataGroup, localRawTileDataGroup}=
-                await populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, plotState.isThreeColor(),
-                                                        mask, maskColor, bias, contrast, {}, rootUrl);
+                await populateRawImagePixelDataInWorker({rawTileDataGroup, colorTableId, isThreeColor:plotState.isThreeColor(),
+                                                        mask, maskColor, bias, contrast, rootUrl, nanPixelColor});
         entry.rawTileDataGroup= localRawTileDataGroup;
 
 
@@ -246,16 +246,17 @@ export async function callStretchedByteData(plotImageId,plotStateSerialized,plot
  * @param {boolean} bandUse
  * @param {PlotState} plotState
  * @param {string} rootUrl
+ * @param  nanPixelColor
  * @return {Object}
  */
-async function changeLocalRawDataColor(plotImageId, colorTableId, threeColor, bias, contrast, bandUse, plotState, rootUrl) {
+async function changeLocalRawDataColor(plotImageId, colorTableId, threeColor, bias, contrast, bandUse, plotState, rootUrl,nanPixelColor) {
     const entry = getEntry(plotImageId);
     const bandEntry=entry?.[Band.NO_BAND.key];
     if (!bandEntry) return;
     const newPlotState = plotState.copy();
     const {retRawTileDataGroup, localRawTileDataGroup}=
-        await populateRawImagePixelDataInWorker(entry.rawTileDataGroup, colorTableId, threeColor, false, '',
-            bias, contrast, bandUse, rootUrl);
+        await populateRawImagePixelDataInWorker({rawTileDataGroup:entry.rawTileDataGroup, colorTableId, threeColor,
+            bias, contrast, bandUse, rootUrl,nanPixelColor});
     entry.rawTileDataGroup= localRawTileDataGroup;
     return {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized: newPlotState.toJson(true)};
 }
@@ -287,7 +288,7 @@ export function createRawTileDataGroup(dataWidth,dataHeight, dataCompress='FULL'
             // if (i===0) yIndexes.push(tileSize*j);
         }
     }
-    return {rawTileDataAry, dataCompress, rgbIntensity};
+    return {rawTileDataAry, dataCompress, rgbIntensity, nanPixelColor:[0,0,0]};
 }
 
 

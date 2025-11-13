@@ -3,7 +3,7 @@
  */
 import {ZoomType} from 'firefly/visualize/ZoomType.js';
 import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
-import {memorizeLastCall} from '../util/WebUtil';
+import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {allBandAry, Band} from './Band';
 import CoordinateSys from './CoordSys.js';
 import {CysConverter} from './CsysConverter.js';
@@ -15,6 +15,7 @@ import {
 } from './projection/Projection.js';
 import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
+import {findAContrastColor, NO_COLOR_TABLE} from './rawData/rawAlgorithm/ColorTable';
 import {convertCelestial} from './VisUtil';
 
 export const BLANK_HIPS_URL= 'blank';
@@ -158,6 +159,9 @@ export const RDConst= {
  * @prop {number} datamax
  * @prop {Object} processHeader
  * @prop {Object} imageTileDataGroup
+ * @prop {number} bias
+ * @prop {number} contrast
+ * @prop {Array.<number>} nanPixelColor
  */
 
 /**
@@ -450,19 +454,29 @@ export const WebPlot= {
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
         if (!request0) request0= plotState.getWebPlotRequest();
+        const colorTableId= request0?.getInitialColorTable() ?? 0;
 
         const {processHeader, wlData, wlDataAry, headerAry, header, zeroHeader,
             allWCSMap, allWlMap}= getAllHeaderAndWlInfo(cubeCtx,wpInit,plotState);
 
 
         let projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
-        const processHeaderAry= !plotState.isThreeColor() ?
+        const threeColor= plotState.isThreeColor();
+        const processHeaderAry= !threeColor ?
                                    [processHeader] :
                                     headerAry.map( (h,idx) => parseSpacialHeaderInfo(h,'',wpInit.zeroHeaderAry[idx]));
         const fluxUnitAry= processHeaderAry.map( (p) => p.fluxUnits);
         const rawData= {
-            useRed: true, useGreen: true, useBlue:true,
-            bandData:processHeaderAry.map( (pH) => ({processHeader:pH, bias:.5,contrast:1}))
+            useRed: true,
+            useGreen: true,
+            useBlue:true,
+            bandData:
+                processHeaderAry.map( (pH) => ({
+                    processHeader:pH,
+                    bias:.5,
+                    contrast:1,
+                    nanPixelColor: !threeColor ? findAContrastColor(colorTableId) : undefined
+                }))
         };
 
         // if main projection is not available, consider an alternate
@@ -498,7 +512,7 @@ export const WebPlot= {
         const imagePlot= {
             tileData    : undefined,
             relatedData     : null,
-            colorTableId: request0?.getInitialColorTable() ?? 0,
+            colorTableId,
             totalImageHdusInFile: wpInit.totalImageHdusInFile ?? 1,
             header,
             headerAry,
@@ -571,7 +585,7 @@ export const WebPlot= {
         const hipsPlot= {
             //HiPS specific
             nside: 3,
-            colorTableId: -1,
+            colorTableId: NO_COLOR_TABLE,
             hipsUrlRoot,
             dataCoordSys : hipsCoordSys,
             hipsProperties,
@@ -595,7 +609,7 @@ export const WebPlot= {
             cubeIdx: Number(hipsProperties?.hips_cube_firstframe) || 0,
             rawData: {
                 useRed: true, useGreen: true, useBlue:true,
-                bandData:[{bias:.5,contrast:1},undefined,undefined]
+                bandData:[{bias:.5,contrast:1,nanPixelColor:undefined},undefined,undefined]
             },
             zoomFactor,
             attributes,
@@ -615,12 +629,13 @@ export const WebPlot= {
      * @param {Number} [colorTableId]
      * @param {Number} [bias]
      * @param {Number} [contrast]
+     * @param {Array.<Number>} [nanPixelColor]
      * @param {boolean|undefined} useRed
      * @param {boolean|undefined} useGreen
      * @param {boolean|undefined} useBlue
      * @return {WebPlot}
      */
-    replacePlotValues(plot, stateJson, zoomFactor, rawData, colorTableId, bias, contrast, useRed,useGreen, useBlue) {
+    replacePlotValues(plot, stateJson, zoomFactor, rawData, colorTableId, bias, contrast, nanPixelColor, useRed,useGreen, useBlue) {
         const plotState= stateJson ? PlotState.makePlotStateWithJson(stateJson) : plot.plotState;
         const screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
 
@@ -635,14 +650,15 @@ export const WebPlot= {
 
         plot= {...plot,...{plotState, zoomFactor,screenSize}};
         plot.tileData= undefined;
-        if (colorTableId>-1) plot.colorTableId= colorTableId;
+        if (isDefined(colorTableId)) plot.colorTableId= colorTableId+'';
         if (rawData) plot.rawData= {...plot.rawData};
 
-        if (isNumber(bias) || isNumber(contrast) || isArray(bias) || isArray(contrast) ) {
+        if (isNumber(bias) || isNumber(contrast) || isArray(bias) || isArray(contrast) || (isArray(nanPixelColor) && nanPixelColor.length) ) {
             const {bandData:oldBandData}= plot.rawData;
             const bandData= oldBandData.map( (entry)  => ({...entry,
                 bias:  isNumber(bias) || isArray(bias) ? bias : entry.bias,
                 contrast:  isNumber(contrast) || isArray(contrast)? contrast : entry.contrast,
+                nanPixelColor: (isArray(nanPixelColor) && nanPixelColor.length) ? nanPixelColor : entry.nanPixelColor,
             }));
             plot.rawData= {...plot.rawData,bandData};
         }

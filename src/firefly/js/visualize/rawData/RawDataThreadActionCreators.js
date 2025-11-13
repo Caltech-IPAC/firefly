@@ -4,15 +4,17 @@ import {isThreeColor} from '../PlotViewUtil.js';
 
 /**
  *
- * @param {WebPlot} plot
- * @param colorTableId
- * @param {number} bias
- * @param {number} contrast
- * @param bandUse
- * @param {String} workerKey
+ * @param {Object} obj
+ * @param {WebPlot} obj.plot
+ * @param obj.colorTableId
+ * @param {number} obj.bias
+ * @param {number} obj.contrast
+ * @param obj.bandUse
+ * @param {Array.<number>} obj.nanPixelColor
+ * @param {String} obj.workerKey
  * @return {WorkerAction}
  */
-export function makeColorAction(plot, colorTableId, bias, contrast, bandUse, workerKey) {
+export function makeColorAction({plot, colorTableId, bias, contrast, bandUse, nanPixelColor, workerKey}) {
     const {plotImageId, plotState} = plot;
     return {
         type: RawDataThreadActions.COLOR,
@@ -22,6 +24,7 @@ export function makeColorAction(plot, colorTableId, bias, contrast, bandUse, wor
             colorTableId,
             bias,
             contrast,
+            nanPixelColor,
             ...bandUse,
             plotStateSerialized: plotState.toJson(true),
             threeColor: isThreeColor(plot),
@@ -63,7 +66,7 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, 
     const {processHeader} = plot.rawData.bandData[b.value];
     const cleanProcessHeader = {...processHeader, imageCoordSys: processHeader.imageCoordSys.toString()};
     const threeColor = isThreeColor(plot);
-    const {bias,contrast}= plot.rawData.bandData[0];
+    const {bias,contrast,nanPixelColor}= plot.rawData.bandData[0];
     const mask= Boolean(maskOptions);
     return {
         type: RawDataThreadActions.FETCH_STRETCH_BYTE_DATA,
@@ -82,6 +85,7 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, 
             colorTableId,
             bias,
             contrast,
+            nanPixelColor,
             // cmdSrvUrl: getCmdSrvNoZipURL(),
             cmdSrvUrl: getCmdSrvSyncURL(),
             threeColor,

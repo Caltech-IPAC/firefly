@@ -4,6 +4,7 @@
 
 import {isNil} from 'lodash';
 import {callWhileAwaiting} from '../../util/WebUtil';
+import {NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
@@ -12,7 +13,7 @@ import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
 
-const colorId = (plot) => plot?.colorTableId ?? -1;
+const colorId = (plot) => plot?.colorTableId ?? NO_COLOR_TABLE;
 
 /**
  * The object that can render a HiPS to the screen.
@@ -60,7 +61,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
         let emptyTile;
 
         let cachedTile= findTileCachedImage(src,colorTableId,bias,contrast);
-        if (colorTableId!==-1 && !cachedTile) {
+        if (colorTableId!==NO_COLOR_TABLE && !cachedTile) {
             cachedTile= findTileCachedImage(src);
             if (cachedTile) {
                 const coloredImage= hipsColorOps.changeHiPSColor(cachedTile.image,colorTableId,bias,contrast);
@@ -104,7 +105,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             if (!inCache && !emptyTile) {
                 image= imageData.image;
                 addTileCachedImage(src, image);
-                if (colorTableId!==-1) {
+                if (colorTableId!==NO_COLOR_TABLE) {
                     image= hipsColorOps.changeHiPSColor(image,colorTableId,bias,contrast);
                     addTileCachedImage(src, image,colorTableId,bias,contrast);
                 }
