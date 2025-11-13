@@ -16,7 +16,7 @@ import {
 import {tapHelpId} from './TapUtil.js';
 import {
     BASE_UNIT,
-    convertWavelengthStr,
+    convertWvlUnits,
     WavelengthInputField,
     WavelengthRangeInput
 } from 'firefly/ui/WavelengthInputField';
@@ -76,7 +76,7 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             errList.checkForError(wlContains);
             if (wlContains?.valid) {
                 // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters) so convert to m
-                const rangeBound = convertWavelengthStr(wlContains.value, BASE_UNIT, 'm');
+                const rangeBound = convertWvlUnits(wlContains.value, BASE_UNIT, 'm');
                 if (rangeBound) {
                     const rangeList = [[rangeBound, rangeBound]];
                     adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
@@ -93,8 +93,8 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             const anyHasValue = wlMinRange?.value || wlMaxRange?.value;
             if (anyHasValue) {
                 // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters) so convert to m
-                const lowerValue = convertWavelengthStr(wlMinRange?.value, BASE_UNIT, 'm') || '-Inf';
-                const upperValue = convertWavelengthStr(wlMaxRange?.value, BASE_UNIT, 'm') || 'Inf';
+                const lowerValue = convertWvlUnits(wlMinRange?.value, BASE_UNIT, 'm') || '-Inf';
+                const upperValue = convertWvlUnits(wlMaxRange?.value, BASE_UNIT, 'm') || 'Inf';
                 const rangeList = [[lowerValue, upperValue]];
                 adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList));
                 siaConstraints.push(...siaQueryRange('BAND', rangeList));
@@ -166,35 +166,32 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, 
             {useNumerical && (
                 <Stack spacing={1} {...slotProps?.numericalWvlOptions}>
                     {!fixedRangeType && (
-                        <div style={{display: 'flex'}}>
-                            <ListBoxInputField
-                                fieldKey={fieldKeys.rangeType}
-                                options={[
-                                    {label: 'contains', value: 'contains'},
-                                    {label: 'overlaps', value: 'overlaps'},
-                                ]}
-                                initialState={{value: initArgs?.urlApi?.[fieldKeys.rangeType] || 'contains'}}
-                                label='Select observations whose wavelength coverage'
-                                orientation='vertical'
-                                multiple={false}
-                                {...slotProps?.rangeType}
-                            />
-                        </div>
+                        <ListBoxInputField
+                            fieldKey={fieldKeys.rangeType}
+                            options={[
+                                {label: 'contains', value: 'contains'},
+                                {label: 'overlaps', value: 'overlaps'},
+                            ]}
+                            initialState={{value: initArgs?.urlApi?.[fieldKeys.rangeType] || 'contains'}}
+                            label='Select observations whose wavelength coverage'
+                            orientation='vertical'
+                            multiple={false}
+                            sx={{alignSelf: 'flex-start'}}
+                            {...slotProps?.rangeType}
+                        />
                     )}
                     {useRangeContains && (
-                        <div style={{ display: 'flex' }}>
-                            <WavelengthInputField fieldKey={fieldKeys.wvlContains}
-                                                  inputStyle={{ overflow: 'auto', height: 16 }}
-                                                  placeholder='enter wavelength'
-                                                  {...slotProps?.wvlContains}
-                                                  initialState={{
-                                                      unit: 'nm', //unit that shows up in the units dropdown
-                                                      ...slotProps?.wvlContains?.initialState,
-                                                      value: initArgs?.urlApi?.[fieldKeys.wvlContains], //always in BASE_UNIT
-                                                      //we don't need `unit` from initArgs since its purpose is only for display:
-                                                      //displayValue that shows in input field is computed with value and unit
-                                                  }}/>
-                        </div>
+                        <WavelengthInputField fieldKey={fieldKeys.wvlContains}
+                                              inputStyle={{ overflow: 'auto', height: 16 }}
+                                              placeholder='enter wavelength'
+                                              {...slotProps?.wvlContains}
+                                              initialState={{
+                                                  unit: 'nm', //unit that shows up in the units dropdown
+                                                  ...slotProps?.wvlContains?.initialState,
+                                                  value: initArgs?.urlApi?.[fieldKeys.wvlContains], //always in BASE_UNIT
+                                                  //we don't need `unit` from initArgs since its purpose is only for display:
+                                                  //displayValue that shows in input field is computed with value and unit
+                                              }}/>
                     )}
                     {useRangeOverlaps && (
                         <WavelengthRangeInput minFieldKey={fieldKeys.wvlMin} maxFieldKey={fieldKeys.wvlMax}
