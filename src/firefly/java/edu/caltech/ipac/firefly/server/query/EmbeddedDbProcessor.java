@@ -279,13 +279,17 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
     }
 
-    public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
+    public File getDataFile(TableServerRequest request) throws DataAccessException {
         TableServerRequest cr = (TableServerRequest) request.cloneRequest();
         cr.setPageSize(Integer.MAX_VALUE);
         DataGroupPart results = getData(cr);
-        File ipacTable = createTempFile(cr, ".tbl");
-        IpacTableWriter.save(ipacTable, results.getData());
-        return ipacTable;
+        try {
+            File ipacTable = createTempFile(cr, ".tbl");
+            IpacTableWriter.save(ipacTable, results.getData());
+            return ipacTable;
+        } catch (IOException e) {
+            throw new DataAccessException(e);
+        }
     }
 
     public FileInfo writeData(OutputStream out, ServerRequest request, FormatUtil.Format format, TableUtil.Mode mode) throws DataAccessException {

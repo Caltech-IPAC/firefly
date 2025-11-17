@@ -14,8 +14,11 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import org.apache.logging.log4j.Level;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -33,6 +36,7 @@ import static org.junit.Assert.assertEquals;
  * @author loi
  * @version $Id: $
  */
+@Ignore("Not using ehcache peer replication anymore")
 public class CachePeerProviderFactoryTest extends ConfigTest {
 
     private static CacheManager peer1, peer2, peer3;
@@ -83,6 +87,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
+
 
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
         RedisService.init();

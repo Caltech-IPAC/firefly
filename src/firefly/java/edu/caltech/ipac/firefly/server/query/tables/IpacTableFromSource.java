@@ -3,81 +3,75 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
-import edu.caltech.ipac.firefly.core.background.JobInfo;
-import edu.caltech.ipac.firefly.core.background.JobManager;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbDataIngestor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.query.DbFromFileProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableMeta;
-import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.function.Consumer;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.CATALOG_OVERLAY_TYPE;
-import static edu.caltech.ipac.firefly.server.ServerContext.convertToFile;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import edu.caltech.ipac.firefly.core.Util.Try;
 
 
 @SearchProcessorImpl(id = PROC_ID)
-public class IpacTableFromSource extends EmbeddedDbProcessor {
+public class IpacTableFromSource extends DbFromFileProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
     private static final String FORMAT = "format";          // format of the source file if known.
 
-    /**
-     * This method should not be called anymore because ingestDataIntoDb is overridden.
-     */
-    @Deprecated
+
+    @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        // when SOURCE is not provided, try to get data from processor or search request
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
-
-        // by processor ID
-        if (!isEmpty(processor)) {
+        if (!isEmpty(processor))  {
             return getByProcessor(processor, req);
-        }
-
-        // by a TableRequest as json string
-        if (!isEmpty(jsonSearchRequest)) {
+        } else if (!isEmpty(jsonSearchRequest)) {
             return getByTableRequest(jsonSearchRequest);
         }
-
-        var srcFile = fetchSourceFile(req);
-        return fetchDataFromFile(req, srcFile);
+        return null;
     }
 
-    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile) throws DataAccessException {
-        try {
-            int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            return TableUtil.readAnyFormat(srcFile, tblIdx, req);
-        } catch (IOException e) {
-            throw new DataAccessException(e.getMessage(), e);
+    @Override
+    public File getDataFile(TableServerRequest req) throws DataAccessException {
+        String source = req.getParam(ServerParams.SOURCE);
+        String altSource = req.getParam(ServerParams.ALT_SOURCE);
+        updateJob(ji -> ji.getAux().setJobUrl(source));
+
+        if (isWorkspace(req)) {
+            // by workspace
+            File inf = getFromWorkspace(source, altSource);
+            if (inf == null || !inf.canRead()) {
+                throw new DataAccessException("Unable to read file from workspace: " + source);
+            }
+            return inf;
         }
+        if (isEmpty(source) && isEmpty(altSource)) {
+            return null;        // no source provided; return null so fetchDataGroup can be tried
+        }
+
+        // by source parameter
+        File inf = QueryUtil.resolveFileFromSource(source, req);
+        if (inf == null) inf = QueryUtil.resolveFileFromSource(altSource, req);
+        if (inf == null) {
+            throw new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
+        }
+        setJobResults(inf);
+        return inf;
     }
 
     @Override
@@ -90,107 +84,6 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
                 }
             }
         }
-    }
-
-    @Override
-    protected FileInfo ingestDataIntoDb(TableServerRequest req, DbAdapter dbAdapter) throws DataAccessException {
-        try {
-            dbAdapter.initDbFile();
-
-            String processor = req.getParam("processor");
-            String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
-            int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            String fmt = req.getParam(FORMAT);
-            FormatUtil.Format format = isEmpty(fmt) ? null : FormatUtil.Format.valueOf(fmt);
-            File srcFile = null;
-            DbAdapter.DataGroupSupplier fetchDataGroup = null;
-
-            if (!isEmpty(processor))  {
-                fetchDataGroup = () -> getByProcessor(processor, req);
-            } else if (!isEmpty(jsonSearchRequest)) {
-                fetchDataGroup = () -> getByTableRequest(jsonSearchRequest);
-            } else {
-                srcFile = getOrFetchSourceFile(req);
-            }
-            if (srcFile == null) {
-                return DbDataIngestor.ingestData(req, dbAdapter, makeDgSupplier(req, fetchDataGroup));
-            } else {
-                return DbDataIngestor.ingestData(req, dbAdapter, (dg) -> applyExtraMeta(dg, req), srcFile, tblIdx, format);
-            }
-        } catch (IOException e) {
-            Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
-            throw new DataAccessException(e);
-        }
-    }
-
-    /**
-     * This allows the processor to fetch data from a previously submitted job.
-     * @param req  the request to fetch data from
-     * @return the DataGroup containing the data
-     */
-    private File getOrFetchSourceFile(TableServerRequest req) throws DataAccessException {
-        File retval = null;
-        if (!isEmpty(req.getJobId())) {
-            // a previously submitted job; try to get from cache
-            List<JobInfo.Result> results = ifNotNull(JobManager.getJobInfo(req.getJobId()))
-                    .get(JobInfo::getResults);
-            if (results != null && !results.isEmpty()) {
-                String href = results.getFirst().href();
-                if (!isEmpty(href)) {
-                    retval = convertToFile(href);
-                }
-            }
-        }
-        if (retval == null || ! retval.canRead()) {       // if not found in cache, fetch from source
-            retval = fetchSourceFile(req);
-        }
-        return retval;
-    }
-
-    private File fetchSourceFile (TableServerRequest req) throws DataAccessException {
-
-        String source = req.getParam(ServerParams.SOURCE);
-        String altSource = req.getParam(ServerParams.ALT_SOURCE);
-        updateJob(ji -> ji.getAux().setJobUrl(source));
-
-        File inf = null;
-        if (isWorkspace(req)) {
-            // by workspace
-            inf = getFromWorkspace(source, altSource);
-        } else {
-            boolean isExternal = isExternalSource(source);
-            inf = QueryUtil.resolveFileFromSource(source, req);
-            if (inf == null) {
-                isExternal = isExternalSource(altSource);
-                inf = QueryUtil.resolveFileFromSource(altSource, req);
-            }
-            if (isExternal) req.setMeta(TableMeta.DATA_ORIGIN, "external");
-        }
-        if (inf == null) {
-            throw new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
-        }
-
-        setJobResults(inf);
-
-        return inf;
-    }
-
-    private boolean isExternalSource(String source) {
-        String sourceBase = getBaseDomain(source);
-        if (sourceBase == null) return false;
-        String hostBase = getBaseDomain(ServerContext.getRequestOwner().getBaseUrl());
-        boolean isExternal = !sourceBase.equals(hostBase);
-        if (isExternal) Logger.getLogger().trace("External source detected. sourceBase: " + sourceBase + " hostBase: " + hostBase);
-        return isExternal;
-    }
-
-    private static String getBaseDomain(String source) {
-        URI uri = Try.it(() -> new URI(source.toLowerCase())).get();
-        if (uri == null) return null;
-        String host = ifNotNull(uri.getHost()).getOrElse("");
-        String[] parts = host.split("\\.");
-        if (parts.length < 2) return host;
-        return parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
 
 //====================================================================

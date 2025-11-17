@@ -137,8 +137,8 @@ ARG user=tomcat
 ARG group=tomcat
 ARG uid=91
 ARG gid=91
-ARG TARGETARCH
-ARG TARGETOS
+ARG TARGETARCH=amd64
+ARG TARGETOS=linux
 ARG DUCKDB_VERSION=v1.1.3
 
 # These are the users replaceable environment variables, basically runtime arguments
@@ -198,9 +198,9 @@ RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080"
     $CATALINA_HOME/conf/server.xml
 
 # preinstall DuckDB extensions; remember to update version when DuckDB is updated
-ENV DUCKDB_TARGET=${DUCKDB_VERSION}/${TARGETOS}_${TARGETARCH}
+ENV DUCKDB_TARGET=${DUCKDB_VERSION}/${TARGETOS}_${TARGETARCH}_gcc4
 RUN mkdir -p temp/$DUCKDB_TARGET \
-    && wget -P temp/$DUCKDB_TARGET http://community-extensions.duckdb.org/$DUCKDB_TARGET/magic.duckdb_extension.gz \
+    && wget -P temp/$DUCKDB_TARGET https://community-extensions.duckdb.org/$DUCKDB_TARGET/magic.duckdb_extension.gz \
     && gunzip -f temp/$DUCKDB_TARGET/magic.duckdb_extension.gz
 
 # Add permission to files and directories needed for runtime

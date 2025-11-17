@@ -98,7 +98,7 @@ public interface SearchProcessor<Type> {
      *
      */
     interface CanGetDataFile {
-        File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException;
+        File getDataFile(TableServerRequest request) throws DataAccessException;
     }
 
 }

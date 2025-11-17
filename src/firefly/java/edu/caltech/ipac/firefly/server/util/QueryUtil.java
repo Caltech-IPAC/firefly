@@ -59,6 +59,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.URL_CHECK_FOR_NEWER;
@@ -150,10 +152,30 @@ public class QueryUtil {
     }
 
     public static File resolveFileFromSource(String source,TableServerRequest request) throws DataAccessException {
-        return resolveFileFromSource(source,
+        File rval = resolveFileFromSource(source,
                 request.getBooleanParam(URL_CHECK_FOR_NEWER, true),
                 tmpFileForUrl(source, request.getRequestId() + "_", QueryUtil.getTempDir(request))
         );
+        if (rval != null && isExternalSource(source)) request.setMeta(TableMeta.DATA_ORIGIN, "external");
+        return rval;
+    }
+
+    private static boolean isExternalSource(String source) {
+        String sourceBase = getBaseDomain(source);
+        if (sourceBase == null) return false;
+        String hostBase = getBaseDomain(ServerContext.getRequestOwner().getBaseUrl());
+        boolean isExternal = !sourceBase.equals(hostBase);
+        if (isExternal) Logger.getLogger().trace("External source detected. sourceBase: " + sourceBase + " hostBase: " + hostBase);
+        return isExternal;
+    }
+
+    private static String getBaseDomain(String source) {
+        URI uri = Util.Try.it(() -> new URI(source.toLowerCase())).get();
+        if (uri == null) return null;
+        String host = ifNotNull(uri.getHost()).getOrElse("");
+        String[] parts = host.split("\\.");
+        if (parts.length < 2) return host;
+        return parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
 
     /**

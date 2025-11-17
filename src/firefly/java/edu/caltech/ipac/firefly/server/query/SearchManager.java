@@ -98,8 +98,8 @@ public class SearchManager {
         SearchProcessor processor = getProcessor(request.getRequestId());
         if (processor != null) {
             try {
-                if (processor instanceof SearchProcessor.CanGetDataFile) {
-                    File dgFile = ((SearchProcessor.CanGetDataFile)processor).getDataFile(request);
+                if (processor instanceof SearchProcessor.CanGetDataFile proc) {
+                    File dgFile = proc.getDataFile(request);
                     // page size will not be taken into account
                     return new FileInfo(dgFile);
                 } else {
@@ -108,12 +108,6 @@ public class SearchManager {
             } catch (ClassCastException e) {
                 LOGGER.error(e, "Invalid processor mapping.  Return value is not of type FileInfo.");
                 throw new DataAccessException("Request failed due to unexpected exception.", e);
-            } catch (IpacTableException e) {
-                LOGGER.error(e, "IPAC table exception. Unable to get IPAC table.");
-                throw new DataAccessException("Request failed.", e);
-            } catch (IOException e) {
-                LOGGER.error(e, "IO Exception. Unable to get IPAC table.");
-                throw new DataAccessException("Request failed.", e);
             }
         }
         return null;

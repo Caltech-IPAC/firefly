@@ -41,14 +41,14 @@ public class IpacTableFromSourceTest extends ConfigTest {
             req.setParam(ServerParams.SOURCE, testFile.getAbsolutePath());
             req.setParam(TBL_INDEX, "0");
 
-            DataGroup results = new IpacTableFromSource().fetchDataGroup(req);
+            DataGroup results = new IpacTableFromSource().getData(req).getData();
             verifyTableData(results, null);
 
 
             // now load the 2nd table.  columns and table IDs are appended with "-1", but the data are the same
             // using same validation test.. but for 2nd table
             req.setParam(TBL_INDEX, "1");
-            results = new IpacTableFromSource().fetchDataGroup(req);
+            results = new IpacTableFromSource().getData(req).getData();
             verifyTableData(results, "-1");
         } catch (Exception e) {
             Assert.fail("IpacTableFromSourceTest.fromFileSystem failed with exception: " + e.getMessage());
@@ -61,13 +61,13 @@ public class IpacTableFromSourceTest extends ConfigTest {
             TableServerRequest req = new TableServerRequest(IpacTableFromSource.PROC_ID);
             req.setParam(ServerParams.SOURCE, "https://web.ipac.caltech.edu/staff/loi/demo/sample_multi_votable.xml");
 
-            DataGroup results = new IpacTableFromSource().fetchDataGroup(req);
+            DataGroup results = new IpacTableFromSource().getData(req).getData();
             verifyTableData(results, null);
 
             // now load the 2nd table.  columns and table IDs are appended with "-1", but the data are the same
             // using same validation test.. but for 2nd table
             req.setParam(TBL_INDEX, "1");
-            results = new IpacTableFromSource().fetchDataGroup(req);
+            results = new IpacTableFromSource().getData(req).getData();
             verifyTableData(results, "-1");
         } catch (Exception e) {
             Assert.fail("IpacTableFromSourceTest.fromUrl failed with exception: " + e.getMessage());
@@ -132,7 +132,7 @@ public class IpacTableFromSourceTest extends ConfigTest {
         suffix = suffix == null ? "" : suffix;
         // test table row and column count
         Assert.assertEquals("Number of rows:", 3, data.size());
-        Assert.assertEquals("Number of columns:", 6, data.getDataDefinitions().length);
+        Assert.assertEquals("Number of columns:", 8, data.getDataDefinitions().length);     // 6 + 2 index columns
 
         // test table's data
         Assert.assertEquals(10.68, data.get(0).getFloat("RA" + suffix, Float.MIN_VALUE), 0.00001);
