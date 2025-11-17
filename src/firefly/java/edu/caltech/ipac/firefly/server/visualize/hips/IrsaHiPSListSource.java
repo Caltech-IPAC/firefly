@@ -78,7 +78,16 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
     public String getUrl() { return irsaHipsListUrl; }
     public String getMocUrl() {
-        if (irsaAddMocPath.startsWith("https")) return irsaAddMocPath;
-        else return irsaBaseUrl+irsaAddMocPath;
+        if (irsaAddMocPath.startsWith("https")) {
+            return irsaAddMocPath;
+        }
+        else {
+            if (irsaBaseUrl.endsWith("/") && irsaAddMocPath.startsWith("/")) {
+                return irsaBaseUrl.substring(0,irsaBaseUrl.length()-1)+irsaAddMocPath;
+            }
+            else {
+                return irsaBaseUrl+irsaAddMocPath;
+            }
+        }
     }
 }
