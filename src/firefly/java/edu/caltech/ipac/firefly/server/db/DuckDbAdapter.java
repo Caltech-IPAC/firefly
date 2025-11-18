@@ -280,10 +280,10 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     public record MimeDesc(String mime, String desc) {}
     @Nonnull
-    public static MimeDesc getMimeType(File inFile) {
+    public static MimeDesc getMimeType(String inFile) {
         try(JdbcFactory.SharedDS ds = JdbcFactory.getSharedDS(new DuckDbAdapter().createDbInstance())) {
             loadExtension(ds, "magic");
-            Map<String, Object> rs = ds.getJdbc().queryForMap("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile.getAbsolutePath()));
+            Map<String, Object> rs = ds.getJdbc().queryForMap("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile));
             if (!rs.isEmpty()) {
                 return new MimeDesc(String.valueOf(rs.get("mime")), String.valueOf(rs.get("desc")));
             }

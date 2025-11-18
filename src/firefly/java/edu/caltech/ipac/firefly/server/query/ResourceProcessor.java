@@ -46,7 +46,7 @@ import static edu.caltech.ipac.util.FileUtil.writeStringToFile;
             @ParamDoc(name = "scope",           desc = "visibility of this resource.  one of 'global', 'user', 'protected'.  defaults to 'global'"),
             @ParamDoc(name = "secret",          desc = "secret token used to access 'protected' resources"),
         })
-public class ResourceProcessor extends EmbeddedDbProcessor {
+public class ResourceProcessor extends DbFromFileProcessor {
     public static final String PROC_ID = "ResourceProcessor";
     public static final String SUBDIR_PATH = "resource-db";
 
@@ -70,7 +70,7 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     public DbAdapter getDbAdapter(TableServerRequest treq) {
         String resourceID = getResourceID(treq);
         return DbAdapter.getAdapter(treq, (ext) ->
-                new File(ServerContext.getHiPSDir(), "%s/%s.%s".formatted(SUBDIR_PATH, resourceID, ext))
+                new File(ServerContext.getHiPSDir(), "%s/%s.%s".formatted(SUBDIR_PATH, resourceID, ext))            // use HiPS dir for longest retention period
         );
     }
 
@@ -89,7 +89,9 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     }
 
     protected FileInfo ingestDataIntoDb(TableServerRequest req, DbAdapter dbAdapter) throws DataAccessException {
-        writeStringToFile(getAclFile(dbAdapter.getDbFile()), String.format("scope=%s\nsecret=%s\nuser=%s\n",
+        File aclFile= getAclFile(dbAdapter.getDbFile());
+        aclFile.getParentFile().mkdirs();       // ensure directory exists
+        writeStringToFile(aclFile, String.format("scope=%s\nsecret=%s\nuser=%s\n",
                 req.getParam(SCOPE, GLOBAL),
                 req.getParam(SECRET, ""),
                 ServerContext.getRequestOwner().getUserKey()));
@@ -97,16 +99,30 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
         return super.ingestDataIntoDb(req, dbAdapter);
     }
 
-    public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
-        try {
-            TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
-            SearchProcessor<?> processor = SearchManager.getProcessor(sreq.getRequestId());
-            if (processor instanceof CanFetchDataGroup) {
-                return ((CanFetchDataGroup)processor).fetchDataGroup(sreq);
-            } else throw new IllegalArgumentException("SearchProcessor not found for the given request: " + getUniqueID(treq));
-        } catch (Exception e) {
-            throw new DataAccessException(e.getMessage(), e);
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        TableServerRequest sreq = QueryUtil.getSearchRequest(req);
+        if (getRefProcessor(sreq) instanceof CanFetchDataGroup proc) {
+            return proc.fetchDataGroup(sreq);
         }
+        return null;
+    }
+
+    @Override
+    public File getDataFile(TableServerRequest req) throws DataAccessException {
+        TableServerRequest sreq = QueryUtil.getSearchRequest(req);
+        if (getRefProcessor(sreq) instanceof CanGetDataFile proc) {
+            return proc.getDataFile(sreq);
+        }
+        return null;
+    }
+
+    private SearchProcessor<?> getRefProcessor(TableServerRequest req) throws DataAccessException {
+        SearchProcessor<?> processor = SearchManager.getProcessor(req.getRequestId());
+        if (processor == null) {
+            throw new DataAccessException("SearchProcessor not found for the given request: " + getUniqueID(req));
+        }
+        return processor;
     }
 
     protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {

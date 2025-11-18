@@ -311,7 +311,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         }
     }
 
-    public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
+    public File getDataFile(TableServerRequest request) throws DataAccessException {
         LOGGER.warn("<< slow getDataFile called." + this.getClass().getSimpleName());
 
         Cache<File> cache = CacheManager.getLocal();  // validateFile is called.  no need to set validator
@@ -323,86 +323,89 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         if (noBgWrite) {
             request.setPageSize(Integer.MAX_VALUE);
         }
+        try {
+            // go get original data
+            File resultsFile = getBaseDataFile(request);      // caching already done..
 
-        // go get original data
-        File resultsFile = getBaseDataFile(request);      // caching already done..
+            if (resultsFile == null || !resultsFile.canRead()) return null;
 
-        if (resultsFile == null || !resultsFile.canRead()) return null;
+            // from here on.. we use resultsFile as the cache key.
+            // if the source file changes, we ignore previously cached temp files
+            StringKey key = new StringKey(resultsFile.getPath());
 
-        // from here on.. we use resultsFile as the cache key.
-        // if the source file changes, we ignore previously cached temp files
-        StringKey key = new StringKey(resultsFile.getPath());
-
-        // do filtering
-        CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
-        if (filters != null && filters.length > 0) {
-            key = key.appendToKey((Object[]) filters);
-            File filterFile = validateFile(cache.get(key));
-            if (filterFile == null) {
-                filterFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
-                doFilter(filterFile, resultsFile, filters, request);
-                cache.put(key, filterFile);
-            }
-            resultsFile = filterFile;
-        }
-
-        // do sorting...
-        SortInfo sortInfo = request.getSortInfo();
-        if (sortInfo != null) {
-            key = key.appendToKey(sortInfo);
-            File sortedFile = validateFile(cache.get(key));
-            if (sortedFile == null) {
-                sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
-                doSort(resultsFile, sortedFile, sortInfo, request);
-                cache.put(key, sortedFile);
-            }
-            resultsFile = sortedFile;
-        }
-
-        // do decimation
-        DecimateInfo decimateInfo = DecimationProcessor.getDecimateInfo(request);
-        if (decimateInfo != null) {
-            key = key.appendToKey(decimateInfo);
-            File deciFile = validateFile(cache.get(key));
-            if (deciFile == null) {
-                // only read in the required columns
-                String xColExpr = decimateInfo.getxColumnName();
-                String yColExpr = decimateInfo.getyColumnName();
-                String [] requestedCols = new String[]{xColExpr, yColExpr};
-
-                DataGroup dg = IpacTableReader.read(resultsFile, requestedCols);
-
-                deciFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
-                DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-                IpacTableWriter.save(deciFile, retval);
-                cache.put(key, deciFile);
-            }
-            resultsFile = deciFile;
-        }
-
-        // return only the columns requested, ignore when decimation is requested
-        String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
-        if (decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
-            key = key.appendToKey(ic);
-            File subFile = validateFile(cache.get(key));
-            if (subFile == null) {
-                subFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
-                String sql = "select col " + ic + " from " + resultsFile.getAbsolutePath() + " into " + subFile.getAbsolutePath() + " with complete_header";
-                try {
-                    DataGroupQueryStatement.parseStatement(sql).executeInline();
-                } catch (InvalidStatementException e) {
-                    throw new DataAccessException("InvalidStatementException", e);
+            // do filtering
+            CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
+            if (filters != null && filters.length > 0) {
+                key = key.appendToKey((Object[]) filters);
+                File filterFile = validateFile(cache.get(key));
+                if (filterFile == null) {
+                    filterFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
+                    doFilter(filterFile, resultsFile, filters, request);
+                    cache.put(key, filterFile);
                 }
-                cache.put(key, subFile);
+                resultsFile = filterFile;
             }
-            resultsFile = subFile;
-        }
 
-        if (noBgWrite) {
-            request.setPageSize(oriPageSize);
-        }
+            // do sorting...
+            SortInfo sortInfo = request.getSortInfo();
+            if (sortInfo != null) {
+                key = key.appendToKey(sortInfo);
+                File sortedFile = validateFile(cache.get(key));
+                if (sortedFile == null) {
+                    sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
+                    doSort(resultsFile, sortedFile, sortInfo, request);
+                    cache.put(key, sortedFile);
+                }
+                resultsFile = sortedFile;
+            }
 
-        return resultsFile;
+            // do decimation
+            DecimateInfo decimateInfo = DecimationProcessor.getDecimateInfo(request);
+            if (decimateInfo != null) {
+                key = key.appendToKey(decimateInfo);
+                File deciFile = validateFile(cache.get(key));
+                if (deciFile == null) {
+                    // only read in the required columns
+                    String xColExpr = decimateInfo.getxColumnName();
+                    String yColExpr = decimateInfo.getyColumnName();
+                    String [] requestedCols = new String[]{xColExpr, yColExpr};
+
+                    DataGroup dg = IpacTableReader.read(resultsFile, requestedCols);
+
+                    deciFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
+                    DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
+                    IpacTableWriter.save(deciFile, retval);
+                    cache.put(key, deciFile);
+                }
+                resultsFile = deciFile;
+            }
+
+            // return only the columns requested, ignore when decimation is requested
+            String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
+            if (decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+                key = key.appendToKey(ic);
+                File subFile = validateFile(cache.get(key));
+                if (subFile == null) {
+                    subFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
+                    String sql = "select col " + ic + " from " + resultsFile.getAbsolutePath() + " into " + subFile.getAbsolutePath() + " with complete_header";
+                    try {
+                        DataGroupQueryStatement.parseStatement(sql).executeInline();
+                    } catch (Exception e) {
+                        throw new DataAccessException(e);
+                    }
+                    cache.put(key, subFile);
+                }
+                resultsFile = subFile;
+            }
+
+            if (noBgWrite) {
+                request.setPageSize(oriPageSize);
+            }
+
+            return resultsFile;
+        } catch (IOException e) {
+            throw new DataAccessException("IOException: " + e.getMessage(), e);
+        }
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {}
