@@ -184,7 +184,7 @@ public class FitsExtract {
         var bzero= FitsReadUtil.getBzero(header);
 
         if (bscale==1.0D && bzero==0D && !isNaN(aveValue) && aveValue.doubleValue()!=blankValue) return aveValue;
-        if (arrayType==Float.TYPE && Float.isNaN(aveValue.floatValue())) return Float.NaN;
+        if (arrayType==Float.TYPE && Float.isNaN(aveValue.floatValue())) return (ptSizeX>1||ptSizeY>1) ? Double.NaN : Float.NaN;
         if (arrayType==Double.TYPE && Double.isNaN(aveValue.doubleValue())) return Double.NaN;
 
         double newValue= ImageStretch.getFluxStandard( aveValue.doubleValue(), blankValue, bscale, bzero, bitpix);
