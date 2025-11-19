@@ -898,7 +898,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
     else {
         return (
             <>
-                <Stack spacing={2} alignItems='center' alignSelf='flex-start' ml='200px' mt={4}>
+                <Stack spacing={2} alignItems='center' alignSelf='flex-start' ml='200px' mt={4} className='ff-FileUploadViewPanel-acceptedWrapper'>
                     { Boolean(message) && <Typography color='danger'>{message}</Typography> }
                     <AcceptedList list={acceptList}/>
                 </Stack>
