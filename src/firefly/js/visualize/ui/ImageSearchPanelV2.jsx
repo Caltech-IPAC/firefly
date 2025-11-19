@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Sheet, Stack, Typography} from '@mui/joy';
+import {Sheet, Stack, Typography} from '@mui/joy';
 import {get, includes, isNil, isString} from 'lodash';
 import PropTypes, {bool, object, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
@@ -16,7 +16,6 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
-import {FileUpload} from '../../ui/FileUpload.jsx';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {getHipsUrl, HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
 import {ImageSelect} from '../../ui/ImageSelect.jsx';
@@ -48,6 +47,8 @@ import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getImageMasterData} from './AllImageSearchConfig.js';
 import {FD_KEYS, FG_KEYS} from './UIConst';
 import {GridMask} from 'firefly/ui/panel/MaskPanel.jsx';
+import {IMAGES} from 'firefly/ui/FileUploadUtil';
+import {FileUploadViewPanel} from 'firefly/visualize/ui/FileUploadViewPanel';
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 const scrollDivId = 'ImageSearchScroll';
@@ -452,18 +453,28 @@ SpacialContent.propsTypes= {
     }),
 };
 
-
-
 function SelectUpload() {
     return (
-        <Sheet variant='outlined' sx={{mt: 1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto',borderRadius: '5px'}}>
-            <Stack direction='row' spacing={2}>
-                <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Image</Typography>
-                <FileUpload fieldKey='fileUpload' initialState= {{tooltip: 'Select a image to upload' }} />
+        <Sheet variant='outlined' sx={{mt: 0.5, py: 1, width: '100%', display: 'flex', flexDirection: 'row',
+            flex: '1 1 auto', borderRadius: '5px', alignItems: 'stretch', gap: 2
+        }}>
+            <Stack sx={{width: 200, justifyContent: 'flex-start', px:1}}>
+                <Typography color='primary' level='title-md'>
+                    3. Select Image
+                </Typography>
+            </Stack>
+            <Stack sx={{flex: 1,
+                    '& .ff-FileUploadViewPanel-file': { ml: 0},
+                    '& .ff-FileUploadViewPanel-acceptList': { ml: 0 },
+                    '.ff-FileUploadViewPanel-acceptedWrapper': { ml: 0 },
+            }}>
+                <FileUploadViewPanel acceptList={[IMAGES]} />
             </Stack>
         </Sheet>
     );
 }
+
+
 
 function SelectWorkspace() {
     return (
