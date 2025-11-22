@@ -47,7 +47,7 @@ async function drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity,
         offscreenCanvas.width = diagonal;
         offscreenCanvas.height = diagonal;
     }
-    if (!colorTableMatches(plot)) {
+    if (!colorTableMatches(plot) && plot===primePlot(plotView)) {
         const {bias, contrast, nanPixelColor}= plot.rawData.bandData[0];
         await changeLocalRawDataColor({plot,colorTableId:plot.colorTableId,bias, contrast,nanPixelColor});
     }
