@@ -97,7 +97,7 @@ public class IpacTableFromSource extends DbFromFileProcessor {
         nReq.setStartIndex(0);
         SearchProcessor<DataGroupPart> proc = SearchManager.getProcessor(processor);
         if (proc != null) {
-            return (proc instanceof CanFetchDataGroup) ? ((CanFetchDataGroup)proc).fetchDataGroup(nReq) : proc.getData(nReq).getData();
+            return proc.getData(nReq).getData();
         } else {
             throw new DataAccessException("Unable to find a suitable SearchProcessor for the given ID: " + processor);
         }
