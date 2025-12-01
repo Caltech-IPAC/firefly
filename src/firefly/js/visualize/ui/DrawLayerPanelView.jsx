@@ -215,7 +215,7 @@ function modifyMaskColor(opv) {
             colorStr:rgbStr,
             callbackOnBoth:true,
             presetAlpha:.58,
-            cd:(ev) => {
+            cb:(ev) => {
                 if (!ev?.rgb) return;
                 const {r,g,b,a}= ev.rgb;
                 const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
