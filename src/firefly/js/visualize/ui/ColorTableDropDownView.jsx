@@ -497,7 +497,7 @@ function NanColor({plot, changeColor, nanColorLocked, setNanColorLocked}) {
             slotProps:{tbCheckBox:{
                 sx: { backgroundColor: colorStr, width: 17.5, height: 20, borderRadius: 3.5}
             }},
-            text:`NaN Pixel Color ${nanColorLocked?' (Locked)': ' (Auto computed)'}`,
+            text:`NaN Pixel Color ${nanColorLocked?' (Locked)': ' (Auto Computed)'}`,
             hasCheckBox:true, checkBoxOn:defaultNanColorLocked, CheckboxOnIcon: checkIcon,
             onClick:() => {
                 if (nanColorLocked) {
