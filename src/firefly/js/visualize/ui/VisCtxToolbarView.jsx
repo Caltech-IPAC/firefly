@@ -417,7 +417,7 @@ export function MultiImageControllerView({plotView:pv}) {
             if (hasPlaneOnlyWLInfo(plot)) {
                 const wl= doFormat(getPtWavelength(plot,undefined, plot.cubeIdx),4);
                 const unitStr= getFormattedWaveLengthUnits(plot);
-                wlStr= `${wl} ${unitStr}`;
+                wlStr= wl ? `${wl} ${unitStr}` : '';
             }
         }
         tooltip+= `, Image Count: ${cIdx+1} / ${length}`;
@@ -459,7 +459,11 @@ MultiImageControllerView.propTypes= {
     plotView : object.isRequired,
 };
 
-const doFormat= (v,precision) => precision>0 ? sprintf(`%.${precision}f`,v) : Math.trunc(v)+'';
+const doFormat= (v,precision) => isNaN(v)
+    ? ''
+    : precision>0
+        ? sprintf(`%.${precision}f`,v)
+        : Math.trunc(v)+'';
 
 function getHipsCubeDesc(plot) {
     if (!isHiPS(plot)) return '';
