@@ -138,7 +138,7 @@ function ProductTypesBlock({tbl_id, dynamicOptions, cutoutValue}) {
                     />
                     {isCutoutSelected && (
                         <Typography level='body-sm' sx={{ ml: 1 }}>
-                            Note: the current cutout size is {makeFoVString(Number(cutoutValue))}
+                            Note: the current cutout size is {`${makeFoVString(Number(cutoutValue))} `}
                             (you may change this via the cutout dialog).
                         </Typography>
                     )}
