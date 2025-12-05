@@ -19,12 +19,13 @@ import {getPreferCutout} from '../../ui/tap/Cutout';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import {ImageViewerPlaceHolder} from '../iv/ImageViewer';
 import {onPlotComplete} from '../PlotCompleteMonitor';
+import {RotateType} from '../PlotState';
 import {UserZoomTypes} from '../ZoomUtil';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchReplaceViewerItems, getMultiViewRoot, getViewer, IMAGE, NewPlotMode,} from '../MultiViewCntlr.js';
 import {
     dispatchChangeActivePlotView, dispatchDeletePlotView,
-    dispatchPlotImage, dispatchRecenter, dispatchWcsMatch, dispatchZoom, visRoot, WcsMatchType
+    dispatchPlotImage, dispatchRecenter, dispatchRotate, dispatchWcsMatch, dispatchZoom, visRoot, WcsMatchType
 } from '../ImagePlotCntlr.js';
 import {SORT_ASC, SortInfo, UNSORTED} from '../../tables/SortInfo.js';
 import {CloseButton} from 'firefly/ui/CloseButton';
@@ -256,12 +257,18 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
                      defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId, cutoutWpt,
                      defaultCutoutSizeAS}) {
 
+    const {current:matchInit} = useRef({wcsMatchInitDone:false});
+
     useEffect(()=>{
-        if(wcsMatchType!==defaultWcsMatchType) {
+        if (matchInit.wcsMatchInitDone) return;
+        const pv= getPlotViewById(visRoot(),activePlotId);
+        const plotId= (!pv || pv.plotViewCtx.useForCoverage || !pv.plotViewCtx.useForSearchResults) ? undefined : activePlotId;
+        if(plotId && wcsMatchType!==defaultWcsMatchType) {
             //to make sure wcsMatch checkbox is checked on initial render
-            dispatchWcsMatch({matchType: defaultWcsMatchType, plotId: activePlotId});
+            matchInit.wcsMatchInitDone = true;
+            dispatchWcsMatch({matchType: defaultWcsMatchType, plotId});
         }
-    }, []);
+    }, [activePlotId]);
 
     const wcsMatch = (defaultWcsMatchType===WcsMatchType.Standard || defaultWcsMatchType===WcsMatchType.Target) && (
         <SwitchInputFieldView
@@ -439,6 +446,7 @@ async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
         vr= visRoot();
         const plotId= exclusiveNewPlotIds.find( (plotId) => getPlotViewById(vr, plotId).serverCall==='success');
         dispatchChangeActivePlotView(plotId);
+        dispatchRotate({plotId, rotateType:RotateType.NORTH });
         dispatchZoom({ plotId, userZoomType: UserZoomTypes.FIT, });
         dispatchRecenter({plotId});
     }

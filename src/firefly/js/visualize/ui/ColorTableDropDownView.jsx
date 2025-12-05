@@ -493,11 +493,13 @@ function NanColor({plot, changeColor, nanColorLocked, setNanColorLocked}) {
     };
     return (
         <ToolbarButton {...{
-            tip:'set NaN color',
+            tip: nanColorLocked
+                ? 'Automatically selected based on the current color bar.'
+                : 'This color will remain fixed even if the color bar changes.',
             slotProps:{tbCheckBox:{
                 sx: { backgroundColor: colorStr, width: 17.5, height: 20, borderRadius: 3.5}
             }},
-            text:`NaN Pixel Color ${nanColorLocked?' (Locked)': ' (Auto Computed)'}`,
+            text:`NaN Pixel Color ${nanColorLocked?' (Locked)': ' (Auto)'}`,
             hasCheckBox:true, checkBoxOn:defaultNanColorLocked, CheckboxOnIcon: checkIcon,
             onClick:() => {
                 if (nanColorLocked) {

@@ -66,6 +66,7 @@ export class ImageRender extends Component {
 
         if (props.colorMode!==np.colorMode) return true;
         if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
+            pv.lastByteRefreshData===nPv.lastByteRefreshData &&
             targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
             pv.overlayPlotViews===nPv.overlayPlotViews &&
             props.plot===np.plot && props.opacity===np.opacity ) {
