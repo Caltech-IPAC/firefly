@@ -536,6 +536,7 @@ export const WebPlot= {
             zoomFactor: zf,
             attributes,
             rawData,
+            lastByteRefreshData:Date.now(),
             directFileAccessDataAry,
             dataRequested: false,
             cubeIdx: cubeCtx?.cubePlane ?? -1,
