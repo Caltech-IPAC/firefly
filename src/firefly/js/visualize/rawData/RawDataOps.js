@@ -268,6 +268,7 @@ function getFirstDataCompress(plot, mask) {
     if (mask) return FULL;
     const {dataWidth, dataHeight, zoomFactor}= plot;
     const size= dataWidth*dataHeight;
+    if (size < MEG) return FULL;
     if (size < 6*MEG) return zoomFactor<.3 ? HALF : FULL;
 
     if (zoomFactor<QUARTER_ZOOM_FACT) return QUARTER;

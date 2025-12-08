@@ -787,12 +787,12 @@ function markByteDataRefresh(state, action) {
     if (imageOverlayId) {
         const overlayPlotViews= pv.overlayPlotViews?.map( (oPv) => {
             if (oPv?.plot?.plotImageId!==plotImageId) return oPv;
-            return {...oPv, plot:{...oPv.plot}};
+            return {...oPv, plot:{...oPv.plot}, lastByteRefreshData:Date.now()};
         });
         updatedPv= {...pv, overlayPlotViews};
     }
     else {
-        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p}: p);
+        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,lastByteRefreshData:Date.now()}: p);
         updatedPv= {...pv,plots};
     }
 
