@@ -992,7 +992,7 @@ export function getPtSpectralCoords(plot, pt, cubeIdx, band= Band.NO_BAND) {
     if (!plot?.wlDataAry?.[band.value] || !hasWLInfo(plot)) return [0,0];
     const ipt= CCUtil.getImageCoords(plot,pt);
     if (!ipt && plot?.wlData?.hasPixelLevelCoordInfo) return [0,0];
-    return getWavelength(ipt, cubeIdx, plot.wlDataAry[band.value]) ?? [0,0];
+    return getWavelength(ipt||makeImagePt(0,0), cubeIdx, plot.wlDataAry[band.value]) ?? [0,0];
 }
 
 //=============================================================

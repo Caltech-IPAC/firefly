@@ -4,7 +4,7 @@
 
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
 import {convertToArraySize} from '../../tables/TableUtil.js';
-import {algorithmTypes, spectralCoordTypes, LINEAR, TAB, WAVE, VRAD} from './Wavelength.js';  // eslint-disable-line no-unused-vars
+import {algorithmTypes, spectralCoordTypes, LINEAR, TAB, WAVE, VRAD} from './Wavelength.js';
 import {isDefined} from '../../util/WebUtil.js';
 import {Logger} from '../../util/Logger.js';
 
@@ -172,7 +172,7 @@ function isNonSeparableTABGroup(spectralCoords) {
     // all coordinates refer to the same table and output column
     const table = spectralCoords[0].tab.table;
     const ps3_1 = spectralCoords[0].tab.ps3_1.toUpperCase();
-    return spectralCoords.slice(1).every((c) => c.tab.table === table || c.tab.ps3_1.toUpperCase() === ps3_1);
+    return spectralCoords.slice(1).every((c) => c.tab.table === table && c.tab.ps3_1.toUpperCase() === ps3_1);
 }
 
 
@@ -183,8 +183,6 @@ function isNonSeparableTABGroup(spectralCoords) {
  * @returns {{nAxis: int, restWAV: number, r_j: Array.<int>, N: int}}
  */
 function calculateSharedParams(parse, altWcs) {
-
-    // todo should N be max(WCSAXESa, NAXIS)?
     // WCSAXES – [integer; default: NAXIS, or larger of WCS indices i
     // or j]. Number of axes in the WCS description. This keyword,
     // if present, must precede all WCS keywords except NAXIS in
@@ -193,9 +191,12 @@ function calculateSharedParams(parse, altWcs) {
     //
     // It is not recommended for WCSAXES to be smaller than NAXIS,
     // as this would imply that some of the data dimensions are not included in the WCS.
-    const N = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
+    const nAxisWCS = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);  // WCS axes
 
-    const nAxis = parse.getIntValue('NAXIS');
+    const nAxis = parse.getIntValue('NAXIS');  // pixel axes
+
+    // N should be max(WCSAXESa, NAXIS)
+    const N = Math.max(nAxisWCS, nAxis);
 
     // reference pixel, CRPIXj default is 0.0
     let r_j = parse.getDoubleAry('CRPIX', altWcs, 1, N, undefined);
