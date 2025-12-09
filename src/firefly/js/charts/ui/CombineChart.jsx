@@ -393,6 +393,24 @@ function getParamsFromDialog(props) {
     });
 }
 
+/* If one of x or y `data` is mapped ("tables::"), then apply `tablesource` mappings to all the other `data` keys as well.
+* This is necessary because when the combined chart is added to the store, `handleTableSourceConnections` creates new
+* tablesources only for the mapped `data` fields.
+*/
+const addTSMappingsToData = ({tablesources, data, activeTrace=0}) => {
+    const xmapped = (data?.[activeTrace]?.x || '').startsWith?.('tables:');
+    const ymapped = (data?.[activeTrace]?.y || '').startsWith?.('tables:');
+    if (xmapped ^ ymapped) {
+        // all mapped fields should be handled: x, y, error_y.array, etc.
+        Object.entries(tablesources?.[activeTrace]?.mappings || {}).forEach(([key, val]) => {
+            // need get to handle compound keys, like 'error_y.array'
+            if (!get(data, `${activeTrace}.${key}`)?.startsWith?.('tables:')) {
+                set(data, `${activeTrace}.${key}`, `tables::${val}`);
+            }
+        });
+    }
+};
+
 
 function combineChart({chartIds, doCascading, cascadePadding, ...plottingProps}) {
 
@@ -407,6 +425,7 @@ function combineChart({chartIds, doCascading, cascadePadding, ...plottingProps})
     baseChartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 
     doCascading && applyCascadingAlgo(baseChartId, baseChartData, 0, cascadePadding);
+    addTSMappingsToData(baseChartData);
 
     for (let i = 1; i < chartIds.length; i++) {
         const chartId = chartIds[i];
@@ -444,19 +463,8 @@ function combineChart({chartIds, doCascading, cascadePadding, ...plottingProps})
             });
         }
 
-        const xmapped = (data?.[activeTrace]?.x || '').startsWith?.('tables:');
-        const ymapped = (data?.[activeTrace]?.y || '').startsWith?.('tables:');
-        if (xmapped ^ ymapped) {
-            // all mapped fields should be handled: x, y, error_y.array, etc.
-            Object.entries(tablesources?.[activeTrace]?.mappings || {}).forEach(([key, val]) => {
-                // need get to handle compound keys, like 'error_y.array'
-                if (!get(data, `${activeTrace}.${key}`)?.startsWith?.('tables:')) {
-                    set(data, `${activeTrace}.${key}`, `tables::${val}`);
-                }
-            });
-        }
-
         doCascading && applyCascadingAlgo(chartId, chartData, i, cascadePadding);
+        addTSMappingsToData({tablesources, data, activeTrace});
 
         // merge selected chart data into new chart
         data         && baseChartData.data.push(...data);
