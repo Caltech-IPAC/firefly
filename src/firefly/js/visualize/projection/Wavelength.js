@@ -735,20 +735,19 @@ function getPixelCoords(ipt, cubeIdx) {
  *  s_3: is a scaling factor given by CDELT3
  *  m3_j: is a linear transformation matrix given either by PC3_j or CD3_j
  *
- * @param pixCoords: pixel coordinates, normally this will be an array [imagePt.x,imagePt.y,plane]
+ * @param pixCoords pixel coordinates, normally this will be an array [imagePt.x,imagePt.y,plane]
  * @param {number} N
- * @param {Array.<number>} r_j: r j are pixel coordinates of the reference point given by CRPIX j
- * @param {Array.<number>} pc_3j: PC_3j matrix, if length=3 array and first two entries are 0,
+ * @param {Array.<number>} r_j r j are pixel coordinates of the reference point given by CRPIX j
+ * @param {Array.<number>} pc_3j PC_3j matrix, if length=3 array and first two entries are 0,
  * then probably all pixels on the plane have the same value
- * @param {Number} s_3: CDELT3 value
+ * @param {Number} s_3 CDELT3 value
  * @return number
  */
-
 function getOmega(pixCoords, N, r_j, pc_3j, s_3) {
     let omega = 0.0;
-    for (let i = 0; i < N; i++) {
+    // N is max(WCSAXES, NAXIS)
+    for (let i = 0; i < Math.min(pixCoords.length, N); i++) {
         omega += s_3 * pc_3j[i] * (pixCoords[i] - r_j[i]);
     }
     return omega;
 }
-
