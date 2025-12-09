@@ -6,7 +6,10 @@
 ## Tentative plans: improve cube handling, optimizations, chart work, interaction with firefly_client
 
 #### Major Features
-_add details features here_
+
+- Images: use web gpu to process images- Firefly-1897 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1890))
+ 
+_add more details features here_
 
 #### Bug fix
 _add bug fix list here_
