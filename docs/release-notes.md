@@ -8,7 +8,7 @@
 
 
 ## Version 2025.5
-- 2025.5.0 - (Dec 3, 2025),  _docker tag_: `2025.5.0`, `2025.5`, `latest`
+- 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`, `2025.5`, `latest`
 
 This release includes broad range of features Job Monitor cleanup, Spectrum/Chart cleanup, Packaging/Download cleanup, S3 support, more FITS projections supported and improved color support
 It also includes significant infrastructure updates.
@@ -49,6 +49,7 @@ It also includes significant infrastructure updates.
 - Fixed: Cube visualizer shows 0.0 um for all planes- Firefly-1870 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1862))
 - Fixed: grid options not showing in MultiProductViewer- IRSA-7404 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1871))
 - Fixed: Inconsistent CSV handling between API and direct upload- Firefly-1838 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1886))
+- Fixed: Per-plane spectral coord display when WCSAXES != NAXIS - Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 
 
 ##### _Pull Requests in this release_
