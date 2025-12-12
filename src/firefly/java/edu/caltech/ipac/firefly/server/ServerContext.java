@@ -123,13 +123,13 @@ public class ServerContext {
             ServerContext.webappConfigPath = webappConfigPath;
             ServerContext.contextName = contextName;
 
+            configInit();
+
             try {
                 RedisService.init();    // initialize Redis first because other services depend on it.
             } catch (Exception e) {
                 log.error(e, "Failed to initialize RedisService: " + e.getMessage());
             }
-
-            configInit();
 
             initVisSearchPath();
 
