@@ -21,7 +21,7 @@ import {getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
 import {getFluxUnits} from '../WebPlot';
 import { getColorModel, makeColorHistImage, makeColorTableImage
-} from 'firefly/visualize/rawData/rawAlgorithm/ColorTable.js';
+} from '../rawData/ColorTable.js';
 import {useWatcher} from 'firefly/ui/SimpleComponent.jsx';
 import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 

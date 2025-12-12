@@ -28,7 +28,7 @@ import BrowserInfo from '../util/BrowserInfo.js';
 import {
     visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
     dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
-    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON, ExpandType
+    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON, ExpandType, dispatchMarkOutOfMemory
 } from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
@@ -165,7 +165,7 @@ function isWheelRequireImageActive(plotId) {
     }
     else {
         const viewerId= findViewerWithItemId(mvRoot, plotId, IMAGE);
-        return getViewer(mvRoot, viewerId)?.scroll ?? false
+        return getViewer(mvRoot, viewerId)?.scroll ?? false;
     }
 }
 
@@ -416,6 +416,7 @@ function isImageSizeViewable(plotView) {
 /**
  *
  * @param {PlotView} pv
+ * @param colorMode
  * @return {Array}
  */
 function makeTileDrawers(pv, colorMode) {
@@ -485,6 +486,16 @@ function MessageArea({pv,plotShowing,onScreen, sizeViewable, loadingRawData}) {
                                    useMessageAlpha={false} buttonText='Zoom To Fit'
                                    buttonCB={() => dispatchZoom({plotId:pv.plotId, userZoomType:UserZoomTypes.FIT}) }/>
             );
+        }
+        else if (pv.plotViewCtx.markOutOfMemory) {
+            return (
+                <ImageViewerStatus message={'Last action failed: Image out of memory'} working={false} top={2}
+                                   useMessageAlpha={true} buttonText='OK'
+                                   buttonCB={() => {
+                                       dispatchChangeActivePlotView(pv.plotId);
+                                       setTimeout(() => dispatchMarkOutOfMemory({plotId:pv.plotId, markOutOfMemory:false}));
+                                   } } />
+                );
         }
         else {
             return false;

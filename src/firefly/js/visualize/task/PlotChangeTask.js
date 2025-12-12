@@ -4,7 +4,9 @@
 
 import {isNumber, isArray, set} from 'lodash';
 import {logger} from '../../util/Logger.js';
-import ImagePlotCntlr, { IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot, dispatchMarkOutOfMemory
+} from '../ImagePlotCntlr.js';
 import {
     primePlot,
     getPlotViewById,
@@ -21,7 +23,7 @@ import {locateOtherIfMatched} from './WcsMatchTask';
 import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
 import {RangeValues} from '../RangeValues.js';
-import {loadStretchData, queueChangeLocalRawDataColor} from '../rawData/RawDataOps.js';
+import {isOutOfMemoryInWorker, loadInitialStretchData, queueChangeLocalRawDataColor} from '../rawData/RawDataOps.js';
 import {dispatchAddWorkingTask} from '../../core/AppDataCntlr.js';
 import {Band} from '../Band.js';
 import {makeCubeCtxAry, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
@@ -44,7 +46,7 @@ export function requestLocalDataActionCreator(rawAction) {
         }
         if (plot.dataRequested) return;
         dispatcher(rawAction);
-        loadStretchData(pv, plot,dispatcher);
+        loadInitialStretchData(pv, plot,dispatcher);
     };
 }
 
@@ -113,6 +115,10 @@ function colorChangeImage(store,dispatcher,payload) {
     const {plotId,cbarId,nanPixelColor, useRed=true, useGreen=true, useBlue=true}= payload;
     const pv= getPlotViewById(store,plotId);
     const plot= primePlot(pv);
+    if (isOutOfMemoryInWorker(plot.plotImageId)) {
+        dispatchMarkOutOfMemory({plotId,markOutOfMemory:true});
+        return;
+    }
     const basePlotThreeColor= isThreeColor(pv);
     const {bias,contrast}= getBiasContrast(pv,payload.bias, payload.contrast);
     const colorParams= {plot,bias,contrast, colorTableId:cbarId, nanPixelColor, onComplete};

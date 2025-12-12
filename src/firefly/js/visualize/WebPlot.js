@@ -15,7 +15,7 @@ import {
 } from './projection/Projection.js';
 import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
-import {findAContrastColor, NO_COLOR_TABLE} from './rawData/rawAlgorithm/ColorTable';
+import {findAContrastColor, NO_COLOR_TABLE} from './rawData/ColorTable';
 import {convertCelestial} from './VisUtil';
 
 export const BLANK_HIPS_URL= 'blank';
@@ -58,7 +58,7 @@ export const RDConst= {
  * coordinate system.
  *
  * @prop {String} plotId - plot id, id of the plotView, immutable
- * @prop {String} plotImageId,  - plot image id, id of this WebPlot , immutable
+ * @prop {String} plotImageId - plot image id, id of this WebPlot , immutable
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
  * @prop {number} colorTableId
@@ -454,7 +454,7 @@ export const WebPlot= {
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
         if (!request0) request0= plotState.getWebPlotRequest();
-        const colorTableId= request0?.getInitialColorTable() ?? 0;
+        const colorTableId= request0?.getInitialColorTable()+'' ?? '0';
 
         const {processHeader, wlData, wlDataAry, headerAry, header, zeroHeader,
             allWCSMap, allWlMap}= getAllHeaderAndWlInfo(cubeCtx,wpInit,plotState);

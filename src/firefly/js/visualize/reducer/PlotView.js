@@ -181,6 +181,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         multiHdu:false, // this is updated when plots are added
         cubeCnt: 0,     // this is updated when plots are added
         hduPlotStartIndexes: [0], // this is updated when plots are added
+        markOutOfMemory: false,
     };
 
     const {hipsImageConversion:hi}= pvOptions;

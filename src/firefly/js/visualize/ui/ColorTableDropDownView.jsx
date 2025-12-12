@@ -19,7 +19,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {
     findAContrastColor, getColorModel, baseIdMatchesForOrRev, isReversedColor, makeColorTableImage, NO_COLOR_TABLE,
     reverseId, getCbarNumIds, getCbarTip
-} from '../rawData/rawAlgorithm/ColorTable';
+} from '../rawData/ColorTable';
 import {isImage} from '../WebPlot.js';
 import {Band} from '../Band.js';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';

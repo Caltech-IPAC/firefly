@@ -128,7 +128,7 @@ function makeImageTag(pv, onImageLoad,size) {
     const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
 
     const drawOnCanvas= (targetCanvas) => {
-        if (!targetCanvas) return;
+        if (!targetCanvas || !thumbnailCanvas) return;
         const ctx= targetCanvas.getContext('2d');
         ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
         ctx.drawImage(thumbnailCanvas,0,0);
@@ -136,7 +136,7 @@ function makeImageTag(pv, onImageLoad,size) {
 
     return (
         <div style={s}>
-            <SimpleCanvas drawIt={drawOnCanvas} width={thumbnailCanvas.width} height={thumbnailCanvas.height}
+            <SimpleCanvas drawIt={drawOnCanvas} width={thumbnailCanvas?.width} height={thumbnailCanvas?.height}
                           id={'thumbnail'}/>
         </div>);
 }

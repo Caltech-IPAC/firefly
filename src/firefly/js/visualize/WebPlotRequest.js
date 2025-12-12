@@ -175,7 +175,7 @@ const clientSideKeys = [WPConst.PREFERENCE_COLOR_KEY, WPConst.GRID_ON,
         ];
 
 
-let defColorTable= 0;
+let defColorTable= '0';
 
 export const setDefaultImageColorTable= (ct) => defColorTable=ct;
 export const getDefaultImageColorTable= () => defColorTable;

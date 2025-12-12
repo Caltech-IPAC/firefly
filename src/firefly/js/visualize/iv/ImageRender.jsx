@@ -10,7 +10,6 @@ import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
 import {CANVAS_IMAGE_ID_START} from '../PlotViewUtil.js';
 import {primePlot} from '../PlotViewUtil';
-import {getGpuJsImmediate} from '../rawData/GpuJsConfig.js';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
@@ -37,7 +36,7 @@ function initTileDrawer(targetCanvas, plot) {
         return initImageDrawer(targetCanvas);
     }
     else {
-        return createHiPSDrawer(targetCanvas, getGpuJsImmediate());
+        return createHiPSDrawer(targetCanvas);
     }
 }
 

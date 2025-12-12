@@ -40,11 +40,6 @@ export const {addRawDataToCache, getEntry, getEntryByBand, removeRawData, getEnt
         }
     };
 
-    const updateCacheData= (plot, cacheData) => {
-        //todo  this should update the cache
-        //       make getEntry clone the results, so updateCacheData must be called
-    };
-
     const removeRawData= (plotImageId) => {
         rawDataStore= rawDataStore.filter( (s) => s.plotImageId!==plotImageId);
         return rawDataStore.length;

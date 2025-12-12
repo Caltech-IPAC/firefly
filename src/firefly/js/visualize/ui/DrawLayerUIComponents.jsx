@@ -143,6 +143,7 @@ export function getTitleTag(title, maxTitleChars, autoFormatTitle) {
 
     return (
         <Typography {...{
+            component:'div',
             whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
             minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
             {title}

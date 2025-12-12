@@ -5,7 +5,7 @@
 import React, {memo, useRef} from 'react';
 import PropTypes from 'prop-types';
 
-export const SimpleCanvas= memo(({drawIt, width, height, id, backgroundColor}) => {
+export const SimpleCanvas= memo(({drawIt, width=0, height=0, id, backgroundColor}) => {
     const {current:canvasRef} = useRef({canvas:undefined});
     const setUpCanvas=(c) => {
         canvasRef.canvas= c;

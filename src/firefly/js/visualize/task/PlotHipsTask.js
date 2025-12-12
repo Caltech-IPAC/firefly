@@ -265,7 +265,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             // console.log('hips plot expired or aborted');
             return;
         }
-        await getGpuJs(getRootURL()); // make sure the GPU code is loaded up front
+        await getGpuJs(); // make sure the GPU code is loaded up front
         createHiPSGridLayer();
         dispatchAddActionWatcher({
             actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],

@@ -1,49 +1,35 @@
-import {isArray, isArrayBuffer, isUndefined} from 'lodash';
+import {isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
-import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions';
+import BrowserInfo from '../../util/BrowserInfo';
 import {Band} from '../Band.js';
-import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
-import {createCanvas, isImageBitmap, MEG} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
-import {PlotState} from '../PlotState.js';
-import {getNextWorkerKey, postToWorker} from '../../threadWorker/WorkerAccess.js';
-import {addRawDataToCache, CLEARED, getEntry, STRETCH_ONLY} from './RawDataCache.js';
-import {getColorModel} from './rawAlgorithm/ColorTable.js';
-import {getGPUOps} from './RawImageTilesGPU.js';
-import {getGpuJs} from './GpuJsConfig.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {
-    makeAbortFetchAction, makeColorAction, makeRetrieveStretchByteDataAction,
+    findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot
+} from '../PlotViewUtil.js';
+import {MEG} from '../../util/WebUtil.js';
+import ImagePlotCntlr, {
+    dispatchAttributeChange, dispatchMarkOutOfMemory, dispatchRequestLocalData, visRoot
+} from '../ImagePlotCntlr.js';
+import {PlotState} from '../PlotState.js';
+import {getNextWorkerKey, isWorkerOutOfMemory, postToWorker} from '../../threadWorker/WorkerAccess.js';
+import {
+    addLoadingPromise, addRawDataToCache, CLEARED, getEntry, markOutOfMemory, STRETCH_ONLY
+} from './RawDataCache.js';
+import {getColorModel} from './ColorTable.js';
+import {createTileWithGPU} from './RawImageTilesGPU.js';
+import {getGpuJs, getGpuJsImmediate} from './GpuJsConfig.js';
+import {
+    makeAbortFetchAction, makeColorAction, makeMaskColorAction, makeRetrieveStretchByteDataAction,
 } from './RawDataThreadActionCreators.js';
-import {FULL, HALF, MAX_FULL_DATA_SIZE, QUARTER, shouldUseGpuInWorker} from './RawDataCommon.js';
+import {FULL, HALF, logGpuState, MAX_FULL_DATA_SIZE, QUARTER, shouldUseGpuInWorker} from './RawDataCommon.js';
 import {makeThumbnailCanvas} from 'firefly/visualize/rawData/RawTileDrawer.js';
 import {Logger} from 'firefly/util/Logger.js';
 
 const nextColorChangeParams= new Map();
 const colorChangeDonePromises= new Map();
-const imageIdsRequested= new Map();
+const currentRunningZoomImageId= new Map();
 const QUARTER_ZOOM_FACT= .15;
 const HALF_ZOOM_FACT= .42;
-
-
-/**
- *
- * @param {ImageBitmap|HTMLCanvasElement|ArrayBuffer} buffer
- * @param {number} width
- * @param {number} height
- * @return {HTMLCanvasElement}
- */
-function createTileFromImageData(buffer, width,height) {
-    if (buffer instanceof HTMLCanvasElement) return buffer;
-    const c= createCanvas(width,height);
-    if (isImageBitmap(buffer)) {
-        c.getContext('2d').drawImage(buffer,0,0);
-    }
-    else {
-        c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(buffer),width,height),0,0);
-    }
-    return c;
-}
-
 
 
 /**
@@ -57,65 +43,30 @@ function createTileFromImageData(buffer, width,height) {
  * @param obj.contrast
  * @param obj.bandUse
  * @param obj.nanPixelColor
- * @param obj.GPU
  * @return {Promise<unknown>}
  */
-function* rawTileGenerator({rawTileDataGroup, colorTableId=0, mask=false, maskColor=undefined,
-                               bias=.5, contrast=1, bandUse, nanPixelColor, GPU}) {
-    const {rawTileDataAry}= rawTileDataGroup;
-    const newRawTileDataAry= [];
-    const gpu= getGPUOps(GPU);
-    for(let i=0; (i<rawTileDataAry.length);i++) {
-        const inData= rawTileDataAry[i];
-        const {pixelData3C, pixelDataStandard,workerTmpTile, width,height}= rawTileDataAry[i];
-        let tile;
+async function populateTilesAsync({rawTileDataGroup:groupFromWorker, colorTableId=0, mask=false, maskColor=undefined,
+                               bias=.5, contrast=1, bandUse, nanPixelColor}) {
+    const {rawTileDataAry:tileFromWorker}= groupFromWorker;
+    let rawTileDataAry;
+    const workerBitMapTile= undefined;
 
-        if (isArrayBuffer(pixelDataStandard) || pixelData3C?.some( (a) => isArrayBuffer(a)) ) {
-            const cm=getColorModel(colorTableId,nanPixelColor);
-            tile= gpu.createTileWithGPU(rawTileDataAry[i],cm,mask, maskColor, bias, contrast,bandUse);
-        }
-        else {
-            tile= createTileFromImageData(workerTmpTile, width,height);
-        }
-        newRawTileDataAry[i]= {...inData, workerTmpTile: undefined, rawImageTile:tile};
-        if (i<rawTileDataAry.length-1) yield;
+    if (tileFromWorker[0].workerBitMapTile) { // just move workerBitMapTile to rawImageTile
+        rawTileDataAry= tileFromWorker.map( (obj) => ({...obj, rawImageTile:obj.workerBitMapTile, workerBitMapTile}));
     }
-    return {...rawTileDataGroup, rawTileDataAry:newRawTileDataAry, colorTableId, nanPixelColor};
+    else { // worker returned array data because no worker gpu support, todo: can I deprecate this else?
+        rawTileDataAry= [];
+        if (!BrowserInfo.supportsWebGpu() && !getGpuJsImmediate() ) await getGpuJs(); // make sure the GPU code is loaded up front
+        const cm=getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
+        for(let i=0; (i<tileFromWorker.length); i++) {
+            const bitMap= await createTileWithGPU(tileFromWorker[i],cm,mask, maskColor, bias, contrast,bandUse);
+            rawTileDataAry[i]= { ...tileFromWorker[i], workerBitMapTile, rawImageTile:bitMap};
+        }
+    }
+    return {...groupFromWorker, rawTileDataAry, colorTableId, nanPixelColor};
 }
 
 
-/**
- *
- * @param {Object} obj
- * @param obj.rawTileDataGroup
- * @param obj.colorTableId
- * @param [obj.mask]
- * @param [obj.maskColor]
- * @param obj.bias
- * @param obj.contrast
- * @param obj.bandUse
- * @param obj.nanPixelColor
- * @return {Promise<unknown>}
- */
-async function populateTilesAsync(obj) {
-    const chunkSize= 5;
-    const GPU= await getGpuJs();
-    const gen= rawTileGenerator({...obj, GPU});
-    return new Promise((resolve, reject) => {
-        const id= setInterval( () => {
-
-            let result= {done:false};
-            for(let i=0; (i<chunkSize && !result.done); i++) {
-                result= gen.next();
-                if (!result.done) return;
-            }
-            clearInterval(id);
-            result.value ? resolve(result.value) : reject();
-        },0);
-    });
-}
-
-const defBandUse= {useRed:true,useGreen:true,useBlue:true};
 
 /**
  * @typedef {Object} ChangeColorResults
@@ -141,7 +92,12 @@ export function queueChangeLocalRawDataColor(params) {
     const {onComplete, ...changeParams}= params;
     const {plotImageId,plotId}= params.plot;
     const entry = getEntry(plotImageId);
-    if (!entry) return;
+    if (isOutOfMemoryInWorker(plotImageId)) {
+        console.log('queueChangeLocalRawDataColor: not calling worker: out of memory');
+        handleOutOfMemory(params.plot);
+        return;
+    }
+    if (!entry.initialized) return;
     const p= colorChangeDonePromises.get(plotImageId);
     if (!entry.colorChangingInProgress || !p) {
         return changeLocalRawDataColor(changeParams)
@@ -171,52 +127,92 @@ export function queueChangeLocalRawDataColor(params) {
  * @param {WebPlot} obj.plot
  * @param {number} obj.colorTableId
  * @param {number} obj.bias
- * @param {Array.<number>} obj.nanPixelColor
  * @param {number} obj.contrast
  * @param {Array.<number>} obj.nanPixelColor
  * @param [obj.bandUse]
  * @return {ChangeColorResults}
  */
 export async function changeLocalRawDataColor(obj) {
-    const {plot, colorTableId, bias, contrast, nanPixelColor, bandUse=defBandUse}= obj;
-    const entry = getEntry(plot.plotImageId);
-    if (!entry) return {};
+    const defBandUse= {useRed:true,useGreen:true,useBlue:true};
+    const {plot={}, colorTableId, bias, contrast, nanPixelColor, bandUse=defBandUse}= obj;
+    const {plotImageId} = plot;
+    const entry = getEntry(plotImageId);
+    if (!entry.initialized) return {};
 
     let plotStateSerialized;
     let rawTileDataGroup;
     entry.colorChangingInProgress= true;
+
+    if (isOutOfMemoryInWorker(plotImageId)) {
+        console.log('changeLocalRawDataColor: not calling worker: out of memory');
+        return;
+    }
 
     let donePromiseResolve;
 
     const donePromise= new Promise( (resolve) => {
         donePromiseResolve= resolve;
     });
-    colorChangeDonePromises.set(plot.plotImageId, donePromise);
+    colorChangeDonePromises.set(plotImageId, donePromise);
 
     //todo makeColorAction
-    if (shouldUseGpuInWorker()) {
-        const colorResult= await postToWorker(makeColorAction({...obj, workerKey:entry.workerKey}));
-        plotStateSerialized = colorResult.plotStateSerialized;
-        rawTileDataGroup= colorResult.rawTileDataGroup;
+    try {
+        if (shouldUseGpuInWorker()) {
+            const colorResult= await postToWorker(makeColorAction({...obj, workerKey:entry.workerKey}));
+            plotStateSerialized = colorResult.plotStateSerialized;
+            rawTileDataGroup= colorResult.rawTileDataGroup;
+        }
+        else {
+            const newPlotState = plot.plotState.copy();
+            plotStateSerialized= newPlotState.toJson(true);
+            rawTileDataGroup= entry.rawTileDataGroup;
+        }
+        entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, ...obj});
+        entry.thumbnailEncodedImage = makeThumbnailCanvas(plot);
+        entry.colorChangingInProgress= false;
+        colorChangeDonePromises.delete(plotImageId);
+        donePromiseResolve?.();
+        const plotState= PlotState.parse(plotStateSerialized);
+        return {plotState, bias,contrast,bandUse, nanPixelColor, colorTableId};
+
+    } catch (data) {
+        colorChangeDonePromises.delete(plotImageId);
+        donePromiseResolve?.();
+        entry.colorChangingInProgress= false;
+        console.log('color change exception');
+        console.log(data);
+        if (isWorkerOutOfMemory(data.error)) handleOutOfMemory(plot);
+        return {plotState:plot.plotState, bias,contrast,bandUse, nanPixelColor, colorTableId};
     }
-    else {
-        const newPlotState = plot.plotState.copy();
-        plotStateSerialized= newPlotState.toJson(true);
-        rawTileDataGroup= entry.rawTileDataGroup;
-    }
-    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, ...obj});
-    entry.thumbnailEncodedImage = makeThumbnailCanvas(plot);
-    entry.colorChangingInProgress= false;
-    colorChangeDonePromises.delete(plot.plotImageId);
-    donePromiseResolve?.();
-    const plotState= PlotState.parse(plotStateSerialized);
-    return {plotState, bias,contrast,bandUse, nanPixelColor, colorTableId};
+}
+
+export function isOutOfMemoryInWorker(plotImageId) {
+    const entry = getEntry(plotImageId);
+    if (!entry.initialized || !entry.workerKey) return false;
+    return entry.outOfMemory;
+}
+
+function handleOutOfMemory(plot) {
+    const {plotId,plotImageId} = plot;
+    markOutOfMemory(plotImageId);
+    setTimeout(() => {
+        dispatchMarkOutOfMemory({plotId});
+        dispatchAttributeChange({
+            plotId,
+            changes: {[PlotAttribute.USER_WARNINGS]:
+                    {
+                        tooltip: 'Image out of memory',
+                        msg: 'This image is out of memory, the functions are limited: no color or stretch changes'
+                    }}
+        });
+    });
 }
 
 
 export function colorTableMatches(plot) {
     if (!plot || isThreeColor(plot)) return true;
     const entry = getEntry(plot.plotImageId);
+    if (!entry.initialized) return true;
     if (isUndefined(entry?.rawTileDataGroup?.colorTableId)) return true;
     if (entry.rawTileDataGroup.colorTableId!==plot.colorTableId) return false;
     if (!shallowequal(entry.rawTileDataGroup.nanPixelColor, plot.rawData?.bandData?.[0]?.nanPixelColor)) return false;
@@ -228,21 +224,21 @@ export function colorTableMatches(plot) {
 
 
 export async function changeLocalMaskColor(plot, maskColor) {
-    if (!getEntry(plot.plotImageId)) return;
-    const newPlotState = plot.plotState.copy();
     const entry = getEntry(plot.plotImageId);
-    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:entry.rawTileDataGroup, mask:true, maskColor});
+    if (!entry.initialized) return;
+    const newPlotState = plot.plotState.copy();
+    const {workerKey} = entry;
+    // entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:entry.rawTileDataGroup, mask:true, maskColor});
+    const result= await postToWorker(makeMaskColorAction({plot,maskColor,workerKey}));
+    const rawTileDataGroup= result.rawTileDataGroup;
+    entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, make:true, maskColor});
     return { plotState: newPlotState};
 }
 
 export function hasLocalStretchByteDataInStore(plot) {
     const entry = getEntry(plot?.plotImageId);
-    if (!entry) return false;
+    if (!entry.initialized) return false;
     return (entry.rawTileDataGroup && entry?.dataType!==CLEARED);
-}
-
-export function hasClearedDataInStore(plot) {
-    return Boolean(plot && getEntry(plot.plotImageId)?.dataType===CLEARED);
 }
 
 function clearLocalStretchData(plot) {
@@ -250,7 +246,7 @@ function clearLocalStretchData(plot) {
     const {plotImageId, plotId}= plot;
     const entry= getEntry(plotImageId);
     dispatchRequestLocalData({plotId,plotImageId,dataRequested:false});
-    if (!entry) return;
+    if (!entry.initialized) return;
     entry.dataType= CLEARED;
 }
 
@@ -270,7 +266,6 @@ function getFirstDataCompress(plot, mask) {
     const size= dataWidth*dataHeight;
     if (size < MEG) return FULL;
     if (size < 6*MEG) return zoomFactor<.3 ? HALF : FULL;
-
     if (zoomFactor<QUARTER_ZOOM_FACT) return QUARTER;
     else if (zoomFactor<HALF_ZOOM_FACT) return HALF;
     else return size < MAX_FULL_DATA_SIZE ? FULL : HALF;
@@ -311,37 +306,40 @@ const getStretchReqId= () => `stretch-req-${++reqIdCounter}`;
  * @param dispatcher
  * @return {Promise<void>}
  */
-export async function loadStretchData(pv, plot, dispatcher) {
+export async function loadInitialStretchData(pv, plot, dispatcher) {
 
-    const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
+    logGpuState();
+
+    const entry= getEntry(plot.plotImageId);
+    if (isOutOfMemoryInWorker(plot.plotImageId)) {
+        console.log('loadStandardStretchData: not calling worker: out of memory');
+        handleOutOfMemory(plot);
+        return {success:false, fatal:true};
+    }
+    const workerKey= entry.workerKey ?? getNextWorkerKey();
     const {plotImageId}= plot;
     const {plotImageId:plotImageIdForValidation}= primePlot(pv);
 
     const plotInvalid= () => primePlot(visRoot(),plotId)?.plotImageId!==plotImageIdForValidation;
-    const reqId= getStretchReqId();
-    imageIdsRequested.set(plotImageId,reqId);
     const {plotId}= pv;
     const imageOverlayId= plot.plotId!==pv.plotId ? plot.plotId : undefined; // i have an overlay image
     const mask= Boolean(imageOverlayId);
     const oPv= mask ? getOverlayById(pv,imageOverlayId) : undefined;
     const maskOptions= mask ? {maskColor:oPv?.colorAttributes.color, maskBits: oPv?.maskValue } : undefined;
     const dataCompress= getFirstDataCompress(plot,mask);
-    const {success:firstSuccess, fatal}= await loadStandardStretchData(workerKey, plot,
+    const {success, fatal}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
-    imageIdsRequested.delete(plot.plotImageId);
 
     if (plotInvalid()) return;
-    if (firstSuccess) {
+    if (success) {
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
     }
     else {
         if (fatal) {
             Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (dataCompress!==FULL) {
-                // Logger('RawDataOps').warn(`requesting again: ${dataCompress}`);
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: Could not retrieve image render data' }});
-                // await requestAgain(reqId, plotId, plot, 1, dataCompress, workerKey, dispatcher);
             }
             else {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
@@ -358,80 +356,56 @@ export async function loadStretchData(pv, plot, dispatcher) {
 }
 
 /**
- * load the stretch data again if it is either QUARTER or HALF, if it is already FULL then return
+ * load the stretch data again if it is either QUARTER or HALF, or FULL, if it is already FULL then return
  * @param {String} plotId
  * @param dispatcher
- * @param {boolean} secondTry - true if call recursively
  * @return {Promise<void>}
  */
-export async function updateStretchDataAfterZoom(plotId,dispatcher, secondTry=false) {
+export async function updateStretchDataAfterZoom(plotId,dispatcher) {
     const plot= primePlot(visRoot(),plotId);
     if (!plot) return;
-    const entry = getEntry(plot.plotImageId);
-    if (!entry?.rawTileDataGroup) return;
+    const {plotImageId}= plot;
+    const entry = getEntry(plotImageId,false);
+    if (!entry || isOutOfMemoryInWorker(plotImageId)) return false;
+    if (entry.loadingPromise) {// let current running loadStandardStretchData finished
+        await entry.loadingPromise;
+        await delay(5); // this is to solve race condition with same promise resolution
+    }
+    if (!entry.rawTileDataGroup) {
+        Logger('RawDataOps').warn('updateStretchDataAfterZoom: unexpected empty rawTileDataGroup');
+        return;
+    }
     const {dataCompress}=  entry.rawTileDataGroup;
     const nextDataCompress= getNextDataCompress(dataCompress,plot);
     if (dataCompress===FULL || nextDataCompress===dataCompress) return; // if the compression target is already achieved then return
-
-    const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
+    if (currentRunningZoomImageId.get(plotImageId)?.dataCompress===nextDataCompress) return; // if a call is already scheduled for this compression target then return
+    const workerKey= getEntry(plotImageId)?.workerKey ?? getNextWorkerKey();
     const reqId= getStretchReqId();
-    const runningReqId= imageIdsRequested.get(plot.plotImageId);
-    if (runningReqId && runningReqId!==reqId) return; // abort another request for this image is running
-    imageIdsRequested.set(plot.plotImageId,reqId);
-    const success= await requestAgain(reqId, plot.plotId, plot, 100, nextDataCompress, workerKey, dispatcher);
-    imageIdsRequested.delete(plot.plotImageId);
+    currentRunningZoomImageId.set(plotImageId,{reqId,dataCompress:nextDataCompress});
+    await delay(100);  // allow for superseding request
+    if (currentRunningZoomImageId.get(plotImageId).reqId!==reqId) return; //if superseding call came in then return
+    const {success,fatal}= await loadStandardStretchData(workerKey, plot, { dataCompress:nextDataCompress, backgroundUpdate: true, checkForPlotUpdate: true});
     if (success) {
-        if (secondTry) return;
-        void await updateStretchDataAfterZoom(plotId,dispatcher); // try again the zoom may have changed
-    }
-
-
-               // only to this code if first try and request failed
-    await delay(3000);
-    if (getEntry(plot.plotImageId)?.rawTileDataGroup.dataCompress===nextDataCompress) return; // image already achieved target via another request
-    const runningReqId2= imageIdsRequested.get(plot.plotImageId);
-    if (runningReqId2 && runningReqId2!==reqId) return; // abort another request for this image is running
-    void await updateStretchDataAfterZoom(plotId, dispatcher, true); // second try if mainly a fallback, code will rarely get here
-}
-
-/**
- *
- * @param {String} reqId - requestId
- * @param {String} plotId
- * @param {WebPlot|undefined} plot
- * @param {Number} waitTime
- * @param {String} dataCompress - should be 'FULL' or 'HALF' or 'QUARTER'
- * @param {String} workerKey
- * @param {function} dispatcher
- * @return {Promise<boolean>}
- */
-async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerKey, dispatcher) {
-    if (!plot) return false;
-    const {plotImageId}= plot;
-    await delay(waitTime);
-    if (imageIdsRequested.get(plotImageId)!==reqId) {
-        Logger('RawDataOps').warn('request again: aborted with duplicate');
-        return false;
-    } // abort another request for this image has started
-    const {success,fatal}= await loadStandardStretchData(workerKey, plot,
-                       { dataCompress, backgroundUpdate: true, checkForPlotUpdate: true});
-    if (success) {
-        Logger('RawDataOps').warn(`request again: success BYTE_DATA_REFRESH: ${dataCompress}`);
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
     }
     else {
-        if (fatal) {
-            Logger('RawDataOps').warn(`request again: dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
-            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                payload:{plotId, description:'Failed: Could not retrieve image render data (requestAgain)' }});
-        }
-        else {
-            Logger('RawDataOps').warn(`should never happen: request again: non fatal failure BYTE_DATA_REFRESH: ${dataCompress}`);
-        }
+        handleAfterZoomFail(dispatcher,plotId,fatal,nextDataCompress);
     }
-    return success;
+    currentRunningZoomImageId.delete(plot.plotImageId);
 }
 
+function handleAfterZoomFail(dispatcher, plotId, fatal,nextDataCompress) {
+    let msg;
+    if (fatal) {
+        msg= `requestDataAfterZoom: dispatch the the plot failed on BYTE_DATA_REFRESH: ${nextDataCompress}`;
+        dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+            payload:{plotId, description:'Failed: Could not retrieve image render data (requestDataAfterZoom)' }});
+    }
+    else {
+        msg= `should never happen: request again: non fatal failure BYTE_DATA_REFRESH: ${nextDataCompress}`;
+    }
+    Logger('RawDataOps').warn(msg);
+}
 
 /**
  *
@@ -451,23 +425,26 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
     const {processHeader,nanPixelColor} = plot.rawData.bandData[0];
     const {plotImageId,colorTableId:originalColorTableId}= plot;
     const veryLargeData= plot.dataWidth*plot.dataHeight > MAX_FULL_DATA_SIZE;
-    let entry = getEntry(plotImageId);
-    if (entry) {
+    const entry = getEntry(plotImageId);
+    if (isOutOfMemoryInWorker(plotImageId)) {
+        console.log('loadStandardStretchData: not calling worker: out of memory');
+        return {success:false, fatal:true};
+    }
+    if (entry.initialized) {
         if (!backgroundUpdate) entry.dataType= CLEARED;
-        if (entry.loadingCnt) {
+        if (entry.loadingPromise) {
             postToWorker(makeAbortFetchAction(plotImageId, workerKey));
         }
     }
     else {
         if (backgroundUpdate) return {success:false, fatal:false};
         addRawDataToCache(plotImageId, processHeader, workerKey, Band.NO_BAND, CLEARED);
-        entry = getEntry(plotImageId);
     }
-    entry.loadingCnt++;
     try {
-        const stretchResult = await postToWorker(
+        const stretchPromise = postToWorker(
             makeRetrieveStretchByteDataAction(plot, plot.plotState, maskOptions, dataCompress, veryLargeData, workerKey));
-        entry.loadingCnt--;
+        addLoadingPromise(plotImageId, stretchPromise);
+        const stretchResult = await stretchPromise;
         if (!stretchResult.success) return {success:false, fatal: stretchResult.fatal};
 
         let latestPlot;
@@ -486,6 +463,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
 
         if (continueLoading) {
             entry.dataType = STRETCH_ONLY;
+            entry.initialized = true;
             const success=  maskOptions ?
                 await completeMaskLoad(latestPlot, stretchResult, maskOptions.maskColor) :
                 await completeLoad(latestPlot, stretchResult, originalColorTableId, nanPixelColor); //todo - get mask color
@@ -495,9 +473,14 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
             return {success:false, fatal: stretchResult.fatal};
         }
     } catch (failResult) {
-        const {success,fatal}= failResult;
-        entry.loadingCnt--;
-        return {success, fatal};
+        if (isWorkerOutOfMemory(failResult.error)) {
+            handleOutOfMemory(plot);
+            return {success:false, fatal:true};
+        }
+        else {
+            const {success,fatal}= failResult;
+            return {success, fatal};
+        }
     }
 }
 
@@ -515,6 +498,7 @@ async function completeLoad(plot, stretchResult, originalColorTableId, nanPixelC
     const entry = getEntry(plot.plotImageId);
     if (originalColorTableId===currPlot.colorTableId) {
         entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:stretchResult.rawTileDataGroup, colorTableId:currPlot.colorTableId, nanPixelColor});
+        entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
     }
     else {
         const {bias,contrast,nanPixelColor}= currPlot.rawData.bandData[0];
@@ -522,7 +506,6 @@ async function completeLoad(plot, stretchResult, originalColorTableId, nanPixelC
     }
     entry.rawTileDataGroup.colorTableId= currPlot.colorTableId;
     entry.rawTileDataGroup.nanPixelColor= currPlot.rawData.bandData[0].nanPixelColor;
-    entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
     return true;
 }
 
@@ -533,107 +516,3 @@ async function completeMaskLoad(plot, stretchResult, maskColor) {
     entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, mask:true, maskColor});
     return true;
 }
-
-
-
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-//--- This code is use if we bring the float data over
-//--- right now we have disabled this feature
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-// export function loadRawData(plotOrAry, dispatcher) {
-//     const plotAry= isArray(plotOrAry) ? plotOrAry : [plotOrAry];
-//
-//     plotAry.forEach(  (p) => {
-//         const workerKey= getNextWorkerKey();
-//         let promise;
-//         const {plotId,plotImageId}= p;
-//         if (isThreeColor(p)) {
-//             promise= load3ColorRawData(p, workerKey);
-//         } else {
-//             promise= loadStandardRawData(p,workerKey);
-//         }
-//         promise.then( (rawData) =>
-//             rawData && dispatcher({type: ImagePlotCntlr.UPDATE_RAW_IMAGE_DATA, payload:{plotId, plotImageId, rawData}}));
-//     });
-// }
-//
-// async function load3ColorRawData( plot, workerKey) {
-//     const {plotState} = plot;
-//     const promiseAry = allBandAry.map((b) => plotState.isBandUsed(b) ? postToWorker(makeLoadAction(plot, b, workerKey)) : Promise.resolve());
-//     const loadResultAry= (await Promise.all(promiseAry)).map( (r) => r ? r : {success:false} );
-//     loadResultAry.forEach(({success}, idx) => {
-//         const band = Band.get(idx);
-//         if (band && success) {
-//             const {processHeader} = plot.rawData.bandData[idx];
-//             if (!processHeader) return;
-//             addRawDataToCache(plot.plotImageId, processHeader, workerKey, band);
-//         }
-//     });
-//     let latestPlot= primePlot(visRoot(),plot.plotId);
-//     if (!latestPlot) return;
-//     const stretchResult= await postToWorker(makeStretchAction(latestPlot, Band.NO_BAND,workerKey));
-//     latestPlot= primePlot(visRoot(),plot.plotId);
-//     const latestPlotView= getPlotViewById(visRoot(),plot.plotId);
-//     latestPlot= findPlot(latestPlotView,plot.plotImageId);
-//     if (!latestPlot) return;
-//     return completeLoad(latestPlot,stretchResult);
-// }
-//
-// async function loadStandardRawData( plot, workerKey) {
-//     const loadResult = await postToWorker(makeLoadAction(plot,Band.NO_BAND, workerKey));
-//     if (!loadResult.success) throw ('Error loading the data');
-//     let latestPlot= primePlot(visRoot(),plot.plotId);
-//     if (!latestPlot) return;
-//     const stretchResult = await postToWorker(makeStretchAction(latestPlot,Band.NO_BAND, workerKey));
-//     const {processHeader} = plot.rawData.bandData[0];
-//     latestPlot= primePlot(visRoot(),plot.plotId);
-//     if (!latestPlot) return;
-//     addRawDataToCache(plot.plotImageId, processHeader, workerKey, Band.NO_BAND);
-//     completeLoad(plot,stretchResult);
-// }
-
-// export function hasLocalRawDataInStore(plot) {
-//     const entry = getEntry(plot?.plotImageId);
-//     if (!entry) return false;
-//     if (entry.dataType!==FULL) return false;
-//
-//     if (isThreeColor(plot)) {
-//         const {plotState} = plot;
-//         return allBandAry.every((band) => {
-//             if (!plotState.isBandUsed(band)) return true;
-//             return Boolean(entry[band.key]);
-//         });
-//     } else {
-//         return Boolean(entry[Band.NO_BAND.key]);
-//     }
-// }
-// /**
-//  * @param {WebPlot} plot
-//  * @param {ImagePt} ipt
-//  * @param {Band} band
-//  * @return {Promise.<Number|NaN>}
-//  */
-// export async function getFluxDirect(plot, ipt, band = Band.NO_BAND) {
-//     const entry = getEntry(plot.plotImageId);
-//     if (!entry) return NaN;
-//     const fluxResult= await postToWorker(makeFluxDirectAction(plot,ipt,band,entry.workerKey));
-//     return fluxResult.value;
-// }
-
-// export async function stretchRawData(plot, rvAry) {
-//     const entry = getEntry(plot.plotImageId);
-//     const stretchResult= await postToWorker(makeStretchAction(plot,Band.NO_BAND, entry.workerKey,rvAry));
-//     const {rawTileDataGroup, plotStateSerialized} = stretchResult;
-//     entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, plot.plotState.getColorTableId());
-//     entry.thumbnailEncodedImage = makeThumbnailCanvas(plot);
-//     return {plotState:PlotState.parse(plotStateSerialized)};
-//
-// }
-//
-//

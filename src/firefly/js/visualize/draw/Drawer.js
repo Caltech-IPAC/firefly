@@ -542,12 +542,9 @@ function getNextChuck(params) {
 
 function getMaxChunk(drawData,isPointData) {
     if (!drawData?.length) return 1;
-    if (isPointData) {
-        return BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
-    }
-    else {
-        return BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
-    }
+    return isPointData  // todo does this need to be revisited
+        ? BrowserInfo.isSafari() || BrowserInfo.isChrome() ? 2000 : 500
+        : BrowserInfo.isSafari() || BrowserInfo.isChrome() ? 2000 : 500;
 }
 
 
