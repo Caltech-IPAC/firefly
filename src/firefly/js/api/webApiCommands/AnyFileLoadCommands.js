@@ -1,6 +1,5 @@
 import {makeExamples} from 'firefly/api/WebApi';
-import {EXTERNAL_UPLOAD} from '../../core/AppDataCntlr';
-import {flux} from '../../core/ReduxFlux';
+import {dispatchExternalUpload} from '../../core/AppDataCntlr';
 
 
 const anyFileOverview= {
@@ -39,7 +38,7 @@ function enableFileLoad(cmd,inParams) {
     const params= {...inParams};
     setTimeout(() => {
         const {url, execute=false}= params;
-        flux.process({type:EXTERNAL_UPLOAD, payload:{url, displayName:'some name', immediate:execute}});
+        dispatchExternalUpload({url, displayName:'some name', immediate:execute});
     },10);
 }
 
