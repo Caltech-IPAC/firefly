@@ -317,13 +317,17 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
     if (!showToolbar) return null;
 
     return (
-        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
-            <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
-            <Stack direction='row' spacing={1} alignItems='center'>
-                {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
-                <OverflowMarker tbl_id={tbl_id}/>
+        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row'
+               sx={{justifyContent:'space-between', flexWrap:'wrap', width:1}}
+               {...slotProps?.toolbar}>
+            <Stack direction='row' sx={{alignItems:'center', flexWrap:'wrap', flex:'1 1 0'}}>
+                <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
+                <Stack direction='row' spacing={1} sx={{flexGrow: 1, justifyContent:'center'}} >
+                    {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
+                    <OverflowMarker tbl_id={tbl_id}/>
+                </Stack>
             </Stack>
-            <Stack direction='row' alignItems='center'>
+            <Stack direction='row' sx={{alignItems:'center', flex:'0 1 auto'}}>
                 {rightButtons}
                 {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
                 <ActionsDropDownButton {...{searchActions, tbl_id}} tip='Search drop down: search based on table'/>
@@ -365,7 +369,7 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 }
 
 
-function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
+function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons=[]}) {
     const style = {display: 'inline-flex', alignItems: 'center'};
     const lbStyle = showTitle ? {...style, paddingLeft:10, alignSelf:'center'} : style;
 
@@ -383,15 +387,11 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
                 <ToolbarHorizontalSeparator/>
             </Stack>
         );
-        if (leftButtons) {
-            leftButtons.push(doclink);
-        } else {
-            leftButtons = [doclink];
-        }
+        leftButtons.push(doclink);
     }
 
     return (
-        <Stack direction='row' style={style}>
+        <Stack direction='row' sx={{flexWrap:'wrap'}} >
             { showTitle && <Title {...{title, removable, tbl_id}}/>}
             {leftButtons && <Stack direction='row' spacing={1} style={lbStyle}>{leftButtons}</Stack>}
         </Stack>
