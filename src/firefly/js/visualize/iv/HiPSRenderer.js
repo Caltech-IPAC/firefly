@@ -3,6 +3,7 @@
  */
 
 import {isNil} from 'lodash';
+import BrowserInfo from '../../util/BrowserInfo';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import {NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
@@ -239,7 +240,8 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             if (abortRender) return;
             abortRender = true;
             if (isBaseImage && !renderComplete && renderedCnt>0) renderToScreen(screenRenderParams);
-            if (!renderComplete) allImageCancelFuncs.forEach( (f) => f && f() );
+            //only do this with chrome - with firefox and safari this seems to create invalid images cached
+            if (BrowserInfo.isChrome() && !renderComplete) allImageCancelFuncs.forEach( (f) => f?.() );
         }
     };
 }
