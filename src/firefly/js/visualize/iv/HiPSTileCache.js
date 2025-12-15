@@ -4,6 +4,7 @@
 import {isString} from 'lodash';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPlotViewAry, primePlot} from '../PlotViewUtil.js';
+import {NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable';
 import {isHiPS} from '../WebPlot.js';
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 import {createCanvas} from '../../util/WebUtil.js';
@@ -40,9 +41,16 @@ const getMaxStandardTiles= () => getMaxTiles(MAX_TILE_IMAGES_PER_HIPS, MIN_TILE_
 const getMaxAllSkyTiles= () => getMaxTiles(MAX_ALLSKY_IMAGES_PER_HIPS, MAX_ALLSKY_IMAGES_PER_HIPS, MAX_ALLSKY_TOTAL);
 
 
-
-function makeKey(url,colorTableId=-1,bias=.5,contrast=1) {
-    if (colorTableId===-1) { // if the default tile then the key should set bias and contrast to the default
+/**
+ *
+ * @param {String} url
+ * @param {String} [colorTableId]
+ * @param {String} [bias]
+ * @param {String} [contrast]
+ * @return {String}
+ */
+function makeKey(url,colorTableId=NO_COLOR_TABLE,bias=.5,contrast=1) {
+    if (colorTableId===NO_COLOR_TABLE) { // if the default tile then the key should set bias and contrast to the default
         bias=.5;
         contrast=1;
     }
@@ -67,7 +75,7 @@ export function findAllSkyCachedImage(url,colorTableId,bias,contrast) {
  *
  * @param {String} url
  * @param {Canvas|Image} image
- * @param {number} [colorTableId]
+ * @param {String} [colorTableId]
  * @param {number} [bias]
  * @param {number} [contrast]
  */
@@ -143,7 +151,7 @@ function cleanupCache(cacheMap, maxEntries) {
 
 function removeNonNativeTilesForCache(cacheMap) {
     const entries= Array.from(cacheMap.entries());
-    const newEntries= entries.filter( ([k,v]) => v.colorTableId===-1);
+    const newEntries= entries.filter( ([k,v]) => v.colorTableId===NO_COLOR_TABLE);
     return new Map(newEntries);
 }
 
