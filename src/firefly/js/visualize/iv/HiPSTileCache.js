@@ -4,7 +4,7 @@
 import {isString} from 'lodash';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPlotViewAry, primePlot} from '../PlotViewUtil.js';
-import {NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable';
+import {NO_COLOR_TABLE} from '../rawData/ColorTable';
 import {isHiPS} from '../WebPlot.js';
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 import {createCanvas} from '../../util/WebUtil.js';
