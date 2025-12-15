@@ -35,26 +35,30 @@ export function PagingBar(props) {
         return showingLabel;
     } else {
         return (
-            <Typography component='div' display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
-                <ToolbarButton icon={<FirstPage/>} tip='First Page' onClick={() => callbacks.onGotoPage(1)}/>
-                <ToolbarButton icon={<NavigateBefore/>} tip='Previous Page' onClick={() => callbacks.onGotoPage(currentPage - 1)}/>
-                <Stack direction='row' alignItems='center' spacing={1/2}>
-                    <InputField
-                        slotProps={{ input: { size: 'sm', sx: {width:'3em'} } }}
-                        style={{textAlign: 'right', width: `${nchar+1}ch`}}
-                        validator = {intValidator(1, totalPages, 'Page Number')}
-                        tooltip = 'Jump to this page'
-                        value = {currentPage+''}
-                        onChange = {onPageChange}
-                        actOn={['blur','enter']}
-                        showWarning={false}
-                    /> <div> of {totalPages}</div>
+            <Stack direction='row' sx={{flexWrap:'wrap', alignItems:'center'}}>
+                <Stack direction='row'>
+                    <ToolbarButton icon={<FirstPage/>} tip='First Page' onClick={() => callbacks.onGotoPage(1)}/>
+                    <ToolbarButton icon={<NavigateBefore/>} tip='Previous Page' onClick={() => callbacks.onGotoPage(currentPage - 1)}/>
+                    <Stack direction='row' alignItems='center' spacing={1/2}>
+                        <InputField
+                            slotProps={{ input: { size: 'sm', sx: {width:'3em'} } }}
+                            style={{textAlign: 'right', width: `${nchar+1}ch`}}
+                            validator = {intValidator(1, totalPages, 'Page Number')}
+                            tooltip = 'Jump to this page'
+                            value = {currentPage+''}
+                            onChange = {onPageChange}
+                            actOn={['blur','enter']}
+                            showWarning={false}
+                        /> <Typography level='body-sm' noWrap={true}> of {totalPages}</Typography>
+                    </Stack>
+                    <ToolbarButton icon={<NavigateNext/>} tip='Next Page' onClick={() => callbacks.onGotoPage(currentPage + 1)}/>
+                    <ToolbarButton icon={<LastPage/>} tip='Last Page' onClick={() => callbacks.onGotoPage(totalPages)}/>
                 </Stack>
-                <ToolbarButton icon={<NavigateNext/>} tip='Next Page' onClick={() => callbacks.onGotoPage(currentPage + 1)}/>
-                <ToolbarButton icon={<LastPage/>} tip='Last Page' onClick={() => callbacks.onGotoPage(totalPages)}/>
-                {showingLabel}
-                {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
-            </Typography>
+                <Typography level='body-sm'>
+                    {showingLabel}
+                    {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
+                </Typography>
+            </Stack>
         );
     }
 }
