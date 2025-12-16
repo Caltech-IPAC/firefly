@@ -8,7 +8,8 @@
 
 
 ## Version 2025.5
-- 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`, `2025.5`, `latest`
+- 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`, `2025.5`, `latest`
+- 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`
 
 This release includes broad range of features Job Monitor cleanup, Spectrum/Chart cleanup, Packaging/Download cleanup, S3 support, more FITS projections supported and improved color support
 It also includes significant infrastructure updates.
@@ -51,6 +52,12 @@ It also includes significant infrastructure updates.
 - Fixed: Inconsistent CSV handling between API and direct upload- Firefly-1838 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1886))
 - Fixed: Per-plane spectral coord display when WCSAXES != NAXIS - Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 
+### _Patches 2025.5_
+#### 2025.5.1
+- Fixed: Empty HiPS tiles with Firefox- Firefly-1918 ([commit](https://github.com/Caltech-IPAC/firefly/commit/d6373c98244771f2f0094184ace95f84e3544e4c))
+- Fixed: Fix email notification stopped working- ([commit](https://github.com/Caltech-IPAC/firefly/commit/413eb71e5e18b72e721b9ebc552dc01e20a90cda))
+- Update: Table toolbar needs to wrap when table is narrow- Firefly-1634 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
+- Update: Expose any data file upload functionality- Firefly-1854 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1895))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.5+label%3abug)
