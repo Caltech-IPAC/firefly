@@ -218,7 +218,7 @@ function addTo(ary,addAry) {
 
 function hasCoverageTables(centerWp, fov, plot) {
     const norder= fov > 4 ? MIN_NORDER_FOR_COVERAGE : MIN_NORDER_FOR_COVERAGE+2;
-    const cells = getAllVisibleHiPSCells(norder, centerWp, fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
+    const cells = getAllVisibleHiPSCells(norder, centerWp, fov<1?1:fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
     if (!cells?.length) return 0;
     const ipixAry = cells.map(({ipix}) => ipix);
     return Object.entries(idxRoot())
