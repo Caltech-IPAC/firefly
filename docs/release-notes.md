@@ -8,7 +8,8 @@
 
 
 ## Version 2025.5
-- 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`, `2025.5`, `latest`
+- 2025.5.2 - (Dec 17, 2025),  _docker tag_: `2025.5.2`, `2025.5`, `latest`
+- 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`,
 - 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`
 
 This release includes broad range of features Job Monitor cleanup, Spectrum/Chart cleanup, Packaging/Download cleanup, S3 support, more FITS projections supported and improved color support
@@ -58,6 +59,8 @@ It also includes significant infrastructure updates.
 - Fixed: Fix email notification stopped working- ([commit](https://github.com/Caltech-IPAC/firefly/commit/413eb71e5e18b72e721b9ebc552dc01e20a90cda))
 - Update: Table toolbar needs to wrap when table is narrow- Firefly-1634 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 - Update: Expose any data file upload functionality- Firefly-1854 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1895))
+#### 2025.5.2
+- Fixed: healpix catalog drawing fails at time when on the corner of a tile- ([commit](https://github.com/Caltech-IPAC/firefly/commit/d24939b9e88f943d3a1f9b761fd5f86d8eff4bf2))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.5+label%3abug)
