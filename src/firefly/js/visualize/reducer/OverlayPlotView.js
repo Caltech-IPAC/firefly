@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {clone} from '../../util/WebUtil.js';
 import {RDConst} from '../WebPlot.js';
 
 /**
@@ -25,7 +24,7 @@ import {RDConst} from '../WebPlot.js';
  * @param imageOverlayId
  * @param plotId plot id of image that is overlayed
  * @param {String} title
- * @param imageNumber
+ * @param hduNumber
  * @param maskNumber
  * @param maskValue
  * @param {string} color the color, if overlay is a mask
@@ -34,22 +33,24 @@ import {RDConst} from '../WebPlot.js';
  * @param {string} [fileKey] a file on the server
  * @return {OverlayPlotView}
  */
-export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, maskNumber,
+export function makeOverlayPlotView(imageOverlayId, plotId, title, hduNumber, maskNumber,
                                     maskValue, color, drawingDef, relatedDataId, fileKey) {
 
-    var opv= {
-        imageOverlayId,
+    const opv= {
+        imageOverlayId, // id of the overlay plot view analogous to plotId
         opvType: RDConst.IMAGE_MASK,
-        plotId,
+        plotId, // plotId of the base plot
         title,
         plot: null,
-        drawingDef,
+        primeIdx: 0,
+        plots: [],
+        cube: false,
         makeOverlay : true,
         visible: true,
         wasVisibleWhenReplace: false,
         maskNumber,
         maskValue,
-        imageNumber,
+        imageNumber:hduNumber,
         colorAttributes : {color, srcImageColor: color},
         relatedDataId,
         opacity: .58,
@@ -62,13 +63,18 @@ export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, 
     return opv;
 }
 
-export function replaceOverlayPlots(opv, plot) {
+export function initOverlayPlots(opv) {
 
-    opv= clone(opv, {plot});
-    plot.plotImageId= `${opv.imageOverlayId}--${opv.plotCounter}`;
-    opv.plotCounter++;
+    opv= {...opv};
+    opv.plots.forEach( (plot) => {
+        plot.plotImageId=
+            opv.cube
+                ? `${opv.imageOverlayId}---plane-${plot.cubeCtx.cubePlane}---${opv.plotCounter}`
+                : `${opv.imageOverlayId}--${opv.plotCounter}`;
+        opv.plotCounter++;
+    } );
+    opv.plot= opv.plots[opv.primeIdx];
     opv.visible= true;
-
     opv.plottingStatusMsg='';
     opv.serverCall='success';
 

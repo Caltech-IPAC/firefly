@@ -295,6 +295,7 @@ public class VisJsonSerializer {
         putStr(retObj, "band", band.toString().toUpperCase());
         putStr(retObj, "dataKey", rData.getDataKey());
         putStrNotNull(retObj, "hduName", rData.getHduName());
+        putBoolIfTrue(retObj, "parallelCubePlane", rData.isParallelCubePlane());
         if (rData.getHduIdx()>-1) {
             putNum(retObj, "hduIdx", rData.getHduIdx());
             putNum(retObj, "hduVersion", rData.getHduVersion());

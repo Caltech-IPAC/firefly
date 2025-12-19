@@ -4,7 +4,7 @@ import BrowserInfo from '../../util/BrowserInfo';
 import {Band} from '../Band.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {
-    findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot
+    findPlot, getOverlayById, getPlotViewById, hasLocalStretchByteData, isThreeColor, primePlot
 } from '../PlotViewUtil.js';
 import {MEG} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {
@@ -155,7 +155,6 @@ export async function changeLocalRawDataColor(obj) {
     });
     colorChangeDonePromises.set(plotImageId, donePromise);
 
-    //todo makeColorAction
     try {
         if (shouldUseGpuInWorker()) {
             const colorResult= await postToWorker(makeColorAction({...obj, workerKey:entry.workerKey}));
@@ -221,14 +220,20 @@ export function colorTableMatches(plot) {
     return true;
 }
 
+export async function changeLocalMaskColorOnOverlayPlotView(opv, maskColor) {
+
+    const promiseAry= opv.plots
+        .filter( (p) => hasLocalStretchByteData(p))
+        .map( (p) => changeLocalMaskColor(p,maskColor) );
+    return Promise.all(promiseAry);
+}
 
 
-export async function changeLocalMaskColor(plot, maskColor) {
+async function changeLocalMaskColor(plot, maskColor) {
     const entry = getEntry(plot.plotImageId);
     if (!entry.initialized) return;
     const newPlotState = plot.plotState.copy();
     const {workerKey} = entry;
-    // entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup:entry.rawTileDataGroup, mask:true, maskColor});
     const result= await postToWorker(makeMaskColorAction({plot,maskColor,workerKey}));
     const rawTileDataGroup= result.rawTileDataGroup;
     entry.rawTileDataGroup = await populateTilesAsync({rawTileDataGroup, make:true, maskColor});

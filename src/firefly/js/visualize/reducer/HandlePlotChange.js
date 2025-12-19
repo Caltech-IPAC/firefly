@@ -29,7 +29,8 @@ import {
     primePlot, clonePvAry, clonePvAryWithPv, applyToOnePvOrAll, applyToOnePvOrOverlayGroup,
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
     getPlotViewById, findCurrentCenterPoint, getCenterOfProjection,
-    isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle
+    isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle, isImageCube,
+    convertImageIdxToHDU
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -713,9 +714,17 @@ function recenterPv(centerPt,  centerOnImage, updateFixedTarget= false) {
 
 function makeNewPrimePlot(state,action) {
     const {plotId,primeIdx}= action.payload;
-    let pv=  getPlotViewById(state,plotId);
-    if (!pv || isEmpty(pv.plots) || pv.plots.length<=primeIdx) return state;
-    pv= changePrimePlot(pv, primeIdx);
+    const existingPv=  getPlotViewById(state,plotId);
+    if (!existingPv || isEmpty(existingPv.plots) || existingPv.plots.length<=primeIdx) return state;
+    const pv= changePrimePlot(existingPv, primeIdx);
+
+    if (isImageCube(primePlot(pv))) {
+        const primeIdx= convertImageIdxToHDU(pv,pv.primeIdx).cubeIdx;
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
+            if (!oPv.cube || !oPv.plot || !oPv.plots.length) return oPv;
+            return {...oPv,plot:oPv.plots[primeIdx], primeIdx};
+        });
+    }
     return {...state, plotViewAry:clonePvAryWithPv(state,pv)};
 }
 
@@ -808,9 +817,10 @@ function requestLocalData(state, action) {
     let updatedPv;
     if (imageOverlayId) {
         const overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
-            if (oPv?.plot?.plotImageId!==plotImageId) return oPv;
-            oPv.plot= {...oPv.plot,dataRequested};
-            return oPv;
+            const plots= oPv.plots.map( (p) =>
+                p.plotImageId!==plotImageId ? p : {...p,dataRequested}
+            );
+            return {...oPv, plots, plot:plots[oPv.primeIdx]};
         });
         updatedPv= {...pv, overlayPlotViews};
     }

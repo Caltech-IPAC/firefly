@@ -98,7 +98,7 @@ export function getNextWorkerKey() {
 
 
 export function removeWorker(workerKey) {
-    void postToWorker( { type: RawDataThreadActions.CLOSE_WHEN_IDLE, workerKey, payload:{workerKey}});
+    void postToWorker( { type: RawDataThreadActions.CLOSE_WHEN_IDLE, workerKey, callKey:'', payload:{workerKey}});
     workerMap.delete(workerKey);
 }
 

@@ -9,7 +9,7 @@ import {
     replacePlots, makePlotView, updatePlotViewScrollXY,
     findScrollPtToCenterImagePt, updateScrollToWcsMatch, initScrollCenterPoint
 } from './PlotView.js';
-import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
+import {makeOverlayPlotView, initOverlayPlots} from './OverlayPlotView.js';
 import {
     primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListByPositionLock,
     getCubePlaneCnt, getHDU, getImageCubeIdx, } from '../PlotViewUtil.js'; import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
@@ -250,7 +250,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
 
 
 function newOverlayPrep(state, action) {
-    const {plotId, imageOverlayId, imageNumber, maskValue, maskNumber,
+    const {plotId, imageOverlayId, hduNumber, maskValue, maskNumber,
            color, title, drawingDef, relatedDataId,lazyLoadPayload, fileKey}= action.payload;
 
     const pv= getPlotViewById(state, plotId);
@@ -261,7 +261,7 @@ function newOverlayPrep(state, action) {
     let opv;
     if (!overlayPv) {
         oPvArray= isEmpty(pv.overlayPlotViews) ? [] : pv.overlayPlotViews.slice(0);
-        opv= makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber,
+        opv= makeOverlayPlotView(imageOverlayId, plotId, title, hduNumber,
                                            maskNumber, maskValue, color, drawingDef, relatedDataId,
                                            fileKey);
         if (lazyLoadPayload) {
@@ -272,7 +272,7 @@ function newOverlayPrep(state, action) {
     }
     else {
         oPvArray= pv.overlayPlotViews.map( (opv) => opv.imageOverlayId===imageOverlayId ?
-                             {...overlayPv, imageNumber, maskValue, color, drawingDef, plot:null} : opv);
+                             {...overlayPv, imageNumber:hduNumber, maskValue, color, drawingDef, plot:null} : opv);
     }
 
     return {...state, plotViewAry:clonePvAry(state, plotId, {overlayPlotViews:oPvArray})};
@@ -280,13 +280,14 @@ function newOverlayPrep(state, action) {
 
 
 function addOverlay(state, action) {
-    const {plotId, imageOverlayId, plot}= action.payload;
+    const {plotId, imageOverlayId, cube=false, primeIdx=-1}= action.payload;
 
     const plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!== plotId) return pv;
         const overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
             if (opv.imageOverlayId!== imageOverlayId) return opv;
-            return replaceOverlayPlots(opv,{...plot, affTrans:pv.affTrans});
+            const plots= action.payload.plots.map( (p) => ({...p,affTrans:pv.affTrans}));
+            return initOverlayPlots({...opv,cube, plots, primeIdx});
         });
         return {...pv, overlayPlotViews};
     });

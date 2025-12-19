@@ -11,7 +11,6 @@ import React from 'react';
 import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
-import {clone} from '../../util/WebUtil.js';
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchDeleteOverlayPlot, dispatchOverlayPlotChangeAttributes, visRoot} from '../ImagePlotCntlr.js';
 import {getAllDrawLayersForPlot, getHDU, getLayerTitle, isDrawLayerVisible, primePlot} from '../PlotViewUtil.js';
@@ -224,7 +223,7 @@ function modifyMaskColor(opv) {
                 operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
                     const {plotId, imageOverlayId} = aOpv;
                     const colorAttributes= aOpv.colorAttributes.color!==newColor ?
-                        clone(aOpv.colorAttributes, {color:newColor} ) : aOpv.colorAttributes;
+                        {...aOpv.colorAttributes, color:newColor} : aOpv.colorAttributes;
                     dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot:false,
                         attributes:{colorAttributes,opacity:a}});
                 });
