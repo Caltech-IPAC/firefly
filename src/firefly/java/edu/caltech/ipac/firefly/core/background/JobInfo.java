@@ -4,6 +4,8 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.AppProperties;
@@ -52,6 +54,7 @@ public class JobInfo implements Serializable {
     public static final String ERROR_SUMMARY = "errorSummary";
     public static final String ERROR_TYPE = "type";
     public static final String ERROR_MSG = "message";
+    public static final String ERROR_HAS_DETAILS = "hasDetail";
     public static final String META = "meta";
     public static final String JOB_INFO = "jobInfo";
 
@@ -83,9 +86,9 @@ public class JobInfo implements Serializable {
     private Instant endTime;
     private int executionDuration = LIFE_SPAN;
     private Instant destruction;
-    private Map<String, String> params = new HashMap<>();
+    private Map<String, String> parameters = new HashMap<>();
     private List<Result> results = new ArrayList<>();
-    private Error error;
+    private ErrorSummary errorSummary;
 
     //meta contains essential information needed to manage the job
     final private Meta meta = new Meta();
@@ -113,6 +116,8 @@ public class JobInfo implements Serializable {
     public Meta getMeta() {
         return meta;
     }
+
+    @JsonProperty("jobInfo")
     public Aux getAux() {return aux; }
 
     public Phase getPhase() {
@@ -127,13 +132,13 @@ public class JobInfo implements Serializable {
         this.phase = phase;
     }
 
-    public Error getError() {
-        return error;
+    public ErrorSummary getErrorSummary() {
+        return errorSummary;
     }
 
-    public void setError(Error error) {
+    public void setErrorSummary(ErrorSummary errorSummary) {
         setPhase(Phase.ERROR);
-        this.error = error;
+        this.errorSummary = errorSummary;
     }
 
     public List<Result> getResults() {
@@ -145,11 +150,11 @@ public class JobInfo implements Serializable {
     }
 
     @Nonnull
-    public Map<String, String> getParams() {
-        return params;
+    public Map<String, String> getParameters() {
+        return parameters;
     }
 
-    public void setParams(Map<String,String> params) { this.params = params; }
+    public void setParameters(Map<String,String> parameters) { this.parameters = parameters; }
 
     public String getOwnerId() { return ownerId;}
 
@@ -187,7 +192,7 @@ public class JobInfo implements Serializable {
     /**
      * @return how long this job may run in seconds.  zero implies unlimited execution duration.
      */
-    public long executionDuration() {
+    public long getExecutionDuration() {
         return executionDuration;
     }
     public void setExecutionDuration(int duration) { executionDuration = duration; }
@@ -195,8 +200,9 @@ public class JobInfo implements Serializable {
     /**
      * @return a SrvParam from the flatten params map
      */
+    @JsonIgnore
     public SrvParam getSrvParams() {
-        return SrvParam.makeSrvParamSimpleMap(getMeta().getParams());
+        return SrvParam.makeSrvParamSimpleMap(getMeta().getParameters());
     }
 
     public void copyFrom(JobInfo uws) {
@@ -212,9 +218,9 @@ public class JobInfo implements Serializable {
         this.endTime = uws.endTime;
         this.executionDuration = uws.executionDuration;
         this.destruction = uws.destruction;
-        this.params = new HashMap<>(uws.params);
+        this.parameters = new HashMap<>(uws.parameters);
         this.results = new ArrayList<>(uws.results);
-        this.error = uws.error;
+        this.errorSummary = uws.errorSummary;
         ifNotNull(uws.aux.getJobUrl()).apply(aux::setJobUrl);
         ifNotNull(uws.aux.getUserId()).apply(aux::setUserId);
         ifNotNull(uws.aux.getUserName()).apply(aux::setUserName);
@@ -226,7 +232,11 @@ public class JobInfo implements Serializable {
 //
 //====================================================================
 
-    public record Error ( int code, String msg) implements Serializable {}
+    public record ErrorSummary(String message, String type, boolean hasDetail) implements Serializable {
+        public ErrorSummary(String message) {
+            this(message, "transient", true);
+        }
+    }
     public record Result(String id, String href, String mimeType, String size) implements Serializable {};
 
     /**
@@ -237,7 +247,7 @@ public class JobInfo implements Serializable {
     public static class Meta implements Serializable {
         String jobId;
         String runId;
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> parameters = new HashMap<>();
         String userKey;
         Job.Type type;
         int progress;
@@ -258,8 +268,8 @@ public class JobInfo implements Serializable {
         public String getRunId() { return runId; }
         public void setRunId(String runId) { this.runId = runId; }
 
-        public Map<String, String> getParams() { return params; }
-        public void setParams(Map<String, String> params) { this.params = params; }
+        public Map<String, String> getParameters() { return parameters; }
+        public void setParameters(Map<String, String> parameters) { this.parameters = parameters; }
 
         public String getUserKey() { return userKey; }
         public void setUserKey(String userKey) { this.userKey = userKey;}

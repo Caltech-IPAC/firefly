@@ -98,6 +98,12 @@ dependencies {
     // amazon s3 support
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.33.11'
 
+    // jackson serialization support, including msgpack
+    implementation "org.msgpack:jackson-dataformat-msgpack:0.9.8"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.2"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.17.2"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2"
+
 }
 
 

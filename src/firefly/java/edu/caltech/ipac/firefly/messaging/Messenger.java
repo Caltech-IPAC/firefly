@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
+import static edu.caltech.ipac.util.serialization.Serializer.fromUtf8;
+import static edu.caltech.ipac.util.serialization.Serializer.toUtf8;
 
 /**
  * An implementation of publish-subscribe messaging pattern based on Jedis client and Redis backend.
@@ -100,7 +102,7 @@ public class Messenger {
      */
     public static void publish(String topic, Message msg) {
         try {
-            RedisService.mainConn().async().publish(topic, msg.toJson());
+            RedisService.mainConn().async().publish(topic, fromUtf8(msg.toJson()));
         } catch (Exception e) {
             LOG.error(e, "Error publishing message to topic: " + topic);
         }
@@ -118,9 +120,10 @@ public class Messenger {
 // A single Listener that dispatches messages to all subscribers
 //====================================================================
 
-    private static class RedisPubListener extends RedisPubSubAdapter<String, String> {
+    private static class RedisPubListener extends RedisPubSubAdapter<String, byte[]> {
         @Override
-        public void message(String channel, String message) {
+        public void message(String channel, byte[] raw) {
+            String message = toUtf8(raw);
             LOG.trace("Received message from channel [" + channel + "]: " + message);
             List<Subscriber> subs = subscribers.get(channel);
             if (subs != null) {

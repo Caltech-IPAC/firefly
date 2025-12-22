@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.util.multipart;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import edu.caltech.ipac.firefly.data.FileInfo;
 
 import java.io.File;
@@ -14,6 +15,11 @@ import java.io.Serializable;
  * @author loi
  * @version $Id: UploadFileInfo.java,v 1.1 2010/07/29 00:37:05 loi Exp $
  */
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class UploadFileInfo implements Serializable {
     private String pname;
     private File file;
@@ -22,6 +28,8 @@ public class UploadFileInfo implements Serializable {
     private int responseCode;
     private long size;
     private transient FileInfo fileInfo;
+
+    protected UploadFileInfo() {}
 
     public UploadFileInfo(String pname, File file, String fileName, String contentType, int responseCode) {
         this.pname = pname;

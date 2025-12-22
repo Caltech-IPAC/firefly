@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.data;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -22,7 +23,11 @@ import static edu.caltech.ipac.firefly.data.HttpResultInfo.RESPONSE_CODE_MSG;
 import static edu.caltech.ipac.firefly.data.HttpResultInfo.SIZE_IN_BYTES;
 import static edu.caltech.ipac.firefly.data.HttpResultInfo.SUFFIX;
 
-
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public static final String INTERNAL_NAME= "internalName";

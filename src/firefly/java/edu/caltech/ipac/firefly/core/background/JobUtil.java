@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.serialization.Serializer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
@@ -20,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -116,8 +116,7 @@ public class JobUtil {
     }
 
     public static String toJson(JobInfo info) {
-        JSONObject jsonObject = toJsonObject(info);
-        return jsonObject == null ? "null" : jsonObject.toJSONString();
+        return info == null ? "null" : Serializer.toJsonString(info);
     }
 
     /**
@@ -222,16 +221,17 @@ public class JobUtil {
         applyIfNotEmpty(info.getCreationTime(), v -> rval.put(CREATION_TIME, v.toString()));
         applyIfNotEmpty(info.getStartTime(), v -> rval.put(START_TIME, v.toString()));
         applyIfNotEmpty(info.getEndTime(), v -> rval.put(END_TIME, v.toString()));
-        applyIfNotEmpty(info.executionDuration(), v -> rval.put(EXECUTION_DURATION, v));
+        applyIfNotEmpty(info.getExecutionDuration(), v -> rval.put(EXECUTION_DURATION, v));
         applyIfNotEmpty(info.getDestruction(), v -> rval.put(DESTRUCTION, v.toString()));
 
-        if (!info.getParams().isEmpty()) rval.put(PARAMETERS, info.getParams());
+        if (!info.getParameters().isEmpty()) rval.put(PARAMETERS, info.getParameters());
         if (!info.getResults().isEmpty())  rval.put(RESULTS, toResults(info.getResults()));
 
-        applyIfNotEmpty(info.getError(), v -> {
+        applyIfNotEmpty(info.getErrorSummary(), v -> {
             JSONObject errSum = new JSONObject();
-            errSum.put(ERROR_MSG, v.msg());
-            errSum.put(ERROR_TYPE, v.code() < 500 ? "fatal" : "transient");     // 5xx are typically system error, e.g. server down.
+            errSum.put(ERROR_MSG, v.message());
+            ifNotNull(v.type()).apply((t) -> errSum.put(ERROR_TYPE, t));
+            errSum.put(ERROR_HAS_DETAILS, v.hasDetail());
             rval.put(ERROR_SUMMARY, errSum);
         });
 
@@ -259,7 +259,7 @@ public class JobUtil {
         applyIfNotEmpty(meta.getRunHost(), v -> jsonMeta.put(RUN_HOST, v));
         applyIfNotEmpty(meta.getSendNotif(), v -> jsonMeta.put(SEND_NOTIF, v));
 
-        if (!meta.getParams().isEmpty()) jsonMeta.put(PARAMETERS, meta.getParams());
+        if (!meta.getParameters().isEmpty()) jsonMeta.put(PARAMETERS, meta.getParameters());
 
         return rval;
     }
@@ -279,14 +279,14 @@ public class JobUtil {
         ifNotNull(json.get(EXECUTION_DURATION)).apply(v -> rval.setExecutionDuration(((Long) v).intValue()));
         ifNotNull(json.get(DESTRUCTION)).apply(v -> rval.setDestruction(Instant.parse(v.toString())));
 
-        ifNotNull(toParameters(json.get(PARAMETERS))).apply(p -> rval.setParams(p));
+        ifNotNull(toParameters(json.get(PARAMETERS))).apply(p -> rval.setParameters(p));
         ifNotNull(toResults(json.get(RESULTS))).apply(r -> rval.setResults(r));
 
         ifNotNull(json.get(ERROR_SUMMARY)).apply(v -> {
             if (v instanceof JSONObject jo) {
                 int code = getInt(jo.get(ERROR_TYPE), 500);
                 String msg = String.valueOf(jo.get(ERROR_MSG));
-                rval.setError(new JobInfo.Error(code, msg));
+                rval.setErrorSummary(new ErrorSummary(msg));
             }
         });
         ifNotNull(json.get(META)).apply(v -> {
@@ -304,7 +304,7 @@ public class JobUtil {
                 ifNotNull(ji.get(RUN_HOST)).apply(s -> rval.getMeta().setRunHost(s.toString()));
                 ifNotNull(ji.get(SEND_NOTIF)).apply(o -> rval.getMeta().setSendNotif((Boolean) o));
 
-                ifNotNull(toParameters(ji.get(PARAMETERS))).apply(p -> rval.getMeta().setParams(p));
+                ifNotNull(toParameters(ji.get(PARAMETERS))).apply(p -> rval.getMeta().setParameters(p));
             }
         });
         ifNotNull(json.get(JOB_INFO)).apply(v -> {

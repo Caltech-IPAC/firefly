@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 
-import java.time.Instant;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.background.JobManager.*;
@@ -53,8 +52,8 @@ public abstract class ServCmdJob extends ServCommand implements Job {
         this.jobId = jobId;
         updateJobInfo(jobId, ji -> {
             Map<String, String> p = params.flatten();
-            ji.getMeta().setParams(p);
-            ji.setParams(p);    // for non-uws searches.
+            ji.getMeta().setParameters(p);
+            ji.setParameters(p);    // for non-uws searches.
         });
     }
 

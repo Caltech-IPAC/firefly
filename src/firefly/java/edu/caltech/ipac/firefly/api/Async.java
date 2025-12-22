@@ -183,7 +183,7 @@ public class Async extends BaseHttpServlet {
         }
         res.setStatus(code);
         info.setPhase(JobInfo.Phase.ERROR);
-        info.setError(new JobInfo.Error(code, message));
+        info.setErrorSummary(new JobInfo.ErrorSummary(message));
         sendResponse(JobUtil.toJson(info), res);
     }
 

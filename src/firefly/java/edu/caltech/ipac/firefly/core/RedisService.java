@@ -16,6 +16,9 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
@@ -74,13 +77,15 @@ public class RedisService {
     private static Instant failSince;
 
     private static RedisClient client;
-    private static StatefulRedisConnection<String, String> mainConn;
-    private static StatefulRedisConnection<String, String> scanConn;
-    private static StatefulRedisPubSubConnection<String, String> subPubConn;
+    private static StatefulRedisConnection<String, byte[]> mainConn;
+    private static StatefulRedisConnection<String, byte[]> scanConn;
+    private static StatefulRedisPubSubConnection<String, byte[]> subPubConn;
 
     private static final List<String> RESERVED_KEYS = List.of(ALL_JOB_CACHE_KEY);
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
     private static final AtomicBoolean localStartupTriggered = new AtomicBoolean(false);
+    private static RedisCodec<String, byte[]> codec =
+            RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE);
 
     // -------------------------------------------------------------------------
     // Initialization
@@ -141,9 +146,9 @@ public class RedisService {
 
     private static void tryConnect() throws Exception{
         try {
-            mainConn = client.connect();
-            scanConn = client.connect();
-            subPubConn = client.connectPubSub();
+            mainConn = client.connect(codec);
+            scanConn = client.connect(codec);
+            subPubConn = client.connectPubSub(codec);
             LOG.info("Lettuce connections created. Auto-reconnect enabled.");
         } catch (Exception e) {
             LOG.error("Error connecting to Redis...");
@@ -189,19 +194,19 @@ public class RedisService {
     // Connection accessors
     // -------------------------------------------------------------------------
 
-    public static StatefulRedisConnection<String, String> mainConn() throws Exception {
+    public static StatefulRedisConnection<String, byte[]> mainConn() throws Exception {
         return checkConn(mainConn);
     }
 
-    public static StatefulRedisConnection<String, String> scanConn() throws Exception {
+    public static StatefulRedisConnection<String, byte[]> scanConn() throws Exception {
         return checkConn(scanConn);
     }
 
-    public static StatefulRedisPubSubConnection<String, String> pubSubConn() throws Exception {
+    public static StatefulRedisPubSubConnection<String, byte[]> pubSubConn() throws Exception {
         return checkConn(subPubConn);
     }
 
-    private static <T extends StatefulRedisConnection<String, String>> T checkConn(T conn)
+    private static <T extends StatefulRedisConnection<String, byte[]>> T checkConn(T conn)
             throws Exception {
         if (conn == null) init();
         if (conn != null && conn.isOpen()) return conn;
@@ -510,15 +515,16 @@ public class RedisService {
         if (isEmpty(cVersion) && isEmpty(jobCacheVersion)) {
             LOG.info("Migrating unversioned Redis data schema to version 1.0");
             LOG.info("  - change to composite job key; jobId:userKey");
-            int count = migrateRedisKeys();
+            int count = appendUserKeyToJobId();
             LOG.info("Migrated " + count + " job keys to new format");
             CacheManager.getDistributed().put(JOB_CACHE_VERSION_KEY, "1.0");
+            jobCacheVersion = "1.0";
         }
 
         // moving 1.0 to V1_1:
         // Rename key to SchemaVersion.  Apply version to the full Redis data structure and not just JobInfo.
         if (!isEmpty(jobCacheVersion)) {
-            LOG.info("Updating Redis data structure version from 1.0 to V1.1");
+            LOG.info("Updating Redis data structure version from 1.0 to V1_1");
             redisCache.remove(JOB_CACHE_VERSION_KEY);
             redisCache.put(VersionKey, SchemaVersion.V1_1.name());
         }

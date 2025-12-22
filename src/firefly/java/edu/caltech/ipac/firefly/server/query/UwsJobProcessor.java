@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobManager;
-import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
@@ -35,7 +34,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
@@ -90,7 +88,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     // instead, we will query the jobUrl directly to see if it's aborted
                     JobInfo jobInfo = Try.it(() -> getUwsJobInfo(jobUrl)).get();
                     if (jobInfo == null || jobInfo.getPhase() != Phase.ABORTED) {
-                        String msg = ifNotNull(jobInfo.getError().msg()).getOrElse("Job cannot be aborted");
+                        String msg = ifNotNull(jobInfo.getErrorSummary().message()).getOrElse("Job cannot be aborted");
                         return new Status(400, "Failed to abort: %s".formatted(msg) );
                     }
                     return Status.ok();         // aborted or no longer active
@@ -99,7 +97,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (status.isError()) {
             logger.warn(status.getErrMsg());
             sendJobUpdate(ji -> {
-                ji.setError(new JobInfo.Error(status.getStatusCode(), status.getErrMsg()));
+                ji.setErrorSummary(new ErrorSummary(status.getErrMsg()));
             });
         } else {
             logger.info("UWS job aborted: " + jobUrl);
@@ -130,7 +128,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             }
         } catch (Exception e) {
             updateJob(ji -> {
-                ji.setError(new JobInfo.Error(400, e.getMessage()));
+                ji.setErrorSummary(new ErrorSummary(e.getMessage()));
                 ji.getMeta().setProgress(100);
             });
             throw new DataAccessException(e.getMessage());
@@ -147,7 +145,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 JobInfo uwsJob = getUwsJobInfo(jobUrl);
                 if (uwsJob == null) {
                     String msg = "Failed to retrieve UWS job info";
-                    sendJobUpdate(ji -> ji.setError(new JobInfo.Error(500, msg)));
+                    sendJobUpdate(ji -> ji.setErrorSummary(new ErrorSummary(msg)));
                     throw new DataAccessException(msg);
                 }
 
@@ -165,11 +163,11 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     updateJob(ji -> ji.setPhase(Phase.PENDING));
                     throw new DataAccessException("The job was submitted, but no execution request has been made.");
                 } else if (phase == Phase.ERROR) {
-                    JobInfo.Error error = getError(uwsJob, jobUrl);
-                    updateJob(ji -> ji.setError(error));
-                    throw new DataAccessException("Job has failed with the error: " + error.msg());
+                    ErrorSummary error = getError(uwsJob, jobUrl);
+                    updateJob(ji -> ji.setErrorSummary(error));
+                    throw new DataAccessException("Job has failed with the error: " + error.message());
                 } else if (phase == Phase.UNKNOWN) {
-                    updateJob(ji -> ji.setError(new JobInfo.Error(500, "Unknown phase")));
+                    updateJob(ji -> ji.setErrorSummary(new ErrorSummary("Unknown phase")));
                     throw new DataAccessException("The job is in an unknown state");
                 } else {
                     int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
@@ -344,8 +342,8 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    public static JobInfo.Error getError(JobInfo uwsJob, String jobUrl)  {
-        JobInfo.Error jobError = uwsJob.getError();
+    public static ErrorSummary getError(JobInfo uwsJob, String jobUrl)  {
+        ErrorSummary jobError = uwsJob.getErrorSummary();
         if (jobError != null) return jobError; // error is a part of the job resource
         else { // error document maybe present at /error endpoint of the job
             String errorUrl = jobUrl + "/error";
@@ -356,7 +354,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     return new HttpServices.Status(500, "Unexpected exception: " + e.getMessage());
                 }
             });
-            return new JobInfo.Error(status.getStatusCode(), status.getErrMsg());
+            return new ErrorSummary(status.getErrMsg());
         }
     }
 
@@ -427,9 +425,9 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 for (int i = 0; i < plist.getLength(); i++) {
                     Node p = plist.item(i);
                     String key = getAttr(p, "id");
-                    String val = jobInfo.getParams().get(key);
+                    String val = jobInfo.getParameters().get(key);
                     val = isEmpty(val) ? p.getTextContent() : val + PARAM_DELIM + p.getTextContent();
-                    jobInfo.getParams().put(key, val);
+                    jobInfo.getParameters().put(key, val);
                 }
             });
 
@@ -450,10 +448,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
             applyIfNotEmpty(getEl(root, prefix + ERROR_SUMMARY), errsum -> {
                 String type = errsum.getAttribute(ERROR_TYPE);
-                int code = type.equals("transient") ? 500 : 400;
+                String hasDetails = errsum.getAttribute(ERROR_HAS_DETAILS);
                 String msg = getVal(errsum, prefix + ERROR_MSG);
                 if (!isEmpty(msg)) {
-                    jobInfo.setError(new JobInfo.Error(code, msg));
+                    jobInfo.setErrorSummary(new ErrorSummary(msg, type, Boolean.parseBoolean(hasDetails)));
                 }
             });
 

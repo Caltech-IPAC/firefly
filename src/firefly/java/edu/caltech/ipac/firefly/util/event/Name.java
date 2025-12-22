@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
@@ -17,6 +18,11 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class Name implements Serializable {
 
     public static final Name EVT_CONN_EST =  new Name("EVT_CONN_EST",
