@@ -127,7 +127,7 @@ export function getPlotViewIdListByPositionLock(visRoot, pvOrId) {
         .filter( (id) => getPlotViewById(visRoot,id)?.plots?.length );
 }
 /**
- * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
+ * Return an array of plotId's that are in the plot group associated with the pvOrId parameter.
  * @param {VisRoot} visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId string or a plotView objects
  * @returns {Array.<String>}
@@ -229,7 +229,9 @@ export const getOverlayByPvAndId = (ref,plotId,imageOverlayId) =>
 
 export function removeRawDataByPlotView(pv) {
     pv?.plots.forEach( (p) => removeRawData(p.plotImageId));
-    pv?.overlayPlotViews?.forEach( (oPv) => oPv?.plot?.plotImageId && removeRawData(oPv.plot.plotImageId) );
+    pv?.overlayPlotViews?.forEach( (opv) => {
+        opv.plots.forEach( (p) => p?.plotImageId && removeRawData(p.plotImageId) );
+    } );
 }
 
 /**

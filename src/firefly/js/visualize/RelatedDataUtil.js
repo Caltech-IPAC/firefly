@@ -161,7 +161,7 @@ function enableRelatedDataLayerMaskInGroup(vr, pv,relatedData) {
 
 
 function enableRelatedDataLayerMask(pv, relatedData) {
-    const imageNumber= relatedData.searchParams[WPConst.MULTI_IMAGE_IDX];
+    const hduNumber= relatedData.searchParams[WPConst.MULTI_IMAGE_EXTS];
     const fileKey= relatedData.searchParams[WPConst.FILE];
 
 
@@ -171,7 +171,7 @@ function enableRelatedDataLayerMask(pv, relatedData) {
         .sort( (v1,v2) => v1-v2)
         .forEach(  (v) =>
             {
-                addMaskLayer(pv, v, imageNumber, fileKey, relatedData);
+                addMaskLayer(pv, v, hduNumber, fileKey, relatedData);
             }
         );
 
@@ -181,7 +181,7 @@ function enableRelatedDataLayerMask(pv, relatedData) {
 const maskIdRoot= 'AUTO_LOADED_MASK';
 let maskCnt= 0;
 
-function addMaskLayer(pv, maskNumber, imageNumber, fileKey, relatedData) {
+function addMaskLayer(pv, maskNumber, hduNumber, fileKey, relatedData) {
 
     const {relatedDataId}= relatedData;
 
@@ -190,7 +190,7 @@ function addMaskLayer(pv, maskNumber, imageNumber, fileKey, relatedData) {
     dispatchPlotMask({plotId:pv.plotId,
         imageOverlayId:`${pv.plotId}-${maskIdRoot}_#${maskNumber}_${maskCnt}`,
         fileKey, maskNumber, maskValue:Math.pow(2,Number(maskNumber)),
-        uiCanAugmentTitle:false, imageNumber, title,
+        uiCanAugmentTitle:false, hduNumber, title,
         relatedDataId, lazyLoad:true});
     maskCnt++;
 }

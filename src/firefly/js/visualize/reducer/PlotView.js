@@ -153,12 +153,12 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 
 /**
  *
- * @param {WebPlotRequest} req
- * @param {PVCreateOptions} pvOptions
+ * @param {WebPlotRequest} [req]
+ * @param {PVCreateOptions} [pvOptions]
  * @return {PlotViewContextData}
  */
-function createPlotViewContextData(req, pvOptions={}) {
-    const attributes= req.getAttributes();
+export function createPlotViewContextData(req=undefined, pvOptions={}) {
+    const attributes= req?.getAttributes() ?? {};
     const plotViewCtx= {
         menuItemKeys: {...getDefMenuItemKeys(), ...pvOptions.menuItemKeys},
         userCanDeletePlots: pvOptions?.userCanDeletePlots ?? true,

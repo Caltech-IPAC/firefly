@@ -798,7 +798,7 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  * @param {number} p.maskValue power of 2, e.g 4, 8, 32, 128, etc
  * @param {number} p.maskNumber 2, e.g 4, 8, 32, 128, etc
  * @param {string} p.imageOverlayId
- * @param {number} p.imageNumber hdu number of fits
+ * @param {number} p.hduNumber hdu number of fits
  * @param {string} p.fileKey file on the server
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
@@ -812,12 +812,12 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  * @memberof firefly.action
  */
 export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey,
-                                  imageNumber, maskNumber=-1, color, title,
+                                  hduNumber, maskNumber=-1, color, title,
                                   uiCanAugmentTitle,
                                   relatedDataId, lazyLoad, dispatcher= flux.process}) {
 
     dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, fileKey, maskValue,
-                                              uiCanAugmentTitle, imageNumber, maskNumber,
+                                              uiCanAugmentTitle, hduNumber, maskNumber,
                                               color, title, relatedDataId, lazyLoad } });
 }
 
