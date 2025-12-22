@@ -22,7 +22,7 @@ const popupSx = {
     justifyContent: 'space-between',
     resize: 'both',
     overflow: 'auto',
-    minHeight: 200, minWidth: 500,
+    minHeight: 200, minWidth: 525,
     width: '45vh'
 };
 
@@ -121,11 +121,11 @@ function JobInfoDetails({jobInfo={}}) {
         <Stack direction='row' spacing={4}>
             <Stack>
                 <KeywordBlock label='Phase' title='Referred to as "phase" in UWS' value={phase} mb={1}/>
-                <KeywordBlock label='Created' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
+                <KeywordBlock label='Creation Time' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
                 <KeywordBlock label='Start Time' title='Referred to as "startTime" in UWS' value={toDateString(startTime, useLocalTime)} {...dateProps}/>
                 <KeywordBlock label='End Time' title='Referred to as "endTime" in UWS' value={toDateString(endTime, useLocalTime)} {...dateProps}/>
-                <KeywordBlock label='Planned end' title='Referred to as "quote" in UWS' value={toDateString(quote, useLocalTime)} {...dateProps}/>
-                <KeywordBlock label='Destruction' title='Referred to as "destruction" in UWS' value={toDateString(destruction, useLocalTime)} {...dateProps}/>
+                <KeywordBlock label='Planned End Time' title='Referred to as "quote" in UWS' value={toDateString(quote, useLocalTime)} {...dateProps}/>
+                <KeywordBlock label='Destruction Time' title='Referred to as "destruction" in UWS' value={toDateString(destruction, useLocalTime)} {...dateProps}/>
             </Stack>
             <Stack>
                 <JobIdWrapper jobInfo={jobInfo}/>
