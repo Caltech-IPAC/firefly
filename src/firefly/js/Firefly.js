@@ -236,7 +236,7 @@ const defFireflyOptions = {
             label: 'Job Monitor',    // label for the background monitor button
             note: `
                 Note: The listed jobs are limited to your current session, where "session" may refer to your browser or archive, 
-                or account with which you're currently logged in. Jobs older than 14 days will not appear.
+                or account with which you're currently logged in. Jobs are removed once they reach their destruction time.
             `.trim(),
         }
     },
