@@ -88,13 +88,11 @@ public class AsyncTapQueryTest extends ConfigTest {
 
 
 			// test bad job
-			try {
-				req.setParam("QUERY", "SELECT * FROM dumm_table where dummy = 'dummy'");
-				new AsyncTapQuery().submitJob(req);
-				Assert.fail("should have thrown exception");
-			} catch (Exception e) {
-				Assert.assertNotNull("should fail with error message", e.getMessage());
-			}
+			req.setParam("QUERY", "SELECT * FROM dumm_table where dummy = 'dummy'");
+			jobUrl = new AsyncTapQuery().submitJob(req);
+			Thread.sleep(2000); // wait for job to process
+			jobInfo = AsyncTapQuery.getUwsJobInfo(jobUrl);
+			Assert.assertEquals(JobInfo.Phase.ERROR, jobInfo.getPhase());
 
 		} catch (Exception e) {
 			Assert.fail("testExecRequestQuery failed with exception: " + e.getMessage());
