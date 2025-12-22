@@ -73,8 +73,7 @@ public class JobManager {
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 60);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
-    private static final int JOB_EXPIRY_HOURS = AppProperties.getIntProperty("job.expiry.hours", 24*14);        // Time in hours to keep a job after it has ended.  Default to 14 days.
-    private static final int JOB_ARCHIVED_EXPIRY_HOURS = AppProperties.getIntProperty("job.archived.expiry.hours", 24*14);   // Time in hours to keep an archived job after it has ended.  Default to 14 days.
+    private static final int JOB_TTL_DAYS = AppProperties.getIntProperty("job.ttl.days", 7);                    // Time in days to keep a job in redis.  Default to 7 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
@@ -148,7 +147,7 @@ public class JobManager {
         updateJobInfo(jobId, true, ji -> {      // setting 'true' to add this jobInfo into the datastore
             Instant start = Instant.now();
             ji.setCreationTime(start);
-            ji.setDestruction(start.plus(7, ChronoUnit.DAYS));
+            ji.setDestruction(start.plus(JOB_TTL_DAYS, ChronoUnit.DAYS));
             ji.getMeta().setType(job.getType());
         });
         // update Job after jobInfo has been created
@@ -562,22 +561,23 @@ public class JobManager {
     }
 
     public static void cleanup() {
+        LOG.info("JobInfo cleanup started");
         List<JobInfo> jobs = getAllJobs();
         jobs.forEach(job -> {
             CacheKey k = cacheKey(job);
             if (!job.getMeta().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("Removing non-monitored job: " + k);
+                LOG.info("  Removing non-monitored job: " + k);
                 allJobInfos.remove(k);      // remove non-monitored job after 1 hour
-            } else if (job.getPhase() == ARCHIVED) {
-                if (job.getEndTime().plus(JOB_ARCHIVED_EXPIRY_HOURS, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                    LOG.info("Removing expired archived job: " + k);
+            } else {
+                Instant desDate = job.getDestruction();
+                desDate = desDate == null ? job.getCreationTime().plus(JOB_TTL_DAYS, ChronoUnit.DAYS) : desDate;        // ensure destruction date has a value
+                if (desDate.isBefore(Instant.now())) {
+                    LOG.info("  Removing expired job: " + k);
                     allJobInfos.remove(k);
                 }
-            } else if (!CLEANUP_PHASES_EXCLUDES.contains(job.getPhase()) && job.getEndTime().plus(JOB_EXPIRY_HOURS, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("Removing expired job: " + k);
-                allJobInfos.remove(k);
             }
         });
+        LOG.info("JobInfo cleanup finished");
     }
 
     /**
