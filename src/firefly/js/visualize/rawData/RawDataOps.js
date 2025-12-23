@@ -332,7 +332,7 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
     const oPv= mask ? getOverlayById(pv,imageOverlayId) : undefined;
     const maskOptions= mask ? {maskColor:oPv?.colorAttributes.color, maskBits: oPv?.maskValue } : undefined;
     const dataCompress= getFirstDataCompress(plot,mask);
-    const {success, fatal}= await loadStandardStretchData(workerKey, plot,
+    const {success, fatal, silentAbort=false}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
 
     if (plotInvalid()) return;
@@ -340,7 +340,7 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
     }
     else {
-        if (fatal) {
+        if (fatal && !silentAbort) {
             Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (dataCompress!==FULL) {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
@@ -354,8 +354,10 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
 
         else {
             Logger('RawDataOps').warn(`non fatal, dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
-            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+            if (!silentAbort) {
+                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                    payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+            }
         }
     }
 }
@@ -438,7 +440,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
     if (entry.initialized) {
         if (!backgroundUpdate) entry.dataType= CLEARED;
         if (entry.loadingPromise) {
-            postToWorker(makeAbortFetchAction(plotImageId, workerKey));
+            await postToWorker(makeAbortFetchAction(plotImageId, workerKey));
         }
     }
     else {
@@ -475,7 +477,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
             return {success, fatal:false};
         } else {
             clearLocalStretchData(latestPlot);
-            return {success:false, fatal: stretchResult.fatal};
+            return {success:false, fatal: stretchResult.fatal, silentAbort:true};
         }
     } catch (failResult) {
         if (isWorkerOutOfMemory(failResult.error)) {
@@ -483,8 +485,8 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
             return {success:false, fatal:true};
         }
         else {
-            const {success,fatal}= failResult;
-            return {success, fatal};
+            const {success,fatal, aborted=false}= failResult;
+            return {success, fatal, silentAbort:aborted};
         }
     }
 }

@@ -132,7 +132,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         plots:[],
         visible: pvOptions.visible ?? true,
         subHighlight: Boolean(pvOptions.subHighlight ?? false),
-        request: req && req.makeCopy(),
+        request: req?.makeCopy(),
         plottingStatusMsg:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx: -1,

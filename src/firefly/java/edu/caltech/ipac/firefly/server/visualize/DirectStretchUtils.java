@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.firefly.data.HasSizeOf;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -14,8 +13,8 @@ import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 import nom.tam.fits.Header;
 
 import java.awt.Color;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -32,7 +31,7 @@ import static edu.caltech.ipac.firefly.visualize.Band.RED;
  */
 public class DirectStretchUtils {
 
-    public enum CompressType {FULL, HALF, HALF_FULL, QUARTER_HALF, QUARTER_HALF_FULL}
+    public enum CompressType {FULL, HALF, QUARTER, HALF_FULL, QUARTER_HALF, QUARTER_HALF_FULL}
 
 
     private static ExecutorService makeExecutorService () {
@@ -60,7 +59,7 @@ public class DirectStretchUtils {
         var sTileList= doTileStretch(sv,tileSize, StretchMaskTile::new,
                 (stdef, strContainer) -> () -> strContainer.stretch(stdef, maskList,  flip1d,fr.getNaxis1()) );
 
-        byte[] byte1d= combineArray(flip1d.length, sTileList.stream().map( st -> st.result).toList());
+        List<byte[]> byte1d= sTileList.stream().map( st -> st.result).toList();
         return new StretchDataInfo(byte1d, null, null, getRangeValuesToUse(state));
     }
 
@@ -81,41 +80,36 @@ public class DirectStretchUtils {
         FitsRead fr= frGroup.getFitsRead(state.firstBand());
         StretchVars sv= getStretchVars(fr,tileSize, ct);
         RangeValues[] rvAry= getRangeValuesToUse(state);
-        int bPos= 0;
-        int bPosHalf=0;
-        int bPosQuarter=0;
         Band[] bands= state.getBands();
         ThreeCComponents tComp= get3CComponents(frGroup,sv.totWidth,sv.totHeight,state);
         RGBIntensity rgbI= get3CRGBIntensity(state,frGroup,bands);
          new ArrayList<Stretch3CTile>(sv.tileLen);
 
-        var sTileList =doTileStretch(sv,tileSize, Stretch3CTile::new,
+        List<Stretch3CTile> sTileList =doTileStretch(sv,tileSize, Stretch3CTile::new,
                 (stdef,strContainer) -> () -> strContainer.stretch(stdef, rvAry, tComp.float1dAry,tComp.imHeadAry,tComp.histAry,rgbI) );
-        int bLen= state.getBands().length;
-        byte[] byte1d= new byte[sv.totWidth*sv.totHeight * bLen];
-        byte[] byte1dHalf=  useHalf(ct) ? new byte[dRoundUp(sv.totWidth,2) * dRoundUp(sv.totHeight,2) * bLen] : null;
-        byte[] byte1dQuarter= useQuarter(ct) ? new byte[dRoundUp(sv.totWidth,4) * dRoundUp(sv.totHeight,4) * bLen] : null;
+
+        var byte1d= useFull(ct) ? new HashMap<Band,List<byte []>>() : null;
+        var byte1dHalf= useHalf(ct) ? new HashMap<Band,List<byte []>>() : null;
+        var byte1dQuarter=useQuarter(ct) ? new HashMap<Band,List<byte []>>() : null;
 
         for (Stretch3CTile stretchTile : sTileList) {
-            byte[][] tmpByte3CAry= stretchTile.result;
-            for(int bandIdx=0; (bandIdx<3);bandIdx++) {
-                if (tComp.float1dAry[bandIdx]!=null) {
-                    System.arraycopy(tmpByte3CAry[bandIdx],0,byte1d,bPos,tmpByte3CAry[bandIdx].length);
-                    bPos+=tmpByte3CAry[bandIdx].length;
-                    if (useHalf(ct)) {
-                        byte[] hDecimatedAry= stretchTile.resultHalf[bandIdx];
-                        System.arraycopy(hDecimatedAry, 0, byte1dHalf, bPosHalf, hDecimatedAry.length);
-                        bPosHalf += hDecimatedAry.length;
-                    }
-                    if (useQuarter(ct)) {
-                        byte[] qDecimatedAry= stretchTile.resultQuarter[bandIdx];
-                        System.arraycopy(qDecimatedAry, 0, byte1dQuarter, bPosQuarter , qDecimatedAry.length);
-                        bPosQuarter += qDecimatedAry.length;
-                    }
+            for(Band band : bands) {
+                if (useFull(ct)) {
+                    byte1d.computeIfAbsent(band, k -> new ArrayList<>())
+                            .add(stretchTile.result[band.getIdx()]);
+                }
+                if (useHalf(ct)) {
+                    byte1dHalf.computeIfAbsent(band, k -> new ArrayList<>())
+                            .add(stretchTile.resultHalf[band.getIdx()]);
+                }
+                if (useQuarter(ct)) {
+                    byte1dQuarter.computeIfAbsent(band, k -> new ArrayList<>())
+                            .add(stretchTile.resultQuarter[band.getIdx()]);
                 }
             }
         }
-        return new StretchDataInfo(byte1d, byte1dHalf, byte1dQuarter, rvAry);
+
+        return new StretchDataInfo(byte1d,byte1dHalf,byte1dQuarter, rvAry);
     }
 
     private static <T> List<T> doTileStretch(StretchVars sv, int tileSize, Callable<T> stretchContainerFactory,
@@ -137,21 +131,14 @@ public class DirectStretchUtils {
     }
 
     private static StretchDataInfo buildStandardResult(List<StretchStandardTile> sTileList, RangeValues rv,
-                                                      int totWidth, int totHeight, CompressType ct) throws Exception {
-        var taskList= new ArrayList<Callable<Void>>();
-        byte[] byte1d= useFull(ct ) ? new byte[totWidth*totHeight] : null;
-        byte[] byte1dQuarter=  useQuarter(ct) ? new byte[dRoundUp(totWidth,4) * dRoundUp(totHeight,4)]:null;
-        byte[] byte1dHalf= useHalf(ct) ? new byte[dRoundUp(totWidth,2) * dRoundUp(totHeight,2)]:null;
-        if (useFull(ct)) {
-            taskList.add(() -> combineArray(byte1d, sTileList.stream().map( st -> st.result).toList()));
-        }
-        if (useQuarter(ct)) {
-            taskList.add(() -> combineArray(byte1dQuarter, sTileList.stream().map( st -> st.resultQuarter).toList()));
-        }
-        if (useHalf(ct)) {
-            taskList.add(() -> combineArray(byte1dHalf, sTileList.stream().map( st -> st.resultHalf).toList()));
-        }
-        invokeList(taskList);
+                                                       int totWidth, int totHeight, CompressType ct) throws Exception {
+        List<byte[]> byte1d= useFull(ct) ?
+                sTileList.stream().map( st -> st.result).toList() : null;
+        List<byte[]> byte1dHalf= useHalf(ct) ?
+                sTileList.stream().map( st -> st.resultHalf).toList() : null;
+        List<byte[]> byte1dQuarter= useQuarter(ct) ?
+                sTileList.stream().map( st -> st.resultQuarter).toList() : null;
+
         return new StretchDataInfo(byte1d, byte1dHalf, byte1dQuarter, new RangeValues[] {rv});
     }
 
@@ -177,18 +164,6 @@ public class DirectStretchUtils {
     }
     private static boolean useFull(CompressType ct) {
         return ct==CompressType.FULL || ct==CompressType.HALF_FULL || ct==CompressType.QUARTER_HALF_FULL;
-    }
-
-    private static float [] flipFloatArray(float [] float1d, int naxis1, int naxis2) {
-        float [] flipped= new float[float1d.length];
-        int idx=0;
-        for (int y= naxis2-1; y>=0; y--) {
-            for (int x= 0; x<naxis1; x++) {
-                flipped[idx]= float1d[y*naxis1+x];
-                idx++;
-            }
-        }
-        return flipped;
     }
 
     private static StretchVars getStretchVars(FitsRead fr, int tileSize, CompressType ct) {
@@ -238,21 +213,6 @@ public class DirectStretchUtils {
         if (!state.isThreeColor()) return new RangeValues[] {rv};
         if (rv.rgbPreserveHue()) return new RangeValues[] {rv,rv,rv};
         return new RangeValues[] { state.getRangeValues(RED), state.getRangeValues(GREEN), state.getRangeValues(BLUE) };
-    }
-
-    private static Void combineArray(byte[] target, List<byte[]> aList) {
-        int pos= 0;
-        for (var dAry : aList) {
-            System.arraycopy(dAry, 0, target, pos , dAry.length);
-            pos += dAry.length;
-        }
-        return null;
-    }
-
-    private static byte[] combineArray(int length, List<byte[]> aList) {
-        byte[] target= new byte[length];
-        combineArray(target,aList);
-        return target;
     }
 
     private static int dRoundUp(int v, int factor) { return v % factor == 0 ? v/factor : v/factor +1; }
@@ -312,70 +272,7 @@ public class DirectStretchUtils {
     private record StretchVars(int totWidth, int totHeight, int xPanels, int yPanels, int tileLen, CompressType ct) {}
     private record StretchTileDef(int x, int y, int width, int height, CompressType ct) {}
 
-    public static class StretchDataInfo implements Serializable, HasSizeOf {
-        private final byte [] byte1d;
-        private final byte [] byte1dHalf;
-        private final byte [] byte1dQuarter;
-        private final RangeValues[] rvAry;
-
-        public StretchDataInfo(byte[] byte1d, byte[] byte1dHalf, byte[] byte1dQuarter, RangeValues[] rvAry) {
-            this.byte1d = byte1d;
-            this.byte1dHalf = byte1dHalf;
-            this.byte1dQuarter = byte1dQuarter;
-            this.rvAry= rvAry;
-        }
-
-        public byte[] findMostCompressAry(CompressType ct) {
-            return switch (ct) {
-                case FULL -> byte1d;
-                case QUARTER_HALF_FULL, QUARTER_HALF -> byte1dQuarter;
-                case HALF, HALF_FULL -> byte1dHalf;
-            };
-        }
-
-        public static String getMostCompressedDescription(CompressType ct) {
-            return switch (ct) {
-                case FULL -> "Full";
-                case QUARTER_HALF_FULL, QUARTER_HALF -> "Quarter";
-                case HALF, HALF_FULL -> "Half";
-            };
-        }
-
-        public boolean isRangeValuesMatching(PlotState state) {
-            if (!state.isThreeColor()) {
-                return rvAry.length==1 && rvAry[0].toString().equals(state.getRangeValues().toString());
-            }
-            for (Band band : new Band[]{RED, GREEN, BLUE}) {
-                if (state.isBandUsed(band)) {
-                    int idx= band.getIdx();
-                    if (rvAry[idx]==null || !rvAry[idx].toString().equals(state.getRangeValues(band).toString())) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        /**
-         * create a version of the object with only the full byte array and optionally the half if the
-         * CompressType is only using the quarter
-         * @return a version of StretchDataInfo without all the data we will not use again
-         */
-        public StretchDataInfo copyParts(CompressType ct) {
-            boolean keepHalf= ct== CompressType.QUARTER_HALF_FULL || ct== CompressType.QUARTER_HALF;
-            return new StretchDataInfo(byte1d, keepHalf?byte1dHalf:null, null, rvAry);
-        }
-
-        @Override
-        public long getSizeOf() {
-            long sum= rvAry.length * 80L;
-            if (byte1d!=null) sum+=byte1d.length;
-            if (byte1dHalf!=null) sum+=byte1dHalf.length;
-            if (byte1dQuarter!=null) sum+=byte1dQuarter.length;
-            return sum;
-        }
-    }
-private static class Stretch3CTile {
+    private static class Stretch3CTile {
         byte[][] result;
         byte[][] resultHalf;
         byte[][] resultQuarter;

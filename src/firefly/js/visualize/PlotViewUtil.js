@@ -228,9 +228,9 @@ export const getOverlayByPvAndId = (ref,plotId,imageOverlayId) =>
 
 
 export function removeRawDataByPlotView(pv) {
-    pv?.plots.forEach( (p) => removeRawData(p.plotImageId));
+    pv?.plots.forEach( (p) => removeRawData(p.plotImageId,p.plotState));
     pv?.overlayPlotViews?.forEach( (opv) => {
-        opv.plots.forEach( (p) => p?.plotImageId && removeRawData(p.plotImageId) );
+        opv.plots.forEach( (p) => p?.plotImageId && removeRawData(p.plotImageId,p.plotState) );
     } );
 }
 

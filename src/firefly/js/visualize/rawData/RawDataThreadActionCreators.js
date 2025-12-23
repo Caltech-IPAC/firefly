@@ -67,6 +67,25 @@ export function makeAbortFetchAction(plotImageId, workerKey) {
     };
 }
 
+/**
+ * @typedef {Object} StretchWorkerActionPayload
+ * @prop {String} plotImageId
+ * @prop {String} dataCompress
+ * @prop {boolean} veryLargeData
+ * @prop {boolean} mask
+ * @prop {number} maskBits
+ * @prop {String} maskColor
+ * @prop {number} dataWidth
+ * @prop {number} dataHeight
+ * @prop {String} plotStateSerialized
+ * @prop {Object} processHeader
+ * @prop {String} colorTableId
+ * @prop {number} bias
+ * @prop {number} contrast
+ * @prop {String} nanPixelColor
+ */
+
+
 
 /**
  *
@@ -81,7 +100,7 @@ export function makeAbortFetchAction(plotImageId, workerKey) {
  * @return {WorkerAction}
  */
 export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, dataCompress, veryLargeData, workerKey) {
-    const {plotImageId, colorTableId} = plot;
+    const {plotImageId, colorTableId, plotId} = plot;
     const b = plot.plotState.firstBand();
     const {processHeader} = plot.rawData.bandData[b.value];
     const cleanProcessHeader = {...processHeader, imageCoordSys: processHeader.imageCoordSys.toString()};
@@ -92,6 +111,7 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, 
         type: RawDataThreadActions.FETCH_STRETCH_BYTE_DATA,
         workerKey,
         payload: {
+            plotId,
             plotImageId,
             dataCompress,
             veryLargeData,
