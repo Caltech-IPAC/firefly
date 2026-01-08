@@ -5,8 +5,7 @@ import {get, intersection, isEmpty, isNaN, isString, isUndefined} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
-import {
-    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
+import {getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
@@ -14,8 +13,7 @@ import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {isTableExclusiveToPlot} from '../visualize/saga/CatalogWatcher';
 import {
     ACCESS_FORMAT, ACCESS_URL, CLOUD_ACCESS, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION,
-    SERVICE_DESC_COL_NAMES,
-    SSA_COV_UTYPE, SSA_TITLE_UTYPE
+    DATALINK_COL_NAMES, SSA_COV_UTYPE, SSA_TITLE_UTYPE
 } from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
 import {getServiceDescriptors, hasServiceDescriptors, isDataLinkServiceDesc} from './VoDataLinkServDef.js';
@@ -194,7 +192,7 @@ export function hasDataLinkSvcDesc(tableOrId) {
 
 export function isDatalinkTable(tableOrId) {
     const columns = getTableModel(tableOrId)?.tableData?.columns?.map( (c) => c?.name?.toLowerCase() ?? '') ?? [];
-    return SERVICE_DESC_COL_NAMES.every((cname) => columns.includes(cname));
+    return DATALINK_COL_NAMES.every((cname) => columns.includes(cname));
 }
 
 function columnMatches(table, cName) {

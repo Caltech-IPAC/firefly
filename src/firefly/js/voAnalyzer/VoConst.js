@@ -22,7 +22,7 @@ export const obsPrefix = 'obscore:';
 export const ColNameIdx = 0;
 export const UtypeColIdx = 2;
 
-export const SERVICE_DESC_COL_NAMES = ['id', ACCESS_URL, SERVICE_DEF, ERROR_MESSAGE, SEMANTICS,
+export const DATALINK_COL_NAMES = ['id', ACCESS_URL, SERVICE_DEF, ERROR_MESSAGE, SEMANTICS,
     DESCRIPTION, CONTENT_TYPE, CONTENT_LENGTH];
 
 export const adhocServiceUtype = 'adhoc:service';

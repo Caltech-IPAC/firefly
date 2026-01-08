@@ -11,7 +11,7 @@ import {
 } from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
-    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS, ipacMultiSpectrum,
+    DATALINK_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS, ipacMultiSpectrum,
 } from './VoConst.js';
 import {
     columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
@@ -280,7 +280,7 @@ export function isAnalysisTableDatalink(report) {
     const {tableData} = part.details;
     if (!tableData.data?.length) return;
     const tabColNames = tableData.data.map((d) => d?.[0]?.toLowerCase());
-    const hasCorrectCols = SERVICE_DESC_COL_NAMES.every((cname) => tabColNames.includes(cname));
+    const hasCorrectCols = DATALINK_COL_NAMES.every((cname) => tabColNames.includes(cname));
     if (!hasCorrectCols) return false;
     return hasCorrectCols && part.totalTableRows < 50; // 50 is arbitrary, it is protections from dealing with files that are very big
 }
