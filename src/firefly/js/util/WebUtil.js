@@ -966,7 +966,7 @@ export function callWhileAwaiting(p, whileWaitingFunc, waitUntilMS=0) {
  * @param {String} url
  * @param {Object} options
  * @param {boolean} doValidation
- * @param loggerFunc
+ * @param [loggerFunc]
  * @return {Promise<Response>}
  */
 export async function lowLevelDoFetch(url, options, doValidation, loggerFunc) {

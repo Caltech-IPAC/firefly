@@ -1,15 +1,16 @@
 import {isArrayBuffer, once} from 'lodash';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {createTileWithGPU} from './RawImageTilesGPU.js';
-import {AJAX_REQUEST, MEG, REQUEST_WITH} from '../../util/WebUtil.js';
+import {MEG} from '../../util/WebUtil.js';
 import {getColorModel} from './ColorTable.js';
-import {RawDataThreadActions} from 'firefly/threadWorker/WorkerThreadActions.js';
 
 export const HALF= 'HALF';
 export const QUARTER= 'QUARTER';
 export const FULL= 'FULL';
+export const HALF_FULL= 'HALF_FULL';
+export const QUARTER_HALF= 'QUARTER_HALF';
+export const QUARTER_HALF_FULL= 'QUARTER_HALF_FULL';
 
-const abortControllers= new Map(); // map of imagePlotId and AbortController
 export const TILE_SIZE = 3000;
 export const MAX_FULL_DATA_SIZE = 1200*MEG; //max size of byte data that can be loaded, file size will be 4x to 8x bigger
 
@@ -26,8 +27,8 @@ export const isOffscreenCanvas= (b) => globalThis.OffscreenCanvas && (b instance
 export const logGpuState= once(() => {
     const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'gpu.js';
     const outStr= shouldUseGpuInWorker()
-        ? `Images: gpu in worker, gpu: ${gpuType}`
-        : `Images: gpu in main thread: ${gpuType}`;
+        ? `Images: gpu available in worker, gpu: ${gpuType}`
+        : `Images: gpu only available in main thread: ${gpuType}`;
     console.log(outStr);
 });
 
@@ -68,9 +69,9 @@ async function populateTileDataInWorker(obj) {
  * @return {Promise}
  */
 export async function populateRawImagePixelDataInWorker(obj) {
-    const {rawTileDataGroup, colorTableId, mask, nanPixelColor, isThreeColor=false}= obj;
+    const {rawTileDataGroup, colorTableId, mask, nanPixelColor, threeColor=false}= obj;
     if (shouldUseGpuInWorker()) {
-        const colorModel = !mask && !isThreeColor && getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
+        const colorModel = !mask && !threeColor && getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
         const rawTileDataAry = await populateTileDataInWorker({...obj,colorModel});
 
 
@@ -92,29 +93,7 @@ export async function populateRawImagePixelDataInWorker(obj) {
     }
 }
 
-export function makeFetchOptions(plotImageId, params) {
-    const options= {
-        method: 'post',
-        mode: 'cors',
-        credentials: 'include',
-        cache: 'default',
-        params,
-        headers: {
-            [REQUEST_WITH]: AJAX_REQUEST,
-        }
-    };
-    const ac= globalThis.AbortController && new AbortController();
-    if (ac) {
-        abortControllers.set(plotImageId,ac);
-        options.signal= ac.signal;
-    }
-    return options;
-}
 
-export async function abortFetch({plotImageId}) {
-    abortControllers.get(plotImageId)?.abort();
-    return {data:{success:true, type: RawDataThreadActions.ABORT_FETCH}};
-}
 
 export function getTransferable(result) {
     if (!result?.rawTileDataGroup) return [];
@@ -166,10 +145,6 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
     return {tileSize,xPanels,yPanels, realDataWidth, realDataHeight};
 
 }
-
-// export function getDataCompress(plotImageId) {
-//     return getEntry(plotImageId)?.rawTileDataGroup?.dataCompress;
-// }
 
 
 /**

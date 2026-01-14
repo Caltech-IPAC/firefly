@@ -53,9 +53,6 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
     const plot= primePlot(plotView);
     const hasPlot= Boolean(plot);
     const plotShowing= Boolean(viewDim.width && viewDim.height && plot && !plotView.nonRecoverableFail);
-    const onScreen= !plotShowing || isImageOnScreen(plotView);
-    const sizeViewable= !plotShowing || isImageSizeViewable(plotView);
-    const loadingRawData= plotShowing && isImage(plot) && !plot?.tileData && !hasLocalStretchByteData(plot);
 
     useEffect(() => {
         if (width && height) {
@@ -131,7 +128,7 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
     return (
         <div className='web-plot-view-scr' style={rootStyle}>
             <ImageViewerContents {...{drawLayersAry,plotView,eventCallback:eventCB,cursor,plotShowing}}/>
-            <MessageArea {...{pv:plotView,plotShowing,onScreen,sizeViewable,loadingRawData}}/>
+            <MessageArea {...{pv:plotView,plotShowing}}/>
         </div>
     );
 
@@ -462,11 +459,15 @@ function sizeChange(previousDim,width,height,viewDim) {
 }
 
 
-function MessageArea({pv,plotShowing,onScreen, sizeViewable, loadingRawData}) {
+function MessageArea({pv,plotShowing}) {
+    const plot= primePlot(pv);
+    const loadingRawData= plotShowing && isImage(plot) && !plot?.tileData && !hasLocalStretchByteData(plot);
+    const sizeViewable= !plotShowing || isImageSizeViewable(pv);
+    const onScreen= !plotShowing || isImageOnScreen(pv);
     if (pv.serverCall==='success' && !pv.nonRecoverableFail) {
         if (loadingRawData) {
             return (
-                <ImageViewerStatus message={'Loading Image Rendering'} working={true}
+                <ImageViewerStatus message={`Loading Image Rendering${pv.plottingStatusMsg?': ':''}${pv.plottingStatusMsg}`} working={true}
                                    maskWaitTimeMS= {500} messageWaitTimeMS={1000} useMessageAlpha={plotShowing}/>
             );
         }

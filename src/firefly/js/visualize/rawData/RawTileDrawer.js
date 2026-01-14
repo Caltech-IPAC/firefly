@@ -1,5 +1,5 @@
 import {getEntry} from 'firefly/visualize/rawData/RawDataCache.js';
-import {TILE_SIZE} from 'firefly/visualize/rawData/RawDataCommon.js';
+import {FULL, HALF, TILE_SIZE} from 'firefly/visualize/rawData/RawDataCommon.js';
 import {contains, intersects} from 'firefly/visualize/VisUtil.js';
 import {createCanvas} from 'firefly/util/WebUtil.js';
 
@@ -16,8 +16,8 @@ import {createCanvas} from 'firefly/util/WebUtil.js';
  */
 function writeToCanvas(ctx, zf, rawTileDataAry, x, y, width, height, dataCompress) {
     ctx.imageSmoothingEnabled = false;
-    const realTileSize = dataCompress === 'FULL' ? TILE_SIZE : dataCompress === 'HALF' ? TILE_SIZE / 2 : TILE_SIZE / 4;
-    const factor = dataCompress === 'FULL' ? zf : dataCompress === 'HALF' ? zf * 2 : zf * 4;
+    const realTileSize = dataCompress === FULL ? TILE_SIZE : dataCompress === HALF ? TILE_SIZE / 2 : TILE_SIZE / 4;
+    const factor = dataCompress === FULL ? zf : dataCompress === HALF ? zf * 2 : zf * 4;
     const step = Math.trunc(realTileSize * factor);
     let id, drawX, drawY;
     const len = rawTileDataAry.length;

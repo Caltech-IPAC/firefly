@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.rpc;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
@@ -18,17 +19,19 @@ import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -101,26 +104,77 @@ public class VisServerCommands {
 
         public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
 
-            PlotState state= sp.getState();
-            boolean mask= sp.getOptionalBoolean(ServerParams.MASK_DATA,false);
-            int maskBits= sp.getOptionalInt(ServerParams.MASK_BITS,0);
-            int tileSize= sp.getRequiredInt(ServerParams.TILE_SIZE);
-            String compress= sp.getOptional(ServerParams.DATA_COMPRESS, "FULL");
-            CompressType ct;
-            try {
-                ct = CompressType.valueOf(compress.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                ct= CompressType.FULL;
+            String tileAction= sp.getRequired(ServerParams.TILE_ACTION);
+            switch (tileAction) {
+                case "create" -> createTiles(res, sp);
+                case "delete" -> deleteTiles(res, sp);
+                case "getTile" -> getTile(res, sp);
+                default -> res.sendError(400, "tileAction parameter must be either 'create', 'delete', or 'getTile'. passed: "+tileAction);
             }
+        }
 
-            byte[] data = VisServerOps.getByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
+        public void getTile(HttpServletResponse res, SrvParam sp) throws Exception {
+            PlotState state= sp.getState();
+            int tileNumber= sp.getRequiredInt("tileNumber");
+            CompressType ct= getCompressType(sp);
+            var band= sp.contains(ServerParams.BAND) ? Band.parse(sp.getOptional(ServerParams.BAND)) : Band.NO_BAND;
 
+            byte[] data = VisServerOps.getByteStretchTile(state, ct, tileNumber,band);
+            if (data==null) {
+                String msg= "Tile Not Found";
+                if (!VisServerOps.hasByteStretchDataEntry(state)) msg+= ", No Byte Stretch Data";
+                res.sendError(404, msg);
+                return;
+            }
+            res.addHeader("tile-number", tileNumber+"");
             res.setContentType("application/octet-stream");
             ByteBuffer byteBuf = ByteBuffer.wrap(data);
             byteBuf.position(0);
             WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
             chan.write(byteBuf);
             chan.close();
+        }
+
+
+        public void createTiles(HttpServletResponse res, SrvParam sp) throws Exception {
+            PlotState state= sp.getState();
+            boolean mask= sp.getOptionalBoolean(ServerParams.MASK_DATA,false);
+            int maskBits= sp.getOptionalInt(ServerParams.MASK_BITS,0);
+            int tileSize= sp.getRequiredInt(ServerParams.TILE_SIZE);
+            CompressType ct= getCompressType(sp);
+            VisServerOps.createByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
+            JSONObject data = new JSONObject();
+            var entry= VisServerOps.getByteStretchDataEntry(state);
+            data.put("tileCount", entry!=null ? entry.getTotalTiles() : 0);
+            sendJsonDataRet(res,data);
+        }
+
+        public void deleteTiles(HttpServletResponse res, SrvParam sp) throws Exception {
+            VisServerOps.deleteByteStretchData(sp.getState(),getCompressType(sp));
+            sendJsonDataRet(res,null);
+        }
+
+        private static void sendJsonDataRet(HttpServletResponse res, Map<?,?> data) throws IOException {
+            String jsonData= makeJsonRetData(data);
+            res.setContentType("application/json");
+            res.setContentLength(jsonData.length());
+            ServletOutputStream out = res.getOutputStream();
+            out.write(jsonData.getBytes());
+            out.close();
+        }
+
+        private static String makeJsonRetData(Map<?,?> data) {
+            JSONArray ary= new JSONArray();
+            JSONObject map = new JSONObject();
+            map.put("success", true);
+            map.put("data", data!=null ? data : "none");
+            ary.add(map);
+            return ary.toString();
+        }
+
+        private static CompressType getCompressType(SrvParam sp) {
+            String compress= sp.getOptional(ServerParams.DATA_COMPRESS);
+            return Util.Try.it(() -> CompressType.valueOf(compress)).getOrElse(CompressType.FULL);
         }
     }
 

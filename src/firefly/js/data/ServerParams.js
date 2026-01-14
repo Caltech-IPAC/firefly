@@ -102,6 +102,8 @@ export const ServerParams = {
         HIPS_MERGE_PRIORITY: 'mergedListPriority',
         CUBE: 'cube',
         CATALOG: 'catalog',
+        TILE_ACTION: 'tileAction',
+        TILE_NUMBER: 'tileNumber',
 
         GEOSHAPE : 'shape',
         ROTATION : 'rotation',

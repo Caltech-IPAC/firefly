@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
-import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.StretchDataInfo;
 import edu.caltech.ipac.firefly.server.visualize.WebPlotFactory.WebPlotFactoryRet;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
@@ -216,7 +215,7 @@ public class VisServerOps {
         }
     }
 
-    public static byte[] getByteStretchArrayWithUserLocking(PlotState state,
+    public static StretchDataInfo createByteStretchArrayWithUserLocking(PlotState state,
                                                             int tileSize,
                                                             boolean mask,
                                                             long maskBits,
@@ -224,7 +223,7 @@ public class VisServerOps {
         Semaphore userSemaphore = getUserSemaphore();
         try {
             acquireSemaphore(userSemaphore);
-            return getByteStretchArray(state,tileSize,mask,maskBits,ct);
+            return createByteStretchData(state,tileSize,mask,maskBits,ct);
         } catch (InterruptedException e) {
             throw new Exception("Unexpected InterruptedException", e);
         } finally {
@@ -233,31 +232,68 @@ public class VisServerOps {
     }
 
 
-    public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
-        DirectStretchUtils.StretchDataInfo data;
+    public static byte[] getByteStretchTile(PlotState state, CompressType ct, int tileNumber, Band band) {
+        CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
+        StretchDataInfo data= (StretchDataInfo)CacheManager.getVisMemCache().get(stretchDataKey);
+        if (data == null) {
+           _log.error("getByteStretchTile: context error, StretchDataInfo not in cache, " +
+                   "tileNumber: " + tileNumber + ", band: " + band.toString() );
+           return null;
+        }
+        return data.findData(ct, tileNumber,band);
+    }
+
+    public static boolean hasByteStretchDataEntry(PlotState state) {
+        return getByteStretchDataEntry(state)!=null;
+    }
+    public static StretchDataInfo getByteStretchDataEntry(PlotState state) {
+        CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
+        return (StretchDataInfo)CacheManager.getVisMemCache().get(stretchDataKey);
+    }
+
+
+    public static void deleteByteStretchData(PlotState state, CompressType ct) {
+        CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
+        Cache<Object> memCache= CacheManager.getVisMemCache();
+        StretchDataInfo data= (StretchDataInfo)memCache.get(stretchDataKey);
+        if (data == null) return;
+        var full= data.getFullData(CompressType.FULL);
+        var half= data.getFullData(CompressType.HALF);
+        var rvAry= data.getRangeValues();
+        var newData= switch (ct) {
+            case FULL -> null;
+            case QUARTER, QUARTER_HALF_FULL, QUARTER_HALF -> new StretchDataInfo(full, half, null, rvAry);
+            case HALF, HALF_FULL -> new StretchDataInfo(full, null, null, rvAry);
+        };
+        if (newData == null) memCache.remove(stretchDataKey);
+        else memCache.put(stretchDataKey, newData);
+        PlotServUtils.statsLog("byteAry", "delete", ct.toString());
+    }
+
+    public static StretchDataInfo createByteStretchData(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
+        StretchDataInfo data;
         try {
             ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
             Cache<Object> memCache= CacheManager.getVisMemCache();
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
             data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
-            if (data!=null && data.isRangeValuesMatching(state) && data.findMostCompressAry(ct)!=null) {
-                if (ct==CompressType.FULL || ct==CompressType.HALF) memCache.remove(stretchDataKey); // this the two types then this is the last time we need this data
+            if (data!=null && data.isRangeValuesMatching(state) && data.hasCompressType(ct)) {
                 fromCache= " (from Cache)";
             }
             else {
                 data= !mask ? DirectStretchUtils.getStretchData(state,frGroup,tileSize,ct) :
-                              DirectStretchUtils.getStretchDataMask(state,frGroup,tileSize,maskBits);
-                if (ct!= CompressType.FULL) memCache.put(stretchDataKey, data.copyParts(ct));
+                        DirectStretchUtils.getStretchDataMask(state,frGroup,tileSize,maskBits);
+                memCache.put(stretchDataKey, data);
             }
             counters.incrementVis("Byte Data: " + StretchDataInfo.getMostCompressedDescription(ct));
             PlotServUtils.statsLog("byteAry",
-                    "total-MB", (float)data.findMostCompressAry(ct).length / StringUtils.MEG,
+                    "total-MB", data.getSizeOf() / StringUtils.MEG,
                     "Type", (state.isThreeColor() ? "3 Color" : "Standard") +" - "+ ct + fromCache);
             CtxControl.refreshCache(state);
-            return data.findMostCompressAry(ct);
+            return data;
         } catch (Exception e) {
-            return new byte[] {};
+            return null;
         }
     }
 

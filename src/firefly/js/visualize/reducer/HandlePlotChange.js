@@ -30,7 +30,7 @@ import {
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
     getPlotViewById, findCurrentCenterPoint, getCenterOfProjection,
     isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle, isImageCube,
-    convertImageIdxToHDU
+    convertImageIdxToHDU, hasLocalStretchByteData
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -838,15 +838,22 @@ function requestLocalData(state, action) {
 function updatePlotProgress(state,action) {
     const {plotId, message:plottingStatusMsg, done, requestKey, callSuccess=true, allowBackwardUpdates= false}= action.payload;
     const plotView=  getPlotViewById(state,plotId);
+    const plot= primePlot(plotView);
 
     // validate the update
+
+
     if (!plotView) return state;
     if (requestKey!==plotView.request.getRequestKey()) return state;
     if (plotView.plottingStatusMsg===plottingStatusMsg) return state;
-    if (!done && plotView.serverCall!=='working' && !allowBackwardUpdates) return state;
+
+    const tileDataLoading= isImage(plot) && !plot?.tileData && !hasLocalStretchByteData(plot);
+    if (!done && !tileDataLoading && plotView.serverCall!=='working' && !allowBackwardUpdates) return state;
 
     // do the update
-    const serverCall= done ? callSuccess ? 'success' : 'fail' : 'working';
+
+    const serverCall= (done || tileDataLoading) ? callSuccess ? 'success' : 'fail' : 'working';
+
     return {...state,plotViewAry:clonePvAry(state,plotId, {plottingStatusMsg,serverCall})};
 }
 

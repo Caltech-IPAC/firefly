@@ -1,3 +1,4 @@
+import {dispatchPlotProgressUpdate} from '../visualize/ImagePlotCntlr';
 import Worker from './firefly-thread.worker.js';
 import {uniqueId} from 'lodash';
 import {Logger} from '../util/Logger.js';
@@ -33,6 +34,11 @@ function makeWorker(workerKey) {
     const worker= new Worker();
     worker.onmessage= (ev) => {
         const {success,callKey}= ev.data;
+        if (ev.data.message) {
+            const {plotId,messageText,requestKey}= ev.data;
+            dispatchPlotProgressUpdate(plotId,messageText,false,requestKey);
+            return;
+        }
         if (promiseMap.has(callKey)) {
             const pResponse= promiseMap.get(callKey);
             if (!success && isWorkerOutOfMemory(ev.data?.error)) {

@@ -198,6 +198,8 @@ public class ServerParams {
     public static final String BACK_TO_URL= "backToUrl";
     public static final String MASK_DATA= "maskData";
     public static final String MASK_BITS= "maskBits";
+    public static final String TILE_ACTION= "tileAction";
+    public static final String TILE_NUMBER= "tileNumber";
 
     //Workspaces
     public static final String WS_LIST = "wsList"; // Gets the list of content/files

@@ -1,3 +1,4 @@
+import {getCmdSrvSyncURL, getRootURL} from '../../util/WebUtil';
 import {Band} from '../Band.js';
 import {postToWorker, removeWorker} from '../../threadWorker/WorkerAccess.js';
 import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
@@ -45,12 +46,25 @@ export const {addRawDataToCache, getEntry, removeRawData,addLoadingPromise, mark
         }
     };
 
-    const removeRawData= (plotImageId) => {
+    /**
+     *
+     * @param {String} plotImageId
+     * @param {PlotState} plotState
+     */
+    const removeRawData= (plotImageId, plotState) => {
         const entry= getEntry(plotImageId,false);
         if (!entry) return;
         rawDataStore= rawDataStore.filter( (s) => s.plotImageId!==plotImageId);
         if (entry.initialized) {
-            const action= {type:RawDataThreadActions.REMOVE_RAW_DATA, workerKey:entry.workerKey, callKey:'', payload:{plotImageId}};
+            const action= {
+                type:RawDataThreadActions.REMOVE_RAW_DATA,
+                workerKey:entry.workerKey,
+                callKey:'',
+                payload:{
+                    plotStateSerialized: plotState.toJson(false),
+                    plotImageId,
+                    cmdSrvUrl: getCmdSrvSyncURL(),
+                }};
             postToWorker(action).then(({entryCnt}) => {
                 if (entryCnt===0) removeWorker(entry.workerKey);
             });
