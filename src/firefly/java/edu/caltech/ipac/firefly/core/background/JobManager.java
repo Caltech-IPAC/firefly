@@ -25,7 +25,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 import io.lettuce.core.ScanArgs;
 import org.apache.commons.lang.text.StrBuilder;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -68,8 +67,8 @@ public class JobManager {
 
     public static final String BG_INFO = "background.info";
     public static final String ALL_JOB_CACHE_KEY = "ALL_JOB_INFOS"; // cache key for all job infos
-    public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 12*60);          // run cleanup once every 12 hours
-    public static final int JOB_LIST_DEFAULT_LIMIT = AppProperties.getIntProperty("job.list.default.limit", 100_000);    // the default limit for job list queries
+    public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 2*60);          // run cleanup once every 2 hours
+    public static final int JOB_LIST_DEFAULT_LIMIT = AppProperties.getIntProperty("job.list.default.limit", 100_000);  // the default limit for job list queries
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 60);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
@@ -79,7 +78,7 @@ public class JobManager {
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
     private static final ExecutorService searches = Executors.newCachedThreadPool();
     private static final HashMap<String, JobEntry> runningJobs = new HashMap<>();
-    private static final DistribMapCache<JobInfo> allJobInfos = new DistribMapCache<>(ALL_JOB_CACHE_KEY, 0, new JobInfoSerializer()); // the all job hash should never expire
+    private static final DistribMapCache<JobInfo> allJobInfos = new DistribMapCache<>(ALL_JOB_CACHE_KEY, 0); // the all job hash should never expire
     private static final String COMPLETED_HANDLER = AppProperties.getProperty("job.completed.handler");
     public static final CacheKey JOB_CACHE_VERSION_KEY = new StringKey("job.all.cache.version");
 
@@ -124,18 +123,20 @@ public class JobManager {
             if (ids != null) importedJobIds.addAll(ids);
         });
         // update all userJobs with active status
-        userJobs.forEach(ji -> {
-            if (ji.getMeta().getType() == UWS &&
-                    isActive(ji) &&
-                    !importedJobIds.contains(ji.getMeta().getJobId())) {
-                JobInfo uws = Try.it(() -> getUwsJobInfo(ji.getAux().getJobUrl())).get();
-                if (uws == null) {
-                    LOG.debug("Job no longer exists:" + ji.getAux().getJobUrl());
-                    ji.setError(new JobInfo.Error(404, "Job no longer exists"));
-                } else {
-                    mergeJobInfo(ji, uws, null, null);
+        userJobs.removeIf(ji -> {
+            if (isActive(ji)) {
+                if (ji.getMeta().getType() == UWS && !importedJobIds.contains(ji.getMeta().getJobId())) {
+                    // update UWS job status, if not already updated during import
+                    JobInfo uws = Try.it(() -> getUwsJobInfo(ji.getAux().getJobUrl())).get();
+                    if (uws == null) {
+                        LOG.debug("Job no longer exists:" + ji.getAux().getJobUrl());
+                        return true;    // remove job that no longer exists
+                    } else {
+                        mergeJobInfo(ji, uws, null, null);
+                    }
                 }
             }
+            return false;
         });
 
         return userJobs;
@@ -149,6 +150,7 @@ public class JobManager {
             ji.setCreationTime(start);
             ji.setDestruction(start.plus(JOB_TTL_DAYS, ChronoUnit.DAYS));
             ji.getMeta().setType(job.getType());
+            ji.getMeta().setRunHost(hostName());
         });
         // update Job after jobInfo has been created
         job.runAs(reqOwner);
@@ -169,7 +171,7 @@ public class JobManager {
         } catch (Exception e) {
             // job run() handles exceptions; this only happens if submit or future.get() fails
             sendUpdate(jobId, (ji) -> {
-                ji.setError(new JobInfo.Error(500, e.getMessage()));
+                ji.setErrorSummary(new ErrorSummary(e.getMessage()));
                 ji.getMeta().setProgress(100, null);
             });
             LOG.error(e);
@@ -179,7 +181,7 @@ public class JobManager {
 
     public static JobInfo abort(String jobId, String reason) {
         JobInfo info = updateJobInfo(jobId, (ji) -> {
-            if (reason != null) ji.setError(new JobInfo.Error(500, reason));
+            if (reason != null) ji.setErrorSummary(new ErrorSummary(reason));
             ji.setPhase(ABORTED);
         });
         if (info != null) {
@@ -219,7 +221,7 @@ public class JobManager {
     }
 
     public static JobInfo sendEmail(String jobId, String email) {
-        updateJobInfo(jobId, (ji) -> ji.getMeta().getParams().put(EMAIL, email));
+        updateJobInfo(jobId, (ji) -> ji.getMeta().getParameters().put(EMAIL, email));
         JobInfo jobInfo = getJobInfo(jobId);
         if (jobInfo != null) EmailNotification.sendNotification(jobInfo);
         return jobInfo;
@@ -426,7 +428,6 @@ public class JobManager {
         ji.getMeta().setJobId(ji.getJobId());
         ji.getMeta().setUserKey(reqOwner.getUserKey());
         ji.getMeta().setEventConnId(reqOwner.getEventConnID());
-        ji.getMeta().setRunHost(hostName());
         ji.getMeta().setAppUrl(ServerContext.getRequestOwner().getBaseUrl());
         ji.getMeta().setMonitored(true);                // all async jobs are monitored by default
 
@@ -468,7 +469,7 @@ public class JobManager {
 
         // kill expired jobs
         getRunningJobs().forEach(fi -> {
-                    long duration = fi.executionDuration();
+                    long duration = fi.getExecutionDuration();
                     if (duration != 0 && fi.getStartTime().plus(duration, ChronoUnit.SECONDS).isBefore(Instant.now())) {
                         abort(fi.getMeta().getJobId(), "Exceeded execution duration");
                     }
@@ -565,13 +566,24 @@ public class JobManager {
         List<JobInfo> jobs = getAllJobs();
         jobs.forEach(job -> {
             CacheKey k = cacheKey(job);
-            if (!job.getMeta().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("  Removing non-monitored job: " + k);
+            var endTime = job.getEndTime();
+            if (endTime == null) return;   // skip active jobs
+
+            if (!job.getMeta().isMonitored() && endTime.plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                LOG.info("Removing non-monitored job: " + k);
                 allJobInfos.remove(k);      // remove non-monitored job after 1 hour
+            } else if (isActive(job) && hostName().equals(job.getMeta().getRunHost())) {
+                if (job.getMeta().getType() != UWS && !runningJobs.containsKey(job.getMeta().getJobId())) {
+                    // if the job is active and supposed to run on this host, but we don't have record of it running, remove it
+                    LOG.info("Removing orphan active job: " + k);
+                    allJobInfos.remove(k);
+                }
             } else {
                 Instant desDate = job.getDestruction();
-                desDate = desDate == null ? job.getCreationTime().plus(JOB_TTL_DAYS, ChronoUnit.DAYS) : desDate;        // ensure destruction date has a value
-                if (desDate.isBefore(Instant.now())) {
+                if (desDate == null) {
+                    desDate = job.getCreationTime() == null ? null : job.getCreationTime().plus(JOB_TTL_DAYS, ChronoUnit.DAYS);        // ensure destruction date has a value
+                }
+                if (desDate != null && desDate.isBefore(Instant.now())) {
                     LOG.info("  Removing expired job: " + k);
                     allJobInfos.remove(k);
                 }
@@ -579,28 +591,6 @@ public class JobManager {
         });
         LOG.info("JobInfo cleanup finished");
     }
-
-    /**
-     * This serializer is used to serialize JobInfo objects for storage in the cache.
-     * Instead of using the default Java serialization, it uses a JSON string.
-     */
-    private static class JobInfoSerializer implements DistribMapCache.Serializer<JobInfo> {
-
-        public String serialize(Object obj) {
-            if (obj instanceof JobInfo jobInfo) {
-                return toJson(jobInfo);
-            }
-            return null;
-        }
-
-        public JobInfo deserialize(String str) throws Exception{
-            if (str != null) {
-                return toJobInfo((JSONObject) new JSONParser().parse(str));
-            }
-            return null;
-        }
-    }
-
 
 //====================================================================
 //  Utilities: adhoc use cases
@@ -610,7 +600,7 @@ public class JobManager {
      * Migrate all Redis keys that do not have userKey in the key to the new format.
      * @return the number of keys migrated
      */
-    public static int migrateRedisKeys() {
+    public static int appendUserKeyToJobId() {
         // For keys without userKey, we need to migrate them to the new format where userKey is appended to the jobId.
         int count = 0;
         for(CacheKey key : allJobInfos.getKeys()) {

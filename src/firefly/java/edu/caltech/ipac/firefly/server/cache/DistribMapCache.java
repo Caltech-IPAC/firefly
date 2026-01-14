@@ -33,7 +33,7 @@ public class DistribMapCache<T> extends DistributedCache<T> {
         this(mapKey, ttl, new DefaultImpl<>());
     }
 
-    public DistribMapCache(String mapKey, long ttl, Serializer<T> serializer) {
+    public DistribMapCache(String mapKey, long ttl, ValueSerializer<T> serializer) {
         super(serializer);
         this.mapKey = mapKey;
         this.ttl = ttl;
@@ -46,8 +46,8 @@ public class DistribMapCache<T> extends DistributedCache<T> {
             ScanCursor cursor = ScanCursor.INITIAL;
 
             do {
-                MapScanCursor<String, String> scanResult = redis.hscan(mapKey, cursor, scanArgs);
-                for (Map.Entry<String, String> entry : scanResult.getMap().entrySet()) {
+                MapScanCursor<String, byte[]> scanResult = redis.hscan(mapKey, cursor, scanArgs);
+                for (Map.Entry<String, byte[]> entry : scanResult.getMap().entrySet()) {
                     result.add(deserialize(entry.getValue()));
                 }
                 cursor = scanResult;   // advance cursor
@@ -64,15 +64,15 @@ public class DistribMapCache<T> extends DistributedCache<T> {
 //  override for Redis Map implementation
 //====================================================================
 
-    String get(StatefulRedisConnection<String, String> redis, String key) {
+    byte[] get(StatefulRedisConnection<String, byte[]>  redis, String key) {
         return redis.sync().hget(mapKey, key);
     }
 
-    void del(StatefulRedisConnection<String, String> redis, String key) {
+    void del(StatefulRedisConnection<String, byte[]>  redis, String key) {
         redis.sync().hdel(mapKey, key);
     }
 
-    void set(StatefulRedisConnection<String, String> redis, String key, String value) {
+    void set(StatefulRedisConnection<String, byte[]>  redis, String key, byte[] value) {
         var sync = redis.sync();
         sync.hset(mapKey, key, value);
         if (ttl > 0) {
@@ -82,19 +82,19 @@ public class DistribMapCache<T> extends DistributedCache<T> {
         }
     }
 
-    void setex(StatefulRedisConnection<String, String> redis, String key, String value, long ttl) {
+    void setex(StatefulRedisConnection<String, byte[]>  redis, String key, byte[] value, long ttl) {
         set(redis, key, value); // ttl is managed at the map level, not individual keys
     }
 
-    List<String> keys(StatefulRedisConnection<String, String> redis) {
+    List<String> keys(StatefulRedisConnection<String, byte[]>  redis) {
         return new ArrayList<>(redis.sync().hkeys(mapKey));
     }
 
-    boolean exists(StatefulRedisConnection<String, String> redis, String key) {
+    boolean exists(StatefulRedisConnection<String, byte[]>  redis, String key) {
         return redis.sync().hexists(mapKey, key);
     }
 
-    long size(StatefulRedisConnection<String, String> redis) {
+    long size(StatefulRedisConnection<String, byte[]>  redis) {
         return redis.sync().hlen(mapKey);
     }
 

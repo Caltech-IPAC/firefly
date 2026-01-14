@@ -24,6 +24,8 @@ public class ProgressStat implements Serializable {
     private final String plotId;
     private final List<String> memberIDList;
 
+    protected ProgressStat() {this(null, null, null, null);}
+
     public ProgressStat(String id, String plotId, PType type, String message) {
         this.id = id;
         this.plotId = plotId;

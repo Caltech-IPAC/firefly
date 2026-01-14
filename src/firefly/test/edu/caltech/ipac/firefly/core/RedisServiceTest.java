@@ -14,6 +14,8 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static edu.caltech.ipac.util.serialization.Serializer.fromUtf8;
+import static edu.caltech.ipac.util.serialization.Serializer.toUtf8;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -82,8 +84,8 @@ public class RedisServiceTest extends ConfigTest {
 
         try {
             var redis = RedisService.mainConn().sync();
-            redis.setex("key1", 1, "val1");
-            assertEquals("val1", redis.get("key1"));
+            redis.setex("key1", 1, fromUtf8("val1"));
+            assertEquals("val1", toUtf8(redis.get("key1")));
             Thread.sleep(3_000);        // should be expired after 3 seconds
             assertEquals(0, (long) redis.exists("key1"));
         } catch (Exception e) {

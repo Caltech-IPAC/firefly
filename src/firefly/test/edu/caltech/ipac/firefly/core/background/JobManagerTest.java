@@ -86,27 +86,27 @@ public class JobManagerTest extends ConfigTest {
         AppProperties.setProperty("job.wait.complete", "0");
         Logger.setLogLevel(Level.INFO);
 
-//        ServerContext.getRequestOwner().setWsConnInfo("test", "test");
-//        for(int i =0; i < 100_000; i++) {
+//        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // ridiculously large amount of jobs
+//        for(int i =0; i < 2_000_000; i++) {
 //            JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
 //        }
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // load 9999 with 100k; extreme
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // load user x9999 with 100k; extreme
         for(int i =0; i < 100_000; i++) {
             JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
         }
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414621000");      // load 1000 with 1k; rare
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414621000");      // load user x1000 with 1k; rare
         for(int i =0; i < 1000; i++) {
             JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
         }
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620100");      // load 0100 with 100; normal
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620100");      // load user x0100 with 100; normal
         for(int i =0; i < 100; i++) {
             JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
         }
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620010");      // load 0010 with 10; less common
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620010");      // load user x0010 with 10; less common
         for(int i =0; i < 10; i++) {
             JobManager.submit(new SleepJob(Job.Type.PACKAGE, ServerContext.getRequestOwner().getEventConnID()));
         }
@@ -118,8 +118,8 @@ public class JobManagerTest extends ConfigTest {
         /*
           Performance results using Jedis vs Lettuce are identical with embedded Redis server.
             Cache keys count: 101,104
-            All Jobs: 1,165ms with 101,104 jobs
-            User Jobs: 936ms with 99,994 jobs       # confirmed only 99,994 jobs for 9999; not sure why 6 missing
+            All Jobs: 1,165ms with 101,110 jobs
+            User Jobs: 936ms with 100,000 jobs
             User Jobs: 94ms with 1,000 jobs
             User Jobs: 84ms with 100 jobs
             User Jobs: 92ms with 10 jobs
@@ -135,28 +135,40 @@ public class JobManagerTest extends ConfigTest {
         int aCount = JobManager.getAllJobs().size();
         System.out.printf("All Jobs: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), aCount);
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // get jobs for 9999 with 100k jobs
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414629999");      // get jobs for user x9999 with 100k jobs
         start = Instant.now();
         int count = JobManager.getUserJobs().size();
         System.out.printf("User Jobs: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), count);
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414621000");      // get jobs for 1000 with 1k jobs
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414621000");      // get jobs for user x1000 with 1k jobs
         start = Instant.now();
         count = JobManager.getUserJobs().size();
         System.out.printf("User Jobs: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), count);
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620100");      // get jobs for 0100 with 100 jobs
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620100");      // get jobs for user x0100 with 100 jobs
         start = Instant.now();
         count = JobManager.getUserJobs().size();
         System.out.printf("User Jobs: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), count);
 
-        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620010");      // get jobs for 0010 with 10 jobs
+        ServerContext.getRequestOwner().setUserKey("59bac3e4-6dc7-4b74-a83d-a35414620010");      // get jobs for user x0010 with 10 jobs
         start = Instant.now();
         count = JobManager.getUserJobs().size();
         System.out.printf("User Jobs: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), count);
 
     }
 
+    @Category({TestCategory.Perf.class})
+    @Test
+    public void cleanupTest() throws Exception {
+        /*
+          cleanup called on redis with 2_303_348 jobs  ~ 2.8 minutes
+          13618 remaining jobs after cleanup; 2,289,730 removed.
+            cleanup: 170,493ms with 2,303,348 jobs
+         */
+        Instant start = Instant.now();
+        JobManager.cleanup();
+        System.out.printf("cleanup: %,dms with %,d jobs %n", Duration.between(start, Instant.now()).toMillis(), 2_303_348);
+    }
 
     private static class SleepJob extends ServCmdJob implements Job.Worker {
         Job.Type type;

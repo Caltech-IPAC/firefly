@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.data.userdata;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +13,11 @@ import java.util.Map;
  * @author tatianag
  * @version $Id: UserInfo.java,v 1.15 2012/07/16 23:30:10 loi Exp $
  */
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class UserInfo implements Serializable {
 
     public static final String GUEST = "Guest";
@@ -81,10 +88,7 @@ public class UserInfo implements Serializable {
         setProperty(LASTNAME, lastName);
     }
 
-    public String getEmail() {
-        String email = getProperty(EMAIL);
-        return email == null ? getLoginName() : email;
-    }
+    public String getEmail() { return getProperty(EMAIL);}
 
     public void setEmail(String email) {
         setProperty(EMAIL, email);

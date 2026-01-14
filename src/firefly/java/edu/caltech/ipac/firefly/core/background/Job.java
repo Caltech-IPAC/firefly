@@ -13,7 +13,6 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobManager.sendUpdate;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
-import static java.util.Optional.ofNullable;
 
 /**
  * Date: 9/29/21
@@ -73,7 +72,7 @@ public interface Job extends Callable<String> {
         } catch (Exception e) {
             updateManagedStatus(ji -> {
                 String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
-                ji.setError(new JobInfo.Error(500, msg));
+                ji.setErrorSummary(new JobInfo.ErrorSummary(msg));
             });
             Logger.getLogger().error(e);
         } finally {

@@ -78,7 +78,9 @@ public class ServerStatus extends BaseHttpServlet {
             if (execGC) System.gc();            // force garbage collection.
             if (execRedisCleanup) {
                 long keyCount = RedisService.cleanupStaleKeys();    // manually clean up stale Redis keys
-                writer.println("* Redis cleanup completed. Number of keys removed: " + keyCount);
+                writer.println("* Redis cleanupStaleKeys completed. Number of keys removed: " + keyCount);
+                JobManager.cleanup();
+                writer.println("* JobManager cleanup completed.  Check redis CACHE USAGE SUMMARY for details.");
                 skip(writer);
             }
 

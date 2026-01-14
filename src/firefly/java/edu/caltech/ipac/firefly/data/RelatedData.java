@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.data;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
@@ -15,6 +16,11 @@ import java.util.stream.Stream;
 /**
 * @author Trey Roby
 */
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class RelatedData implements Serializable, HasSizeOf {
     public static final String IMAGE_OVERLAY= "IMAGE_OVERLAY";
     public static final String IMAGE_MASK= "IMAGE_MASK";
@@ -35,6 +41,8 @@ public class RelatedData implements Serializable, HasSizeOf {
     private int hduIdx= -1;
     private long size= 0;
 
+
+    protected RelatedData() {this(null, null, null);}
 
     private RelatedData(String dataType, String dataKey, String desc) {
         this.dataType= dataType;

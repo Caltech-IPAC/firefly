@@ -29,6 +29,10 @@ public class ServerEventQueue implements Serializable {
     private String userKey;
     private transient long lastPutTime= 0;
 
+    protected ServerEventQueue() {
+        this.eventTerminal = null;
+    }
+
     public ServerEventQueue(String connID, String channel, String userKey, EventConnector terminal) {
         this.connID = connID;
         this.channel = channel;

@@ -98,9 +98,9 @@ public class EmailNotification implements JobCompletedHandler {
             Logger.getLogger().info("No email address found for job: %s;  skip Email Notification".formatted(jobInfo.getJobId()));
             return;
         }
-        if (jobInfo.getError() != null) {
+        if (jobInfo.getErrorSummary() != null) {
 
-            String msg = failure.formatted(name, jobInfo.getJobId(), jobInfo.getError().msg(), contact);
+            String msg = failure.formatted(name, jobInfo.getJobId(), jobInfo.getErrorSummary().message(), contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                     .getOrElse(e -> Logger.getLogger().error(e));
 

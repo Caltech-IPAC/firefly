@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.RegionTableWriter;
 import edu.caltech.ipac.table.io.VoTableWriter;
@@ -47,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
@@ -164,7 +162,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                     String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
                     results.setErrorMsg(error);
-                    sendJobUpdate(ji -> ji.setError( new JobInfo.Error(500, error)));      // because an error table is returned
+                    sendJobUpdate(ji -> ji.setErrorSummary( new JobInfo.ErrorSummary(error)));      // because an error table is returned
                 } else {
                     throw e;
                 }
