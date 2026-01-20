@@ -17,13 +17,22 @@ const DIALOG_DIV= 'dialogRootDiv';
 const TMP_ROOT='TMP-';
 const DEFAULT_ZINDEX= 200;
 
-export default {defineDialog, showTmpPopup};
+export default {defineDialog, showTmpPopup, refreshDialogs};
+
+function refreshDialogs(mode) {
+    if (!divElement || !divElementRoot) return;
+    dialogColorMode = mode ?? dialogColorMode;
+    reRender(dialogs, tmpPopups, requestOnTop);
+}
+
 
 let dialogs= [];
 let tmpPopups= [];
 let tmpCount=0;
 let divElement;
 let divElementRoot;
+let dialogColorMode; //'light' | 'dark' | 'system'
+
 
 function init() {
     divElement= createDiv({id: DIALOG_DIV});
@@ -214,7 +223,7 @@ DialogRootComponent.propTypes = {
  */
 function reRender(dialogs,tmpPopups,requestOnTop) {
     divElementRoot.render(
-        <FireflyRoot>
+        <FireflyRoot key={`dlg-root-${dialogColorMode ?? ''}`}>
             <DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>
         </FireflyRoot>
     );
