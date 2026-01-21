@@ -565,32 +565,35 @@ public class JobManager {
         LOG.info("JobInfo cleanup started");
         List<JobInfo> jobs = getAllJobs();
         jobs.forEach(job -> {
-            CacheKey k = cacheKey(job);
-            var endTime = job.getEndTime();
-            if (endTime == null) return;   // skip active jobs
+            try {
+                CacheKey k = cacheKey(job);
+                Instant desTime = job.getDestruction();
+                if (desTime == null) {
+                    Instant startTime = ifNotNull(job.getCreationTime()).getOrElse(job.getStartTime());
+                    desTime = startTime == null ? Instant.now() : startTime.plus(JOB_TTL_DAYS, ChronoUnit.DAYS);
+                }
+                Instant endTime = ifNotNull(job.getEndTime()).getOrElse(desTime);
 
-            if (!job.getMeta().isMonitored() && endTime.plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("Removing non-monitored job: " + k);
-                allJobInfos.remove(k);      // remove non-monitored job after 1 hour
-            } else if (isActive(job) && hostName().equals(job.getMeta().getRunHost())) {
-                if (job.getMeta().getType() != UWS && !runningJobs.containsKey(job.getMeta().getJobId())) {
-                    // if the job is active and supposed to run on this host, but we don't have record of it running, remove it
-                    LOG.info("Removing orphan active job: " + k);
-                    allJobInfos.remove(k);
-                }
-            } else {
-                Instant desDate = job.getDestruction();
-                if (desDate == null) {
-                    desDate = job.getCreationTime() == null ? null : job.getCreationTime().plus(JOB_TTL_DAYS, ChronoUnit.DAYS);        // ensure destruction date has a value
-                }
-                if (desDate != null && desDate.isBefore(Instant.now())) {
+                if (!job.getMeta().isMonitored() && endTime.plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                    LOG.info("Removing non-monitored job: " + k);
+                    allJobInfos.remove(k);      // remove non-monitored job after 1 hour
+                } else if (isActive(job) && hostName().equals(job.getMeta().getRunHost())) {
+                    if (job.getMeta().getType() != UWS && !runningJobs.containsKey(job.getMeta().getJobId())) {
+                        // if the job is active and supposed to run on this host, but we don't have record of it running, remove it
+                        LOG.info("Removing orphan active job: " + k);
+                        allJobInfos.remove(k);
+                    }
+                } else if (desTime.isBefore(Instant.now())) {
                     LOG.info("  Removing expired job: " + k);
                     allJobInfos.remove(k);
                 }
+            } catch (Exception e) {
+                LOG.error(e,"Unexpected error during job cleanup for jobId=" + job.getJobId());
             }
         });
         LOG.info("JobInfo cleanup finished");
     }
+
 
 //====================================================================
 //  Utilities: adhoc use cases

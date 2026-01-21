@@ -48,13 +48,17 @@ public class DistribMapCache<T> extends DistributedCache<T> {
             do {
                 MapScanCursor<String, byte[]> scanResult = redis.hscan(mapKey, cursor, scanArgs);
                 for (Map.Entry<String, byte[]> entry : scanResult.getMap().entrySet()) {
-                    result.add(deserialize(entry.getValue()));
+                    try {
+                        result.add(deserialize(entry.getValue()));
+                    } catch (Exception e) {
+                        LOG.error(e, "Error deserializing value for key {%s} in Redis hash {%s}: %s".formatted(entry.getKey(), mapKey, e.getMessage()));
+                    }
                 }
                 cursor = scanResult;   // advance cursor
             } while (!cursor.isFinished());
 
         } catch (Exception e) {
-            LOG.error(e, "Error scanning Redis hash {}: {}", mapKey, e.getMessage());
+            LOG.error(e, "Error scanning Redis hash {%s}: %s".formatted(mapKey, e.getMessage()));
         }
 
         return result;
