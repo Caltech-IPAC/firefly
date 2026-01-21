@@ -194,7 +194,7 @@ COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/web
 # - compression="on" → turn on response compression
 # - useSendfile="false" →  avoids bypassing compression for static files
 # - compressibleMimeType → list of text-based formats to compress (HTML, CSS, JS, JSON, VOTable, XML, CSV, SVG, Fonts)
-RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" useSendfile="false" compressibleMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2"/' \
+RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080" protocol="HTTP\/1.1" compression="on" useSendfile="false" compressibleMimeType="text\/html,text\/plain,text\/css,text\/javascript,application\/javascript,application\/json,application\/xml,text\/xml,application\/x-votable+xml,application\/x-yaml,application\/ld+json,image\/svg+xml,text\/csv,application\/xhtml+xml,application\/rss+xml,application\/atom+xml,application\/x-font-ttf,font\/otf,font\/woff,font\/woff2,application\/octet-stream"/' \
     $CATALINA_HOME/conf/server.xml
 
 # preinstall DuckDB extensions; remember to update version when DuckDB is updated
