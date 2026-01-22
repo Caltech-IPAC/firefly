@@ -220,7 +220,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     let dimStr= `${plot.dataWidth} x ${plot.dataHeight}`;
     if (isImageCube(plot)) dimStr+= ` x ${getCubePlaneCnt(plot)}`;
 
-   return (
+   const overview= (
         <Stack direction='row' spacing={1} pt={1}>
             <Typography {...{level:'body-sm', pl:1, textAlign: 'right'}}>Pixel Size:</Typography>
             <Typography {...{level:'body-sm', color:'warning'}}>{pixelSize}</Typography>
@@ -230,6 +230,21 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
             <Typography {...{level:'body-sm', color:'warning'}}>{dimStr}</Typography>
         </Stack>
     );
+
+   if (plot.plotState.getFileType(band)==='ASDF') {
+       return (
+           <Stack>
+               {overview}
+               <Typography {...{level:'body-sm', color:'warning', sx:{pl:1} }}>
+                   This is a ASDF file, the headers are convert to FITS style
+               </Typography>
+           </Stack>
+
+       );
+   }
+   else {
+       return overview
+   }
 }
 
 

@@ -12,6 +12,7 @@ import React, {Fragment, memo} from 'react';
 import shallowequal from 'shallowequal';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
+import {Format} from '../../data/FileAnalysis';
 import {sprintf} from '../../externalSource/sprintf';
 import {ActionsDropDownButton, isSpacialActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
@@ -402,7 +403,8 @@ export function MultiImageControllerView({plotView:pv}) {
             const {attributes:att, plotDesc:desc=''}= plot;
             const hduNum= getHDU(plot);
             startStr= 'Image: ';
-            startStr= att[HDU_TITLE_DESC] ? att[HDU_TITLE_DESC] + ': ': `HDU (#${hduNum}): `;
+            const imagePartStr= plot.plotState.getFileType()!==Format.ASDF ? 'HDU' : 'Image';
+            startStr= att[HDU_TITLE_DESC] ? att[HDU_TITLE_DESC] + ': ': `${imagePartStr} (#${hduNum}): `;
 
             const hduTitleHeader= att[HDU_TITLE_HEADER] ;
             const reqHeaderTitle= hduTitleHeader ? `${getHeader(plot,hduTitleHeader)}` : '';

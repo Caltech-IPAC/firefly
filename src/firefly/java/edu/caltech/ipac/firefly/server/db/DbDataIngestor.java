@@ -15,6 +15,7 @@ import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.table.io.TableParseHandler;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.ASDFUtil;
 import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
@@ -51,6 +52,7 @@ public class DbDataIngestor {
                 case VO_TABLE -> ingestVoTable(dbAdapter, source, extraMetaSetter, tblIdx, searchForSpectrum);
                 case CSV, TSV, PARQUET -> ingestDuckReadable(format, dbAdapter, source, extraMetaSetter, searchForSpectrum);
                 case FITS -> ingestFitsTable(req, dbAdapter, source, tblIdx);
+                case ASDF -> ingestAsdfTable(req, dbAdapter, source, tblIdx, extraMetaSetter, searchForSpectrum);
                 case JSON -> ingestJsonTable(req, dbAdapter, srcFile, searchForSpectrum);
                 default -> throw new DataAccessException("Unsupported format (%s), file: %s".formatted(format, source));
             };
@@ -104,6 +106,17 @@ public class DbDataIngestor {
     static FileInfo ingestFitsTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex) throws IOException, DataAccessException {
         var table = FITSTableReader.convertFitsToDataGroup(source, req, tableIndex);
         return ingestTable(dbAdapter, table, false);        //logic is already in the reader
+    }
+    static FileInfo ingestAsdfTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex,
+                                    Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum) throws IOException, DataAccessException {
+        if (dbAdapter instanceof DuckDbAdapter) {
+            var h= new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum);
+            ASDFUtil.convertAsdfAstroPyTableToDataGroup(h, new File(source), tableIndex);   // only the first table.
+            return new FileInfo(dbAdapter.getDbFile());
+        } else {
+            var table = ASDFUtil.convertAsdfAstroPyTableToDataGroup(new File(source), req, tableIndex);
+            return ingestTable(dbAdapter, table, false);        //logic is already in the reader
+        }
     }
 
     static FileInfo ingestJsonTable(TableServerRequest req, DbAdapter dbAdapter, File srcFile, boolean searchForSpectrum) throws IOException, DataAccessException {

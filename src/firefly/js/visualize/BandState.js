@@ -21,6 +21,7 @@ import {RangeValues} from './RangeValues.js';
  * @prop multiImageFile
  * @prop tileCompress
  * @prop cubeCnt
+ * @prop fileType
  * @prop cubePlaneNumber
  */
 
@@ -41,6 +42,7 @@ export function makeBandState(plotRequest, rangeValues) {
         tileCompress: false,
         cubeCnt: 0,
         cubePlaneNumber: 0,
+        fileType: undefined,
         plotRequest : isString(plotRequest) ? WebPlotRequest.parse(plotRequest) : plotRequest,
         rangeValues: isString(rangeValues) ? RangeValues.parse(rangeValues) : rangeValues,
     };
@@ -67,6 +69,7 @@ export function makeBandStateWithJson(bsJson, overridePlotRequest, overrideRV ) 
     bState.cubeCnt= bsJson.cubeCnt || 0;
     bState.cubePlaneNumber= bsJson.cubePlaneNumber || 0;
     bState.directFileAccessData= bsJson.directFileAccessData;
+    bState.fileType= bsJson.fileType;
     return bState;
 }
 
@@ -91,6 +94,7 @@ export function convertBandStateToJSON(bs, includeDirectAccessData= true) {
     if (bs.tileCompress) json.tileCompress = bs.tileCompress;
     if (bs.cubeCnt) json.cubeCnt= bs.cubeCnt;
     if (bs.cubePlaneNumber) json.cubePlaneNumber= bs.cubePlaneNumber;
+    if (bs.fileType) json.fileType= bs.fileType;
     return json;
 
 }

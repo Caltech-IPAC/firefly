@@ -37,6 +37,7 @@ export const Format= {
     UNKNOWN: 'UNKNOWN',
     FIXEDTARGETS: 'FIXEDTARGETS',
     FITS: 'FITS',
+    ASDF: 'ASDF',
     JSON: 'JSON',
     TEXT: 'TEXT',
     PDF: 'PDF',

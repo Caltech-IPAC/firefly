@@ -22,6 +22,7 @@ public class BandState implements Serializable {
     private String uploadFileNameStr = null;
     private int    imageIdx = 0;
     private int    originalImageIdx = 0;
+    private String fileType; // null defaults to FITS
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
@@ -58,6 +59,10 @@ public class BandState implements Serializable {
 
     public void setOriginalImageIdx(int idx) { originalImageIdx = idx; }
     public int getOriginalImageIdx() { return originalImageIdx; }
+
+    public void setFileType(String type) { this.fileType = type; }
+    public String getFileType() { return fileType; }
+
 
     /**
      * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
@@ -133,6 +138,7 @@ public class BandState implements Serializable {
         b.tileCompress = this.tileCompress;
         b.cubeCnt = this.cubeCnt;
         b.cubePlaneNumber = this.cubePlaneNumber;
+        b.fileType = this.fileType;
         return b;
     }
 
@@ -149,6 +155,7 @@ public class BandState implements Serializable {
                 directFileAccessData +"",
                 multiImageFile+"",
                 tileCompress+"",
+                fileType+"",
                 cubeCnt+"",
                 cubePlaneNumber+"");
     }
@@ -162,6 +169,7 @@ public class BandState implements Serializable {
                 ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
                 ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
                 ComparisonUtil.equals(directFileAccessData, bs.directFileAccessData) &&
+                ComparisonUtil.equals(fileType, bs.fileType) &&
                 imageIdx ==bs.imageIdx &&
                 originalImageIdx ==bs.originalImageIdx);
     }

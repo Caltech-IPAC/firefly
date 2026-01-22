@@ -140,6 +140,8 @@ export class PlotState {
 
     getUploadFileName(band) { return this.get(band || this.firstBand()).uploadFileNameStr; }
 
+    getFileType(band) { return this.get(band || this.firstBand()).fileType ?? 'FITS'; }
+
     /**
      *
      * @param {Operation} op
