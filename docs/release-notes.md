@@ -8,7 +8,8 @@
 
 
 ## Version 2025.5
-- 2025.5.2 - (Dec 17, 2025),  _docker tag_: `2025.5.2`, `2025.5`, `latest`
+- 2025.5.3 - (Jan 23, 2025),  _docker tag_: `2025.5.3`, `2025.5`, `latest`
+- 2025.5.2 - (Dec 17, 2025),  _docker tag_: `2025.5.2`,
 - 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`,
 - 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`
 
@@ -54,13 +55,19 @@ It also includes significant infrastructure updates.
 - Fixed: Per-plane spectral coord display when WCSAXES != NAXIS - Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 
 ### _Patches 2025.5_
+#### 2025.5.3
+- Fixed: Firefly-1932- Regression bug: Firefly not working with URL request type ([PR](https://github.com/Caltech-IPAC/firefly/pull/1904))
+- Fixed: Firefly-1929- Regression bug: re-enabled compression for binary transfers ([PR](https://github.com/Caltech-IPAC/firefly/pull/1903))
+- Fixed: Firefly-1830- Clean no completely working ([commit](https://github.com/Caltech-IPAC/firefly/commit/140a6a019d040b2dfde93d45083d9865ec115ed3))
+- Fixed: new chart creation from Python crashing the app ([commit](https://github.com/Caltech-IPAC/firefly/commit/5bfc4a8fb629ca39b73a8aeb2af0678f13d53e48))
+
+#### 2025.5.2
+- Fixed: healpix catalog drawing fails at time when on the corner of a tile- ([commit](https://github.com/Caltech-IPAC/firefly/commit/d24939b9e88f943d3a1f9b761fd5f86d8eff4bf2))
 #### 2025.5.1
 - Fixed: Empty HiPS tiles with Firefox- Firefly-1918 ([commit](https://github.com/Caltech-IPAC/firefly/commit/d6373c98244771f2f0094184ace95f84e3544e4c))
 - Fixed: Fix email notification stopped working- ([commit](https://github.com/Caltech-IPAC/firefly/commit/413eb71e5e18b72e721b9ebc552dc01e20a90cda))
 - Update: Table toolbar needs to wrap when table is narrow- Firefly-1634 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 - Update: Expose any data file upload functionality- Firefly-1854 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1895))
-#### 2025.5.2
-- Fixed: healpix catalog drawing fails at time when on the corner of a tile- ([commit](https://github.com/Caltech-IPAC/firefly/commit/d24939b9e88f943d3a1f9b761fd5f86d8eff4bf2))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.5+label%3abug)
