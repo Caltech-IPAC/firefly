@@ -7,11 +7,12 @@ import Enum from 'enum';
 /**
  * @typedef {Object} RequestType
  * @summary web plot request type
- * @description can be 'SERVICE', 'FILE', 'URL', 'ALL_SKY', 'HiPS', 'PROCESSOR', 'TRY_FILE_THEN_URL', 'WORKSPACE', ''S3_AS_LOCAL'
+ * @description can be 'SERVICE', 'FILE', 'URI', 'URL', 'ALL_SKY', 'HiPS', 'PROCESSOR', 'TRY_FILE_THEN_URL', 'WORKSPACE', ''S3_AS_LOCAL'
  *
  * @prop SERVICE
  * @prop FILE
  * @prop URI
+ * @prop URL
  * @prop ALL_SKY
  * @prop HiPS
  * @prop PROCESSOR
@@ -24,6 +25,6 @@ import Enum from 'enum';
  */
 
 /** @type RequestType */
-export const RequestType= new Enum([ 'SERVICE', 'FILE', 'URI', 'ALL_SKY', 'HiPS',
+export const RequestType= new Enum([ 'SERVICE', 'FILE', 'URI', 'URL', 'ALL_SKY', 'HiPS',
         'PROCESSOR', 'TRY_FILE_THEN_URL', 'WORKSPACE'],
                                      { ignoreCase: true });

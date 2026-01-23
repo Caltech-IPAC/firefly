@@ -41,6 +41,7 @@ public final class ImageFileRetrieverFactory {
         RequestType rType;
         if (request.containsParam(WebPlotRequest.TYPE)) {
             rType= request.getRequestType();
+            if (rType==RequestType.URL) rType= RequestType.URI;
         }
         else {
             rType= guessRequestType(request);
