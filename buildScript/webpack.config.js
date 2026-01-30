@@ -162,7 +162,7 @@ export default function makeWebpackConfig(config) {
                         ],
                         '@babel/preset-react'
                     ],
-                    plugins: [ '@babel/plugin-transform-runtime', 'lodash' ]
+                    plugins: [ 'react-compiler', '@babel/plugin-transform-runtime', 'lodash' ]
                 }
             }
         },

@@ -92,17 +92,18 @@ const expandableTapSectionSx = {
 };
 
 function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService, setError}) {
-    const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
-    const capabilities= getLoadedCapability(serviceUrl);
+    const [capabilities, setCapabilities] = useState(() => getLoadedCapability(serviceUrl));
     useEffect(() => {
-        if (!isCapabilityLoaded(serviceUrl)) {
-            loadTapCapabilities(serviceUrl)
-                .then((c) => setCapabilitiesChange(c??{}))
-                .catch( (error) => {
-                    setError(`Fail to retrieve capability for: ${serviceUrl}`);
-                });
+        if (!serviceUrl) return;
+        if (isCapabilityLoaded(serviceUrl)) {
+            setCapabilities(getLoadedCapability(serviceUrl));
+            return;
         }
+        loadTapCapabilities(serviceUrl)
+            .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
+            .catch(() => setError(`Fail to retrieve capability for: ${serviceUrl}`));
     }, [serviceUrl]);
+
 
     return (
         <Sheet variant='outline' sx={{display:'flex', flexDirection: 'column', flexGrow: 1}}>
@@ -155,7 +156,6 @@ function BasicUI(props) {
     const [schemaName, schemaRef, setSchemaName] = useStateRef(lockedSchemaName || searchParams.schema || initState.schemaName || urlApi.schema);
     const [tableName, tableRef, setTableName] = useStateRef(lockedTableName || searchParams.table || initState.tableName || urlApi.table);
     const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || initArgs.urlApi?.selectBy === 'obscore');
-    const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [tableTableModel, setTableTableModel] = useState();
@@ -165,18 +165,19 @@ function BasicUI(props) {
 
     const schemaIsLocked= !forceLockObsCore && Boolean(lockedSchemaName);
     const tableIsLocked= !forceLockObsCore && Boolean(lockedTableName);
-
-    const capabilities= getLoadedCapability(serviceUrl);
+    const [capabilities, setCapabilities] = useState(() => getLoadedCapability(serviceUrl));
 
     useEffect(() => {
-        if (!isCapabilityLoaded(serviceUrl)) {
-            loadTapCapabilities(serviceUrl)
-                .then((c) => setCapabilitiesChange(c??{}))
-                .catch( (error) => {
-                    setError(`${SERVICE_EXIST_ERROR}: ${serviceUrl}`);
-                });
+        if (!serviceUrl) return;
+        if (isCapabilityLoaded(serviceUrl)) {
+            setCapabilities(getLoadedCapability(serviceUrl));
+            return;
         }
+        loadTapCapabilities(serviceUrl)
+            .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
+            .catch(() => setError(`Fail to retrieve capability for: ${serviceUrl}`));
     }, [serviceUrl]);
+
 
     const setLockToObsCore= (doLock) => {
         if (!hasObsCoreTable || !obsCoreTableModel?.tableData?.data) return;
