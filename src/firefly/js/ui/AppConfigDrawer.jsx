@@ -1,6 +1,5 @@
 
 import {DialogTitle, Divider, Drawer, IconButton, ModalClose, Stack, Typography} from '@mui/joy';
-import {isObject} from 'lodash';
 import {object, bool, number, oneOfType, string} from 'prop-types';
 import React, {isValidElement, useContext, useState} from 'react';
 import {dispatchHideDialog, isDialogVisible, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
@@ -11,6 +10,7 @@ import {SideBarMenu} from './Menu.jsx';
 import {AccordionPanelView} from './panel/AccordionPanel.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {VersionInfo} from './VersionInfo.jsx';
+import DialogRootContainer from 'firefly/ui/DialogRootContainer';
 
 
 
@@ -72,6 +72,7 @@ function SideBarColorModeUI({closeSideBar}) {
             <ListBoxInputFieldView {...{
                 onChange: (ev, newValue) => {
                     setMode(newValue);
+                    DialogRootContainer.refreshDialogs(newValue);//forces a re-render of open dialogs to update their color mode
                     closeSideBar();
                 },
                 slotProps:{label: {sx: {width: '7rem'}}},
