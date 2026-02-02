@@ -501,6 +501,7 @@ function TableChooser({tOps=[],tableTableModel, tableName,setTableName,schemaNam
                     options:dropOps, value:tableName, placeholder:'Loading...',
                     startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
                     onChange:(ev, selectedTapTable) => {
+                        if (!ev) return;
                         setTableName(selectedTapTable);
                         setVal('tableName',selectedTapTable);
                     },
