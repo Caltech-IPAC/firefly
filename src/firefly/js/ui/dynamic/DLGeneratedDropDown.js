@@ -20,7 +20,6 @@ import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
 import {dispatchChangeCenterOfProjection, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
 import {pointEquals} from '../../visualize/Point.js';
-import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
 import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {FieldGroup} from '../FieldGroup.jsx';
@@ -29,7 +28,8 @@ import {useStoreConnector} from '../SimpleComponent.jsx';
 import {analyzeQueries, getCisxUI, getCisxUIUCD, getCisxUIValue, handleSearch} from './DLGenAnalyzeSearch.js';
 import {SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
 import {DLuiServDescPanel, DLuiTabView} from './DLuiServDescPanel.jsx';
-import {CIRCLE, POINT, POSITION, RANGE} from './DynamicDef.js';
+import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {AREA, CIRCLE, CONE_AREA_KEY, POINT, POSITION, RANGE} from './DynamicDef.js';
 import {convertRequest, DEFER_TO_CONTEXT, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
@@ -482,7 +482,7 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
         siaContraints= cAry.map( (f) =>  f.siaConstraints).filter( (c) => c?.length).flat();
     }
 
-    const numKeys= [...new Set(fds.map( ({key}) => key))].length;
+    const numKeys= validKeysCount(fds,r[CONE_AREA_KEY]);
     if (requestKeyCnt<numKeys) {
         showInfoPopup('Please enter all of the fields', 'Error');
         return false;
@@ -496,3 +496,9 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
     return true;
 }
 
+function validKeysCount(fds, conKeyValue) {
+   const keyList= fds
+       .filter( (f) => !(conKeyValue === POLY_CHOICE_KEY && f.type === AREA))
+       .map( (f) => f.key);
+   return new Set(keyList).size;
+}
