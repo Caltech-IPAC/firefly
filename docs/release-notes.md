@@ -8,7 +8,8 @@
 
 
 ## Version 2025.5
-- 2025.5.3 - (Jan 23, 2025),  _docker tag_: `2025.5.3`, `2025.5`, `latest`
+- 2025.5.4 - (Feb 3, 2025),   _docker tag_: `2025.5.4`, `2025.5`, `latest`
+- 2025.5.3 - (Jan 23, 2025),  _docker tag_: `2025.5.3`
 - 2025.5.2 - (Dec 17, 2025),  _docker tag_: `2025.5.2`,
 - 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`,
 - 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`
@@ -55,6 +56,8 @@ It also includes significant infrastructure updates.
 - Fixed: Per-plane spectral coord display when WCSAXES != NAXIS - Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
 
 ### _Patches 2025.5_
+#### 2025.5.4
+- Fixed: TAP: In certain cases the TAP UI shows a never resolving loading view of the table list. ([commit](https://github.com/Caltech-IPAC/firefly/commit/8ecf9616c3e1c4765147f541bbb12706ba50cae1))
 #### 2025.5.3
 - Fixed: Firefly-1932- Regression bug: Firefly not working with URL request type ([PR](https://github.com/Caltech-IPAC/firefly/pull/1904))
 - Fixed: Firefly-1929- Regression bug: re-enabled compression for binary transfers ([PR](https://github.com/Caltech-IPAC/firefly/pull/1903))
