@@ -466,7 +466,9 @@ function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
                 title:SCHEMA_TIP,
                 options:dropOps, value:schemaName, placeholder:'Loading...',
                 startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
-                onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
+                onChange:(ev, selectedTapSchema) => {
+                    ev && selectedTapSchema && setSchemaName(selectedTapSchema);
+                },
                 renderValue:
                     ({value}) =>
                         (<OpRender {...{
