@@ -14,13 +14,18 @@ import FOOTER_BG from 'images/ipac_bar.jpg';
 
 /**
  * Main panel of the FireflyLayout.  It handles the 3 possible views: drop-down, standard, expanded.
- * It also add a footer to the drop-down if footerComponent is set.
+ * It also adds a footer to the drop-down view if footerComponent is set.
+ *
+ * Typically, these 3 views render the following:
+ * 1) standard:   LandingPage or ResultsPanel.StandardView.DockLayoutPanel with split view of image, table and chart containers
+ * 2) expanded:   ResultsPanel.ExpandedView with one of image, table or chart container expanded to entire main panel
+ * 3) drop-down:  DropDownContainer containing any panel except the above two like search panel, upload panel, etc.
  * @param p     props
  * @param p.dropDownComponent   drop-down component to show when drop-down is visible
  * @param p.footer     footer component to show
  * @param p.showDropDown        set drop-down state
  * @param p.useDefaultExpandedView  use default ExpandedView
- * @param p.children            main content to show when drop-down is hidden
+ * @param p.children            main content to show when it's not drop-down or expanded view
  * @return {JSX.Element}
  */
 export function MainPanel({dropDownComponent, footer, showDropDown, useDefaultExpandedView=false, children}) {
