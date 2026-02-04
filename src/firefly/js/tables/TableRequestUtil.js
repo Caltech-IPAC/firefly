@@ -266,6 +266,21 @@ export function cloneRequest(request={}, params = {}, createTblId) {
 }
 
 /**
+ * copy options from one request to another
+ * @param {TableRequest}    from  the original request to copy
+ * @param {TableRequest}    to    the request to copy options into
+ * @returns {TableRequest}  the modified 'to' request
+ */
+export function copyRequestOptions(from, to) {
+    to.pageSize = from.pageSize;
+    to.startIdx = from.startIdx;
+    to.META_INFO = from.META_INFO;
+    to.filters = from.filters;
+    to.sortInfo = from.sortInfo;
+    return to;
+}
+
+/**
  * create a request which will perform a function on the given searchRequest
  * @param {TableRequest} searchRequest  required. the table's request this function should operate on
  * @param {string} id                   required.  SearchProcessor ID.
@@ -307,7 +322,7 @@ export function makeSubQueryRequest(searchRequest, title, params={}, options={})
  * @returns {string}
  */
 export function getTblId(request) {
-    return get(request, 'META_INFO.tbl_id') || get(request, 'tbl_id'); 
+    return request?.META_INFO?.tbl_id || request?.tbl_id;
 }
 
 /**

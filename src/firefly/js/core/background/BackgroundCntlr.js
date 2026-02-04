@@ -5,7 +5,7 @@
 import {flux} from '../ReduxFlux';
 
 import {updateObject, updateSet} from '../../util/WebUtil.js';
-import {showJobMonitor, showMultiResults} from './JobMonitor.jsx';
+import {showJobMonitor, showMultiDownloads} from './JobMonitor.jsx';
 import {isSuccess} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {doPackageRequest} from './BackgroundUtil.js';
@@ -221,7 +221,7 @@ function bgPackage(action) {
                     dispatchWorkspaceUpdate();
                 } else {
                     if (results?.length > 1) {
-                        showMultiResults(jobInfo);
+                        showMultiDownloads(jobInfo);
                     } else {
                         const url= jobInfo?.results?.[0]?.href;
                         download(url);

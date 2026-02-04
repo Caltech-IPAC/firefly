@@ -140,7 +140,7 @@ export function resultSuccess(request,cacheKey) {
             const title= report.fileName ?? 'UWS Job File';
             const jobUrl = report?.parts[0].url;
             const req = makeTblRequest('UwsJob', title, {jobUrl});
-            dispatchTableSearch(req);
+            dispatchTableSearch(req, {backgroundable: true});
             return true;
 
         default: return false;

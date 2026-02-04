@@ -176,6 +176,11 @@ public class JobManager {
             });
             LOG.error(e);
         }
+        if (!job.getWorker().isSelfManaged()) {
+            updateJobInfo(jobId, ji -> {
+                ji.setOwnerId(reqOwner.getUserKey());
+            });
+        }
         return getJobInfo(jobId);
     }
 

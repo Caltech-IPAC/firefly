@@ -193,9 +193,9 @@ public class QueryUtil {
             if (uri==null) {
                 // file path based source
                 File f = ServerContext.convertToFile(source);
-                if (f == null) return null;
-                if (!f.canRead()) throw new SecurityException("Access is not permitted.");
-
+                if (f == null) throw new SecurityException("Access is not permitted.");
+                if (!f.exists()) throw new SecurityException("File no longer exists.");
+                if (!f.canRead()) throw new SecurityException("Insufficient permission to read the file.");
                 return f;
             } else {
                 HttpServiceInput inputs = new HttpServiceInput(source);

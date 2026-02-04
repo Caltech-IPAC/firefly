@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
@@ -541,9 +542,13 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     protected void setJobResults(File... files) {
         if (files == null || files.length == 0) return;
         updateJob(ji -> {
+            ji.setResults(new ArrayList<>());
             Arrays.stream(files)
                     .filter(f -> f != null && f.isFile() && f.canRead())
-                    .forEach(file -> ji.addResult(new JobInfo.Result("result", ServerContext.replaceWithPrefix(file), null, String.valueOf(file.length()))));
+                    .forEach(file -> {
+                        DuckDbAdapter.MimeDesc mimeDesc = FormatUtil.getMimeType(file);
+                        ji.addResult(new JobInfo.Result("result", ServerContext.replaceWithPrefix(file), mimeDesc.mime(), String.valueOf(file.length())));
+                    });
         });
     }
 
