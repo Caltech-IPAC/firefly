@@ -452,14 +452,15 @@ function ConeOp({slotProps,nullAllowed}) {
     }= slotProps.sizeInput ?? {};
     const {
         targetKey=DEF_TARGET_PANEL_KEY,
+        inputFieldLabel,
         targetPanelExampleRow1,
-        targetPanelExampleRow2
+        targetPanelExampleRow2,
     }= slotProps.targetPanel ?? {};
     return (
         <Stack>
             <TargetPanel {...{
                 sx:{width:DEFAULT_TARGET_PANEL_WIDTH, ...slotProps.targetPanel?.sx},
-                key:targetKey,
+                key:targetKey, inputFieldLabel,
                 fieldKey:targetKey, nullAllowed,
                 targetPanelExampleRow1, targetPanelExampleRow2,
                 slotProps: {

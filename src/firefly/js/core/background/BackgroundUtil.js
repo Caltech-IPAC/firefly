@@ -318,15 +318,20 @@ function  getMimeLoader(mimeType, href) {
     }
 }
 
+const handleLayoutChanges = (jobInfo) => {
+    showJobMonitor(false);
+    const {submitTo} = getMetadata({jobInfo});
+    if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
+};
+
 export function loadTableResult({jobInfo, request, href}) {
-    const {submitTo, tbl_id} = getMetadata({jobInfo});
+    const {tbl_id} = getMetadata({jobInfo});
     const tblRequest= makeFileRequest(null, href, null, {tbl_id});
     copyRequestOptions(request, tblRequest);
 
     const {tbl_ui_id} = getTableUiByTblId(tbl_id) || {};        // re-use existing table UI if exists
     dispatchTableSearch(tblRequest, {tbl_ui_id});
-    showJobMonitor(false);
-    if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
+    handleLayoutChanges(jobInfo);
 }
 
 export function getMetadata({jobInfo, resultIdx=0}) {
@@ -350,5 +355,6 @@ export function loadImageResult({jobInfo, href}) {
     wpRequest.setPlotGroupId(viewerId);
     const plotId = `${href.replace('.', '_')}-${jobInfo.jobId}`;
     dispatchPlotImage({plotId, wpRequest, viewerId});
+    handleLayoutChanges(jobInfo);
 }
 
