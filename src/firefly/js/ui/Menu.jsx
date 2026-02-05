@@ -20,7 +20,7 @@ import {
     dispatchShowDropDown,
     dispatchUpdateMenuTabNodes,
     getLayouInfo, getMenuTabNodes,
-    getResultCounts,
+    getResultCounts, isResultsViewDropdown, resultsViewDropdown,
 } from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
@@ -62,8 +62,7 @@ export function Menu() {
     const {appTitle, showUserInfo} = useContext(AppPropertiesCtx);
     const menu= useStoreConnector(() => getMenu());
     const {menuItems=[]} = menu;
-    const layoutInfo= getLayouInfo() ?? {};
-    const {dropDown={}}=  layoutInfo;
+    const dropDown=  useStoreConnector(() => getLayouInfo()?.dropDown ?? {});
     const selected= getSelectedMenuItem(menu,dropDown);
 
     useEffect(() => {
@@ -94,6 +93,11 @@ export function Menu() {
             updateMenu(appTitle, {...menu, menuItems:newMenuItems, selected});
         }
     }, [selected,ready]);
+
+    useEffect(() => {
+        // if layoutInfo.dropdown in the store updated to results view, set selected menu tab to '' (results)
+        if (isResultsViewDropdown(dropDown) && menu?.selected !== '') dispatchSetMenu({...menu, selected: ''});
+    }, [dropDown]);
 
     if (!ready) return <div/>;
 
@@ -386,7 +390,7 @@ export function SideBarMenu({closeSideBar, allowMenuHide}) {
     const {haveResults}= useStoreConnector(getCounts);
     const uploadItem= menu.menuItems?.find(({action}) => action===UploadCmd);
     const menuItems= menu.menuItems?.filter(({type,action}) => type !== COMMAND && action!==UploadCmd);
-    const {dropDown={visible:false}}= getLayouInfo() ?? {};
+    const {dropDown=resultsViewDropdown}= getLayouInfo() ?? {};
     const selected= getSelectedMenuItem(menu,dropDown);
     const categoryList= menuItems ? [...new Set(menuItems.map( (mi) => mi.category ?? ''))] : [];
 

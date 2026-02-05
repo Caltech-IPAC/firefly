@@ -270,7 +270,7 @@ export function dispatchShowDropDown({view, menuItem, initArgs}) {
  * hide the drop down container
  */
 export function dispatchHideDropDown() {
-    flux.process({type: SHOW_DROPDOWN, payload: {visible: false}});
+    flux.process({type: SHOW_DROPDOWN, payload: resultsViewDropdown});
 }
 
 /**
@@ -415,10 +415,18 @@ export function getResultCounts() {
     return {haveResults,tableCnt,tableLoadingCnt,imageCnt,imageLoadingCnt,pinChartCnt,bgTableCnt};
 }
 
+/* layoutInfo.dropdown for the "Results" panel that shows in standard or expanded layout views */
+export const resultsViewDropdown = {
+    visible: false,
+    view: '' // '' is important to avoid `undefined` getting ignored in state objects merging
+};
+/* check if a layoutInfo.dropdown is for the "Results" view */
+export const isResultsViewDropdown = ({view, visible}) => !visible && view === '';
+
 /**
  * This handles the general use case of the drop-down panel.
- * It will collapse the drop-down panel when new tables or images are added.
- * It will expand the drop-down panel when there is no results to be shown.
+ * It will collapse the drop-down panel when new tables, chart, or images are added, i.e., show the results view (standard/expanded).
+ * It will expand the drop-down panel when there is no results to be shown, i.e., show the non-results panels.
  * @param {LayoutInfo} layoutInfo
  * @param {Action} action
  * @returns {LayoutInfo}  return new LayoutInfo if layout was affected.  Otherwise, return the given layoutInfo.
@@ -427,17 +435,18 @@ export function dropDownHandler(layoutInfo, action) {
     // calculate dropDown when new UI elements are added or removed from results
     switch (action.type) {
         case CHART_ADD:
+            return smartMerge(layoutInfo, {dropDown: resultsViewDropdown});
         case TBL_RESULTS_ADDED:
         case TBL_RESULTS_ACTIVE:
         case TABLE_LOADED:
-            const tbl_id= action.type === CHART_ADD ? action.payload.groupId : action.payload.tbl_id;
+            const {tbl_id} = action.payload;
             if (findGroupByTblId(tbl_id)!=='main' || getTblById(tbl_id)?.request?.META_INFO?.[MetaConst.UPLOAD_TABLE]) {
                 return layoutInfo;
             }
-            return smartMerge(layoutInfo, {dropDown: {visible: false}});
+            return smartMerge(layoutInfo, {dropDown: resultsViewDropdown});
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
-            return smartMerge(layoutInfo, {dropDown: {visible: false}});
+            return smartMerge(layoutInfo, {dropDown: resultsViewDropdown});
         case ImagePlotCntlr.PLOT_IMAGE_START :
             const VISUALIZED_TABLE_IDS = action.payload?.attributes?.VISUALIZED_TABLE_IDS;
             if (VISUALIZED_TABLE_IDS?.length) {
