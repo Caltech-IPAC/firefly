@@ -102,14 +102,21 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
 const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey}) => {
     return (
         <SingleColumnMenu>
-            {menu.map( (menuItem, idx) => (
-                <ToolbarButton text={menuItem.dropDownText??menuItem.name??menuItem.message} tip={`${menuItem.semantics} - ${menuItem.url}`}
-                               horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
-                               checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
-                               onClick={() => {
-                                   dispatchActivateMenuItem(dpId,menuItem.menuKey);
-                               } }/> )
-            )}
+            {menu.map( (menuItem, idx) => {
+                const {semantics,url, dlData={}}= menuItem;
+                let tip= '';
+                if (semantics && url) tip= `${menuItem.semantics} - ${menuItem.url}`;
+                else if (dlData.semantics && dlData.url) tip= `${dlData.semantics} - ${dlData.url}`;
+                return (
+                    <ToolbarButton text={menuItem.dropDownText??menuItem.name??menuItem.message} tip={tip}
+                                   horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
+                                   checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
+                                   onClick={() => {
+                                       dispatchActivateMenuItem(dpId,menuItem.menuKey);
+                                   } }/>
+                );
+            })
+            }
         </SingleColumnMenu> );
 };
 

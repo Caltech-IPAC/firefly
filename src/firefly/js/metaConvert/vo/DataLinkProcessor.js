@@ -1,6 +1,7 @@
-import {TableDataType} from '../../data/FileAnalysis';
+import {isUndefined} from 'lodash';
+import {Format, TableDataType} from '../../data/FileAnalysis';
 import {getPreferCutout} from '../../ui/tap/Cutout';
-import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
+import { getSearchTarget, obsCoreTableHasOnlyImages } from '../../voAnalyzer/TableAnalysis.js';
 import { getDataLinkData, isSimpleImageType, isVoTable } from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSizeAsString, GIG} from '../../util/WebUtil.js';
 import {
@@ -19,6 +20,7 @@ import {
     createChartTableActivate, createTableActivate, createTableExtraction, makeMultiTableActivate,
     makeMultiTableExtraction
 } from '../TableDataProductUtils.js';
+import {createObsCoreProductTitle, getBasicTitling, getSpectrumTitle, makeDatalinkTitles} from '../VoUITitles';
 import {makeServiceDefDataProduct} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
 
@@ -42,11 +44,10 @@ const WARN_SIZE= GIG;
  * @param {boolean} [params.doFileAnalysis]
  * @param {String} [params.parsingAlgorithm] - which type of DL data
  * @param {DataProductsFactoryOptions} [params.options] - which type of DL data
- * @param {string} [params.baseTitle]
  * @param {boolean} [params.useForTableGrid] - this result is part of a table grid Result
  * @return {DataProductsDisplayType}
  */
-export function processDatalinkTable({sourceTable, row, datalinkTable, activateParams, baseTitle=undefined,
+export function processDatalinkTable({sourceTable, row, datalinkTable, activateParams,
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL, useForTableGrid}) {
     const dataLinkData= getDataLinkData(datalinkTable,false, sourceTable,row);
@@ -56,15 +57,15 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
     const originalParsingAlgorithm= parsingAlgorithm;
     if (parsingAlgorithm===USE_ALL) {
         if (isMultiTableSpectrum) parsingAlgorithm= SPECTRUM;
-        else if (obsCoreTableHasOnlyImages(sourceTable)) parsingAlgorithm= IMAGE;
+        else if (obsCoreTableHasOnlyImages(sourceTable,dataLinkData)) parsingAlgorithm= IMAGE;
     }
 
     let menu=  dataLinkData.length &&
-        createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
+        createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams,
             additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options, preferCutout});
 
     if (!menu.length && dataLinkData.length && originalParsingAlgorithm===USE_ALL && parsingAlgorithm!==USE_ALL) {
-        menu= createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
+        menu= createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams,
             additionalServiceDescMenuList, doFileAnalysis, USE_ALL, options, preferCutout});
     }
 
@@ -80,7 +81,12 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
             if (isRelatedImageGrid) {
                 const lastSource= getCurrentActiveKeyID(dpId);
                 const lastKey= getActiveMenuKey(dpId, lastSource);
-                index= menu.findIndex( (m) => m.menuKey===lastKey);
+                if (hasBandAndLabelInMenuKey(lastKey)) {
+                    index= menu.findIndex( (m) => menuKeysMatchBandLabel(lastKey, m.menuKey));
+                }
+                else {
+                    index= menu.findIndex( (m) => m.menuKey===lastKey);
+                }
             }
             if (index<0) index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
             if (index<0) index= 0;
@@ -103,16 +109,14 @@ function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable}) {
     };
 }
 
-function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                        name, dropDownText, activateParams}) {
+function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
+                        name, prodTitle, dropDownText, activateParams}) {
     const {serDef}= dlData;
     const {positionWP, activeMenuLookupKey,menuKey}= getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
-    const {title:servDescTitle=''}= serDef;
-    const titleStr= baseTitle ? `${baseTitle} (${dlData.description||servDescTitle})` : (dlData.description||servDescTitle);
 
     return makeServiceDefDataProduct({
-        serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name, dropDownText,
-                                               titleStr, activeMenuLookupKey, menuKey, dlData,
+        serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name:prodTitle??name, dropDownText,
+                                               activeMenuLookupKey, menuKey, dlData,
     });
 }
 
@@ -128,21 +132,22 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
  * @param p.doFileAnalysis
  * @param p.dropDownText
  * @param p.name
+ * @param p.prodTitle
  * @param {ActivateParams} p.activateParams
  * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, url: *, fileType: *}}
  */
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
-                                      doFileAnalysis, name, dropDownText, activateParams}) {
+                                      doFileAnalysis, name, prodTitle, dropDownText, activateParams}) {
 
-    const {semantics,size,url, cloudAccess, dlAnalysis:{isSimpleImage}, contentType, description}= dlData;
-    const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey}=
+    const {semantics,size,url, cloudAccess, dlAnalysis:{isSimpleImage}, contentType}= dlData;
+    const {positionWP,sRegion,activeMenuLookupKey,menuKey}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
     if (isSimpleImage) {
-        return dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey, dlData});
+        return dpdtPNG( getBasicTitling(name,'',Format.PNG)?.title, url,menuKey,{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (isTooBig(size)) {
-        return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey, dlData});
+        return dpdtDownload(`Download: ${name} (too large to show)`,url,menuKey,'fits',{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (isNonServerAnalysisType(url,contentType)) {
         const item= doFileNameAndTypeAnalysis({url,ct:contentType,wrapWithMessage:false, name});
@@ -159,7 +164,7 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
         const activate= createChartTableActivate({
             chartAndTable:true,
             source: url,
-            titleInfo:description,
+            titleInfo:prodTitle,
             activateParams,
             dataTypeHint: TableDataType.Spectrum,
             tbl_id,
@@ -167,19 +172,20 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             chartId,
             statefulTabComponentKey: options.statefulTabComponentKey
         });
-        const extract= createTableExtraction(url,description,0,undefined,undefined,TableDataType.Spectrum);
-        return dpdtChartTable(description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
+        const extract= createTableExtraction(url,prodTitle,0,undefined,undefined,TableDataType.Spectrum);
+        return dpdtChartTable(prodTitle, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
     }
-    else if (isAnalysisType(contentType)) {
+    else if (isAnalysisType(url,contentType)) {
         if (doFileAnalysis) {
-            const request= makeObsCoreRequest({url,cloudAccess,positionWP,titleStr:name,
+            const request= makeObsCoreRequest({url,cloudAccess,positionWP,titleStr:prodTitle??name,
                 table:sourceTable,row:sourceRow,expectStaticFile:true});
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
-                activateParams, menuKey, activeMenuLookupKey, options, dlData, originalTitle:dropDownText||name});
+                activateParams, menuKey, activeMenuLookupKey, options, dlData, originalTitle:dropDownText||name, prodTitle});
             return dpdtAnalyze({name, activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, dlData});
         }
         else {
-            return createGuessDataType(name,menuKey,url,cloudAccess, contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size, dlData);
+            return createGuessDataType({name,menuKey,url,cloudAccess, ct:contentType,semantics, activateParams,
+                positionWP,table:sourceTable,row:sourceRow,size, dlData});
         }
     }
 }
@@ -200,26 +206,26 @@ const getChartId=  (description, options, idx) =>
  * @param {String} p.dlTableUrl
  * @param {DatalinkData} p.dlData
  * @param {number} p.idx
- * @param {string} p.baseTitle
  * @param {TableModel} p.sourceTable
  * @param {number} p.sourceRow
  * @param {DataProductsFactoryOptions} p.options
  * @param {string} p.name
+ * @param {string} p.prodTitle
  * @param {string} [p.dropDownText]
  * @param {boolean} p.doFileAnalysis
  * @param p.activateParams
  * @return {Object}
  */
-export function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                        name, doFileAnalysis, activateParams, dropDownText}) {
+export function makeMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
+                        name, prodTitle, doFileAnalysis, activateParams, dropDownText}) {
 
     if (dlData.serDef) {
-        return makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
-                                name, dropDownText, doFileAnalysis, activateParams});
+        return makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
+                                name, prodTitle:prodTitle??name, dropDownText, doFileAnalysis, activateParams});
     }
     else if (dlData.url) {
-        return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow,options,
-            name, doFileAnalysis, activateParams});
+        return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow,options,
+            name, prodTitle:prodTitle??name, doFileAnalysis, activateParams});
     }
 }
 
@@ -316,22 +322,28 @@ export function sortRelatedGridUsingRequest(reqAry, relatedGridImageOrder) {
  * @param obj.preferCutout
  * @param {DataProductsFactoryOptions} obj.options
  * @param obj.parsingAlgorithm
- * @param obj.baseTitle
  * @return {Array.<DataProductsDisplayType>}
  */
-function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow, activateParams, baseTitle,
+function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow, activateParams,
                                additionalServiceDescMenuList=[], doFileAnalysis=true, preferCutout,
                                options, parsingAlgorithm=USE_ALL}) {
-    const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
-    let auxCnt=0;
-    let primeCnt=0;
+    const totals={};
+    const indices={};
 
-    const menu= filterDLList(parsingAlgorithm,dataLinkData)
-        .map( (dlData) => {
-            const {url,error_message,
-                dlAnalysis:{isAux,isThis,cutoutFullPair,isCounterpart,isCutout}}= dlData;
+    const filteredDLData= filterDLList(parsingAlgorithm,dataLinkData);
+    filteredDLData.forEach((dlData) => {
+        totals[dlData.semantics]= isUndefined(totals[dlData.semantics]) ? 0 : totals[dlData.semantics]+1;
+    });
+
+    const menu= filteredDLData.map( (dlData) => {
+            const {error_message,labelDLExt, bandpassNameDLExt,
+                dlAnalysis:{isThis,cutoutFullPair,isCounterpart,isCutout}}= dlData;
             const idx= dlData.rowIdx;
-            const name= makeName(dlData, url, auxTot, auxCnt, primeCnt, baseTitle);
+
+            indices[dlData.semantics]= isUndefined(indices[dlData.semantics]) ? 0 : indices[dlData.semantics]+1;
+            const {name,prodTitle,imageRelatedTitle}=
+                makeDatalinkTitles({dlData, totals, indices, sourceTable, sourceRow});
+
             if (error_message) {
                 const edp= dpdtMessageWithError(error_message);
                 edp.complexMessage= false;
@@ -340,8 +352,10 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
                 return edp;
             }
 
-            const menuParams= {dlTableUrl,dlData,idx, baseTitle, sourceTable, dropDownText:name,
-                            sourceRow, options, name, doFileAnalysis, activateParams};
+            const prodTitleIn= parsingAlgorithm===RELATED_IMAGE_GRID ? imageRelatedTitle : prodTitle;
+
+            const menuParams= {dlTableUrl,dlData,idx, sourceTable, dropDownText:name,
+                sourceRow, options, name, prodTitle:prodTitleIn, doFileAnalysis, activateParams};
 
             if (cutoutFullPair) {
                 if (isCutout) return;
@@ -351,8 +365,10 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
                 }
             }
             const menuEntry= makeMenuEntry(menuParams);
-            if (isAux) auxCnt++;
-            if (isThis) primeCnt++;
+            if (menuEntry && (labelDLExt || bandpassNameDLExt)) {
+                menuEntry.menuKey= makeBandLabelMenuKey(labelDLExt,bandpassNameDLExt,menuEntry.menuKey); //todo - WHY IS THIS HERE???? !!!!!!
+            }
+
             return menuEntry;
         })
         .filter(Boolean);
@@ -364,17 +380,8 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
         const activate= makeMultiTableActivate(activateObj, activateParams);
         const extraction= makeMultiTableExtraction(extractionObj, activateParams);
 
-        return [dpdtChartTable( 'Show: Spectrum', activate, extraction, 'multi-table',
+        return [dpdtChartTable( getSpectrumTitle(), activate, extraction, 'multi-table',
             {extractionText: 'Pin Table', paIdx:0})];
-    }
-
-    if (menu?.length) {
-        menu.forEach( (m) => {
-            const {labelDLExt, bandpassNameDLExt}= m.dlData ?? {};
-            if (labelDLExt || bandpassNameDLExt) {
-                m.menuKey= makeBandLabelMenuKey(labelDLExt,bandpassNameDLExt);
-            }
-        });
     }
 
     if (parsingAlgorithm===USE_ALL) {
@@ -385,21 +392,33 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
 }
 
 const BAND_MARKER= '__BAND:';
+const BAND_MATCH_RE= /__BAND:(.*?)--/;
 const LABEL_MARKER= '__LABEL:';
+const LABEL_MATCH_RE= /__LABEL:(.*?)--/;
 
-function makeBandLabelMenuKey(label='',band='') {
+export function makeBandLabelMenuKey(label='',band='',menuKey) {
     let v= '--';
-    if (label) v+= LABEL_MARKER+label;
-    if (band) v+= BAND_MARKER+band;
+    if (label) v+= LABEL_MARKER+label + '--';
+    if (band) v+= BAND_MARKER+band + '--';
+    if (menuKey) v+= '__'+menuKey;
     return v;
 }
 
-export const hasBandInMenuKey= (menuKey='',band='') => menuKey.endsWith(`${BAND_MARKER}${band}`);
+export const hasBandInMenuKey= (menuKey='',band='') => menuKey.includes(`${BAND_MARKER}${band}`);
 export const hasLabelInMenuKey= (menuKey='',label='') => menuKey.includes(`${LABEL_MARKER}${label}`);
+export const hasBandAndLabelInMenuKey= (menuKey='',label='', band) => hasBandInMenuKey(menuKey,band) && hasLabelInMenuKey(menuKey,label);
 export const findMenuKeyWithName= (keyAry,name) => name && keyAry.find( (k) => k.includes(LABEL_MARKER+name));
 
+export function menuKeysMatchBandLabel(key1, key2) {
+    const band1= key1.match(BAND_MATCH_RE)?.[1];
+    const band2= key2.match(BAND_MATCH_RE)?.[1];
+    const label1= key1.match(LABEL_MATCH_RE)?.[1];
+    const label2= key2.match(LABEL_MATCH_RE)?.[1];
+    return band1===band2 && label1===label2;
+}
 
-export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, options}) {
+
+export function createDataLinkSingleRowItem({dlData, activateParams, options}) {
     const name= dlData.semantics;
     const error= hasError(dlData);
     if (error) {
@@ -409,7 +428,7 @@ export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, 
         edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
         return edp;
     }
-    const menuEntry= makeMenuEntry({dlTableUrl:'none',dlData,idx:dlData.rowIdx, baseTitle,
+    const menuEntry= makeMenuEntry({dlTableUrl:'none',dlData,idx:dlData.rowIdx,
         options, name, doFileAnalysis:true, activateParams});
     return menuEntry;
 
@@ -441,77 +460,29 @@ export function hasError(dlData) {
 const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary', 'text'];
 
 
-function makeName(dlData, url, auxTot, autCnt, primeCnt=0, baseTitle) {
-    const {id,semantics,labelDLExt, dlAnalysis:{isThis,isAux}}= dlData;
-    if (labelDLExt) return labelDLExt;
-    if (baseTitle) return makeNameWithBaseTitle(dlData,auxTot,autCnt,primeCnt,baseTitle);
-    const baseTitleFromId= getBaseTitleFromId(id);
-    let name= semantics[0]==='#' ? semantics.substring(1) : 'unknown';
-    if (baseTitleFromId) {
-        if (isThis) return `${baseTitleFromId}`;
-        if (isAux) return `${baseTitleFromId}: auxiliary ${auxTot>1?autCnt+'':''}`;
-        else return `${baseTitleFromId}: ${name}`;
-    }
-    else {
-        name= (isThis && primeCnt>0) ? '#this '+primeCnt  : name;
-        name= isThis ? `Primary product (${name})` : name;
-        name= (isAux && auxTot>1) ? `${name}: ${autCnt}` : name;
-        return name || url;
-    }
-}
-
-function getBaseTitleFromId(id) {
-    if (!id?.toLowerCase().startsWith('ivo:')) return;
-    try {
-        const url= new URL(id);
-        if (!url) return;
-        const sp= url.searchParams;
-        if (sp.size) {
-            const keyNames= [...sp.keys()];
-            if (keyNames.length===1) return keyNames[0];
-            return;
-        }
-        if (url.pathname.length>1) {
-            return url.pathname.substring(1);
-        }
-    }
-    catch {
-        // do nothing
-    }
-
-
-}
-
-
-function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
-    const {semantics,dlAnalysis:{isThis,isAux}}= dlData;
-    if (!semantics) return baseTitle;
-    if (isThis) {
-       return primeCnt<1 ? `${baseTitle} (#this)` : `${baseTitle} (#this ${primeCnt})`;
-    }
-    if (isAux) return `auxiliary${auxTot>0?' '+autCnt:''}: ${baseTitle}`;
-    return semantics[0]==='#' ? `${semantics.substring(1)}: ${baseTitle}` : `${semantics}: ${baseTitle}`;
-}
 
 
 /**
  *
- * @param name
- * @param menuKey
- * @param url
- * @param {CloudAccessData} cloudAccess
- * @param ct
- * @param semantics
- * @param activateParams
- * @param positionWP
- * @param table
- * @param row
- * @param size
- * @param [dlData]
+ * @param {Object} p
+ * @param [p.name]
+ * @param p.menuKey
+ * @param p.url
+ * @param {CloudAccessData} p.cloudAccess
+ * @param p.ct
+ * @param [p.semantics]
+ * @param p.activateParams
+ * @param p.positionWP
+ * @param p.table
+ * @param p.row
+ * @param p.size
+ * @param [p.dlData]
  * @return {DataProductsDisplayType}
  */
-export function createGuessDataType(name, menuKey, url,cloudAccess,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
+export function createGuessDataType({name, menuKey='guess-0', url,cloudAccess,ct,semantics='',
+                                        activateParams, positionWP, table,row,size,dlData}) {
     const {imageViewerId}= activateParams;
+    name??= createObsCoreProductTitle(table,row);
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
         const request= makeObsCoreRequest({url,cloudAccess,positionWP,titleStr:name,table,row, expectStaticFile:true});
         return dpdtImage({name,
@@ -534,7 +505,11 @@ export function createGuessDataType(name, menuKey, url,cloudAccess,ct,semantics,
 }
 
 
-const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
+function isAnalysisType(url,ct) {
+  const anaFromCt= (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
+  if (anaFromCt) return true;
+  return url?.includes('.fits');
+}
 const isTooBig= (size) => size>MAX_SIZE;
 export const isWarnSize= (size) => size>WARN_SIZE;
 

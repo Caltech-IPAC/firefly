@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray,isEmpty} from 'lodash';
-import {getSSATitle, isSSATable} from '../voAnalyzer/TableAnalysis.js';
+import {isSSATable} from '../voAnalyzer/TableAnalysis.js';
 import {isFitsTableDataTypeNumeric} from '../visualize/FitsHeaderUtil.js';
 import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE} from './DataProductsType';
@@ -12,11 +12,13 @@ import {TitleOptions} from '../visualize/WebPlotRequest';
 import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction, getExtractionText
 } from './TableDataProductUtils.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
+import {getAnalysisSSATitle, getAnalysisPartTableTitling} from './VoUITitles';
 
 /**
  *
  * @param {Object} p
  * @param {FileAnalysisPart} p.part
+ * @param {number} p.totalParts
  * @param {WebPlotRequest} p.request
  * @param {TableModel} p.table
  * @param {number} p.row
@@ -26,23 +28,21 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
  * @param {String} p.originalTitle
  * @param {ActivateParams} p.activateParams
  * @param {DataProductsFactoryOptions} p.options
- * @param {String} p.title
  * @return {{tableResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
 export function analyzePart({part, request, table, row, fileFormat, dlData, originalTitle,
-                                source, activateParams, options={}, title}) {
+                                source, activateParams, totalParts, options={}}) {
 
     const {type,desc, fileLocationIndex}= part;
-    const titleToUse= title ?? desc;
     const aTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
     if (isEmpty(aTypes)) return {imageResult:false, tableResult:false};
 
     const imageResult= aTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
         analyzeImageResult({part, request, table, row, fileFormat, dlData, source,
-            title:desc,activateParams,hduIdx:fileLocationIndex, originalTitle});
+            title:desc,activateParams,hduIdx:fileLocationIndex});
 
     const tableResult= aTypes.includes(DPtypes.TABLE) &&
-        analyzeChartTableResult(table, row, part, fileFormat, source,titleToUse??desc,activateParams,options, originalTitle, dlData);
+        analyzeChartTableResult(table, row, part, fileFormat, source,desc,totalParts, activateParams,options, originalTitle);
 
     return {imageResult, tableResult};
 }
@@ -168,7 +168,7 @@ function getTableChartColInfo(title, part, fileFormat,table) {
         if (part.tableDataType===TableDataType.Spectrum) {
             tableDataType= TableDataType.Spectrum;
             if (isSSATable(table)) {
-                showChartTitle= Boolean(getSSATitle(table,table.highlightedRow));
+                showChartTitle= Boolean(getAnalysisSSATitle(table,table.highlightedRow));
             }
         }
         else if (isTimeSeries(colInfo)) {
@@ -215,35 +215,6 @@ function findMatchingUCDColumn(colInfo, testList) {
     return colInfo.find( (ci) => ci.UCD?.toLowerCase().match(bestMatcher)?.[0]) ;
 }
 
-/**
- *
- * @param {String} title
- * @param {String} originalTitle
- * @param {FileAnalysisPart} part
- * @param fileFormat
- * @param {TableModel} table
- * @return {string}
- */
-function getTableDropTitleStr(title,originalTitle,part,fileFormat,table) {
-    if (!title) title='';
-    if (part.interpretedData) return title;
-    let endTitle;
-    if (fileFormat===Format.FITS) {
-        const tOrCStr= 'table or chart';
-        if (isImageAsTable(part,fileFormat)) {
-            const twoD= getImageAsTableColCount(part,fileFormat)>2;
-            const imageAsStr=  twoD ? '2D image - show as ': '1D image - show as ';
-            endTitle= `HDU #${part.index} (${imageAsStr}${tOrCStr}${twoD? ' or image':''}) ${title}`;
-        }
-        else {
-            endTitle= `HDU #${part.index} (${tOrCStr}) ${title}`;
-        }
-    }
-    else {
-        endTitle= isSSATable(table) ? getSSATitle(table,table.highlightedRow)  : `Part #${part.index} ${title}`;
-    }
-    return endTitle;
-}
 
 
 /**
@@ -254,14 +225,14 @@ function getTableDropTitleStr(title,originalTitle,part,fileFormat,table) {
  * @param {String} fileFormat
  * @param {String} source - server key to access the file
  * @param {String} title
+ * @param {Number} totalParts
  * @param {ActivateParams} activateParams
  * @param {DataProductsFactoryOptions} options
  * @param {String} originalTitle
- * @param {DatalinkData} dlData
  * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartTableResult(table, row, part, fileFormat, source, title, activateParams,
-                                 options={}, originalTitle, dlData) {
+function analyzeChartTableResult(table, row, part, fileFormat, source, title, totalParts, activateParams,
+                                 options={}, originalTitle) {
     const {uiEntry,uiRender,interpretedData=false, fileLocationIndex:tbl_index=0}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
@@ -269,17 +240,20 @@ function analyzeChartTableResult(table, row, part, fileFormat, source, title, ac
     }
     const {tbl_id,chartId}= getIds(options,title);
 
-    const ddTitleStr= getTableDropTitleStr(title,originalTitle, part,partFormat, table);
-    const dropDownText= originalTitle ? `${originalTitle} - ${ddTitleStr}` : ddTitleStr;
+
+    const useImageAsTable= partFormat===Format.FITS && isImageAsTable(part,partFormat);
+    const imageAsTableColCnt= useImageAsTable ? getImageAsTableColCount(part,fileFormat) : 0;
+    const {title:ddTitleStr, dropDownText} = getAnalysisPartTableTitling({title,part,fileFormat:partFormat, table,
+        useImageAsTable, imageAsTableColCnt, totalParts, originalTitle});
     const {chartInfo, imageAsTableInfo}= getTableChartColInfo(title, part, partFormat, table);
 
     let titleInfo=title || `table_${part.index}`;
-    if (isSSATable(table)) titleInfo= getSSATitle(table,row)??'spectrum';
+    if (isSSATable(table)) titleInfo= getAnalysisSSATitle(table,row)??'spectrum';
     
 
     if (chartInfo.hasChart) {
         const chartTableDefOption= getChartTableDefaultOption(part,chartInfo,partFormat);
-        if (isSingleRowChart(part,partFormat,chartInfo)) { // a common case- single row table with array columns
+        if (isSingleRowChart(part,partFormat,chartInfo)) { // a common case: single row table with array columns
             return makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartInfo,tbl_index, imageAsTableInfo,
                                                        chartTableDefOption, interpretedData, dropDownText});
         }

@@ -31,7 +31,7 @@ const getInitList= () => dataProductRoot().map( ({dpId}) => dpId);
 export function MultiProductViewer ({viewerId= DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, metaDataTableId, ...props}) {
     const [initList, setInitList]= useState(getInitList());
     const dpId= viewerId;
-    const activateParams=  getActivateParams(dataProductRoot(),dpId);
+    const activateParams= useStoreConnector(() => getActivateParams(dataProductRoot(),dpId));
     useEffect(() => {
         if (initList.includes(viewerId)) return;
         dispatchInitDataProducts(viewerId);

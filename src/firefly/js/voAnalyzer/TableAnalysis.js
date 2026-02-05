@@ -5,15 +5,16 @@ import {get, intersection, isEmpty, isNaN, isString, isUndefined} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
-import {getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
+import {
+    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {isTableExclusiveToPlot} from '../visualize/saga/CatalogWatcher';
 import {
-    ACCESS_FORMAT, ACCESS_URL, CLOUD_ACCESS, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION,
-    DATALINK_COL_NAMES, SSA_COV_UTYPE, SSA_TITLE_UTYPE
+    ACCESS_FORMAT, ACCESS_URL, CLOUD_ACCESS, DATALINK_COL_NAMES, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES,
+    S_REGION, SSA_COV_UTYPE, SSA_TITLE_UTYPE
 } from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
 import {getServiceDescriptors, hasServiceDescriptors, isDataLinkServiceDesc} from './VoDataLinkServDef.js';
@@ -448,16 +449,6 @@ export function isSSATable(tableOrId) {
     return foundParts.length>=2;
 }
 
-export function getSSATitle(tableOrId,row) {
-    const table= getTableModel(tableOrId);
-    if (!table) return false;
-    const foundCol= table.tableData.columns
-        .filter((c) => {
-            if (c?.utype?.toLowerCase().includes(SSA_TITLE_UTYPE )) return true;
-        });
-    return foundCol.length>0 ? getCellValue(table,row,foundCol[0].name) : undefined;
-}
-
 
 export function getSearchTargetFromTable(tableOrId) {
     const table= getTableModel(tableOrId);
@@ -515,8 +506,19 @@ function extractWorldPtFromADQL(adql) {
     }
 }
 
-export function obsCoreTableHasOnlyImages(table) {
+/**
+ *
+ * @param {TableModel} table
+ * @param {Array.<DatalinkData>} dataLinkData - if defined, drill down to see if each datalink is an image
+ * @return {boolean}
+ */
+export function obsCoreTableHasOnlyImages(table, dataLinkData=undefined) {
     if (!table) return false;
+
+    if (dataLinkData?.length) {
+        const imDatalink= dataLinkData.every( (dl) => dl.dlAnalysis.maybeImage);
+        if (!imDatalink) return false;
+    }
 
     const propTypeCol = getObsCoreProdTypeCol(table);
     if (propTypeCol?.enumVals) {

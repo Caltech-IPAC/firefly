@@ -1,23 +1,18 @@
-import {FileAnalysisType} from '../data/FileAnalysis.js';
-import {getCellValue, getColumns, hasRowAccess} from '../tables/TableUtil.js';
-import {getDataServiceOptionByTable} from '../ui/tap/DataServicesOptions';
-import {tokenSub} from '../util/WebUtil';
+import {FileAnalysisType, Format} from '../data/FileAnalysis.js';
+import {hasRowAccess} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getObsCoreAccessFormat, getObsTitle} from '../voAnalyzer/TableAnalysis';
 import {
-    isGzipType, isHtmlType, isJSONType, isPDFType, isPlainTextType, isSimpleImageType, isTarType, isYamlType
+    isGzipType, isHtmlType, isJSONType, isPDFType, isSimpleImageType, isTarType, isYamlType
 } from '../voAnalyzer/VoDataLinkServDef';
+import {dispatchActivateFileMenuItem, dispatchUpdateDataProducts} from './DataProductsCntlr.js';
 import {
-    dispatchActivateFileMenuItem, dispatchActivateMenuItem, dispatchUpdateDataProducts
-} from './DataProductsCntlr.js';
-import {
-    dpdtDownload,
-    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg, dpdtText, dpdtWorkingMessage,
-    dpdtWorkingPromise,
-    DPtypes
+    dpdtDownload, dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg, dpdtText, dpdtWorkingMessage,
+    dpdtWorkingPromise, DPtypes
 } from './DataProductsType.js';
 import {createGridImagesActivate} from './ImageDataProductsUtil.js';
 import {doUploadAndAnalysis} from './UploadAndAnalysis.js';
+import {getBasicTitling} from './VoUITitles';
 
 const LOADING_MSG= 'Loading...';
 
@@ -197,7 +192,6 @@ export function doFileNameAndTypeAnalysis({url, ct, wrapWithMessage=true, name, 
 
     if (isUsableDownloadType(ext,ct)) item= makeDownloadType(url,ext,ct,wrapWithMessage, name, obsTitle);
     else if (imExt.some( (e) => ext.includes(e)) || isSimpleImageType(ct)) item= makePngEntry(url, name, obsTitle);
-    // else if (ext.endsWith('txt') || isPlainTextType(ct)) item= makeTextEntry(url, name, obsTitle);
     else if (ext.endsWith('yaml') || isYamlType(ct)) item= makeYamlEntry(url, name, obsTitle);
     else if (ext.endsWith('json') || isJSONType(ct))  item= makeJsonEntry(url, name, obsTitle);
     if (item) item.contentType= ct;
@@ -240,140 +234,56 @@ export function makeDownloadType(url,ext,ct,wrapWithMessage,name, obsTitle) {
     }
 }
 
-function makeOtMsg(obsTitle) {
-    if (!obsTitle) return '';
-    const otBase= obsTitle.length>25 ? obsTitle.substring(0,29) : obsTitle;
-    return ` (${otBase})`;
-}
-
 
 export function makePdfEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtDownload('Download PDF File'+otMsg, url, 'download-0', 'pdf',
-        {
-            message: 'This is a PDF file. It may be downloaded or opened in another tab',
-            loadInBrowserMsg: 'Open PDF File'+otMsg,
-            dropDownText: name ? `${name}${otMsg} (pdf file)` : undefined,
-        }
+    const {title,dropDownText,message,loadInBrowserMsg}= getBasicTitling(name,obsTitle,Format.PDF);
+    return dpdtDownload(title, url, 'download-0', 'pdf',
+        { message, loadInBrowserMsg, dropDownText, }
     );
 }
 
 export function makeHtmlEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtDownload('Open', url, 'download-0', 'html',
-        {
-            message: 'This is a web page or web application. It can be open in another tab',
-            loadInBrowserMsg: 'Open Page'+otMsg,
-            dropDownText: name ? `${name}${otMsg} (html)` : undefined,
-        }
-    );
+    const {title,dropDownText,message,loadInBrowserMsg}= getBasicTitling(name,obsTitle,Format.HTML);
+    return dpdtDownload(title, url, 'download-0', 'html',
+        { message, loadInBrowserMsg, dropDownText, } );
 }
 
 export function makeJsonEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtText('Show JSON file'+otMsg, url, undefined,
-        {
-            dropDownText: name ? `${name}${otMsg} (JSON File)` : undefined,
-            fileType: 'json',
-        }
-    );
+    const {title,dropDownText}= getBasicTitling(name,obsTitle,Format.JSON);
+    return dpdtText(title, url, undefined, { dropDownText, fileType: 'json'});
 }
 
 export function makeTarEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtDownload('Download TAR File'+otMsg, url, 'download-0', 'tar',
-        {
-            message: 'This is a TAR file. It may only be downloaded',
-            dropDownText: name ? `${name}${otMsg} (tar file)` : undefined,
-        }
-    );
+    const {title,dropDownText,message}= getBasicTitling(name,obsTitle,Format.TAR);
+    return dpdtDownload(title, url, 'download-0', 'tar', { message, dropDownText, } );
 }
 
 export function makeGzipEntry(url,name,obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtDownload('Download GZip File'+otMsg, url, 'download-0', 'gzip',
-        {
-            message: 'This is a GZip file. It may only be downloaded',
-            dropDownText: name ? `${name}${otMsg} (GZip file)` : undefined,
-        }
-    );
+    const {title,dropDownText,message}= getBasicTitling(name,obsTitle,Format.GZIP);
+    return dpdtDownload(title, url, 'download-0', 'gzip', { message, dropDownText} );
 }
 
 export function makeAnyEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtDownload('Download File'+otMsg, url, 'download-0', 'unknown',
-        {
-            message: 'This file may only only be downloaded',
-            dropDownText: name ? `${name}${otMsg} (GZip file)` : undefined,
-        }
-    );
+    const {title,dropDownText,message}= getBasicTitling(name,obsTitle,Format.GZIP);
+    return dpdtDownload(title, url, 'download-0', 'unknown', { message, dropDownText, } );
 }
 
 export function makePngEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtPNG('Show PNG image'+otMsg,url,undefined,
-        {
-            dropDownText: name ? `${name}${otMsg} (image)` : undefined,
-        }
-    );
+    const {title,dropDownText}= getBasicTitling(name,obsTitle,Format.PNG);
+    return dpdtPNG(title,url,undefined, { dropDownText} );
 }
 
 export function makeTextEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtText('Show text file'+otMsg,url, undefined,
-        {
-            dropDownText: name ? `${name}${otMsg} (Plain text file)` : undefined,
-            fileType: 'text',
-        }
-    );
+    const {title,dropDownText}= getBasicTitling(name,obsTitle,Format.TEXT);
+    return dpdtText(title,url, undefined, { dropDownText, fileType: 'text'} );
 }
 
 
 export function makeYamlEntry(url,name, obsTitle) {
-    const otMsg= makeOtMsg(obsTitle);
-    return dpdtText('Show yaml file'+otMsg,url,undefined,
-        {
-            dropDownText: name ? `${name}${otMsg}  (Plain text file)` : undefined,
-            fileType: 'yaml',
-        }
-    );
+    const {title,dropDownText}= getBasicTitling(name,obsTitle,Format.YAML);
+    return dpdtText(title,url,undefined, { dropDownText, fileType: 'yaml', } );
 }
 
 const makeErrorResult= (message, fileName,url) =>
     dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
 
-export function createObsCoreImageTitle(table,row) {
-    // 1. try a template
-    const template= getDataServiceOptionByTable('productTitleTemplate',table);
-    if (template?.trim()==='') return ''; // setting template to empty string disables all title guessing
-    if (template) {
-        const templateColNames= template && getColNameFromTemplate(template);
-        const columns= getColumns(table);
-        if (templateColNames?.length && columns?.length) {
-            const cNames= columns.map( ({name}) => name);
-            const colObj= templateColNames.reduce((obj, v) => {
-                if (cNames.includes(v)) {
-                    obj[v]= getCellValue(table,row,v);
-                }
-                return obj;
-            },{});
-            if (Object.keys(colObj).length===templateColNames.length) {
-                const titleStr= tokenSub(colObj,template);
-                if (titleStr) return titleStr;
-            }
-        }
-    }
-    // 2. try obs_title
-    if (getObsTitle(table,row)) return getObsTitle(table,row);
-
-    // 3. compute a name
-    let obsCollect= getCellValue(table,row,'obs_collection') || '';
-    const obsId= getCellValue(table,row,'obs_id') || '';
-    const iName= getCellValue(table,row,'instrument_name') || '';
-    if (obsCollect===iName) obsCollect= '';
-    return `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
-}
-
-function getColNameFromTemplate(template) {
-    return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
-}

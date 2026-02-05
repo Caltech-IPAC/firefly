@@ -390,7 +390,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
 function getFluxUnits(parse, zeroHeader) {
     let bunit = parse.getValue(HdrConst.BUNIT, 'NONE');
-    if (bunit==='NONE') {
+    if (bunit==='NONE' || bunit.toLowerCase()==='null') {
         bunit= zeroHeader  ? getHeader(zeroHeader, 'BUNIT', EMPTY_BUNIT_DEFAULT) : EMPTY_BUNIT_DEFAULT;
     }
     if (bunit.startsWith('HITS')) return 'frames';

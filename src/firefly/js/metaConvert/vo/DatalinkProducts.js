@@ -8,7 +8,6 @@ import {getObsCoreAccessURL} from '../../voAnalyzer/TableAnalysis';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
-import {createObsCoreImageTitle} from '../AnalysisUtils';
 import {GROUP_BY_DATALINK_RESULT, IMAGE_ONLY, TABLE_ONLY} from '../DataProductConst';
 import {
     dispatchUpdateActiveKey, dispatchUpdateDataProducts, getActiveMenuKey, getCurrentActiveKeyID
@@ -19,10 +18,13 @@ import {
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
 } from '../ImageDataProductsUtil.js';
+import {createObsCoreProductTitle, makeObsCoreFailDownloadTitling} from '../VoUITitles';
 import {fetchAllDatalinkTables, fetchDatalinkTable} from './DatalinkFetch.js';
 import {
     findMenuKeyWithName, getCutoutSizeWarning, getCutoutTotalWarning, hasBandInMenuKey, hasLabelInMenuKey,
-    IMAGE, makeMenuEntry, processDatalinkTable, RELATED_IMAGE_GRID, sortRelatedGridUsingRequest, SPECTRUM, USE_ALL
+    IMAGE, makeBandLabelMenuKey, makeMenuEntry, menuKeysMatchBandLabel, processDatalinkTable, RELATED_IMAGE_GRID,
+    sortRelatedGridUsingRequest,
+    SPECTRUM, USE_ALL
 } from './DataLinkProcessor.js';
 
 
@@ -34,11 +36,10 @@ import {
  * @param obj.table
  * @param obj.row
  * @param obj.threeColorOps
- * @param obj.titleStr
  * @param obj.options
  * @return {Promise<DataProductsDisplayType>}
  */
-export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
+export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, options}) {
     try {
 
         if (options.limitViewerDisplay===TABLE_ONLY) return dpdtSimpleMsg('Configuration Error: No support for related spectrum');
@@ -53,8 +54,7 @@ export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activatePa
         const cutoutSwitching= dataSupportsCutoutSwitching(gridData);
 
         const dataLinkGrid = processDatalinkTable({
-            sourceTable: table, row, datalinkTable, activateParams,
-            baseTitle: titleStr, dlTableUrl, doFileAnalysis: false,
+            sourceTable: table, row, datalinkTable, activateParams, dlTableUrl, doFileAnalysis: false,
             options, parsingAlgorithm: RELATED_IMAGE_GRID,
         });
 
@@ -85,8 +85,10 @@ export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activatePa
         let highlightPlotId;
         if (options.relatedGridImageOrder?.length) {
             const {dpId}= activateParams;
-            const activeMenuLookupKey= dlTableUrl;
-            const activeMenuKey= getActiveMenuKey(dpId, activeMenuLookupKey);
+            const lastSource= getCurrentActiveKeyID(dpId);
+            // const activeMenuKey= getActiveMenuKey(dpId, activeMenuLookupKey); // this is right if coming from single view
+            // const activeMenuKey= getActiveMenuKey(dpId, table.tbl_id); // this is right if coming from grid view
+            const activeMenuKey= getActiveMenuKey(dpId, lastSource); // this is right if coming from grid view
             const idx= requestAry.findIndex( (r) => hasLabelInMenuKey(activeMenuKey, r.getTitle()) );
             highlightPlotId= (idx>-1) ? requestAry[idx].getPlotId() : undefined;
         }
@@ -106,7 +108,8 @@ export async function getDatalinkRelatedImageGridProduct({dlTableUrl, activatePa
         item.menu= extractItems;
         return item;
     } catch (reason) {
-        return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: ' + titleStr, dlTableUrl);
+        const {title, message}=makeObsCoreFailDownloadTitling(table,row,reason);
+        return dpdtMessageWithDownload(message,title, dlTableUrl);
     }
 }
 
@@ -181,11 +184,9 @@ function convertDLTableAryToImageGrid(dlTableAry, filteredTbl, preferCutout, act
     const processedGrid= dlDataAry.map( (dlData, idx) => {
         const {dlAnalysis:{cutoutFullPair}}= dlData;
         const dlTableUrl= getObsCoreAccessURL(filteredTbl,idx);
-        // const name= makeName(dlData, url, 0, 0, 0, 'todo title');
-        const name= createObsCoreImageTitle(filteredTbl,idx);
-        const baseTitle= '';
+        const name= createObsCoreProductTitle(filteredTbl,idx);
 
-        const menuParams= {dlTableUrl,dlData,idx, baseTitle, filteredTbl, ropDownText:name,
+        const menuParams= {dlTableUrl,dlData,idx, baseTitle:'', filteredTbl, dropDownText:name,
             sourceRow:idx, options, name, doFileAnalysis:false, activateParams};
         if (cutoutFullPair) {
             dlData.relatedDLEntries.cutout.cutoutToFullWarning= getCutoutSizeWarning(dlData);
@@ -193,7 +194,7 @@ function convertDLTableAryToImageGrid(dlTableAry, filteredTbl, preferCutout, act
                 menuParams.dlData = dlData.relatedDLEntries.cutout;
             }
         }
-        return makeMenuEntry({dlTableUrl, dlData:menuParams.dlData,idx, baseTitle, sourceTable:filteredTbl, sourceRow:idx,options,
+        return makeMenuEntry({dlTableUrl, dlData:menuParams.dlData,idx, sourceTable:filteredTbl, sourceRow:idx,options,
             name, doFileAnalysis:false, activateParams});
     });
 
@@ -237,7 +238,6 @@ function make3ColorRequestAry(requestAry,threeColorOps,tbl_id) {
  * @param obj.sourceTable
  * @param obj.row
  * @param obj.activateParams
- * @param obj.titleStr
  * @param obj.doFileAnalysis
  * @param obj.additionalServiceDescMenuList
  * @param {boolean} [obj.useForTableGrid] - this result is part of a table grid Result
@@ -248,7 +248,6 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
                                                        sourceTable,
                                                        row,
                                                        activateParams,
-                                                       titleStr = 'datalink table',
                                                        doFileAnalysis = true,
                                                        additionalServiceDescMenuList,
                                                        useForTableGrid}) {
@@ -260,7 +259,7 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
         if (options.limitViewerDisplay===TABLE_ONLY) parsingAlgorithm = SPECTRUM;
 
         return processDatalinkTable({
-            sourceTable, row, datalinkTable, activateParams, baseTitle: titleStr,
+            sourceTable, row, datalinkTable, activateParams,
             options, parsingAlgorithm, doFileAnalysis,
             dlTableUrl, additionalServiceDescMenuList, useForTableGrid
         });
@@ -272,49 +271,55 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
                 return dpdtMessageWithError(eStr, [dlTableUrl]);
             }
         }
-        return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: ' + titleStr, dlTableUrl);
+        const {title, message}=makeObsCoreFailDownloadTitling(sourceTable,row,reason);
+        return dpdtMessageWithDownload(message,title, dlTableUrl);
     }
 }
 
 
 export async function createGridResult(promiseAry, activateParams, table, plotRows,options) {
 
+    const resultAry= await Promise.all(promiseAry);
+    const {hasRelatedBands }= options;
+    const {dpId}= activateParams;
+    let menuIndex= 0;
+    const lastSource= getCurrentActiveKeyID(dpId);
+    const activeMenuKey= getActiveMenuKey(dpId, lastSource);
+
+    const isAllRelatedImageGrid= hasRelatedBands && resultAry
+        ?.every( ({menu}) => menu
+            ?.filter( ({dlData:dl}) => dl?.dlAnalysis?.isImage && dl?.dlAnalysis?.isGrid).length>1 );
+
+    const mi= makeGridMi(resultAry,activateParams,table,plotRows,activeMenuKey);
+
+    if (!isAllRelatedImageGrid) return mi;
+
+    // this following code uses the bandPassName extension, every entry must use it
+    if (!isUsingBandPassExtension(resultAry)) return mi;
+
+    // band pass extension is confirmed
+    const bandPassSet= getBandPassSet(resultAry);
+    
+    mi.menu= makeAllRelatedGridMenu(resultAry,bandPassSet,activateParams,table,plotRows,options);
+    // menuIndex= mi.menu.findIndex( (m) => m.menuKey===activeMenuKey);
+    menuIndex= mi.menu.findIndex( (m) => menuKeysMatchBandLabel(m.menuKey,activeMenuKey) );
+    if (menuIndex===-1) menuIndex=0;
+    const activeMenuLookupKey= table.tbl_id;
+    dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:mi.menu[menuIndex].menuKey}});
+    return  dpdtFromMenu(mi.menu,menuIndex,table.tbl_id);
+}
 
 
-    return Promise.all(promiseAry).then((resultAry) => {
-        const {hasRelatedBands }= options;
-        const {dpId}= activateParams;
-        const activeMenuLookupKey= table.tbl_id;
-        let activeMenuKey= getActiveMenuKey(dpId, activeMenuLookupKey);
-        const lastSource= getCurrentActiveKeyID(dpId);
-        let menuIndex= 0;
-        activeMenuKey= getActiveMenuKey(dpId, lastSource);
+function isUsingBandPassExtension(resultAry)  {
+    return resultAry
+        .every( (r) => r.menu
+            .every( ({dlData}) => dlData.bandpassNameDLExt));
+}
 
-        const isAllRelatedImageGrid= hasRelatedBands && resultAry
-            ?.every( ({menu}) => menu
-                ?.filter( ({dlData:dl}) => dl?.dlAnalysis?.isImage && dl?.dlAnalysis?.isGrid).length>1 );
-
-        // const primeIdx= resultAry[0].menu.findIndex( (m) => m.menuKey=== resultAry[0].menuKey);
-        const mi= makeGridMi(resultAry,activateParams,table,plotRows,activeMenuKey);
-        if (isAllRelatedImageGrid) {
-            const hasBandpassDefined= resultAry
-                .every( (r) => r.menu
-                    .every( (m) => m.dlData.bandpassNameDLExt));
-            const bandPassSet= hasBandpassDefined &&
-                new Set(...resultAry
-                    .map( (r) => r.menu
-                        .map( (m) => m.dlData.bandpassNameDLExt)));
-            if (bandPassSet.size) {
-                mi.menu= makeAllRelatedGridMenu(resultAry,bandPassSet,activateParams,table,plotRows,options);
-                menuIndex= mi.menu.findIndex( (m) => m.menuKey===activeMenuKey);
-                if (menuIndex===-1) menuIndex=0;
-                dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:mi.menu[menuIndex].menuKey}});
-            }
-
-        }
-
-        return mi.menu ? dpdtFromMenu(mi.menu,menuIndex,table.tbl_id) : mi;
-    });
+function getBandPassSet(resultAry) {
+    return new Set(...resultAry
+        .map( (r) => r.menu
+            .map( ({dlData}) => dlData.bandpassNameDLExt)));
 }
 
 
@@ -328,14 +333,14 @@ function makeAllRelatedGridMenu(resultAry, bandPassSet, activateParams, table, p
 
     return bandMenuAry
         .map((bandMenu, idx) => {
-            const entry= makeGridMi(bandMenuAry[idx], activateParams, table, plotRows, resultAry[0].menuKey);
+            const label= bandMenu[highlightedIdx].dlData.labelDLExt ?? 'xxx';
+            const band= bandMenu[highlightedIdx].dlData.bandpassNameDLExt ?? 'xxx';
+            const menuKey= makeBandLabelMenuKey(label, band, 'grid-item'+idx);
+            const entry= makeGridMi(bandMenuAry[idx], activateParams, table, plotRows, menuKey);
             entry.name= bandMenu[highlightedIdx]?.name ?? 'Image Data';
-            entry.menuKey= bandMenu[highlightedIdx]?.menuKey ?? 'grid-item'+idx;
             return entry;
         } )
         .filter(Boolean);
-    
-
 }
 
 
@@ -361,7 +366,7 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         const results = processDatalinkTable({
             sourceTable: table, row, datalinkTable, activateParams:{},
-            baseTitle: '', dlTableUrl, doFileAnalysis: false,
+            dlTableUrl, doFileAnalysis: false,
             options, parsingAlgorithm: RELATED_IMAGE_GRID
         });
         dataLinkGrid = results.menu;
