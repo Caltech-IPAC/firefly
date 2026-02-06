@@ -371,7 +371,8 @@ export const isRegion= (currentSummaryModel) => getFirstPartType(currentSummaryM
 export const isUWS= (report) => report.fileFormat === 'UWS';
 
 function isFileSupported(summaryModel, currentReport) {
-    return getFirstPartType(summaryModel) && (SUPPORTED_TYPES.includes(getFirstPartType(summaryModel)) || getFileFormat(currentReport)===Format.FITS);
+    return getFirstPartType(summaryModel) && (SUPPORTED_TYPES.includes(getFirstPartType(summaryModel)) ||
+        getFileFormat(currentReport)===Format.FITS || getFileFormat(currentReport)===Format.ASDF);
 }
 
 function sendRegionRequest(fileCacheKey,currentReport) {

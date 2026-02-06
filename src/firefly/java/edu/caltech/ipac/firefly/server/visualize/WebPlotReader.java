@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -50,7 +51,7 @@ public class WebPlotReader {
                 fitsDataEval.getHduUnCompressedFile():fd.getFile();
         for (int i = 0; (i < frAry.length); i++) {
             retval[i]= new FileReadInfo(fd.getFile(), workingFile, frAry[i], fd, band, i,
-                    fd.getDesc(), getUploadedName(fd), fitsDataEval.getRelatedData(i));
+                    fd.getDesc(), getUploadedName(fd), fitsDataEval.getRelatedData(i),fitsDataEval.getImageFileType());
         }
         return retval;
     }
@@ -72,7 +73,7 @@ public class WebPlotReader {
             newFrAry[imageIdx]= WebPlotPipeline.applyPipeline(req, frAry[imageIdx]);
 
             retval[imageIdx]= new FileReadInfo(originalFile, originalFile, newFrAry[imageIdx], fd, band, imageIdx,
-                    fd.getDesc(), getUploadedName(fd), null);
+                    fd.getDesc(), getUploadedName(fd), null,fitsDataEval.getImageFileType());
         }
         return retval;
     }
@@ -126,7 +127,8 @@ public class WebPlotReader {
 
 
     public record FileReadInfo(File originalFile, File workingFile, FitsRead fitsRead,
-                                      FileInfo fileInfo, Band band, int originalImageIdx, String dataDesc,
-                                      String uploadedName, List<RelatedData> relatedData) { }
+                               FileInfo fileInfo, Band band, int originalImageIdx, String dataDesc,
+                               String uploadedName, List<RelatedData> relatedData,
+                               FitsDataEval.ImageFileType imageFileType) { }
 }
 

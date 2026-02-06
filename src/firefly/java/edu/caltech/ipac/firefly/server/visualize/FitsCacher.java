@@ -90,7 +90,7 @@ public class FitsCacher {
      * fyi - this call is only from crop - todo -  can i remove this function?
      */
     static FitsDataEval loadFits(Fits fits, File cachePath) throws FitsException, IOException {
-        FitsDataEval fitsDataEval= FitsEvaluation.readAndEvaluate(fits, cachePath, true, null);
+        FitsDataEval fitsDataEval= FitsEvaluation.readAndEvaluateFits(fits, cachePath, true, null);
         addToCache(new FileInfo(cachePath),fitsDataEval);
         return fitsDataEval;
     }

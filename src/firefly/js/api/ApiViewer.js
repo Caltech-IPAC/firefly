@@ -346,7 +346,7 @@ const doViewerOperation= (() => {
  * @param {string} defMsg - the init loading message to pass to firefly
  * @return {function} a function called with-  f(message,function) or f(function)
  */
-const makeViewerOp= (channel,file,defMsg='') => (msgOrFunc,func) =>
+const makeViewerOp= (channel,file,defMsg='') => (msgOrFunc,func)=>
     isFunction(msgOrFunc) ?
         doViewerOperation(channel,file,defMsg,msgOrFunc) :
         doViewerOperation(channel,file,msgOrFunc, func);

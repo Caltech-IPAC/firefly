@@ -28,17 +28,24 @@ import java.util.List;
  */
 public class FitsDataEval implements Serializable, HasSizeOf {
 
+    public enum ImageFileType {FITS, ASDF};
+
     private final FitsRead [] frAry;
     private final List<RelatedData>[] relatedDataAry;
     private final File hduUnCompressedFile;
+    private final ImageFileType imageFileType;
     private long baseSize= 0;
 
 
-
     public FitsDataEval(FitsRead[] frAry, File hduCompressedFile) {
+        this(frAry, hduCompressedFile, ImageFileType.FITS);
+    }
+
+    public FitsDataEval(FitsRead[] frAry, File hduCompressedFile, ImageFileType imageFileType) {
         this.frAry= frAry;
         relatedDataAry= new List[frAry.length];
         this.hduUnCompressedFile = hduCompressedFile;
+        this.imageFileType= imageFileType;
     }
 
     public FitsRead[] getFitReadAry() { return frAry; }
@@ -76,4 +83,5 @@ public class FitsDataEval implements Serializable, HasSizeOf {
         for(int i=0; (i<relatedDataAry.length); i++) addAllRelatedData(i, rDataList);
     }
 
+    public ImageFileType getImageFileType() {return imageFileType;}
 }

@@ -41,6 +41,7 @@ public class FormatUtil {
         TEXT("text", "txt"),
         FIXEDTARGETS("fixed-targets", ".tbl"),
         FITS("fits",".fits"),
+        ASDF("asdf",".asdf"),
         JSON("json", ".json"),
         PDF("pdf", ".pdf"),
         TAR("tar", ".tar"),
@@ -200,6 +201,9 @@ public class FormatUtil {
             line = line == null ? "" : line.trim();
             if (line.startsWith("SIMPLE  = ")) {
                 return FITS;
+            } else if (line.startsWith("#ASDF")) {      // not reliable
+                return ASDF;
+
             } else if (line.startsWith("{")) {      // not reliable
                 return JSON;
             }

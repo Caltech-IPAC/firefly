@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotCreator.PlotInfo;
 import edu.caltech.ipac.firefly.server.visualize.WebPlotReader.FileReadInfo;
+import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -234,12 +235,16 @@ public class ImagePlotBuilder {
     private static PlotInfo[] asArray(PlotInfo pi) { return new PlotInfo[] {pi}; }
 
     private static ArrayList<Integer> getFileReadList(String extList, FileReadInfo[] frInfo) {
+                                //note next line: asdf files are translated into fits files. FITS file have an empty header.
+                                // So for example, an asdf file image #4 would be #5 in the translated fits
+        boolean alignAsdfImageLocationToFits= frInfo[0].imageFileType() == FitsDataEval.ImageFileType.ASDF;
         List<String> idxs = new ArrayList<>(Arrays.asList(extList.split(",")));
         List<Integer> idxsInt = new ArrayList<>();
 
         int maxIdx = -1;
         for (String idxStr : idxs) {
             int idx = Integer.parseInt(idxStr);
+            if (alignAsdfImageLocationToFits) idx++;
             idxsInt.add(idx);
             if (idx > maxIdx) {
                 maxIdx = idx;
@@ -352,6 +357,7 @@ public class ImagePlotBuilder {
             bandS.setUploadedFileName(fi.uploadedName());
             bandS.setOriginalImageIdx(fi.originalImageIdx());
             bandS.setImageIdx(fi.originalImageIdx());
+            if (fi.imageFileType()!=FitsDataEval.ImageFileType.FITS) bandS.setFileType(fi.imageFileType().toString());
         }
     }
 

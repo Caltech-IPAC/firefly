@@ -435,6 +435,7 @@ public class VisJsonSerializer {
         putNumOver0(map,"cubeCnt", b.getCubeCnt());
         putNumOver0(map, "cubePlaneNumber", b.getCubePlaneNumber());
         putStrNotNull(map, "rangeValuesSerialize", b.getRangeValuesSerialized());
+        putStrNotNull(map, "fileType", b.getFileType());
         return map;
     }
 

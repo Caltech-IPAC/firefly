@@ -118,6 +118,11 @@ public class PlotState {
         return get(band).getWebPlotRequest();
     }
 
+    public String getFileType(Band band) {
+        if (band==null) band= firstBand();
+        return get(band).getFileType();
+    }
+
     /**
      * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
      * after the set will not be reflected here.

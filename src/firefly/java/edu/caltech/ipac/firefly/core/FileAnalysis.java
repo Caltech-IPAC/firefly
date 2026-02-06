@@ -15,6 +15,7 @@ import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.ASDFUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.FormatUtil;
@@ -88,6 +89,9 @@ public class FileAnalysis {
                 catch (FitsException e) {
                     return analyzeFITSError(infile, e.getMessage());
                 }
+                break;
+            case ASDF:
+                report= ASDFUtil.analyze(infile, mtype);
                 break;
             case IPACTABLE:
                 report = IpacTableReader.analyze(infile, mtype);
