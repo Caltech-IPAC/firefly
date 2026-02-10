@@ -4,7 +4,7 @@ import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} fr
 import moment from 'moment';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, handleJobResult, Phase, loadJobResult} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, handleJobResult, Phase, loadJobResult, fixTapResults} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
@@ -49,7 +49,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
             loadAllJobs();
         }, pollInterval);
 
-        // 🔁 Cleanup: clear the interval when the component unmounts
+        // Cleanup: clear the interval when the component unmounts
         return () => {
             clearInterval(intervalId);
         };
@@ -339,7 +339,8 @@ function NotifBtn ({jobId, enable}) {
 function Results({job}) {
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
-        return job?.results?.length === 1 ? <ShowResultButton job={job} resultIdx={0}/> : <MultiResultsPopup job={job}/>;
+        const fJob = fixTapResults(job);
+        return fJob?.results?.length === 1 ? <ShowResultButton job={fJob} resultIdx={0}/> : <MultiResultsPopup job={fJob}/>;
     } else {
         if (job?.results?.length === 1) {
             return <DownloadBtn job={job}/>;
@@ -362,7 +363,14 @@ export function showMultiMultiResults(job) {
     if (results.length === 0) {
         showInfoPopup('No results found');
     } else {
-        showInfoPopup(<Stack mb={2}><ResultsBlock job={job}/></Stack>);
+        showInfoPopup(
+            <Stack gap={1} mb={2}>
+                <Typography level={'body-md'}>This job has multiple results. Please click on each icon to load the corresponding result.</Typography>
+                <Stack>
+                    <ResultsBlock job={job}/>
+                </Stack>
+            </Stack>
+        );
     }
 }
 

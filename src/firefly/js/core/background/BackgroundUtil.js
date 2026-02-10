@@ -233,7 +233,7 @@ function bgTracker(action, cancelSelf, params={}) {
 }
 
 export function handleJobResult({jobInfo, hlRowIdx}) {
-    // jobInfo = fixTapResults(jobInfo);            remove comment once multi-result feature is tested
+    jobInfo = fixTapResults(jobInfo);
     const {results, tbl_id} = getMetadata({jobInfo});
     if (results?.length===0) {
         dispatchTableUpdate(TblUtil.createErrorTbl(tbl_id, 'No results found'));
@@ -244,7 +244,7 @@ export function handleJobResult({jobInfo, hlRowIdx}) {
     }
 }
 
-function fixTapResults(jobInfo) {
+export function fixTapResults(jobInfo) {
     if (isTapJob(jobInfo) && jobInfo?.results?.length !==1) {
         const jobUrl = jobInfo?.jobInfo?.jobUrl;
         if (jobUrl) {
