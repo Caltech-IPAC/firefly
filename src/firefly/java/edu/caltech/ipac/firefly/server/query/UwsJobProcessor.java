@@ -28,6 +28,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
@@ -115,9 +116,8 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 // a previously submitted job
                 jobUrl = ifNotNull(JobManager.getJobInfo(req.getJobId()))
                         .get(j -> j.getAux().getJobUrl());
-            } else {
-                jobUrl = req.getParam(JOB_URL);
             }
+            jobUrl = jobUrl == null ? req.getParam(JOB_URL) : jobUrl;
             if (jobUrl == null) {
                 jobUrl = submitJob(req);
                 if (jobUrl != null) runJob(jobUrl);
@@ -233,15 +233,11 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         JobInfo jobInfo = ifNotNull(getJob()).get(j -> getJobInfo(j.getJobId()));
         if (jobInfo == null) jobInfo = getUwsJobInfo(jobUrl);           // there's no job when it's not running in the background
 
-        if (jobInfo == null || jobInfo.getResults().size() < 1) {
+        if (jobInfo == null || jobInfo.getResults().isEmpty()) {
             throw createDax("UWS job completed without results", jobUrl, null);
         } else {
             List<JobInfo.Result> results = jobInfo.getResults();
-            if (results.size() == 1) {
-                return getTableResult(results.get(0).href(), QueryUtil.getTempDir(request));
-            } else {
-                return convertResultsToObsCoreTable(results);
-            }
+            return convertResultsToObsCoreTable(results);
         }
     }
 

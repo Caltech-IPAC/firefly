@@ -34,7 +34,9 @@ public class ReplicatedQueueList {
        List<ServerEventQueue> retList= new ArrayList<>();
        Cache<EventQueueList> cache= getCache();
        for(CacheKey k : cache.getKeys()) {
-           retList.addAll(cache.get(k).items);
+           if (cache.get(k) instanceof EventQueueList eql && eql.items != null) {
+               retList.addAll(eql.items);
+           }
        }
        return retList;
    }

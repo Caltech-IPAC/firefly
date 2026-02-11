@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isNil} from 'lodash';
+import {cloneDeep, get, isNil} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../ReduxFlux';
-import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgJobInfo, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
+import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
 import {getCmdSrvAsyncURL} from '../../util/WebUtil.js';
 import {COMPONENT_STATE_CHANGE, dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
@@ -14,6 +14,15 @@ import {jsonFetch} from '../JsonUtils.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {logger} from '../../util/Logger';
+import * as TblUtil from 'firefly/tables/TableUtil';
+import {copyRequestOptions, getRequestFromJob, getTblId, makeFileRequest} from 'firefly/tables/TableRequestUtil';
+import {dispatchTableRemove, dispatchTableSearch, dispatchTableUpdate} from 'firefly/tables/TablesCntlr';
+import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
+import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
+import {dispatchPlotImage} from 'firefly/visualize/ImagePlotCntlr';
+import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
+import {showJobMonitor, showMultiMultiResults} from 'firefly/core/background/JobMonitor';
+import {getTableUiByTblId} from 'firefly/tables/TableUtil';
 
 export const Phase = new Enum(['PENDING', 'QUEUED', 'EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED', 'HELD', 'SUSPENDED', 'ARCHIVED', 'UNKNOWN'], {ignoreCase: true});
 
@@ -44,9 +53,12 @@ export const modifyJob = (jobId, cmd, params) => {
     return jsonFetch(url, params);
 };
 
-export const fetchJobResult = (jobId) => {
-    const url = getCmdSrvAsyncURL() + '/' + jobId + '/results/result';
-    return jsonFetch(url, null, false, true);
+export const fetchJobResult = (jobInfo) => {
+    const results = jobInfo?.results;
+    if (!results || results.length===0) return Promise.resolve(null);
+    const resultUrl = results[0]?.url;
+    if (!resultUrl) return Promise.resolve(null);
+    return jsonFetch(resultUrl);
 };
 
 export const fetchJobInfo = (jobId) => {
@@ -219,3 +231,98 @@ function bgTracker(action, cancelSelf, params={}) {
         hide?.();
     }
 }
+
+export function handleJobResult({jobInfo, hlRowIdx}) {
+    jobInfo = fixTapResults(jobInfo);
+    const {results, tbl_id} = getMetadata({jobInfo});
+    if (results?.length===0) {
+        dispatchTableUpdate(TblUtil.createErrorTbl(tbl_id, 'No results found'));
+    } else if (results.length === 1) {
+        loadJobResult({jobInfo, resultIdx:0});
+    } else {
+        showMultiMultiResults(jobInfo);
+    }
+}
+
+export function fixTapResults(jobInfo) {
+    if (isTapJob(jobInfo) && jobInfo?.results?.length !==1) {
+        const jobUrl = jobInfo?.jobInfo?.jobUrl;
+        if (jobUrl) {
+            const copy = cloneDeep(jobInfo);
+            copy.results = [{
+                href: `${jobUrl}/results/result`,
+                mimeType: 'application/x-votable+xml',
+                id: 'result',
+            }];
+            return copy;
+        }
+    }
+    return jobInfo;
+}
+
+
+export function loadJobResult({jobInfo, resultIdx}) {
+    const {request, tbl_id, loader, href,  mimeType, id, size} = getMetadata({jobInfo, resultIdx});
+    loader?.({jobInfo, request, href, mimeType, id, size});
+    if (loader !== loadTableResult) {
+        dispatchTableRemove(tbl_id, true);
+    }
+}
+
+function  getMimeLoader(mimeType, href) {
+    if (!mimeType && href) {
+        const qstr = href.split('?')[0].split('#')[0];
+        const ext = qstr.substring(qstr.lastIndexOf('.') + 1).toLowerCase();
+        if (['fits', 'fit', 'fts'].includes(ext)) {
+            mimeType = 'application/fits';
+        } else if (['csv', 'tbl', 'tsv', 'txt', 'vot', 'xml'].includes(ext)) {
+            mimeType = 'application/x-votable+xml';             // just to trigger table loader
+        }
+    }
+
+    switch (String(mimeType).toLowerCase()) {
+        case 'application/x-fits; content=mixed':           // non-standard used by Firefly to indicate mixed content in a FITS file
+            return loadMixedResult;
+        case 'application/fits':
+        case 'application/x-fits':
+        case 'image/fits':
+            return loadImageResult;
+        default:
+            return loadTableResult;         // default to table loader
+    }
+}
+
+export function loadTableResult({jobInfo, request, href}) {
+    const {submitTo, tbl_id} = getMetadata({jobInfo});
+    const tblRequest= makeFileRequest(null, href, null, {tbl_id});
+    copyRequestOptions(request, tblRequest);
+
+    const {tbl_ui_id} = getTableUiByTblId(tbl_id) || {};        // re-use existing table UI if exists
+    dispatchTableSearch(tblRequest, {tbl_ui_id});
+    showJobMonitor(false);
+    if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
+}
+
+export function getMetadata({jobInfo, resultIdx=0}) {
+    const request = getRequestFromJob(jobInfo?.meta?.jobId);  // the request is initiated from Firefly
+    const tbl_id = getTblId(request);
+    const submitTo = request?.META_INFO?.form_submitTo;
+    const results = jobInfo?.results || [];
+    const metaMimeType = jobInfo?.meta?.mimeType;
+    const {href, mimeType, id, size} = results[resultIdx];
+    const loader = getMimeLoader(metaMimeType || mimeType, href);
+    return {tbl_id, request, submitTo, href, loader, results, mimeType, id, size};
+}
+
+export function loadMixedResult({jobInfo, href}) {
+    loadImageResult({jobInfo, href});      // placeholder for mixed content loader to be implemented later
+}
+
+export function loadImageResult({jobInfo, href}) {
+    const wpRequest = WebPlotRequest.makeURIPlotRequest(href);
+    const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
+    wpRequest.setPlotGroupId(viewerId);
+    const plotId = `${href.replace('.', '_')}-${jobInfo.jobId}`;
+    dispatchPlotImage({plotId, wpRequest, viewerId});
+}
+

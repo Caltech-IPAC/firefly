@@ -92,9 +92,4 @@ public class AsyncTapQuery extends UwsJobProcessor {
 
         return inputs;
     }
-
-    @Override
-    public DataGroup getResult(TableServerRequest request) throws DataAccessException {
-        return getTableResult(getJobUrl() + "/results/result", QueryUtil.getTempDir(request));
-    }
 }

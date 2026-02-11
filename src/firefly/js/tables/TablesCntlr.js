@@ -5,7 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, unset, merge}
 
 import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from './TableUtil.js';
-import {MAX_ROW, getRequestFromJob} from './TableRequestUtil.js';
+import {MAX_ROW} from './TableRequestUtil.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
@@ -14,7 +14,7 @@ import {updateMerge} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues, asyncFetchTable} from '../rpc/SearchServicesJson.js';
-import { trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
+import {trackBackgroundJob, isSuccess, isDone, getErrMsg, handleJobResult} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
@@ -664,12 +664,12 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
         });
 }
 
-function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
+export function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     unset(request, 'META_INFO.backgroundable');
 
     const onComplete = (jobInfo) => {
         if (isSuccess(jobInfo)) {
-            syncFetch(getRequestFromJob(jobInfo?.meta?.jobId), hlRowIdx, dispatch, tbl_id);
+            handleJobResult({jobInfo, hlRowIdx});
         } else {
             dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(jobInfo))});
         }

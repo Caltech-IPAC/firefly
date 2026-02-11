@@ -2,18 +2,15 @@ import React, {useContext, useEffect, useState} from 'react';
 import {object, string, shape} from 'prop-types';
 import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
-import {isEmpty} from 'lodash';
-import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, handleJobResult, Phase, loadJobResult, fixTapResults} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
-import {dispatchFormSubmit, getAppOptions} from '../AppDataCntlr';
+import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
 import Validate from '../../util/Validate';
-import {getRequestFromJob} from '../../tables/TableRequestUtil';
-import {dispatchTableAddLocal, dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr';
+import {dispatchTableAddLocal, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr';
 import {showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil';
 import {isDefined, updateSet} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
@@ -25,17 +22,18 @@ import {workingIndicator} from '../../ui/Menu';
 import {dispatchHideDialog} from '../ComponentCntlr';
 import {InfoButton} from '../../visualize/ui/Buttons';
 
-import InsightsIcon from '@mui/icons-material/Insights';
 import DownloadIcon from '@mui/icons-material/Download';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import {FormWatcher} from '../../templates/router/RouteHelper';
 import {logger} from '../../util/Logger';
 import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
+import {AppPropertiesCtx} from 'firefly/ui/AppPropertiesCtx';
+import InsightsIcon from '@mui/icons-material/Insights';
+import {FormWatcher} from 'firefly/templates/router/RouteHelper';
 
 export const jobMonitorPath = '/jobMonitor';
 export const jobMonitorGroupKey = 'jobMonitor';
@@ -51,7 +49,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
             loadAllJobs();
         }, pollInterval);
 
-        // 🔁 Cleanup: clear the interval when the component unmounts
+        // Cleanup: clear the interval when the component unmounts
         return () => {
             clearInterval(intervalId);
         };
@@ -107,20 +105,20 @@ export function makeBackgroundMonitorMenuItem() {
     return { label, TabRenderer, action: 'BackgroundMonitorCmd', primary: true , path: jobMonitorPath};
 }
 
-export function MultiResultsPopup({job, ...props}) {
+export function MultiDownloadPopup({job, ...props}) {
     return (
-        <IconButton title='Show Download Requests' color='primary' onClick={() => showMultiResults(job)} {...props}>
+        <IconButton title='Show Download Requests' color='primary' onClick={() => showMultiDownloads(job)} {...props}>
             <ReadMoreIcon/>
         </IconButton>
     );
 }
 
-export function showMultiResults(job) {
+export function showMultiDownloads(job) {
     const {results} = job || [];
     const popup = results.map( (r, idx) => (
-        <Stack direction='row' alignItems='center' gap={2}>
-            <Typography>{r?.id || `Item-${idx}`}</Typography>
-            <DownloadBtn key={idx} job={job} index={idx}/>
+        <Stack key={idx} direction='row' alignItems='center' gap={2}>
+            <DownloadBtn job={job} index={idx}/>
+            <ResultDesc job={job} resultIdx={idx}/>
         </Stack>
     ));
     showInfoPopup(<Stack>{popup}</Stack>);
@@ -339,28 +337,88 @@ function NotifBtn ({jobId, enable}) {
 
 
 function Results({job}) {
-    const appProps = useContext(AppPropertiesCtx);
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
-        const request = getRequestFromJob(job?.meta?.jobId);  // the request is initiated from Firefly
-        const submitTo = request?.META_INFO?.form_submitTo;
-        const onClick = showResults(request, submitTo);
-        const icon = <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
-        if (isDefined(appProps.getRouter) && submitTo) {
-            return (
-                <FormWatcher submitTo={submitTo}>
-                    {icon}
-                </FormWatcher>
-            );
-        } else {
-            return icon;
-        }
-    } else if (job?.results?.length === 1) {
-        return <DownloadBtn job={job}/>;
+        const fJob = fixTapResults(job);
+        return fJob?.results?.length === 1 ? <ShowResultButton job={fJob} resultIdx={0}/> : <MultiResultsPopup job={fJob}/>;
     } else {
-        return <MultiResultsPopup job={job}/>;
+        if (job?.results?.length === 1) {
+            return <DownloadBtn job={job}/>;
+        } else {
+            return <MultiDownloadPopup job={job}/>;
+        }
     }
 }
+
+export function MultiResultsPopup({job, ...props}) {
+    return (
+        <IconButton title='Show Multiple Results' color='primary' onClick={() => showMultiMultiResults(job)} {...props}>
+            <ReadMoreIcon/>
+        </IconButton>
+    );
+}
+
+export function showMultiMultiResults(job) {
+    const {results=[]} = job;
+    if (results.length === 0) {
+        showInfoPopup('No results found');
+    } else {
+        showInfoPopup(
+            <Stack gap={1} mb={2}>
+                <Typography level={'body-md'}>This job has multiple results. Please click on each icon to load the corresponding result.</Typography>
+                <Stack>
+                    <ResultsBlock job={job}/>
+                </Stack>
+            </Stack>
+        );
+    }
+}
+
+export function ResultsBlock({job, ActionBtn=ShowResultButton}) {
+    const {results=[]} = job;
+    return results.map( (r, idx) => (
+        <Stack key={idx} direction='row' alignItems='center' gap={2}>
+            <ActionBtn job={job} resultIdx={idx}/>
+            <ResultDesc job={job} resultIdx={idx}/>
+        </Stack>
+    ));
+}
+
+export function ResultDesc({job, resultIdx=0}) {
+    const {href, id, mimeType} = getMetadata({jobInfo:job, resultIdx});
+    return (
+        <Stack direction='row' gap={1} maxWidth='25em'>
+            <Typography level='body-sm'>
+                <Typography fontWeight='bold'>id=</Typography>{id || {resultIdx}}
+            </Typography>
+            {mimeType &&
+                <Typography level='body-sm'>
+                    <Typography fontWeight='bold'>mimeType=</Typography>{mimeType}
+                </Typography>
+            }
+            <Typography level='body-sm' title={href} sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                <Typography fontWeight='bold'>href=</Typography>{href}
+            </Typography>
+        </Stack>
+    );
+}
+
+export function ShowResultButton({job, resultIdx=0}) {
+    const appProps = useContext(AppPropertiesCtx);
+    const {submitTo} = getMetadata({jobInfo:job});
+    const onClick = () => loadJobResult({jobInfo:job, resultIdx});
+    const icon = <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
+    if (isDefined(appProps.getRouter) && submitTo) {
+        return (
+            <FormWatcher submitTo={submitTo}>
+                {icon}
+            </FormWatcher>
+        );
+    } else {
+        return icon;
+    }
+}
+
 
 function DownloadBtn({job, index=0}) {
     const dlState = useStoreConnector( () => getJobInfo(job?.meta?.jobId)?.downloadState?.[index], [job?.meta?.jobId, index]);
@@ -426,17 +484,6 @@ function defaultRequest(doFilter) {
     const sortInfo = SortInfo.newInstance(SORT_DESC, 'Created').serialize();
     const filters = doFilter ? "Phase IN ('EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED')" : undefined;
     return {sortInfo, filters};
-}
-
-function showResults(request, submitTo) {
-    // assuming job returns a table;  will expand to other types in the future
-    if (!isEmpty(request)) {
-        return () => {
-            dispatchTableSearch(request);
-            showJobMonitor(false);
-            if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
-        };
-    }
 }
 
 function doDownload(job, index) {
