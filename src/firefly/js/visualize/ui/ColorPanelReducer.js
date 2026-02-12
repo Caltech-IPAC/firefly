@@ -3,7 +3,7 @@
  */
 
 import Validate from '../../util/Validate.js';
-import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER, INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER} from '../../fieldGroup/FieldGroupCntlr.js';
 import {Band} from '../Band';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -62,7 +62,6 @@ function computeColorPanelState(fields, plottedRV, band, action) {
             return syncFields(fields,makeRangeValuesFromFields(fields));
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-        case INIT_FIELD_GROUP:
         case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV) return fields;
@@ -408,7 +407,6 @@ export function computeHuePreservePanelState(fields, plottedRVAry, bands, action
 
         case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-        case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:
             if (plottedRVAry.some((rv)=>!rv)) return fields;
             const newFields = updateHuePreserveFieldsFromRangeValues(fields,plottedRVAry);

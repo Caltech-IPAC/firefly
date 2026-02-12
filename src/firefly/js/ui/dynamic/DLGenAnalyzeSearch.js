@@ -19,6 +19,7 @@ import {findFieldDefType, makeServiceDescriptorSearchRequest, sdToFieldDefAry} f
  */
 export function analyzeQueries(tbl_id) {
 
+    if (!tbl_id) return undefined;
     const dlData= getDataLinkData(tbl_id);
     if (isEmpty(dlData)) return;
     const bandDesc= getMetaEntry(tbl_id,'bandDesc');

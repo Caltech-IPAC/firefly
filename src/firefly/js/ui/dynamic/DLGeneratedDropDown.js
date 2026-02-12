@@ -165,11 +165,11 @@ export function DLGeneratedDropDown({initArgs={},
         else {
             setUrl(newUrl);
         }
-    }, [urlApi?.url, searchParams?.url, registryData[name].savedUrl, regLoaded]);
+    }, [urlApi?.url, searchParams?.url, regLoaded, name, hasRegistry, findUrlInReg, registryTblId]);
 
     useEffect(() => {
         if (!useCurrentIdx && currentIdx>-1 && currentIdx!==initialRow) setUseCurrentIdx(true);
-    }, [currentIdx]);
+    }, [currentIdx, initialRow, useCurrentIdx]);
 
     useEffect(() => {
         if (!regLoaded || !useCurrentIdx) return;
@@ -230,8 +230,8 @@ DLGeneratedDropDown.propTypes= {
 function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setLoadedTblIds, url, hasRegistry,
                                        searchAttributes, groupKey, slotProps, dataServiceId,
                                        findUrlInReg, initArgs, defaultMaxMOCFetchDepth}) {
-
     const [sideBarShowing, setSideBarShowing]= useState(true);
+    const [qAna, setQAna]= useState(undefined);
     const currentTblId= loadedTblIds?.[url];
     useEffect(() => {
         if (regLoaded && !currentTblId) {
@@ -251,17 +251,20 @@ function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setL
             });
 
         }
-    }, [currentTblId,url,regLoaded]);
+    }, [currentTblId, url, regLoaded, searchAttributes, setLoadedTblIds, loadedTblIds]);
 
     useEffect(() => {
         const showChooser= toBoolean(initArgs.urlApi?.showChooser ?? true, false, ['true','']);
         setSideBarShowing(showChooser);
     },[]);
 
+    useEffect(() => {
+        setQAna(analyzeQueries(currentTblId));
+    }, [currentTblId]);
+
 
     const sideBar= hasRegistry && <SideBarTable {...{registryTblId, setSideBarShowing,...slotProps.sideBar}}/>;
     const regHasUrl= findUrlInReg(url, registryTblId)>-1;
-    const qAna= analyzeQueries(currentTblId);
     return (
         <Sheet sx={{display:'flex', flexDirection: 'row', width:1, height:1, minWidth:800, minHeight:400}}>
             <DLGeneratedTableSearch {...{currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
@@ -280,10 +283,12 @@ const executeInitTargetOnce= makeSearchOnce(false);
 function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
                                     sideBarShowing, slotProps, regLoaded, dataServiceId:inDataServiceId,
                                     setSideBarShowing, defaultMaxMOCFetchDepth}) {
-    const [,setCallId]= useState('none');
+    const [callId,setCallId]= useState('none');
+    const [doRender,setDoRender]= useState(false);
     const [{onClick},setClickFuncImpl]= useState({});
     const tabsKey= 'Tabs-'+currentTblId;
     const matchUrl= initArgs?.urlApi?.url?.[0]===url;
+    const tableLoaded= useStoreConnector(()=> isFullyLoaded(currentTblId));
 
     const setClickFunc= (obj) => {
         if (obj?.onClick && !onClick) setClickFuncImpl(obj);
@@ -291,17 +296,28 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 
     const dataServiceId= getCisxUIValue(qAna, 'data_service_id') ?? inDataServiceId;
 
+
+    useEffect(() => {
+        setDoRender(false);
+    }, [initArgs?.urlApi?.callId]);
+
+    useEffect(() => {
+        if (doRender) return;
+        if (initArgs?.urlApi) dispatchMountFieldGroup(groupKey, false, false); // unmount to force to forget default so it will reinit
+        setDoRender(true);
+
+    }, [doRender, groupKey, initArgs?.urlApi]);
+
     useEffect(() => {
         if (initArgs?.urlApi?.execute && onClick && matchUrl) {
             executeInitOnce(true, () => {
-                const callId= initArgs.urlApi.callId ?? 'none';
+                const callId= initArgs?.urlApi?.callId ?? 'none';
                 setCallId(callId); //forces one more render after unmount
                 logger.warn(`execute (${callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
-                dispatchMountFieldGroup(groupKey, false, false); // unmount to force to forget default so it will reinit
                 setTimeout(() => onClick(),10);
             }, initArgs.urlApi.callId);
         }
-    }, [onClick, initArgs?.urlApi?.callId, matchUrl]);
+    }, [onClick, initArgs?.urlApi, initArgs?.urlApi?.callId, initArgs?.urlApi?.execute, initArgs?.urlApi?.url, matchUrl, groupKey]);
 
     const fdAry= makePrimarySearchFieldDefAry(qAna,initArgs,defaultMaxMOCFetchDepth);
 
@@ -323,7 +339,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
             searchObjFds[0].fds :
             searchObjFds.find(({ID}) => ID===request[tabsKey])?.fds;
         alignHiPS(currentTblId,qAna,groupKey, fds);
-    }, [currentTblId]);
+    }, [currentTblId, groupKey, qAna, searchObjFds, tabsKey]);
 
     const isAllSky= toBoolean(getCisxUI(qAna)?.find( (e) => e.name==='data_covers_allsky')?.value);
     const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
@@ -333,7 +349,9 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 
 
     let dlLoadError= false;
-    if (!qAna && isFullyLoaded(currentTblId)) dlLoadError= true;
+    if (!qAna && tableLoaded) dlLoadError= true;
+
+    if (!doRender) return;
 
     return (
         <Sheet sx={{width:1,height:1}}>
