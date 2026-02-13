@@ -82,8 +82,7 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
     const dlTableUrl= makeDlUrl(dlDescriptors[0],table, row);
     if (dlTableUrl) {
         return getDatalinkSingleDataProduct({dlTableUrl, options, sourceTable:table, row,
-            activateParams, titleStr:'',
-            additionalServiceDescMenuList:!isEmpty(menu)?menu:undefined});
+            activateParams, additionalServiceDescMenuList:!isEmpty(menu)?menu:undefined});
     }
     else {
         // there will be no menu if the there is only one service descriptor, and it is not datalink
@@ -103,7 +102,7 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
     if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to these data.');
     const dlTableUrl= makeDlUrl(findDataLinkServeDescs(descriptors)[0],table, row);
     if (!dlTableUrl) return dpdtSimpleMsg('a datalink service descriptors return images is required for related grid');
-    return getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams,table,row,threeColorOps, titleStr:'',options});
+    return getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams,table,row,threeColorOps,options});
 }
 
 

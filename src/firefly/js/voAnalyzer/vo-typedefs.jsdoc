@@ -71,7 +71,7 @@
  * @prop {number} rowIdx
  * @prop {String} serviceDefRef - from service_def  column
  * @prop {String} labelDLExt - the label, this is an extension to the standard, from label column, only used if defined
- * @prop {String} bandpassNameDLExt- the bandpassName, this is an extension to the standard, from bandpass_name column, only used if defined
+ * @prop {String} bandpassNameDLExt - the bandpassName, this is an extension to the standard, from bandpass_name column, only used if defined
  * @prop {ServiceDescriptorDef} serDef
  * @prop {DlAnalysisData} dlAnalysis
  * @prop {Object} relatedDLEntries

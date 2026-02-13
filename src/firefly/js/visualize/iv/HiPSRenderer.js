@@ -241,7 +241,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             abortRender = true;
             if (isBaseImage && !renderComplete && renderedCnt>0) renderToScreen(screenRenderParams);
             //only do this with chrome - with firefox and safari this seems to create invalid images cached
-            if (BrowserInfo.isChrome() && !renderComplete) allImageCancelFuncs.forEach( (f) => f?.() );
+            // if (BrowserInfo.isChrome() && !renderComplete) allImageCancelFuncs.forEach( (f) => f?.() );
         }
     };
 }

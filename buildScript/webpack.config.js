@@ -19,7 +19,7 @@ process.traceDeprecation = true;
  * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defaults to true
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
- * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
+ * @param {string}  [config.baseWarName]  name of the war file base, defaults to config.name
  * @param {function}  [config.doFirst]  execute with the original config param if given.
  * @param {function}  [config.doLast]   execute with the created webpack_config param if given.
  * @returns {Object} a webpack config object.
@@ -36,6 +36,7 @@ export default function makeWebpackConfig(config) {
     const MIN_CHROME_VERSION= '130';
     const MIN_FIREFOX_VERSION= '134';
     const MIN_EDGE_VERSION= '130';
+    const useReactCompiler = false;
 
     if (!process.env.NODE_ENV) {
         process.env.NODE_ENV = ['local', 'dev'].includes(BUILD_ENV) ? 'development' : 'production';
@@ -157,12 +158,12 @@ export default function makeWebpackConfig(config) {
                                 debug: false,
                                 modules: false,  // preserve application module style - in our case es6 modules
                                 useBuiltIns : 'usage',
-                                corejs: '3.37' // should specify the minor version: https://babeljs.io/docs/babel-preset-env#corejs
+                                corejs: '3.46' // should specify the minor version: https://babeljs.io/docs/babel-preset-env#corejs
                             }
                         ],
                         '@babel/preset-react'
                     ],
-                    plugins: [ 'react-compiler', '@babel/plugin-transform-runtime', 'lodash' ]
+                    plugins: [...(useReactCompiler?['react-compiler']:[]), '@babel/plugin-transform-runtime', 'lodash']
                 }
             }
         },

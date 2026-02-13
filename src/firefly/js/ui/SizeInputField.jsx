@@ -36,7 +36,7 @@ const convertSizeUnits = (valueStr, fromUnit=BASE_UNIT, toUnit=BASE_UNIT) => {
     return toMaxFixed(newVal, DEC_DIGIT).toString();
 };
 
-const formatSize = (valueInDeg, outputUnit) => `${convertSizeUnits(valueInDeg, BASE_UNIT, outputUnit)}${ANGULAR_SIZE_UNITS[outputUnit].symbol}`;
+const formatSize = (valueInDeg, outputUnit) => `${convertSizeUnits(valueInDeg, BASE_UNIT, outputUnit)}${ANGULAR_SIZE_UNITS[outputUnit]?.symbol ?? ''}`;
 
 const sizeQuantityProps = {
     quantityName: 'Size',

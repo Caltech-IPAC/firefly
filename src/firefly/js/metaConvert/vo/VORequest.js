@@ -5,7 +5,8 @@ import {getCellValue, getColumn, getMetaEntry} from '../../tables/TableUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import RangeValues from '../../visualize/RangeValues.js';
 import {TitleOptions, WebPlotRequest} from '../../visualize/WebPlotRequest.js';
-import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
+import {isSSATable} from '../../voAnalyzer/TableAnalysis.js';
+import {createObsCoreProductTitle, getAnalysisSSATitle} from '../VoUITitles';
 
 /**
  *
@@ -19,7 +20,7 @@ import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
  * @param {boolean|undefined} [p.expectStaticFile]
  * @return {undefined|WebPlotRequest}
  */
-export function makeObsCoreRequest({ url, cloudAccess={}, positionWP, titleStr, table, row, expectStaticFile=false}) {
+export function makeObsCoreRequest({ url, cloudAccess={}, positionWP, titleStr:inTitleStr, table, row, expectStaticFile=false}) {
     if (!url) return undefined;
     const {gcs={},aws={}}= cloudAccess;
     const {region,bucket_name:awsBucketName,key}= aws;
@@ -27,13 +28,12 @@ export function makeObsCoreRequest({ url, cloudAccess={}, positionWP, titleStr, 
     if (gcs.bucket_name && gcs.object_name) {
         r.setGcsParams(gcs.project,gcs.bucket_name,gcs.object_name);
     }
-    const ssa= isSSATable(table);
-    const titleStringToUse= ssa
-        ? (getSSATitle(table,row) ?? TableDataType.Spectrum)
-        : titleStr;
-    if (titleStringToUse?.length > 2) {
+    const titleStr= isSSATable(table)
+        ? (getAnalysisSSATitle(table,row) ?? TableDataType.Spectrum)
+        : (inTitleStr || createObsCoreProductTitle(table,row));
+    if (titleStr?.length > 2) {
         r.setTitleOptions(TitleOptions.NONE);
-        r.setTitle(titleStringToUse);
+        r.setTitle(titleStr);
     }
     else {
         r.setTitleOptions(TitleOptions.FILE_NAME);

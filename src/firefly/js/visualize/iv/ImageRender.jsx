@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component} from 'react';
+import React, {Component, memo, useRef} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
@@ -13,35 +13,13 @@ import {primePlot} from '../PlotViewUtil';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
-
-const containerStyle={position:'absolute',
-                      overflow:'hidden',
-                      left: 0,
-                      right: 0,
-                      background: BACKGROUND_STYLE
-};
+const containerStyle={position:'absolute', overflow:'hidden', left: 0, right: 0, background: BACKGROUND_STYLE };
 
 
-
-
-/**
- * Return a function that should be called on every render to draw the image
- * @param targetCanvas
- * @param {WebPlot} plot
- * @return {*}
- */
 function initTileDrawer(targetCanvas, plot) {
     if (!targetCanvas) return () => undefined;
-    if (isImage(plot)) {
-        return initImageDrawer(targetCanvas);
-    }
-    else {
-        return createHiPSDrawer(targetCanvas);
-    }
+    return isImage(plot) ? initImageDrawer(targetCanvas) : createHiPSDrawer(targetCanvas);
 }
-
-
-
 
 export class ImageRender extends Component {
 
@@ -97,6 +75,58 @@ export class ImageRender extends Component {
 }
 
 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++ Experiment +++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+export const ImageRenderEXPERIMENT=memo(
+    (props) =>{
+        const {current:draw} = useRef({ tileDrawer:undefined});
+
+        const {current:init} = useRef({
+            drawInit: (canvas) => {
+                const {plot}= props;
+                draw.tileDrawer= initTileDrawer(canvas, plot);
+            }
+        });
+
+
+        const {plot, idx, opacity,plotView:pv}= props;
+        const {width, height}= pv.viewDim;
+        const style = {...containerStyle, width, height};
+        draw.tileDrawer?.(plot, opacity,pv,props.colorMode);// eslint-disable-line react-hooks/refs
+
+        return (
+            <div className='tile-drawer' style={style}>
+                <SimpleCanvas drawIt={init.drawInit} width={width} height={height} plotType={plot.plotType}
+                              id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
+            </div>
+        );
+    },
+    (p,np) => {
+        const {plotView:pv}= p;
+        const {width:targetWidth, height:targetHeight}= p.plotView.viewDim;
+        const {plotView:nPv}= np;
+
+        if (p.colorMode!==np.colorMode) return false;
+        if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
+            pv.lastByteRefreshData===nPv.lastByteRefreshData &&
+            targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
+            pv.overlayPlotViews===nPv.overlayPlotViews &&
+            p.plot===np.plot && p.opacity===np.opacity ) {
+            return true;
+        }
+
+        const nextPlot= primePlot(nPv);
+        const plot= primePlot(pv);
+        if (nextPlot.plotType!==plot.plotType) this.tileDrawer= undefined;
+
+        return shallowequal(p,np);
+        // return false;
+
+    }
+);
 ImageRender.propTypes= {
     plot : PropTypes.object.isRequired,
     opacity : PropTypes.number.isRequired,

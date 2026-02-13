@@ -31,6 +31,17 @@ const idExamples= [
             showChooser: 'true'
         }
     },
+    {
+        desc:'load wise_unwise',
+        params:{
+            id: 'wise_unwise',
+            showChooser: 'true',
+            execute: 'true',
+            sr: 30,
+            ra: 10.6848,
+            dec:41.2691
+        }
+    },
 ];
 
 function validate(params) {
