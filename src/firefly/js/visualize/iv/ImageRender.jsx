@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component, memo, useRef} from 'react';
+import React, {Component, memo, useLayoutEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
@@ -21,7 +21,7 @@ function initTileDrawer(targetCanvas, plot) {
     return isImage(plot) ? initImageDrawer(targetCanvas) : createHiPSDrawer(targetCanvas);
 }
 
-export class ImageRender extends Component {
+export class ImageRenderOLD extends Component {
 
 
     constructor(props) {
@@ -80,7 +80,8 @@ export class ImageRender extends Component {
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export const ImageRenderEXPERIMENT=memo(
+// export const ImageRenderEXPERIMENT=memo(
+export const ImageRender=memo(
     (props) =>{
         const {current:draw} = useRef({ tileDrawer:undefined});
 
@@ -95,7 +96,12 @@ export const ImageRenderEXPERIMENT=memo(
         const {plot, idx, opacity,plotView:pv}= props;
         const {width, height}= pv.viewDim;
         const style = {...containerStyle, width, height};
-        draw.tileDrawer?.(plot, opacity,pv,props.colorMode);// eslint-disable-line react-hooks/refs
+
+        useLayoutEffect(() => {
+            draw.tileDrawer?.(plot, opacity,pv,props.colorMode);// eslint-disable-line react-hooks/refs
+        });
+
+
 
         return (
             <div className='tile-drawer' style={style}>
