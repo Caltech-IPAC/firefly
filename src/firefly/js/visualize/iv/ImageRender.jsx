@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component, memo, useLayoutEffect, useRef} from 'react';
+import React, {memo, useLayoutEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
@@ -21,66 +21,7 @@ function initTileDrawer(targetCanvas, plot) {
     return isImage(plot) ? initImageDrawer(targetCanvas) : createHiPSDrawer(targetCanvas);
 }
 
-export class ImageRenderOLD extends Component {
 
-
-    constructor(props) {
-        super(props);
-
-        this.drawInit= (canvas) => {
-            const {plot, opacity,plotView}= this.props;
-            this.tileDrawer= initTileDrawer(canvas, plot);
-            this.tileDrawer(plot, opacity,plotView, this.props.colorMode);
-        };
-    }
-
-
-    shouldComponentUpdate(np,ns) {
-        const {props}= this;
-        const {plotView:pv}= props;
-        const {width:targetWidth, height:targetHeight}= props.plotView.viewDim;
-        const {plotView:nPv}= np;
-
-        if (props.colorMode!==np.colorMode) return true;
-        if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
-            pv.lastByteRefreshData===nPv.lastByteRefreshData &&
-            targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
-            pv.overlayPlotViews===nPv.overlayPlotViews &&
-            props.plot===np.plot && props.opacity===np.opacity ) {
-            return false;
-        }
-
-        const nextPlot= primePlot(nPv);
-        const plot= primePlot(pv);
-        if (nextPlot.plotType!==plot.plotType) this.tileDrawer= undefined;
-
-        const result = !shallowequal(this.props,np) || !shallowequal(this.state,ns);
-        return result;
-    }
-
-
-    render() {
-        const {plot, idx, opacity,plotView:pv}= this.props;
-        const {width, height}= pv.viewDim;
-        const style = {...containerStyle, width, height};
-        this.tileDrawer?.(plot, opacity,pv,this.props.colorMode);
-
-        return (
-            <div className='tile-drawer' style={style}>
-                <SimpleCanvas drawIt={this.drawInit} width={width} height={height} plotType={plot.plotType}
-                              id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
-            </div>
-        );
-    }
-}
-
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++ Experiment +++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-// export const ImageRenderEXPERIMENT=memo(
 export const ImageRender=memo(
     (props) =>{
         const {current:draw} = useRef({ tileDrawer:undefined});
@@ -129,8 +70,6 @@ export const ImageRender=memo(
         if (nextPlot.plotType!==plot.plotType) this.tileDrawer= undefined;
 
         return shallowequal(p,np);
-        // return false;
-
     }
 );
 ImageRender.propTypes= {
@@ -142,3 +81,57 @@ ImageRender.propTypes= {
     processor : PropTypes.func,
     colorMode: PropTypes.string
 };
+
+//keep around for 6 months - today 1/13/2026
+// export class ImageRenderOLD extends Component {
+//
+//
+//     constructor(props) {
+//         super(props);
+//
+//         this.drawInit= (canvas) => {
+//             const {plot, opacity,plotView}= this.props;
+//             this.tileDrawer= initTileDrawer(canvas, plot);
+//             this.tileDrawer(plot, opacity,plotView, this.props.colorMode);
+//         };
+//     }
+//
+//
+//     shouldComponentUpdate(np,ns) {
+//         const {props}= this;
+//         const {plotView:pv}= props;
+//         const {width:targetWidth, height:targetHeight}= props.plotView.viewDim;
+//         const {plotView:nPv}= np;
+//
+//         if (props.colorMode!==np.colorMode) return true;
+//         if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
+//             pv.lastByteRefreshData===nPv.lastByteRefreshData &&
+//             targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
+//             pv.overlayPlotViews===nPv.overlayPlotViews &&
+//             props.plot===np.plot && props.opacity===np.opacity ) {
+//             return false;
+//         }
+//
+//         const nextPlot= primePlot(nPv);
+//         const plot= primePlot(pv);
+//         if (nextPlot.plotType!==plot.plotType) this.tileDrawer= undefined;
+//
+//         const result = !shallowequal(this.props,np) || !shallowequal(this.state,ns);
+//         return result;
+//     }
+//
+//
+//     render() {
+//         const {plot, idx, opacity,plotView:pv}= this.props;
+//         const {width, height}= pv.viewDim;
+//         const style = {...containerStyle, width, height};
+//         this.tileDrawer?.(plot, opacity,pv,this.props.colorMode);
+//
+//         return (
+//             <div className='tile-drawer' style={style}>
+//                 <SimpleCanvas drawIt={this.drawInit} width={width} height={height} plotType={plot.plotType}
+//                               id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
+//             </div>
+//         );
+//     }
+// }
