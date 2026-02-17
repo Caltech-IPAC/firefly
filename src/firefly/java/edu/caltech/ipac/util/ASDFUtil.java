@@ -54,22 +54,32 @@ public class ASDFUtil {
             if (asdfInfo == null || !asdfInfo.mainTreeNode.equals(ROMAN)) return null;
             AsdfNode roman = asdfFile.getTree().get(asdfInfo.mainTreeNode);
             try (final RomanModel<?> model = RomanDatamodels.open(path)) {
-                int i=0;
                 if (model instanceof RomanImageModel<?> imageModel) {
                     FitsWcs fitsWcs= Util.Try.it(() -> imageModel.getMeta().getFitsWcs()).get();
-                    for(String extName : asdfInfo.imageNameList) {
-                        var arrayNode= (NdArrayAsdfNode)roman.get(extName);
-                        FileAnalysisReport.Part part = new FileAnalysisReport.Part(Image, "asdf image");
-                        part.setIndex(i++);
-                        part.setDesc(extName+axisDesc(getAxisInfo(arrayNode.asNdArray())));
-                        part.setDetails(getDetails(fitsWcs,arrayNode, asdfInfo,extName));
-                        report.addPart(part);
-                    }
+                    buildReport(report,roman, asdfInfo,fitsWcs);
                 }
-                addTables(asdfInfo, report,i);
+                else {
+                    buildReport(report,roman,asdfInfo,null);
+                }
+            }
+            catch (Exception e) {
+                buildReport(report,roman,asdfInfo,null);
             }
         }
         return report;
+    }
+
+    private static void buildReport(FileAnalysisReport report, AsdfNode rootDataNode, AsdfFileInfo asdfInfo, FitsWcs fitsWcs) {
+        int i=0;
+        for(String extName : asdfInfo.imageNameList) {
+            var arrayNode= (NdArrayAsdfNode)rootDataNode.get(extName);
+            FileAnalysisReport.Part part = new FileAnalysisReport.Part(Image, "asdf image");
+            part.setIndex(i++);
+            part.setDesc(extName+axisDesc(getAxisInfo(arrayNode.asNdArray())));
+            part.setDetails(getDetails(fitsWcs,arrayNode, asdfInfo,extName));
+            report.addPart(part);
+        }
+        addTables(asdfInfo, report,i);
     }
 
 
@@ -149,44 +159,60 @@ public class ASDFUtil {
 
 
     public static File createFitsVersionOfRomandAsdfFile(File infile) throws FitsException, IOException {
-        String fBase= FileUtil.getBase(infile);
-        File retFile= new File(infile.getParent()+"/"+ fBase+"---from-asdf"+".fits");
         Path path= infile.toPath();
         try (AsdfFile asdfFile = Asdf.open(path)) {
             AsdfNode roman = asdfFile.getTree().get(ROMAN);
             if (roman==null) return null;
             AsdfFileInfo asdfInfo= getAsdfFileInfo(asdfFile);
+            if (asdfInfo==null) throw new IOException("could evaluate ASDF file");
             try (final RomanModel<?> model = RomanDatamodels.open(path)) {
                 if (model instanceof RomanImageModel<?> imageModel) {
                     FitsWcs fitsWcs= Util.Try.it(() -> imageModel.getMeta().getFitsWcs()).get();
                     var baseAxisInfo= getAxisInfo(imageModel.getData());
-                    Fits fits= new Fits();
-                    fits.addHDU(new NullDataHDU());
-                    for(String extName : asdfInfo.imageNameList) {
-                        var arrayNode= (NdArrayAsdfNode)roman.get(extName);
-                        AxisInfo axisInfo= getAxisInfo(arrayNode.asNdArray());
-                        FitsWcs wcsToUse= imagesMatch(baseAxisInfo,axisInfo) ? fitsWcs : null;
-                        var inHeaders= makeFitsLikeHeadersUsingRomanImageModel(wcsToUse, arrayNode, asdfInfo,extName, false);
-                        Object ary= getImageAry(axisInfo.naxis,arrayNode);
-                        var hdu= Fits.makeHDU(ary);
-                        Header header= hdu.getHeader();
-                        for(var h : inHeaders) {
-                            header.addValue(h.key,h.value, "derived from roman asdf");
-                        }
-                        fits.addHDU(hdu);
-                    }
-                    fits.write(retFile);
-                    closeFits(fits);
-                    return retFile;
+                    return makeFITS(infile,roman,asdfInfo,baseAxisInfo,fitsWcs);
                 }
+                else {
+                    return makeFITS(infile,roman,asdfInfo);
+                }
+            }
+            catch (RuntimeException e) {
+                return makeFITS(infile,roman,asdfInfo);
             }
         } catch (RuntimeException e) {
             throw new IOException(e.toString(),e);
         }
-        return null;
+    }
+
+
+    private static File makeFITS(File infile, AsdfNode rootDataNode, AsdfFileInfo asdfInfo) throws IOException {
+        return makeFITS(infile,rootDataNode,asdfInfo,null,null);
+    }
+
+    private static File makeFITS(File infile, AsdfNode rootDataNode, AsdfFileInfo asdfInfo, AxisInfo baseAxisInfo, FitsWcs fitsWcs) throws IOException {
+        String fBase= FileUtil.getBase(infile);
+        File retFile= new File(infile.getParent()+"/"+ fBase+"---from-asdf"+".fits");
+        Fits fits= new Fits();
+        fits.addHDU(new NullDataHDU());
+        for(String extName : asdfInfo.imageNameList) {
+            var arrayNode= (NdArrayAsdfNode)rootDataNode.get(extName);
+            AxisInfo axisInfo= getAxisInfo(arrayNode.asNdArray());
+            FitsWcs wcsToUse= imagesMatch(baseAxisInfo,axisInfo) ? fitsWcs : null;
+            var inHeaders= makeFitsLikeHeadersUsingRomanImageModel(wcsToUse, arrayNode, asdfInfo,extName, false);
+            Object ary= getImageAry(axisInfo.naxis,arrayNode);
+            var hdu= Fits.makeHDU(ary);
+            Header header= hdu.getHeader();
+            for(var h : inHeaders) {
+                header.addValue(h.key,h.value, "derived from roman asdf");
+            }
+            fits.addHDU(hdu);
+        }
+        fits.write(retFile);
+        closeFits(fits);
+        return retFile;
     }
 
     private static boolean imagesMatch(AxisInfo baseAxisInfo, AxisInfo axisInfo) {
+        if (baseAxisInfo==null || axisInfo==null) return false;
         if (baseAxisInfo.width()==axisInfo.width() && baseAxisInfo.height()==axisInfo.height()) {
             var d1= baseAxisInfo.depth();
             var d2= axisInfo.depth();
@@ -367,6 +393,7 @@ public class ASDFUtil {
 
     public static Map<String,List<String>> findTables(AsdfNode tablesRootNode) {
         Map<String,List<String>> tables= new LinkedHashMap<>();
+        if (tablesRootNode==null) return tables;
         for(AsdfNode name : tablesRootNode) {
             String desc= tablesRootNode.get(name).toString();
             if (desc.contains("astropy.org:astropy/table")) {
