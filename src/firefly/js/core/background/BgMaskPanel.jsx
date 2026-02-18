@@ -1,12 +1,12 @@
 import React, {useEffect} from 'react';
 import {bool, string, func, object, element} from 'prop-types';
-import {Button, LinearProgress, Skeleton, Stack, Typography} from '@mui/joy';
+import {Button, Skeleton, Stack, Typography} from '@mui/joy';
 
 import {dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {useStoreConnector, Slot} from '../../ui/SimpleComponent.jsx';
 import {Logger} from '../../util/Logger.js';
-import {showJobInfo} from './JobInfo.jsx';
-import {getJobInfo, isActive} from './BackgroundUtil.js';
+import {JobProgress, showJobInfo} from './JobInfo.jsx';
+import {getJobInfo} from './BackgroundUtil.js';
 import {InfoButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {showJobMonitor} from './JobMonitor';
 import {dispatchJobRemove} from './BackgroundCntlr';
@@ -49,11 +49,11 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
         doHide();
     };
 
-    const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
+    const msg = jobInfo?.errorSummary?.message;
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
-            <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}>
+            <MaskP jobInfo={jobInfo} mask={mask} {...props}>
                 <Stack direction='row' spacing={1}>
                     <Button variant='solid' disabled={!jobInfo} color='primary' onClick={doHide}>Send to background</Button>
                     <Button variant='solid' disabled={!jobInfo} color='primary' onClick={doShowMonitor}>Job Monitor</Button>
@@ -78,16 +78,14 @@ function MaskP({msg, jobInfo, children, mask=<Skeleton/>, ...props}) {
             {mask}
             <Stack whiteSpace='nowrap' position='absolute' zIndex={10} top='50%' left='50%' spacing={2} sx={{transform: 'translate(-50%, -50%)'}}>
                 <Stack direction='row' alignItems='center' justifyContent='center' spacing={1}>
-                    <Stack >
-                        <Typography level='title-md' color='warning' fontStyle='italic' noWrap={true}>{msg}</Typography>
-                        {isActive(jobInfo) && <LinearProgress color='neutral'/>}
-                    </Stack>
+                    {<JobProgress jobInfo={jobInfo}/> ||
+                     <Typography level='title-md' color='warning' fontStyle='italic' noWrap={true}>{msg}</Typography>
+                    }
                     <InfoButton enabled={!!jobInfo} onClick={showInfo}/>
                 </Stack>
                 {children}
             </Stack>
         </Slot>
-
     );
 }
 

@@ -37,9 +37,7 @@ import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.convertToJobList;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.getUwsJobInfo;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.parse;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
-import static edu.caltech.ipac.util.StringUtils.getInt;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 public class JobUtil {
     // Services are defined as strings with three fields (url|serviceId|serviceType), separated by commas. Only url is required; the others are optional.
@@ -61,7 +59,8 @@ public class JobUtil {
 
     public static void logJobInfo(JobInfo info) {
         if (info == null) return;
-        LOG.debug(String.format("JOB:%s  userKey:%s  phase:%s  msg:%s", info.getMeta().getJobId(), info.getMeta().getUserKey(), info.getPhase(), info.getMeta().getSummary()));
+        String progress = info.getAux().getProgress() == null ? "null" : String.format("%d%% %s", info.getAux().getProgress().percentComplete(), info.getAux().getProgress().message());
+        LOG.debug(String.format("JOB:%s  userKey:%s  phase:%s  progress:%s", info.getMeta().getJobId(), info.getMeta().getUserKey(), info.getPhase(), progress));
         LOG.trace(String.format("JOB: %s details: %s", info.getMeta().getJobId(), toJson(info)));
     }
 
@@ -243,6 +242,16 @@ public class JobUtil {
         applyIfNotEmpty(info.getAux().getUserEmail(), v -> jsonAux.put(USER_EMAIL, v));
         applyIfNotEmpty(info.getAux().getJobUrl(), v -> jsonAux.put(JobInfo.JOB_URL, v));
 
+        Progress progress = info.getAux().getProgress();
+        if (progress != null) {
+            JSONObject p = new JSONObject();
+            jsonAux.put(PROGRESS, p);
+            ifNotNull(progress.percentComplete()).apply(v -> p.put("percentComplete", v));
+            ifNotNull(progress.message()).apply(v -> p.put("message", v));
+            ifNotNull(progress.itemsProcessed()).apply(v -> p.put("itemsProcessed", v));
+            ifNotNull(progress.totalItems()).apply(v -> p.put("totalItems", v));
+        }
+
         JSONObject jsonMeta = new JSONObject();
         rval.put(META, jsonMeta);
         Meta meta = info.getMeta();
@@ -250,9 +259,6 @@ public class JobUtil {
         applyIfNotEmpty(meta.getRunId(), v -> jsonMeta.put(RUN_ID, v));
         applyIfNotEmpty(meta.getUserKey(), v -> jsonMeta.put(USER_KEY, v));
         applyIfNotEmpty(meta.getType(), v -> jsonMeta.put(JOB_TYPE, v.toString()));
-        applyIfNotEmpty(meta.getProgress(), v -> jsonMeta.put(PROGRESS, v));
-        applyIfNotEmpty(meta.getProgressDesc(), v -> jsonMeta.put(PROGRESS_DESC, v));
-        applyIfNotEmpty(meta.getSummary(), v -> jsonMeta.put(SUMMARY, v));
         applyIfNotEmpty(meta.isMonitored(), v -> jsonMeta.put(MONITORED, v));
         applyIfNotEmpty(meta.getSvcId(), v -> jsonMeta.put(SVC_ID, v));
         applyIfNotEmpty(meta.getAppUrl(), v -> jsonMeta.put(APP_URL, v));
@@ -295,9 +301,6 @@ public class JobUtil {
                 ifNotNull(ji.get(RUN_ID)).apply(s -> rval.getMeta().setRunId(s.toString()));
                 ifNotNull(ji.get(USER_KEY)).apply(s -> rval.getMeta().setUserKey(s.toString()));
                 ifNotNull(ji.get(JOB_TYPE)).apply(t -> rval.getMeta().setType(Job.Type.valueOf(t.toString())));
-                ifNotNull(ji.get(PROGRESS)).apply(p -> rval.getMeta().setProgress(((Long) p).intValue()));
-                ifNotNull(ji.get(PROGRESS_DESC)).apply(d -> rval.getMeta().setProgressDesc(d.toString()));
-                ifNotNull(ji.get(SUMMARY)).apply(s -> rval.getMeta().setSummary(s.toString()));
                 ifNotNull(ji.get(MONITORED)).apply(m -> rval.getMeta().setMonitored((Boolean) m));
                 ifNotNull(ji.get(SVC_ID)).apply(s -> rval.getMeta().setSvcId(s.toString()));
                 ifNotNull(ji.get(APP_URL)).apply(s -> rval.getMeta().setAppUrl(s.toString()));
@@ -314,6 +317,17 @@ public class JobUtil {
                 ifNotNull(ji.get(USER_NAME)).apply(s -> rval.getAux().setUserName(s.toString()));
                 ifNotNull(ji.get(USER_EMAIL)).apply(s -> rval.getAux().setUserEmail(s.toString()));
                 ifNotNull(ji.get(JobInfo.JOB_URL)).apply(o -> rval.getAux().setJobUrl(o.toString()));
+                ifNotNull(ji.get(PROGRESS)).apply(p -> {
+                    if (p instanceof JSONObject jp) {
+                        JobInfo.Progress progress = new JobInfo.Progress(
+                                getInt(jp.get("percentComplete"), -1),
+                                getInt(jp.get("itemsProcessed"), -1),
+                                getInt(jp.get("totalItems"), -1),
+                                ifNotNull(jp.get("message")).get(Object::toString)
+                        );
+                        rval.getAux().setProgress(progress);
+                    }
+                });
             }
         });
         return rval;
@@ -365,14 +379,13 @@ public class JobUtil {
      * @return an array of job IDs under the 'jobs' prop as a json string
      */
     public static String toJsonJobList(List<JobInfo> infos, boolean overflow) {
-        JSONObject rval = new JSONObject();
+        Map<String, Object> rval = new HashMap<>();
         if (infos != null && !infos.isEmpty()) {
             // object with "jobs": array of JobInfo and "overflow: true" if the list exceed 'LAST' or default limit
-            List<JSONObject> jobs = infos.stream().map(JobUtil::toJsonObject).collect(Collectors.toList());
-            rval.put("jobs", jobs);
+            rval.put("jobs", infos);
             if (overflow) rval.put("overflow", true);
         }
-        return rval.toJSONString();
+        return Serializer.toJsonString(rval);
     }
 
     /**

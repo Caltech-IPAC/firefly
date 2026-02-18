@@ -4,7 +4,7 @@ import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} fr
 import moment from 'moment';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, handleJobResult, Phase, loadJobResult, fixTapResults} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
@@ -271,8 +271,7 @@ function PhaseRenderer({cellInfo}) {
 
 function ControlRenderer({cellInfo}) {
     const {value:jobId} = cellInfo;
-    const job = getJobInfo(jobId);
-    // const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
+    const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
     if (!job?.meta?.jobId) return null;
 
     return  (
@@ -307,9 +306,10 @@ function InfoPopup({job}) {
 
 function Progress({job}) {
     if (!Phase.EXECUTING.is(job?.phase)) return null;
+    const progress = getProgressMsg(job);
     return(
         <>
-            <Button loading title={job?.meta?.progressDesc} variant='plain' color='success'/>
+            <Button loading title={progress} variant='plain' color='success'/>
             <NotifBtn jobId={job.meta?.jobId} enable={job.meta?.sendNotif}/>
         </>
     );

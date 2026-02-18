@@ -137,7 +137,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         var locked = GET_DATA_CHECKER.lock(uniqueID);
         try {
             var dbAdapter = getDbAdapter(treq);
-            sendJobUpdate(ji -> ji.getMeta().setProgress(10, "fetching data..."));
+            if (job != null && !job.getWorker().isSelfManaged()) {
+                sendJobUpdate(ji -> ji.getAux().setProgress( new JobInfo.Progress("fetching data...")));
+            }
 
             DataGroupPart results;
             try {
@@ -151,8 +153,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 results = getResultSet(treq, dbAdapter);
                 int totalRows = results.getRowCount();
                 sendJobUpdate(v -> {
-                    v.getMeta().setProgress(90, "generating results...");
-                    sendJobUpdate(ji -> ji.getMeta().setSummary(String.format("%,d rows found", totalRows)));
+                    sendJobUpdate(ji -> ji.getAux().setProgress( new JobInfo.Progress("%,d rows found".formatted(totalRows))));
                 });
             } catch (Exception e) {
                 // table data exists; but, bad grammar when querying for the resultset.
@@ -266,7 +267,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
             if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
-            sendJobUpdate(v -> v.getMeta().setProgress(70, dg.size() + " rows of data found"));
+            sendJobUpdate(v -> v.getAux().setProgress( new JobInfo.Progress(dg.size() + " rows of data found")));
 
             applyExtraMeta(dg, req);
             return dg;

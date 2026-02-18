@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 
-import {getJobInfo, getMetadata, isTapJob, isUWS} from './BackgroundUtil.js';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {getElapsedTime, getJobInfo, getJobPctComplete, getMetadata, getProgressMsg, isActive, isTapJob, isUWS} from './BackgroundUtil.js';
+import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {KeywordBlock} from '../../tables/ui/TableInfo.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -9,7 +9,7 @@ import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../Compon
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsibleItem, CollapsibleGroup} from '../../ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Box, Card, Skeleton, Stack, Typography} from '@mui/joy';
+import {Box, Card, Grid, LinearProgress, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
 import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {PrismADQLAware} from '../../ui/tap/AdvancedADQL';
@@ -84,8 +84,9 @@ export function JobInfo({jobId, ...props}) {
 }
 
 export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
-    const {results, parameters, errorSummary, jobInfo:aux} = jobInfo;
+    const {results, parameters, errorSummary} = jobInfo;
     const hrefs = results?.map((r) => r.href);
+    const {progress, ...aux} = jobInfo?.jobInfo ?? {};
     const hasMoreSection = hrefs || parameters || errorSummary || aux;
     const resultRenderer = () => <ResultsBlock job={jobInfo} ActionBtn={CopyHref}/>;
     return (
@@ -105,11 +106,39 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
     );
 }
 
-const toDate = (d) => d && new Date(d);
+export function JobProgress({jobInfo, ...props}) {
+    const [elapsed, setElapsed] = useState(0);
+    const msg = getProgressMsg(jobInfo);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setElapsed(getElapsedTime(jobInfo)); // triggers re-render
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [jobInfo]);
+
+    if (!isActive(jobInfo)) return null;
+
+    const pct = getJobPctComplete(jobInfo);
+    const lpProps =  pct >= 0 ? {determinate:true, value:pct} : {size:'md'};
+    return (
+        <Slot component={Sheet} variant='soft' sx={{flexGrow:1, padding:1}} slotProps={{...props}}>
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <Typography level='title-sm' >Progress:</Typography>
+                <LinearProgress variant='outlined' {...lpProps}/>
+            </Stack>
+            <Stack direction='row' spacing={1}>
+                <Typography level='body-xs' color='warning' sx={{fontVariantNumeric: 'tabular-nums'}}> {elapsed} — </Typography>
+                <Typography level='body-xs' fontStyle='italic' title={msg} sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',}}> {msg} </Typography>
+            </Stack>
+        </Slot>
+    );
+}
 
 function JobInfoDetails({jobInfo={}}) {
     const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
-
+    const toDate = (d) => d && new Date(d);
     const {ownerId, phase, executionDuration} = jobInfo;
     const startTime = toDate(jobInfo.startTime);
     const endTime = toDate(jobInfo.endTime);
@@ -120,22 +149,44 @@ function JobInfoDetails({jobInfo={}}) {
     const duration =  executionDuration ? executionDuration + 's' : '';
     const dateProps = {width: '18rem', justifyContent:'space-between'};
     return (
-        <Stack direction='row' spacing={4}>
-            <Stack>
+        <Grid container spacing={.5}>
+            <GridRow>
                 <KeywordBlock label='Phase' title='Referred to as "phase" in UWS' value={phase} mb={1}/>
-                <KeywordBlock label='Creation Time' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
-                <KeywordBlock label='Start Time' title='Referred to as "startTime" in UWS' value={toDateString(startTime, useLocalTime)} {...dateProps}/>
-                <KeywordBlock label='End Time' title='Referred to as "endTime" in UWS' value={toDateString(endTime, useLocalTime)} {...dateProps}/>
-                <KeywordBlock label='Planned End Time' title='Referred to as "quote" in UWS' value={toDateString(quote, useLocalTime)} {...dateProps}/>
-                <KeywordBlock label='Destruction Time' title='Referred to as "destruction" in UWS' value={toDateString(destruction, useLocalTime)} {...dateProps}/>
-            </Stack>
-            <Stack>
                 <JobIdWrapper jobInfo={jobInfo}/>
+            </GridRow>
+            <GridRow>
+                <JobProgress jobInfo={jobInfo}/>
+            </GridRow>
+            <GridRow>
+                <KeywordBlock label='Creation Time' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
                 <KeywordBlock label='Owner' title='Referred to as "ownerId" in UWS' value={ownerId}/>
+            </GridRow>
+            <GridRow>
+                <KeywordBlock label='Start Time' title='Referred to as "startTime" in UWS' value={toDateString(startTime, useLocalTime)} {...dateProps}/>
                 <KeywordBlock label='Run time limit' title='Referred to as "executionDuration" in UWS' value={duration}/>
+            </GridRow>
+            <GridRow>
+                <KeywordBlock label='End Time' title='Referred to as "endTime" in UWS' value={toDateString(endTime, useLocalTime)} {...dateProps}/>
                 <KeywordBlock label='Actual run time' title='The difference of the "End" and "Start" times.' value={actualRt}/>
-            </Stack>
-        </Stack>
+            </GridRow>
+            <GridRow>
+                <KeywordBlock label='Planned End Time' title='Referred to as "quote" in UWS' value={toDateString(quote, useLocalTime)} {...dateProps}/>
+            </GridRow>
+            <GridRow>
+                <KeywordBlock label='Destruction Time' title='Referred to as "destruction" in UWS' value={toDateString(destruction, useLocalTime)} {...dateProps}/>
+            </GridRow>
+        </Grid>
+    );
+}
+
+function GridRow({children}) {
+    const [left, right] = React.Children.toArray(children);
+    const lw = right ? 7 : 12;
+    return (
+        <>
+            <Grid xs={lw}>{left}</Grid>
+            {right && <Grid xs={5}>{right}</Grid>}
+        </>
     );
 }
 

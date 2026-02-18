@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 
@@ -61,9 +60,7 @@ public class JobInfo implements Serializable {
     // These are additional info that's not in defined in uws:job but is needed by Firefly
     // In serialized form, it will go under uws:jobInfo block
     public static final String PROGRESS = "progress";
-    public static final String PROGRESS_DESC = "progressDesc";
     public static final String JOB_TYPE = "type";
-    public static final String SUMMARY = "summary";
     public static final String JOB_URL = "jobUrl";
     public static final String MONITORED = "monitored";
     public static final String TITLE = "title";
@@ -221,6 +218,7 @@ public class JobInfo implements Serializable {
         this.parameters = new HashMap<>(uws.parameters);
         this.results = new ArrayList<>(uws.results);
         this.errorSummary = uws.errorSummary;
+        this.getAux().setProgress(uws.aux.getProgress());
         ifNotNull(uws.aux.getJobUrl()).apply(aux::setJobUrl);
         ifNotNull(uws.aux.getUserId()).apply(aux::setUserId);
         ifNotNull(uws.aux.getUserName()).apply(aux::setUserName);
@@ -250,9 +248,6 @@ public class JobInfo implements Serializable {
         Map<String, String> parameters = new HashMap<>();
         String userKey;
         Job.Type type;
-        int progress;
-        String progressDesc;
-        String summary;
         boolean monitored;
         String svcId;       // the service id that this job is associated with
         String runHost;     // the host where the job is running on
@@ -277,22 +272,8 @@ public class JobInfo implements Serializable {
         public String getRunHost() { return runHost; }
         public void setRunHost(String runHost) { this.runHost = runHost;}
 
-        public int getProgress() { return progress; }
-        public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
-
-        public void setProgress(int progress, String desc) {
-            setProgress(progress);
-            setProgressDesc(desc);
-        }
-
-        public String getProgressDesc() { return progressDesc; }
-        public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc; }
-
         public Job.Type getType() { return type; }
         public void setType(Job.Type type) { this.type = type; }
-
-        public String getSummary() { return summary; }
-        public void setSummary(String summary) { this.summary = summary; }
 
         public boolean isMonitored() { return monitored; }
         public void setMonitored(boolean monitored) { this.monitored = monitored; }
@@ -321,6 +302,7 @@ public class JobInfo implements Serializable {
         String userEmail;   // may need to be generic so that other user's info can be stored amd passed around
         String title;
         String jobUrl;      // the service URL associated with this job
+        Progress progress;
 
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId;}
@@ -336,6 +318,24 @@ public class JobInfo implements Serializable {
 
         public String getJobUrl() { return jobUrl; }
         public void setJobUrl(String jobUrl) { this.jobUrl = jobUrl; }
+
+        public Progress getProgress() { return progress; }
+        public void setProgress(Progress progress) { this.progress = progress; }
+    }
+
+    public record Progress(int percentComplete, int itemsProcessed, int totalItems, String message) implements Serializable {
+        public Progress() {
+            this(-1, -1, -1, null);
+        }
+        public Progress(String message) {
+            this(-1, message);
+        }
+        public Progress(int percentComplete, String message) {
+            this(percentComplete, -1, -1, message);
+        }
+        public Progress(int itemsProcessed, int totalItems, String message) {
+            this(-1, itemsProcessed, totalItems, message);
+        }
     }
 
 }
