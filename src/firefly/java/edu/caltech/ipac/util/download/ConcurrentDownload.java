@@ -52,7 +52,12 @@ public class ConcurrentDownload {
         HttpResultInfo result= URLDownload.getHeader(url,cookies,newHeaders,8);
 
         var status= result.getResponseCode();
-        if (status>=400 && status!=HttpURLConnection.HTTP_BAD_METHOD) {
+
+        if (status==HttpURLConnection.HTTP_FORBIDDEN && S3Ref.isS3SignedURL(url.toString())) { // try an alternate way to get the header, may have to add for GWS as well
+            result= URLDownload.getHeader(url,cookies,newHeaders,8,true);
+            status= result.getResponseCode();
+        }
+        if (status>=400 && (status!=HttpURLConnection.HTTP_BAD_METHOD && status!=HttpURLConnection.HTTP_FORBIDDEN)) {  // bad method or forbidden just keep going
             logHeadFail(url,result);
             return new FileInfo(result.getResponseCode(), result.getResponseCodeMsg());
         }
@@ -173,9 +178,9 @@ public class ConcurrentDownload {
     }
 
     private static boolean partialDownloadQualified(HttpResultInfo result) {
-        return result.isOK() &&
-                isFileLarge(result.getContentLength()) &&
-                "bytes".equalsIgnoreCase(result.getAttribute("Accept-Ranges"));
+        return result.isOK()
+                && ( isFileLarge(result.getContentLength()) || isFileLarge(result.getContentRangeMax()) )
+                && "bytes".equalsIgnoreCase(result.getAttribute("Accept-Ranges"));
     }
 
     private static long transferredBytes(ArrayList<PartialDownload> pdList) {
@@ -211,11 +216,12 @@ public class ConcurrentDownload {
     }
 
     private static void logSuccess(HttpResultInfo r, File outfile, URL url,  double dSeconds, int parts, HttpResultInfo headerR) {
-        String formatedSize= FileUtil.getSizeAsString(r.getContentLength());
+        var len= Math.max(r.getContentLength(),r.getContentRangeMax());
+        String formatedSize= FileUtil.getSizeAsString(len);
         String lastMod= r.getAttribute("Last-Modified")!=null ? ", Last-Modified: " +r.getAttribute("Last-Modified") : "";
         log.info(
                 String.format( "DOWNLOAD (%.1f sec, %s, %d parts): Content-Type: %s, Content-Length: %s%s",
-                        dSeconds, formatedSize, parts, r.getContentType(), r.getContentLength(), lastMod),
+                        dSeconds, formatedSize, parts, r.getContentType(), len, lastMod),
                 "url:  "+ url.toString(),
                 "file: "+ outfile.toPath(),
                 "headers sent: " + sendHeadersToStr(headerR),

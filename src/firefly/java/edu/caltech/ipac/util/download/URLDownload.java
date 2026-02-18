@@ -115,6 +115,27 @@ public class URLDownload {
         return getSuggestedFileName(disposition);
     }
 
+    public static Map<String,List<String>> getQueryParams(URL url) {
+        if (url==null) return Collections.emptyMap();
+        if (StringUtils.isEmpty(url.getQuery())) return Collections.emptyMap();
+        var paramList= url.getQuery().split("&");
+        var queryParamMap = new HashMap<String, List<String>>();
+        for(var p : paramList) {
+            var parts = p.split("=");
+            if (parts.length == 2) {
+                var key= parts[0].trim();
+                var value= parts[1].trim();
+                var valueList= queryParamMap.get(key);
+                if (valueList == null) {
+                   valueList = new ArrayList<>();
+                   queryParamMap.put(key, valueList);
+                }
+                valueList.add(value);
+            }
+        }
+        return queryParamMap;
+    }
+
     private static int codeFromException(Exception e) {
         return switch (e) {
             case SSLException ignored -> 495;
@@ -362,11 +383,19 @@ public class URLDownload {
                                            Map<String, String> cookies,
                                            Map<String, String> requestHeaders,
                                            int timeoutInSec ) throws FailedRequestException {
+       return getHeader(url,cookies,requestHeaders,timeoutInSec,false);
+    }
+
+    public static HttpResultInfo getHeader(URL url,
+                                           Map<String, String> cookies,
+                                           Map<String, String> requestHeaders,
+                                           int timeoutInSec,
+                                           boolean useSmallRangeStyle) throws FailedRequestException {
         Map <String,String> h= null;
         try {
             h= buildReqHeaders(url,requestHeaders,null);
             HttpURLConnection conn= makeURLConnection(url,cookies,h);
-            return getHeaderFromConnection(conn,timeoutInSec,MAX_REDIRECT,cookies,h);
+            return getHeaderFromConnection(conn,timeoutInSec,MAX_REDIRECT,cookies,h,useSmallRangeStyle);
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
             return exceptionToResponse(e,h);
         } catch (IOException e) {
@@ -379,13 +408,21 @@ public class URLDownload {
                                                           int timeoutInSec,
                                                           int redirectCnt,
                                                           Map<String, String> cookies,
-                                                          Map<String, String> requestHeaders) throws FailedRequestException {
+                                                          Map<String, String> requestHeaders,
+                                                          boolean useSmallRangeStyle) throws FailedRequestException {
         try {
             if (timeoutInSec>0) {
                 conn.setConnectTimeout(timeoutInSec * 1000);
                 conn.setReadTimeout(timeoutInSec * 1000 + 3000);
             }
-            conn.setRequestMethod("HEAD");
+
+            if (useSmallRangeStyle) {
+                requestHeaders= new HashMap<>(requestHeaders);
+                requestHeaders.put("Range","bytes=0-1");
+            }
+            else {
+                conn.setRequestMethod("HEAD");
+            }
 
 
             conn.connect();
@@ -404,7 +441,7 @@ public class URLDownload {
             if (responseCode >= 300 && responseCode < 400) {
                 if (redirectCnt > 0 && Arrays.asList(301,302,303,307,308).contains(responseCode)) {
                     HttpURLConnection newConn = makeURLConnection(urlFromLocation(conn), cookies, requestHeaders);
-                    return getHeaderFromConnection(newConn, 2, redirectCnt-1, cookies, requestHeaders);
+                    return getHeaderFromConnection(newConn, 2, redirectCnt-1, cookies, requestHeaders,useSmallRangeStyle);
                 }
                 result.putAttribute("Location", conn.getHeaderField("Location"));
                 throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),

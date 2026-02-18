@@ -6,6 +6,8 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload.Options;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.client.builder.AwsClientBuilder;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -61,9 +63,11 @@ public class S3Download {
                                    Map<String, String> requestHeaders,
                                    Options options) throws FailedRequestException {
 
-                 //todo eventually we might get credentials from the cookies
-        return getData(ref,outfile,S3Download::applyAnonymouse,options) ;
-    }
+        if (ref == null) return null;
+        //todo: the signed download is supported here but not working, we need more research to understand it.
+        ApplyCredentials applyCredentials= ref.hasCredentials() ? getApplySigned(ref) : S3Download::applyAnonymouse;
+            return getData(ref,outfile,applyCredentials, options) ;
+        }
 
     public static FileInfo getData(S3Ref ref,
                                    File outfile,
@@ -77,12 +81,19 @@ public class S3Download {
 
 
             // --- first do a HEAD call
-            S3HeaderInfo header = getHeader(ref, applyCredentials, options, outfile);
-            String extName = URLDownload.getSuggestedFileName(header.contentDisposition());
-            var length = header.contentLength();
-            var contentType = header.contentType();
-            var code = header.statusCode();
-            if (code != HttpURLConnection.HTTP_OK) {
+            S3HeaderInfo header= null;
+            long length= 0;
+            int code=0;
+            String extName= null;
+            String contentType= null;
+            try {
+                header = getHeader(ref, applyCredentials, options, outfile);
+                extName = URLDownload.getSuggestedFileName(header.contentDisposition());
+                length = header.contentLength();
+                contentType = header.contentType();
+                code = header.statusCode();
+            } catch (SdkClientException ignore) { }
+            if (header!=null && code != HttpURLConnection.HTTP_OK) {
                 if (code == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     logNotModified(outfile, ref);
                     return new FileInfo(outfile, extName, code, ResponseMessage.getHttpResponseMessage(code),
@@ -121,7 +132,7 @@ public class S3Download {
             double seconds = tracker.getElapsedTime(StopWatch.Unit.SECONDS);
             logSuccess(outfile, ref, completedDownload.response(), seconds);
             return new FileInfo(outfile, extName, 200, ResponseMessage.getHttpResponseMessage(200), contentType);
-        } catch (S3Exception | InterruptedException e) {
+        } catch (S3Exception | SdkClientException | InterruptedException e) {
             tracker.stops();
             double seconds = tracker.getElapsedTime(StopWatch.Unit.SECONDS);
             var code= e instanceof S3Exception ? ((S3Exception )e).statusCode() : 0;
@@ -189,8 +200,8 @@ public class S3Download {
 
     public static void logSuccess(File outfile, S3Ref ref, GetObjectResponse r,  double seconds) {
         String formatedSize= FileUtil.getSizeAsString(r.contentLength());
-        String send= String.format( "S3 Download (%.1f sec, %s): %s\n", seconds, formatedSize, ref );
-        String stat= String.format(
+        String send= java.lang.String.format( "S3 Download (%.1f sec, %s): %s\n", seconds, formatedSize, ref );
+        String stat= java.lang.String.format(
                 "        length: %d, contentType: %s, encoding: %s, disposition %s\n",
                 r.contentLength(), r.contentType(), r.contentEncoding(), r.contentDisposition() );
         String file= "        File: "+ outfile.toPath();
@@ -287,6 +298,14 @@ public class S3Download {
         return builder.credentialsProvider(AnonymousCredentialsProvider.create());
     }
 
+    public static ApplyCredentials getApplySigned(S3Ref ref) {
+        String accessKey= ref.accessKey();
+        String signature= ref.signature();
+        return (AwsClientBuilder<?,?> builder) ->
+                                builder.credentialsProvider(
+                                        StaticCredentialsProvider.create(
+                                                AwsBasicCredentials.create(accessKey, signature)));
+    }
 
     public static S3HeaderInfo getResponseInfo(GetObjectResponse response) {
         return new S3HeaderInfo(

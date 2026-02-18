@@ -185,7 +185,7 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static UploadFileInfo makeUploadFileInfo(FileInfo statusFileInfo, String fname) {
         File file= statusFileInfo.getFile();
         return new UploadFileInfo(ServerContext.replaceWithPrefix(file), file,
-                fname!=null ? fname : file.getName(),
+                fname!=null ? fname : file!=null ? file.getName() : null,
                 statusFileInfo.getContentType(), statusFileInfo.getResponseCode());
     }
 

@@ -71,6 +71,13 @@ public class HttpResultInfo {
    public String getResultAsString() { return new String(result);}
 
     public long getContentLength() { return StringUtils.getLong(getAttribute("Content-Length"),0); }
+    public long getContentRangeMax() {
+        var rangeStr= getAttribute("content-range");
+        if (rangeStr==null) return 0;
+        var rAry= rangeStr.split("/");
+        if (rAry.length==2) return StringUtils.getLong(rAry[1],0);
+        return 0;
+    }
     public String getContentEncoding() { return getAttribute("Content-Encoding"); }
     public String getContentDisposition() { return getAttribute("Content-Disposition"); }
 
