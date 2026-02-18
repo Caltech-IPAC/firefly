@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class ConcurrentDownload {
 
         var status= result.getResponseCode();
 
-        if (status==HttpURLConnection.HTTP_FORBIDDEN && S3Ref.isS3SignedURL(url.toString())) { // try an alternate way to get the header, may have to add for GWS as well
+        if (status==HttpURLConnection.HTTP_FORBIDDEN && isProbablyCloudSignedURL(url)) { // try an alternate way to get the header, may have to add for GWS as well
             result= URLDownload.getHeader(url,cookies,newHeaders,8,true);
             status= result.getResponseCode();
         }
@@ -366,4 +367,22 @@ public class ConcurrentDownload {
         }
     }
 
+
+    public static boolean isProbablyCloudSignedURL(URL url) {
+        if (url==null) return false;
+        var s= url.toString();
+        if (s==null) return false;
+        if (!s.toLowerCase().startsWith("https")) return false;
+        var path = url.getPath();
+        if (path.length() < 2) return false;
+        if (StringUtils.isEmpty(url.getQuery())) return false;
+        var q= url.getQuery();
+        if (StringUtils.isEmpty(q)) return false;
+        var p= URLDownload.getQueryParams(url);
+        var isS3Signed= (p.containsKey("Signature") || p.containsKey("X-Amz-Signature")) &&
+                (p.containsKey("AWSAccessKeyId") || p.containsKey("X-Amz-Credential"));
+        var isGwsSigned= p.containsKey("X-Goog-Signature") && p.containsKey("X-Goog-Credential");
+        return isS3Signed || isGwsSigned;
+    }
 }
+

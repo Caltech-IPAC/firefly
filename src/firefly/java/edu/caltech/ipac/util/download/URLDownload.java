@@ -419,6 +419,7 @@ public class URLDownload {
             if (useSmallRangeStyle) {
                 requestHeaders= new HashMap<>(requestHeaders);
                 requestHeaders.put("Range","bytes=0-1");
+                conn.setRequestProperty("Range", "bytes=0-1");
             }
             else {
                 conn.setRequestMethod("HEAD");
@@ -427,7 +428,14 @@ public class URLDownload {
 
             conn.connect();
             Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? Collections.emptySet() : conn.getHeaderFields().entrySet();
-            HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),null, conn.getContentType(), getSuggestedFileName(conn));
+            HttpResultInfo result;
+            if (useSmallRangeStyle && getResponseCode(conn)==HttpURLConnection.HTTP_PARTIAL) {
+                result= new HttpResultInfo(null,HttpURLConnection.HTTP_OK,null, conn.getContentType(), getSuggestedFileName(conn));
+                result.putAttribute("ActualResponseCode", HttpURLConnection.HTTP_PARTIAL+"");
+            }
+            else {
+                result= new HttpResultInfo(null,getResponseCode(conn),null, conn.getContentType(), getSuggestedFileName(conn));
+            }
             result.setSendHeaders(requestHeaders);
 
             for (var e : hSet) {
