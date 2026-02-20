@@ -15,23 +15,25 @@ import {STANDARD_READOUT} from './MouseReadoutCntlr';
 
 /**
  * @typedef MouseState
- * @prop NONE,
- * @prop ENTER,
- * @prop EXIT,
- * @prop DOWN,
- * @prop UP,
- * @prop DRAG_COMPONENT,
- * @prop DRAG,
- * @prop MOVE,
- * @prop CLICK,
- * @prop WHEEL_UP,
- * @prop WHEEL_DOWN,
- * @prop DOUBLE_CLICK,
- * @type {Enum}
+ * @prop NONE
+ * @prop ENTER
+ * @prop EXIT
+ * @prop DOWN
+ * @prop UP
+ * @prop DRAG_COMPONENT
+ * @prop DRAG
+ * @prop MOVE
+ * @prop PINCH_IN
+ * @prop PINCH_OUT
+ * @prop CLICK
+ * @prop WHEEL_UP
+ * @prop WHEEL_DOWN
+ * @prop DOUBLE_CLICK
  */
+
 /** @type MouseState */
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
-    'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK', 'WHEEL_UP', 'WHEEL_DOWN',
+    'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK', 'WHEEL_UP', 'WHEEL_DOWN', 'PINCH_IN', 'PINCH_OUT',
     'DOUBLE_CLICK']);
 
 var lastCtx = {
@@ -110,9 +112,9 @@ export function fireMouseReadoutChange({readoutType= STANDARD_READOUT, plotId, r
  * @param kState.metaDown
  * @return {{plotId: string, mouseState: Enum, screenPt: object, imagePt: object, worldPt: object, screenX: number, screenY: number}}
  */
-export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,
+export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,eventType='',
                                {shiftDown,controlDown,metaDown}= {}) {
-    const payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
+    const payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown,eventType};
     const plot= primePlot(visRoot(),plotId);
     const cc= CysConverter.make(plot);
     if (!plotId || !plot) return payload;

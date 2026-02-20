@@ -27,6 +27,7 @@ import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const PAUSE_DELAY= 30;
+const igoreEvTypes= ['touchend'];
 
 
 /**
@@ -49,6 +50,7 @@ export function* watchReadout() {
     let savedWP;
     yield call(mouseUpdatePromise);
 
+
     mouseCtx = yield call(mouseUpdatePromise);
 
     while (true) {
@@ -56,35 +58,41 @@ export function* watchReadout() {
         let getNextWithWithAsync= false;
         const lockByClick= isLockByClick(readoutRoot());
         let {worldPt,screenPt,imagePt}= mouseCtx;
-        const {plotId,mouseState, healpixPixel, norder, shiftDown}= mouseCtx;
-        if (!lockByClick) savedWP= undefined;
-        if (lockByClick && worldPt && !shiftDown && mouseState===MouseState.CLICK) savedWP= worldPt;
+        const {plotId,mouseState, healpixPixel, norder, shiftDown,eventType}= mouseCtx;
+        const useEv= !igoreEvTypes.includes(eventType);
+
+        if (!useEv) {
+            if (!lockByClick) savedWP= undefined;
+            if (lockByClick && worldPt && !shiftDown && mouseState===MouseState.CLICK) savedWP= worldPt;
+        }
 
         const plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
         const threeColor= plot?.plotState?.threeColor;
 
-        if (plot && lockByClick && savedWP && shiftDown && mouseState===MouseState.CLICK) {
-            worldPt= savedWP;
-            const cc= CsysConverter.make(plot);
-            imagePt= cc.getImageCoords(savedWP);
-            screenPt= cc.getScreenCoords(imagePt);
-        }
+        if (useEv) {
+            if (plot && lockByClick && savedWP && shiftDown && mouseState===MouseState.CLICK) {
+                worldPt= savedWP;
+                const cc= CsysConverter.make(plot);
+                imagePt= cc.getImageCoords(savedWP);
+                screenPt= cc.getScreenCoords(imagePt);
+            }
 
 
-        if (isPayloadNeeded(mouseState,lockByClick)) {
-            if (plot) {
-                const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
-                fireMouseReadoutChange({plotId, readoutItems, threeColor, readoutType:getReadoutKey(plot)});
-                getNextWithWithAsync= hasAsyncReadout(plot);
+            if (isPayloadNeeded(mouseState,lockByClick)) {
+                if (plot) {
+                    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+                    fireMouseReadoutChange({plotId, readoutItems, threeColor, readoutType:getReadoutKey(plot)});
+                    getNextWithWithAsync= hasAsyncReadout(plot);
+                }
+            }
+            else if (!lockByClick) {
+                fireMouseReadoutChange({plotId, readoutItems:{}, readoutType:getReadoutKey(plot)});
             }
         }
-        else if (!lockByClick) {
-            fireMouseReadoutChange({plotId, readoutItems:{}, readoutType:getReadoutKey(plot)});
-        }
 
-        if (getNextWithWithAsync) { // get the next mouse event or the flux
-            mouseCtx= lockByClick  ?
+        if (useEv && getNextWithWithAsync) { // get the next mouse event or the flux
+            mouseCtx= lockByClick || eventType=== 'touchstart' ?
                 yield call(processAsyncDataImmediate,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) :
                 yield call(processAsyncDataDelayed,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
         }
@@ -144,7 +152,7 @@ function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeCol
 
 function isPayloadNeeded(mouseState, lockByClick) {
     if (lockByClick) {
-        return mouseState===MouseState.CLICK;
+        return mouseState===MouseState.CLICK || mouseState.eventType==='touchstart';
     }
     else {
         return mouseState!==MouseState.EXIT;

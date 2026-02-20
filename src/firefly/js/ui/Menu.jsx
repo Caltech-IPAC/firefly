@@ -217,6 +217,7 @@ function MenuTabBar({menuTabItems=[], size, selected, displayMask, setElement}) 
     const tabSelected= selected || ResultCmd;
     const variant='soft';
     const color='primary';
+    const adjustedDisplayMask= displayMask?.slice(1);
 
     const tabItems= [
         <ResultsTab {...{key:'results-tab', size, color, variant, ref: (el) => setElement('results-tab ', el)}}/>,
@@ -233,7 +234,7 @@ function MenuTabBar({menuTabItems=[], size, selected, displayMask, setElement}) 
                 return tip ? <Tooltip key={idx} title={tip}>{tab}</Tooltip> : tab;
             }
             )
-            .filter((item,idx) => displayMask ? displayMask[idx] : true)
+            .filter((item,idx) => adjustedDisplayMask?.[idx] ?? true)
     ];
 
     return (
@@ -288,7 +289,8 @@ function updateMenu(appTitle, menu) {
 
 function getTabBarRealWidth(tabBarElement) {
     const {left: tabBarLeft, width: tabBarWidth} = tabBarElement.getBoundingClientRect() ?? {width: 0, left: 0};
-    const tabBarRealWidth = (window.innerWidth < (tabBarLeft + tabBarWidth)) ? window.innerWidth - tabBarLeft : tabBarWidth;
+    const docWidth= Math.min(document.documentElement.clientWidth, window.innerWidth);
+    const tabBarRealWidth = (docWidth < (tabBarLeft + tabBarWidth)) ? docWidth - tabBarLeft : tabBarWidth;
     return tabBarRealWidth;
 }
 
