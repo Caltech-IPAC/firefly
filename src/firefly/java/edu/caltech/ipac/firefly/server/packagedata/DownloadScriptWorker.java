@@ -29,6 +29,7 @@ import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownlo
 import static edu.caltech.ipac.firefly.server.util.DownloadScript.makeScriptFilename;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import edu.caltech.ipac.firefly.core.background.JobInfo.Progress;
 
 /**
  * Downloads a script with products from the List<FileInfo>
@@ -65,19 +66,19 @@ public final class DownloadScriptWorker implements Job.Worker {
         String dataDesc = dlreq.getDataSource();
         String wsDestPath = isEmpty(dlreq.getParam(DownloadRequest.FILE_LOC)) ? null : dlreq.getParam(DownloadRequest.WS_DEST_PATH);
 
-        sendJobUpdate(ji -> ji.getMeta().setProgress(10, "Validating inputs"));
+        sendJobUpdate(ji -> ji.getAux().setProgress(new Progress("Validating inputs")));
 
         SearchProcessor processor = SearchManager.getProcessor(dlreq.getRequestId());
         if (!(processor instanceof FileGroupsProcessor)) {
             throw new DataAccessException("Operation aborted:" + dlreq.getRequestId(), new IllegalArgumentException("Unable to resolve a search processor for this request"));
         }
 
-        sendJobUpdate(ji -> ji.getMeta().setProgress(20, "Processing the request"));
+        sendJobUpdate(ji -> ji.getAux().setProgress(new Progress("Processing the request")));
 
         List<FileGroup> result = ((FileGroupsProcessor) processor).getData(dlreq);
         int totalFiles = result.stream().mapToInt(fg -> fg.getSize()).sum();
 
-        sendJobUpdate(ji -> ji.getMeta().setProgress(80, "Generating the results"));
+        sendJobUpdate(ji -> ji.getAux().setProgress( new Progress("Generating the results")));
 
         File curlScript = makeScript(result, Curl, dataDesc);
         File wgetScript = makeScript(result, Wget, dataDesc);
@@ -96,7 +97,7 @@ public final class DownloadScriptWorker implements Job.Worker {
 
         sendJobUpdate(ji -> {
             String summary = String.format("%,d files were processed.", totalFiles);
-            ji.getMeta().setSummary(summary);
+            ji.getAux().setProgress(new Progress(summary));
             ji.addResult(new JobInfo.Result("curl-script", curlScriptUrl, "text/x-shellscript", curlScript.length() + ""));
             ji.addResult(new JobInfo.Result("wget-script", wgetScriptUrl, "text/x-shellscript", wgetScript.length() + ""));
             ji.addResult(new JobInfo.Result("url-list", urlsFileUrl, "text/plain", urlsFile.length() + ""));

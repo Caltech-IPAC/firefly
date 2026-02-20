@@ -52,21 +52,19 @@ public interface Job extends Callable<String> {
         try {
             updateJobInfo(getJobId(), ji -> {
                 ji.setStartTime(Instant.now());
-                ji.getMeta().setProgress(0);
             });
             String results = run();
-            // the worker is set in onStart().
+            // the worker is set at onStart().
             getWorker().onComplete();
             if (Thread.currentThread().isInterrupted()) throw new InterruptedException("Job was aborted");
             updateManagedStatus(ji -> {
                 ji.setPhase(JobInfo.Phase.COMPLETED);
-                ji.getMeta().setProgress(100, "");
             });
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {
             updateJobInfo(getJobId(), ji -> {
                 ji.setPhase(JobInfo.Phase.ABORTED);
-                ji.getMeta().setProgress(100, "Job was aborted");
+                ji.getAux().setProgress(new JobInfo.Progress("Job was aborted"));
             });
             getWorker().onAbort();
         } catch (Exception e) {
@@ -78,7 +76,6 @@ public interface Job extends Callable<String> {
         } finally {
             sendUpdate(getJobId(), ji -> {
                 ji.setEndTime(Instant.now());
-                ji.getMeta().setProgress(100);
             });
         }
         return null;

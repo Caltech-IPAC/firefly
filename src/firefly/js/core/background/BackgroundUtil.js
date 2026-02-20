@@ -4,6 +4,7 @@
 
 import {cloneDeep, get, isNil} from 'lodash';
 import Enum from 'enum';
+import moment from 'moment';
 
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
@@ -183,6 +184,31 @@ export function getErrMsg(jobInfo) {
     return jobInfo?.errorSummary?.message;
 }
 
+export function getElapsedTime(jobInfo) {
+    const creationTime = jobInfo?.creationTime ? new Date(jobInfo.creationTime) : new Date();
+    const d = moment.duration(new Date() - creationTime);
+    const fmt = d.asHours() < 1 ? 'mm:ss' : 'HH:mm:ss';
+    return moment.utc(d.asMilliseconds()).format(fmt);
+}
+
+export function getJobPctComplete (jobInfo) {
+    const {percentComplete, itemsProcessed, totalItems} = jobInfo?.jobInfo?.progress ?? {};
+    if (percentComplete < 0 && totalItems < 1) return -1;
+    const pct = percentComplete >= 0 ? percentComplete : itemsProcessed / totalItems * 100;
+    return Math.min(Math.round(pct), 100);
+};
+
+export function getProgressMsg(jobInfo) {
+    const {message, itemsProcessed, totalItems} = jobInfo?.jobInfo?.progress ?? {};
+    const pct = getJobPctComplete(jobInfo);
+    const fixCase = (s) => s?.charAt(0).toUpperCase() + s?.slice(1).toLowerCase();
+
+    if (message) return message;
+    if (totalItems > 0) return `${itemsProcessed} of ${totalItems} processed`;
+    if (pct > 0) return `${pct}% complete`;
+    return `${fixCase(jobInfo?.phase ?? '')}...`;
+}
+
 export const SCRIPT_ATTRIB = new Enum(['URLList', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
 
 export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, downloadType, onComplete}) {
@@ -223,8 +249,8 @@ function bgTracker(action, cancelSelf, params={}) {
     if ( type === BG_JOB_INFO && jobInfo?.meta?.jobId === jobId) {
         if (isDone(jobInfo)) {
             cancelSelf();
-            dispatchComponentStateChange(key, {inProgress:false});
             onComplete?.(jobInfo);
+            dispatchComponentStateChange(key, {inProgress:false});
         }
     } else if (getComponentState(key)?.hide) {
         cancelSelf();

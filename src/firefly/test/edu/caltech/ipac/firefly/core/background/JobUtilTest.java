@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.firefly.core.background;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.query.UwsJobProcessor;
@@ -17,8 +20,9 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.mergeJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobUtil.toJsonJobList;
+import static edu.caltech.ipac.util.serialization.Serializer.getJsonMapper;
 import static org.junit.Assert.*;
 
 /**
@@ -30,12 +34,49 @@ public class JobUtilTest extends ConfigTest {
     static Logger.LoggerImpl logger = Logger.getLogger();
     static List<JobInfo> jobs;
     static String xmlJobList;
+    static String xmlJob;
 
     @BeforeClass
     public static void setUp() {
         // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
         setupServerContext(null);
         Logger.setLogLevel(Level.DEBUG);
+
+        xmlJob = """
+                <uws:job version="1.1" xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 UWS.xsd" 
+                                       xmlns:xml="http://www.w3.org/XML/1998/namespace" 
+                                       xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" 
+                                       xmlns:xlink="http://www.w3.org/1999/xlink" 
+                                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uwsc="urn:uwscustom">
+                <uws:jobId>1242749568029</uws:jobId>
+                <uws:runId>myjobref</uws:runId>
+                <uws:ownerId xsi:nil="true"/>
+                <uws:phase>COMPLETED</uws:phase>
+                <uws:creationTime>2009-05-19T17:01:44.038Z</uws:creationTime>
+                <uws:startTime>2009-05-19T17:12:48.038Z</uws:startTime>
+                <uws:endTime>2009-05-19T17:12:49.041Z</uws:endTime>
+                <uws:executionDuration>86400</uws:executionDuration>
+                <uws:destruction>2009-05-29T17:12:48.035Z</uws:destruction>
+                <uws:parameters>
+                <uws:parameter id="scaleFactor">1.8</uws:parameter>
+                <uws:parameter id="image" byReference="true"> http://myserver.org/uws/jobs/jobid123/param/image</uws:parameter>
+                </uws:parameters>
+                <uws:results>
+                <uws:result id="correctedImage" xlink:href="http://myserver.org/uws/jobs/jobid123/result/image" size="3000960" mime-type="image/fits" uwsc:anyattribute="a custom attribute"/>
+                </uws:results>
+                <uws:errorSummary type="transient" hasDetail="true">
+                <uws:message>we have problem</uws:message>
+                </uws:errorSummary>
+                <uws:jobInfo>
+                    <progress>
+                        <percentComplete>77</percentComplete>
+                        <message>77 of 100 items processed</message>
+                        <itemsProcessed>77</itemsProcessed>
+                        <totalItems>100</totalItems>
+                    </progress>
+                </uws:jobInfo>
+                </uws:job>
+        """.stripIndent();
 
         xmlJobList = """
             <uws:jobs xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -152,6 +193,29 @@ public class JobUtilTest extends ConfigTest {
     }
 
     @Test
+    public void parseUwsJob() throws Exception {
+        JobInfo uwsJob = UwsJobProcessor.convertToJobInfo(UwsJobProcessor.parse( new ByteArrayInputStream(xmlJob.getBytes())));
+        assertEquals(uwsJob.getJobId(), "1242749568029");
+        assertEquals(uwsJob.getCreationTime().toString(), "2009-05-19T17:01:44.038Z");
+        assertEquals(uwsJob.getStartTime().toString(), "2009-05-19T17:12:48.038Z");
+        assertEquals(uwsJob.getEndTime().toString(), "2009-05-19T17:12:49.041Z");
+        assertEquals(uwsJob.getExecutionDuration(), 86400);
+        assertEquals(uwsJob.getParameters().get("scaleFactor"), "1.8");
+        assertEquals(uwsJob.getParameters().get("image"), "http://myserver.org/uws/jobs/jobid123/param/image");
+        assertEquals(uwsJob.getResults().getFirst().id(), "correctedImage");
+        assertEquals(uwsJob.getResults().getFirst().href(), "http://myserver.org/uws/jobs/jobid123/result/image");
+        assertEquals(uwsJob.getResults().getFirst().size(), "3000960");
+        assertEquals(uwsJob.getResults().getFirst().mimeType(), "image/fits");
+        assertEquals(uwsJob.getErrorSummary().message(), "we have problem");
+        assertEquals(uwsJob.getErrorSummary().type(), "transient");
+        assertTrue(uwsJob.getErrorSummary().hasDetail());
+        assertEquals(uwsJob.getAux().getProgress().percentComplete(), 77);
+        assertEquals(uwsJob.getAux().getProgress().message(), "77 of 100 items processed");
+        assertEquals(uwsJob.getAux().getProgress().itemsProcessed(), 77);
+        assertEquals(uwsJob.getAux().getProgress().totalItems(), 100);
+    }
+
+    @Test
     public void parseUwsJobs() throws Exception {
         List<JobInfo> uwsJobs = UwsJobProcessor.convertToJobList( UwsJobProcessor.parse( new ByteArrayInputStream(xmlJobList.getBytes())), "http://example.org/uws/jobs");
         assertEquals(2, uwsJobs.size());
@@ -159,6 +223,19 @@ public class JobUtilTest extends ConfigTest {
         assertEquals("http://example.org/uws/jobs/job-001", uwsJobs.get(0).getAux().getJobUrl());
         assertEquals("job-002", uwsJobs.get(1).getJobId());
         assertEquals("http://example.org/uws/jobs/job-002", uwsJobs.get(1).getAux().getJobUrl());
+
+        String userJobs = toJsonJobList(uwsJobs, true);
+        ObjectMapper mapper = getJsonMapper();
+        JsonNode root = Util.Try.it(() -> mapper.readTree(userJobs)).get();
+        boolean overflow = root.get("overflow").asBoolean();
+        List<JobInfo> jobs = mapper.convertValue(root.get("jobs"), new TypeReference<List<JobInfo>>() {});
+        assertTrue(overflow);
+        assertEquals(2, jobs.size());
+        assertEquals("job-001", jobs.get(0).getJobId());
+        assertEquals("http://example.org/uws/jobs/job-001", jobs.get(0).getAux().getJobUrl());
+        assertEquals("job-002", jobs.get(1).getJobId());
+        assertEquals("http://example.org/uws/jobs/job-002", jobs.get(1).getAux().getJobUrl());
+
     }
 
     @Test

@@ -153,6 +153,16 @@
  * @prop {string} userId        Firefly user ID associated with the job
  * @prop {string} userName      Firefly username associated with the job
  * @prop {string} userEmail     email associated with the job
+ * @prop {Progess} progress     Job progress information
+ */
+
+/**
+ * Internal job information.  Used by Firefly to manage the job.
+ * @typedef {Object} Progess
+ * @prop {int} percentComplete  progress of the job as a percentage.  0-100, where 100 is done
+ * @prop {int} totalItems       total number of items to process.  -1 means unknown or unlimited
+ * @prop {int} itemsProcessed   number of items processed so far
+ * @prop {string} message       a description of the current progress
  */
 
 /**
@@ -164,8 +174,6 @@
  * @prop {string} type          type of job. One of SEARCH, UWS, TAP, PACKAGE, SCRIPT
  * @prop {string} svcId         an identifier for the service that this job is associated with
  * @prop {boolean} monitored    true if UI is monitoring the job
- * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
- * @prop {string} progressDesc  a description of the current progress
  * @prop {string} summary       summary of the job
  * @prop {boolean} sendNotif    if true, send notification when job is done
  */

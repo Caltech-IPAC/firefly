@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Progress;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.getJobWorkDir;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
@@ -124,9 +124,7 @@ public final class PackagingWorker implements Job.Worker {
         updateJobInfo(getJob().getJobId(), ji -> {
             String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
-            ji.getMeta().setProgress(100);
-            ji.getMeta().setProgressDesc(summary);
-            ji.getMeta().setSummary(summary);
+            ji.getAux().setProgress(new Progress(summary));
         });
 
         return "";
@@ -146,8 +144,7 @@ public final class PackagingWorker implements Job.Worker {
             if ( pct != lastUpdatedPct) {
                 lastUpdatedPct = pct;
                 sendJobUpdate(ji -> {
-                    ji.getMeta().setProgress(pct);
-                    ji.getMeta().setProgressDesc(String.format("%d of %d completed", curFileInfoIdx, totalFiles));
+                    ji.getAux().setProgress(new Progress("%d of %d completed".formatted(curFileInfoIdx, totalFiles)));
                 });
             }
         }

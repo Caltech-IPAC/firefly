@@ -33,9 +33,10 @@ public class AsyncTapQueryTest extends ConfigTest {
 
 			DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
 
+			// uws job returns an obscore table as the resulting table.  It may contain more than one mixed data products.
 			Assert.assertTrue("has results", results.size() > 0);
-			Assert.assertNotNull("has ra", results.getDataDefintion("ra"));
-			Assert.assertNotNull("has dec", results.getDataDefintion("dec"));
+			Assert.assertNotNull("has access_url", results.getDataDefintion("access_url"));
+			Assert.assertNotNull("has dataproduct_type", results.getDataDefintion("dataproduct_type"));
 
 		} catch (Exception e) {
 			Assert.fail("testExecRequestQuery failed with exception: " + e.getMessage());

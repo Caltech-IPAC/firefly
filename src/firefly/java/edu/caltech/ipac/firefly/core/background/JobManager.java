@@ -48,6 +48,7 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.UWS;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.EXECUTING;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.*;
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.firefly.server.ServerContext.SCHEDULE_TASK_EXEC;
@@ -158,13 +159,11 @@ public class JobManager {
 
         sendUpdate(jobId, ji -> {
             ji.setPhase(QUEUED);
-            ji.getMeta().setProgress(0);
         });
 
         try {
             Future<String> future = job.getType() == PACKAGE ? packagers.submit(job) : searches.submit(job);
             runningJobs.put(jobId, new JobEntry(future, job));
-
             future.get(WAIT_COMPLETE, TimeUnit.SECONDS);        // wait in seconds for a job to complete
         } catch (TimeoutException e) {
             // it's ok; job may take longer to complete
@@ -172,7 +171,6 @@ public class JobManager {
             // job run() handles exceptions; this only happens if submit or future.get() fails
             sendUpdate(jobId, (ji) -> {
                 ji.setErrorSummary(new ErrorSummary(e.getMessage()));
-                ji.getMeta().setProgress(100, null);
             });
             LOG.error(e);
         }
@@ -283,9 +281,11 @@ public class JobManager {
             info = new JobInfo(jobId);
             initNewJob(info);
         }
-        if (info == null || func == null) return null;
-        func.accept(info);
-        updateJobInfo(info);
+        if (info == null) return null;
+        if (func != null) {
+            func.accept(info);
+            updateJobInfo(info);
+        }
         return info;
     }
 
@@ -298,7 +298,8 @@ public class JobManager {
         JobInfo jobInfo = updateJobInfo(jobId, func);
         if (jobInfo != null) {
             Messenger.publish(new JobEvent(JobEvent.EventType.UPDATED, jobInfo));
-            Logger.getLogger().trace("sendUpdate: " + jobInfo.getMeta().getJobId() + " " + jobInfo.getPhase() + jobInfo.getMeta().getProgressDesc());
+            String progress = jobInfo.getAux().getProgress() == null ? "null" : String.format("%d%% %s", jobInfo.getAux().getProgress().percentComplete(), jobInfo.getAux().getProgress().message());
+            Logger.getLogger().trace("sendUpdate: " + jobInfo.getMeta().getJobId() + " " + jobInfo.getPhase() + progress);
         }
         return jobInfo;
     }
@@ -379,7 +380,7 @@ public class JobManager {
                         ji.getPhase(),
                         ji.getCreationTime() == null ? "" : ji.getCreationTime().truncatedTo(ChronoUnit.SECONDS),
                         startT == null || endT == null ? -1 : Duration.between(startT, endT).toSeconds(),
-                        ji.getMeta().getProgress(),
+                        ifNotNull(ji.getAux().getProgress()).orElse(new Progress()).get(Progress::percentComplete),
                         ji.getMeta().isMonitored(),
                         ji.getMeta().getUserKey()));
             });

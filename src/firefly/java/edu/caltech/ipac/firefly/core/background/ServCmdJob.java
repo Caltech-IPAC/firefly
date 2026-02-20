@@ -71,7 +71,6 @@ public abstract class ServCmdJob extends ServCommand implements Job {
             worker.setJob(this);
             updateManagedStatus(ji -> {     // set these only if it's not a self-managed job
                 ji.setPhase(JobInfo.Phase.EXECUTING);
-                ji.getMeta().setProgress(10);
             });
             sendUpdate(jobId, ji -> {      // needs to update clients, because these values may change after the job has submitted
                 ji.getMeta().setType(worker.getType());

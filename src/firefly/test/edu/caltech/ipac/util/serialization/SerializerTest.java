@@ -43,7 +43,6 @@ public class SerializerTest {
                   "creationTime": "2025-01-01T10:00:00Z",
                   "meta": {
                     "summary": "Running",
-                    "progress": 50,
                     "sendNotif": false,
                     "monitored": false
                   },
@@ -66,7 +65,13 @@ public class SerializerTest {
                   ],
                   "jobInfo": {
                     "jobUrl": "http://example/job/123",
-                    "userName": "Jane Doe"
+                    "userName": "Jane Doe",
+                    "progress": {
+                        "percentage": 75,
+                        "itemsProcessed": 75,
+                        "totalItems": 100,
+                        "message": "Processing"
+                    }
                   }
                 }
             """;
@@ -87,12 +92,12 @@ public class SerializerTest {
         assertNotNull(json);
         assertNotNull(msgpack);
         assertNotNull(base64);
-        // Size reduced from 476 to 367 (~23% smaller)
+        // Size reduced from 549 to 436 (~23% smaller)
         assertTrue(
                 "Expected MessagePack payload to be smaller than JSON",
                 msgpack.length < json.length
         );
-        // Size reduced from 2460 to 367 (~85% smaller)
+        // Size reduced from 2768 to 436 (~85% smaller)
         assertTrue(
                 "Expected MessagePack payload to be smaller than base64",
                 msgpack.length < base64.length()
@@ -116,8 +121,8 @@ public class SerializerTest {
         assertEquals(original.getExecutionDuration(), decoded.getExecutionDuration());
         assertEquals(original.getParameters(), decoded.getParameters());
         assertEquals(
-                original.getMeta().getProgress(),
-                decoded.getMeta().getProgress()
+                original.getAux().getProgress(),
+                decoded.getAux().getProgress()
         );
         assertEquals(
                 original.getAux().getUserName(),
@@ -138,10 +143,6 @@ public class SerializerTest {
 
         assertEquals(original.getJobId(), decoded.getJobId());
         assertEquals(original.getPhase(), decoded.getPhase());
-        assertEquals(
-                original.getMeta().getSummary(),
-                decoded.getMeta().getSummary()
-        );
     }
 
     @Test
