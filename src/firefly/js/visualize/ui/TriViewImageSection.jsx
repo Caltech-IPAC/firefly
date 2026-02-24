@@ -13,7 +13,7 @@ import {
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
-import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
+import {Tab, TabPanel} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
@@ -21,7 +21,14 @@ import {
     DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
     META_VIEWER_ID} from '../MultiViewCntlr.js';
 import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge, getActiveTableId} from '../../tables/TableUtil.js';
-import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {
+    LO_MODE,
+    LO_VIEW,
+    dispatchSetLayoutMode,
+    dispatchUpdateLayoutInfo,
+    getLayouInfo,
+    TAB_IDS
+} from '../../core/LayoutCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
@@ -46,21 +53,23 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
                                      showMeta=false, imageExpandedMode=false, closeable=true,
                                      coverageSide= 'LEFT', dataProductTableId, }) {
 
-    if (imageExpandedMode) {
-        return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
-    }
+    const selectedTab = useStoreConnector(() => getLayouInfo()?.images?.selectedTab);
     const onTabSelect = (id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
     const key= (showCoverage&&coverageSide==='LEFT') +'--'+ showFits +'--' + showMeta;
+    const defaultSelected=getDefSelected(showCoverage,showFits,showMeta,dataProductTableId);
+
+    if (imageExpandedMode) {
+        return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
+    }
 
     if (showCoverage || showFits || showMeta) {
         return (
-            <Tabs key={key} onTabSelect={onTabSelect}
-                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta,dataProductTableId)}>
-                { showCoverage && coverageSide==='LEFT' && makeCoverageTab({id:'coverage'}) }
-                { showMeta && makeMultiProductViewerTab({dataProductTableId,id:'meta'}) }
-                { showFits && makeFitsPinnedTab({id:'fits',asTab:true}) }
-            </Tabs>
+            <TabPanel key={key} value={selectedTab ?? defaultSelected} onTabSelect={onTabSelect}>
+                { showCoverage && coverageSide==='LEFT' && makeCoverageTab({id:TAB_IDS.COVERAGE}) }
+                { showMeta && makeMultiProductViewerTab({dataProductTableId,id:TAB_IDS.DP}) }
+                { showFits && makeFitsPinnedTab({id:TAB_IDS.PINNED_IMAGE,asTab:true}) }
+            </TabPanel>
         );
 
     }
@@ -125,24 +134,24 @@ TriViewImageSection.propTypes= {
     closeable: PropTypes.bool,
     dataProductTableId: PropTypes.string,
     chartMetaId: PropTypes.string,
-    selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),
+    selectedTab: PropTypes.oneOf([TAB_IDS.PINNED_IMAGE, TAB_IDS.DP, TAB_IDS.COVERAGE]),
     coverageSide: PropTypes.string,
     style: PropTypes.object
 };
 
 
 function getDefSelected(showCoverage, showFits, showMeta, tbl_id) {
-    if (showFits) return 'fits';
+    if (showFits) return TAB_IDS.PINNED_IMAGE;
     if (showMeta) {
-        if (!showCoverage || isObsCoreLike(tbl_id)) return 'meta';
+        if (!showCoverage || isObsCoreLike(tbl_id)) return TAB_IDS.DP;
         const sdAry= getServiceDescriptors(tbl_id);
         if (sdAry) {
-            if (sdAry.some((sd) => isDataLinkServiceDesc(sd) )) return 'meta'; // treat just like an obbscore table
-            return 'coverage'; // probably a catalog with some secondary data products, a pretty common case
+            if (sdAry.some((sd) => isDataLinkServiceDesc(sd) )) return TAB_IDS.DP; // treat just like an obbscore table
+            return TAB_IDS.COVERAGE; // probably a catalog with some secondary data products, a pretty common case
         }
-        return 'meta'; // probably not obscore but some other data product table (like an upload of images)
+        return TAB_IDS.DP; // probably not obscore but some other data product table (like an upload of images)
     }
-    if (showCoverage) return 'coverage';
+    if (showCoverage) return TAB_IDS.COVERAGE;
 }
 
 export function startImagesLayoutWatcher() {
@@ -233,12 +242,12 @@ function handleNewTable(layoutInfo, action) {
     const showCoverage= hasCoverageTable(tblList)|| hasCoverageData(tbl_id) || isOrbitalPathTable(tbl_id) || isCatalog(tbl_id);
 
     if (isMeta || showTables ) {
-        if (!showFits) selectedTab = 'coverage';
+        if (!showFits) selectedTab = TAB_IDS.COVERAGE;
         showFits= showFits || shouldShowFits();
     }
     if (isMeta && showTables) {
         showImages = true;
-        selectedTab = 'meta';
+        selectedTab = TAB_IDS.DP;
         showMeta = true;
         dataProductTableId = tbl_id;
     }
@@ -306,11 +315,11 @@ function onNewImage(layoutInfo, action) {
     const {viewerId} = action.payload || {};
     if (viewerId === META_VIEWER_ID) {
         // select meta tab when new images are added to meta image group.
-        selectedTab = 'meta';
+        selectedTab = TAB_IDS.DP;
         showMeta = true;
     } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
         // select fits tab when new images are added to default group.
-        selectedTab = 'fits';
+        selectedTab = TAB_IDS.PINNED_IMAGE;
         showFits = true;
     }
 
