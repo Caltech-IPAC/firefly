@@ -164,7 +164,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                     String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
                     results.setErrorMsg(error);
-                    sendJobUpdate(ji -> ji.setErrorSummary( new JobInfo.ErrorSummary(error)));      // because an error table is returned
+                    sendJobUpdate(ji -> {
+                        ji.setPhase(JobInfo.Phase.ERROR);
+                        ji.setErrorSummary( new JobInfo.ErrorSummary(error));       // because an error table is returned
+                    });
                 } else {
                     throw e;
                 }

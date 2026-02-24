@@ -49,7 +49,7 @@ export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, canc
 
     return (
         <Stack component={Sheet} className='ff-FormPanel' spacing={1} p={1} height={1} {...rootProps}>
-            <Slot component={Stack} flexGrow={1} slotProps={slotProps?.input}>
+            <Slot component={Stack} flexGrow={1} overflow='auto' slotProps={slotProps?.input}>
                 {children}
             </Slot>
             <Slot component={Stacker} endDecorator={searchBarEnd} slotProps={slotProps?.searchBar}>

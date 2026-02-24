@@ -134,7 +134,6 @@ public class JobInfo implements Serializable {
     }
 
     public void setErrorSummary(ErrorSummary errorSummary) {
-        setPhase(Phase.ERROR);
         this.errorSummary = errorSummary;
     }
 
@@ -232,7 +231,7 @@ public class JobInfo implements Serializable {
 
     public record ErrorSummary(String message, String type, boolean hasDetail) implements Serializable {
         public ErrorSummary(String message) {
-            this(message, "transient", true);
+            this(message, "fatal", false);
         }
     }
     public record Result(String id, String href, String mimeType, String size) implements Serializable {};

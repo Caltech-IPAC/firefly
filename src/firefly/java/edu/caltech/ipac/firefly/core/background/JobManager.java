@@ -170,6 +170,7 @@ public class JobManager {
         } catch (Exception e) {
             // job run() handles exceptions; this only happens if submit or future.get() fails
             sendUpdate(jobId, (ji) -> {
+                ji.setPhase(ERROR);
                 ji.setErrorSummary(new ErrorSummary(e.getMessage()));
             });
             LOG.error(e);
@@ -184,8 +185,8 @@ public class JobManager {
 
     public static JobInfo abort(String jobId, String reason) {
         JobInfo info = updateJobInfo(jobId, (ji) -> {
-            if (reason != null) ji.setErrorSummary(new ErrorSummary(reason));
             ji.setPhase(ABORTED);
+            if (reason != null) ji.setErrorSummary(new ErrorSummary(reason));
         });
         if (info != null) {
             Messenger.publish(new JobEvent(JobEvent.EventType.ABORTED, info));      // notify all instances AFTER jobInfo is updated
