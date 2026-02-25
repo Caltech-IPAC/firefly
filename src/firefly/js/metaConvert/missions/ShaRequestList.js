@@ -34,7 +34,7 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
             : 'AOR';
 
     const dataFile = dataType === 'AOR' ? getCellValue(table, row, 'depthofcoverage')
-            : dataType === 'SEIP' ? getCellValue(table, row, 'uri')
+            : dataType === 'SEIP' ? getCellValue(table, row, 'fname')
             : getCellValue(table, row, 'heritagefilename');
 
     /*
@@ -50,8 +50,7 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
         filepath = dataFile.replaceAll('/sha/archive/proc', 'Enhanced/IRS/spectra');
         url = `${serverinfo}/${filepath}`;
     } else if (dataType === 'SEIP') {
-        // url = `${serverinfo}` + 'Enhanced/SEIP/' + `${dataFile}`;
-        url = dataFile;     // uri is already a full url
+        url = `${serverinfo}` + 'Enhanced/SEIP/' + `${dataFile}`;
     } else if (dataType === 'PRECOVERY') {
         url += `${shaservlet}` + '&ID=' + `${bcdId}`;
         url = new URL(url, getRootURL());
