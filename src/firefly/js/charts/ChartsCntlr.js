@@ -86,6 +86,7 @@ function reducers() {
  *  @param {string} [p.viewerId] – viewer where chart will be displayed
  *  @param {boolean} [p.deletable] - is the chart deletable, if undefined: single chart in a group is not deletable, multiple are deletable
  *  @param {string} [p.help_id] - help id, if undefined, no help icon shows up
+ *  @param {boolean} [p.activateViewer] - activate the chart viewer (tab) when chart is added
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  *  @public
  *  @function dispatchChartAdd

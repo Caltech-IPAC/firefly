@@ -18,7 +18,8 @@ import { TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH, 
 } from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
 import {
-    DEFAULT_FITS_VIEWER_ID, getMultiViewRoot, getViewer, PINNED_CHART_VIEWER_ID, REPLACE_VIEWER_ITEMS
+    DEFAULT_FITS_VIEWER_ID,
+    DEFAULT_PLOT2D_VIEWER_ID, getMultiViewRoot, getViewer, PINNED_CHART_VIEWER_ID, REPLACE_VIEWER_ITEMS
 } from '../visualize/MultiViewCntlr.js';
 import {COMMAND, getMenu, REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
@@ -66,6 +67,8 @@ export const REMOVE_CELL        = `${LAYOUT_PATH}.removeCell`;
 export const ENABLE_SPECIAL_VIEWER= `${LAYOUT_PATH}.enableSpecialViewer`;
 
 
+/*------------------ Layout Constants ---------------------------- */
+
 export const TRIVIEW_ICov_Ch_T= 'TRIVIEW_ICov_Ch_T'; //top left: image/cov, top right: charts, bottom: tables
 export const TRIVIEW_I_ChCov_T= 'TRIVIEW_I_ChCov_T';//top left: image, top right: charts/cov, bottom: tables
 export const BIVIEW_ICov_Ch= 'BIVIEW_ICov_Ch'; //left: image/cov, right: charts
@@ -73,8 +76,15 @@ export const BIVIEW_I_ChCov= 'BIVIEW_I_ChCov'; //left: image, right: charts/cov
 export const BIVIEW_T_IChCov= 'BIVIEW_T_IChCov'; //left: tables, right: image/charts/cov
 export const BIVIEW_IChCov_T= 'BIVIEW_IChCov_T'; //left: image/charts/cov, right: tables
 
-
-
+/* IDs of all the tabs other than TablesContainer inside the "Results" panel */
+export const TAB_IDS = {
+    ACTIVE_CHART: 'activeCharts',
+    PINNED_CHART: 'pinnedCharts',
+    COVERAGE: 'coverage',
+    DP: 'meta',
+    PINNED_IMAGE: 'fits',
+    PROPERTY_SHEET: 'rowDetails',
+};
 
 /*---------------------------- Reducers ----------------------------*/
 
@@ -435,7 +445,9 @@ export function dropDownHandler(layoutInfo, action) {
     // calculate dropDown when new UI elements are added or removed from results
     switch (action.type) {
         case CHART_ADD:
-            return smartMerge(layoutInfo, {dropDown: resultsViewDropdown});
+            const {viewerId, activateViewer} = action.payload;
+            const updates = activateViewer ? getChartViewerLayout(viewerId) : {};
+            return smartMerge(layoutInfo, {...updates, dropDown: resultsViewDropdown});
         case TBL_RESULTS_ADDED:
         case TBL_RESULTS_ACTIVE:
         case TABLE_LOADED:
@@ -571,3 +583,15 @@ function getColFitIdx(gridView, row, testIdx, gridColumns, testWidth) {
 export const MENU_TAB_NODES = 'menuTabNodes';
 export const getMenuTabNodes = () => getLayouInfo()?.[MENU_TAB_NODES] ?? {};
 export const dispatchUpdateMenuTabNodes = (menuTabNodes) => dispatchUpdateLayoutInfo({[MENU_TAB_NODES]: menuTabNodes});
+
+// get LayoutInfo based on the viewerId of the chart add action
+const getChartViewerLayout = (viewerId) => {
+    switch (viewerId) {
+        case DEFAULT_PLOT2D_VIEWER_ID:
+            return {rightSide: {selectedTab: TAB_IDS.ACTIVE_CHART}};
+        case PINNED_CHART_VIEWER_ID:
+            return {rightSide: {selectedTab: TAB_IDS.PINNED_CHART}};
+        default:
+            return {};
+    }
+};

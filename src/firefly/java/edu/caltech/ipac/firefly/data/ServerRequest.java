@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.data;
 
+import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -276,6 +277,10 @@ public class ServerRequest implements Serializable, Cloneable {
         return StringUtils.getDouble(getParam(key));
     }
 
+    public double getDoubleParam(String key, double def) {
+        return StringUtils.getDouble(getParam(key), def);
+    }
+
     public float getFloatParam(String key) {
         return StringUtils.getFloat(getParam(key));
     }
@@ -292,6 +297,15 @@ public class ServerRequest implements Serializable, Cloneable {
             wpt= null;
         }
         return wpt;
+    }
+
+    public double getSizeParam(String key, MathUtil.Units units) {
+        double sizeInDeg = getDoubleParam(key); // client sends size in degrees
+        return MathUtil.convert(MathUtil.Units.DEGREE, units, sizeInDeg);
+    }
+
+    public double getSizeParam(String key) {
+        return getSizeParam(key, MathUtil.Units.DEGREE);
     }
 
 //====================================================================

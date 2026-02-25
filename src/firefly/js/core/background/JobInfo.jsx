@@ -121,18 +121,22 @@ export function JobProgress({jobInfo, ...props}) {
     if (!isActive(jobInfo)) return null;
 
     const pct = getJobPctComplete(jobInfo);
-    const lpProps =  pct >= 0 ? {determinate:true, value:pct} : {size:'md'};
+    const lpProps =  pct >= 0 ? {determinate:true, value:pct} : {};
     return (
-        <Slot component={Sheet} variant='soft' sx={{flexGrow:1, padding:1}} slotProps={{...props}}>
-            <Stack direction='row' spacing={1} alignItems='center'>
-                <Typography level='title-sm' >Progress:</Typography>
-                <LinearProgress variant='outlined' {...lpProps}/>
+        <Stack spacing={.25} {...props} sx={{flex: 1, ...props?.sx}}>
+            <Stack direction='row' spacing={1} alignItems='baseline'>
+                <Typography level='title-sm'>Progress:</Typography>
+                <Typography level='body-sm' title={msg}
+                            sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                    {msg}
+                </Typography>
+                <Typography level='body-sm' color='primary'
+                            sx={{fontVariantNumeric: 'tabular-nums', flexGrow: 1, textAlign: 'right'}}>
+                    {elapsed}
+                </Typography>
             </Stack>
-            <Stack direction='row' spacing={1}>
-                <Typography level='body-xs' color='warning' sx={{fontVariantNumeric: 'tabular-nums'}}> {elapsed} — </Typography>
-                <Typography level='body-xs' fontStyle='italic' title={msg} sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',}}> {msg} </Typography>
-            </Stack>
-        </Slot>
+            <LinearProgress variant='solid' thickness={2} {...lpProps}/>
+        </Stack>
     );
 }
 
@@ -155,7 +159,7 @@ function JobInfoDetails({jobInfo={}}) {
                 <JobIdWrapper jobInfo={jobInfo}/>
             </GridRow>
             <GridRow>
-                <JobProgress jobInfo={jobInfo}/>
+                <JobProgress jobInfo={jobInfo} sx={{mb: 1, mr: 1}}/>
             </GridRow>
             <GridRow>
                 <KeywordBlock label='Creation Time' title='Referred to as "creationTime" in UWS' value={toDateString(creationTime, useLocalTime)}  {...dateProps}/>
