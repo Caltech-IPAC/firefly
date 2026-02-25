@@ -30,6 +30,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static edu.caltech.ipac.util.download.URLDownload.firstParamValUsingKeyList;
+
 /**
  * @author Trey Roby
  *
@@ -379,9 +381,9 @@ public class ConcurrentDownload {
         var q= url.getQuery();
         if (StringUtils.isEmpty(q)) return false;
         var p= URLDownload.getQueryParams(url);
-        var isS3Signed= (p.containsKey("Signature") || p.containsKey("X-Amz-Signature")) &&
-                (p.containsKey("AWSAccessKeyId") || p.containsKey("X-Amz-Credential"));
-        var isGwsSigned= p.containsKey("X-Goog-Signature") && p.containsKey("X-Goog-Credential");
+        var isS3Signed= firstParamValUsingKeyList(p,S3Ref.S3_CRED_PARAMS)!=null &&
+                firstParamValUsingKeyList(p,S3Ref.S3_SIG_PARAMS)!=null;
+        var isGwsSigned= p.containsKey(GcsRef.GCS_SIG_PARAM) && p.containsKey(GcsRef.GCS_CRED_PARAM);
         return isS3Signed || isGwsSigned;
     }
 }

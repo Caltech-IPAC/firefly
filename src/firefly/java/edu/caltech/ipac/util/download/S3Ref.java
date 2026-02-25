@@ -13,6 +13,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 
+import static edu.caltech.ipac.util.download.URLDownload.firstParamValUsingKeyList;
+
 /**
  * @author Trey Roby
  *
@@ -29,7 +31,9 @@ public record S3Ref(String region, String bucket, String key, String accessKey, 
     private static final String AMAZON = "amazonaws.com";
     private static final String defRegion = "aws-global";
     private static final int amazonLen = AMAZON.length();
-    private static final boolean ENABLE_SIGNED= false; // we don't support signed calls yet
+    public static final String[] S3_SIG_PARAMS = new String[] {"Signature", "X-Amz-Signature"};
+    public static final String[] S3_CRED_PARAMS = new String[] {"AWSAccessKeyId", "X-Amz-Credential"};
+    private static final boolean ENABLE_SIGNED = false; // we don't support signed calls yet
 
     public String toString() {
         return String.format("%s - %s - %s", region, bucket, key);
@@ -95,24 +99,19 @@ public record S3Ref(String region, String bucket, String key, String accessKey, 
             }
             if (s3Ref==null) return null;
 
-            if (isS3SignedURL(s)) {
+            var signedUrl= isS3SignedURL(s);
+            if (signedUrl) {
                 var params= URLDownload.getQueryParams(url);
                 if (params.size()>=2) {
-                    String sig= Util.Try.it(() -> params.get("Signature").getFirst()).getOrElse("");
-                    if (sig.isEmpty()) {
-                        sig= Util.Try.it(() -> params.get("X-Amz-Signature").getFirst()).getOrElse("");
-                    }
-                    String accessKey= Util.Try.it(() -> params.get("AWSAccessKeyId").getFirst()).getOrElse("");
-                    if (accessKey.isEmpty()) {
-                        accessKey= Util.Try.it(() -> params.get("X-Amz-Credential").getFirst()).getOrElse("");
-                    }
-                    if (!sig.isEmpty() && !accessKey.isEmpty()) {
+                    String sig= firstParamValUsingKeyList(params, S3_SIG_PARAMS);
+                    String accessKey= firstParamValUsingKeyList(params, S3_CRED_PARAMS);
+                    if (sig!=null && accessKey!=null) {
                         s3Ref= new S3Ref( s3Ref.region, s3Ref.bucket, s3Ref.key, accessKey, sig);
                     }
                 }
-                if (!ENABLE_SIGNED) return null;
             }
-            return s3Ref;
+            if (ENABLE_SIGNED && signedUrl) return s3Ref;
+            return (StringUtils.isEmpty(url.getQuery())) ? s3Ref : null;
         }
         return null;
     }
@@ -128,9 +127,9 @@ public record S3Ref(String region, String bucket, String key, String accessKey, 
         if (StringUtils.isEmpty(url.getQuery())) return false;
         var host = url.getHost().toLowerCase();
         if (!host.endsWith(AMAZON) && !host.contains("s3.")) return false;
-        var q= url.getQuery();
-        if (StringUtils.isEmpty(q)) return false;
-        return (q.contains("Signature") || q.contains("X-Amz-Signature")) &&
-               (q.contains("AWSAccessKeyId") || q.contains("X-Amz-Credential"));
+        var params= URLDownload.getQueryParams(url);
+        String sig= firstParamValUsingKeyList(params, S3_SIG_PARAMS);
+        String accessKey= firstParamValUsingKeyList(params, S3_CRED_PARAMS);
+        return (sig!=null && accessKey!=null);
     }
 }

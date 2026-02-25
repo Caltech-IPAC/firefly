@@ -35,9 +35,7 @@ public record UriRef(Object ref, Object sourceForRef) {
 
     public ResourceType getType() {return determineType(ref);}
 
-    public URL getURL() {
-        return (ref instanceof URL url) ? url : null;
-    }
+    public URL getURL() { return (ref instanceof URL url) ? url : null; }
     public S3Ref getS3Ref() { return (ref instanceof S3Ref s3Ref) ? s3Ref : null; }
     public GcsRef getGcsRef() { return (ref instanceof GcsRef gcsRef) ? gcsRef : null; }
 

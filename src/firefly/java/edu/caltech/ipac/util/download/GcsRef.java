@@ -25,6 +25,8 @@ public record GcsRef(String projectId, String bucket, String objName, URL source
         Objects.requireNonNull(objName, "objName cannot be null");
     }
 
+    public static final String GCS_SIG_PARAM = "X-Goog-Signature";
+    public static final String GCS_CRED_PARAM= "X-Goog-Credential";
 
     public String toString() {
         return String.format("%s - %s - %s", projectId, bucket, objName);

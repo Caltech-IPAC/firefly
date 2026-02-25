@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -39,6 +40,16 @@ public class UriRefTest {
 
             var srRefwithQ= UriRef.make("https://s3.us-west-2.amazonaws.com/amzn-s3-demo-bucket1/puppy.jpg?a=2");
             assertEquals(UriRef.ResourceType.OnPrimUrl, srRefwithQ.getType());
+
+
+            var signedS3= UriRef.make("https://s3.us-west-2.amazonaws.com/amzn-s3-demo-bucket1/puppy.jpg?AWSAccessKeyId=xxxxx&X-Amz-Signature=yyyy");
+            assertNotEquals(UriRef.ResourceType.S3Cloud, signedS3.getType()); // with signed urls are supported change to assertEquals
+
+            var gcsUrl= UriRef.make("https://storage.googleapis.com/my-bucket/folder/data.csv");
+            assertEquals(UriRef.ResourceType.GcsCloud, gcsUrl.getType());
+
+            assertEquals(UriRef.make("a/b/c/x.text"), null);
+
         } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new RuntimeException(e);
         }

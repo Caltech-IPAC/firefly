@@ -136,6 +136,21 @@ public class URLDownload {
         return queryParamMap;
     }
 
+    public static String getFirstVal(Map<String, List<String>> params, String key) {
+        return Util.Try.it(() -> params.get(key).getFirst()).getOrElse((String)null);
+    }
+
+    public static String firstParamValUsingKeyList(Map<String, List<String>> params, String ...keys) {
+        var foundKey= Arrays.stream(keys)
+                .filter(key -> getFirstVal(params, key)!=null)
+                .findFirst()
+                .orElse(null);
+        return foundKey!=null ? getFirstVal(params, foundKey) : null;
+    }
+
+
+
+
     private static int codeFromException(Exception e) {
         return switch (e) {
             case SSLException ignored -> 495;
