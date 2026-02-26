@@ -201,9 +201,9 @@ export const EventLayer = memo( (props) => {
             ['touchend', onTouchCancelOrEnd], ['touchcancel', onTouchCancelOrEnd],
         ];
 
-        nonPassiveEvents.forEach( ([ev,cb]) => eRef.element.addEventListener(ev, cb, {passive:false}));
+        nonPassiveEvents.forEach( ([ev,cb]) => eRef?.element?.addEventListener(ev, cb, {passive:false}));
         return () => {
-            nonPassiveEvents.forEach( ([ev,cb]) => eRef?.element.removeEventListener(ev, cb));
+            nonPassiveEvents.forEach( ([ev,cb]) => eRef?.element?.removeEventListener(ev, cb));
         };
     }, [transform, plotId, eventCallback]); // eslint-disable-line react-hooks/exhaustive-deps
 
