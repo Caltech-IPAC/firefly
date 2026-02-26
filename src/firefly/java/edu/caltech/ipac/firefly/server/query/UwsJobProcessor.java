@@ -318,8 +318,9 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             }
         });
         if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
-
-        return jInfo.get();
+        JobInfo jobInfo = jInfo.get();
+        if (jobInfo != null) jobInfo.getAux().setJobUrl(jobUrl);
+        return jobInfo;
     }
 
     public static Phase getPhase(String jobUrl) throws DataAccessException {

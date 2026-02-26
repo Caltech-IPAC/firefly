@@ -158,6 +158,16 @@ const ShowObjectTreeBtn = ({data, title}) => {
     );
 };
 
+/**
+ * renders a keyword block if value is not empty, otherwise returns null
+ * @param p - props
+ * @param p.value - if this is empty, then nothing will be rendered
+ * @param p.rest - the rest of the props get passed into Keyword component
+ */
+export function KeywordBlockOpt({value, ...rest}) {
+    return value ? <KeywordBlock value={value} {...rest}/> : null;
+}
+
 export function KeywordBlock({label, value, title, asLink, href, ...props}) {
     return (
         <Slot component={Stack} direction='row' whiteSpace='nowrap' alignItems='baseline' slotProps={props}>
