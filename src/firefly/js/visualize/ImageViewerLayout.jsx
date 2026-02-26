@@ -91,7 +91,7 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
     const eventCB= (eventPlotId,mouseState,screenPt,screenX,screenY,nativeEv) => {
         const {DOWN,MOVE}= MouseState;
         const shiftDown= nativeEv.shiftKey;
-        const mouseStatePayload= makeMouseStatePayload(eventPlotId,mouseState,screenPt,screenX,screenY, {shiftDown});
+        const mouseStatePayload= makeMouseStatePayload(eventPlotId,mouseState,screenPt,screenX,screenY, nativeEv.type, {shiftDown});
         const list= drawLayersAry.filter(
             (dl) => dl.visiblePlotIdAry.includes(plotId) && dl.mouseEventMap?.[mouseState.key] );
 
@@ -102,6 +102,11 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
         else if (isWheel(mouseState)) {
             if (!isActivePlotView(visRoot(),eventPlotId) && isWheelRequireImageActive(eventPlotId)) return;
             handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
+            return;
+        }
+        else if (isPinch(mouseState)) {
+            if (!isActivePlotView(visRoot(),eventPlotId)) return;
+            handlePinchEvent(plotView,mouseState,screenPt,nativeEv);
             return;
         }
         else {
@@ -140,6 +145,7 @@ const draggingOrReleasing = (ms) => ms===MouseState.DRAG || ms===MouseState.DRAG
     ms===MouseState.UP || ms===MouseState.EXIT || ms===MouseState.ENTER;
 
 const isWheel= (mouseState) => mouseState===MouseState.WHEEL_DOWN || mouseState===MouseState.WHEEL_UP;
+const isPinch= (mouseState) => mouseState===MouseState.PINCH_IN || mouseState===MouseState.PINCH_OUT;
 
 const zoomThrottle= throttle( (params) => {
     dispatchZoom(params);
@@ -309,14 +315,32 @@ function makeScroll() {
 }
 
 
+function handlePinchEvent(plotView, mouseState, screenPt, nativeEv) {
+    if (!plotView) return;
+    const userZoomType= mouseState===MouseState.PINCH_OUT ? UserZoomTypes.UP : UserZoomTypes.DOWN;
+    const plot= primePlot(plotView) ?? {};
+    const devicePt= CCUtil.getDeviceCoords(plot,screenPt);
+    const {screenSize:{width,height}}= plot;
+    if (mouseState===MouseState.PINCH_IN && width<100 && height<100) return;
+    dispatchZoom(
+        {
+            plotId:plotView.plotId,
+            userZoomType,
+            devicePt,
+            upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:  isHiPS(plot)? .2 : .4
+        } );
+
+}
+
 function makeHandleScrollWheelEvent() {
     let mouseWheelDevicePt= undefined;
     let mouseWheelTimeoutId= undefined;
 
     const handleScrollWheelEvent= (plotView, mouseState, screenPt, nativeEv) => {
 
+        const plot= primePlot(plotView) ?? {};
         if (!mouseWheelDevicePt) {
-            mouseWheelDevicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
+            mouseWheelDevicePt= CCUtil.getDeviceCoords(plot,screenPt);
             mouseWheelTimeoutId= setTimeout(() => {
                 mouseWheelDevicePt= undefined;
             }, 200);
@@ -330,7 +354,6 @@ function makeHandleScrollWheelEvent() {
 
         const userZoomType= mouseState===MouseState.WHEEL_DOWN ? UserZoomTypes.UP : UserZoomTypes.DOWN;
         nativeEv.preventDefault();
-        const plot= primePlot(plotView) ?? {};
         const {screenSize}= plot;
         const {viewDim}= plotView ?? {};
         const smallImage=

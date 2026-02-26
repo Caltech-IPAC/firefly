@@ -20,7 +20,7 @@ export const VisInlineToolbarView = memo( (props) => {
         const {pv, showDelete,deleteVisible, topOffset=0}= props;
         if (!pv) return undefined;
         const deleteClick= () => {
-            const mouseStatePayload= makeMouseStatePayload(undefined,MouseState.EXIT,undefined,0,0);
+            const mouseStatePayload= makeMouseStatePayload(undefined,MouseState.EXIT,undefined,0,0,'');
             fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
             dispatchDeletePlotView({plotId:pv.plotId});
         };
