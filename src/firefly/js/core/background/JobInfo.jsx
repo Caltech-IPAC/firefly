@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 
-import {getElapsedTime, getJobInfo, getJobPctComplete, getMetadata, getProgressMsg, isActive, isTapJob, isUWS} from './BackgroundUtil.js';
+import {getElapsedTime, getJobInfo, getJobPctComplete, getProgressMsg, isActive, isTapJob, isUWS} from './BackgroundUtil.js';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {KeywordBlock} from '../../tables/ui/TableInfo.jsx';
+import {KeywordBlockOpt, KeywordBlock} from '../../tables/ui/TableInfo.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../ComponentCntlr.js';
@@ -15,7 +15,6 @@ import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {PrismADQLAware} from '../../ui/tap/AdvancedADQL';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {jobMonitorGroupKey, ResultsBlock, toDateString, useLocalTimeKey} from '../../core/background/JobMonitor';
-import {CopyToClipboard} from 'firefly/visualize/ui/MouseReadout';
 
 const dialogID = 'show-job-info';
 
@@ -88,7 +87,6 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
     const hrefs = results?.map((r) => r.href);
     const {progress, ...aux} = jobInfo?.jobInfo ?? {};
     const hasMoreSection = hrefs || parameters || errorSummary || aux;
-    const resultRenderer = () => <ResultsBlock job={jobInfo} ActionBtn={CopyHref}/>;
     return (
         <Stack spacing={1} p={1} sx={sx}>
             <JobInfoDetails jobInfo={jobInfo}/>
@@ -96,9 +94,9 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
             {/*{ meta?.runId && <KeywordBlock key='localRunId' label='local runId' value={meta.runId}/>}*/}
             { hasMoreSection && (
                 <CollapsibleGroup>
-                    <OptionalBlock label='Error Summary' title='Referred to as "errorSummary" in UWS' value={errorSummary} isOpen={isOpen}/>
+                    <OptionalBlock label='Error Summary' title='Referred to as "errorSummary" in UWS' value={errorSummary} Component={ErrorBlock} job={jobInfo} isOpen={isOpen}/>
                     <OptionalBlock label='Parameters' title='Referred to as "parameters" in UWS' value={parameters} isOpen={isOpen}/>
-                    <OptionalBlock label='Results' title='Referred to as "results" in UWS' value={hrefs} Component={resultRenderer} isOpen={isOpen}/>
+                    <OptionalBlock label='Results' title='Referred to as "results" in UWS' value={results} Component={ResultsBlock} job={jobInfo} isOpen={isOpen}/>
                     <OptionalBlock label='Extra Information' title='Referred to as "jobInfo" in UWS' value={aux} isOpen={isOpen}/>
                 </CollapsibleGroup>
             )}
@@ -223,31 +221,41 @@ function JobIdWrapper({jobInfo}) {
     return <KeywordBlock value={jobId} mb={1} asLink={!!href} {...{href, label, title}} />;
 }
 
-function OptionalBlock({label, value, asLink, isOpen, Component=KeyValueBlock}) {
+function OptionalBlock({label, value, asLink, isOpen, Component=KeyValueBlock, ...rest}) {
     if (!value) return null;
     return (
         <CollapsibleItem componentKey={`JobInfo-${label}`} header={label} isOpen={isOpen}>
             <Stack spacing={.5}>
-                <Component asLink={asLink} value={value}/>
+                <Component asLink={asLink} value={value} {...rest}/>
             </Stack>
         </CollapsibleItem>
     );
 }
 
-function CopyHref({job, resultIdx=0}) {
-    const {href} = getMetadata({jobInfo:job, resultIdx});
-    return <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}} style={{alignSelf: 'end'}}/>
+export function ErrorBlock({job}) {
+    if (!job?.errorSummary) return null;
+    const {message, type, hasDetail=[]} = job.errorSummary;
+    const detailUrl = hasDetail && job.jobInfo?.jobUrl && `${job.jobInfo?.jobUrl}/error`;
+    return (
+        <>
+            <KeywordBlockOpt label='Message' title={message} value={message}/>
+            <Stack direction='row' alignItems='baseline' spacing={1} overflow='hidden'>
+                <KeywordBlockOpt label='Type' value={type}/>
+                <KeywordBlockOpt label='Details' value={detailUrl} asLink={true} overflow='hidden'/>
+            </Stack>
+        </>
+    );
 }
 
 // value can be an object with string values or an array of strings.
 // If a value contains the ':::' delimiter, it will be split into multiple values with the same key.
-function KeyValueBlock({asLink, value}) {
+function KeyValueBlock({asLink, value, ...rest}) {
     return (
         <>
             {Object.entries(value).map(([k, v]) =>
                 String(v).split(':::').map((val, idx) => {           // matches ':::' delimiter used by Server's JobInfo.parameters
                     const isLink = asLink ?? /^https?:\/\//.test(val?.toLowerCase?.());
-                    return <KeywordBlock key={k+idx} label={k} value={val} asLink={isLink}/>;
+                    return <KeywordBlock key={k+idx} label={k} value={val} asLink={isLink} {...rest}/>;
                 })
             )}
         </>

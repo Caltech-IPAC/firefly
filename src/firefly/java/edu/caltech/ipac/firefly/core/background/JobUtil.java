@@ -290,9 +290,10 @@ public class JobUtil {
 
         ifNotNull(json.get(ERROR_SUMMARY)).apply(v -> {
             if (v instanceof JSONObject jo) {
-                int code = getInt(jo.get(ERROR_TYPE), 500);
+                String type = getStr(jo, ERROR_TYPE);
+                boolean hasDetails = Boolean.parseBoolean(String.valueOf(jo.get(ERROR_HAS_DETAILS)));
                 String msg = String.valueOf(jo.get(ERROR_MSG));
-                rval.setErrorSummary(new ErrorSummary(msg));
+                rval.setErrorSummary(new ErrorSummary(msg, type, hasDetails));
             }
         });
         ifNotNull(json.get(META)).apply(v -> {

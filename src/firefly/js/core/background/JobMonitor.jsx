@@ -34,6 +34,7 @@ import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
 import {AppPropertiesCtx} from 'firefly/ui/AppPropertiesCtx';
 import InsightsIcon from '@mui/icons-material/Insights';
 import {FormWatcher} from 'firefly/templates/router/RouteHelper';
+import {KeywordBlockOpt} from 'firefly/tables/ui/TableInfo';
 
 export const jobMonitorPath = '/jobMonitor';
 export const jobMonitorGroupKey = 'jobMonitor';
@@ -367,18 +368,18 @@ export function showMultiMultiResults(job) {
             <Stack gap={1} mb={2}>
                 <Typography level={'body-md'}>This job has multiple results. Please click on each icon to load the corresponding result.</Typography>
                 <Stack>
-                    <ResultsBlock job={job}/>
+                    <ResultsBlock job={job} ActionBtn={ShowResultButton}/>
                 </Stack>
             </Stack>
         );
     }
 }
 
-export function ResultsBlock({job, ActionBtn=ShowResultButton}) {
+export function ResultsBlock({job, ActionBtn}) {
     const {results=[]} = job;
     return results.map( (r, idx) => (
-        <Stack key={idx} direction='row' alignItems='center' gap={2}>
-            <ActionBtn job={job} resultIdx={idx}/>
+        <Stack key={idx} direction='row' alignItems='baseline' gap={1} overflow='hidden'>
+            {ActionBtn && <ActionBtn job={job} resultIdx={idx}/>}
             <ResultDesc job={job} resultIdx={idx}/>
         </Stack>
     ));
@@ -386,19 +387,12 @@ export function ResultsBlock({job, ActionBtn=ShowResultButton}) {
 
 export function ResultDesc({job, resultIdx=0}) {
     const {href, id, mimeType} = getMetadata({jobInfo:job, resultIdx});
+    const idDesc = id || resultIdx;
     return (
-        <Stack direction='row' gap={1} maxWidth='25em'>
-            <Typography level='body-sm'>
-                <Typography fontWeight='bold'>id=</Typography>{id || {resultIdx}}
-            </Typography>
-            {mimeType &&
-                <Typography level='body-sm'>
-                    <Typography fontWeight='bold'>mimeType=</Typography>{mimeType}
-                </Typography>
-            }
-            <Typography level='body-sm' title={href} sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                <Typography fontWeight='bold'>href=</Typography>{href}
-            </Typography>
+        <Stack direction='row' gap={1} overflow='hidden'>
+            <KeywordBlockOpt label='id' value={idDesc} title={idDesc}/>
+            <KeywordBlockOpt label='mimeType' value={mimeType} title={mimeType}/>
+            <KeywordBlockOpt label='href' value={href} title={href} asLink={true} overflow='hidden'/>
         </Stack>
     );
 }

@@ -99,6 +99,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (status.isError()) {
             logger.warn(status.getErrMsg());
             sendJobUpdate(ji -> {
+                ji.setPhase(Phase.ERROR);
                 ji.setErrorSummary(new ErrorSummary(status.getErrMsg()));
             });
         } else {
@@ -128,6 +129,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             }
         } catch (Exception e) {
             updateJob(ji -> {
+                ji.setPhase(Phase.ERROR);
                 ji.setErrorSummary(new ErrorSummary(e.getMessage()));
             });
             throw new DataAccessException(e.getMessage());
@@ -144,7 +146,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 JobInfo uwsJob = getUwsJobInfo(jobUrl);
                 if (uwsJob == null) {
                     String msg = "Failed to retrieve UWS job info";
-                    sendJobUpdate(ji -> ji.setErrorSummary(new ErrorSummary(msg)));
+                    sendJobUpdate(ji -> {
+                        ji.setPhase(Phase.ERROR);
+                        ji.setErrorSummary(new ErrorSummary(msg));
+                    });
                     throw new DataAccessException(msg);
                 }
                 try {
@@ -162,9 +167,12 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                         case Phase.ERROR:
                             throw new DataAccessException("Job has failed with the error: " + uwsJob.getErrorSummary().message());
                         case Phase.UNKNOWN: {
-                            if (cnt > 20) {
-                                updateJob(ji -> ji.setErrorSummary(new ErrorSummary("Unknown phase for over 20 seconds")));
-                                throw new DataAccessException("Unknown phase for over 20 seconds");
+                            if (cnt > 70) {
+                                updateJob(ji -> {
+                                    ji.setPhase(Phase.ABORTED);
+                                    ji.setErrorSummary(new ErrorSummary("Job aborted: unknown phase for over 2 minutes"));
+                                });
+                                throw new DataAccessException("Job aborted: unknown phase for over 2 minutes");
                             }
                         }
                         default:
@@ -310,8 +318,9 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             }
         });
         if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
-
-        return jInfo.get();
+        JobInfo jobInfo = jInfo.get();
+        if (jobInfo != null) jobInfo.getAux().setJobUrl(jobUrl);
+        return jobInfo;
     }
 
     public static Phase getPhase(String jobUrl) throws DataAccessException {

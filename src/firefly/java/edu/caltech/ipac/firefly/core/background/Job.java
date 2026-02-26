@@ -65,11 +65,13 @@ public interface Job extends Callable<String> {
             updateJobInfo(getJobId(), ji -> {
                 ji.setPhase(JobInfo.Phase.ABORTED);
                 ji.getAux().setProgress(new JobInfo.Progress("Job was aborted"));
+                ji.setErrorSummary(new JobInfo.ErrorSummary("Job was aborted", "fatal", false   ));
             });
             getWorker().onAbort();
         } catch (Exception e) {
             updateManagedStatus(ji -> {
                 String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+                ji.setPhase(JobInfo.Phase.ERROR);
                 ji.setErrorSummary(new JobInfo.ErrorSummary(msg));
             });
             Logger.getLogger().error(e);
