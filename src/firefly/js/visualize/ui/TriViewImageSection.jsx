@@ -134,7 +134,7 @@ TriViewImageSection.propTypes= {
     closeable: PropTypes.bool,
     dataProductTableId: PropTypes.string,
     chartMetaId: PropTypes.string,
-    selectedTab: PropTypes.oneOf([TAB_IDS.PINNED_IMAGE, TAB_IDS.DP, TAB_IDS.COVERAGE]),
+    selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),// should be (circular import issues): [TAB_IDS.PINNED_IMAGE, TAB_IDS.DP, TAB_IDS.COVERAGE])
     coverageSide: PropTypes.string,
     style: PropTypes.object
 };
