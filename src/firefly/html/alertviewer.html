@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="icon" type="image/x-icon" href="images/fftools-logo-16x16.png">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Alert Viewer</title>
+
+    <script>
+        var pOpts = window.firefly && window.firefly.options || {};
+        window.firefly = {
+            app: {
+                template: 'AlertViewer',           // set to app mode, instead of api.
+                appTitle: 'Alert Viewer',
+                menu: [
+                    {label:'Upload', action:'AlertUpload'},
+                    {label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
+                ],
+            },
+            options : Object.assign(pOpts, {
+                wcsMatchType: 'Target',
+                defNorthUpLock: true,
+                charts: {
+                    singleTraceUI: true
+                }
+            })
+        };
+    </script>
+    <script  type="text/javascript" src="firefly_loader.js"></script>
+</head>
+
+<body style="margin: 0">
+<!-- attached location for firefly app -->
+<div id='app' style="width:100vw;height: 100vh"/>
+
+
+
+
+</body>
+
+</html>
+
+

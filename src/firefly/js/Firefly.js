@@ -45,6 +45,7 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
+import {AlertViewer} from 'firefly/templates/alert/AlertViewer';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -64,6 +65,7 @@ export const Templates = {
     FireflyViewer,
     FireflySlate,
     LightCurveViewer : LcViewer,
+    AlertViewer,
     HydraViewer,
     [ROUTER]: ROUTER      // root component is passed in via getRouter
 };

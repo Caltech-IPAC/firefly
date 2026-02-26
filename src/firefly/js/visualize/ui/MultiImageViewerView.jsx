@@ -49,10 +49,21 @@ export function MultiImageViewerView(props)  {
             makeToolbar:handleToolbar?makeToolbar:undefined, makeItemViewer, makeItemViewerFull});
 
     let style= {display:'flex', flexDirection:'column', position:'relative'};
-    if (props.insideFlex) {
+    /*if (props.insideFlex) {
         style= {...style, flex:'1 1 auto', maxWidth:'100%', ...props.style};
-    }
-    else {
+    }*/
+    if (props.insideFlex) {
+               style= {
+                        ...style,
+                       flex: '1 1 0%',
+                       minHeight: 0,
+                    height: '100%',
+                       maxWidth: '100%',
+                       overflow: 'hidden',
+                        ...props.style
+                };
+            }
+else {
         style=  {...style, width:'100%', height:'100%', ...props.style};
     }
     
@@ -73,7 +84,7 @@ export function MultiImageViewerView(props)  {
     if (layoutType===SINGLE || viewerPlotIds?.length===1) {
         return (
             <div style={style} ref={(e) => elementWrapper.element= e}>
-                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
+                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style: {flex: '1 1 0%', minHeight: 0, overflow: 'hidden', ...props.style}}} />
                 <Stack spacing={1} style={mouseReadoutEmbedded? {position:'absolute', left:3, right:3, bottom:2}:{}} >
                     {bottomUIComponent?.()}
                     {mouseReadout}
@@ -84,7 +95,7 @@ export function MultiImageViewerView(props)  {
     else {
         return (
             <div className={'MultiImageViewer'} style={style} ref={(e) => elementWrapper.element= e}>
-                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
+                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style: {flex: '1 1 0%', minHeight: 0, overflow: 'hidden', ...props.style}}} />
                 <Stack style={ mouseReadoutEmbedded?{position:'absolute', left:3, bottom:3, right:scrollGrid?15:6}:{}} >
                     {bottomUIComponent?.()}
                     {mouseReadout}
