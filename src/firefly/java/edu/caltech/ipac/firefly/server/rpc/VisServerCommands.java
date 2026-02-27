@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
@@ -38,6 +39,7 @@ import java.util.Map;
  * Date: 2/8/12
  */
 public class VisServerCommands {
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     public static class FileFluxCmdJson extends ServCommand {
         public String doCommand(SrvParam sp) throws IllegalArgumentException {
@@ -124,6 +126,7 @@ public class VisServerCommands {
                 String msg= "Tile Not Found";
                 if (!VisServerOps.hasByteStretchDataEntry(state)) msg+= ", No Byte Stretch Data";
                 res.sendError(404, msg);
+                _log.warn("tile not found: returning: 404");
                 return;
             }
             res.addHeader("tile-number", tileNumber+"");
