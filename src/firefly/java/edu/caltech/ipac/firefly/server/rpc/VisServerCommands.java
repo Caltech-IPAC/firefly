@@ -142,7 +142,8 @@ public class VisServerCommands {
             int maskBits= sp.getOptionalInt(ServerParams.MASK_BITS,0);
             int tileSize= sp.getRequiredInt(ServerParams.TILE_SIZE);
             CompressType ct= getCompressType(sp);
-            VisServerOps.createByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
+//            VisServerOps.createByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
+            VisServerOps.createByteStretchData(state,tileSize,mask,maskBits,ct);
             JSONObject data = new JSONObject();
             var entry= VisServerOps.getByteStretchDataEntry(state);
             data.put("tileCount", entry!=null ? entry.getTotalTiles() : 0);
