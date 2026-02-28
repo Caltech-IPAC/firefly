@@ -21,6 +21,7 @@ import {ChartsContainer} from 'firefly/charts/ui/ChartsContainer.jsx';
 import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import {ImageExpandedMode} from 'firefly/visualize/iv/ImageExpandedMode.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from 'firefly/visualize/MultiViewCntlr.js';
+import {MultiViewStandardToolbar} from 'firefly/visualize/ui/MultiViewStandardToolbar';
 
 
 function getAlertData() {
@@ -117,6 +118,7 @@ export function AlertResultView() {
                                 viewerId={viewerId}
                                 insideFlex={true}
                                 forceRowSize={1}
+                                Toolbar={MultiViewStandardToolbar}
                             />
                         ) : (
                             <EmptySlot label={`Image ${idx+1}`} />

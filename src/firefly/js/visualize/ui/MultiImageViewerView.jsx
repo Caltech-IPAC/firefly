@@ -53,15 +53,8 @@ export function MultiImageViewerView(props)  {
         style= {...style, flex:'1 1 auto', maxWidth:'100%', ...props.style};
     }*/
     if (props.insideFlex) {
-               style= {
-                        ...style,
-                       flex: '1 1 0%',
-                       minHeight: 0,
-                    height: '100%',
-                       maxWidth: '100%',
-                       overflow: 'hidden',
-                        ...props.style
-                };
+               style= {...style, flex: '1 1 0%', minHeight: 0, height: '100%', maxWidth: '100%',
+                       overflow: 'hidden', ...props.style};
             }
 else {
         style=  {...style, width:'100%', height:'100%', ...props.style};

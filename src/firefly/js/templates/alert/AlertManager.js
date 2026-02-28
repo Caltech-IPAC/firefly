@@ -37,7 +37,7 @@ export const ALERT = {
     TABLE_PAGESIZE: MAX_ROW,
 };
 
-export function* alertManager({views='tables | images'} = {}) {
+export function* alertManager({views='tables | images | xyPlots'} = {}) {
     const viewMask = LO_VIEW.get(views) || LO_VIEW.none;
     yield fork(dropDownManager);
 
