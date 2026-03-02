@@ -1,7 +1,7 @@
 import BrowserInfo from '../../util/BrowserInfo';
 import {Band} from '../Band.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getColorModel} from './ColorTable';
+import {getColorModelByGPUType} from './ColorTable';
 import {getGpuJs, getGpuJsImmediate} from './GpuJsConfig';
 import {isAbortedError, makeJobRunningContext} from './JobRunner';
 import {addRawDataToCache, getEntry, getEntryCount, removeRawData} from './RawDataThreadCache.js';
@@ -119,7 +119,10 @@ async function fetchByteDataArray(payload,sendStatus) {
     try {
         const callResults= await callStretchedByteData(payload,sendStatus);
         if (!callResults.success) {
-            return {data:{success:false, aborted: Boolean(callResults.aborted), type: FETCH_STRETCH_BYTE_DATA, fatal: true, message: callResults.message}};
+            return {data:{success:false, aborted: Boolean(callResults.aborted),
+                    type: FETCH_STRETCH_BYTE_DATA, fatal: true, message: callResults.message,
+                    status: callResults.status,
+            }};
         }
 
         const {tileResultsAry}= callResults;
@@ -182,7 +185,7 @@ export async function callStretchedByteData(payload,sendStatus ) {
     const {plotImageId,plotStateSerialized,plotState, dataWidth,dataHeight,
         nanPixelColor,colorTableId, mask=false,maskBits,cmdSrvUrl:url, dataCompress= 'FULL'}= payload;
 
-    const colorModel= !mask && !plotState.isThreeColor() && getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
+    const colorModel= !mask && !plotState.isThreeColor() && getColorModelByGPUType(colorTableId,nanPixelColor);
     const ct= getCompressParam(dataCompress, payload.veryLargeData);
     const {options}=  makeFetchOptions(plotImageId,
         {
@@ -241,11 +244,12 @@ export async function callStretchedByteData(payload,sendStatus ) {
     sendStatus('');
     const tileResultsAry= results.map( (r) => r.value);
     const success= !tileResultsAry.some( (r) => Boolean(r?.error || !r));
+    const firstErrStat= !success ? tileResultsAry.find( (r) => r.error || !r)?.status : 200;
     const aborted= success ? false : tileResultsAry.some( (r) => r?.aborted);
     if (success || !aborted) deleteByteData(url,plotImageId, plotStateSerialized, ct); // don't clean up if aborted since it will probably be overridden anyway, avoids a race condition
     return success
         ? {success, message:'', tileResultsAry}
-        : {success, message:'tile retrieve failed,', tileResultsAry:[], aborted};
+        : {success, message:'tile retrieve failed,', tileResultsAry:[], aborted, status: firstErrStat};
 }
 
 function deleteByteData(url, plotImageId, plotStateSerialized, ct) {
@@ -286,8 +290,9 @@ async function getATile({tileNumber, colorModel, width, height, payload,incUpdat
                 threeCPromises.push(fetchTileDataInQueue(url,options,signalId+bandStr,plotImageId, abortController));
             }
             for(let i=0; (i<bandAry.length); i++){
-                pixelData3C[bandAry[i].value]= await threeCPromises[i];
-                if (!pixelData3C[bandAry[i].value]) return;
+                const response= await threeCPromises[i];
+                if (!response || response.error) return response ?? {error:true};
+                pixelData3C[bandAry[i].value]= response.array;
             }
             const inData= {width,height, pixelData3C, pixelDataStandard:undefined};
             const workerBitMapTile= doBitmap
@@ -298,8 +303,9 @@ async function getATile({tileNumber, colorModel, width, height, payload,incUpdat
         }
         else {
             const {options,abortController}= makeFetchOptions(plotImageId, params,signalId);
-            const responseAry= await fetchTileDataInQueue(url,options,signalId, plotImageId, abortController);
-            if (!responseAry) return;
+            const response= await fetchTileDataInQueue(url,options,signalId, plotImageId, abortController);
+            if (!response || response.error) return response ?? {error:true};
+            const responseAry= response.array;
             const pixelDataStandard= mask ? convertToBits(responseAry) : responseAry;
             const inData= {width,height, pixelData3C:undefined, pixelDataStandard};
             const workerBitMapTile= doBitmap
@@ -316,10 +322,10 @@ async function getATile({tileNumber, colorModel, width, height, payload,incUpdat
 
 async function fetchTileData(url, options) {
     const response= await lowLevelDoFetch(url, options, false);
-    if (!response.ok) return undefined;
+    if (!response.ok) return {error: true, status:response.status, statusText:response.statusText};
     const responseBuffer= await response.arrayBuffer();
-    if (!responseBuffer) return undefined;
-    return new Uint8ClampedArray(responseBuffer);
+    if (!responseBuffer) return {error:true};
+    return {ok:true, array: new Uint8ClampedArray(responseBuffer)};
 }
 
 async function fetchTileDataInQueue(url, options, signalId, plotImageId, abortController) {

@@ -23,7 +23,7 @@ function handleRawDataActions(action) {
     if (action.payload.plotId && action.payload.plotStateSerialized) {
         sendStatus= (messageText) => {
             const plotState= PlotState.parse(action.payload.plotStateSerialized);
-            postMessage({message:true,
+            postMessage({statusMessage:true,
                 messageText,
                 plotId:action.payload.plotId,
                 requestKey:plotState.getWebPlotRequest().getRequestKey()});

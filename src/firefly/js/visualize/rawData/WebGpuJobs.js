@@ -148,7 +148,12 @@ function makeEncoder(device, bindGroup, pipeline, count, wgSize) {
 async function makeBitmapFromBuffer(readBuf,width,height) {
     await readBuf.mapAsync(GPUMapMode.READ);
     const data= new ImageData(new Uint8ClampedArray(readBuf.getMappedRange()), width, height);
-    const bitMap= await globalThis.createImageBitmap(data);
+    const bitMap= await globalThis.createImageBitmap(data,
+    {
+      colorSpaceConversion: 'none', // Do not let the browser "correct" it
+      premultiplyAlpha: 'none'      // Keep raw color values intact
+    }
+    );
     readBuf.unmap();
     return bitMap;
 }

@@ -34,7 +34,7 @@ function makeWorker(workerKey) {
     const worker= new Worker();
     worker.onmessage= (ev) => {
         const {success,callKey}= ev.data;
-        if (ev.data.message) {
+        if (ev.data.statusMessage) {
             const {plotId,messageText,requestKey}= ev.data;
             dispatchPlotProgressUpdate(plotId,messageText,false,requestKey);
             return;

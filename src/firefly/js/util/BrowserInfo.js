@@ -96,8 +96,8 @@ export default BrowserInfo;
             BrowserInfo.getBrowserString()+ ' Version: ' + BrowserInfo.majorVersion;
     if (BrowserInfo.isFirefox()) {
         navigator?.gpu?.requestAdapter()
-            .then( () => BrowserInfo.fireflyWebGpuEnabled= true)
-            .catch(() => BrowserInfo.fireflyWebGpuEnabled= false);
+            .then( () => BrowserInfo.firefoxWebGpuEnabled= true)
+            .catch(() => BrowserInfo.firefoxWebGpuEnabled= false);
     }
     BrowserInfo.platformMajorVerison= platformMajorVersion(ua,BrowserInfo.platform);
     logIfVersionNotSupported();
@@ -234,8 +234,15 @@ function supportsWebGpu() {
     const foundGpu= Boolean(navigator.gpu);
     if (isBrowser(Browser.CHROME)) return isVersionAtLeast(113) && foundGpu;
     if (isBrowser(Browser.EDGE)) return isVersionAtLeast(113) && foundGpu;
-    if (isBrowser(Browser.SAFARI)) return isVersionAtLeast(26) && foundGpu;
-    if (isBrowser(Browser.FIREFOX)) return isVersionAtLeast(141) && foundGpu && Boolean(BrowserInfo.fireflyWebGpuEnabled);
     if (isBrowser(Browser.OPERA)) return isVersionAtLeast(99) && foundGpu;
+    if (isBrowser(Browser.FIREFOX)) {
+        if (!foundGpu || !isVersionAtLeast(147)) return false;
+        if (BrowserInfo.isPlatform(Platform.WINDOWS)) return true;
+        if (BrowserInfo.isPlatform(Platform.MACOS)) {
+            return (isVersionAtLeast(149) && BrowserInfo.firefoxWebGpuEnabled);
+            // I think webgpu worked with ff 147. ff 148 enabled more webgpu features but seems to have bugs, We will wait for 149
+        }
+        return false;
+    }
     return foundGpu;
 }

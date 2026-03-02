@@ -3,13 +3,13 @@ import {createCanvas} from '../../util/WebUtil.js';
 import {
     gpujs_hips512TileGPU, gpujs_hips862by928AllSkyGPU, setOnGpuJsContextLostListener
 } from '../rawData/GpuJsJobs';
-import {getColorModel} from '../rawData/ColorTable.js';
+import {getColorModel, getColorModelByGPUType} from '../rawData/ColorTable.js';
 import {once} from 'lodash';
 import {remapColorsViaWebGpu} from '../rawData/WebGpuJobs';
 import {removeNonNativeCachedTiles} from './HiPSTileCache.js';
 
 export const logGpuState= once(() => {
-    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'gpu.js';
+    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
     console.log(`HiPS color gpu : ${gpuType}`);
 });
 
@@ -45,7 +45,7 @@ export const getHipsColorOps= once(() => {
 
         const getInData= (x,y,w,h) => inCtx.getImageData(x,y,w,h).data;
 
-        const cm= getColorModel(ct, undefined, !BrowserInfo.supportsWebGpu());
+        const cm= getColorModelByGPUType(ct);
 
         if (width===512 && height===512) {
             if (BrowserInfo.supportsWebGpu()) {

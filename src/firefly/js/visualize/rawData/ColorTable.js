@@ -3,6 +3,7 @@
  */
 import chroma from 'chroma-js';
 import {isTypedArray, reverse} from 'lodash';
+import BrowserInfo from '../../util/BrowserInfo';
 import {createCanvas, memorizeLastCall} from '../../util/WebUtil.js';
 import {Band} from '../Band.js';
 import {getColorTableDefinitionInfo} from './ColorTableDefinitions';
@@ -68,6 +69,11 @@ function getRawColorTableEntry(id) {
     }
     ctMap[originalId+REVERSED_END_CHAR] = Uint8Array.of(...revCAry);
     return ctMap[originalId+REVERSED_END_CHAR];
+}
+
+export function getColorModelByGPUType(colorTableId, nanPixelColor=undefined) {
+   const asPercent= !BrowserInfo.supportsWebGpu();
+   return getColorModel(colorTableId,nanPixelColor,asPercent);
 }
 
 /**

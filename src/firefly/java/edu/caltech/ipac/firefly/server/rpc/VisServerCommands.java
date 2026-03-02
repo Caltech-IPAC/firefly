@@ -126,7 +126,8 @@ public class VisServerCommands {
                 String msg= "Tile Not Found";
                 if (!VisServerOps.hasByteStretchDataEntry(state)) msg+= ", No Byte Stretch Data";
                 res.sendError(404, msg);
-                _log.warn("tile not found: returning: 404");
+                _log.warn("Tile not found: returning: 404, this should never happen.",
+                        "If the call to create was successful and the file was not found then the server call may not be sticky");
                 return;
             }
             res.addHeader("tile-number", tileNumber+"");
@@ -145,8 +146,7 @@ public class VisServerCommands {
             int maskBits= sp.getOptionalInt(ServerParams.MASK_BITS,0);
             int tileSize= sp.getRequiredInt(ServerParams.TILE_SIZE);
             CompressType ct= getCompressType(sp);
-//            VisServerOps.createByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
-            VisServerOps.createByteStretchData(state,tileSize,mask,maskBits,ct);
+            VisServerOps.createByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
             JSONObject data = new JSONObject();
             var entry= VisServerOps.getByteStretchDataEntry(state);
             data.put("tileCount", entry!=null ? entry.getTotalTiles() : 0);
