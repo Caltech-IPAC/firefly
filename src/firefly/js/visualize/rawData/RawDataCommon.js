@@ -2,7 +2,7 @@ import {isArrayBuffer, once} from 'lodash';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {createTileWithGPU} from './RawImageTilesGPU.js';
 import {MEG} from '../../util/WebUtil.js';
-import {getColorModel} from './ColorTable.js';
+import {getColorModelByGPUType} from './ColorTable.js';
 
 export const HALF= 'HALF';
 export const QUARTER= 'QUARTER';
@@ -25,10 +25,10 @@ export const isOffscreenCanvas= (b) => globalThis.OffscreenCanvas && (b instance
 
 
 export const logGpuState= once(() => {
-    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'gpu.js';
+    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
     const outStr= shouldUseGpuInWorker()
-        ? `Images: gpu available in worker, gpu: ${gpuType}`
-        : `Images: gpu only available in main thread: ${gpuType}`;
+        ? `Images: gpu in worker, gpu: ${gpuType}`
+        : `Images: gpu in main thread: ${gpuType}`;
     console.log(outStr);
 });
 
@@ -71,7 +71,7 @@ async function populateTileDataInWorker(obj) {
 export async function populateRawImagePixelDataInWorker(obj) {
     const {rawTileDataGroup, colorTableId, mask, nanPixelColor, threeColor=false}= obj;
     if (shouldUseGpuInWorker()) {
-        const colorModel = !mask && !threeColor && getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
+        const colorModel = !mask && !threeColor && getColorModelByGPUType(colorTableId,nanPixelColor);
         const rawTileDataAry = await populateTileDataInWorker({...obj,colorModel});
 
 

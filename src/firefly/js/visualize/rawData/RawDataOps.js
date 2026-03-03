@@ -15,7 +15,7 @@ import {getNextWorkerKey, isWorkerOutOfMemory, postToWorker} from '../../threadW
 import {
     addLoadingPromise, addRawDataToCache, CLEARED, getEntry, markOutOfMemory, STRETCH_ONLY
 } from './RawDataCache.js';
-import {getColorModel} from './ColorTable.js';
+import {getColorModelByGPUType} from './ColorTable.js';
 import {createTileWithGPU} from './RawImageTilesGPU.js';
 import {getGpuJs, getGpuJsImmediate} from './GpuJsConfig.js';
 import {
@@ -57,7 +57,7 @@ async function populateTilesAsync({rawTileDataGroup:groupFromWorker, colorTableI
     else { // worker returned array data because no worker gpu support, todo: can I deprecate this else?
         rawTileDataAry= [];
         if (!BrowserInfo.supportsWebGpu() && !getGpuJsImmediate() ) await getGpuJs(); // make sure the GPU code is loaded up front
-        const cm=getColorModel(colorTableId,nanPixelColor, !BrowserInfo.supportsWebGpu());
+        const cm=getColorModelByGPUType(colorTableId,nanPixelColor);
         for(let i=0; (i<tileFromWorker.length); i++) {
             const bitMap= await createTileWithGPU(tileFromWorker[i],cm,mask, maskColor, bias, contrast,bandUse);
             rawTileDataAry[i]= { ...tileFromWorker[i], workerBitMapTile, rawImageTile:bitMap};
@@ -332,7 +332,7 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
     const oPv= mask ? getOverlayById(pv,imageOverlayId) : undefined;
     const maskOptions= mask ? {maskColor:oPv?.colorAttributes.color, maskBits: oPv?.maskValue } : undefined;
     const dataCompress= getFirstDataCompress(plot,mask);
-    const {success, fatal, silentAbort=false}= await loadStandardStretchData(workerKey, plot,
+    const {success, fatal, silentAbort=false,status}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
 
     if (plotInvalid()) return;
@@ -341,10 +341,11 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
     }
     else {
         if (fatal && !silentAbort) {
-            Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
-            if (dataCompress!==FULL) {
+            Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}, status: ${status}`);
+            if (status===404) {
+                Logger('RawDataOps').warn('it appears that the getTile called failed, this might be the server calls are not sticky, or server is out of memory');
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                    payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+                    payload:{plotId, description:'Failed: server configuration error' }});
             }
             else {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
@@ -486,7 +487,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
         }
         else {
             const {success,fatal, aborted=false}= failResult;
-            return {success, fatal, silentAbort:aborted};
+            return {success, fatal, silentAbort:aborted, status:failResult.status};
         }
     }
 }
