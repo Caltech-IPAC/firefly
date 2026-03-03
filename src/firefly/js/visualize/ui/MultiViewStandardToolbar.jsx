@@ -3,16 +3,17 @@
  */
 
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Sheet, Stack} from '@mui/joy';
+import {Divider, Sheet, Stack} from '@mui/joy';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {HIDDEN} from '../ImViewFilterDisplay';
 import {ViewerScroll} from '../iv/ExpandedTools.jsx';
 import {
     dispatchChangeViewerLayout, EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, getViewerItemIds
 } from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView, ExpandType} from '../ImagePlotCntlr.js';
 import {BeforeButton, DisplayTypeButtonGroup, NextButton } from './Buttons.jsx';
 import {ViewOptionsButton} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
