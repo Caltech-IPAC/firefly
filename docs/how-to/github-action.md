@@ -1,4 +1,3 @@
-
 # GitHub Workflow
 
 ## Overview
@@ -149,7 +148,8 @@ This results in:
 └── firefly/
 ```
 
-The Docker build `context` should be set appropriately (for example `context: .`) so both directories are visible during the build.
+The Docker build context must be the parent directory that contains `firefly` (for example, `context: .`) 
+so dependent build directories are visible during the Docker build.
 
 ### Build Arguments
 
@@ -481,4 +481,3 @@ Equivalent to CLI:
 ```
 --build-arg env=ops
 ```
-

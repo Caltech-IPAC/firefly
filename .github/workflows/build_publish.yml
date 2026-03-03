@@ -3,18 +3,21 @@ name: Build and publish Firefly image
 on:
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: "Docker image tag; git tag without 'release-' prefix (e.g. 'xxxx.x.x')"
+      git_tag:
+        description: "Git tag to use(e.g. 'release-xxxx.x.x' or a full git tag)"
         required: true
+        type: string
+      img_tag:
+        description: "Optional: Docker image tag(e.g. 'xxxx.x.x'); If omitted, `git_tag` will be used."
+        required: false
         type: string
       push_image:
         description: "Push image to GHCR"
         required: false
         default: false
         type: boolean
-# Commenting out release trigger for now since we have not decided on publishing to GHCR.
-#  release:
-#    types: [published]
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -26,13 +29,34 @@ jobs:
 
     steps:
       # ------------------------------------------------------------
-      # Checkout firefly repo at configured tag
+      # Resolve checkout ref and image tag
+      # - If triggered by a release event, use the release tag for both ref and image tag
+      # - Otherwise, prefer `inputs.img_tag` (short form) and fallback to `inputs.git_tag`
+      # This ensures `git_tag` is required and independent of `img_tag`.
+      # ------------------------------------------------------------
+      - name: Resolve tags
+        id: resolve_tags
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
+            if [[ -n "${{ inputs.img_tag }}" ]]; then
+              echo "tag=${{ inputs.img_tag }}" >> $GITHUB_OUTPUT
+            else
+              echo "tag=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # ------------------------------------------------------------
+      # Checkout firefly repo at the resolved ref
       # ------------------------------------------------------------
       - name: Checkout Firefly
         uses: actions/checkout@v4
         with:
           repository: Caltech-IPAC/firefly
-          ref: release-${{ inputs.tag_name }}
+          ref: ${{ steps.resolve_tags.outputs.ref }}
           path: firefly
 
       # ------------------------------------------------------------
@@ -66,20 +90,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # ------------------------------------------------------------
-      # Determine image tag
-      # - Release: use release tag
-      # - Manual: use firefly tag
-      # ------------------------------------------------------------
-      - name: Set image tag
-        id: image_tag
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ inputs.push_image }}" >> $GITHUB_OUTPUT
-          fi
-
-      # ------------------------------------------------------------
       # Build (and optionally push) multi-platform image
       # ------------------------------------------------------------
       - name: Build and push image
@@ -89,7 +99,7 @@ jobs:
           file: firefly/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'release' || inputs.push_image == 'true' }}
-          tags: ghcr.io/${{ github.repository }}:${{ steps.image_tag.outputs.tag }}
+          tags: ghcr.io/${{ github.repository }}:${{ steps.resolve_tags.outputs.tag }}
           build-args: |
             env=ops
           cache-from: type=gha
