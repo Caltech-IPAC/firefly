@@ -63,12 +63,6 @@ export class MultiImageViewer extends PureComponent {
         const pv= getActivePlotView(visRoot());
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
         const {rootWidget}= this;
-        /*if (rootWidget) {
-            console.log('MIV size', this.props.viewerId, {
-                w: rootWidget.offsetWidth,
-                h: rootWidget.offsetHeight,
-            });
-        }*/
         if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId) return;
         activeViewerMap.set(this.props.viewerId, Boolean(rootWidget.offsetWidth && rootWidget.offsetHeight));
         if (viewer.lastActiveItemId!==pv.plotId && !viewer.itemIdAry.includes(pv.plotId) && rootWidget.offsetWidth && rootWidget.offsetHeight) {
@@ -106,7 +100,6 @@ export class MultiImageViewer extends PureComponent {
         const {viewerId,tableId,gridDefFunc,handleToolbar=true}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId,tableId);
-        //console.log('inside MultiImageViewer render, viewerId=', viewerId, ' tableId=', tableId, ' layoutType=', layoutType);
         if (!viewer) return false;
         if (isEmpty(viewer.itemIdAry)) {
             if (!gridDefFunc) return false;

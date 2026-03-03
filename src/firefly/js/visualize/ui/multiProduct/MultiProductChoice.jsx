@@ -22,12 +22,11 @@ let lastChartDefault= 'Chart';
 
 
 export function MultiProductChoice({ dataProductsState, dpId,
-                                      makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
-                                      tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
-                                  }) {
-    //handle null dataProductsState for cases where data products workflow is not used
-    const {enableCutout, pixelBasedCutout=false, dlData, gridForceRowSize}= dataProductsState ?? {};
-    const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState?.dlData ?? {};
+                                       makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
+                                       tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
+                                   }) {
+    const {enableCutout, pixelBasedCutout=false, dlData, gridForceRowSize}= dataProductsState;
+    const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const stateDef= dlData ? dlData?.dlAnalysis?.isSpectrum ? 'Spectrum' : 'Chart' : lastChartDefault;
@@ -38,27 +37,26 @@ export function MultiProductChoice({ dataProductsState, dpId,
     const tbl_id = getTableGroup(tableGroupViewerId)?.active;
     const table = tbl_id ? getTblById(tbl_id) : undefined;
     useEffect(() => {
-        if (!tbl_id) return;
         onTableLoaded(tbl_id).then(() => {
             const name = (getMetaEntry(tbl_id, 'utype') === 'spec:Spectrum') ? 'Spectrum' : 'Chart';
             setChartName(name);
             lastChartDefault= name;
         });
-    }, [dataProductsState?.activate,tbl_id]);
+    }, [dataProductsState.activate,tbl_id]);
 
-    const activeItemKey= dataProductsState ? getActiveFileMenuKeyByKey(dpId,dataProductsState?.fileMenu?.activeItemLookupKey) : undefined;
+    const activeItemKey= getActiveFileMenuKeyByKey(dpId,dataProductsState?.fileMenu?.activeItemLookupKey);
     const cubeIdx= dataProductsState?.fileMenu?.menu.find( (i) => i.menuKey===activeItemKey)?.cubeIdx ?? -1;
 
     useEffect(() => {
-        if (!imageViewerId || !dataProductsState) return;
+        if (!imageViewerId) return;
         const pv= getActivePlotView(visRoot());
         if (!pv || !hasImageCubes(pv) || cubeIdx<0) return;
         showingStatus.oldWhatToShow= whatToShow;
         showingStatus.cubeSet= false;
-    }, [whatToShow,cubeIdx,dataProductsState]);
+    }, [whatToShow,cubeIdx]);
 
     useEffect(() => {
-        if (!imageViewerId || primeIdx===-1 || cubeIdx<0 || !dataProductsState) return;
+        if (!imageViewerId || primeIdx===-1 || cubeIdx<0) return;
         if (showingStatus.cubeSet) return;
         const pv= getActivePlotView(visRoot());
         if (!pv || !hasImageCubes(pv)) return;
@@ -66,7 +64,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
         const hduIdx= getHDUIndex(pv);
         const newPrimeIdx= convertHDUIdxToImageIdx(pv,hduIdx,cubeIdx) ?? 0;
         if (primeIdx!==newPrimeIdx) dispatchChangePrimePlot({plotId:pv.plotId,primeIdx:newPrimeIdx});
-    }, [table,primeIdx,cubeIdx,dataProductsState]);
+    }, [table,primeIdx,cubeIdx]);
 
 
 
