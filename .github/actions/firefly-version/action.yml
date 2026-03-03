@@ -1,0 +1,37 @@
+name: 'Resolve Firefly Version'
+description: 'Extracts the firefly.tag.name from app.config.'
+
+inputs:
+  config_path:
+    description: 'Path to the app.config file'
+    required: true
+
+outputs:
+  ref:
+    description: 'The extracted firefly tag'
+    value: ${{ steps.extract.outputs.ref }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: extract
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if [[ ! -f "${{ inputs.config_path }}" ]]; then
+          echo "::error::Configuration file not found at: ${{ inputs.config_path }}"
+          exit 1
+        fi
+
+        ref="$(
+          grep -E '^[[:space:]]*firefly\.tag\.name[[:space:]]*=' "${{ inputs.config_path }}" | cut -d'"' -f2
+        )"
+
+        if [[ -z "$ref" ]]; then
+          echo "ERROR: firefly.tag.name not found or malformed in ${{ inputs.config_path }}"
+          exit 1
+        fi
+
+        echo "Using firefly tag: $ref"
+        echo "ref=$ref" >> "$GITHUB_OUTPUT"

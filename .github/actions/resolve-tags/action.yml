@@ -1,0 +1,35 @@
+name: 'Resolve tags'
+description: 'Determines the git ref and image tag based on inputs and event type'
+
+inputs:
+  git_tag:
+    description: 'Manual git tag input'
+    required: false
+  img_tag:
+    description: 'Manual image tag input'
+    required: false
+
+outputs:
+  ref:
+    description: "The resolved git reference"
+    value: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.git_tag }}
+  tag:
+    description: "The resolved image tag"
+    value: ${{ steps.logic.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: logic
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "tag=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+        else
+          FINAL_TAG="${{ inputs.img_tag }}"
+          if [[ -z "$FINAL_TAG" ]]; then
+            FINAL_TAG="${{ inputs.git_tag }}"
+          fi
+          echo "tag=$FINAL_TAG" >> $GITHUB_OUTPUT
+        fi

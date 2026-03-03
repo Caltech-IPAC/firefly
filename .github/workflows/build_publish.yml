@@ -28,34 +28,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ------------------------------------------------------------
-      # Resolve checkout ref and image tag
-      # - If triggered by a release event, use the release tag for both ref and image tag
-      # - Otherwise, prefer `inputs.img_tag` (short form) and fallback to `inputs.git_tag`
-      # This ensures `git_tag` is required and independent of `img_tag`.
-      # ------------------------------------------------------------
+      # -------------------------------------------------------------
+      # Use local action to resolve git ref and image tag from inputs
+      # -------------------------------------------------------------
       - name: Resolve tags
         id: resolve_tags
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-            echo "tag=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
-          else
-            echo "ref=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
-            if [[ -n "${{ inputs.img_tag }}" ]]; then
-              echo "tag=${{ inputs.img_tag }}" >> $GITHUB_OUTPUT
-            else
-              echo "tag=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
-            fi
-          fi
+        uses: ./firefly/.github/actions/resolve-tags
+        with:
+          git_tag: ${{ inputs.git_tag }}
+          img_tag: ${{ inputs.img_tag }}
 
       # ------------------------------------------------------------
-      # Checkout firefly repo at the resolved ref
+      # Checkout firefly (this repo)
       # ------------------------------------------------------------
       - name: Checkout Firefly
         uses: actions/checkout@v4
         with:
-          repository: Caltech-IPAC/firefly
           ref: ${{ steps.resolve_tags.outputs.ref }}
           path: firefly
 
@@ -99,7 +87,8 @@ jobs:
           file: firefly/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'release' || inputs.push_image == 'true' }}
-          tags: ghcr.io/${{ github.repository }}:${{ steps.resolve_tags.outputs.tag }}
+          # docker buildx does not allow uppercase letters in tags, so we convert to lowercase here
+          tags: ghcr.io/caltech-ipac/firefly:${{ steps.resolve_tags.outputs.tag }}
           build-args: |
             env=ops
           cache-from: type=gha
