@@ -1,5 +1,5 @@
-name: 'Resolve tags'
-description: 'Determines the git ref and image tag based on inputs and event type'
+name: 'Resolve tag'
+description: 'Determines the image tag based on inputs and event type'
 
 inputs:
   git_tag:
@@ -10,9 +10,6 @@ inputs:
     required: false
 
 outputs:
-  ref:
-    description: "The resolved git reference"
-    value: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.git_tag }}
   tag:
     description: "The resolved image tag"
     value: ${{ steps.logic.outputs.tag }}

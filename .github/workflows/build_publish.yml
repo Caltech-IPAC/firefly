@@ -28,24 +28,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------------------------------------
-      # Use local action to resolve git ref and image tag from inputs
-      # -------------------------------------------------------------
-      - name: Resolve tags
-        id: resolve_tags
-        uses: ./firefly/.github/actions/resolve-tags
-        with:
-          git_tag: ${{ inputs.git_tag }}
-          img_tag: ${{ inputs.img_tag }}
-
       # ------------------------------------------------------------
       # Checkout firefly (this repo)
       # ------------------------------------------------------------
       - name: Checkout Firefly
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.resolve_tags.outputs.ref }}
+          ref: ${{ inputs.git_tag || github.event.release.tag_name}}
           path: firefly
+
+      # -------------------------------------------------------------
+      # Use local action to resolve git ref and image tag from inputs
+      # -------------------------------------------------------------
+      - name: Resolve tags
+        id: resolve_tag
+        uses: ./firefly/.github/actions/resolve-tag
+        with:
+          git_tag: ${{ inputs.git_tag }}
+          img_tag: ${{ inputs.img_tag }}
 
       # ------------------------------------------------------------
       # Checkout Firefly online help
@@ -88,7 +88,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'release' || inputs.push_image == 'true' }}
           # docker buildx does not allow uppercase letters in tags, so we convert to lowercase here
-          tags: ghcr.io/caltech-ipac/firefly:${{ steps.resolve_tags.outputs.tag }}
+          tags: ghcr.io/caltech-ipac/firefly:${{ steps.resolve_tag.outputs.tag }}
           build-args: |
             env=ops
           cache-from: type=gha
