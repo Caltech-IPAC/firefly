@@ -1,0 +1,106 @@
+name: Build and publish Firefly image
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_tag:
+        description: "Git tag to use(e.g. 'release-xxxx.x.x' or a full git tag)"
+        required: true
+        type: string
+      img_tag:
+        description: "Optional: Docker image tag(e.g. 'xxxx.x.x'); If omitted, `git_tag` will be used."
+        required: false
+        type: string
+      push_image:
+        description: "Push image to GHCR"
+        required: false
+        default: false
+        type: boolean
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ------------------------------------------------------------
+      # Resolve checkout ref and image tag
+      # - If triggered by a release event, use the release tag for both ref and image tag
+      # - Otherwise, prefer `inputs.img_tag` (short form) and fallback to `inputs.git_tag`
+      # This ensures `git_tag` is required and independent of `img_tag`.
+      # ------------------------------------------------------------
+      - name: Resolve tags
+        id: resolve_tags
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
+            if [[ -n "${{ inputs.img_tag }}" ]]; then
+              echo "tag=${{ inputs.img_tag }}" >> $GITHUB_OUTPUT
+            else
+              echo "tag=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # ------------------------------------------------------------
+      # Checkout firefly repo at the resolved ref
+      # ------------------------------------------------------------
+      - name: Checkout Firefly
+        uses: actions/checkout@v4
+        with:
+          repository: Caltech-IPAC/firefly
+          ref: ${{ steps.resolve_tags.outputs.ref }}
+          path: firefly
+
+      # ------------------------------------------------------------
+      # Checkout Firefly online help
+      # ------------------------------------------------------------
+      - name: Checkout Firefly Help
+        uses: actions/checkout@v4
+        with:
+          repository: Caltech-IPAC/firefly-help
+          ref: master
+          path: firefly-help
+
+      # ------------------------------------------------------------
+      # Setup Docker multi-platform build
+      # ------------------------------------------------------------
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ------------------------------------------------------------
+      # Login to GHCR (only if pushing)
+      # ------------------------------------------------------------
+      - name: Login to GHCR
+        if: github.event_name == 'release' || inputs.push_image
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------
+      # Build (and optionally push) multi-platform image
+      # ------------------------------------------------------------
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: firefly/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'release' || inputs.push_image == 'true' }}
+          tags: ghcr.io/${{ github.repository }}:${{ steps.resolve_tags.outputs.tag }}
+          build-args: |
+            env=ops
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
