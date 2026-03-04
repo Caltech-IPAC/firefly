@@ -28,44 +28,32 @@ public class EMailUtil {
     public static final boolean MAIL_SESSION_BY_PROP = AppProperties.getBooleanProperty("mail.use.prop.file", false);
     public static final String MAIL_SESSION = AppProperties.getProperty("mail.session", "MailSession");
 
-    public static void sendMessage(String[] to, String[] cc, String[] bcc, String subject, String messageBody, boolean isHTML)
-            throws EMailUtilException {
-
-        Session mailSession = getMailSession();
-        sendMessage(to, cc, bcc, subject, messageBody, mailSession, isHTML);
+    public static Properties getMailProperties() throws EMailUtilException {
+        Properties props = new Properties();
+        props.setProperty("mail.transport.protocol", AppProperties.getProperty("mail.transport.protocol"));
+        props.setProperty("mail.smtp.host", AppProperties.getProperty("mail.smtp.host"));
+        props.setProperty("mail.smtp.auth", AppProperties.getProperty("mail.smtp.auth"));
+        props.setProperty("mail.smtp.port", AppProperties.getProperty("mail.smtp.port"));
+        props.setProperty("mail.smtp.from", AppProperties.getProperty("mail.smtp.from"));
+        props.setProperty("mail.smtp.starttls.enable", AppProperties.getProperty("mail.smtp.starttls.enable"));
+        return props;
     }
 
-    private static Session getMailSession() throws EMailUtilException {
-        Session session;
+    public static Session getMailSession(Properties props) throws EMailUtilException {
         try {
-            if (MAIL_SESSION_BY_PROP) {
-                Properties properties = System.getProperties();
-                properties.setProperty("mail.transport.protocol", AppProperties.getProperty("mail.transport.protocol"));
-                properties.setProperty("mail.smtp.host", AppProperties.getProperty("mail.smtp.host"));
-                properties.setProperty("mail.smtp.auth", AppProperties.getProperty("mail.smtp.auth"));
-                properties.setProperty("mail.smtp.port", AppProperties.getProperty("mail.smtp.port"));
-                properties.setProperty("mail.smtp.from", AppProperties.getProperty("mail.smtp.from"));
-                properties.setProperty("mail.smtp.starttls.enable", AppProperties.getProperty("mail.smtp.starttls.enable"));
-                session = Session.getDefaultInstance(properties);
-            } else {
-                Context initCtx = new InitialContext();
-                Context envCtx = (Context) initCtx.lookup("java:comp/env");
-                session =(Session) envCtx.lookup(MAIL_SESSION);
-            }
+            return Session.getDefaultInstance(props);
         } catch (Exception e) {
             String msg = "Unable to send message, mail session not found on server.  Fail to look up session from " +
                     ( MAIL_SESSION_BY_PROP ? " JNDI name = " + MAIL_SESSION : " prop file." );
             ClientLog.message(msg+"; "+e.getMessage());
             throw new EMailUtilException(msg);
         }
-        return session;
     }
-
 
     public static void sendMessage(String[] to, String[] cc, String[] bcc, String subject, String messageBody)
             throws EMailUtilException {
 
-        Session mailSession = getMailSession();
+        Session mailSession = getMailSession(getMailProperties());
         sendMessage(to, cc, bcc, subject, messageBody, mailSession, false);
     }
 
