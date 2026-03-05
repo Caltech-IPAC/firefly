@@ -21,7 +21,7 @@ import {getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getSelectedShape} from './Catalog.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
+import {detachSelectArea} from '../visualize/ui/SelectAreaUIComponents.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 
 const ID= 'ImageLineBasedFP_PLOT';

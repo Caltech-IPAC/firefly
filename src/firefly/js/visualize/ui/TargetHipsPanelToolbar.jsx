@@ -1,23 +1,13 @@
 import {Stack, Typography} from '@mui/joy';
-import SELECTED_ZOOM from 'images/icons-2014/ZoomFitToSelectedSpace.png';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {ToolbarButton} from '../../ui/ToolbarButton';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
-import {
-    CenterOnSelection, CheckedButton, CheckedClearButton, CropButton, FilterAddButton, FiltersOffButton, StatsButton
-} from './Buttons';
 import {CONE_CHOICE_KEY} from './CommonUIKeys.js';
-import {
-    clearFilterDrawingLayer, crop, filterDrawingLayer, recenterToSelection, selectDrawingLayer, stats,
-    unselectDrawingLayer,
-    zoomIntoSelection
-} from './CtxToolbarFunctions';
-import {SelectAreaButton} from './SelectAreaDropDownView.jsx';
+import {SelectAreaButton} from './SelectAreaUIComponents.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 
 export const targetHipsDefaultMenuItemKey = {
@@ -58,14 +48,12 @@ export const HelpLines= ({whichOverlay, selectionHelpText, usingRadius}) => {
             <Stack {...{direction:'row', alignItems:'center', pl:.5 }}>
                 {whichOverlay===CONE_CHOICE_KEY ?
                     (<>
-                        <Typography level='body-xs' sx={nowrap}>Click to choose a search center, or use the Selection Tools (</Typography>
-                        {selectButton}
-                        <Typography level='body-xs' sx={nowrap}>) to choose a search center and radius.</Typography>
+                        <Typography level='body-xs' sx={nowrap}>Click to choose a search center, or use the Selection Tools
+                         to choose a search center and radius.</Typography>
                     </> ) :
                     (<>
-                        <Typography level='body-xs' sx={nowrap}>Use the Selection Tools (</Typography>
-                        {selectButton}
-                        <Typography level='body-xs' sx={nowrap}>) to choose a search polygon. Click to change the center.
+                        <Typography level='body-xs' sx={nowrap}>Use the Selection Tools
+                         to choose a search polygon. Click to change the center.
                         </Typography>
                     </> )}
             </Stack>

@@ -179,7 +179,8 @@ export function getMocOrderIndex(Nuniq) {
  * add new layer on MOC table
  * @param {Object} params moc table id
  * @param {string} params.tbl_id moc table id
- * @param {string} [params.title] optional title
+ * @param {string} [params.title] optional shorter title
+ * @param {string} [params.shortTitle] optional title
  * @param {string} params.fitsPath moc fits path at the server after upload
  * @param {string} params.mocUrl  moc fits url
  * @param {string} params.uniqColName column name for uniq number
@@ -189,7 +190,7 @@ export function getMocOrderIndex(Nuniq) {
  * @param {string} [params.mocGroupDefColorId ] - group color id
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = 'NUNIQ', maxFetchDepth,
+export function addNewMocLayer({tbl_id, title, shortTitle, fitsPath, mocUrl, uniqColName = 'NUNIQ', maxFetchDepth,
                                    tablePreloaded=false, color, mocGroupDefColorId }) {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
@@ -199,7 +200,7 @@ export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = '
         if (title) title= 'MOC - ' + title;
         const mocFitsInfo = {fitsPath, mocUrl, uniqColName, tbl_id, tablePreloaded};
         dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID,
-            {mocFitsInfo,title,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId,maxFetchDepth});
+            {mocFitsInfo,title,shortTitle,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId,maxFetchDepth});
     }
     return dl;
 }

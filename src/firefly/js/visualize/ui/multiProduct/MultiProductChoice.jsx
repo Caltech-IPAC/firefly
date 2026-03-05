@@ -13,6 +13,7 @@ import {NewPlotMode} from '../../MultiViewCntlr.js';
 import { convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, hasImageCubes} from '../../PlotViewUtil';
 import {ImageMetaDataToolbar} from '../ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from '../MultiImageViewer.jsx';
+import {SmallLegend} from '../SmallLegend';
 
 
 const imageOp= {label: 'Image', value: SHOW_IMAGE};
@@ -100,6 +101,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
                         enableCutoutFullSwitching:cutoutFullPair,
                         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
                         forceRowSize: gridForceRowSize,
+                        Legend: SmallLegend,
                         cutoutToFullWarning,
                         makeDropDown: !mayToggle ? makeDropDown : undefined,
                         Toolbar:ImageMetaDataToolbar, factoryKey}} />

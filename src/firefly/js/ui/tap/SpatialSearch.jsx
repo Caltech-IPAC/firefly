@@ -4,7 +4,9 @@ import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
+import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import {getColumnIdx} from '../../tables/TableUtil';
+import {SelectAreaForEmbedded} from '../../visualize/ui/SelectAreaUIComponents';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
@@ -116,7 +118,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType, Closest];
 
 export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, columnsModel, tableName, initArgs={},
-                                  obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true,
+                                  obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true, embeddedInHiPS=false,
                                   useSIAv2= false,
                                   slotProps}) {
     const {searchParams={}, urlApi={}}= initArgs ?? {};
@@ -255,7 +257,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
         ? slotProps
         : defaultsDeep({
                 // turn off the flags in (deeply nested) subcomponents that handle HiPS connection
-                targetPanel: { manageHiPS: false },
+                targetPanel: { manageHiPS: false},
                 polygonDataArea: {
                     showCornerTypeField: false,
                     slotProps: {polygonPanel: {manageHiPS: false}},
@@ -287,7 +289,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
                         }}
                         /> }
                     <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo, serviceLabel, serviceId,
-                        hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
+                        hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps, embeddedInHiPS}} />
                     {showCenterColumns &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
                             headerTitle:posHeaderTitle, openKey:posOpenKey,
@@ -316,7 +318,7 @@ function getSpacialLayoutMode(spacialType, obsCoreEnabled, canUpload) {
 
 
 const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInfo, serviceLabel, serviceId,
-                                 hipsUrl, centerWP, fovDeg, capabilities, slotProps}) => {
+                                 hipsUrl, centerWP, fovDeg, capabilities, embeddedInHiPS, slotProps}) => {
 
     const {getVal}= useContext(FieldGroupCtx);
 
@@ -329,11 +331,11 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const isCone= spatialMethod === CONE_CHOICE_KEY;
     const containsPoint= spatialRegOpValue === SpatialRegOpType.CONTAINS_POINT;
 
-    const radiusField= <RadiusField {...{radiusInArcSec:initArgs?.urlApi?.radiusInArcSec, ...slotProps?.radiusField}}/>;
+    const radiusField= <RadiusField {...{radiusInArcSec:initArgs?.urlApi?.radiusInArcSec, ...slotProps?.radiusField, embeddedInHiPS}}/>;
 
     const radiusOrPolygon= isCone ?
         radiusField :
-        (<PolygonDataArea {...{ imageCornerCalc: cornerCalcTypeValue, hipsUrl, centerWP, fovDeg,
+        (<PolygonField {...{ imageCornerCalc: cornerCalcTypeValue, hipsUrl, centerWP, fovDeg, embeddedInHiPS,
             initValue: initArgs?.urlApi?.polygon, ...slotProps?.polygonDataArea }}/>);
 
     switch (layoutMode) {
@@ -341,7 +343,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
             return (
                 <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities, ...slotProps?.regionOpField}}/>
-                    {!containsPoint && <ConeOrAreaField {...slotProps?.coneOrAreaField}/>}
+                    {!containsPoint && <ConeOrAreaField {...{...slotProps?.coneOrAreaField}}/>}
                     { (isCone || containsPoint) && <TargetPanelForSpacial {...{serviceId, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {!containsPoint && radiusOrPolygon}
                 </Stack>
@@ -410,6 +412,7 @@ SpatialSearch.propTypes = {
     tableName: string,
     sx: object,
     handleHiPSConnection: bool,
+    embeddedInHiPS: bool,
 };
 
 SpatialSearchLayout.propTypes = {
@@ -510,22 +513,24 @@ function TargetPanelForSpacial({hasRadius=true, serviceId,
     );
 }
 
-function RadiusField({label = 'Radius', radiusInArcSec=undefined, ...props }) {
-    const marginSides = 5;
-    return (
-        <SizeInputFields fieldKey={RadiusSize} showFeedback={true}
-                         style={{margin: `${marginSides}px 0px ${marginSides}px 0px`}}
-                         initialState={{
-                             unit: 'arcsec',
-                             nullAllowed: true,
-                             value: `${(radiusInArcSec||10)/3600}`,
-                             min: 1 / 3600,
-                             max: 100
-                         }}
-                         label={label}
-                         {...props}/>
+const PolygonField= ({embeddedInHiPS,  ...props }) => (
+        <Stack spacing={1}>
+            <PolygonDataArea {...props}/>
+            {embeddedInHiPS && <SelectAreaForEmbedded {...{ shape:SelectedShape.rect}}/>}
+        </Stack>
     );
-}
+
+const RadiusField= ({label= 'Radius', radiusInArcSec=10, embeddedInHiPS, style={margin:'5px 0 5px 0'}, ...props }) => (
+        <Stack direction='row' spacing={1}>
+            <SizeInputFields {...{ fieldKey:RadiusSize, showFeedback:true, label, style,
+                initialState:{
+                    unit: 'arcsec', nullAllowed: true, value: `${radiusInArcSec/3600}`, min: 1/3600, max: 100
+                },
+                ...props
+            }}/>
+            {embeddedInHiPS && <SelectAreaForEmbedded {...{ shape:SelectedShape.cone,sx:{width:'13em'}}}/>}
+        </Stack>
+    );
 
 // find ucd coordinate in type of UCDCoord
 const getUCDCoord = (columnsModel, colName) => {

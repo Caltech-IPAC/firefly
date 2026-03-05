@@ -22,6 +22,7 @@ import {getActiveTableId, getBooleanMetaEntry, getTblById, getTblIdsByGroup} fro
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
+import {SmallLegend} from './SmallLegend';
 
 
 const startWatcher= once((viewerId) => {
@@ -80,6 +81,7 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,noCovMessage
                                   insideFlex={true}
                                   canReceiveNewPlots={NewPlotMode.replace_only.key}
                                   controlViewerMounting={false}
+                                  Legend={SmallLegend}
                                   Toolbar={MultiViewStandardToolbar}/>
             </Stack>
         );

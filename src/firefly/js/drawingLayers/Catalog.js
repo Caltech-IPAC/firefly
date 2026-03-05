@@ -32,7 +32,7 @@ import {getUIComponent, TableSelectOptions} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea from './SelectArea.js';
-import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
+import {detachSelectArea} from '../visualize/ui/SelectAreaUIComponents.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj';
@@ -78,7 +78,7 @@ const pointBehavior= (catalogType) =>
 
 
 function creator(initPayload, presetDefaults={}) {
-    const {catalogId, tableData, tableMeta, title, catalogType= CatalogType.POINT,
+    const {catalogId, tableData, tableMeta, title, shortTitle, catalogType= CatalogType.POINT,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
            tableCanControlColor:inTableCanControlColor,
            symbol, size, tbl_id, dataTooBigForSelection=false, tableSelection, layersPanelLayoutId,
@@ -104,6 +104,7 @@ function creator(initPayload, presetDefaults={}) {
     const helpText= `Click on ${(catalogType===CatalogType.REGION) ? 'region' : 'point'} to highlight`;
     const options= {
         catalogType,
+        shortTitle,
         layersPanelLayoutId,
         hasPerPlotData:false,
         isPointData: pointBehavior(catalogType),

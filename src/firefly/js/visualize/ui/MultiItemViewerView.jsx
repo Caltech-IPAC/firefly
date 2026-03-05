@@ -5,7 +5,8 @@
 
 import {debounce} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
-import PropTypes from 'prop-types';
+import {bool, number, string, object, func, oneOf, arrayOf, any} from 'prop-types';
+import {checkProps} from '../../ui/SimpleComponent';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {Divider, Stack} from '@mui/joy';
 
@@ -23,7 +24,7 @@ const defDecStyle= {
 
 
 export function MultiItemViewerView(props)  {
-
+    checkProps(props, MultiItemViewerView);
     const {current:gridContainerElement}= useRef({element:undefined});
     const [,setWindowWidth]= useState(window?.innerWidth??1000);
     const {layoutType, activeItemId,
@@ -31,7 +32,6 @@ export function MultiItemViewerView(props)  {
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
         scrollGrid=false, ref,
         makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
-    let wrapperStyle;
 
     useEffect(() => {
         if (!scrollGrid) return;
@@ -41,14 +41,12 @@ export function MultiItemViewerView(props)  {
         return () => {
             window.removeEventListener('resize', browserResizeCallback);
         };
-    },[]);
+    },[]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (insideFlex) {
-        wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
-    }
-    else {
-        wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
-    }
+    const wrapperStyle= insideFlex
+        ? {...flexContainerStyle, flex:'1 1 auto'}
+        : {...flexContainerStyle, width:'100%', height:'100%'};
+
     let container;
     if (!viewerItemIds.length && !gridDefFunc) {
         container= false;
@@ -74,13 +72,8 @@ export function MultiItemViewerView(props)  {
         container= makePackedGrid(viewerItemIds,rows,forceColSize,true,makeItemViewer);
     }
     else if (scrollGrid) {
-        let cols;
-        const {width:containerWidth}= gridContainerElement?.element ?
-            gridContainerElement.element.getBoundingClientRect() : {width:0,height:0};
-        if (viewerItemIds.length>16) cols=4;
-        else if (viewerItemIds.length>5) cols=3;
-        else cols=2;
-        container= makeScrollGrid(viewerItemIds,cols,containerWidth, makeItemViewer);
+        const {width:containerWidth=0}= gridContainerElement?.element?.getBoundingClientRect() ?? {};
+        container= makeScrollGrid(viewerItemIds,containerWidth, makeItemViewer);
     }
     else {                   // GRID automatic
         const dim= findAutoGridDim(viewerItemIds.length, autoRowOriented);
@@ -107,26 +100,27 @@ export function MultiItemViewerView(props)  {
 }
 
 MultiItemViewerView.propTypes= {
-    viewerId : PropTypes.string.isRequired,
-    style : PropTypes.object,
-    defaultDecoration : PropTypes.bool,
-    layoutType : PropTypes.oneOf([GRID,SINGLE]),
-    forceRowSize : PropTypes.number,   //optional - force a certain number of rows
-    forceColSize : PropTypes.number,  //optional - force a certain number of columns
-    makeCustomLayout : PropTypes.func,  //optional - a function to present the items in a custom layout
-    gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
-    gridComponent : PropTypes.object,  // an element to define the grid - not implemented, just an idea
-    scrollGrid: PropTypes.bool,
-    insideFlex :  PropTypes.bool,
-    autoRowOriented: PropTypes.bool,
+    viewerId : string.isRequired,
+    style : object,
+    defaultDecoration : bool,
+    layoutType : oneOf([GRID,SINGLE]),
+    forceRowSize :number,   //optional - force a certain number of rows
+    forceColSize : number,  //optional - force a certain number of columns
+    makeCustomLayout : func,  //optional - a function to present the items in a custom layout
+    gridDefFunc : func,  // optional - a function to return the grid definition
+    gridComponent : object,  // an element to define the grid - not implemented, just an idea
+    scrollGrid: bool,
+    insideFlex :  bool,
+    autoRowOriented: bool,
 
-    viewerItemIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    activeItemId : PropTypes.string,
-    makeToolbar : PropTypes.func,
-    makeItemViewer : PropTypes.func,
-    makeItemViewerFull : PropTypes.func,
-    eventCallback: PropTypes.object,
-    sparseGridTitleLocation : PropTypes.oneOf(['top', 'left', 'off', ''])
+    viewerItemIds : arrayOf(string).isRequired,
+    activeItemId : string,
+    makeToolbar : func,
+    makeItemViewer : func,
+    makeItemViewerFull : func,
+    eventCallback: object,
+    sparseGridTitleLocation : oneOf(['top', 'left', 'off', '']),
+    ref: any,
 };
 
 
@@ -143,7 +137,13 @@ function makePackedGrid(viewerItemIds,rows,cols, columnBased,makeItemViewer) {
         rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,height,makeItemViewer);
 }
 
-function makeScrollGrid(viewerItemIds,cols,containerWidth, makeItemViewer) {
+function makeScrollGrid(viewerItemIds,containerWidth, makeItemViewer) {
+    const cols =
+        viewerItemIds.length>16
+            ? 4
+            : viewerItemIds.length>5
+                ? 3
+                : 2;
     const size= 100/cols;
     const sizePx= containerWidth ? Math.trunc((size/100)*containerWidth-2) : 0;
     const width= `calc(${size}% - 2px)`;
@@ -225,7 +225,7 @@ function findAutoGridDim(size, rowOriented=true) {
  *  an empty element will act as a placeholder in the row.
  *
  * @param {Array} viewerItemIds
- * @param {Array.<{string,string[]}>} gridDef
+ * @param {Array.<{title:string,plotIdAry:string[],noDataMessage:string,size:number}>} gridDef
  * @param {Function} makeItemViewer
  * @param sparseGridTitleLocation
  */

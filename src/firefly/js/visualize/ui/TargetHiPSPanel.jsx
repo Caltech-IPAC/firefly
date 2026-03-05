@@ -45,6 +45,7 @@ import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {SmallLegend} from './SmallLegend';
 import {HelpLines, targetHipsDefaultMenuItemKey, TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
 import {closeToolbarModalLayers} from './ToolbarToolModalEnd.js';
 import {
@@ -153,7 +154,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     useEffect(() => {
         setMocError();
         void updateMoc(mocList,plotId,setMocError);
-    }, [mocList]);
+    }, [mocList, plotId]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
         const setWhichOverlayWrapper= setWhichOverlay ?
@@ -165,7 +166,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
             setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,minSize,maxSize,
             canUpdateModalEndInfo:false
         });
-    },[pv]);
+    },[pv]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
         const whichOverlay= getWhichOverlay();
@@ -183,7 +184,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
 
     useEffect(() => {
         attachSRegion(sRegion,plotId);
-    }, [sRegion]);
+    }, [plotId, sRegion]);
 
     return (
         <Stack {...{minHeight:200, ...sx,}}>
@@ -198,7 +199,8 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                               whichOverlay={getWhichOverlay()}
                               toolbarHelpId={toolbarHelpId}
                               handleToolbar={false}
-                              menuItemKeys={{...targetHipsDefaultMenuItemKey, selectArea:usingRadius}}
+                              menuItemKeys={{...targetHipsDefaultMenuItemKey, selectArea:false}}
+                              Legend={SmallLegend}
                               Toolbar={TargetHipsPanelToolbar}/>
         </Stack>
     );
@@ -312,7 +314,7 @@ function HiPSPanelPopupButton({groupKey:gk, polygonKey, whichOverlay=CONE_CHOICE
                 connectContext?.setControlConnected(false);
             }
         };
-    },[]);
+    },[]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <ToolbarButton {...{
@@ -444,7 +446,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
 
         try {
             for(let i=0; (i<mocAddList.length); i++) {
-                const {mocUrl,title,mocColor,maxFetchDepth}= mocAddList[i];
+                const {mocUrl,title,mocColor,maxFetchDepth,shortTitle}= mocAddList[i];
 
                 const tbl_id= 'MOC---'+mocUrl;
                 let add= true;
@@ -454,7 +456,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
 
                     const {status, cacheKey}= await callWhileAwaiting(
                         upload(mocUrl, 'details', {hipsCache:true}),
-                        (p) => dispatchAddWorkingTask(plotId, p) );
+                        (p) => dispatchAddWorkingTask(plotId, p, 'MOC') );
                     setMocError();
                     if (abort) return;
                     const request= makeFileRequest(title, cacheKey, undefined, {
@@ -464,7 +466,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                     } );
                     dispatchTableFetch(request);
                     await callWhileAwaiting(onTableLoaded(tbl_id),
-                        (p) => dispatchAddWorkingTask(plotId, p) );
+                        (p) => dispatchAddWorkingTask(plotId, p, 'MOC') );
                     if (abort) return;
                     add= (status === '200');
                 }
@@ -477,6 +479,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                         visible: true,
                         fitsPath: mocUrl,
                         title,
+                        shortTitle,
                         color: mocColor ?? colors[i % 2],
                         mocUrl,
                         mocGroupDefColorId: `mocForTargetHipsPanelID-${i}-${mocColor??''}`,

@@ -55,7 +55,7 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 function creator(initPayload, presetDefaults={}) {
 
     const {catalogId,
-        highlightedRow, color, title,
+        highlightedRow, color, title, shortTitle,
         tableCanControlColor= true,
         symbol, size, tbl_id,
         layersPanelLayoutId,
@@ -83,6 +83,7 @@ function creator(initPayload, presetDefaults={}) {
         hasPerPlotData: true,
         isPointData:true,
         supportSubgroups: Boolean(table.tableMeta && table.tableMeta[SUBGROUP]),
+        shortTitle,
         layersPanelLayoutId,
     };
 

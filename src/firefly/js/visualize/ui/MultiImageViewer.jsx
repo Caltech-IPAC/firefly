@@ -3,8 +3,8 @@
  */
 
 import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
-import {isEmpty,omit} from 'lodash';
+import {bool, number, string, func} from 'prop-types';
+import {isEmpty} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {
     NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
@@ -37,11 +37,11 @@ function viewWithIdMounted(itemId) {
 }
 
 
-export class MultiImageViewer extends PureComponent {
+export class MultiImageViewer extends PureComponent {//todo: turn this into a functional component
 
     constructor(props) {
         super(props);
-        this.state= {viewer : null};
+        this.state= {viewer : undefined};
     }
 
 
@@ -72,7 +72,6 @@ export class MultiImageViewer extends PureComponent {
                 }
             }, 5);
         }
-
     }
 
     componentWillUnmount() {
@@ -99,42 +98,37 @@ export class MultiImageViewer extends PureComponent {
     render() {
         const {viewerId,tableId,gridDefFunc,handleToolbar=true}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
-        const layoutType= getLayoutType(getMultiViewRoot(),viewerId,tableId);
-        if (!viewer) return false;
-        if (isEmpty(viewer.itemIdAry)) {
+        if (isEmpty(viewer?.itemIdAry)) {
             if (!gridDefFunc) return false;
-            if (isEmpty(gridDefFunc([]))) return false; // it is possible the function will returns some messages
+            if (isEmpty(gridDefFunc([]))) return false; // it is possible the function will return some messages
         }
-        const newProps= omit(this.props, ['viewerPlotIds']);
-        const aId= viewer.itemIdAry.find( (id) => getPlotViewById(visRoot,id));
-        const pv= getPlotViewById(visRoot, aId);
-        if (!pv) return false;
+        if (!viewer?.itemIdAry.find( (id) => getPlotViewById(visRoot,id))) return false; //make sure a least one id has a PlotView
         return (
-            <MultiImageViewerView {...newProps}
-                                  viewerPlotIds={viewer.itemIdAry}
-                                  layoutType={layoutType}
-                                  handleToolbar={handleToolbar}
-                                  scrollGrid={viewer?.scroll ?? false}
-                                  visRoot={visRoot}
-                                  ref={(c) => this.rootWidget= c}
-                                  dlAry={dlAry}
+            <MultiImageViewerView {...{
+                ...this.props, handleToolbar, visRoot, dlAry,
+                layoutType: getLayoutType(getMultiViewRoot(),viewerId,tableId),
+                viewerPlotIds: viewer.itemIdAry,
+                scrollGrid: viewer.scroll,
+                ref: (c) => this.rootWidget= c,
+            }}
             />
         );
     }
 }
 
 MultiImageViewer.propTypes= {
-    viewerId : PropTypes.string.isRequired,
-    canReceiveNewPlots : PropTypes.string,
-    Toolbar : PropTypes.func,
-    handleToolbar : PropTypes.bool,
-    forceRowSize : PropTypes.number,
-    forceColSize : PropTypes.number,
-    gridDefFunc : PropTypes.func,
-    insideFlex : PropTypes.bool,
-    closeFunc : PropTypes.func,
-    tableId : PropTypes.string,
-    controlViewerMounting : PropTypes.bool
+    viewerId : string.isRequired,
+    canReceiveNewPlots : string,
+    Toolbar : func,
+    Legend : func,
+    handleToolbar : bool,
+    forceRowSize : number,
+    forceColSize : number,
+    gridDefFunc : func,
+    insideFlex : bool,
+    closeFunc : func,
+    tableId : string,
+    controlViewerMounting : bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, plotId:[string]}]

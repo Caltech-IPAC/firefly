@@ -7,6 +7,7 @@ import {visRoot, dispatchChangeExpandedMode, ExpandType, dispatchChangeActivePlo
 import {
     getMultiViewRoot, getViewer, getExpandedViewerItemIds, EXPANDED_MODE_RESERVED, DEFAULT_FITS_VIEWER_ID
 } from '../MultiViewCntlr.js';
+import {SmallLegend} from '../ui/SmallLegend';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent';
@@ -32,6 +33,7 @@ export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, force
     return (
         <MultiImageViewerView viewerPlotIds={getExpandedViewerItemIds(multiViewRoot)}
                               layoutType={layoutType} Toolbar={ExpandedTools}
+                              Legend={SmallLegend}
                               viewerId={foundViewerId} visRoot={vr}
                               scrollGrid={viewer?.scroll ?? false}
                               style={{flex:'1 1 auto', marginBottom:1,marginLeft:1}} closeFunc={closeFunc}

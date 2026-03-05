@@ -46,7 +46,7 @@ import {logger} from '../../util/Logger.js';
 import CoordUtil from '../CoordUtil';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
-import {detachSelectArea, isOutlineImageForSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView';
+import {detachSelectArea, isOutlineImageForSelectArea, SELECT_AREA_TITLE} from './SelectAreaUIComponents';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {convertAngle} from '../VisUtil';
 import ShapeDataObj from '../draw/ShapeDataObj';
