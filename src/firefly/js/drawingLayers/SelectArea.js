@@ -57,6 +57,7 @@ export function selectAreaEndActionCreator(rawAction) {
             const selectBox= drawLayer.drawData.data.find( (drawObj) => drawObj.type===SelectBox.SELECT_BOX);
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
             const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape, pv.rotation);
+            // update plot attributes with selection info retrieved from a SelectArea drawing layer drawn by the user
             dispatchAttributeChange({plotId,changes: {
                     [PlotAttribute.SELECTION] : sel,
                     [PlotAttribute.SELECTION_TYPE] : drawLayer.selectedShape ?? SelectedShape.rect.key,

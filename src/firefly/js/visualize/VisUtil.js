@@ -676,10 +676,10 @@ export function getBoundingBox(ptAry) {
 
 /**
  * Return a WorldPt that is offset by the relative ra and dec from the passed in position
- * @param {WorldPt} pos1
- * @param {number} offsetRa in arcseconds
- * @param {number} offsetDec in arcseconds
- * @return {WorldPt}
+ * @param {WorldPt} pos1 position to offset in Equatorial coordinate system
+ * @param {number} offsetRa eastward offset in arcseconds
+ * @param {number} offsetDec northward offset in arcseconds
+ * @return {WorldPt} resulting position in Equatorial coordinate system
  */
 export function calculatePosition(pos1, offsetRa, offsetDec ) {
     const ra = toRadians(pos1.getLon());
@@ -702,19 +702,22 @@ export function calculatePosition(pos1, offsetRa, offsetDec ) {
     const cosDn = Math.cos(dn);
     const sinDn = Math.sin(dn);
 
-
+    // Build a 3D unit vector (\hat{r}) for offsets (de, dn) in local tangent plane
     rhat[0] = cosDe * cosDn;
     rhat[1] = sinDe * cosDn;
     rhat[2] = sinDn;
 
+    // Apply Dec rotation to above vector
     shat[0] = cosDec * rhat[0] - sinDec * rhat[2];
     shat[1] = rhat[1];
     shat[2] = sinDec * rhat[0] + cosDec * rhat[2];
 
+    // Apply RA rotation to above vector
     uhat[0] = cosRa * shat[0] - sinRa * shat[1];
     uhat[1] = sinRa * shat[0] + cosRa * shat[1];
     uhat[2] = shat[2];
 
+    // Convert the final rotated vector back to RA and Dec in equatorial plane
     const uxy = Math.sqrt(uhat[0] * uhat[0] + uhat[1] * uhat[1]);
     if (uxy>0.0) {
         ra2 = Math.atan2(uhat[1], uhat[0]);
@@ -731,6 +734,47 @@ export function calculatePosition(pos1, offsetRa, offsetDec ) {
 
     return makeWorldPt(ra2, dec2);
 }
+
+/**
+ * Transform vector components from a local rotated frame to equatorial sky coordinate frame.
+ *
+ * @param {number} x angular distance (can be in arcsec, deg, etc.) along local X axis
+ * @param {number} y angular distance (can be in arcsec, deg, etc.) along local Y axis
+ * @param {number} angleDeg rotation angle of local Y axis east of north, in degrees. Default is 0 which means
+ * local Y axis points north and local X axis points east.
+ * @return {{east: number, north: number}} angular distances along equatorial East and North axes (in same units that were passed)
+ */
+export const transformToEastNorth = (x, y, angleDeg=0) => {
+    const thetaRad = convertAngle('deg', 'rad', angleDeg);
+    if (thetaRad === 0) {
+        return { east: x, north: y };
+    }
+
+    const cosTheta = Math.cos(thetaRad);
+    const sinTheta = Math.sin(thetaRad);
+    return {
+        east:  x * cosTheta + y * sinTheta,
+        north: -x * sinTheta + y * cosTheta,
+    };
+};
+
+/**
+ * Calculate a new position given a center position, offsets along local X and Y axes, and
+ * rotation angle of the local Y axis east of north.
+ *
+ * @param centerWp {WorldPt} center point to calculate offset from. (0, 0) for local axes.
+ * @param xOffset {number} angular distance in arcseconds along local X axis
+ * @param yOffset {number} angular distance in arcseconds along local Y axis
+ * @param rotAngle {number} rotation angle of local Y axis east of north, in degrees. Default is 0 which means
+ * local Y axis points north and local X axis points east.
+ * @returns {WorldPt}
+ */
+export const calculatePositionFromLocalOffsets = (centerWp, xOffset, yOffset, rotAngle=0) => {
+    const centerWpEqu = convertCelestial(centerWp);
+    const newWpOffset = transformToEastNorth(xOffset, yOffset, rotAngle);
+    const newWpEqu = calculatePosition(centerWpEqu, newWpOffset.east, newWpOffset.north);
+    return convertCelestial(newWpEqu, centerWp.getCoordSys());
+};
 
 export function isAngleUnit(unit) {
     return ['deg', 'degree', 'arcmin', 'arcsec', 'radian', 'rad'].includes(unit.toLowerCase());
@@ -1097,6 +1141,12 @@ export function getPointOnEllipse(cx, cy, rx, ry, angle) {
     return {x,y};
 }
 
+// Normalise rotation angle to be between -360 and 360 degrees. If the input is not a finite number then return 0.
+export function normalizeRotation(rotation=0) {
+    const value = Number(rotation);
+    if (!Number.isFinite(value)) return 0;
+    return value % 360;
+}
 
 export default {
     convert: convertCelestial,

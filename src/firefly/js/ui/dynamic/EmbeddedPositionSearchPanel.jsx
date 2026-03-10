@@ -4,9 +4,12 @@ import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, el
 import {defaultsDeep, isString} from 'lodash';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
-import { DEFAULT_INSTRUCTIONS_CIRCLE,
-    DEFAULT_SELECTION_TEXT, SelectAreaForEmbedded } from '../../visualize/ui/SelectAreaUIComponents';
+import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {BoxSearchInputFields} from '../BoxSearchInputFields.jsx';
+import {
+    DEFAULT_INSTRUCTIONS_CIRCLE, DEFAULT_INSTRUCTIONS_RECT,
+    DEFAULT_SELECTION_TEXT, SelectAreaForEmbedded
+} from '../../visualize/ui/SelectAreaUIComponents';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -34,8 +37,13 @@ const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
 const DEFAULT_PLOT_ID= 'defaultHiPSTargetSearch';
 const DEFAULT_TARGET_PANEL_WIDTH= '34rem';
 const DEFAULT_SIZE_KEY= 'radius';
-const DEFAULT_INIT_SIZE_VALUE= .005;
+const DEFAULT_INIT_SIZE_VALUE= .005; //deg
+const DEFAULT_MIN_SIZE_VALUE= 1/3600; // deg
+const DEFAULT_MAX_SIZE_VALUE= 1; //deg
 const DEFAULT_POLYGON_KEY= 'Polygon';
+const DEFAULT_BOX_SIZE_X_KEY= 'boxSizeX';
+const DEFAULT_BOX_SIZE_Y_KEY= 'boxSizeY';
+const DEFAULT_BOX_ROTATION_KEY= 'boxRotation';
 
 export const emptyHeaderSx = {
     paddingBlockStart: '0.5rem',
@@ -63,6 +71,9 @@ export const emptyHeaderSx = {
  *                  - *State: Cone*:
  *                      - `targetPanel` slot - TargetPanel
  *                      - `sizeInput` slot - SizeInputFields
+ *                  - *State: Box*:
+ *                     - `targetPanel` slot - TargetPanel
+ *                     - `boxSearchInput` slot - BoxSearchInputFields
  *                  - *State: Polygon*:
  *                      - `polygonField` slot - PolygonField
  *                  - *State: Upload*:
@@ -81,6 +92,7 @@ export const emptyHeaderSx = {
  * @param p.nullAllowed
  * @param p.insetSpacial
  * @param p.usePosition whether to use Cone search type in spatialSearch
+ * @param p.useBox whether to use Box search type in spatialSearch
  * @param p.useUpload whether to use multi-object search type in spatialSearch
  * @param p.usePolygon whether to use Polygon search type in spatialSearch
  * @param p.slotProps props to control the slots mentioned above. See propTypes.slotProps for details.
@@ -97,6 +109,7 @@ export function EmbeddedPositionSearchPanel({
                                                 usePosition= true,
                                                 useUpload = false,
                                                 usePolygon= true,
+                                                useBox= false,
                                                 slotProps={},
                                                 doSearch,
                                                 formTitle,
@@ -105,7 +118,14 @@ export function EmbeddedPositionSearchPanel({
 
     const {targetKey=DEF_TARGET_PANEL_KEY}= slotProps.targetPanel ?? {};
     const {polygonKey=DEFAULT_POLYGON_KEY, }= slotProps.polygonField ?? {};
-    const {sizeKey= DEFAULT_SIZE_KEY, min= 1 / 3600, max= 1, enabled:sizeEnabled=true}= slotProps.sizeInput ?? {};
+    const {sizeKey= DEFAULT_SIZE_KEY, min=DEFAULT_MIN_SIZE_VALUE, max=DEFAULT_MAX_SIZE_VALUE, enabled:sizeEnabled=true}= slotProps.sizeInput ?? {};
+    const {
+        boxSizeXKey=DEFAULT_BOX_SIZE_X_KEY,
+        boxSizeYKey=DEFAULT_BOX_SIZE_Y_KEY,
+        boxRotationKey=DEFAULT_BOX_ROTATION_KEY,
+        min:boxMin=DEFAULT_MIN_SIZE_VALUE*2, // since box size is length of its side so it corresponds to cone diameter (= radius * 2)
+        max:boxMax=DEFAULT_MAX_SIZE_VALUE*2, // same as above
+    }= slotProps.boxFields ?? {};
 
     const {groupKey}= useContext(FieldGroupCtx);
     const {searchTypeKey=CONE_AREA_KEY}= slotProps.spatialSearch ?? {};
@@ -138,6 +158,7 @@ export function EmbeddedPositionSearchPanel({
 
     const searchTypes = [
         {key: CONE_CHOICE_KEY, use: usePosition, label: 'Cone'},
+        {key: BOX_CHOICE_KEY, use: useBox, label: 'Box'},
         {key: POLY_CHOICE_KEY, use: usePolygon, label: 'Polygon'},
         {key: UPLOAD_CHOICE_KEY, use: useUpload, label: 'Multi-object'},
     ];
@@ -186,6 +207,9 @@ export function EmbeddedPositionSearchPanel({
         overflow: 'auto',
     };
 
+    const minSize = doGetSearchTypeOp()===BOX_CHOICE_KEY ? boxMin : min;
+    const maxSize = doGetSearchTypeOp()===BOX_CHOICE_KEY ? boxMax : max;
+
     return (
         <Stack key='targetGroup' alignItems='center' height='100%' paddingBottom={insetSpacial ? 0 : 20}
            onMouseDown={() => {
@@ -198,11 +222,14 @@ export function EmbeddedPositionSearchPanel({
                     hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList,
                     coordinateSys: CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000,
                     sRegion, plotId,
-                    minSize: min, maxSize: max, toolbarHelpId, showHelpLines, selectionHelpText,
+                    minSize, maxSize, toolbarHelpId, showHelpLines, selectionHelpText,
                     getWhichOverlay: doGetSearchTypeOp, setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
                     targetKey,
                     sizeKey: sizeEnabled ? sizeKey : undefined, //to draw radius only when size input is enabled
                     polygonKey,
+                    boxSizeXKey,
+                    boxSizeYKey,
+                    boxRotationKey,
                     sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1, ...hipsTargetViewSx}
                 }}/>
             <Sheet
@@ -232,7 +259,10 @@ export function EmbeddedPositionSearchPanel({
                 <CollapsibleGroup variant={'plain'}>
                     <CollapsibleItem {...{
                         componentKey:'embedSearchPanel', isOpen:true, title:'Please select a search type',
-                        header: (isOpen) => (<Header {...{isOpen, doSearch, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, slotProps}}/>),
+                        header: (isOpen) => (<Header {...{
+                            isOpen, doSearch, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, slotProps,
+                            boxSizeXKey, boxSizeYKey, boxRotationKey
+                        }}/>),
                         slotProps: {
                             header: {
                                 sx: emptyHeaderSx,
@@ -281,6 +311,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     nullAllowed: bool,
     insetSpacial: bool,
     usePosition: bool,
+    useBox: bool,
     usePolygon: bool,
     useUpload: bool,
     doSearch: func,
@@ -332,6 +363,9 @@ EmbeddedPositionSearchPanel.propTypes= {
             cancelSelectionText: string,
             sx: object,
         }),
+        boxFields : shape({
+            ...BoxSearchInputFields.propTypes,
+        }),
         uploadTableSelector: shape({
             component: elementType,
             ...UploadTableSelector.propTypes
@@ -349,11 +383,14 @@ EmbeddedPositionSearchPanel.propTypes= {
     }),
 };
 
-const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions}) {
+const Header = function({
+    isOpen, slotProps={}, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions,
+    boxSizeXKey, boxSizeYKey, boxRotationKey
+}) {
     const {groupKey} = useContext(FieldGroupCtx);
     const reqObj = getFieldGroupResults(groupKey,true);
 
-    useFieldGroupRerender([targetKey,sizeKey,polygonKey,searchTypeKey, searchTypeToggleOptions]);
+    useFieldGroupRerender([targetKey,sizeKey,polygonKey,searchTypeKey, searchTypeToggleOptions, boxSizeXKey, boxSizeYKey, boxRotationKey]);
 
     return (
         isOpen ?
@@ -370,7 +407,8 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
                     cancelText=''>
                     <Stack {...{width:'100%', alignItems:'center'}}>
                         <Slot {...{component:SearchSummary, slotProps:slotProps.searchSummary, request:reqObj,
-                            targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions}}/>
+                            targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions,
+                            boxSizeXKey, boxSizeYKey, boxRotationKey}}/>
                     </Stack>
                 </FormPanel>
             </Stack>
@@ -378,9 +416,13 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
 };
 
 
-function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, getSearchType}) {
+function SearchSummary({
+    request, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, getSearchType,
+    boxSizeXKey, boxSizeYKey, boxRotationKey
+}) {
     let {value: searchTypeValue, label: searchTypeLabel} = getSearchType?.(request) ?? {};
     searchTypeValue ??= request?.[searchTypeKey];
+    if (searchTypeToggleOptions.length === 1) searchTypeValue ??= searchTypeToggleOptions[0].value;
     if (!searchTypeValue) return false; //since searchTypeValue determines all the following summary info to be displayed
 
     searchTypeLabel ??= searchTypeToggleOptions.find(({value})=>value===searchTypeValue)?.label ?? searchTypeValue;
@@ -392,15 +434,25 @@ function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, 
         : formatWorldPtToStringSimple(target, getEqTypeFromMR(coordPref)); // for cone, point, etc.
 
     const radius = request?.[sizeKey]; // in degrees
+    const boxSizeX = request?.[boxSizeXKey];
+    const boxSizeY = request?.[boxSizeYKey];
+    const boxRotation = request?.[boxRotationKey];
     const fileName = request?.uploadInfo?.fileName;
     const rows = request?.uploadInfo?.totalRows;
 
     const summaryFragments = [];
-    if (radius && searchTypeValue === CONE_CHOICE_KEY) {
-        summaryFragments.push(`${toMaxFixed(radius, 6).toString()}° at `);
-    }
-    if (coords && searchTypeValue !== UPLOAD_CHOICE_KEY) {
+    if (searchTypeValue === CONE_CHOICE_KEY) {
+        if (radius) summaryFragments.push(`${toMaxFixed(radius, 6).toString()}° at `);
         summaryFragments.push(coords);
+    }
+    if (searchTypeValue === POLY_CHOICE_KEY && coords) {
+        summaryFragments.push(coords);
+    }
+    if (searchTypeValue === BOX_CHOICE_KEY && boxSizeX && boxSizeY) {
+        summaryFragments.push(`${toMaxFixed(boxSizeX, 6).toString()}° x ${toMaxFixed(boxSizeY, 6).toString()}° at ${coords}`);
+        if (boxRotation) {
+            summaryFragments.push(` rotated by ${toMaxFixed(Number(boxRotation), 3).toString()}° E of N`);
+        }
     }
     if (fileName && rows && searchTypeValue === UPLOAD_CHOICE_KEY) {
         summaryFragments.push(`${rows} rows in '${fileName}'`);
@@ -421,6 +473,9 @@ SearchSummary.propTypes = {
     targetKey: string,
     sizeKey: string,
     polygonKey: string,
+    boxSizeXKey: string,
+    boxSizeYKey: string,
+    boxRotationKey: string,
     searchTypeKey: string,
     searchTypeToggleOptions: arrayOf(shape({value: string, label: string})),
     getSearchType: func, // for customizing the logic of how searchType.value and searchType.label is determined
@@ -441,6 +496,7 @@ function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setU
             }} />}
             {children}
             {searchTypeOp === CONE_CHOICE_KEY && <ConeOp {...{slotProps,nullAllowed}}/> }
+            {searchTypeOp === BOX_CHOICE_KEY && <BoxOp {...{slotProps, nullAllowed}}/> }
             {searchTypeOp === POLY_CHOICE_KEY && <PolyOp {...{slotProps}}/> }
             {searchTypeOp === UPLOAD_CHOICE_KEY && <UploadOp {...{slotProps,uploadInfo,setUploadInfo}}/>}
         </Stack>
@@ -451,8 +507,8 @@ function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setU
 function ConeOp({slotProps,nullAllowed}) {
     const {
         sizeKey= DEFAULT_SIZE_KEY,
-        min= 1 / 3600,
-        max= 1,
+        min= DEFAULT_MIN_SIZE_VALUE,
+        max= DEFAULT_MAX_SIZE_VALUE,
         initValue= DEFAULT_INIT_SIZE_VALUE,
         enabled= true,
         sx={},
@@ -500,7 +556,7 @@ function PolyOp({slotProps}) {
         polygonExampleRow1= DEF_AREA_EXAMPLE,
         polygonExampleRow2,
         selectButtonText= DEFAULT_SELECTION_TEXT,
-        instructionsText= DEFAULT_INSTRUCTIONS_CIRCLE,
+        instructionsText= DEFAULT_INSTRUCTIONS_RECT,
     }= slotProps.polygonField ?? {};
 
 
@@ -514,6 +570,44 @@ function PolyOp({slotProps}) {
             }} />
             {Boolean(selectButtonText) &&
                 <SelectAreaForEmbedded {...{selectButtonText,instructionsText,shape:SelectedShape.rect}}/>}
+        </Stack>
+    );
+}
+
+function BoxOp({slotProps, nullAllowed}) {
+    const {
+        targetKey=DEF_TARGET_PANEL_KEY,
+        inputFieldLabel,
+        targetPanelExampleRow1,
+        targetPanelExampleRow2,
+    }= slotProps.targetPanel ?? {};
+
+    return (
+        <Stack>
+            <TargetPanel {...{
+                sx:{width:DEFAULT_TARGET_PANEL_WIDTH, ...slotProps.targetPanel?.sx},
+                key:targetKey,
+                inputFieldLabel,
+                fieldKey:targetKey,
+                nullAllowed,
+                targetPanelExampleRow1,
+                targetPanelExampleRow2,
+                slotProps: {
+                    feedback:{sx: {alignSelf:'center'} },
+                }
+            }}/>
+            <BoxSearchInputFields {...{
+                boxSizeXKey: DEFAULT_BOX_SIZE_X_KEY,
+                boxSizeYKey: DEFAULT_BOX_SIZE_Y_KEY,
+                boxRotationKey: DEFAULT_BOX_ROTATION_KEY,
+                min: DEFAULT_MIN_SIZE_VALUE * 2,
+                max: DEFAULT_MAX_SIZE_VALUE * 2,
+                initSizeXState: {value: (DEFAULT_INIT_SIZE_VALUE * 2)+''},
+                initSizeYState: {value: (DEFAULT_INIT_SIZE_VALUE * 2)+''},
+                selectButtonText: DEFAULT_SELECTION_TEXT,
+                instructionsText: DEFAULT_INSTRUCTIONS_RECT,
+                ...slotProps.boxFields
+            }} />
         </Stack>
     );
 }

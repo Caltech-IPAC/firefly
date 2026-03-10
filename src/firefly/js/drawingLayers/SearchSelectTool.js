@@ -16,6 +16,8 @@ import ShapeDataObj, {UnitType} from '../visualize/draw/ShapeDataObj.js';
 import {makeImagePt, makeScreenPt, pointEquals} from 'firefly/visualize/Point.js';
 import {getScreenPixScaleArcSec} from '../visualize/WebPlot';
 import {SelectedShape} from './SelectedShape.js';
+import {clampInRange} from 'firefly/util/MathUtil';
+import {logger} from 'firefly/util/Logger';
 
 const ID= 'SEARCH_SELECT_TOOL';
 const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
@@ -69,6 +71,13 @@ function dispatchSelectPoint(mouseStatePayload) {
                 }});
         }
     }
+    else if (plot.attributes[PlotAttribute.USE_BOX]) {
+        dispatchAttributeChange( {plotId, changes:{
+                [PlotAttribute.SELECTION_TYPE]: SelectedShape.rect.key,
+                [PlotAttribute.USER_SEARCH_WP]:wp
+            }
+        });
+    }
     else {
         dispatchAttributeChange( {plotId, changes:{
                 [PlotAttribute.SELECTION_TYPE]: SelectedShape.circle.key,
@@ -96,8 +105,9 @@ function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefau
     const drawingDef= { ...makeDrawingDef(color), symbol: DrawSymbol.DIAMOND, size: 8, ...presetDefaults };
     idCnt++;
     const pairs= {
-        [MouseState.UP.key]: dispatchSelectPoint,
+        [MouseState.UP.key]: dispatchSelectPoint, // point selection event on image will move the search region to that point
         [MouseState.DOWN.key]: saveLastDown
+        // TODO: add events and listeners for interaction with rotation and resize handles
     };
     const actionTypes= [DrawLayerCntlr.SELECT_POINT];
     const options = {
@@ -134,8 +144,9 @@ function drawSearchSelection(drawLayer, action, active, plotId) {
     const {plotIdAry}= action.payload;
     const plot= primePlot(visRoot(),plotId||plotIdAry?.[0]);
     if (!plot) return [];
-    return plot.attributes[PlotAttribute.USE_POLYGON] ?
-        drawSearchSelectionPolygon(plot, drawLayer) : drawSearchSelectionCircle(plot, drawLayer);
+    if (plot.attributes[PlotAttribute.USE_POLYGON]) return drawSearchSelectionPolygon(plot, drawLayer);
+    if (plot.attributes[PlotAttribute.USE_BOX]) return drawSearchSelectionTransformBox(plot, drawLayer);
+    return drawSearchSelectionCircle(plot, drawLayer);
 }
 
 function drawSearchSelectionCircle(plot, drawLayer) {
@@ -144,14 +155,14 @@ function drawSearchSelectionCircle(plot, drawLayer) {
     if (!wp) return [];
     const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG];
     const drawAry= [];
-    const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
+    const drawRadius = clampInRange(radius, minSize, maxSize);
     const shadow={offX:1,offY:1,color:'black',blur:1};
-    if (drawLayer.isInteractive) {
+    if (drawLayer.isInteractive) { // dispatchSelectPoint will move the draw layer on a point selection event
         const x= PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X,undefined,{shadow});
         drawAry.push(x);
         radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3, renderOptions:{shadow}} );
     }
-    else {
+    else { // dispatchSelectPoint will do nothing (isInteractive=false in search refinement tool)
         const cross= PointDataObj.make(wp,3, DrawSymbol.CROSS, undefined, {shadow});
         drawAry.push(cross);
         radius && drawAry.push(
@@ -167,6 +178,22 @@ function drawSearchSelectionPolygon(plot, drawLayer) {
     const wpAry= plot?.attributes[PlotAttribute.POLYGON_ARY];
     if (!wpAry || wpAry.length<3) return [];
     return [ drawLayer.isInteractive ?
-        {...ShapeDataObj.makePolygon(wpAry), lineWidth:3 } :
-        {...ShapeDataObj.makePolygon(wpAry), lineWidth:1,  renderOptions:{lineDash:[5,5]}}];
+        {...ShapeDataObj.makePolygon(wpAry), lineWidth:3 } : // movable layer
+        {...ShapeDataObj.makePolygon(wpAry), lineWidth:1,  renderOptions:{lineDash:[5,5]}}]; // locked layer
+}
+
+function drawSearchSelectionTransformBox(plot, drawLayer) {
+    const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
+    // const box = plot.attributes[PlotAttribute.USER_SEARCH_BOX];
+    const wpAry = plot?.attributes[PlotAttribute.POLYGON_ARY];
+    const rotAxisWp = plot.attributes[PlotAttribute.USER_SEARCH_BOX_AXIS_WP];
+    if (!wp || !wpAry) return [];
+    logger.debug('Box SearchSelectTool Draw Layer:', {center: wp.toString(), corners: wpAry.map((wp)=>wp.toString()), rotAxis: rotAxisWp.toString()});
+
+    // TODO: draw rotate and resize handles when the box is selected (similar to footprint selection behavior)
+    return [
+        PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X,undefined),
+        {...ShapeDataObj.makePolygon(wpAry), lineWidth:3},
+        {...ShapeDataObj.makeLine(wp, rotAxisWp, true), lineWidth:2, renderOptions:{lineDash:[5,5]}},
+    ];
 }

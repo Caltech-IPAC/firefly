@@ -52,7 +52,7 @@ export const PlotAttribute= {
     /** the selection type, a string - 'rect' or 'circle' */
     SELECTION_TYPE: 'SELECTION_TYPE',
 
-    /** the component who created the selection eg ('SelectArea' or 'SearchRefinementTool') */
+    /** the component who created the selection eg ('SelectArea' or 'SearchSelectTool') */
     SELECTION_SOURCE: 'SELECTION_SOURCE',
 
 
@@ -70,6 +70,11 @@ export const PlotAttribute= {
      * boolean
      */
     USE_POLYGON: 'USE_POLYGON',
+
+    /**
+     * boolean
+     */
+    USE_BOX: 'USE_BOX',
 
     SELECT_ACTIVE_CHART_PT: 'selectActiveChartPt',
 
@@ -158,6 +163,11 @@ export const PlotAttribute= {
 
     /** the radius of the search */
     USER_SEARCH_RADIUS_DEG: 'USER_SEARCH_RADIUS_DEG',
+
+    /** the box used for search in format: sizeXInDeg,sizeYInDeg,rotAngleInDeg */
+    USER_SEARCH_BOX: 'USER_SEARCH_BOX',
+
+    USER_SEARCH_BOX_AXIS_WP: 'USER_SEARCH_BOX_AXIS_WP',
 
     /** an object warnings: {key: string, warning:string} */
     USER_WARNINGS: 'USER_WARNINGS',

@@ -23,19 +23,18 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @typedef {Object} DrawLayer
  *
  * @prop {String} drawLayerId unique for each layer
- * @prop {String} displayGroupId, any layer in this group Id will be controlled together in the UI.\
+ * @prop {String} displayGroupId any layer in this group Id will be controlled together in the UI.\
  *                           Default to the drawLayerId layers all have a type string that default to the id,
  *                           however if multiple of same are added, the type id should be set
- * @prop {String} drawingTypeId  allows for multiple layers of same type to be added (such as multiple markers)
- *                if they share the same type id
- *                a drawing layer factory def should always pass the same type Id
- *                eg. all catalog overlays will by the same type of have different layer ids
+ * @prop {String} drawLayerTypeId  allows for multiple layers of same type to be added (such as multiple markers)
+ * if they share the same type id. A drawing layer factory def should always pass the same type id,
+ * e.g. all catalog overlays will be of the same type but have different layer ids.
  * @prop {String} title title to show in the ui
  * @prop {String} shortTitle a smaller title for the legend
  * @prop {String[]} plotIdAry array of plotId that are layered
  * @prop {String[]} visiblePlotIdAry:  array of plotId that are visible, only ids in this array are visible
  * @prop {String[]} actionTypeAry  what actions that the reducer will allow through the drawing layer reducer
- * @prop {DrawingDef} drawingDef
+ * @prop {DrawingDef} drawingDef layer's definitions of color, symbol, size, text, etc. styling information
  *
  * @prop {Boolean} canHighlight default: false,  if the layer can highlight
  * @prop {Boolean} canSelect  default: false
@@ -62,14 +61,14 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  *
  *
  * Key:   data
- * Value: null or [] or plotId:[]
+ * Value: null or [] or {plotId:[]}
  *              arrays are arrays of drawObj
  *              if data is an array the it applies to all the plots
  *              if data is an object the it applies to the only to the plotId with
  *              the fallback being the ALL_PLOTS key
  *
  * Key:   highlightData
- * Value: null or [] or plotId:[]
+ * Value: null or [] or {plotId:[]}
  *              arrays are arrays of drawObj
  *              if data is an object the it applies to the only to the plotId with
  *
@@ -133,7 +132,7 @@ function makeDrawLayer(drawLayerId,
          // it section: The types of IDs
          // drawLayerId: unique for each layer
          // drawingGroupLayerId:
-         // drawingTypeId: allows for multiple layers of same type to be added (such as multiple markers)
+         // drawLayerTypeId: allows for multiple layers of same type to be added (such as multiple markers)
          //                if they share the same type id then events mapping marked static will only be fired once
          //                a drawing layer factory def should always pass the same type Id
          //                eg. all catalog overlays will by the same type of have different layer ids
@@ -186,14 +185,14 @@ function makeDrawLayer(drawLayerId,
            //
            //
            // Key:   data
-           // Value: null or [] or plotId:[]
+           // Value: null or [] or {plotId:[]}
            //              arrays are arrays of drawObj
            //              if data is an array the it applies to all the plots
            //              if data is an object the it applies to the only to the plotId with
            //              the fallback being the ALL_PLOTS key
            //
            // Key:   highlightData
-           // Value: null or [] or plotId:[]
+           // Value: null or [] or {plotId:[]}
            //              arrays are arrays of drawObj
            //              if data is an object the it applies to the only to the plotId with
            //
@@ -213,7 +212,7 @@ function makeDrawLayer(drawLayerId,
 
            //
            //     mouse type as the key and the function to call when activated @see MouseState
-           //     if the value is an object the a it should define the properties: exclusive:boolean and func:function
+           //     if the value is an object then it should define the properties: exclusive:boolean and func:function
            //     the function usually dispatch type functions, but can be anything
            //     value can be an action string. in that case flux.process is call to dispatch that action.
            //     a mousestatepayload object is always passed.
