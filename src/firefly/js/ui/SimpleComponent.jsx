@@ -152,6 +152,17 @@ export function useFieldGroupValue(fieldKey, gk) {
     return [ getter, setter];
 }
 
+/**
+ * Convenience hook for components that only need the current field value and not the setter.
+ *
+ * @param {String} fieldKey - field key to read
+ * @param {*} def - default value to return when the field value is nullish
+ * @param {String} [gk] - optional group key; defaults to the current FieldGroup context
+ * @return {*} current field value or the provided default
+ */
+export function useFieldValueOnly(fieldKey, def, gk) {
+    return useFieldGroupValue(fieldKey, gk)[0]() ?? def;
+}
 
 
 /**
