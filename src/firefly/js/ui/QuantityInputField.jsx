@@ -5,7 +5,7 @@
  * for e.g., length, angular size, etc.
  */
 
-import React, { memo } from 'react';
+import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Divider, Stack, FormHelperText, Typography} from '@mui/joy';
 import { ListBoxInputFieldView } from 'firefly/ui/ListBoxInputField';
@@ -205,6 +205,14 @@ export const QuantityInputField = memo((props) => {
         ...props,
         initialState: normalizeInitState(props?.initialState, quantityBaseUnit, convertQuantityUnits),
     });
+
+    useEffect(() => {
+        // if value changed in the store (for e.g. by a setFieldValue()) and there's no displayValue, set it
+        if ((viewProps?.value || viewProps?.value===0) && viewProps?.unit && !viewProps?.displayValue) {
+            const newDisplayValue = convertQuantityUnits(viewProps.value, quantityBaseUnit, viewProps.unit);
+            fireValueChange({displayValue: newDisplayValue});
+        }
+        }, [viewProps?.value, viewProps?.unit, viewProps?.displayValue, fireValueChange, convertQuantityUnits, quantityBaseUnit]);
 
     const handleOnChange = (ev, quantityInfoUpdate) => {
         const { value, displayValue, unit=quantityBaseUnit, validator,
