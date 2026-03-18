@@ -6,14 +6,13 @@ package edu.caltech.ipac.util.download;
  */
 
 
-import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 
 import static edu.caltech.ipac.util.download.URLDownload.firstParamValUsingKeyList;
+import static edu.caltech.ipac.util.download.URLDownload.makeURL;
 
 /**
  * @author Trey Roby
@@ -77,7 +76,7 @@ public record S3Ref(String region, String bucket, String key, String accessKey, 
             String bucket = path.substring(0, idx);
             return new S3Ref(null, bucket, key);
         } else if (s.toLowerCase().startsWith("https")) {
-            URL url= Util.Try.it(() -> new URI(s).toURL()).getOrElse((URL)null);
+            URL url= makeURL(s);
             if (url == null) return null;
             var path = url.getPath();
             if (path.length() < 2) return null;
@@ -120,7 +119,7 @@ public record S3Ref(String region, String bucket, String key, String accessKey, 
     public static boolean isS3SignedURL(String s) {
         if (s==null) return false;
         if (!s.toLowerCase().startsWith("https")) return false;
-        URL url = Util.Try.it(() -> new URI(s).toURL()).getOrElse((URL) null);
+        URL url = makeURL(s);
         if (url == null) return false;
         var path = url.getPath();
         if (path.length() < 2) return false;

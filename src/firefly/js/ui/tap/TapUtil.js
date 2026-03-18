@@ -4,15 +4,12 @@ import {isArray, memoize, omit, sortBy, uniqBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {
-    alterFalsyVal, doFetchTable, getColumnIdx, getTblById, getTblIdsByGroup, sortTableData
-} from '../../tables/TableUtil.js';
+import {alterFalsyVal, doFetchTable, getColumnIdx, sortTableData } from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
-import {getTAPServicesByName} from './TapKnownServices';
+import {makeTAPDefaultServicesByName} from './TapKnownServices';
 
 const logger = Logger('TapUtil');
-const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&RUNID=TAP_SCHEMA&';
 
 export const ADQL_LINE_LENGTH = 100;
 export const ADQL_UPLOAD_TABLE_NAME= 'upload_table';
@@ -33,7 +30,14 @@ const columnCache={};
 const obsCoreMetadataCache={};
 // end cache objects
 
-
+function makeSyncQueryURL(serviceUrl, query) {
+    const url= new URL(serviceUrl+'/sync');
+    url.searchParams.append('REQUEST', 'doQuery');
+    url.searchParams.append('LANG', 'ADQL');
+    url.searchParams.append('RUNID', 'TAP_SCHEMA');
+    url.searchParams.append('QUERY', query);
+    return url.toString();
+}
 
 export function getMaxrecHardLimit() {
     const defaultValue = Number.parseInt(getProp('tap.maxrec.hardlimit'));
@@ -280,12 +284,10 @@ export async function loadTapColumns(serviceUrl, schemaName, tableName) {
 
 async function doLoadTapColumns(serviceUrl, schemaName, tableName) {
 
-    const url = serviceUrl + qFragment +
-        'QUERY=SELECT+*+FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
-        // 'QUERY=SELECT+column_name,description,unit,datatype,ucd,utype,principal+' +
-        // 'FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
+    const url = makeSyncQueryURL(serviceUrl,`SELECT * FROM TAP_SCHEMA.columns WHERE table_name like '${tableName}'`);
 
-    const request = makeFileRequest('columns', url, undefined, {tbl_id: getColumnsTblId(serviceUrl, tableName), pageSize: MAX_ROW});
+    const request = makeFileRequest('columns', url, undefined,
+        {tbl_id: getColumnsTblId(serviceUrl, tableName), pageSize: MAX_ROW});
 
     try {
         const tableModel= await doFetchTable(request);
@@ -337,16 +339,15 @@ async function doLoadObsCoreMetadata(serviceUrl, obscoreTable) {
 }
 
 function makeTapSchemaRequest(serviceUrl, QUERY, title) {
-    const url = serviceUrl + qFragment +  'QUERY=' + encodeURIComponent(QUERY);
+    const url= makeSyncQueryURL(serviceUrl,QUERY.trim());
     return makeFileRequest(title, url, undefined, {pageSize: MAX_ROW});
-
 }
 
 async function loadSchemaDefJoin(serviceUrl) {
     const QUERY = ` SELECT *
                     FROM tap_schema.schemas
                     INNER JOIN tap_schema.tables ON  tap_schema.tables.schema_name = tap_schema.schemas.schema_name
-                `.replace(/\s+/g, ' ').trim();
+                `;
 
     const tableModel= await doFetchTable(makeTapSchemaRequest(serviceUrl, QUERY, 'loadSchemaDefJoin'));
 
@@ -390,8 +391,13 @@ async function loadSchemaDefNoJoin(serviceUrl) {
     const schemasQuery = 'SELECT * FROM tap_schema.schemas';
     const tablesQuery  = 'SELECT * FROM tap_schema.tables';
 
-    const schemas = await doFetchTable(makeTapSchemaRequest(serviceUrl, schemasQuery, 'loadSchemaDefNoJoin-schemas'));
-    const tables  = await doFetchTable(makeTapSchemaRequest(serviceUrl, tablesQuery, 'loadSchemaDefNoJoin-tables'));
+
+    const [schemas,tables]= await Promise.all([
+        doFetchTable(makeTapSchemaRequest(serviceUrl, schemasQuery, 'loadSchemaDefNoJoin-schemas')),
+        doFetchTable(makeTapSchemaRequest(serviceUrl, tablesQuery, 'loadSchemaDefNoJoin-tables'))
+    ]);
+
+
 
     const schemaIdx = getColumnIdx(schemas, 'schema_index');
     const schemaNameIdx = getColumnIdx(schemas, 'schema_name');
@@ -420,14 +426,6 @@ async function loadSchemaDefNoJoin(serviceUrl) {
     return tables;
 }
 
-function supportJoin(serviceUrl) {
-    // Vizier doesn't support schema.*, table.*.  returning a table of blank rows.
-    // heasarc doesn't support schema.*, table.* nor *. need to handle separately.
-    // most services does not have schema_index and/or table_index.
-    // to make it work for most services, had to use 'select *'.
-    return !serviceUrl.toLowerCase().includes('heasarc.gsfc.nasa.gov');
-}
-
 function isOldTap(serviceUrl) {
     // norlab is using an old version of TAP and there is no other way to recognize it
     return serviceUrl.toLowerCase().includes('datalab.noirlab.edu');
@@ -437,9 +435,10 @@ export const loadSchemaDef = memoize(async (serviceUrl) => {
 
     try {
         if (!serviceUrl) return;
-        const tableModel= supportJoin(serviceUrl)
-                ? await loadSchemaDefJoin(serviceUrl)
-                : await loadSchemaDefNoJoin(serviceUrl);
+
+        const tableModel= getTapServiceByURL(serviceUrl)?.schemaLoadManual
+            ? await loadSchemaDefNoJoin(serviceUrl)
+            : await loadSchemaDefJoin(serviceUrl);
 
         if (tableModel.error) throw new Error(tableModel.error);
 
@@ -482,9 +481,9 @@ export const loadTapKeys = memoize(async (serviceUrl) => {
                tap_schema.key_columns.from_column,
                tap_schema.key_columns.target_column
         FROM tap_schema.keys INNER JOIN tap_schema.key_columns ON tap_schema.keys.key_id = tap_schema.key_columns.key_id
-        `.replace(/\s+/g, ' ').trim();
+        `;
 
-    const url = serviceUrl + qFragment + 'QUERY=' + encodeURIComponent(QUERY);
+    const url= makeSyncQueryURL(serviceUrl,QUERY.trim());
     const request = makeFileRequest('loadTapKeys', url, undefined, {pageSize: MAX_ROW});
 
     try {
@@ -566,7 +565,7 @@ export function mergeServices(startingServices, additional) {
 
 export function getTapServices() {
     const {tap} = getAppOptions();
-    const startingTapServices= hasElements(tap?.services) ? [...tap.services] : getTAPServicesByName();
+    const startingTapServices= hasElements(tap?.services) ? [...tap.services] : makeTAPDefaultServicesByName();
     const mergedServices= mergeServices(startingTapServices,tap?.additional?.services);
     mergedServices.push(...getUserServiceAry());
     return mergedServices;
@@ -580,9 +579,7 @@ function getUserServiceAry() {
 
 export function addUserService(serviceUrl) {
     const userServices= getUserServiceAry();
-    if (getTapServices().some( (({value}) => value===serviceUrl))) { // don't add if service already exist
-        return;
-    }
+    if (getTapServiceByURL(serviceUrl)) return; // don't add if service already exist
     const usedNumAry= userServices
         .map( (s) => s.label)
         .filter((title) => title && title.startsWith(baseName))
@@ -626,30 +623,6 @@ export function maybeQuote(name, isTable=false) {
 
 
 
-export const defaultADQLExamples=[
-    {
-        description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-            `SELECT * FROM fp_psc 
-WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
-    },
-    {
-        description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-            `SELECT * FROM gaiaedr3.gaia_source 
-WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
-    },
-    {
-        description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-            `SELECT designation, ra, dec, w2mpro 
-FROM allwise_p3as_psd 
-WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
-    }
-];
 
 function getTableNameFromADQL(adql) {
     if (!adql) return;
@@ -698,11 +671,6 @@ export function getAvailableColumns(columnsModel){
     });
 }
 
-export function getServiceLabel(serviceUrl) {
-    const tapOps= getTapServiceOptions();
-    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
-}
-
 export function getServiceId(serviceUrl) {
     const tapOps= getTapServices();
     const id= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.serviceId));
@@ -710,10 +678,26 @@ export function getServiceId(serviceUrl) {
     return getServiceLabel(serviceUrl).replaceAll(/\s/g,'');
 }
 
-export function getServiceHiPS(serviceUrl) {
-    const tapOps= getTapServices();
-    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.hipsUrl)) || '';
-}
+
+/**
+ * @param serviceUrl
+ * @return {TapService}
+ */
+export const getTapServiceByURL= (serviceUrl) => getTapServices()?.find( (e) => e.value===serviceUrl);
+
+/**
+ * @param serviceUrl
+ * @return {String} label
+ */
+export const getServiceLabel= (serviceUrl) => getTapServiceByURL(serviceUrl)?.labelOnly ?? '';
+
+/**
+ * @param serviceUrl
+ * @return {String} HiPS url
+ */
+export const getServiceHiPS= (serviceUrl) => getTapServiceByURL(serviceUrl)?.hipsUrl ?? '';
+
+
 
 export const getTapServiceOptions= () =>
     getTapServices().map(({label,value,userAdded=false})=>({label:value, value, labelOnly:label, userAdded}));

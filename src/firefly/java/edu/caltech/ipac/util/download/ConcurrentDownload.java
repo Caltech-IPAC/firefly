@@ -13,9 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -66,16 +63,13 @@ public class ConcurrentDownload {
         }
         if (status == HttpURLConnection.HTTP_NOT_MODIFIED) return notModified(url,outfile,result);
 
-        try {
-            URL finalUrl= result.isRedirected() ? new URI(result.getLocation()).toURL() : url;
-            if (partialDownloadQualified(result)) {
-                return doMultiThreadedDownload(finalUrl,outfile,cookies,requestHeaders,ops,result);
-            }
-            else {
-                return URLDownload.getDataToFile(finalUrl,outfile,cookies,requestHeaders,ops);
-            }
-        } catch (MalformedURLException | URISyntaxException | IllegalArgumentException e) {
-            throw new FailedRequestException("redirect URL could not be parsed");
+        URL finalUrl= result.isRedirected() ? URLDownload.makeURL(result.getLocation()) : url;
+        if (finalUrl==null) throw new FailedRequestException("redirect URL could not be parsed");
+        if (partialDownloadQualified(result)) {
+            return doMultiThreadedDownload(finalUrl,outfile,cookies,requestHeaders,ops,result);
+        }
+        else {
+            return URLDownload.getDataToFile(finalUrl,outfile,cookies,requestHeaders,ops);
         }
     }
 

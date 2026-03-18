@@ -3,10 +3,31 @@
  */
 import {Logger} from 'firefly/util/Logger.js';
 
-const tapEntry= (serviceId, label,url,hipsUrl, fovDeg,centerWP, schemaLabel, examples) =>
-    ({ serviceId, label, value: url, examples, fovDeg, hipsUrl, centerWP, schemaLabel});
 
-export function getTAPServicesByName(nameList) {
+
+const defEntry= (serviceId, label,url) => ({ serviceId, label, value: url});
+
+/**
+ * @typedef {Object} TapService
+ * @prop {String} serviceId
+ * @prop {String} label
+ * @prop {String} value the url
+ * @prop {Array.<TapExample>} examples
+ * @prop {Number} fovDeg
+ * @prop {String} hipsUrl
+ * @prop {String} centerWP - world point serialized string
+ * @prop {String} schemaLabel - label to show instead of "Schema'
+ * @prop {boolean} schemaLoadManual - label to show instead of "Schema'
+ */
+
+/**
+ * @typedef {Object} TapExample
+ * @prop {String} description -
+ * @prop {String} statement
+ */
+
+
+export function makeTAPDefaultServicesByName(nameList) {
     const services= makeServices();
     if (!nameList) return services;
 
@@ -18,30 +39,35 @@ export function getTAPServicesByName(nameList) {
         .filter( (v) => v);
 }
 
+/**
+ *
+ * @return {Array.<TapService>}
+ */
 function makeServices() {
     return [
-        tapEntry('IRSA', 'IRSA', 'https://irsa.ipac.caltech.edu/TAP', undefined,undefined,undefined, 'Project', irsaExamples() ),
-        tapEntry('NED', 'NED', 'https://ned.ipac.caltech.edu/tap/',undefined,undefined,undefined,undefined, nedExamples()),
-        tapEntry('ExoplanetArchive', 'NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
-        tapEntry('KOA', 'KOA', 'https://koa.ipac.caltech.edu/TAP/'),
-        tapEntry('HEASARC', 'HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
-        tapEntry('MASTImages', 'MAST Images', 'https://mast.stsci.edu/vo-tap/api/v0.1/caom'),
-        tapEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
-        tapEntry('CANFARyoucat', 'CANFAR youcat', 'https://ws-uv.canfar.net/youcat'),
+        {...defEntry('IRSA', 'IRSA', 'https://irsa.ipac.caltech.edu/TAP'), schemaLabel: 'Project', examples:irsaExamples()},
+        {...defEntry('NED', 'NED', 'https://ned.ipac.caltech.edu/tap/'), examples:nedExamples()},
+        defEntry('ExoplanetArchive', 'NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
+        defEntry('KOA', 'KOA', 'https://koa.ipac.caltech.edu/TAP/'),
+        {...defEntry('HEASARC', 'HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'), schemaLoadManual:true},
+        defEntry('MASTImages', 'MAST Images', 'https://mast.stsci.edu/vo-tap/api/v0.1/caom'),
+        defEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
+        defEntry('CANFARyoucat', 'CANFAR youcat', 'https://ws-uv.canfar.net/youcat'),
         // CDS???
-        tapEntry('VizieR', 'VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
-        tapEntry('Simbad', 'Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
+        {...defEntry('VizieR', 'VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'), schemaLoadManual:true},
+        defEntry('Simbad', 'Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
         // more ESA??
-        tapEntry('Gaia', 'Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined, gaiaExamples()),
-        tapEntry('GAVO', 'GAVO', 'https://dc.g-vo.org/tap'),
-        tapEntry('HSA', 'HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
-        tapEntry('NOIRLab', 'NOIR Lab',  'https://datalab.noirlab.edu/tap'),
+        {...defEntry('Gaia', 'Gaia', 'https://gea.esac.esa.int/tap-server/tap'), examples:gaiaExamples()},
+        defEntry('GAVO', 'GAVO', 'https://dc.g-vo.org/tap'),
+        defEntry('HSA', 'HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
+        defEntry('NOIRLab', 'NOIR Lab',  'https://datalab.noirlab.edu/tap'),
     ];
 }
 
 
-
-
+/**
+ * @return {Array.<TapExample>}
+ */
 const irsaExamples= () => [
     {
         description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
@@ -64,6 +90,9 @@ WHERE CONTAINS (POINT('J2000' , ra , dec) , POLYGON('J2000' , 209.80225 , 54.348
     }
 ];
 
+/**
+ * @return {Array.<TapExample>}
+ */
 const nedExamples= () => [
     {
         description: 'From the NED TAP service, a 100 arcsec radius around m16:',
@@ -92,6 +121,9 @@ AND z < 0
     },
 ];
 
+/**
+ * @return {Array.<TapExample>}
+ */
 const gaiaExamples= () => [
     {
         description: 'From the Gaia TAP service, a .25 degree cone search Gaia data release 3 point source catalog around M31 would be:',
@@ -110,5 +142,27 @@ WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0
         statement:
             `SELECT source_id, designation, ra, dec, phot_g_mean_mag FROM gaiaedr3.gaia_source 
 WHERE CONTAINS (POINT('ICRS' , ra , dec) , POLYGON('ICRS' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+    }
+];
+
+export const defaultADQLExamples= ()=> [
+    {
+        description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
+        statement:
+            `SELECT * FROM fp_psc 
+WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
+    },
+    {
+        description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
+        statement:
+            `SELECT * FROM gaiaedr3.gaia_source 
+WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
+    },
+    {
+        description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
+        statement:
+            `SELECT designation, ra, dec, w2mpro 
+FROM allwise_p3as_psd 
+WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
     }
 ];

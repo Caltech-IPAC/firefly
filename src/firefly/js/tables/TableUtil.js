@@ -1571,6 +1571,7 @@ export function splitVals(values='') {
 }
 
 export function parseError(error) {
+    if (!error) return {message: 'Unknown error', cause: 'Unknown error'};
     const message = error?.message ?? error;
     const colonRegex = /^((?:\S+\s*){1,3}?):(.+)/s; // colon appears at most 3 words after the beginning of the string
 

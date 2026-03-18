@@ -1,11 +1,9 @@
 package edu.caltech.ipac.util.download;
 
-import edu.caltech.ipac.firefly.core.Util;
-
-import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 
+import static edu.caltech.ipac.util.download.URLDownload.makeURL;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.GcsCloud;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.OnPrimUrl;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.S3Cloud;
@@ -57,7 +55,7 @@ public record UriRef(Object ref, Object sourceForRef) {
         if (S3Ref.isS3Ref(obj)) return S3Cloud;
         else if (GcsRef.isGcsRef(obj)) return GcsCloud;
         else if (obj instanceof URL) return OnPrimUrl;
-        else if (obj instanceof String s) return makeURLFromStr(s)!=null ? OnPrimUrl : null;
+        else if (obj instanceof String s) return makeURL(s)!=null ? OnPrimUrl : null;
         else return null;
 
     }
@@ -83,15 +81,9 @@ public record UriRef(Object ref, Object sourceForRef) {
         var resourceType= determineType(uriStr);
         if (resourceType == null) return null;
         return switch (resourceType) {
-            case OnPrimUrl -> new UriRef(makeURLFromStr(uriStr), uriStr);
+            case OnPrimUrl -> new UriRef(makeURL(uriStr), uriStr);
             case S3Cloud -> new UriRef(S3Ref.makeFromUri(uriStr), uriStr);
             case GcsCloud -> new UriRef(GcsRef.makeFromUri(uriStr), uriStr);
         };
     }
-
-    private static URL makeURLFromStr(String urlStr) {
-        if (urlStr == null) return null;
-        return Util.Try.it(() -> new URI(urlStr.trim()).toURL()).getOrElse((URL)null);
-    }
-
 }
