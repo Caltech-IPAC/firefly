@@ -150,7 +150,8 @@ public class FITSExtractToTable {
             aRow.setDataElement("plane",i+1);
             if (wlAry!=null) aRow.setDataElement("wavelength",rnd(wlAry[i],7));
             for(FitsExtract.ExtractionResults result : results) {
-                aRow.setDataElement(makeKeyByHDU(result),result.aryData().get(i));
+                DataType dt= dataGroup.getDataDefintion(makeKeyByHDU(result));
+                setDataElementWithNanCleanup(aRow, dt, result.aryData().get(i));
             }
             dataGroup.add(aRow);
         }
@@ -167,6 +168,22 @@ public class FITSExtractToTable {
             insertZaxisGenericChartMeta(dataGroup, results, wlAry!=null?"wavelength":"plane");
         }
         return dataGroup;
+    }
+
+    private static void setDataElementWithNanCleanup(DataObject aRow, DataType dt, Object value) {
+        if (value instanceof Double d) {
+            if (!Double.isNaN(d)) aRow.setDataElement(dt,value);
+            else if (dt.getDataType()==Double.class) aRow.setDataElement(dt,Double.NaN);
+            else aRow.setDataElement(dt,Float.NaN);
+        }
+        else if (value instanceof Float f) {
+            if (!Double.isNaN(f)) aRow.setDataElement(dt,value);
+            else if (dt.getDataType()==Float.class) aRow.setDataElement(dt,Float.NaN);
+            else aRow.setDataElement(dt,Float.NaN);
+        }
+        else {
+            aRow.setDataElement(dt,value);
+        }
     }
 
     private static Object getWithEnsuredType(Object obj, Class<?> type) {

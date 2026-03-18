@@ -13,13 +13,11 @@ import edu.caltech.ipac.util.download.GcsRef;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.RetrieveUtil;
 import edu.caltech.ipac.util.download.S3Ref;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.download.UriRef;
 import edu.caltech.ipac.util.download.UriRefParams;
 import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -102,9 +100,11 @@ public class URIFileRetriever implements FileRetriever {
             }
         }
         try  {
-            return new URI(urlStr).toURL();
-        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            throw new FailedRequestException("Could not find file", "request.getURL() returned Exception", e);
+            URL url= URLDownload.makeURL(urlStr);
+            if (url==null) throw new FailedRequestException("Could not parse URL", "Could not parse url: "+urlStr);
+            return url;
+        } catch (IllegalArgumentException e) {
+            throw new FailedRequestException("Could not find file", "request.getURL() returned Exception",e);
         }
     }
 

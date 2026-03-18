@@ -37,7 +37,8 @@ import {
 } from './TableSearchHelpers.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
-    getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
+    getAsEntryForTableName, getColumnAttribute, getTapServiceByURL, makeUploadSchema, maybeQuote,
+    tapHelpId
 } from './TapUtil.js';
 import {
     CenterColumns,
@@ -127,7 +128,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelPrefix = getPanelPrefix(panelTitle);
     const posOpenKey= 'pos-columns';
-    const {hipsUrl,centerWP,fovDeg}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
+    const {hipsUrl,centerWP,fovDeg}= getTapServiceByURL(serviceUrl);
     const {canUpload=false}= capabilities ?? {};
     const showCenterColumns = !obsCoreEnabled && cols;
 

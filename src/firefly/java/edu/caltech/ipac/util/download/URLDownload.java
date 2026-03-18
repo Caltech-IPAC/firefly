@@ -108,6 +108,13 @@ public class URLDownload {
         return null;
     }
 
+    public static URL makeURL(String s) {
+        if (s == null) return null;
+        URL url= Util.Try.it(() -> new URI(s.trim()).toURL()).get();
+        if (url!=null) return url;
+        return Util.Try.it(() -> new URL(s.trim())).get();
+    }
+
     public static String getSuggestedFileName(URLConnection conn) {
         if (conn == null) return null;
         String disposition = conn.getHeaderField("Content-disposition");
@@ -257,10 +264,6 @@ public class URLDownload {
         } catch (IOException e) {
             return -1;
         }
-    }
-
-    private static URL makeURL(String urlStr) {
-        return Util.Try.it(() -> new URI(urlStr).toURL()).getOrElse((URL)null);
     }
 
     private static URL urlFromLocation(HttpURLConnection conn) { return makeURL(conn.getHeaderField("Location")); }

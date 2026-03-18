@@ -20,9 +20,10 @@ import {InputFieldView} from '../InputFieldView.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
+import {defaultADQLExamples} from './TapKnownServices';
 import {
-    loadTapSchemas, loadTapTables, loadTapColumns, getTapServices, maybeQuote, TAP_UPLOAD_SCHEMA,
-    ADQL_UPLOAD_TABLE_NAME, defaultADQLExamples, makeUploadSchema, loadTapKeys, searchNodeBy
+    loadTapSchemas, loadTapTables, loadTapColumns, maybeQuote, TAP_UPLOAD_SCHEMA,
+    ADQL_UPLOAD_TABLE_NAME, makeUploadSchema, loadTapKeys, searchNodeBy, getTapServiceByURL
 } from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -83,9 +84,9 @@ PrismADQLAware.propTypes= {
 
 
 function getExamples(serviceUrl) {
-    const configEx = getTapServices().find(({value}) => value === serviceUrl)?.examples;
+    const configEx = getTapServiceByURL(serviceUrl)?.examples;
     const ex= isArray(configEx) ?
-        defaultADQLExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultADQLExamples;
+        defaultADQLExamples().map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultADQLExamples();
 
     return ex.map( ({description, statement},idx) =>
         (<Stack {...{key:description}}>

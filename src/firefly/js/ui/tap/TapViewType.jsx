@@ -21,7 +21,8 @@ import {
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
     defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
-    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR, getServiceId
+    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR, getServiceId,
+    getTapServiceByURL
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
@@ -161,7 +162,7 @@ function BasicUI(props) {
     const [tableTableModel, setTableTableModel] = useState();
     const [columnsModel, setColumnsModel] = useState();
     const [obsCoreMetadataModel, setObsCoreMetadataModel] = useState(undefined);
-    const {schemaLabel}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
+    const {schemaLabel}= getTapServiceByURL(serviceUrl) ?? {};
 
     const schemaIsLocked= !forceLockObsCore && Boolean(lockedSchemaName);
     const tableIsLocked= !forceLockObsCore && Boolean(lockedTableName);

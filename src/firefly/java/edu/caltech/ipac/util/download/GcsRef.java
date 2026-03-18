@@ -6,11 +6,10 @@ package edu.caltech.ipac.util.download;
  */
 
 
-import edu.caltech.ipac.firefly.core.Util;
-
-import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
+
+import static edu.caltech.ipac.util.download.URLDownload.makeURL;
 
 /**
  * @author Trey Roby
@@ -37,9 +36,7 @@ public record GcsRef(String projectId, String bucket, String objName, URL source
     }
 
     public URL toUrl() {
-        return sourceUrl!=null
-                ? sourceUrl
-                : Util.Try.it(() -> new URI(toUrlStr()).toURL()).getOrElse((URL)null);
+        return sourceUrl!=null ? sourceUrl : makeURL(toUrlStr());
     }
 
     public static GcsRef makeFromUri(Object uri) {
@@ -56,7 +53,7 @@ public record GcsRef(String projectId, String bucket, String objName, URL source
     private static GcsRef makeFromString(String s) {
         if (s.length() < 10) return null;
         if (s.toLowerCase().startsWith("http") && s.toLowerCase().contains(GOOGLE)) {
-            URL url= Util.Try.it(() -> new URI(s).toURL()).getOrElse((URL)null);
+            URL url= makeURL(s);
             if (url == null) return null;
             var path = url.getPath();
             if (path.length() < 2) return null;
