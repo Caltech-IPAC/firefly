@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
 import {Stack} from '@mui/joy';
 import React, {useRef} from 'react';
-import PropTypes from 'prop-types';
+import {object, arrayOf, bool, func, number, oneOf, string, elementType, any} from 'prop-types';
 import {omit} from 'lodash';
+import {checkProps} from '../../ui/SimpleComponent';
 import {SINGLE, GRID, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
@@ -29,92 +29,68 @@ function makeState() {
 }
 
 export function MultiImageViewerView(props)  {
+    checkProps(props, MultiImageViewerView);
 
     const {current:elementWrapper}= useRef({element:undefined});
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
-    const {Toolbar, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
-        handleToolbar=true, layoutType=GRID, scrollGrid, viewerId, ref}= props;
+    const {Toolbar, Legend, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
+        handleToolbar=true, layoutType=GRID, scrollGrid=false, viewerId, ref}= props;
 
-    const viewer= getViewer(getMultiViewRoot(),viewerId);
+    const viewer= getViewer(getMultiViewRoot(),viewerId) ?? {};
     const {bottomUIComponent}= viewer ?? {};
 
-    const makeToolbar = Toolbar ? () => (<Toolbar {...{...props, containerElement:elementWrapper?.element}} />) : undefined;
-    const makeItemViewer = (plotId) => ( <ImageViewer {...{plotId, key:plotId, makeToolbar, showWhenExpanded}} /> );
-    const makeItemViewerFull = (plotId) => ( <ImageViewer {...{plotId, key:plotId,showWhenExpanded,makeToolbar} } /> );
+    const makeToolbar = Toolbar && (() => (<Toolbar {...{...props, containerElement:elementWrapper?.element}} />));
+    const makeLegend =  Legend && ((plotId) => (<Legend {...{...props,plotId}}/>));
+    const makeItemViewer = (plotId) => ( <ImageViewer {...{plotId, key:plotId, makeToolbar, makeLegend, showWhenExpanded}} /> );
 
-    const doReadoutAndShowing= readoutShowing && viewerPlotIds.includes(readoutData?.plotId);
+    const newProps = {...omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
+        activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds,
+        makeToolbar:handleToolbar?makeToolbar:undefined, makeItemViewer, makeItemViewerFull:makeItemViewer};
 
-    const newProps = Object.assign(omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
-        {activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds,
-            makeToolbar:handleToolbar?makeToolbar:undefined, makeItemViewer, makeItemViewerFull});
+    const insideStyle= props.insideFlex ? {flex:'1 1 auto', maxWidth:'100%'} : {width:'100%', height:'100%'};
+    const style= { display:'flex', flexDirection:'column', position:'relative', ...insideStyle, ...props.style };
 
-    let style= {display:'flex', flexDirection:'column', position:'relative'};
-    if (props.insideFlex) {
-        style= {...style, flex:'1 1 auto', maxWidth:'100%', ...props.style};
-    }
-    else {
-        style=  {...style, width:'100%', height:'100%', ...props.style};
-    }
+    const pvToUseForReadout= isLockByClick(readout) ? primePlot(visRoot) : primePlot(visRoot,lastMouseCtx().plotId);
+    const one= layoutType===SINGLE || viewerPlotIds?.length===1;
+    const sStyle= {
+        position: 'absolute',
+        left: 3,
+        bottom:one ? 2 : 3, 
+        right: one ? 3 : scrollGrid? 15 : 6, 
+    };
     
-    const {readoutPref}= readoutRoot();
-    const pvToUse= isLockByClick(readoutRoot()) ? primePlot(visRoot) : primePlot(visRoot,lastMouseCtx().plotId);
-    const radix= getFluxRadix(readoutPref, pvToUse);
-
-
-    const mouseReadout= (
-        <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
-                                readoutShowing={doReadoutAndShowing}
-                                showOnInactive={!mouseReadoutEmbedded}
-                                scrollGrid={scrollGrid}
-                                radix={radix}
-                                slightlyTransparent={mouseReadoutEmbedded} />
+    return (
+        <div className='MultiImageViewer' style={style} ref={(e) => elementWrapper.element= e}>
+            <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
+            <Stack spacing={one?1:undefined} style={mouseReadoutEmbedded? sStyle:{}} >
+                {bottomUIComponent?.()}
+                <MouseReadoutBottomLine {...{readout, readoutData, scrollGrid,
+                                        readoutShowing: readoutShowing && viewerPlotIds.includes(readoutData?.plotId),
+                                        showOnInactive:!mouseReadoutEmbedded,
+                                        radix: getFluxRadix(readout.readoutPref, pvToUseForReadout),
+                                        slightlyTransparent: mouseReadoutEmbedded  }}/>
+            </Stack>
+        </div>
     );
-
-    if (layoutType===SINGLE || viewerPlotIds?.length===1) {
-        return (
-            <div style={style} ref={(e) => elementWrapper.element= e}>
-                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
-                <Stack spacing={1} style={mouseReadoutEmbedded? {position:'absolute', left:3, right:3, bottom:2}:{}} >
-                    {bottomUIComponent?.()}
-                    {mouseReadout}
-                </Stack>
-            </div>
-        );
-    }
-    else {
-        return (
-            <div className={'MultiImageViewer'} style={style} ref={(e) => elementWrapper.element= e}>
-                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
-                <Stack style={ mouseReadoutEmbedded?{position:'absolute', left:3, bottom:3, right:scrollGrid?15:6}:{}} >
-                    {bottomUIComponent?.()}
-                    {mouseReadout}
-                </Stack>
-            </div>
-        );
-    }
 }
 
 MultiImageViewerView.propTypes= {
-    visRoot : PropTypes.object,
-    viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    showWhenExpanded : PropTypes.bool,
-
-    Toolbar : PropTypes.func,
-    viewerId : PropTypes.string.isRequired,
-    style : PropTypes.object,
-    defaultDecoration : PropTypes.bool,
-    layoutType : PropTypes.oneOf([GRID,SINGLE]),
-    forceRowSize : PropTypes.number,   //optional - force a certain number of rows
-    forceColSize : PropTypes.number,  //optional - force a certain number of columns
-    gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
-    gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
-    insideFlex :  PropTypes.bool,
-    handleToolbar: PropTypes.bool,
-    scrollGrid: PropTypes.bool,
-    mouseReadoutEmbedded: PropTypes.bool
+    visRoot : object,
+    viewerPlotIds : arrayOf(string).isRequired,
+    showWhenExpanded : bool,
+    Toolbar : elementType,
+    Legend : elementType,
+    viewerId : string.isRequired,
+    style : object,
+    defaultDecoration : bool,
+    layoutType : oneOf([GRID,SINGLE]),
+    forceRowSize : number,   //optional - force a certain number of rows
+    forceColSize : number,  //optional - force a certain number of columns
+    gridDefFunc : func,  // optional - a function to return the grid definition
+    gridComponent : object,  // a React element to define the grid - not implemented, just an idea
+    insideFlex :  bool,
+    handleToolbar: bool,
+    scrollGrid: bool,
+    mouseReadoutEmbedded: bool,
+    ref: any,
 };
-
-
-
-
-

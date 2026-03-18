@@ -2,8 +2,11 @@ import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, elementType, node} from 'prop-types';
 import {defaultsDeep, isString} from 'lodash';
+import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import { DEFAULT_INSTRUCTIONS_CIRCLE,
+    DEFAULT_SELECTION_TEXT, SelectAreaForEmbedded } from '../../visualize/ui/SelectAreaUIComponents';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -316,6 +319,8 @@ EmbeddedPositionSearchPanel.propTypes= {
             polygonKey: string,
             polygonExampleRow1: arrayOf(string),
             polygonExampleRow2: arrayOf(string),
+            selectButtonText: string, // empty string will disable button
+            cancelSelectionText: string,
             sx: object,
         }),
         sizeInput : shape({
@@ -323,6 +328,8 @@ EmbeddedPositionSearchPanel.propTypes= {
             min: number,
             max: number,
             initValue: number,
+            selectButtonText: string, // empty string will disable button
+            cancelSelectionText: string,
             sx: object,
         }),
         uploadTableSelector: shape({
@@ -449,6 +456,8 @@ function ConeOp({slotProps,nullAllowed}) {
         initValue= DEFAULT_INIT_SIZE_VALUE,
         enabled= true,
         sx={},
+        selectButtonText= DEFAULT_SELECTION_TEXT,
+        instructionsText= DEFAULT_INSTRUCTIONS_CIRCLE,
     }= slotProps.sizeInput ?? {};
     const {
         targetKey=DEF_TARGET_PANEL_KEY,
@@ -456,6 +465,7 @@ function ConeOp({slotProps,nullAllowed}) {
         targetPanelExampleRow1,
         targetPanelExampleRow2,
     }= slotProps.targetPanel ?? {};
+
     return (
         <Stack>
             <TargetPanel {...{
@@ -467,15 +477,19 @@ function ConeOp({slotProps,nullAllowed}) {
                     feedback:{sx: {alignSelf:'center'} },
                 }
             }}/>
-            {enabled && <SizeInputFields {...{
-                fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
-                label: 'Search Radius',
-                initialState: {unit: 'arcsec', value: initValue+'', min, max},
-                sx: {'.ff-Input': {width: 1}, ...sx},
-                slotProps: {
-                    feedback:{sx: {alignSelf:'center'} },
-                }
-            }} />}
+            {enabled && <Stack direction='row' spacing={1}>
+                <SizeInputFields {...{
+                    fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
+                    label: 'Search Radius',
+                    initialState: {unit: 'arcsec', value: initValue+'', min, max},
+                    sx: {'.ff-Input': {width: 1}, ...sx},
+                    slotProps: {
+                        feedback:{sx: {alignSelf:'center'} },
+                    }
+                }} />
+                {Boolean(selectButtonText) && <SelectAreaForEmbedded {...{selectButtonText,instructionsText,
+                    shape:SelectedShape.cone,sx:{width:'13em'}}}/>}
+            </Stack>}
         </Stack>
     );
 }
@@ -484,15 +498,23 @@ function PolyOp({slotProps}) {
     const {
         polygonKey=DEFAULT_POLYGON_KEY,
         polygonExampleRow1= DEF_AREA_EXAMPLE,
-        polygonExampleRow2
+        polygonExampleRow2,
+        selectButtonText= DEFAULT_SELECTION_TEXT,
+        instructionsText= DEFAULT_INSTRUCTIONS_CIRCLE,
     }= slotProps.polygonField ?? {};
+
+
     return (
-        <PolygonField {...{
-            hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
-            targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
-            placeholder: 'Coordinates',
-            manageHiPS:false,
-        }} />
+        <Stack spacing={1}>
+            <PolygonField {...{
+                hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
+                targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
+                placeholder: 'Coordinates',
+                manageHiPS:false,
+            }} />
+            {Boolean(selectButtonText) &&
+                <SelectAreaForEmbedded {...{selectButtonText,instructionsText,shape:SelectedShape.rect}}/>}
+        </Stack>
     );
 }
 

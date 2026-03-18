@@ -2,10 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {isString} from 'lodash';
 import React from 'react';
 import {Box, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {getTitleTag, makeColorChange, makeShape} from './DrawLayerUIComponents';
+import Layers from '@mui/icons-material/Layers';
 
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
@@ -64,8 +66,46 @@ DrawLayerItemView.propTypes= {
 
 
 
-function makeColorChangeUIElement(color, canUserChangeColor, modifyColor) {
-    return canUserChangeColor ? makeColorChange(color,modifyColor, {width: 'calc(33%)'}) : false;
+export function DrawLayerLegendView({maxTitleChars, color, canUserChangeColor, title, tip='',
+                                      autoFormatTitle, canUserHide=true, visible, changeVisible, modifyColor}) {
+
+    const sx= { width:1, height:1, pr:1.5, position: 'relative', overflow:'hidden', whiteSpace : 'nowrap'};
+    const tipTitle=  (
+        <Stack>
+            {
+                isString(tip)
+                    ? <Typography>{tip}</Typography>
+                    : <div>{tip}</div>
+            }
+            <Typography component='div'>More options under the layers (
+                <Layers viewBox={'2 0 22 20'}/>
+                ) button</Typography>
+        </Stack>
+    );
+
+    return (
+        <Box sx={sx}>
+            <Stack {...{lineHeight:'1em', position: 'relative', direction:'row', flexWrap:'nowrap',
+                justifyContent: 'space-between', alignItems: 'center', width:'100%' }} >
+                <Tooltip title={tipTitle}>
+                    <Stack {...{direction: 'row', alignItems: 'center'}}>
+                        <Switch {...{checked:visible, size:'sm', sx:{visibility: canUserHide?'inherit':'hidden', pr:.5},
+                            onChange:() => changeVisible() }} />
+                        {getTitleTag(title,maxTitleChars, autoFormatTitle, 'body-xs', {minWidth:undefined}, 17)}
+                    </Stack>
+                </Tooltip>
+                <Stack {...{direction:'row', spacing:1/4, py:.5, width: '2em', justifyContent: 'flex-end'}}>
+                    {makeColorChangeUIElement(color, canUserChangeColor,modifyColor,'')}
+                </Stack>
+            </Stack>
+        </Box>
+    );
+}
+
+
+
+function makeColorChangeUIElement(color, canUserChangeColor, modifyColor, text) {
+    return canUserChangeColor ? makeColorChange(color,modifyColor, {width: 'calc(33%)'},text) : false;
 }
 
 function makePointDataShape(isPointData, drawingDef, modifyShape) {
@@ -87,7 +127,7 @@ function makeHelpLine(helpLine) {
 }
 
 function makeDelete(canUserDelete,deleteLayer) {
-    if (!canUserDelete) return <Box sx={{width:23}}/>
+    if (!canUserDelete) return <Box sx={{width:23}}/>;
     return (
         <Tooltip title='Close Layer'
             placement='right-start'>

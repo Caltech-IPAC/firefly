@@ -2,12 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button, ChipDelete, Stack, Typography} from '@mui/joy';
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, string} from 'prop-types';
 import {once} from 'lodash';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
+import {checkProps, useStoreConnector} from '../../ui/SimpleComponent';
 import {ToolbarButton, DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {getDrawLayerByType, getDrawLayersByType, getPlotViewAry, isDrawLayerAttached} from '../PlotViewUtil.js';
+import {
+    getActivePlotView, getDrawLayerByType, getDrawLayersByType, getPlotViewAry, isDrawLayerAttached
+} from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
@@ -18,14 +22,22 @@ import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {onOff, SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 
+import AdsClickIcon from '@mui/icons-material/AdsClick';
+
 import SELECT_RECT from 'html/images/icons-2014/Marquee.png';
 import SELECT_RECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
 import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
-import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
+import {clearModalEndInfo, getModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 const NONSELECT = 'nonselect';
+
+export const DEFAULT_SELECTION_TEXT='Draw Area Selection';
+export const DEFAULT_INSTRUCTIONS_CIRCLE='Choose search area: click and draw circle on map';
+export const DEFAULT_INSTRUCTIONS_RECT= 'Choose search area: click and draw rectangle on map';
+
+
 
 const selectAreaInfo = once(() => ({
     [NONSELECT] : {
@@ -53,7 +65,7 @@ const selectAreaInfo = once(() => ({
     }
 }));
 
-export function getSelectedAreaIcon(isSelected = true) {
+function getSelectedAreaIcon(isSelected = true) {
 
     if (!isSelected) return SELECT_CIRCLE;
     const drawLayer = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
@@ -109,7 +121,7 @@ export function detachSelectArea(pv, allPlots = true, id = SelectArea.TYPE_ID) {
     });
 }
 
-export function detachImageOutlineLayerForSelectArea(pv, allPlots = true) {
+function detachImageOutlineLayerForSelectArea(pv, allPlots = true) {
     const dlAry = getDrawLayersByType(getDlAry(), ImageOutline.TYPE_ID);
 
     dlAry.forEach((dl) => {
@@ -170,4 +182,55 @@ SelectAreaDropDownView.propTypes= {
     plotView : PropTypes.object,
     allPlots: PropTypes.bool,
     modalEndInfo: PropTypes.object,
+};
+
+function getInstructions(shape, instructionsText) {
+    if (instructionsText) return instructionsText;
+    switch (shape) {
+        case SelectedShape.rect: return DEFAULT_INSTRUCTIONS_RECT;
+        case SelectedShape.circle: return DEFAULT_INSTRUCTIONS_CIRCLE;
+        default : return 'click and draw';
+    }
+
+}
+
+
+export function SelectAreaForEmbedded(props) {
+    const {selectButtonText=DEFAULT_SELECTION_TEXT,instructionsText,shape=SelectedShape.circle, sx}= props;
+    checkProps(props, SelectAreaForEmbedded);
+    const modalEndInfo = useStoreConnector(() => getModalEndInfo());
+    const selectActive= modalEndInfo?.key==='SelectArea';
+    const doSelection= updateSelect(getActivePlotView(visRoot()), shape.key, true, modalEndInfo);
+
+    return (
+        <Stack sx={{justifyContent:'center', ...sx}}>
+            <Stack alignItems='center'>
+                {!selectActive
+                    ? <Button {...{ size: 'sm', title: 'Select area',
+                        startDecorator:<AdsClickIcon/>,
+                        onClick: () => doSelection() }}>
+                        {selectButtonText}
+                    </Button>
+                    : <Stack {...{direction:'row', sx:{alignItems: 'center'} }}>
+                        <Typography level='body-xs'>{getInstructions(shape,instructionsText)}</Typography>
+                        <ChipDelete {...{
+                            size:'sm', title:`Cancel ${selectButtonText}`,
+                            onClick:() => {
+                                const pv = getActivePlotView(visRoot());
+                                if (pv) dispatchDetachLayerFromPlot(SelectArea.TYPE_ID, pv.plotId, true, true);
+                                clearModalEndInfo();
+                            }
+                        }}/>
+                    </Stack>
+                }
+            </Stack>
+        </Stack>
+    );
+}
+
+SelectAreaForEmbedded.propTypes = {
+    selectButtonText: string,
+    instructionsText: string,
+    shape: object,
+    sx: object,
 };

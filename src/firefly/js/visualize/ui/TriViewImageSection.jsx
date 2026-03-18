@@ -35,6 +35,7 @@ import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {MetaDataMultiProductViewer} from './multiProduct/MetaDataMultiProductViewer.jsx';
 import {CoverageViewer} from './CoveraeViewer';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
+import {SmallLegend} from './SmallLegend';
 
 
 /**
@@ -114,6 +115,7 @@ export function makeFitsPinnedTab({id,asTab})  {
 
     const viewer= (<MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true} useImageList={true}
                                      style={{height:asTab?undefined:'100%'}}
+                                     Legend={SmallLegend}
                       Toolbar={MultiViewStandardToolbar} canReceiveNewPlots={NewPlotMode.create_replace.key} />);
     return (
         asTab ?

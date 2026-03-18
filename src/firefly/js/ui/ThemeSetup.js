@@ -15,6 +15,18 @@ export function defaultTheme() {
                     variant:'soft' ,
                     color:'primary',
                     size: 'md'
+                },
+                styleOverrides: {
+                    root: ({ownerState, theme}) => ({
+                        ...(ownerState.size === 'xs' && {
+                            '--Icon-fontSize': '1rem',
+                            '--Button-gap': '0.25rem',
+                            minHeight: 'var(--Button-minHeight, 1.75rem)',
+                            fontSize: theme.vars.fontSize.xs,
+                            paddingBlock: '2px',
+                            paddingInline: '0.5rem',
+                        }),
+                    }),
                 }
             },
             JoyInput: {

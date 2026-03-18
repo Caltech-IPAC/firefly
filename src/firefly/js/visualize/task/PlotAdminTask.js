@@ -17,7 +17,7 @@ import { getPlotViewById, applyToOnePvOrAll, isDrawLayerAttached,
     primePlot, getDrawLayerByType, removeRawDataByPlotView } from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
-import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
+import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaUIComponents.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {WcsMatchType} from '../ImagePlotCntlr';
 import {hasOverlayColorLock, findPlotGroup } from '../PlotViewUtil';

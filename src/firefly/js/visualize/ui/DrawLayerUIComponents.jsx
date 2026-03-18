@@ -19,12 +19,15 @@ import {
 const symbolSize= 10;
 
 
-export function makeColorChange(color, modifyColor, sx= {}) {
+export function makeColorChange(color, modifyColor, sx= {}, text='Color') {
     const feedBackStyle= { width:symbolSize, height:symbolSize, backgroundColor: color};
+    if (!text) {
+        return <Chip onClick={() => modifyColor()}> <div style={feedBackStyle} /> </Chip> ;
+    }
     return (
-            <Chip onClick={() => modifyColor()} sx={{px:.5}} startDecorator={<div style={feedBackStyle} />}>
-                Color
-            </Chip>
+        <Chip onClick={() => modifyColor()} sx={{px:.5}} startDecorator={<div style={feedBackStyle} />}>
+            {text}
+        </Chip>
     );
 
 }
@@ -56,9 +59,9 @@ export function drawOnCanvas(c,drawingDef, w, h) {
     DrawUtil.drawSymbol(ct, x, y, drawingDef, null,false);
 }
 
-export function getMinMaxWidth(maxTitleChars) {
-    const minW = maxTitleChars*.3 < 30 ? Math.max(maxTitleChars*.3, 10) : 30;
-    const maxW = maxTitleChars*.7 > 10 ? Math.min(maxTitleChars*.7, 30) : 10;
+export function getMinMaxWidth(maxTitleChars, minMin=10, maxMax=30) {
+    const minW = maxTitleChars*.3 < 30 ? Math.max(maxTitleChars*.3, minMin) : maxMax;
+    const maxW = maxTitleChars*.7 > 10 ? Math.min(maxTitleChars*.7, maxMax) : minMin;
     return {minW,maxW};
 }
 
@@ -135,17 +138,22 @@ export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
     });
 }
 
-export function getTitleTag(title, maxTitleChars, autoFormatTitle) {
+export function getTitleTag(title, maxTitleChars, autoFormatTitle, level, sx, maxMax=30) {
     if (!autoFormatTitle) {
         return isFunction(title) ? title() : title;
     }
-    const {minW,maxW}= getMinMaxWidth(maxTitleChars);
+    const {minW,maxW}= getMinMaxWidth(maxTitleChars,10,maxMax);
 
     return (
         <Typography {...{
             component:'div',
-            whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
-            minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
+            level,
+            sx : {
+                whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+                minWidth: minW + 'em', maxWidth: maxW + 'em',
+                ...sx
+            },
+            }}>
             {title}
         </Typography>
     );

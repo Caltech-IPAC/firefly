@@ -16,7 +16,7 @@ import {dlRoot} from '../../visualize/DrawLayerCntlr';
 import {getCatalogNorderlevel, getCornersForCell} from '../../visualize/HiPSUtil';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 import {DEFAULT_COVERAGE_PLOT_ID, getAllDrawLayersForPlot, primePlot} from '../../visualize/PlotViewUtil';
-import {detachSelectArea} from '../../visualize/ui/SelectAreaDropDownView';
+import {detachSelectArea} from '../../visualize/ui/SelectAreaUIComponents';
 import {contains, containsEllipse} from '../../visualize/VisUtil';
 import SelectArea from '../SelectArea';
 import {SelectedShape} from '../SelectedShape';

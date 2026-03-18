@@ -21,7 +21,7 @@ import {visRoot} from './ImagePlotCntlr.js';
 import {getDrawLayerByType, getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {parseWorldPt} from './Point.js';
 import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './ui/CommonUIKeys.js';
-import {SelectAreaButton} from './ui/SelectAreaDropDownView.jsx';
+import {SelectAreaButton} from './ui/SelectAreaUIComponents.jsx';
 import {closeToolbarModalLayers, getModalEndInfo} from './ui/ToolbarToolModalEnd.js';
 import {
     convertStrToWpAry, convertWpAryToStr, initSearchSelectTool, markOutline, SEARCH_REFINEMENT_DIALOG_ID,

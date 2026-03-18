@@ -685,7 +685,8 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
                                                    lookupOption(options, 'searchTarget', tbl_id),
                                                    lookupOption(options, 'overlayPosition', tbl_id)) : undefined;
 
-    const baseTitle= `Coverage: ${table?.title || tbl_id}`;
+    const shortTitle= table?.title || tbl_id;
+    const baseTitle= `Coverage: ${shortTitle}`;
 
     const createDrawLayer = (cId, dataType, visible, titleAddition='') => {
 
@@ -720,6 +721,7 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
             layersPanelLayoutId,
             tbl_id,
             title,
+            shortTitle:shortTitle+titleAddition,
             color,
             symbol,
             size,
@@ -744,12 +746,12 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
     if (covType === CoverageType.BOX) {
         createDrawLayer(coverageCatalogId(tbl_id), covType, catV);
     } else if (covType === CoverageType.X) {
-        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle,drawOp,options,catV);
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle,shortTitle,drawOp,options,catV);
     } else if (covType === CoverageType.ORBITAL_PATH) {
         createDrawLayer(coverageCatalogId(tbl_id), covType, catV);
     } else if (covType === CoverageType.REGION) {
         const regionV= isVisible(visibleMap,regionId(tbl_id));
-        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',drawOp,options, catV);
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',shortTitle+' positions',drawOp,options, catV);
         createDrawLayer(regionId(tbl_id),CoverageType.REGION,regionV,' regions');
     }
 
@@ -774,13 +776,13 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
 const isVisible= (visibleMap, catalogId) => visibleMap[catalogId] ?? true;
 
 
-function createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,title,drawOp,options,visible) {
+function createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,title,shortTitle,drawOp,options,visible) {
     const catalogId= coverageCatalogId(tbl_id);
     const dl = getDlAry().find((dl) => (dl.drawLayerTypeId === HpxCatalog.TYPE_ID) && dl.catalogId === catalogId);
     if (dl) return;
     const {color,symbol,size}= getColorSymbolSize(drawOp,options,catalogId,tbl_id);
     dispatchCreateDrawLayer(HpxCatalog.TYPE_ID, {
-        catalogId, layersPanelLayoutId, tbl_id, title, color, symbol, size });
+        catalogId, layersPanelLayoutId, tbl_id, title, shortTitle, color, symbol, size });
     dispatchAttachLayerToPlot(catalogId, plotId, false, visible);
 }
 

@@ -5,8 +5,9 @@
 import {Box, ChipDelete, Stack, Typography} from '@mui/joy';
 import {isString} from 'lodash';
 import React, {memo} from 'react';
-import {object, bool, number, string} from 'prop-types';
+import {object, bool, number, string, func} from 'prop-types';
 import {showInfoPopup} from '../../ui/PopupUtil';
+import {checkProps} from '../../ui/SimpleComponent';
 import {PlotAttribute} from '../PlotAttribute';
 import {makeMouseStatePayload, fireMouseCtxChange, MouseState} from '../VisMouseSync.js';
 import {dispatchDeletePlotView, visRoot} from '../ImagePlotCntlr.js';
@@ -16,8 +17,9 @@ import {WarningButton} from './Buttons';
 
 
 
-export const VisInlineToolbarView = memo( (props) => {
-        const {pv, showDelete,deleteVisible, topOffset=0}= props;
+export const PvControlsAndFeedback = memo( (props) => {
+        const {pv, showDelete,controlsVisible, makeLegend}= props;
+        checkProps(props, PvControlsAndFeedback);
         if (!pv) return undefined;
         const deleteClick= () => {
             const mouseStatePayload= makeMouseStatePayload(undefined,MouseState.EXIT,undefined,0,0,'');
@@ -26,23 +28,33 @@ export const VisInlineToolbarView = memo( (props) => {
         };
 
         const deleteStyle= {
-            visibility: deleteVisible ? 'visible' : 'hidden',
-            opacity: deleteVisible ? 1 : 0,
-            transition: deleteVisible ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
+            visibility: controlsVisible ? 'visible' : 'hidden',
+            opacity: controlsVisible ? 1 : 0,
+            transition: controlsVisible ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
         };
 
         const warnAry= getWarningsAry(pv);
-        if (!showDelete && !warnAry?.length) return;
+        const legend= makeLegend?.(pv.plotId);
+        if (!showDelete && !warnAry?.length && !legend) return;
+        const legendAdd= pv.plotViewCtx.useForSearchResults && !pv.plotViewCtx.useForCoverage ?  deleteStyle : {};
 
         return (
-            <Box style={{ top: topOffset, position : 'absolute', right : 0}}>
-                <Stack {...{direction:'row', alignItems:'center',
-                        position: 'relative', sx:{verticalAlign: 'top', zIndex : 1} }}>
-                    <WarningsAlert pv={pv}/>
-                    {showDelete &&
-                        <ChipDelete onClick={deleteClick}
-                                    sx={{alignSelf:'flex-start', minHeight:12, minWidth:12, p:.5, ...deleteStyle}}
-                                    title='Remove Image'/>}
+            <Box style={{ top: 0, position : 'absolute', right : 0}}>
+                <Stack {...{sx: {zIndex : 1, position: 'relative'}}}>
+                    <Stack {...{direction:'row', alignItems:'center',  sx:{verticalAlign: 'top'} }}>
+                        <WarningsAlert pv={pv}/>
+                        {showDelete &&
+                            <ChipDelete onClick={deleteClick}
+                                        sx={{alignSelf:'flex-start', minHeight:12, minWidth:12, p:.5,
+                                            ...deleteStyle}}
+                                        title='Remove Image'/>}
+                    </Stack>
+                    { makeLegend &&
+                        <Box sx={{ top: showDelete ? 30 : 37, position : 'absolute', right : 0, ...legendAdd}} >
+                            {legend}
+                        </Box>
+                    }
+
                 </Stack>
             </Box>
         );
@@ -87,10 +99,11 @@ function WarningsAlert({pv}) {
 
 
 
-VisInlineToolbarView.propTypes= {
+PvControlsAndFeedback.propTypes= {
     pv : object,
     showDelete : bool,
-    deleteVisible : bool,
+    controlsVisible : bool,
     help_id : string,
-    topOffset: number
+    topOffset: number,
+    makeLegend : func,
 };

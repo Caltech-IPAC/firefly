@@ -17,7 +17,7 @@ import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
 import {ExpandButton} from '../ui/Buttons.jsx';
 import {VisCtxToolbarView, ctxToolbarBG} from '../ui/VisCtxToolbarView';
-import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
+import {PvControlsAndFeedback} from '../ui/PvControlsAndFeedback.jsx';
 import {
     primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById, canConvertBetweenHipsAndFits
 } from '../PlotViewUtil.js';
@@ -45,7 +45,6 @@ const isCatalogPtData= (dl) => isCatDl(dl) && dl.catalogType===CatalogType.POINT
 
 
 /**
- * todo
  * show the select and filter button show?
  * @param pv
  * @param dlAry
@@ -75,7 +74,6 @@ function showClearFilter(pv,dlAry) {
 
 
 /**
- * todo
  * show the unselect button?
  * @param pv
  * @param dlAry
@@ -209,8 +207,8 @@ function arePropsEquals(props, np) {
     if (!shallowequal(omit(np,omitList), omit(props,omitList))) return false;
     // if (props.mousePlotId!==np.mousePlotId && (props.mousePlotId===plotId || np.mousePlotId===plotId)) return false;
     if (props.mousePlotId!==np.mousePlotId) return false;
-    if (props.plotId!==np.plotId) return false;
-    return true;
+    return props.plotId === np.plotId;
+
 } //todo: look at closely for optimization
 
 
@@ -252,23 +250,23 @@ function ZoomGroup({visRoot, pv, show}) {
 }
 
 const ImageViewerDecorate= memo((props) => {
-    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, makeToolbar,
-        size:{width,height}}= props;
+    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
+        makeToolbar, makeLegend, size:{width,height}}= props;
 
-    const [showDelAnyway, setShowSelAnyway]= useState(false);
+    const [showDelAnyway, setShowDelAnyway]= useState(false);
 
     useEffect(() => {
         const mousePlotIdExist= Boolean(getPlotViewById(visRoot,mousePlotId));
         if (mousePlotIdExist) {
-            setShowSelAnyway(false);
+            setShowDelAnyway(false); // eslint-disable-line react-hooks/set-state-in-effect
             return;
         }
-        setShowSelAnyway(true);
-        const id= setTimeout(() => setShowSelAnyway(false), 5000);
+        setShowDelAnyway(true);
+        const id= setTimeout(() => setShowDelAnyway(false), 5000);
         return () => clearTimeout(id);
-    },[mousePlotId]);
+    },[mousePlotId, visRoot]);
 
-   const showDelete= pv.plotViewCtx.userCanDeletePlots;
+    const showDelete= pv.plotViewCtx.userCanDeletePlots;
     const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
     const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
     const plot= primePlot(pv);
@@ -297,7 +295,7 @@ const ImageViewerDecorate= memo((props) => {
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);
     const showZoom= mousePlotId===pv?.plotId;
-    const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot || pv.nonRecoverableFail;
+    const controlsVisible= showDelAnyway || mousePlotId===pv?.plotId || !plot || pv.nonRecoverableFail;
 
     return (
         <Box style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
@@ -307,10 +305,11 @@ const ImageViewerDecorate= memo((props) => {
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
                     {ctxToolbar}
-                    {(plot) ? <PlotTitle brief={brief}  plotView={pv}/> : undefined}
+                    {plot ? <PlotTitle brief={brief}  plotView={pv}/> : undefined}
                     <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
                 </Stack>
-                <VisInlineToolbarView pv={pv} showDelete={showDelete} deleteVisible={showDel}/>
+                <PvControlsAndFeedback {...{pv, showDelete, controlsVisible, makeLegend }}/>
+
             </Stack>
         </Box>
         );
@@ -326,6 +325,7 @@ ImageViewerDecorate.propTypes= {
     mousePlotId : string,
     size : object.isRequired,
     makeToolbar: func,
+    makeLegend : func,
 };
 
 export const ImageViewerView= wrapResizeMonitor(ImageViewerDecorate,0);

@@ -178,6 +178,7 @@ function creator(initPayload) {
 
     dl.requestedStyle= drawingDef.style;
 
+    dl.shortTitle= initPayload.shortTitle;
     dl.mocFitsInfo = mocFitsInfo;
     dl.mocTable= undefined;
     dl.rootTitle= dl.title;
@@ -282,7 +283,7 @@ function getLayerChanges(drawLayer, action) {
             return {title: tObj, updateStatusAry};
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {fillStyle, targetPlotId, mocTable, autoUsesOnlyOutline=false} = action.payload.changes;
+            const {fillStyle, targetPlotId, mocTable} = action.payload.changes;
 
             if (fillStyle && targetPlotId) {
 
@@ -295,7 +296,7 @@ function getLayerChanges(drawLayer, action) {
                 let newStyle;
                 const newMocObj = {...drawLayer.mocObj};
                 if (requestedStyle===Style.AUTO) {
-                    const {style: s, color:newColor} = getAutoDrawStyle(primePlot(visRoot(),targetPlotId), drawingDef.color, autoUsesOnlyOutline);
+                    const {style: s, color:newColor} = getAutoDrawStyle(primePlot(visRoot(),targetPlotId), drawingDef.color, action.payload.changes.autoUsesOnlyOutline);
                     newDrawingDef.color= newColor;
                     newMocObj.color= newColor;
                     newStyle= s;
@@ -317,7 +318,7 @@ function getLayerChanges(drawLayer, action) {
                 const mocCsys= getMetaEntry(mocTable,'COORDSYS')?.trim().toUpperCase().startsWith('G') ?
                     CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
                 const mocObj = createMocObj(drawLayer, mocTiles, mocCsys);
-                return {mocTable, mocObj, mocCsys, title: getTitle(drawLayer, visiblePlotIdAry), autoUsesOnlyOutline};
+                return {mocTable, mocObj, mocCsys, title: getTitle(drawLayer, visiblePlotIdAry), autoUsesOnlyOutline:action.payload.changes.autoUsesOnlyOutline};
             }
             break;
 

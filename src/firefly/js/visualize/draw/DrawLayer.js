@@ -31,6 +31,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  *                a drawing layer factory def should always pass the same type Id
  *                eg. all catalog overlays will by the same type of have different layer ids
  * @prop {String} title title to show in the ui
+ * @prop {String} shortTitle a smaller title for the legend
  * @prop {String[]} plotIdAry array of plotId that are layered
  * @prop {String[]} visiblePlotIdAry:  array of plotId that are visible, only ids in this array are visible
  * @prop {String[]} actionTypeAry  what actions that the reducer will allow through the drawing layer reducer
@@ -147,6 +148,7 @@ function makeDrawLayer(drawLayerId,
 
 
         title,
+        shortTitle: undefined,
         autoFormatTitle:true,
         plotIdAry: [],  // array of plotId that are layered
         visiblePlotIdAry: [], // array of plotId that are visible, only ids in this array are visible

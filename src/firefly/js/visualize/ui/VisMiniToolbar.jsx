@@ -28,7 +28,7 @@ import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
 import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';
 import {MatchLockDropDown} from 'firefly/visualize/ui/MatchLockDropDown.jsx';
 import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
-import {SelectAreaButton} from 'firefly/visualize/ui/SelectAreaDropDownView.jsx';
+import {SelectAreaButton} from './SelectAreaUIComponents.jsx';
 import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
