@@ -140,13 +140,14 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
 
     const {xMin:x0, xUnit:dx, nX, yMin:y0, yUnit:dy, nY} = parseDecimateKey(decimateKey);
 
-    // function to get center point of the bin
-    const getCenter = (xval,yval) => {
+    const toNum = (v) => typeof v === 'bigint' ? Number(v) : v;
+    const getCenter = (xval, yval) => {
+        const xv = toNum(xval);
+        const yv = toNum(yval);
+
         return {
-            // bitwise operators convert operands to 32-bit integer
-            // hence they can be used as a fast way to truncate a float to an integer
-            x: x0+(~~((xval-x0)/dx)+0.5)*dx,
-            y: y0+(~~((yval-y0)/dy)+0.5)*dy
+            x: x0 + (Math.floor((xv - x0) / dx) + 0.5) * dx,
+            y: y0 + (Math.floor((yv - y0) / dy) + 0.5) * dy
         };
     };
 
