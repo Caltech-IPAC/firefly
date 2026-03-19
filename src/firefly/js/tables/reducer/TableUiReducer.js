@@ -190,5 +190,11 @@ function adjustColInfo({uiData, tableModel, columns, previous}) {
 }
 
 function hasSameCnames(tableModel, columns=[]) {
-    return getAllColumns(tableModel).map((c) => c.name).join() === columns.map((c) => c.name).join();
+    const tm = getAllColumns(tableModel)
+        .filter((c) => c.visibility !== 'hidden')
+        .map((c) => c.name).join();
+    const cols = columns
+        .filter((c) => c.visibility !== 'hidden')
+        .map((c) => c.name).join();
+    return tm === cols;
 }
