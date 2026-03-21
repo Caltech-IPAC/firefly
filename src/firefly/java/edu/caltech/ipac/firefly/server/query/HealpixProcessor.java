@@ -5,14 +5,13 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
-
-import java.util.Arrays;
 
 import static edu.caltech.ipac.firefly.server.query.HealpixProcessor.*;
 import static edu.caltech.ipac.table.DataGroup.HEALPIX_IDX;
@@ -113,10 +112,10 @@ public class HealpixProcessor extends TableFunctionProcessor {
         if (!dbAdapter.hasTable(healpixTable)) {
 
             // create healpix index at BASE_ORDER
+            DataType healpixCol = makeHealPixColumn();
             StopWatch.getInstance().start("HealpixProcessor: create index");
-            dbAdapter.execUpdate("ALTER TABLE %s DROP COLUMN IF EXISTS %s".formatted(dataTable, HEALPIX_IDX));  // remove existing index
-            dbAdapter.execUpdate("ALTER TABLE %s ADD COLUMN %s LONG".formatted(dataTable, HEALPIX_IDX));
-            dbAdapter.execUpdate("UPDATE %s SET %s = deg2pix(%s, %s, %s)".formatted(dataTable, HEALPIX_IDX, BASE_ORDER, ra, dec));
+            dbAdapter.execUpdate("ALTER TABLE %s DROP COLUMN IF EXISTS %s".formatted(dataTable, healpixCol.getKeyName()));  // remove existing index
+            EmbeddedDbUtil.addColumn(dbAdapter, healpixCol, "deg2pix(%s, %s, %s)".formatted(BASE_ORDER, ra, dec), null, dataTable, null);
             StopWatch.getInstance().printLog("HealpixProcessor: create index");
 
             // create healpix map at BASE_ORDER
@@ -125,6 +124,12 @@ public class HealpixProcessor extends TableFunctionProcessor {
             StopWatch.getInstance().printLog("HealpixProcessor: create pixel map");
 
         }
+    }
+
+    private static DataType makeHealPixColumn() {
+        DataType dt = new DataType(HEALPIX_IDX, Long.class);
+        dt.setVisibility(DataType.Visibility.hidden);
+        return dt;
     }
 
 }
