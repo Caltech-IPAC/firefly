@@ -65,7 +65,7 @@ const TEN_SECONDS= 10000;
 export const ImageViewer= memo( ({showWhenExpanded=false, plotId, makeToolbar, makeLegend}) => {
 
     const [mousePlotId, setMousePlotId] = useState(lastMouseCtx().plotId);
-    const {plotView,vr,drawLayersAry} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
+    const {plotView:unused1,vr:unused2,drawLayersAry} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) ); // see useState bug comment below
     const {current:timeoutRef} = useRef({timeId:undefined});
 
     const deferredDrawLayersAry= useDeferredValue(drawLayersAry);
@@ -90,6 +90,11 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, makeToolbar, m
     }, [mousePlotId, plotId]);
 
 
+    // these next two lines are a workaround for a bug (I think) in getState (via useStoreConnector)
+    // in a certain cases it appears to be returning an old state even after unmount and remount
+    const vr= visRoot();
+    const plotView= getPlotViewById(vr,plotId);
+    //-------
     if (!showWhenExpanded  && vr.expandedMode!==ExpandType.COLLAPSE) return false;
     if (!plotView) return false;
 
