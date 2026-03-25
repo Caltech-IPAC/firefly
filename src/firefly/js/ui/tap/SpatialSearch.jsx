@@ -128,7 +128,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelPrefix = getPanelPrefix(panelTitle);
     const posOpenKey= 'pos-columns';
-    const {hipsUrl,centerWP,fovDeg}= getTapServiceByURL(serviceUrl);
+    const {hipsUrl,centerWP,fovDeg}= getTapServiceByURL(serviceUrl) ?? {};
     const {canUpload=false}= capabilities ?? {};
     const showCenterColumns = !obsCoreEnabled && cols;
 
