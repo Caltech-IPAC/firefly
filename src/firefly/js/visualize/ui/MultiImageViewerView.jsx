@@ -48,7 +48,7 @@ export function MultiImageViewerView(props)  {
         makeToolbar:handleToolbar?makeToolbar:undefined, makeItemViewer, makeItemViewerFull:makeItemViewer};
 
     const insideStyle= props.insideFlex ? {flex:'1 1 auto', maxWidth:'100%'} : {width:'100%', height:'100%'};
-    const style= { display:'flex', flexDirection:'column', position:'relative', ...insideStyle, ...props.style };
+    const style= { display: 'flex', flexDirection: 'column', position: 'relative', ...insideStyle, ...props.style };
 
     const pvToUseForReadout= isLockByClick(readout) ? primePlot(visRoot) : primePlot(visRoot,lastMouseCtx().plotId);
     const one= layoutType===SINGLE || viewerPlotIds?.length===1;
@@ -58,7 +58,7 @@ export function MultiImageViewerView(props)  {
         bottom:one ? 2 : 3, 
         right: one ? 3 : scrollGrid? 15 : 6, 
     };
-    
+
     return (
         <div className='MultiImageViewer' style={style} ref={(e) => elementWrapper.element= e}>
             <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />

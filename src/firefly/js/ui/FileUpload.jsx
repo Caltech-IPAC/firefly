@@ -1,6 +1,6 @@
 import {Button, CircularProgress, Input, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
-import {object, bool, func, number, string, shape} from 'prop-types';
+import {object, bool, func, string, shape} from 'prop-types';
 import {has, isFunction, isNil, isString} from 'lodash';
 import {getHttpErrorMessage} from '../util/HttpErrorMessage.js';
 import {validateUrl} from '../util/Validate.js';
@@ -109,14 +109,14 @@ export const FileUpload= memo( (props) => {
             ...viewProps,
             onChange: (ev) => onUrlChange(ev, viewProps, fireValueChange),
             value:  viewProps.displayValue,
-            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, fileType, viewProps.fileAnalysis)
+            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, fileType, viewProps.fileAnalysis, viewProps.uploadParams)
         };
     }
     else {
         modViewProps= {
             ...viewProps,
             value: viewProps.displayValue,
-            onChange: (ev) => handleChange(ev, fireValueChange, fileType, viewProps.fileAnalysis)
+            onChange: (ev) => handleChange(ev, fireValueChange, fileType, viewProps.fileAnalysis, viewProps.uploadParams)
         };
     }
     return <FileUploadView {...{...modViewProps, hasUploadedData:Boolean(modViewProps.analysisResult) }}/> ;
@@ -131,6 +131,7 @@ FileUpload.propTypes = {
     canDragDrop: bool,
     setDropEvent: func,
     dropEvent: object,
+    uploadParams: object,
     initialState: shape({
         tooltip: string,
         label:  string,
@@ -151,12 +152,12 @@ function onUrlChange(ev, store, fireValueChange) {
 }
 
 
-function doUrlAnalysis(value, fireValueChange, type, fileAnalysis) {
-     fireValueChange({value: makeDoUpload(value, type, true, fileAnalysis)()});
+function doUrlAnalysis(value, fireValueChange, type, fileAnalysis,uploadParams={}) {
+    fireValueChange({value: makeDoUpload(value, type, true, fileAnalysis, uploadParams)()});
 }
 
 
-function handleChange(ev, fireValueChange, type, fileAnalysis) {
+function handleChange(ev, fireValueChange, type, fileAnalysis, uploadParams={}) {
     let file = ev?.target?.files?.[0];
     let displayValue;
     if (ev) {
@@ -168,13 +169,14 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
     }
     fireValueChange({
         displayValue,
-        value: !fileAnalysis ? makeDoUpload(file, type) : makeDoUpload(file, type, false, fileAnalysis)()
+        value: !fileAnalysis ? makeDoUpload(file, type, false, false, uploadParams)()
+                                        : makeDoUpload(file, type, false, fileAnalysis, uploadParams)()
     });
 }
 
-function makeDoUpload(file, type, isFromURL, fileAnalysis) {
+function makeDoUpload(file, type, isFromURL, fileAnalysis, uploadParams={}) {
     return () => {
-        return doUpload(isFromURL, file, fileAnalysis, {}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(isFromURL, file, fileAnalysis, uploadParams).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently (among many others)
                 if (!isNil(fileFormat)) { // TODO: doUpload is not returning fileFormat field (analysisResult JSON string has this field though), has to be refactored

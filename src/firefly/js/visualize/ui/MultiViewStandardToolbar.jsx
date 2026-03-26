@@ -3,17 +3,16 @@
  */
 
 
-import React, {useEffect} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import {Divider, Sheet, Stack} from '@mui/joy';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {Sheet, Stack} from '@mui/joy';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {HIDDEN} from '../ImViewFilterDisplay';
 import {ViewerScroll} from '../iv/ExpandedTools.jsx';
 import {
     dispatchChangeViewerLayout, EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, getViewerItemIds
 } from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView, ExpandType} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {BeforeButton, DisplayTypeButtonGroup, NextButton } from './Buttons.jsx';
 import {ViewOptionsButton} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
@@ -22,7 +21,7 @@ import {getActivePlotView} from '../PlotViewUtil.js';
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, toolbarVariant,
                                           layoutType= 'grid', makeDropDown, useImageList= false,
-                                             toolbarStyle={}}) {
+                                             toolbarStyle={}, showViewerScroll=true}) {
     
     let cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
 
@@ -60,7 +59,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
                         ]
                     }}/>}
                     {useImageList && multipleForImageList && <ViewOptionsButton title='Pinned Images' viewerId={viewerId}/> }
-                    {moreThanOne && layout==='grid' &&
+                    {showViewerScroll && moreThanOne && layout==='grid' &&
                         <>
                             <ToolbarHorizontalSeparator/>
                             <ViewerScroll {...{viewerId,checked:scroll,count:viewerPlotIds.length}}/>
@@ -96,4 +95,5 @@ MultiViewStandardToolbar.propTypes= {
     useImageList: PropTypes.bool,
     toolbarStyle: PropTypes.object,
     toolbarVariant: PropTypes.string,
+    showViewerScroll: PropTypes.bool,
 };
