@@ -71,11 +71,11 @@ public class SpectrumMetaInspector {
     private static final String[] timeLoColName= new String[] {"time_lo"};
     private static final String[] timeHiColName= new String[] {"time_hi"};
 
-    private static final String VALUE= ".Value";
+    public static final String VALUE= ".Value";
     private static final String ACCURACY= ".Accuracy";
-    private static final String SPEC_SPECT_AXIS= "spec:Data.SpectralAxis";
-    private static final String SPEC_FL_AXIS= "spec:Data.FluxAxis";
-    private static final String SPEC_FL_AXIS_ACCURACY= SPEC_FL_AXIS+ACCURACY;
+    public static final String SPEC_SPECT_AXIS= "spec:Data.SpectralAxis";
+    public static final String SPEC_FL_AXIS= "spec:Data.FluxAxis";
+    public static final String SPEC_FL_AXIS_ACCURACY= SPEC_FL_AXIS+ACCURACY;
     private static final String SPEC_TI_AXIS= "spec:Data.TimeAxis";
     private static final String SPEC_TI_AXIS_ACCURACY= SPEC_TI_AXIS+ACCURACY;
     private static final String SPEC_ORDER = "spec:Data.SpectralAxis.Order";
@@ -83,7 +83,7 @@ public class SpectrumMetaInspector {
     private static final String spec10Version= "spectrum v1.0";
     private static final String VOCLASS= "VOCLASS";
 
-    private static final String SPEC_SPECTRUM= "spec:Spectrum";
+    public static final String SPEC_SPECTRUM= "spec:Spectrum";
     private static final String SPEC_DATA= "spec:Data";
     private static final String SPEC_SPECTRUM_DATA= "spec:Spectrum.Data";
     private static final String SPEC= "spec:";
@@ -411,7 +411,7 @@ public class SpectrumMetaInspector {
         // add more unit checks here
     }
 
-    private static DataType getDataTypeWithColName(List<DataType> dtAry, String colName) {
+    public static DataType getDataTypeWithColName(List<DataType> dtAry, String colName) {
         return dtAry.stream().filter(dt -> colName.equals(dt.getKeyName())).findAny().orElse(null);
     }
 
@@ -444,4 +444,47 @@ public class SpectrumMetaInspector {
         else if (includes(freqColNames,colName)) return "FREQ";
         return null;
     }
+
+    public static void insertSpectralData(DataGroup dg, InsertEntry wl, InsertEntry flux, InsertEntry fluxErr) {
+
+        List<GroupInfo> groupInfosList= new ArrayList<>();
+
+
+        TableMeta meta= dg.getTableMeta();
+        var dtList= Arrays.asList(dg.getDataDefinitions());
+
+        // wl
+        if (wl==null) return;
+        DataType wlDt= SpectrumMetaInspector.getDataTypeWithColName(dtList,wl.column());
+        if (wlDt==null) return;
+        if (wl.unit()!=null) wlDt.setUnits(wl.unit());
+        List<GroupInfo.RefInfo> wlRefList= new ArrayList<>();
+        wlRefList.add(new GroupInfo.RefInfo(wl.column(), "WAVE",SPEC_SPECT_AXIS+VALUE));
+        groupInfosList.add(new GroupInfo(SPEC_SPECT_AXIS, "",wlRefList));
+
+
+        // flux
+        if (flux==null) return;
+        List<GroupInfo.RefInfo> fluxRefList= new ArrayList<>();
+        DataType fluxDt= SpectrumMetaInspector.getDataTypeWithColName(dtList,flux.column());
+        if (fluxDt==null) return;
+        if (flux.unit()!=null) fluxDt.setUnits(flux.unit());
+        fluxRefList.add(new GroupInfo.RefInfo(flux.column(), "",SPEC_FL_AXIS+VALUE));
+
+
+        if (fluxErr!=null) {
+            DataType fluxErrDt= SpectrumMetaInspector.getDataTypeWithColName(dtList,fluxErr.column());
+            if (fluxErrDt!=null) {
+                if (fluxErr.unit()!=null) fluxErrDt.setUnits(fluxErr.unit());
+                fluxRefList.add(new GroupInfo.RefInfo(fluxErr.column(), "",SPEC_FL_AXIS_ACCURACY+".StatError"));
+            }
+        }
+        groupInfosList.add(new GroupInfo(SPEC_FL_AXIS, "", fluxRefList));
+
+
+        dg.setGroupInfos(groupInfosList);
+        meta.addKeyword(TableMeta.UTYPE,SPEC_SPECTRUM);
+    }
+
+    public record InsertEntry(String column, String unit) {}
 }

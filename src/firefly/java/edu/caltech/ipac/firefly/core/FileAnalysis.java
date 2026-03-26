@@ -15,7 +15,7 @@ import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.ASDFUtil;
+import edu.caltech.ipac.util.asdf.AsdfAccess;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.FormatUtil;
@@ -91,7 +91,7 @@ public class FileAnalysis {
                 }
                 break;
             case ASDF:
-                report= ASDFUtil.analyze(infile, mtype);
+                report= AsdfAccess.analyze(infile, mtype);
                 break;
             case IPACTABLE:
                 report = IpacTableReader.analyze(infile, mtype);
@@ -186,6 +186,7 @@ public class FileAnalysis {
         h.setValue(report.getFormat(), "fileFormat");
         h.setValue(report.getDataType(), "dataTypes");
         h.setValue(report.isAnalyzerFound(), "analyzerFound");
+        h.setValue(report.getMessage(), "message");
         if (report.isDisableAllImagesOption()) {
             h.setValue(report.isDisableAllImagesOption(), "disableAllImageOption");
         }

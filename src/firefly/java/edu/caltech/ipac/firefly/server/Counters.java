@@ -159,6 +159,7 @@ public class Counters {
         addToList(retList, "Session ID", ServerContext.getRequestOwner().getRequestAgent().getSessId());
         addToList(retList, "User Key", ServerContext.getRequestOwner().getUserKey());
         addToList(retList, "JVM Architecture", AppProperties.getProperty("os.arch", "unknown"));
+        addToList(retList, "Cloud Environment", ServerContext.getCloudEnvironment().toString());
 
         retList.add("");
         addMemoryStatus(retList, sInfo);

@@ -15,7 +15,7 @@ import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.table.io.TableParseHandler;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.ASDFUtil;
+import edu.caltech.ipac.util.asdf.AsdfAccess;
 import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
@@ -111,10 +111,10 @@ public class DbDataIngestor {
                                     Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum) throws IOException, DataAccessException {
         if (dbAdapter instanceof DuckDbAdapter) {
             var h= new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum);
-            ASDFUtil.convertAsdfAstroPyTableToDataGroup(h, new File(source), tableIndex);   // only the first table.
+            AsdfAccess.convertAsdfTableToDataGroup(h, new File(source), tableIndex);   // only the first table.
             return new FileInfo(dbAdapter.getDbFile());
         } else {
-            var table = ASDFUtil.convertAsdfAstroPyTableToDataGroup(new File(source), req, tableIndex);
+            var table = AsdfAccess.convertAsdfTableToDataGroup(new File(source), req, tableIndex);
             return ingestTable(dbAdapter, table, false);        //logic is already in the reader
         }
     }

@@ -271,7 +271,8 @@ function getServiceDescriptorForId(table, matchId, dataLinkTableRowIdx) {
  * @returns {boolean} true if the file analysis report indicates a service descriptor
  */
 export function isAnalysisTableDatalink(report) {
-    if (report?.parts.length !== 1 || report?.parts[0]?.type !== 'Table' || !report?.parts[0]?.details) {
+    if (!report?.parts?.length) return false;
+    if (report.parts.length !== 1 || report?.parts[0].type !== 'Table' || !report.parts[0].details) {
         return false;
     }
 

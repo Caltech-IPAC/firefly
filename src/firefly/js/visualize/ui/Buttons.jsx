@@ -113,10 +113,14 @@ export const PDFButton= (props) =>(
 
 
 export const LockImages= ({locked, ...props}) =>{
-    const sx={position:'absolute', transform: 'scale(1.2,1.2)', top:1, left:4};
+    const sx={position:'absolute', transform: 'scale(1.2,1.2)', top:1, left:4, };
     const icon= (
         <Box sx={{width:24,height:24}}>
-            {locked ? <LinkIcon {...{sx}}/> : <LinkOffIcon {...{sx}}/>}
+            {locked
+                ? <LinkIcon {...{sx: (theme) =>
+                        ({fill: `rgba(${theme.vars.palette.danger.mainChannel} / 1)`,  ...sx}) }}/>
+                : <LinkOffIcon {...{sx}}/>
+            }
         </Box>
     );
     return (<DropDownToolbarButton {...{ icon, dropPosition:{left:6,bottom:-2}, ...props, }}  />);

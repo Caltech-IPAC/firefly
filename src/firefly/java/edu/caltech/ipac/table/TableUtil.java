@@ -9,8 +9,8 @@ import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.ASDFUtil;
 import edu.caltech.ipac.util.FormatUtil;
+import edu.caltech.ipac.util.asdf.AsdfAccess;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class TableUtil {
         } else if (format == FormatUtil.Format.ASDF ) {
             try {
                 // Switch to the new function:
-                return ASDFUtil.convertAsdfAstroPyTableToDataGroup(inf, request, tableIndex);
+                return AsdfAccess.convertAsdfTableToDataGroup(inf, request, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }
