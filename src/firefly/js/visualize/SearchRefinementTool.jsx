@@ -139,8 +139,8 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
-        updatePlotOverlayFromUserInput(plotId, whichOverlay, parseWorldPt(getWP()),
-            Number(hasRadius ? getSize() : .0002), convertStrToWpAry(getPoly()));
+        updatePlotOverlayFromUserInput({plotId, whichOverlay, wp: parseWorldPt(getWP()),
+            radius: Number(hasRadius ? getSize() : .0002), polygonAry: convertStrToWpAry(getPoly())});
     }, [getWP, getSize, getPoly, whichOverlay]);
 
     const cenWpt= parseWorldPt(getWP()??wp);

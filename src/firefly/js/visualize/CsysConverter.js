@@ -600,7 +600,7 @@ export class CysConverter {
     /**
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
      * @param {Point|undefined} pt  the point to convert
-     * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, default to coordinate system of image
+     * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, defaults to Equatorial
      * @returns {WorldPt|null} the translated coordinates
      */
     getWorldCoords(pt, outputCoordSys= undefined) {
@@ -637,7 +637,7 @@ export class CysConverter {
         let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
         const csys = wpt?.getCoordSys();
         if (csys?.isCelestial() && outputCoordSys!==csys) {
-            wpt= convertCelestial(wpt, outputCoordSys);
+            wpt= convertCelestial(wpt, outputCoordSys); // outputCoordSys=undefined will return wpt in Equatorial J2000
         }
         return wpt;
     }

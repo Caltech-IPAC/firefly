@@ -6,7 +6,7 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
-import {CONE_CHOICE_KEY} from './CommonUIKeys.js';
+import {BOX_CHOICE_KEY, CONE_CHOICE_KEY} from './CommonUIKeys.js';
 import {SelectAreaButton} from './SelectAreaUIComponents.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 
@@ -50,6 +50,10 @@ export const HelpLines= ({whichOverlay, selectionHelpText, usingRadius}) => {
                     (<>
                         <Typography level='body-xs' sx={nowrap}>Click to choose a search center, or use the Selection Tools
                          to choose a search center and radius.</Typography>
+                    </> ) : whichOverlay===BOX_CHOICE_KEY ?
+                    (<>
+                        <Typography level='body-xs' sx={nowrap}>Use the Selection Tools
+                            to choose a search box. Click to change the center.</Typography>
                     </> ) :
                     (<>
                         <Typography level='body-xs' sx={nowrap}>Use the Selection Tools

@@ -128,6 +128,7 @@ export function QuantityInputFieldView({min, max, sx, slotProps, inputStyle = {}
                 orientation={orientation}
                 connectedMarker={connectedMarker}
                 sx={{ '& .MuiInput-root': { paddingInlineEnd: 0 } }}
+                { ...slotProps?.inputField }
                 endDecorator={
                     <QuantityUnitsPicker unit={unit} onChange={handleUnitChange}
                                          unitOptions={quantityUnitOptions}
@@ -154,6 +155,7 @@ QuantityInputFieldView.propTypes = {
     max: PropTypes.number,
     sx: PropTypes.object,
     slotProps: PropTypes.shape({
+        inputField: PropTypes.object,
         units: PropTypes.object,
         feedback: PropTypes.object,
     }),

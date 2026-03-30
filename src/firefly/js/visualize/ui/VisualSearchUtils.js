@@ -16,18 +16,26 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {
-    calculatePosition, computeCentralPointAndRadius, computeDistance, convertCelestial, getPointOnEllipse
+    calculatePosition,
+    calculatePositionFromLocalOffsets,
+    computeCentralPointAndRadius,
+    computeDistance,
+    convertCelestial,
+    getPointOnEllipse,
+    getPositionAngle,
+    normalizeRotation,
 } from '../VisUtil.js';
 import {changeHiPSProjectionCenter, getDevPixScaleDeg, isImage} from '../WebPlot.js';
-import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
+import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
     clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
 } from './ToolbarToolModalEnd.js';
 import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
+import {clampInRange} from 'firefly/util/MathUtil';
 
 
 export const SEARCH_REFINEMENT_DIALOG_ID = 'SEARCH_REFINEMENT_DIALOG';
-const SEARCH_REFINEMENT_SELECTION_SOURCE= 'SearchRefinementTool';
+const SEARCH_SELECT_TOOL_SOURCE = SearchSelectTool.TYPE_ID;
 const radians= [Math.PI/4, 2*Math.PI/4, 3*Math.PI/4, 4*Math.PI/4, 5*Math.PI/4, 6*Math.PI/4, 7*Math.PI/4, 8*Math.PI/4];
 
 function getInscribedCorners(cc,cen,rx,ry) {
@@ -74,42 +82,51 @@ export function getDetailsFromSelection(plot) {
     const dPt0= cc.getDeviceCoords(pt0);
     const dPt1= cc.getDeviceCoords(pt1);
     if (!dPt0 || !dPt1) return {};
-    const cen= makeDevicePt( (dPt0.x+dPt1.x)/2, (dPt0.y+dPt1.y)/2 );
-    const cenWpt= cc.getWorldCoords(cen);
-    const sideWPx= cc.getWorldCoords( makeDevicePt( dPt0.x,cen.y));
-    const sideWPy= cc.getWorldCoords( makeDevicePt( cen.x,dPt0.y));
+    const cenDevPt= makeDevicePt( (dPt0.x+dPt1.x)/2, (dPt0.y+dPt1.y)/2 );
+    const cenWpt= cc.getWorldCoords(cenDevPt); // in Equ
+    const sideWPx= cc.getWorldCoords( makeDevicePt( dPt0.x,cenDevPt.y)); // in Equ
+    const sideWPy= cc.getWorldCoords( makeDevicePt( cenDevPt.x,dPt0.y)); // in Equ
     if (!cenWpt || !sideWPx || !sideWPy) return {};
     const radiusInit= Math.min(computeDistance(sideWPx,cenWpt), computeDistance(sideWPy,cenWpt));
-    const radius= plot.attributes[PlotAttribute.SELECTION_SOURCE]===SEARCH_REFINEMENT_SELECTION_SOURCE &&
+    const radius= plot.attributes[PlotAttribute.SELECTION_SOURCE]===SEARCH_SELECT_TOOL_SOURCE &&
                   plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] ?
                plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] : Math.trunc(radiusInit*3600)/3600;
-    let corners;
-    const rx= cen.x-dPt0.x;
-    const ry= cen.y-dPt0.y;
+    let corners, rectSizeX, rectSizeY, rectRotAngle, rectXAxisWpt, rectYAxisWpt;
+    const rx= cenDevPt.x-dPt0.x;
+    const ry= cenDevPt.y-dPt0.y;
 
     const cone= plot.attributes[PlotAttribute.SELECTION_TYPE]===SelectedShape.circle.key;
 
-    if (cone) {
-        corners= getCircumscribedCorners(cc,cen,rx,ry);
+    if (cone) { // SelectedShape.circle
+        corners= getCircumscribedCorners(cc,cenDevPt,rx,ry);
     }
-    else {
-        const ptCorner01= cc.getWorldCoords(makeDevicePt(dPt0.x, dPt1.y));
-        const ptCorner10= cc.getWorldCoords(makeDevicePt(dPt1.x, dPt0.y));
-        corners= [pt0,ptCorner01,pt1,ptCorner10].filter( (pt) => pt);
+    else { // SelectedShape.rect
+        const ptX0Y1= cc.getWorldCoords(makeDevicePt(dPt0.x, dPt1.y)); // in Equ
+        const ptX1Y0= cc.getWorldCoords(makeDevicePt(dPt1.x, dPt0.y)); // in Equ
+        corners = [pt0,ptX0Y1,pt1,ptX1Y0].filter((pt) => pt); //poly UI params
+
+        rectXAxisWpt = cc.getWorldCoords(makeDevicePt(dPt0.x, cenDevPt.y)); // in Equ
+        rectYAxisWpt = cc.getWorldCoords(makeDevicePt(cenDevPt.x, dPt0.y)); // in Equ
+        rectSizeX = computeDistance(cenWpt, rectXAxisWpt) * 2;
+        rectSizeY = computeDistance(cenWpt, rectYAxisWpt) * 2;
+        rectRotAngle = getPositionAngle(
+            cenWpt.getLon(), cenWpt.getLat(),
+            rectYAxisWpt.getLon(), rectYAxisWpt.getLat() // since rotation angle is E of N (where Y axis = N at 0 deg)
+        );
     }
 
     let relativeDevCorners= corners
         .map( (pt) => {
             const dPt= cc.getDeviceCoords(pt);
             if (!dPt) return;
-            return makeDevicePt( cen.x-dPt.x, cen.y-dPt.y );
+            return makeDevicePt( cenDevPt.x-dPt.x, cenDevPt.y-dPt.y );
         })
         .filter( (pt) => pt);
 
     if (relativeDevCorners?.length!==corners.length) relativeDevCorners= undefined;
 
 
-    return {cenWpt, radius, corners, relativeDevCorners, cone};
+    return {cenWpt, radius, corners, rectSizeX, rectSizeY, rectRotAxisWpt: rectYAxisWpt, rectRotAngle, relativeDevCorners, cone};
 }
 
 export function makeRelativePolygonAry(plot, polygonAry) {
@@ -172,6 +189,7 @@ export function isWpArysEquals(wpAry1, wpAry2) {
 }
 
 export function initSearchSelectTool(plotId) {
+    // create a SearchSelect draw layer and attach it to the plot (if not already done)
     const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
     !dl && dispatchCreateDrawLayer(SearchSelectTool.TYPE_ID);
     !isDrawLayerAttached(dl, plotId) && dispatchAttachLayerToPlot(SearchSelectTool.TYPE_ID, plotId, false);
@@ -194,82 +212,144 @@ export function removeSearchSelectTool(plotId) {
     });
 }
 
+
+function handleConeUIFromPlot({plot, plotId, isSelectAreaDLOnPlot, cenWpt, radius,
+                                  setWpAndDispatch, doModalEnd, userEnterWorldPt, userEnterSearchRadius,
+                                  setHiPSRadius, getHiPSRadius, minSize, maxSize}) {
+    if (isSelectAreaDLOnPlot) {
+        if (!cenWpt) return;
+        const drawRadius = clampInRange(radius, minSize, maxSize);
+        if (pointEquals(userEnterWorldPt(), cenWpt) && drawRadius === userEnterSearchRadius()) return;
+        setWpAndDispatch(cenWpt);
+        setUISize(radius, minSize, maxSize, userEnterSearchRadius(), setHiPSRadius);
+        updatePlotOverlayFromUserInput({plotId, whichOverlay: CONE_CHOICE_KEY, wp: cenWpt, radius: drawRadius, polygonAry: undefined});
+        setTimeout(doModalEnd, 10);
+    } else {
+        const wp = plot.attributes[PlotAttribute.USER_SEARCH_WP];
+        if (!wp) return;
+        const utWPt = userEnterWorldPt();
+        if (Number(getHiPSRadius()) !== Number(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG])) {
+            setUISize(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG], minSize, maxSize, userEnterSearchRadius(), setHiPSRadius);
+        }
+        if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
+            setWpAndDispatch(wp);
+            if (plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG]) doModalEnd();
+        }
+    }
+}
+
+function handleBoxUIFromPlot({plot, plotId, isSelectAreaDLOnPlot, cenWpt, rectSizeX, rectSizeY, rectRotAngle, rectRotAxisWpt,
+                                 setWpAndDispatch, doModalEnd, userEnterWorldPt, getBoxParams, setBoxParams, minSize, maxSize}) {
+    if (isSelectAreaDLOnPlot) {
+        if (!cenWpt) return;
+        const drawSizeX = clampInRange(rectSizeX, minSize, maxSize);
+        const drawSizeY = clampInRange(rectSizeY, minSize, maxSize);
+        const rotation = rectRotAngle;
+        if (pointEquals(userEnterWorldPt(), cenWpt) &&
+            drawSizeX === getBoxParams()?.sizeX &&
+            drawSizeY === getBoxParams()?.sizeY &&
+            rotation === getBoxParams()?.rotation) return;
+        setWpAndDispatch(cenWpt);
+        const drawBox = {sizeX: drawSizeX, sizeY: drawSizeY, rotation: normalizeRotation(rotation)};
+        setBoxParams(drawBox);
+        dispatchAttributeChange({plotId, changes: {
+            [PlotAttribute.USER_SEARCH_BOX]: drawBox,
+            [PlotAttribute.USER_SEARCH_BOX_AXIS_WP]: rectRotAxisWpt
+        }});
+        setTimeout(doModalEnd, 10);
+    } else {
+        const wp = plot.attributes[PlotAttribute.USER_SEARCH_WP];
+        if (!wp) return;
+        const utWPt = userEnterWorldPt();
+        const boxParams = plot.attributes[PlotAttribute.USER_SEARCH_BOX];
+        if (getBoxParams()?.sizeX !== boxParams?.sizeX ||
+            getBoxParams()?.sizeY !== boxParams?.sizeY ||
+            getBoxParams()?.rotation !== boxParams?.rotation) {
+            setBoxParams(boxParams);
+        }
+        if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
+            setWpAndDispatch(wp);
+            if (boxParams?.sizeX && boxParams?.sizeY) doModalEnd();
+        }
+    }
+}
+
+function handlePolygonUIFromPlot({plot, plotId, isSelectAreaDLOnPlot, cenWpt, corners,
+                                     setTargetWp, getTargetWp, doModalEnd, userEnterPolygon, setPolygon}) {
+    let wpStr;
+    if (isSelectAreaDLOnPlot) {
+        if (isWpArysEquals(corners, userEnterPolygon())) return;
+        wpStr = cenWpt.toString();
+        const polyStr = convertWpAryToStr(corners, plot);
+        setPolygon(polyStr);
+        dispatchAttributeChange({plotId, changes: {[PlotAttribute.POLYGON_ARY]: convertStrToWpAry(polyStr)}});
+        setTimeout(doModalEnd, 10);
+    } else {
+        const polyWpAry = plot.attributes[PlotAttribute.POLYGON_ARY];
+        wpStr = plot.attributes[PlotAttribute.USER_SEARCH_WP];
+        if (polyWpAry?.length) {
+            if (isWpArysEquals(polyWpAry, userEnterPolygon())) return;
+            setPolygon(convertWpAryToStr(polyWpAry, plot));
+            doModalEnd();
+        }
+    }
+    if (wpStr && wpStr !== getTargetWp()) setTargetWp(wpStr);
+}
+
 export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTargetWp, getTargetWp, canUpdateModalEndInfo=true,
-                                     setHiPSRadius, getHiPSRadius, setPolygon, getPolygon, minSize, maxSize }) {
+                                     setHiPSRadius, getHiPSRadius, setPolygon, getPolygon, getBoxParams, setBoxParams, minSize, maxSize }) {
 
     const userEnterWorldPt = () => parseWorldPt(getTargetWp());
     const userEnterSearchRadius = () => Number(getHiPSRadius());
     const userEnterPolygon = () => convertStrToWpAry(getPolygon());
 
-    if (whichOverlay !== CONE_CHOICE_KEY && whichOverlay !== POLY_CHOICE_KEY) return;
+    if (![CONE_CHOICE_KEY, POLY_CHOICE_KEY, BOX_CHOICE_KEY].includes(whichOverlay)) return;
     const plot = primePlot(visRoot(), plotId);
     if (!plot) return;
     let isCone = whichOverlay === CONE_CHOICE_KEY;
-    const {cenWpt, radius, corners} = plot.attributes[PlotAttribute.SELECTION] ? getDetailsFromSelection(plot) : {};
+    const isBox = whichOverlay === BOX_CHOICE_KEY;
+    const {cenWpt, radius, corners, rectSizeX, rectSizeY, rectRotAxisWpt, rectRotAngle} =
+        plot.attributes[PlotAttribute.SELECTION] ? getDetailsFromSelection(plot) : {};
+
     const plotSelType= plot.attributes[PlotAttribute.SELECTION_TYPE];
     if (setWhichOverlay && plotSelType) {
-        isCone= plotSelType!==SelectedShape.rect.key; // if future, if something not supported just default to cone
-        if (plot.attributes[PlotAttribute.SELECTION_SOURCE]!==SEARCH_REFINEMENT_SELECTION_SOURCE) {
-            setWhichOverlay(isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+        isCone= plotSelType!==SelectedShape.rect.key; // in future, if something not supported just default to cone
+        if (plot.attributes[PlotAttribute.SELECTION_SOURCE]!==SEARCH_SELECT_TOOL_SOURCE) {
+            setWhichOverlay(isCone ? CONE_CHOICE_KEY : (plot.attributes[PlotAttribute.USE_BOX]
+                ? BOX_CHOICE_KEY : POLY_CHOICE_KEY));
         }
     }
+    // SelectArea Drawing Layer is drawn on the plot
+    const isSelectAreaDLOnPlot = plot.attributes[PlotAttribute.SELECTION] && plot.attributes[PlotAttribute.SELECTION_SOURCE]===SelectArea.TYPE_ID;
 
+    const setWpAndDispatch = (wp) => {
+        setTargetWp(wp.toString());
+        dispatchActiveTarget(wp);
+    };
+    const doModalEnd = () => canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
+
+    const handlerCtx = {plot, plotId, isSelectAreaDLOnPlot, cenWpt, setTargetWp, setWpAndDispatch, doModalEnd, userEnterWorldPt};
     if (isCone) {
-        if (plot.attributes[PlotAttribute.SELECTION] && plot.attributes[PlotAttribute.SELECTION_SOURCE]===SelectArea.TYPE_ID) {
-            if (!cenWpt) return;
-            const drawRadius = radius <= maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
-            if (pointEquals(userEnterWorldPt(), cenWpt) && drawRadius === userEnterSearchRadius()) return;
-            setTargetWp(cenWpt.toString());
-            dispatchActiveTarget(cenWpt);
-            setUISize(radius,minSize,maxSize,userEnterSearchRadius(),setHiPSRadius);
-            updatePlotOverlayFromUserInput(plotId, CONE_CHOICE_KEY, cenWpt, drawRadius, undefined);
-            setTimeout(() => {
-                canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
-            }, 10);
-        }
-        else {
-            const wp = plot.attributes[PlotAttribute.USER_SEARCH_WP];
-            if (!wp) return;
-            const utWPt = userEnterWorldPt();
-            if (Number(getHiPSRadius())!==Number(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG])) {
-                setUISize(plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG],minSize,maxSize,userEnterSearchRadius(),setHiPSRadius);
-            }
-            if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
-                setTargetWp(wp.toString());
-                dispatchActiveTarget(wp);
-                if (plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG]) {
-                    canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
-                }
-            }
-        }
-    }
-    else {
-        let wpStr;
-        if (plot.attributes[PlotAttribute.SELECTION] && plot.attributes[PlotAttribute.SELECTION_SOURCE]===SelectArea.TYPE_ID) {
-            if (isWpArysEquals(corners, userEnterPolygon())) return;
-            wpStr= cenWpt.toString();
-            const polyStr= convertWpAryToStr(corners, plot);
-            setPolygon(polyStr);
-            dispatchAttributeChange({ plotId, changes:{[PlotAttribute.POLYGON_ARY]: convertStrToWpAry(polyStr)}});
-            setTimeout(() => {
-                canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
-            }, 10);
-        } else {
-            const polyWpAry = plot.attributes[PlotAttribute.POLYGON_ARY];
-            wpStr = plot.attributes[PlotAttribute.USER_SEARCH_WP];
-            if (polyWpAry?.length) {
-                if (isWpArysEquals(polyWpAry, userEnterPolygon())) return;
-                setPolygon(convertWpAryToStr(polyWpAry, plot));
-                canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
-            }
-        }
-        if (wpStr && wpStr !== getTargetWp()) setTargetWp(wpStr);
+        handleConeUIFromPlot({
+            ...handlerCtx,
+            radius, userEnterSearchRadius, setHiPSRadius, getHiPSRadius, minSize, maxSize
+        });
+    } else if (isBox) {
+        handleBoxUIFromPlot({
+            ...handlerCtx,
+            rectSizeX, rectSizeY, rectRotAngle, rectRotAxisWpt, getBoxParams, setBoxParams, minSize, maxSize
+        });
+    } else {
+        handlePolygonUIFromPlot({
+            ...handlerCtx,
+            corners, getTargetWp, userEnterPolygon, setPolygon
+        });
     }
 }
 
 function setUISize(size, minSize, maxSize, uiCurrentValue, setter) {
     if (isUndefined(size) || isNaN(size)) return;
-    const sizeToSet = size <= maxSize ? (size >= minSize ? size : minSize) : maxSize;
+    const sizeToSet = clampInRange(size, minSize, maxSize);
     if (uiCurrentValue===sizeToSet) return;
     setter(sizeToSet+'');
 }
@@ -292,7 +372,7 @@ function convertConeToSelection(plot,wp,radius) {
         [PlotAttribute.SELECTION]: sel,
         [PlotAttribute.SELECTION_TYPE]: SelectedShape.circle.key,
         [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
-        [PlotAttribute.SELECTION_SOURCE]: SEARCH_REFINEMENT_SELECTION_SOURCE,
+        [PlotAttribute.SELECTION_SOURCE]: SEARCH_SELECT_TOOL_SOURCE,
     };
 }
 
@@ -318,53 +398,103 @@ function convertPolygonToSelection(plot,polygonAry) {
         [PlotAttribute.SELECTION]: sel,
         [PlotAttribute.SELECTION_TYPE]: SelectedShape.rect.key,
         [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
-        [PlotAttribute.SELECTION_SOURCE]: SEARCH_REFINEMENT_SELECTION_SOURCE,
+        [PlotAttribute.SELECTION_SOURCE]: SEARCH_SELECT_TOOL_SOURCE,
     };
     
 }
 
+function convertBoxToSelection(plot, wp, boxParams) {
+    if (!plot || !wp || !boxParams?.sizeX || !boxParams?.sizeY || !(boxParams?.rotation || boxParams?.rotation===0)) return {};
 
-function convertToSelection(plot, wp,radius,polygonAry,whichOverlay) {
-    if (!plot) return {};
-    return (whichOverlay===CONE_CHOICE_KEY) ?
-        convertConeToSelection(plot,wp,radius) :
-        convertPolygonToSelection(plot,polygonAry);
+    const halfSizeXArcsec = boxParams.sizeX / 2 * 3600;
+    const halfSizeYArcsec = boxParams.sizeY / 2 * 3600;
+    const rotAxisOffset = {x: 0, y: halfSizeYArcsec}; // since the rotation axis is along the Y axis of box
+    const boxCornerOffsets = [
+        {x: +halfSizeXArcsec, y: +halfSizeYArcsec}, // upperRight
+        {x: -halfSizeXArcsec, y: +halfSizeYArcsec}, // upperLeft
+        {x: -halfSizeXArcsec, y: -halfSizeYArcsec}, // lowerLeft
+        {x: +halfSizeXArcsec, y: -halfSizeYArcsec}, // lowerRight
+    ];
+
+    // wp is box center (0, 0) but Y and X axes of the box are not always aligned with North and East. So we can't do
+    // simple arithmetic to find the corners from above offsets and instead use the following function which takes
+    // (E of N) rotation of the local plane into account when applying offsets to find new positon.
+    const wpAry = boxCornerOffsets.map((offset) =>
+        calculatePositionFromLocalOffsets(wp, offset.x, offset.y, boxParams.rotation));
+    const rotAxisWp = calculatePositionFromLocalOffsets(wp, rotAxisOffset.x, rotAxisOffset.y, boxParams.rotation);
+
+    if (wpAry.some((pt) => !isValidPoint(pt))) return {};
+
+    const sel = {
+        pt0: wpAry[1], // upperLeft
+        pt1: wpAry[3], // lowerRight
+    };
+    const imBoundSel = getImageBoundsSelection(sel, CsysConverter.make(plot), SelectedShape.rect.key,
+        getPlotViewById(visRoot(), plot.plotId)?.rotation ?? 0);
+
+    return {
+        [PlotAttribute.POLYGON_ARY]: wpAry,
+        [PlotAttribute.USER_SEARCH_BOX_AXIS_WP]: rotAxisWp,
+        [PlotAttribute.SELECTION]: sel,
+        [PlotAttribute.SELECTION_TYPE]: SelectedShape.rect.key,
+        [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
+        [PlotAttribute.SELECTION_SOURCE]: SEARCH_SELECT_TOOL_SOURCE,
+    };
 }
 
-export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius, polygonAry, forceCenterOn = false, canGeneratePolygon= false) {
+
+function convertToSelection(plot, wp, radius, polygonAry, whichOverlay, boxParams) {
+    if (!plot) return {};
+    if (whichOverlay === CONE_CHOICE_KEY) return convertConeToSelection(plot, wp, radius);
+    if (whichOverlay === BOX_CHOICE_KEY) return convertBoxToSelection(plot, wp, boxParams);
+    return convertPolygonToSelection(plot, polygonAry);
+}
+
+export function updatePlotOverlayFromUserInput({
+    plotId, whichOverlay, wp, radius, polygonAry, boxParams, forceCenterOn = false, canGeneratePolygon = false
+}) {
     const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
-    if (!dl) return;
+    if (!dl) return; // since the following changes are only made for SearchSelect drawing layer on plot
+
     const isCone = whichOverlay === CONE_CHOICE_KEY;
+    const isBox = whichOverlay === BOX_CHOICE_KEY;
+    const isPolygon = whichOverlay === POLY_CHOICE_KEY;
     const plot= primePlot(visRoot(),plotId);
 
+    // update SearchSelect drawing layer's attributes in the store
     dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
     dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);
 
-    if (!isCone && wp && radius && canGeneratePolygon) {
+    if (isPolygon && wp && radius && canGeneratePolygon) {
+        // convert cone to a 8-pointed polygon that circumscribes it
         const cc= CsysConverter.make(plot);
-        const cen= cc.getDeviceCoords(wp);
+        const cen= cc.getDeviceCoords(wp); // center of cone
         const ptOnCone= cc.getDeviceCoords(calculatePosition( convertCelestial(wp),radius*3600,radius*3600));
-        const dist= Math.abs(cen.y-ptOnCone.y)*2;
-        polygonAry= getCircumscribedCorners(cc,cen,dist,dist);
+        const dist= Math.abs(cen.y-ptOnCone.y)*2; // diameter of cone
+        polygonAry= getCircumscribedCorners(cc,cen,dist,dist); // rx=ry for circle, so dist is used for both
     }
 
-    let changes= {
+    const changes= {
         [PlotAttribute.USER_SEARCH_WP]: wp,
         [PlotAttribute.USER_SEARCH_RADIUS_DEG]: isCone ? radius : undefined,
-        [PlotAttribute.POLYGON_ARY]: isCone ? undefined : polygonAry,
-        [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]: isCone ? undefined : makeRelativePolygonAry(primePlot(visRoot(), plotId), polygonAry),
-        [PlotAttribute.USE_POLYGON]: !isCone,
+        [PlotAttribute.USER_SEARCH_BOX]: isBox && boxParams ? {...boxParams, rotation: normalizeRotation(boxParams?.rotation)} : undefined,
+        [PlotAttribute.POLYGON_ARY]: isPolygon ? polygonAry : undefined,
+        [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]:
+            isPolygon ? makeRelativePolygonAry(primePlot(visRoot(), plotId), polygonAry) : undefined,
+        [PlotAttribute.USE_BOX]: isBox,
+        [PlotAttribute.USE_POLYGON]: isPolygon,
+        // add SearchSelectTool DL related plot attributes from the user input
+        ...(whichOverlay ? convertToSelection(plot, wp, radius, polygonAry, whichOverlay, boxParams) : {})
     };
-    if (whichOverlay) {
-        changes=  {...changes, ...convertToSelection(plot, wp,radius,polygonAry,whichOverlay)};
-    }
-
     dispatchAttributeChange({ plotId, changes });
+
+    // force redrawing the SearchSelect drawing layer now that plot attributes have been updated
     dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
     if (!plot || isImage(plot)) return;
-    if (!isCone && !polygonAry) return;
+    if (isPolygon && !polygonAry) return;
+    if (isBox && !boxParams?.sizeX && !boxParams?.sizeY) return;
 
-    const centerProjPt = isCone ? wp : computeCentralPointAndRadius(polygonAry)?.centralPoint;
+    const centerProjPt = isPolygon ? computeCentralPointAndRadius(polygonAry)?.centralPoint : wp;
     const cc = CsysConverter.make(plot);
     if (!centerProjPt || !cc) return;
     if (cc.pointInView(centerProjPt) && !forceCenterOn) return;
@@ -408,7 +538,7 @@ export function markOutline(sa, plotId, {wp, radius, polyStr}) {
     if (polygonAry && sa.searchType === AREA) isCone = false;
     updateModalEndInfo(plotId);
 
-    updatePlotOverlayFromUserInput(plotId, isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY, wp, radius, polygonAry);
+    updatePlotOverlayFromUserInput({plotId, whichOverlay: isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY, wp, radius, polygonAry});
     dispatchModifyCustomField(dl.drawLayerId, {isInteractive: false}, plotId);
     dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
 }

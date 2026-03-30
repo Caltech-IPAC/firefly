@@ -43,7 +43,7 @@ import {
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
+import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {SmallLegend} from './SmallLegend';
 import {HelpLines, targetHipsDefaultMenuItemKey, TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
@@ -56,6 +56,10 @@ const DIALOG_ID= 'HiPSPanelPopup';
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
 const DEFAULT_FOV= 340;
 const RADIUS_DISABLED_KEY= 'none---Size';
+const POLYGON_DISABLED_KEY = 'non---Polygon';
+const BOX_SIZE_X_DISABLED_KEY= 'none---BoxSizeX';
+const BOX_SIZE_Y_DISABLED_KEY= 'none---BoxSizeY';
+const BOX_ROTATION_DISABLED_KEY= 'none---BoxRotation';
 
 const sharedPropTypes= {
     hipsUrl: string,
@@ -109,7 +113,9 @@ VisualTargetPanel.propTypes= {
 
 export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
-                                   targetKey=DEF_TARGET_PANEL_KEY, sizeKey=RADIUS_DISABLED_KEY, polygonKey='non---Polygon',
+                                   targetKey=DEF_TARGET_PANEL_KEY, sizeKey=RADIUS_DISABLED_KEY, polygonKey=POLYGON_DISABLED_KEY,
+                                   boxSizeXKey=BOX_SIZE_X_DISABLED_KEY, boxSizeYKey=BOX_SIZE_Y_DISABLED_KEY,
+                                   boxRotationKey=BOX_ROTATION_DISABLED_KEY,
                                    getWhichOverlay=() => CONE_CHOICE_KEY, toolbarHelpId,
                                    showHelpLines=true, selectionHelpText= undefined,
                                    setWhichOverlay, sRegion, coordinateSys, mocList, minSize=1/3600, maxSize=100,
@@ -121,19 +127,37 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
     const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
     const [getPolygon, setPolygon]= useFieldGroupValue(polygonKey, groupKey);
+    const [getBoxSizeX, setBoxSizeX]= useFieldGroupValue(boxSizeXKey, groupKey);
+    const [getBoxSizeY, setBoxSizeY]= useFieldGroupValue(boxSizeYKey, groupKey);
+    const [getBoxRotation, setBoxRotation]= useFieldGroupValue(boxRotationKey, groupKey);
     const [mocError, setMocError]= useState();
     const {current:lastWhichOverlay}= useRef({lastValue:undefined});
 
     const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
     const userEnterSearchRadius= () =>  Number(getHiPSRadius());
     const userEnterPolygon= () => convertStrToWpAry(getPolygon());
+    const userEnterBoxParams= () => {
+        const sizeX= Number(getBoxSizeX());
+        const sizeY= Number(getBoxSizeY());
+        const rotation= Number(getBoxRotation());
+        return {
+            sizeX: Number.isFinite(sizeX) ? sizeX : undefined,
+            sizeY: Number.isFinite(sizeY) ? sizeY : undefined,
+            rotation: Number.isFinite(rotation) ? rotation : undefined,
+        };
+    };
+    const setBoxParams= (boxParams) => {
+        setBoxSizeX(boxParams?.sizeX);
+        setBoxSizeY(boxParams?.sizeY);
+        setBoxRotation(boxParams?.rotation);
+    };
     const usingRadius= sizeKey!==RADIUS_DISABLED_KEY;
 
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
             initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys,
                 userEnterWorldPt, userEnterSearchRadius,
-                getWhichOverlay, userEnterPolygon,
+                getWhichOverlay, userEnterPolygon, userEnterBoxParams,
             });
         }
         else {
@@ -141,8 +165,8 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
             if (coordinateSys && plot && coordinateSys!==plot.projection.coordSys) {
                 dispatchChangeHiPS({plotId,coordSys:coordinateSys});
             }
-            updatePlotOverlayFromUserInput(plotId, getWhichOverlay(), userEnterWorldPt(), userEnterSearchRadius(),
-                userEnterPolygon(), true);
+            updatePlotOverlayFromUserInput({plotId, whichOverlay: getWhichOverlay(), wp: userEnterWorldPt(), 
+                radius: userEnterSearchRadius(), polygonAry: userEnterPolygon(), boxParams: userEnterBoxParams(), forceCenterOn: true});
 
             if (getActivePlotView(visRoot())?.plotId !== plotId ) dispatchChangeActivePlotView(plotId);
         }
@@ -163,7 +187,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                 lastWhichOverlay.lastValue= overLay;
             } : undefined;
         updateUIFromPlot({plotId,setWhichOverlay:setWhichOverlayWrapper, whichOverlay:getWhichOverlay(),setTargetWp,getTargetWp,
-            setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,minSize,maxSize,
+            setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,setBoxParams,getBoxParams:userEnterBoxParams, minSize,maxSize,
             canUpdateModalEndInfo:false
         });
     },[pv]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -171,16 +195,17 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     useEffect(() => { // if target or radius field change then hips plot to reflect it
         const whichOverlay= getWhichOverlay();
         const canGenerate= whichOverlay!==lastWhichOverlay.lastValue;
-        if (canGenerate && whichOverlay===CONE_CHOICE_KEY && !userEnterWorldPt()) {
+        if (canGenerate && (whichOverlay===CONE_CHOICE_KEY || whichOverlay===BOX_CHOICE_KEY) && !userEnterWorldPt()) {
              const wp = primePlot(visRoot(), plotId)?.attributes[PlotAttribute.USER_SEARCH_WP];
              wp && setTargetWp(wp.toString());
          }
         const radius=  usingRadius ? userEnterSearchRadius() : undefined;
+        const boxParams= userEnterBoxParams();
 
-        updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
-            radius, userEnterPolygon(), false, canGenerate);
+        updatePlotOverlayFromUserInput({plotId, whichOverlay, wp: userEnterWorldPt(),
+            radius, polygonAry: userEnterPolygon(), boxParams, forceCenterOn: false, canGeneratePolygon: canGenerate});
         lastWhichOverlay.lastValue= whichOverlay;
-    }, [getTargetWp, getHiPSRadius, getPolygon, getWhichOverlay()]);
+    }, [getTargetWp, getHiPSRadius, getPolygon, getBoxSizeX, getBoxSizeY, getBoxRotation, getWhichOverlay()]);
 
     useEffect(() => {
         attachSRegion(sRegion,plotId);
@@ -210,6 +235,9 @@ HiPSTargetView.propTypes= {
     ...sharedPropTypes,
     sizeKey: string,
     targetKey: string,
+    boxSizeXKey: string,
+    boxSizeYKey: string,
+    boxRotationKey: string,
 };
 
 
@@ -369,10 +397,11 @@ function showHiPSPanelPopup({popupClosing, element, plotId= defPopupPlotId,
  * @param {Function} obj.userEnterSearchRadius
  * @param obj.getWhichOverlay
  * @param {Function} obj.userEnterPolygon
+ * @param {Function} obj.userEnterBoxParams
  * @return {Promise<void>}
  */
 async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys,
-                                userEnterWorldPt, userEnterSearchRadius, getWhichOverlay, userEnterPolygon}) {
+                                userEnterWorldPt, userEnterSearchRadius, getWhichOverlay, userEnterPolygon, userEnterBoxParams}) {
     getDrawLayersByType(dlRoot(), HiPSMOC.TYPE_ID)
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
     const wpRequest= WebPlotRequest.makeHiPSRequest(hipsUrl, centerPt, hipsFOVInDeg);
@@ -403,7 +432,8 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     initSearchSelectTool(plotId);
     if (userEnterWorldPt?.() || userEnterPolygon?.()?.length) {
         await onPlotComplete(plotId);
-        updatePlotOverlayFromUserInput(plotId,getWhichOverlay(), userEnterWorldPt?.(), userEnterSearchRadius?.(), userEnterPolygon?.(), true);
+        updatePlotOverlayFromUserInput({plotId,whichOverlay: getWhichOverlay(), wp: userEnterWorldPt?.(), 
+            radius: userEnterSearchRadius?.(), polygonAry: userEnterPolygon?.(), boxParams: userEnterBoxParams?.(), forceCenterOn: true});
     }
 }
 
@@ -509,6 +539,3 @@ function attachSRegion(sRegion, plotId) {
         {drawObj, color: 'red', title:'s_region outline', destroyWhenAllDetached: true});
     if (!isDrawLayerAttached(dl, plotId)) dispatchAttachLayerToPlot(dl.drawLayerId, plotId, false);
 }
-
-
-

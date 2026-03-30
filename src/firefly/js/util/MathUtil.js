@@ -36,3 +36,5 @@ export function allDigits(s) {
     if (isNumber(s)) return Math.trunc(s)===s;
     return isString(s) && [...s].every( (c) => isDigit(c));
 }
+
+export const clampInRange = (num, min, max) => num <= max ? (num >= min ? num : min) : max;

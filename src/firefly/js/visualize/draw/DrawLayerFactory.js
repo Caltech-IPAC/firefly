@@ -62,14 +62,11 @@
  * This function is just a convenience to create a draw factory definition object literal. You don't have
  * to use it.  You can create the object directly.
  * Every drawing layer needs a drawing
- * factory definition to manage it. All drawing layer modules must export an factoryDef object. The factoryDef should
- * the following properties.
+ * factory definition to manage it. All drawing layer modules must export a factoryDef object.
+ * The factoryDef must have `drawLayerTypeId` and `create` properties.
  *
- * drawLayerTypeId - string, required- type id of the drawLayer
- * create -function, function, required-  that will create a new draw layer of this type
- *
- * @param drawLayerTypeId
- * @param {DrawLayerDefinition~creator} create
+ * @param {string} drawLayerTypeId required; type id of the drawLayer
+ * @param {DrawLayerDefinition~creator} create required; function that will create a new draw layer of this type
  * @param {DrawLayerDefinition~getDrawData} [getDrawDataFunc]
  * @param {DrawLayerDefinition~getLayerChanges} [getLayerChanges] get the changes to incorporate into the drawing layer object
  * @param {object} onDetachAction
