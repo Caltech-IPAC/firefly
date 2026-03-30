@@ -13,7 +13,7 @@ import {
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
-import {Slot, useFieldGroupRerender, useFieldGroupValue} from '../SimpleComponent.jsx';
+import {Slot, useFieldGroupRerender, useFieldGroupValue, useStoreConnector} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../TargetPanel.jsx';
 import {CONE_AREA_KEY} from './DynamicDef.js';
@@ -30,8 +30,10 @@ import {getPreference} from 'firefly/core/AppDataCntlr';
 import {MR_EQJ2000_HMS, MR_FIELD_HIPS_MOUSE_READOUT1} from 'firefly/visualize/MouseReadoutCntlr';
 import {getEqTypeFromMR} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 import {toMaxFixed} from 'firefly/util/MathUtil';
+import {Add, Remove} from '@mui/icons-material';
+import {getComponentState} from 'firefly/core/ComponentCntlr';
 
-
+const EMBEDDED_PANEL_KEY = 'embedSearchPanel';
 const DEFAULT_FOV_DEG= 30;
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
 const DEFAULT_PLOT_ID= 'defaultHiPSTargetSearch';
@@ -129,6 +131,9 @@ export function EmbeddedPositionSearchPanel({
 
     const {groupKey}= useContext(FieldGroupCtx);
     const {searchTypeKey=CONE_AREA_KEY}= slotProps.spatialSearch ?? {};
+
+    const initIsPanelOpen = true; // search panel is open initially
+    const isPanelOpen = useStoreConnector(()=>(getComponentState(EMBEDDED_PANEL_KEY)?.isOpen ?? initIsPanelOpen));
 
     const [getSearchTypeOp, setSearchTypeOp] = useFieldGroupValue(searchTypeKey);
     const [, setPolygon] = useFieldGroupValue(polygonKey);
@@ -258,7 +263,7 @@ export function EmbeddedPositionSearchPanel({
                 }}>
                 <CollapsibleGroup variant={'plain'}>
                     <CollapsibleItem {...{
-                        componentKey:'embedSearchPanel', isOpen:true, title:'Please select a search type',
+                        componentKey: EMBEDDED_PANEL_KEY, isOpen: initIsPanelOpen, title:'Please select a search type',
                         header: (isOpen) => (<Header {...{
                             isOpen, doSearch, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, slotProps,
                             boxSizeXKey, boxSizeYKey, boxRotationKey
@@ -266,9 +271,10 @@ export function EmbeddedPositionSearchPanel({
                         slotProps: {
                             header: {
                                 sx: emptyHeaderSx,
+                                indicator: isPanelOpen ? <Remove/> : <Add/>,
                                 slotProps: {
                                     button: {
-                                        component:'div',
+                                        component:'div', // since we put a "Search" button inside it
                                     }
                                 }
                             },
@@ -399,7 +405,7 @@ const Header = function({
                 <FormPanel
                     onSuccess={slotProps?.formPanel.onSuccess}
                     direction='row'
-                    sx={{width:1, alignItems: 'center', justifyContent:'space-between'}}
+                    sx={{width:1, alignItems: 'center', justifyContent:'space-between', backgroundColor: 'transparent'}}
                     slotProps={{
                         searchBar: {p:0},
                     }}
