@@ -1,0 +1,53 @@
+{{- if and .Values.persistence.workDir.pvc (not .Values.persistence.workDir.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "firefly.fullname" . }}-work
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.workDir.pvc.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.workDir.pvc.size }}
+  {{- if .Values.persistence.workDir.pvc.storageClass }}
+  storageClassName: {{ .Values.persistence.workDir.pvc.storageClass }}
+  {{- end }}
+---
+{{- end }}
+{{- if and .Values.persistence.logsDir.pvc (not .Values.persistence.logsDir.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "firefly.fullname" . }}-logs
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.logsDir.pvc.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.logsDir.pvc.size }}
+  {{- if .Values.persistence.logsDir.pvc.storageClass }}
+  storageClassName: {{ .Values.persistence.logsDir.pvc.storageClass }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.persistence.sharedWorkDir.pvc (not .Values.persistence.sharedWorkDir.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "firefly.fullname" . }}-shared-work
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.sharedWorkDir.pvc.accessMode | default "ReadWriteMany" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.sharedWorkDir.pvc.size }}
+  {{- if .Values.persistence.sharedWorkDir.pvc.storageClass }}
+  storageClassName: {{ .Values.persistence.sharedWorkDir.pvc.storageClass }}
+  {{- end }}
+{{- end }}
