@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ipac/firefly
+  repository: ghcr.io/caltech-ipac/firefly
   # tag: ""  # defaults to appVersion in Chart.yaml
   pullPolicy: IfNotPresent
 
