@@ -31,6 +31,10 @@ spec:
               protocol: TCP
           env:
             {{- toYaml .Values.env | nindent 12 }}
+            {{- if .Values.ingress.pathPrefix }}
+            - name: PATH_PREFIX
+              value: {{ .Values.ingress.pathPrefix | quote }}
+            {{- end }}
             {{- if .Values.adminPassword.secretName }}
             - name: ADMIN_PASSWORD
               valueFrom:

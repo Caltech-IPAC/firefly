@@ -40,7 +40,7 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /firefly
+          - path: {{ if .Values.ingress.pathPrefix }}/{{ trimPrefix "/" .Values.ingress.pathPrefix }}{{ end }}/firefly
             pathType: Prefix
             backend:
               service:

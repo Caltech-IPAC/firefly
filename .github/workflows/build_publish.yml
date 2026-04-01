@@ -116,4 +116,4 @@ jobs:
           # align chart appVersion with the image tag
           sed -i "s/^appVersion:.*/appVersion: \"${{ steps.resolve_tags.outputs.tag }}\"/" firefly/helm/Chart.yaml
           helm package firefly/helm/
-          helm push firefly-*.tgz oci://ghcr.io/caltech-ipac/firefly-chart
+          helm push firefly-*.tgz oci://ghcr.io/caltech-ipac/helm-charts

@@ -17,20 +17,17 @@ helm/
 
 **From GHCR:**
 
-List available versions:
-```bash
-gh api /orgs/Caltech-IPAC/packages/container/firefly-chart%2Ffirefly/versions \
-  --jq '.[].metadata.container.tags'
-```
+Available versions:  
+https://github.com/Caltech-IPAC/firefly/pkgs/container/helm-charts%2Ffirefly/versions
 
 Inspect a specific version:
 ```bash
-helm show chart oci://ghcr.io/caltech-ipac/firefly-chart/firefly --version <chart-version>
+helm show chart oci://ghcr.io/caltech-ipac/helm-charts/firefly --version <chart-version>
 ```
 
 Install:
 ```bash
-helm upgrade --install firefly oci://ghcr.io/caltech-ipac/firefly-chart/firefly \
+helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
   -n my-namespace \
   --create-namespace \
   --version <chart-version> \
@@ -73,6 +70,7 @@ helm -n my-namespace uninstall firefly
 | `ingress.enabled` | `true` | Enable ingress |
 | `ingress.className` | `""` | Ingress class; omit to use cluster default. Supported values: `nginx`, `traefik`, `haproxy` |
 | `ingress.host` | `firefly.example.com` | **Required override.** Hostname depends on where the app is deployed and must be set explicitly via `-f env/<env>.yaml` or `--set ingress.host=<host>` |
+| `ingress.pathPrefix` | `""` | Optional prefix prepended to the ingress path: `/<pathPrefix>/firefly`. Also sets `PATH_PREFIX` env var on the container |
 | `ingress.annotations` | `{}` | Additional annotations; merged with auto-generated affinity annotations |
 | `ingress.tlsSecretName` | `""` | TLS secret name; when set, TLS is enabled |
 

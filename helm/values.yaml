@@ -20,6 +20,7 @@ ingress:
   # or extend them, or to set affinity manually when className is not set.
   annotations: {}
   host: my.example.com
+  pathPrefix: ""  # when set, prefixes the ingress path: /<pathPrefix>/firefly
   # tlsSecretName: my-tls  # when set, TLS is enabled
 
 livenessProbe:
