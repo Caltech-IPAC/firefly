@@ -20,8 +20,19 @@ export function getDecimalPlaces(range, numSigDigits) {
     return numDecPlaces;
 }
 
-/*
- * remove trailing zero from toFixed result
+
+/**
+ * Formats a number to at most `digits` decimal places by rounding.
+ * Unlike `toFixed`, the result is a number (not a string) and has no unnecessary trailing zeros.
+ *
+ * @param {number|string} floatNum - The number to format.
+ * @param {number} digits - Maximum number of decimal places to keep.
+ * @returns {number} The formatted number with at most `digits` decimal places.
+ *
+ * @example
+ * toMaxFixed(3.14159, 4) // 3.1416
+ * toMaxFixed(3.10000, 4) // 3.1
+ * toMaxFixed(3,       2) // 3
  */
 export function toMaxFixed(floatNum, digits) {
     return parseFloat(Number(floatNum).toFixed(digits));
