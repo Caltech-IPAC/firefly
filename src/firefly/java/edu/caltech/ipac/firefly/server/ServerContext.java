@@ -85,6 +85,7 @@ public class ServerContext {
     public static final String STATS_LOG_DIR= "stats.log.dir";
 
 
+    private final static String cloudEnvironmentDefault = System.getProperty("cloud.environment", "detect"); // can be "GCP", "AWS", "ON_PREM" or "detect"
     private final static UriRef.CloudEnvironment cloudEnvironment= findEnvironment();
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
     private static String webappConfigPath;
@@ -223,10 +224,14 @@ public class ServerContext {
             }
         }
 
+        String method= "detect".equals(cloudEnvironmentDefault) ? "detected" : "property set";
+        var cloudMsg= String.format("Cloud Environment (%s) : %s", method, cloudEnvironment.toString() );
+
         Logger.info("",
                 "CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
                 "WORK_DIR       : " + getWorkingDir(),
-                "Available Cores: " + getAvailableCores() );
+                "Available Cores: " + getAvailableCores(),
+                cloudMsg);
     }
 
     private static File setupWorkDir(String desc, String fromProp, File altDir) {
@@ -834,7 +839,7 @@ public class ServerContext {
     }
 
     public static UriRef.CloudEnvironment getCloudEnvironment() {return cloudEnvironment;}
-    public static boolean isRunningInCloud() {return cloudEnvironment!= UriRef.CloudEnvironment.ON_PRIM;}
+    public static boolean isRunningInCloud() {return cloudEnvironment!= UriRef.CloudEnvironment.ON_PREM;}
 
 
     private static class AssertLogger implements Assert.Logger {
@@ -899,16 +904,14 @@ public class ServerContext {
     }
 
     private static UriRef.CloudEnvironment findEnvironment() {
-        String cloudEnvironment = System.getProperty("cloud.environment", "detect"); // can be "GWS", "AWS", "ON_PRIM" or "detect"
-        // GWS is not supported yet so ignore
-        if ("detect".equals(cloudEnvironment)) {
+        if ("detect".equals(cloudEnvironmentDefault)) {
             if (S3Download.isRunningInAws()) return UriRef.CloudEnvironment.AWS;
-            return UriRef.CloudEnvironment.ON_PRIM;
+            return UriRef.CloudEnvironment.ON_PREM;
         }
         try {
-            return Enum.valueOf(UriRef.CloudEnvironment.class, cloudEnvironment.toUpperCase());
+            return Enum.valueOf(UriRef.CloudEnvironment.class, cloudEnvironmentDefault.toUpperCase());
         } catch (Exception e) {
-            return UriRef.CloudEnvironment.ON_PRIM;
+            return UriRef.CloudEnvironment.ON_PREM;
         }
     }
 

@@ -103,6 +103,11 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                 getUploadMetaInfo(), acceptList, acceptOneItem);
         });
 
+    let overrideMessage= undefined;
+    if (report && !report.parts?.length && !message) {
+        overrideMessage= report.message ?? 'empty report';
+    }
+
     const {isLoading,statusKey} = getUploadMetaInfo();
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
@@ -212,7 +217,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                         </Stack>
                     </Box>
                     <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
-                        isDatalink, acceptOneItem, summaryTblId, message}}/>
+                        isDatalink, acceptOneItem, summaryTblId, message:overrideMessage??message}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
                     <TableDisplayOption {...{isMoc, isDatalink, summaryTblId,
                         currentReport:report, currentSummaryModel:summaryModel, currentDetailsModel:detailsModel,
@@ -439,6 +444,7 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
 function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel,
                                 currentDetailsModel, acceptList, acceptOneItem}) {
 
+    if (!currentReport?.parts?.length) return;
     const highlightedRowIdx = currentSummaryModel?.highlightedRow;
     const highlightedRow = currentSummaryModel?.tableData?.data?.[highlightedRowIdx];
     //this is to make sure we show TableDisplayOptions even if only one table entry is selected when acceptOneItem === true
@@ -498,6 +504,7 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
 function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, acceptList}) {
     const selectedImages = getSelectedRows('Image', summaryTblId, currentReport, currentSummaryModel);
 
+    if (!currentReport?.parts?.length) return;
     const singleAxis= findSingleAxisImages(currentReport);
 
     if ( selectedImages.length < 2 && !singleAxis.length) return null;
@@ -876,7 +883,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
         return () => unregister('additionalParams');
     }, [report, message]);
 
-    if (report) {
+    if (report?.parts?.length) {
 
         const {accepted, notAcceptedTypes}= determineAccepted(acceptList, uniqueTypes, isMoc, isDL);
 

@@ -156,7 +156,7 @@ public class RetrieveUtil {
         if (nonNullsTypes.size()==1) return nonNullsTypes.getFirst().getType();
 
         if (env==UriRef.CloudEnvironment.AWS && uriS3!=null) return S3Cloud;
-        if (env==UriRef.CloudEnvironment.GCS && uriGcs!=null) return GcsCloud;
+        if (env==UriRef.CloudEnvironment.GCP && uriGcs!=null) return GcsCloud;
         if (uriUrl!=null) return OnPrimUrl;
         return nonNullsTypes.getFirst().getType(); // if I get to here then I am guessing
     }

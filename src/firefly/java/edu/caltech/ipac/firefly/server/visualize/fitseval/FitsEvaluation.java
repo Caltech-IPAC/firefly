@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.visualize.fitseval;
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.ASDFUtil;
+import edu.caltech.ipac.util.asdf.AsdfAccess;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
@@ -61,7 +61,7 @@ public class FitsEvaluation {
     public static FitsDataEval readAndEvaluateAsdfFile(File asdfFile, boolean clearHdu, WebPlotRequest req) throws FitsException, IOException {
         Fits fits= null;
         try  {
-            File fitsFile= ASDFUtil.createFitsVersionOfRomandAsdfFile(asdfFile);
+            File fitsFile= AsdfAccess.createFitsFromAsdfFile(asdfFile);
             if (fitsFile==null) throw new FitsException("Could not convert ASDF file to FITS file");
             fits= new Fits(fitsFile);
             BasicHDU<?>[] HDUs= fits.read();

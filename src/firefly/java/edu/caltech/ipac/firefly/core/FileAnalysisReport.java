@@ -44,6 +44,7 @@ public class FileAnalysisReport {
     private String dataProductsAnalyzerId;
     private boolean analyzerFound= false;
     private Map<String,String> additionalImageParams;
+    private String message;
 
 
     public FileAnalysisReport(ReportType type, String fileFormat, long fileSize, String filePath) {
@@ -52,6 +53,10 @@ public class FileAnalysisReport {
         this.fileSize = fileSize;
         this.filePath = filePath;
     }
+
+    public void setMessage(String message) { this.message = message; }
+
+    public String getMessage() { return this.message; }
 
     public ReportType getType() {
         return type;

@@ -53,7 +53,7 @@ public class ConcurrentDownload {
 
         var status= result.getResponseCode();
 
-        if (status==HttpURLConnection.HTTP_FORBIDDEN && isProbablyCloudSignedURL(url)) { // try an alternate way to get the header, may have to add for GWS as well
+        if (status==HttpURLConnection.HTTP_FORBIDDEN && isProbablyCloudSignedURL(url)) { // try an alternate way to get the header, may have to add for GCP as well
             result= URLDownload.getHeader(url,cookies,newHeaders,8,true);
             status= result.getResponseCode();
         }
@@ -377,8 +377,8 @@ public class ConcurrentDownload {
         var p= URLDownload.getQueryParams(url);
         var isS3Signed= firstParamValUsingKeyList(p,S3Ref.S3_CRED_PARAMS)!=null &&
                 firstParamValUsingKeyList(p,S3Ref.S3_SIG_PARAMS)!=null;
-        var isGwsSigned= p.containsKey(GcsRef.GCS_SIG_PARAM) && p.containsKey(GcsRef.GCS_CRED_PARAM);
-        return isS3Signed || isGwsSigned;
+        var isGcpSigned= p.containsKey(GcsRef.GCP_SIG_PARAM) && p.containsKey(GcsRef.GCP_CRED_PARAM);
+        return isS3Signed || isGcpSigned;
     }
 }
 

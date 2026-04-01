@@ -13,7 +13,7 @@ import static edu.caltech.ipac.util.download.UriRef.ResourceType.S3Cloud;
  *
  */
 public record UriRef(Object ref, Object sourceForRef) {
-    public enum CloudEnvironment {AWS, GCS, ON_PRIM}
+    public enum CloudEnvironment {AWS, GCP, ON_PREM}
     public enum ResourceType {OnPrimUrl, S3Cloud, GcsCloud}
 
     public UriRef {
