@@ -299,14 +299,14 @@ export function getHiPSZoomLevelForFOV(pv, fov) {
 }
 
 
-function makeAllCorners(nOrder, coordSys) {
+function makeAllCorners(nOrder, dataCoordSys) {
     const nside= 2**nOrder;
     const pixCnt = HealpixIndex.nside2Npix(nside);
     const pixList= Array.from({length:pixCnt}, (v,ipix) => ipix);
     const hpxIdx = getHealpixIndex(nside);
     return pixList.map( (ipix) => {
         const corners = hpxIdx.corners_nest(ipix, 1);
-        const wpCorners= corners.map( (c) => specVectToWP(c,coordSys) );
+        const wpCorners= corners.map( (c) => specVectToWP(c,dataCoordSys) );
         return { ipix, wpCorners };
     });
 }
@@ -344,12 +344,12 @@ function makeHealpixCornerCacheTool() {
            return null;
        },
 
-        makeCornersForPix(ipix, nside, coordSys) {
-            const cacheEntry= this.findCacheData(nside,coordSys, ipix);
+        makeCornersForPix(ipix, nside, dataCoordSys) {
+            const cacheEntry= this.findCacheData(nside,dataCoordSys, ipix);
             if (cacheEntry) return cacheEntry;
 
             const corners = getHealpixIndex(nside).corners_nest(ipix, 1);
-            const wpCorners= corners.map( (c) => specVectToWP(c, coordSys) );
+            const wpCorners= corners.map( (c) => specVectToWP(c, dataCoordSys) );
             return { ipix, wpCorners };
         },
 
@@ -534,8 +534,8 @@ export function wpToSpecVect(wp) {
     return spatialVector;
 }
 
-function specVectToWP(spVec,coordSys) {
-    return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
+function specVectToWP(spVec,dataCoordSys) {
+    return makeWorldPt(spVec.ra(), spVec.dec(), dataCoordSys);
 
 }
 

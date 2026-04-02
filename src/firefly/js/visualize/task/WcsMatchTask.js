@@ -249,12 +249,14 @@ function matchHiPSToImage(pv, hipsPVidAry) {
         dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter, doWcsImageMatching:false});
         //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
         //the change is dispatched. If not, do nothing
-        const jNorth= isPlotRotatedNorth(plot, CoordinateSys.EQ_J2000);
+        const eqNorth= isPlotRotatedNorth(plot, CoordinateSys.EQ_J2000);
+        const eclNorth= isPlotRotatedNorth(plot, CoordinateSys.ECL_J2000);
         const gNorth= isPlotRotatedNorth(plot, CoordinateSys.GALACTIC);
-        if (jNorth || gNorth) {
+        if (eqNorth || gNorth || eclNorth) {
             const hpv= getPlotViewById(visRoot(),id);
             if (!isRotationMatching(pv, hpv)) {
-                if (jNorth)      dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.EQ_J2000});
+                if (eqNorth)     dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.EQ_J2000});
+                if (eclNorth)    dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.ECL_J2000});
                 else if (gNorth) dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.GALACTIC});
             }
         }
