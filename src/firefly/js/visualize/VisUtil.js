@@ -785,9 +785,12 @@ export function isAngleUnit(unit) {
  * @param {string} from 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
  * @param {string} to 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
  * @param {*} angle  number or string
+ * @param {boolean} limitPrecision limit the number of digits after decimal point for arcmin and arcsec units
+ * by truncation. Set it to false if you want full precision or want to handle precision in the caller function
+ * in another way (like rounding instead of truncation). Default is true.
  * @returns {number}
  */
-export function convertAngle(from, to, angle) {
+export function convertAngle(from, to, angle, limitPrecision=true) {
     const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', ['radian', 'rad']];
     const rIdx = angleUnit.length-1;
     let fromIdx, toIdx;
@@ -808,11 +811,13 @@ export function convertAngle(from, to, angle) {
             toIdx = 0;
         }
         const v=  numAngle * Math.pow(60.0, (toIdx - fromIdx));
+        if (!limitPrecision) return v;
+
         switch (to) {
             case 'arcsec':
-                return Math.trunc(1000*v)/1000;
+                return Math.trunc(1000*v)/1000; // limit to 3 decimal places by truncating extra digits
             case 'arcmin':
-                return Math.trunc(100000*v)/100000;
+                return Math.trunc(100000*v)/100000; // limit to 5 decimal places by truncating extra digits
             case 'degree':
                 return v;
         }

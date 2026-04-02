@@ -6,6 +6,7 @@ import toFloat from 'validator/es/lib/toFloat';
 import {QuantityInputField} from 'firefly/ui/QuantityInputField';
 import {useFieldGroupValue} from 'firefly/ui/SimpleComponent';
 import {WAVELENGTH_UNITS} from 'firefly/visualize/VisUtil';
+import {toMaxFixed} from 'firefly/util/MathUtil';
 
 // following must be a key from the WAVELENGTH_UNITS object
 export const BASE_UNIT = 'um';
@@ -29,11 +30,8 @@ export const convertWvlUnits = (valueStr, fromUnit, toUnit) => {
     if (isNaN(value)) return valueStr;
     const newValue = convertWavelength(value, fromUnit, toUnit);
 
-    // to avoid floating-point rounding errors
-    let newValueStr = newValue.toFixed(getFracDigits(toUnit));
-    // remove leading 0s (if any)
-    newValueStr = parseFloat(newValueStr).toString();
-    return newValueStr;
+    // avoid floating-point inconsistencies by rounding to the max possible digits after decimal point for toUnit
+    return toMaxFixed(newValue, getFracDigits(toUnit)).toString();
 };
 
 const formatWvl = (baseValue, outputUnit) => `${convertWvlUnits(baseValue, BASE_UNIT, outputUnit)} ${WAVELENGTH_UNITS[outputUnit].symbol}`;
