@@ -28,6 +28,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # initial checkout to make local actions available
+      - name: Checkout Firefly
+        uses: actions/checkout@v4
+        with:
+          path: firefly
+
       # -------------------------------------------------------------
       # Use local action to resolve git ref and image tag from inputs
       # -------------------------------------------------------------
@@ -86,10 +92,28 @@ jobs:
           context: .
           file: firefly/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'release' || inputs.push_image == 'true' }}
+          push: ${{ github.event_name == 'release' || inputs.push_image }}
           # docker buildx does not allow uppercase letters in tags, so we convert to lowercase here
           tags: ghcr.io/caltech-ipac/firefly:${{ steps.resolve_tags.outputs.tag }}
           build-args: |
             env=ops
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ------------------------------------------------------------
+      # Package and push Helm chart to GHCR
+      # ------------------------------------------------------------
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Publish Helm chart
+        if: github.event_name == 'release' || inputs.push_image
+        run: |
+          if [[ ! -f firefly/helm/Chart.yaml ]]; then
+            echo "No Helm chart found, skipping."
+            exit 0
+          fi
+          # align chart appVersion with the image tag
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.resolve_tags.outputs.tag }}\"/" firefly/helm/Chart.yaml
+          helm package firefly/helm/
+          helm push firefly-*.tgz oci://ghcr.io/caltech-ipac/helm-charts

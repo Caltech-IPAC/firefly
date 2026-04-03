@@ -1,0 +1,78 @@
+{{- if gt (int .Values.replicaCount) 1 }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "firefly.redisName" . }}
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "firefly.redisName" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "firefly.redisName" . }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image }}
+          ports:
+            - containerPort: {{ .Values.redis.port }}
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          command:
+            - redis-server
+          args:
+            - --maxmemory
+            - {{ .Values.redis.maxmemory | quote }}
+            - --save
+            - "600"
+            - "1"
+            - --appendonly
+            - "yes"
+            - --appendfilename
+            - {{ include "firefly.redisName" . }}.aof
+            - --dbfilename
+            - {{ include "firefly.redisName" . }}.rdb
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+              subPath: redis
+      volumes:
+        - name: redis-data
+          {{- if .Values.redis.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.redis.persistence.existingClaim }}
+          {{- else if .Values.persistence.sharedWorkDir.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.sharedWorkDir.existingClaim }}
+          {{- else if .Values.persistence.sharedWorkDir.pvc }}
+          persistentVolumeClaim:
+            claimName: {{ include "firefly.fullname" . }}-shared-work
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "firefly.redisName" . }}
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "firefly.redisName" . }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.redis.port }}
+      targetPort: {{ .Values.redis.port }}
+{{- end }}

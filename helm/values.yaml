@@ -1,0 +1,81 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/caltech-ipac/firefly
+  # tag: ""  # defaults to appVersion in Chart.yaml
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+  sessionAffinity: ClientIP
+  sessionAffinityTimeout: 3600
+
+ingress:
+  enabled: true
+  # className: nginx  # omit to use the cluster's default ingress class
+  # When replicaCount > 1, cookie-based session affinity annotations are automatically
+  # added based on className (nginx, traefik, haproxy). Use annotations to override
+  # or extend them, or to set affinity manually when className is not set.
+  annotations: {}
+  host: my.example.com
+  pathPrefix: ""  # when set, prefixes the ingress path: /<pathPrefix>/firefly
+  # tlsSecretName: my-tls  # when set, TLS is enabled
+
+livenessProbe:
+  httpGet:
+    path: firefly/healthz
+    port: 8080
+  initialDelaySeconds: 120
+  periodSeconds: 60
+  timeoutSeconds: 10
+
+resources:
+  requests:
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+env:
+  - name: CLEANUP_INTERVAL
+    value: "1h"
+
+# ADMIN_PASSWORD can be set as plain text or sourced from a secret.
+# Plain text:
+#   adminPassword:
+#     value: mypassword
+# From a secret:
+#   adminPassword:
+#     secretName: my-secret
+#     secretKey: password
+adminPassword: {}
+
+# Each persistence volume defaults to emptyDir.
+# Override per volume with either a new PVC or an existing one:
+#   pvc:
+#     size: 10Gi
+#     storageClass: standard
+#     accessMode: ReadWriteOnce  # use ReadWriteMany for sharedWorkDir
+#   existingClaim: my-existing-pvc
+persistence:
+  workDir: {}
+  logsDir: {}
+  sharedWorkDir: {}
+
+securityContext: {}
+
+redis:
+  image: redis:6.2
+  port: 6379
+  maxmemory: 256M
+  resources:
+    limits:
+      memory: 256Mi
+  persistence: {}
+    # existingClaim: my-redis-pvc
+    # If not set, falls back to sharedWorkDir PVC if configured, otherwise emptyDir.
+
+serviceAccount:
+  create: false
+  name: ""

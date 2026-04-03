@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "firefly.fullname" . }}
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "firefly.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firefly.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (include "firefly.fullname" .) }}
+      {{- end }}
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+            {{- if .Values.ingress.pathPrefix }}
+            - name: PATH_PREFIX
+              value: {{ .Values.ingress.pathPrefix | quote }}
+            {{- end }}
+            {{- if .Values.adminPassword.secretName }}
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.adminPassword.secretName }}
+                  key: {{ .Values.adminPassword.secretKey }}
+            {{- else if .Values.adminPassword.value }}
+            - name: ADMIN_PASSWORD
+              value: {{ .Values.adminPassword.value | quote }}
+            {{- end }}
+            {{- if gt (int .Values.replicaCount) 1 }}
+            - name: PROPS_redis__host
+              value: {{ include "firefly.redisName" . }}
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: work-dir
+              mountPath: /firefly/workarea
+            - name: logs-dir
+              mountPath: /firefly/logs
+            - name: shared-work-dir
+              mountPath: /firefly/shared-workarea
+      volumes:
+        - name: work-dir
+          {{- if .Values.persistence.workDir.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.workDir.existingClaim }}
+          {{- else if .Values.persistence.workDir.pvc }}
+          persistentVolumeClaim:
+            claimName: {{ include "firefly.fullname" . }}-work
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: logs-dir
+          {{- if .Values.persistence.logsDir.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.logsDir.existingClaim }}
+          {{- else if .Values.persistence.logsDir.pvc }}
+          persistentVolumeClaim:
+            claimName: {{ include "firefly.fullname" . }}-logs
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: shared-work-dir
+          {{- if .Values.persistence.sharedWorkDir.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.sharedWorkDir.existingClaim }}
+          {{- else if .Values.persistence.sharedWorkDir.pvc }}
+          persistentVolumeClaim:
+            claimName: {{ include "firefly.fullname" . }}-shared-work
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

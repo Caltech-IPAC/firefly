@@ -1,0 +1,50 @@
+{{- if .Values.ingress.enabled }}
+{{- $affinityAnnotations := dict }}
+{{- if gt (int .Values.replicaCount) 1 }}
+  {{- if eq .Values.ingress.className "nginx" }}
+    {{- $affinityAnnotations = dict
+      "nginx.ingress.kubernetes.io/affinity" "cookie"
+      "nginx.ingress.kubernetes.io/affinity-mode" "persistent"
+      "nginx.ingress.kubernetes.io/session-cookie-change-on-failure" "true" }}
+  {{- else if eq .Values.ingress.className "traefik" }}
+    {{- $affinityAnnotations = dict
+      "traefik.ingress.kubernetes.io/service.sticky.cookie" "true" }}
+  {{- else if eq .Values.ingress.className "haproxy" }}
+    {{- $affinityAnnotations = dict
+      "haproxy.org/load-balance" "leastconn"
+      "haproxy.org/cookie-persistence" "SERVERID" }}
+  {{- end }}
+{{- end }}
+{{- $mergedAnnotations := merge .Values.ingress.annotations $affinityAnnotations }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "firefly.fullname" . }}
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+  {{- with $mergedAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - secretName: {{ .Values.ingress.tlsSecretName }}
+      hosts:
+        - {{ .Values.ingress.host }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: {{ if .Values.ingress.pathPrefix }}/{{ trimPrefix "/" .Values.ingress.pathPrefix }}{{ end }}/firefly
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "firefly.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}
