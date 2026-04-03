@@ -20,10 +20,12 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.validation.constraints.NotNull;
 import java.sql.*;
@@ -401,7 +403,76 @@ public class EmbeddedDbUtil {
         }
     }
 
-//====================================================================
+    /**
+     * Add a column to the end of given table, and populate the values with the given expression.
+     * @param dbAdapter  dbAdapter to use for the connection
+     * @param table      the table name to add the column to.  If null, will use the main DATA table.
+     * @param col        column to add.
+     * @param expression the expression to populate the column values.
+     * @throws DataAccessException
+     */
+    public static void addColumn(DbAdapter dbAdapter, String table, DataType col, String expression)  throws DataAccessException {
+        addColumn(dbAdapter, table, col, expression, -1);
+    }
+
+    public static void addColumn(DbAdapter dbAdapter, String table, DataType col, String expression, int atIndex)  throws DataAccessException {
+        BaseDbAdapter dbImpl = (BaseDbAdapter) dbAdapter;      // all adapters currently extends from base
+        JdbcTemplate jdbc = dbImpl.getJdbcTmpl();
+        String forTable = isEmpty(table) ? dbImpl.getDataTable() : table;
+
+        try {
+            // remove column if exists
+            dbImpl.execUpdate("ALTER TABLE %s DROP COLUMN IF EXISTS %s".formatted(table, col.getKeyName()));
+
+            // add column to the table
+            var sql = "ALTER TABLE %s ADD COLUMN \"%s\" %s".formatted(forTable, col.getKeyName(), dbImpl.toDbDataType(col));
+            dbImpl.execUpdate(sql);
+        } catch (Exception e) {
+            // DDL statement are transactionally isolated, therefore need to manually rollback if this succeeds but the next few statements failed.
+            throw dbImpl.handleSqlExp("Add column failed", e);
+        }
+        try {
+            TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
+            txnJdbc.execute((st) -> {
+                // add a record to DD table
+                addColumnToDD(dbImpl, forTable, col, atIndex);
+
+                dbImpl.populateColumnValues(jdbc, forTable, col, expression, null, null, null);
+                return st;
+            });
+            EmbeddedDbUtil.enumeratedValuesCheck(dbImpl, new DataType[]{col});        // if successful, check for enum values of this new column
+        } catch (Exception e) {
+            // manually remove the added column
+            var sql = "ALTER TABLE %s DROP COLUMN \"%s\"".formatted(forTable, col.getKeyName());
+            dbImpl.execUpdate(sql);
+            throw dbImpl.handleSqlExp("Add column failed", e);
+        }
+    }
+
+    /**
+     * Add DD info for the given table/column.
+     * @param dbAdapter dbAdapter to use for the connection
+     * @param table     the table name of the column.
+     * @param col       the column to add.
+     * @param atIndex   where to add this column in the DD table.  If negative or larger than the number of columns, will add to the end of the list.
+     */
+    protected static void addColumnToDD(BaseDbAdapter dbAdapter, String table, DataType col, int atIndex) {
+        JdbcTemplate jdbc = dbAdapter.getJdbcTmpl();
+        int colCnt = dbAdapter.getColumnNames(table, null).stream()
+                .filter(cname -> !CollectionUtil.exists(cname, ROW_IDX, ROW_NUM))
+                .toList().size();
+        if (atIndex<0 || atIndex>colCnt) {
+            atIndex = colCnt;
+        } else {
+            dbAdapter.shiftColsAt(jdbc, atIndex, 1);       // added to the middle, need to shift the other cols;
+        }
+
+        String sql = dbAdapter.insertDDSql(table);
+        jdbc.update(sql, dbAdapter.getDdFrom(col, atIndex));
+    }
+
+
+    //====================================================================
 //  serialize/deserialize of Java object
 //  Using duckdb appender greatly improve performance when ingesting large volume of data.
 //  But, direct BLOB support is not available.  Therefore, we will serialize Java object

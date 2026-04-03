@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -114,8 +115,7 @@ public class HealpixProcessor extends TableFunctionProcessor {
             // create healpix index at BASE_ORDER
             DataType healpixCol = makeHealPixColumn();
             StopWatch.getInstance().start("HealpixProcessor: create index");
-            dbAdapter.execUpdate("ALTER TABLE %s DROP COLUMN IF EXISTS %s".formatted(dataTable, healpixCol.getKeyName()));  // remove existing index
-            EmbeddedDbUtil.addColumn(dbAdapter, healpixCol, "deg2pix(%s, %s, %s)".formatted(BASE_ORDER, ra, dec), null, dataTable, null);
+            EmbeddedDbUtil.addColumn(dbAdapter, dataTable, healpixCol, "deg2pix(%s, %s, %s)".formatted(BASE_ORDER, ra, dec));
             StopWatch.getInstance().printLog("HealpixProcessor: create index");
 
             // create healpix map at BASE_ORDER

@@ -491,9 +491,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
      * @param atIndex   the index where shifting is needed
      * @param shiftBy   the number of position to shift.  Normally, it's either +1 or -1.
      */
-    private void shiftColsAt(JdbcTemplate jdbc, int atIndex, int shiftBy) {
+    protected void shiftColsAt(JdbcTemplate jdbc, int atIndex, int shiftBy) {
+        shiftColsAt(jdbc, getDataTable(), atIndex, shiftBy);
+    }
+
+    protected void shiftColsAt(JdbcTemplate jdbc, String table, int atIndex, int shiftBy) {
         jdbc = jdbc == null ? getJdbcTmpl() : jdbc;
-        jdbc.update("UPDATE %s_DD SET order_index = order_index + (%d) WHERE order_index >= %d".formatted(getDataTable(), shiftBy, atIndex));
+        jdbc.update("UPDATE %s_DD SET order_index = order_index + (%d) WHERE order_index >= %d".formatted(table, shiftBy, atIndex));
     }
 
     protected void renameColumn(String from, String to) {
