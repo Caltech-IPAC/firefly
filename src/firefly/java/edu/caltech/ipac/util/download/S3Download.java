@@ -30,9 +30,13 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.firefly.core.Util.Try;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 public class S3Download {
 
@@ -321,7 +325,14 @@ public class S3Download {
 
     public interface ApplyCredentials { AwsClientBuilder<?,?> apply(AwsClientBuilder<?,?> builder); }
 
-    public static boolean isRunningInAws() {return awsRegion!=null;}
+    public static boolean isRunningInAws() {
+        if (awsRegion!=null) return true;
+        var f= new File("/sys/devices/virtual/dmi/id/sys_vendor");
+        if (f.canRead() && f.length() < 10000) {
+            return Try.it(() -> FileUtil.readFile(f).contains("Amazon EC2")).getOrElse(false);
+        }
+        return false;
+    }
 
     /**
      * get the Aws region if running in aws, otherwise return null
@@ -329,14 +340,22 @@ public class S3Download {
      * @return the region or null
      */
     public static Region getAwsDefaultRegion() {
-          // other ways to get region: keep next two lines for reference
-          // var r= System.getenv("AWS_REGION");
-          // var r= System.getProperty("aws.region");
         try {
+            for(String s : Arrays.asList("AWS_DEFAULT_REGION", "AWS_REGION", "aws.region")) {
+                Region r= regionFromEnv(s);
+                if (r!=null) return r;
+            }
             return new DefaultAwsRegionProviderChain().getRegion();
         } catch (SdkClientException ignore) {
             return null;
         }
+    }
+
+    private static Region regionFromEnv(String name) {
+        if (name==null) return null;
+        var r= System.getenv(name);
+        if (isEmpty(r)) return null;
+        return Try.it(() -> Region.of(r)).get();
     }
 }
 
