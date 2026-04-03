@@ -127,6 +127,7 @@ public class ServerParams {
     public static final String STAT = "CmdStat";
     public static final String GET_USER_INFO = "CmdGetUserInfo";
     public static final String GET_ALERTS = "CmdAlerts";
+    public static final String GET_VERSION = "CmdVersion";
 
     public static final String JSON_DATA = "JsonData";
     public static final String RESOLVE_NAME= "CmdResolveName";

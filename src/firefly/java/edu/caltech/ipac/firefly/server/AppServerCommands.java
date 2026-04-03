@@ -10,6 +10,9 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
+import edu.caltech.ipac.util.KeyVal;
+import edu.caltech.ipac.util.serialization.Serializer;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
@@ -24,6 +27,7 @@ import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -149,6 +153,23 @@ public class AppServerCommands {
     }
 
 
+
+    public static class GetVersion extends ServCommand {
+        public String doCommand(SrvParam params) throws Exception {
+            boolean raw = params.getOptionalBoolean("raw", false);
+            Object versionData;
+            if (raw) {
+                versionData = VersionUtil.getAppVersion();
+            } else {
+                Map<String, String> versionMap = new LinkedHashMap<>();
+                for (KeyVal<String, String> kv : VersionUtil.getVersionInfo()) {
+                    versionMap.put(kv.getKey(), kv.getValue());
+                }
+                versionData = versionMap;
+            }
+            return Serializer.getJsonMapper().writeValueAsString(versionData);
+        }
+    }
 
     public static class GetAlerts extends ServCommand {
         public String doCommand(SrvParam params) throws Exception {
