@@ -47,7 +47,7 @@ public class AsdfAccess {
             }
 
         } catch (Exception e) {
-            report.setMessage("could not read ASDF file, possible bad format");
+            report.setMessage("Could not read ASDF file. ASDF reading is a beta feature, there are still many issues being worked out.");
         }
         return report;
     }
