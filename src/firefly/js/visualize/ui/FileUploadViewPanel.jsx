@@ -17,7 +17,8 @@ import {
     SPECTRUM_TABLES, TABLES, UWS
 } from 'firefly/ui/FileUploadUtil';
 import React, {useContext, useEffect, useState} from 'react';
-import SplitPane from 'react-split-pane';
+//import SplitPane from 'react-split-pane';
+import {SplitPanel, Pane} from '../../ui/panel/DockLayoutPanel.jsx';
 import shallowequal from 'shallowequal';
 import {FileAnalysisType, Format, TableDataType} from '../../data/FileAnalysis';
 import {getField} from '../../fieldGroup/FieldGroupUtils';
@@ -696,13 +697,17 @@ function MultiDataSet({summaryModel, detailsModel, isMoc, acceptOneItem}) {
                 </Typography>
             }
             <Box sx={{height:1, position:'relative'}}>
-                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={525}>
-                    {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
-                        ...tblOptions, selectable:false, }} />}
-                    {!acceptOneItem && <TablePanel {...{sx:{mr:1}, showTypes:false, title:'File Summary', tableModel:summaryModel,
-                        ...tblOptions}} />}
-                    <Details detailsModel={detailsModel}/>
-                </SplitPane>
+                <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={525} pKey='file-upload-multi-dataset'>
+                    <Pane>
+                        {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
+                            ...tblOptions, selectable:false, }} />}
+                        {!acceptOneItem && <TablePanel {...{sx:{mr:1}, showTypes:false, title:'File Summary', tableModel:summaryModel,
+                            ...tblOptions}} />}
+                    </Pane>
+                    <Pane>
+                        <Details detailsModel={detailsModel}/>
+                    </Pane>
+                </SplitPanel>
             </Box>
         </Stack>
     );

@@ -15,14 +15,13 @@ import {Box, Button, Card, Divider, Sheet, Stack} from '@mui/joy';
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {pick, get, isEmpty, cloneDeep} from 'lodash';
-import SplitPane from 'react-split-pane';
 import {flux} from '../../core/ReduxFlux.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
-import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitPanel, Pane, SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {DownloadOptionPanel, DownloadButton} from '../../ui/DownloadDialog.jsx';
@@ -183,40 +182,52 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
         if (!err) {
             return (
-                <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
-                    <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
-                        <SplitContent>
-                            <Stack {...{height: '100%', spacing:1}}>
-                                {settingBox}
-                                <Box {...{flexGrow: 1, position: 'relative'}}>
-                                    <div className='abs_full'>{tables}</div>
-                                </Box>
-                            </Stack>
-                        </SplitContent>
-                        <SplitContent>
-                            <Sheet variant='outlined' sx={ (theme) => ({ml:1/2, height:1, borderRadius:theme.radius.md})}>
-                                <Stack sx={{height:1, width:1, p:1/4}}>
-                                    {xyPlot}
-                                </Stack>
-                            </Sheet>
-                        </SplitContent>
-                    </SplitPane>
-                    <SplitContent>{imagePlot}</SplitContent>
-                </SplitPane>
+                <SplitPanel direction='vertical' maxSize={-20} minSize={20} defaultSize={'60%'} pKey='lc-result-standard-outer'>
+                    <Pane>
+                        <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={buttonW} pKey='lc-result-standard-inner'>
+                            <Pane>
+                                <SplitContent>
+                                    <Stack {...{height: '100%', spacing:1}}>
+                                        {settingBox}
+                                        <Box {...{flexGrow: 1, position: 'relative'}}>
+                                            <div className='abs_full'>{tables}</div>
+                                        </Box>
+                                    </Stack>
+                                </SplitContent>
+                            </Pane>
+                            <Pane>
+                                <SplitContent>
+                                    <Sheet variant='outlined' sx={ (theme) => ({ml:1/2, height:1, borderRadius:theme.radius.md})}>
+                                        <Stack sx={{height:1, width:1, p:1/4}}>
+                                            {xyPlot}
+                                        </Stack>
+                                    </Sheet>
+                                </SplitContent>
+                            </Pane>
+                        </SplitPanel>
+                    </Pane>
+                    <Pane>
+                        <SplitContent>{imagePlot}</SplitContent>
+                    </Pane>
+                </SplitPanel>
             );
         } else {
             return (
-                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
-                    <SplitContent>
-                        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-                            <div className='settingBox'>{settingBox}</div>
-                            <div style={{flexGrow: 1, position: 'relative'}}>
-                                <div className='abs_full'>{tables}</div>
+                <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={buttonW} pKey='lc-result-no-image'>
+                    <Pane>
+                        <SplitContent>
+                            <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                <div className='settingBox'>{settingBox}</div>
+                                <div style={{flexGrow: 1, position: 'relative'}}>
+                                    <div className='abs_full'>{tables}</div>
+                                </div>
                             </div>
-                        </div>
-                    </SplitContent>
-                    <SplitContent>{xyPlot}</SplitContent>
-                </SplitPane>
+                        </SplitContent>
+                    </Pane>
+                    <Pane>
+                        <SplitContent>{xyPlot}</SplitContent>
+                    </Pane>
+                </SplitPanel>
             );
         }
 

@@ -241,11 +241,12 @@ export function switchTab(componentKey, selected) {
  Internal use only
 ----------------------------------------------------------------------------------------------*/
 
+const DEFAULT_MAX_TITLE_WIDTH = 400;
 const ResizeTabHeader = wrapResizeMonitor(TabHeader,16);
 
-function TabHeader({children, slotProps}) {
+function TabHeader({children, slotProps, size}) {
     const toolbarEl = useRef(null);
-    const [maxTitleWidth, setMaxTitleWidth] = useState(400);
+    const [maxTitleWidth, setMaxTitleWidth] = useState(DEFAULT_MAX_TITLE_WIDTH);
 
 
     const childrenAry = React.Children.toArray(children);
@@ -256,12 +257,15 @@ function TabHeader({children, slotProps}) {
     const activeBg = tabListVar === 'plain' ? 'neutral.softBg' : 'background.surface';
 
     useEffect(() => {
-        const tbEl = toolbarEl.current;
-        if (tbEl) {
-            const maxWidth = calcOptimalTabSize(tbEl);
-            setMaxTitleWidth(maxWidth);
-        }
-    }, [toolbarEl?.current?.getBoundingClientRect()?.width]);
+        if (!toolbarEl.current || !size?.width) return;
+
+        const rafId = window.requestAnimationFrame(() => {
+            const tbEl = toolbarEl.current;
+            if (tbEl) setMaxTitleWidth(calcOptimalTabSize(tbEl));
+        });
+
+        return () => window.cancelAnimationFrame(rafId);
+    }, [size?.width]);
 
     return (
         <TabList
@@ -422,6 +426,8 @@ function getAllTabId(children) {
 function calcOptimalTabSize(tabEl) {
     const tabAry = Array.from(tabEl.children).filter((c) => c.offsetWidth > 0);        // ignore hidden children.
     const availW = tabEl.getBoundingClientRect().width;
+    if (!tabAry.length || availW <= 0) return DEFAULT_MAX_TITLE_WIDTH;
+
     const maxW = availW/tabAry.length;
     const relTabs = tabAry.filter((t) => t.offsetWidth > maxW);
     if (relTabs.length === 0) return maxW;      // all tabs fit, no adjustment needed.

@@ -32,7 +32,7 @@ import {ActiveChartsPanel} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
-import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
+import {SplitPanel, Pane} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
 import {PinButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
@@ -61,19 +61,23 @@ export const PinnedChartContainer = (props) => {
         return (
             <Stack id='chart-pinned-sideBySide' overflow='hidden' flexGrow={1}>
                 <Stack flexGrow={1} position='relative'>
-                    <SplitPanel split='vertical' defaultSize={400} style={{display: 'inline-flex'}} pKey='chart-sideBySide'>
-                        <Stack>
-                            <Typography level='title-md'>
-                                {activeLabel}
-                            </Typography>
-                            <ActiveChartsPanel {...props}/>
-                        </Stack>
-                        <Stack>
-                            <Typography level='title-md'>
-                                {pinnedLabel}
-                            </Typography>
-                            <PinnedChartPanel {...props}/>
-                        </Stack>
+                    <SplitPanel direction='horizontal' defaultSize={400} style={{display: 'inline-flex'}} pKey='chart-sideBySide'>
+                        <Pane>
+                            <Stack>
+                                <Typography level='title-md'>
+                                    {activeLabel}
+                                </Typography>
+                                <ActiveChartsPanel {...props}/>
+                            </Stack>
+                        </Pane>
+                        <Pane>
+                            <Stack>
+                                <Typography level='title-md'>
+                                    {pinnedLabel}
+                                </Typography>
+                                <PinnedChartPanel {...props}/>
+                            </Stack>
+                        </Pane>
                     </SplitPanel>
                 </Stack>
             </Stack>

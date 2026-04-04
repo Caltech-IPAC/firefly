@@ -51,7 +51,7 @@ Store-connected components (`ValidationField`, `TargetPanel`, `ListBoxInputField
 
 ### Prerequisites
 
-- Node.js and yarn installed
+- Node.js v26 and yarn installed
 - Firefly monorepo cloned
 - Gradle (for build tasks that inject global properties)
 

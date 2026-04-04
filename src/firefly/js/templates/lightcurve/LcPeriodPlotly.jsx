@@ -7,7 +7,6 @@ import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 
 import {get, set,  pick,  debounce} from 'lodash';
-import SplitPane from 'react-split-pane';
 import {flux} from '../../core/ReduxFlux.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
@@ -16,7 +15,7 @@ import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {showInfoPopup, INFO_POPUP} from '../../ui/PopupUtil.jsx';
-import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitPanel, Pane, SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -222,23 +221,33 @@ const PeriodStandardView = (props) => {
         <FieldGroup groupKey={pfinderkey} sx={{ display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500 }}
                     reducerFunc={LcPFReducer(initState)}  keepState={true}>
             <div style={{flexGrow: 1, position: 'relative'}}>
-                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
-                    <SplitContent>
+                <SplitPanel direction='vertical' primary='second' maxSize={-100} minSize={100} defaultSize={400}
+                            pKey='lc-period-plotly-outer'>
+                    <Pane>
+                        <SplitContent>
 
-                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
-                            <SplitContent>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow:'auto'}}>
-                                    <LcPFOptionsBox/>
-                                </Box>
-                            </SplitContent>
-                            <SplitContent>
-                                <PhaseFoldingChart/>
-                            </SplitContent>
-                        </SplitPane>
+                            <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={565}
+                                        pKey='lc-period-plotly-inner'>
+                                <Pane>
+                                    <SplitContent>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow:'auto'}}>
+                                            <LcPFOptionsBox/>
+                                        </Box>
+                                    </SplitContent>
+                                </Pane>
+                                <Pane>
+                                    <SplitContent>
+                                        <PhaseFoldingChart/>
+                                    </SplitContent>
+                                </Pane>
+                            </SplitPanel>
 
-                    </SplitContent>
-                    <LcPeriodogram displayMode={displayMode}/>
-                </SplitPane>
+                        </SplitContent>
+                    </Pane>
+                    <Pane>
+                        <LcPeriodogram displayMode={displayMode}/>
+                    </Pane>
+                </SplitPanel>
             </div>
         </FieldGroup>
     );
@@ -1005,4 +1014,3 @@ export function resetPeriodDefaults(defPeriod) {
         dispatchMultiValueChange(pfinderkey, multiVals);
     }
 }
-

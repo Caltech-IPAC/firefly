@@ -6,8 +6,7 @@ import {Button, Chip, Stack, Typography} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import { get, set, has} from 'lodash';
-import SplitPane from 'react-split-pane';
-import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitPanel, Pane, SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getValidValueFrom, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData} from './LcUtil.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -596,12 +595,16 @@ const  PeriodogramResult = ({expanded}) => {
 
     if (!expanded || expanded === LO_VIEW.none) {
         return (
-            <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
-                <SplitContent>
-                    <div style={{height: 'calc(100% - 28px)'}}>{tables}</div>
-                </SplitContent>
-                <SplitContent>{xyPlot}</SplitContent>
-            </SplitPane>
+            <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={565} pKey='lc-periodogram'>
+                <Pane>
+                    <SplitContent>
+                        <div style={{height: 'calc(100% - 28px)'}}>{tables}</div>
+                    </SplitContent>
+                </Pane>
+                <Pane>
+                    <SplitContent>{xyPlot}</SplitContent>
+                </Pane>
+            </SplitPanel>
         );
     } else {
         return (<div style={{flexGrow: 1}}>
