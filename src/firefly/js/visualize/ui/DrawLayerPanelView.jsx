@@ -154,7 +154,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
     const retAry= pv.overlayPlotViews.map( (opv,idx) => (
         <DrawLayerItemView key={'MaskControl-'+idx}
                            maxTitleChars={maxTitleChars}
-                           helpLine={''}
+                           helpLine={opv.description ?? ''}
                            lastItem={hasLast ? idx===last : false}
                            canUserDelete={true}
                            canUserChangeColor={true}

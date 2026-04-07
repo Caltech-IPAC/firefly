@@ -114,8 +114,15 @@ export const RDConst= {
  * @prop {string} dataType - one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
  * @prop {string} desc - user description of the data
  * @prop {Object.<string, string>} searchParams - map of search parameters to get the related data
- * @prop {Object.<string, string>} availableMask - only used for masks- key is the bit number, value is the description
+ * @prop {Array.<MaskEntry>} availableMask - only used for masks- key is the bit number, value is the description
  *
+ */
+
+/**
+ * @typedef {Object} MaskEntry
+ * @prop {String} name
+ * @prop {Number} bit
+ * @prop {String} desc
  */
 
 

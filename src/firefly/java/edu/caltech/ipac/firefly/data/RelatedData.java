@@ -9,7 +9,9 @@ import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -32,7 +34,7 @@ public class RelatedData implements Serializable, HasSizeOf {
     private final String desc;
     /** related dataKey should be a unique string for a fits file */
     private Map<String,String> searchParams= new HashMap<>();
-    private Map<String,String> availableMask= new HashMap<>();
+    private List<MaskEntry> availableMask= new ArrayList<>();
     private int primaryHduIdx =0;
     private boolean parallelCubePlane = false;
     private String hduName= null;
@@ -59,7 +61,7 @@ public class RelatedData implements Serializable, HasSizeOf {
      * @param dataKey - should be a unique string for a fits file
      * @return RelatedData
      */
-    public static RelatedData makeMaskRelatedData(int primaryHduIdx, String fileName, Map<String,String> availableMask, boolean parallelCubePlane, int extensionNumber, String dataKey) {
+    public static RelatedData makeMaskRelatedData(int primaryHduIdx, String fileName, List<MaskEntry> availableMask, boolean parallelCubePlane, int extensionNumber, String dataKey) {
         Map<String,String> searchParams= new HashMap<>();
         searchParams.put(WebPlotRequest.FILE, fileName);
         searchParams.put(WebPlotRequest.PLOT_AS_MASK, "true");
@@ -75,7 +77,7 @@ public class RelatedData implements Serializable, HasSizeOf {
      * @param dataKey - should be a unique string for a fits file
      * @return RelatedData
      */
-    public static RelatedData makeMaskRelatedData(int primaryHduIdx, Map<String,String> searchParams, Map<String,String> availableMask, boolean parallelCubePlane, String dataKey) {
+    public static RelatedData makeMaskRelatedData(int primaryHduIdx, Map<String,String> searchParams, List<MaskEntry> availableMask, boolean parallelCubePlane, String dataKey) {
         RelatedData d= new RelatedData(IMAGE_MASK, dataKey, "Mask");
         d.availableMask= availableMask;
         d.searchParams= searchParams;
@@ -145,18 +147,21 @@ public class RelatedData implements Serializable, HasSizeOf {
         if (size==0) {
             size= dataType.length()+ dataKey.length()+ desc.length() + 8;
             if (hduName!=null) size+= hduName.length();
-            size+= Stream.of(searchParams, availableMask)
+            size+= Stream.of(searchParams)
                     .map( m -> m.entrySet().stream()
                             .map( e -> (long)(e.getKey().length()+e.getValue().length()))
                             .reduce(0L, Long::sum))
                     .reduce(0L, Long::sum);
+            size+= availableMask.stream()
+                    .map( m -> m.name.length() + m.desc().length() + 4)
+                    .reduce(0, Integer::sum);
         }
         return size;
     }
 
     public String getDataType() { return dataType;}
     public String getDataKey() { return dataKey;}
-    public Map<String,String> getAvailableMask() { return availableMask;}
+    public List<MaskEntry> getAvailableMask() { return availableMask;}
     public String getDesc() { return desc;}
     public Map<String,String> getSearchParams() { return searchParams;}
     public String getHduName() { return hduName;}
@@ -165,5 +170,7 @@ public class RelatedData implements Serializable, HasSizeOf {
     public int getHduIdx() { return hduIdx;}
     public int getPrimaryHduIdx() { return primaryHduIdx;}
     public boolean isParallelCubePlane() { return parallelCubePlane;}
+
+    public record MaskEntry(String name, int bit, String desc) {}
 }
 

@@ -46,6 +46,9 @@ public class FitsReadUtil {
     public static final String SPOT_OFF = "SPOT_OFF";
     public static final String SPOT_BP = "SPOT_BP"; // original bitpix
     public static final String SPOT_PL = "SPOT_PL"; // cube plane number, only used with cubes, deprecated
+    public static final String EXTNAME= "EXTNAME";
+    public static final String EXTTYPE= "EXTTYPE";
+    private static final String RESTORE_COMMENT= "restored after uncompression by Firefly";
 
     public static ImageData getImageData(BasicHDU<?> refHdu, float[] float1d) {
         Header h = refHdu.getHeader();
@@ -96,6 +99,31 @@ public class FitsReadUtil {
 
     public static UncompressFitsInfo createdUncompressVersionOfFile(BasicHDU<?>[] HDUs, File originalFile)
             throws IOException {
+        Fits fits= new Fits();
+        for (BasicHDU<?> hdu : HDUs) {
+            if (hdu instanceof CompressedImageHDU cHDU) {
+                Header header = hdu.getHeader();
+                String extName=  getExtName(header);
+                String extType=  getExtType(header,null);
+                ImageHDU iHDU= cHDU.asImageHDU();
+                var h= iHDU.getHeader();
+                if (getExtName(h)==null && extName!=null) h.addValue(EXTNAME,extName, RESTORE_COMMENT);
+                if (getExtType(h,null)==null && extType!=null) h.addValue(EXTTYPE,extType, RESTORE_COMMENT);
+                fits.addHDU(iHDU);
+            }
+            else {
+                fits.addHDU(hdu);
+            }
+        }
+        File retFile= getUncompressedFileName(originalFile,HDUs);
+        fits.write(retFile);
+        closeFits(fits);
+        Fits retReadFits= new Fits(retFile);
+        BasicHDU<?>[] inHDUs= retReadFits.read();
+        return new UncompressFitsInfo(retFile,inHDUs, retReadFits);
+    }
+
+    private static File getUncompressedFileName(File originalFile, BasicHDU<?>[] HDUs) {
         String fBase= FileUtil.getBase(originalFile);
         String dir= originalFile.getParent();
         var compressType= FileUtil.isGZipFile(originalFile)
@@ -104,16 +132,7 @@ public class FitsReadUtil {
                 ? "---bz2"
                 : "";
         var hduType=  FitsReadUtil.hasCompressedImageHDUS(HDUs) ? "---hdu" : "";
-        File retFile= new File(dir+"/"+ fBase+compressType+hduType+"-uncompressed"+".fits");
-        Fits fits= new Fits();
-        for (BasicHDU<?> hdu : HDUs) {
-            fits.addHDU( hdu instanceof CompressedImageHDU ?  ((CompressedImageHDU) hdu).asImageHDU() : hdu );
-        }
-        fits.write(retFile);
-        closeFits(fits);
-        Fits retReadFits= new Fits(retFile);
-        BasicHDU<?>[] inHDUs= retReadFits.read();
-        return new UncompressFitsInfo(retFile,inHDUs, retReadFits);
+        return new File(dir+"/"+ fBase+compressType+hduType+"-uncompressed"+".fits");
     }
 
     public static BasicHDU<?>[] getCubeExpandedImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu, List<Long> headersSizesList, List<Long> headersOffsetsList) {
@@ -400,8 +419,8 @@ public class FitsReadUtil {
     }
 
     public static String getBUnit(Header h) { return h.getStringValue("BUNIT", ""); }
-    public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
-    public static String getExtType(Header h, String defVal) { return h.getStringValue("EXTTYPE",defVal); }
+    public static String getExtName(Header h) { return h.getStringValue(EXTNAME); }
+    public static String getExtType(Header h, String defVal) { return h.getStringValue(EXTTYPE,defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
     public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h,null);}
     public static String getExtTypeOrName(Header h) { return getExtType(h,null)!=null ? getExtType(h,null) : getExtName(h);}
