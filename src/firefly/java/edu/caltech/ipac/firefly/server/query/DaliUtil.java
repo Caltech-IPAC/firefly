@@ -130,7 +130,7 @@ public class DaliUtil {
      */
     public static String parseError(HttpMethod method, String url) {
         try {
-            return parseError(method.getResponseBody(), HttpServices.getResHeader(method, "Content-Type", ""));
+            return parseError(HttpServices.getResponseBody(method), HttpServices.getResHeader(method, "Content-Type", ""));
         } catch (IOException e) {
             return "Error retrieving error from %s: %s".formatted(url, e.getMessage());
         }

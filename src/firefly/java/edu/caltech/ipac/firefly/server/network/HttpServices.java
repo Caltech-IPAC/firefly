@@ -262,19 +262,17 @@ public class HttpServices {
     }
 
     /**
-     * Convenience method to be used by custom handlers to get the response body
-     * of the HTTP method as a String. Handles content encoding.
+     * Convenience method to be used by custom handlers to get the full response body as a byte array.
      * @param method HttpMethod
      * @return String representation of the response body
      * @throws IOException on error
      */
-    public static String getResponseBodyAsString(HttpMethod method) throws IOException {
+    public static byte[] getResponseBody(HttpMethod method) throws IOException {
         InputStream is = getResponseBodyAsStream(method);
         if (is != null) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            return br.lines().collect(Collectors.joining(System.lineSeparator()));
+            return is.readAllBytes();
         } else {
-            return method.getResponseBodyAsString();
+            return method.getResponseBody();
         }
     }
 
