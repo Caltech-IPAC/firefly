@@ -25,7 +25,9 @@ import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
-import {analyzeQueries, getCisxUI, getCisxUIUCD, getCisxUIValue, handleSearch} from './DLGenAnalyzeSearch.js';
+import {
+    analyzeQueries, getCisxUI, getCisxUIUCD, getCisxUIValue, handleSearch, supportsUpload
+} from './DLGenAnalyzeSearch.js';
 import {SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
 import {DLuiServDescPanel, DLuiTabView} from './DLuiServDescPanel.jsx';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
@@ -33,7 +35,7 @@ import {AREA, CIRCLE, CONE_AREA_KEY, POINT, POSITION, RANGE} from './DynamicDef.
 import {convertRequest, DEFER_TO_CONTEXT, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
-import {getStandardIdType, ingestInitArgs, makeSearchAreaInfo, sdToFieldDefAry} from './ServiceDefTools.js';
+import { getStandardIdType, ingestInitArgs, makeSearchAreaInfo, sdToFieldDefAry } from './ServiceDefTools.js';
 
 
 export const DL_UI_LIST= 'DL_UI_LIST';
@@ -475,7 +477,11 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
     const {fds, standardID, idx}=
         searchObjFds.length===1 ? searchObjFds[0] : searchObjFds.find(({ID}) => ID===r[tabsKey]) ?? {};
 
-    if (!hasValidSpacialSearch(r,fds)) {
+    const selectedConcurrent= r.searchOptions ?? '';
+    const supportsPosCircleUpload= supportsUpload(qAna, standardID, Boolean(selectedConcurrent));
+    const doingUpload= Boolean(supportsPosCircleUpload && r.uploadInfo && r.uploadCenterLatColumns && r.uploadCenterLonColumns);
+
+    if (!hasValidSpacialSearch(r,fds) && !doingUpload) {
         showInfoPopup( getSpacialSearchType(r,fds)===CONE_CHOICE_KEY ?
                 'Target is required' :
                 'Search Area is require and must have at least 3 point pairs, each optionally separated by commas',
@@ -483,10 +489,7 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
         return false;
     }
 
-    const outReq= convertRequest(r,fds,getStandardIdType(standardID));
-    const requestKeyCnt= Object.keys(outReq).length;
-    const convertedR= Object.fromEntries(Object.entries(outReq).filter(([k,v]) => v!==DEFER_TO_CONTEXT));
-    const selectedConcurrent= r.searchOptions ?? '';
+    const {convertedR, uploadSiaExtParams, requestKeyCnt}= makeConvertedRequest(r,fds, standardID, doingUpload);
 
 
     let siaContraints= [];
@@ -506,12 +509,21 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
         return false;
     }
 
-
-
     const extraMeta = docRows?.[0] ? {[META.doclink.url]: docRows[0].accessUrl, [META.doclink.desc]: docRows[0].desc} : {};
     extraMeta[MetaConst.DATA_SERVICE_ID]= dataServiceId;
-    handleSearch(convertedR,siaContraints, qAna,fdAry, idx, extraMeta, selectedConcurrent);
+    handleSearch(convertedR,siaContraints, qAna,fdAry, idx, extraMeta, selectedConcurrent, uploadSiaExtParams);
     return true;
+}
+
+function makeConvertedRequest(r, fds, standardID, doingUpload) {
+    const outReq= convertRequest(r,fds,getStandardIdType(standardID));
+    if (doingUpload) outReq.circleSize= r.circleSize;
+    const requestKeyCnt= Object.keys(outReq).length;
+    const convertedR= Object.fromEntries(Object.entries(outReq).filter(([k,v]) => v!==DEFER_TO_CONTEXT));
+    const uploadSiaExtParams= doingUpload
+        ? { latCol: r.uploadCenterLatColumns, lonCol: r.uploadCenterLonColumns, serverFile: r.uploadInfo.serverFile}
+        : undefined;
+    return {convertedR, uploadSiaExtParams, requestKeyCnt};
 }
 
 function validKeysCount(fds, conKeyValue) {

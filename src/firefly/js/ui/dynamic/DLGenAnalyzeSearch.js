@@ -1,5 +1,6 @@
 import {isEmpty} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
+import {makeTblRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {getMetaEntry} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
@@ -9,7 +10,9 @@ import {CIRCLE, POINT, POLYGON} from './DynamicDef.js';
 import {
     convertCircleToPointArea, convertPointAreaToCircle, isCircleSearch, isPointAreaSearch, isPolySearch
 } from './DynamicUISearchPanel.jsx';
-import {findFieldDefType, makeServiceDescriptorSearchRequest, sdToFieldDefAry} from './ServiceDefTools.js';
+import {
+    findFieldDefType, isSIAStandardID, makeServiceDescriptorSearchRequest, sdToFieldDefAry
+} from './ServiceDefTools.js';
 
 
 /**
@@ -42,17 +45,26 @@ export function analyzeQueries(tbl_id) {
     return {primarySearchDef, concurrentSearchDef, urlRows};
 }
 
+let upTblCnt=1;
 
-export function makeAllSearchRequest(request, siaConstraints, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta) {
-    const primeRequest= makeServiceDescriptorSearchRequest(request,siaConstraints, primeSd,extraPrimaryMeta);
-    const concurrentRequestAry= concurrentSDAry
-        .map( (sd) => {
-            const newR= convertRequestToSecondary(request, primaryFdAry?.[0], sd.serviceDef, primeSd.standardID);
-            return newR ? makeServiceDescriptorSearchRequest(newR,undefined,sd.serviceDef) : undefined;
-        })
-        .filter( (r) => r);
+export function makeAllSearchRequest(request, siaConstraints, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta, uploadSiaExtParams) {
+    if (uploadSiaExtParams) {
+        const {title,accessURL} = primeSd;
+        const tblTitle= `${title} - upload ${upTblCnt++}`;
+        const options= {META_INFO: { ...extraPrimaryMeta }};
+        return [makeTblRequest('SiaExtUpload', tblTitle, {...request,accessURL,uploadSiaExtParams}, options)];
+    }
+    else {
+        const primeRequest= makeServiceDescriptorSearchRequest(request,siaConstraints, primeSd,extraPrimaryMeta);
+        const concurrentRequestAry= concurrentSDAry
+            .map( (sd) => {
+                const newR= convertRequestToSecondary(request, primaryFdAry?.[0], sd.serviceDef, primeSd.standardID);
+                return newR ? makeServiceDescriptorSearchRequest(newR,undefined,sd.serviceDef) : undefined;
+            })
+            .filter( (r) => r);
 
-    return [primeRequest, ...concurrentRequestAry];
+        return [primeRequest, ...concurrentRequestAry];
+    }
 }
 
 /**
@@ -64,8 +76,9 @@ export function makeAllSearchRequest(request, siaConstraints, primeSd, concurren
  * @param idx
  * @param {object} extraMeta            // additional table meta to include with the TableSearch
  * @param {String} selectedConcurrent - space separated name of searches to execute
+ * @param {Object} uploadSiaExtParams
  */
-export function handleSearch(request, siaConstraints, qAna, primaryFdAry, idx, extraMeta={}, selectedConcurrent) {
+export function handleSearch(request, siaConstraints, qAna, primaryFdAry, idx, extraMeta={}, selectedConcurrent, uploadSiaExtParams) {
     const primeSd= qAna.primarySearchDef[idx].serviceDef;
     const {coverage,bandDesc}= qAna.primarySearchDef[idx];
     const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
@@ -80,7 +93,8 @@ export function handleSearch(request, siaConstraints, qAna, primaryFdAry, idx, e
     extraMeta= {coverage,bandDesc, ...extraMeta};
     if (preferredHips) extraMeta[MetaConst.COVERAGE_HIPS]=preferredHips;
 
-    const tableRequestAry= makeAllSearchRequest(request, siaConstraints, primeSd,concurrentSDAry, primaryFdAry, extraMeta);
+    const tableRequestAry= makeAllSearchRequest(request, siaConstraints, primeSd,concurrentSDAry,
+        primaryFdAry, extraMeta, uploadSiaExtParams);
 
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
@@ -155,6 +169,15 @@ export function getCisxUIValue(qAnaOrSd, name) {
 export function getCisxUIUCD(qAnaOrSd, name) {
     return getCisxUI(qAnaOrSd).find((e) => e.name === name)?.UCD;
 }
+
+
+export function supportsUpload(qAna, standardID, useConcurrent= false) {
+    const hasUpload= getCisxUIValue(qAna,'IRSA_SIA_upload_extension') && isSIAStandardID(standardID);
+    if (!hasUpload) return false;
+    if (!useConcurrent) return true;
+    return !Boolean(qAna.concurrentSearchDef?.length);
+}
+
 
 /**
  * @typedef {Object} SearchDefinition
