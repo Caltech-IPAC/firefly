@@ -3,10 +3,27 @@ import React from 'react';
 
 export const ConstraintContext = React.createContext({});
 
+export function hasAdqlConstraint(constraintObj) {
+    return Boolean(
+        constraintObj?.adqlConstraint ||
+        constraintObj?.adqlConstraintsAry?.length
+    );
+}
+
+function getAdqlConstraintsList(constraintObj) {
+    if (constraintObj?.adqlConstraintsAry?.length) return constraintObj.adqlConstraintsAry;
+    if (constraintObj?.adqlConstraint) return [constraintObj.adqlConstraint];
+    return [];
+}
+
+function isConstraintsValid(constraintObj) {
+    return !constraintObj?.constraintErrors?.length;
+}
+
 export function isTapUpload(tapBrowserState) {
     const {constraintFragments}= tapBrowserState;
     return [...constraintFragments.values()]
-        .some( (c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+        .some((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && hasAdqlConstraint(c)));
 }
 
 /**
@@ -16,7 +33,8 @@ export function isTapUpload(tapBrowserState) {
  */
 export function getUploadConstraint(tapBrowserState) {
     const {constraintFragments}= tapBrowserState;
-    return [...constraintFragments.values()].find( (c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+    return [...constraintFragments.values()]
+        .find((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && hasAdqlConstraint(c)));
 }
 
 export function getTapUploadSchemaEntry(tapBrowserState) {
@@ -38,26 +56,17 @@ export function getHelperConstraints(tapBrowserState) {
     const {constraintFragments}= tapBrowserState;
     const adqlConstraints = [];
     const adqlConstraintErrorsArray = [];
-    const siaConstraints = [];
-    // adqlComponents can apparently be modified during iteration in the forEach...
+
     Array.from(constraintFragments.values()).forEach((constraintObj) => {
-        if (!constraintObj.adqlConstraintErrors?.length) {
-            if (constraintObj.adqlConstraint) {
-                adqlConstraints.push(constraintObj.adqlConstraint);
-            }
+        if (isConstraintsValid(constraintObj)) {
+            adqlConstraints.push(...getAdqlConstraintsList(constraintObj));
         } else {
-            adqlConstraintErrorsArray.push(constraintObj.constraintErrors);
-        }
-        if (!constraintObj.constraintErrors?.length) {
-            if (constraintObj.siaConstraints?.length > 0) {
-                siaConstraints.push(...constraintObj.siaConstraints);
-            }
-        } else {
-            adqlConstraintErrorsArray.push(constraintObj.constraintErrors);
+            adqlConstraintErrorsArray.push(...constraintObj.constraintErrors);
         }
     });
+
     return {
-        valid: adqlConstraintErrorsArray?.length === 0,
+        valid: adqlConstraintErrorsArray.length === 0,
         messages: adqlConstraintErrorsArray,
         where: adqlConstraints.join('\n      AND ')
     };

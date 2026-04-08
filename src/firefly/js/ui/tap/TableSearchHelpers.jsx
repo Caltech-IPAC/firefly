@@ -63,6 +63,22 @@ function getPanelAdqlConstraint(panelActive, panelTitle,constraintsValid,adqlCon
     }
 }
 
+export function makeEmptyConstraints() {
+    return {
+        adqlConstraintsAry: [],
+        constraintErrors: [],
+        simpleError: '',
+    };
+}
+
+export function makeConstraintEntry(constraints = {}) {
+    return {
+        ...constraints,
+        constraintErrors: [...(constraints.errAry ?? [])],
+        simpleError: constraints.errAry?.[0] ?? '',
+    };
+}
+
 /**
  *
  * @param {boolean} panelActive

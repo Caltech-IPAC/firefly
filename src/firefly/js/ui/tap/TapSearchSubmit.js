@@ -9,7 +9,7 @@ import {
     getHelperConstraints,
     getTapUploadSchemaEntry,
     getUploadServerFile,
-    getUploadTableName,
+    getUploadTableName, hasAdqlConstraint,
     isTapUpload
 } from 'firefly/ui/tap/Constraints';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil';
@@ -105,9 +105,9 @@ export function onTapSearchSubmit({request, serviceUrl, tapBrowserState, additio
 
 function getCutoutType(tapBrowserState) {
     const spatial= tapBrowserState?.constraintFragments?.get('spatial');
-    if (spatial?.adqlConstraint?.length) return spatial.cutoutType;
+    if (hasAdqlConstraint(spatial)) return spatial.cutoutType;
     const location= tapBrowserState?.constraintFragments?.get('location');
-    if (location?.adqlConstraint?.length) return location.cutoutType;
+    if (hasAdqlConstraint(location)) return location.cutoutType;
     return ROW_POSITION;
 }
 
@@ -129,7 +129,7 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnCons
     if (isUpload) { //check for more than one upload file (in Spatial and in ObjectID col) - should this be a utility function in constraints.js?
         const { constraintFragments } = tapBrowserState;
         const entries = [...constraintFragments.values()];
-        const matchingEntries = entries.filter((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+        const matchingEntries = entries.filter((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && hasAdqlConstraint(c)));
         if (matchingEntries.length > 1) {
             if (showErrors) showInfoPopup('We currently do not support searches with more than one uploaded table.', 'Error');
             return;
