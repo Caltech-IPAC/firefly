@@ -1,0 +1,92 @@
+<!---
+  DO NOT EDIT README.md DIRECTLY.
+  Edit README.md.gotmpl and run helm-docs to regenerate.
+-->
+
+# Firefly Helm Chart
+
+Helm chart for deploying [Firefly](https://github.com/Caltech-IPAC/firefly), a web application for astronomical data visualization.
+
+## Chart Structure
+
+```
+helm/
+├── Chart.yaml
+├── values.yaml         # defaults
+└── env/
+    ├── dev.yaml        # sample dev overrides
+    └── prod.yaml       # sample prod overrides
+```
+
+## Install
+
+**From GHCR:**
+
+Available versions:
+https://github.com/Caltech-IPAC/firefly/pkgs/container/helm-charts%2Ffirefly/versions
+
+Inspect a specific version:
+```bash
+helm show chart oci://ghcr.io/caltech-ipac/helm-charts/firefly --version <chart-version>
+```
+
+Install:
+```bash
+helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
+  -n my-namespace \
+  --create-namespace \
+  --version <chart-version> \
+  -f env/dev.yaml \
+  --set ingress.host=my.example.com
+```
+> Omit `--version` to use the latest published chart.
+
+**From local chart:**
+```bash
+helm upgrade --install firefly ./helm \
+  -n my-namespace \
+  --create-namespace \
+  -f env/dev.yaml \
+  --set ingress.host=my.example.com
+```
+
+**Uninstall:**
+```bash
+helm -n my-namespace uninstall firefly
+```
+
+## Configuration
+
+### Session Affinity
+Session affinity is required when `replicaCount > 1`. If `ingress.className` is set,
+the appropriate cookie-based affinity annotations are automatically injected. Supported
+values: `nginx`, `traefik`, `haproxy`. For other ingress controllers, set the annotations
+manually via `ingress.annotations`.
+
+### Persistence
+All volumes default to `emptyDir`. Each can be overridden with a new PVC or an existing one.
+The examples below are samples — actual values for `storageClass`, `size`, and `existingClaim`
+depend on your Kubernetes setup:
+
+```yaml
+persistence:
+  workDir:
+    pvc:
+      size: 10Gi
+      storageClass: standard
+      accessMode: ReadWriteOnce
+  logsDir:
+    existingClaim: my-logs-pvc
+  sharedWorkDir:
+    pvc:
+      size: 10Gi
+      storageClass: efs
+      accessMode: ReadWriteMany  # required for multi-replica
+```
+
+### Redis
+Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for configuration options including image, resources, and persistence.
+
+## Reference
+
+{{ template "chart.valuesSection" . }}

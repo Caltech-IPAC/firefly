@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
@@ -28,7 +27,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
@@ -143,22 +141,23 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         try {
             while (true) {
                 cnt++;
-                JobInfo uwsJob = getUwsJobInfo(jobUrl);
-                if (uwsJob == null) {
-                    String msg = "Failed to retrieve UWS job info";
-                    sendJobUpdate(ji -> {
-                        ji.setPhase(Phase.ERROR);
-                        ji.setErrorSummary(new ErrorSummary(msg));
-                    });
-                    throw new DataAccessException(msg);
-                }
+                Phase phase = null;
                 try {
+                    JobInfo uwsJob = getUwsJobInfo(jobUrl);
+                    if (uwsJob == null) {
+                        String msg = "Failed to retrieve UWS job info";
+                        sendJobUpdate(ji -> {
+                            ji.setPhase(Phase.ERROR);
+                            ji.setErrorSummary(new ErrorSummary(msg));
+                        });
+                        throw new DataAccessException(msg);
+                    }
                     updateJob(ji -> ji.copyFrom(uwsJob));
-                    Phase phase = ifNotNull(uwsJob.getPhase()).getOrElse(Phase.UNKNOWN);
+                    phase = ifNotNull(uwsJob.getPhase()).getOrElse(Phase.UNKNOWN);
                     switch (phase) {
                         case Phase.COMPLETED:
                             return getResult(req);
-                        case Phase.ABORTED :
+                        case Phase.ABORTED:
                             throw new DataAccessException.Aborted();        // exit; stop tracking
                         case Phase.HELD:
                             throw new DataAccessException("The job is HELD pending execution and will not automatically be executed");
@@ -178,9 +177,14 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                         default:
                             // continue to wait
                     }
-                } finally {
-                    sendJobUpdate(null);        // send update to client on each poll.
+                } catch (Exception e) {
+                    sendJobUpdate(ji -> {
+                        ji.setPhase(Phase.ERROR);
+                        ji.setErrorSummary(new ErrorSummary(e.getMessage()));
+                    });
+                    throw e;  // catch exception to send update job status, then re-throw to let the caller handle it.
                 }
+                sendJobUpdate(null);        // send update to client on each poll.
                 int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
                 TimeUnit.MILLISECONDS.sleep(wait);
             }
@@ -228,7 +232,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public String getJobUrl() { return jobUrl; }
 
     public DataGroup getResult(TableServerRequest request) throws DataAccessException {
-
         JobInfo jobInfo = ifNotNull(getJob()).get(j -> getJobInfo(j.getJobId()));
         if (jobInfo == null) jobInfo = getUwsJobInfo(jobUrl);           // there's no job when it's not running in the background
 
@@ -308,7 +311,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             // Preserve the response body, so it can be parsed for error if needed.
             byte[] response = null;
             try {
-                response = method.getResponseBody();
+                response = HttpServices.getResponseBody(method);
                 Document doc = parse(new ByteArrayInputStream(response));
                 jInfo.set(convertToJobInfo(doc));
                 return HttpServices.Status.ok();

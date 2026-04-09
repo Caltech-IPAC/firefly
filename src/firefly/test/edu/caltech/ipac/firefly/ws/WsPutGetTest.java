@@ -4,6 +4,7 @@ import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.ws.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.jackrabbit.webdav.DavMethods;
@@ -84,7 +85,7 @@ public class WsPutGetTest extends ConfigTest {
         MyGetMethod method = new MyGetMethod(uri);
         client.executeMethod(method);
         if (method.isSuccess(method.getStatusCode())) {
-            byte[] resp = method.getResponseBody();
+            byte[] resp = HttpServices.getResponseBody(method);
             LOG.info("Got response: " + resp.length + " bytes");
             return resp;
         }

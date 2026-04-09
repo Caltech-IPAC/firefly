@@ -5,3 +5,9 @@ resources:
     memory: 4Gi
   limits:
     memory: 8Gi
+
+redis:
+  maxmemory: 500M
+  resources:
+    limits:
+      memory: 512Mi

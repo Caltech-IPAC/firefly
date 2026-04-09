@@ -30,7 +30,11 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           env:
-            {{- toYaml .Values.env | nindent 12 }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            - name: CLEANUP_INTERVAL
+              value: {{ .Values.cleanupInterval | quote }}
             {{- if .Values.ingress.pathPrefix }}
             - name: PATH_PREFIX
               value: {{ .Values.ingress.pathPrefix | quote }}

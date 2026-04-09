@@ -8,7 +8,7 @@ import moment from 'moment';
 
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
-import {getCmdSrvAsyncURL} from '../../util/WebUtil.js';
+import {getCmdSrvAsyncURL, isURL} from '../../util/WebUtil.js';
 import {COMPONENT_STATE_CHANGE, dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
 import {jsonFetch} from '../JsonUtils.js';
@@ -271,19 +271,19 @@ export function handleJobResult({jobInfo, hlRowIdx}) {
 }
 
 export function fixTapResults(jobInfo) {
-    if (isTapJob(jobInfo) && jobInfo?.results?.length !==1) {
-        const jobUrl = jobInfo?.jobInfo?.jobUrl;
-        if (jobUrl) {
-            const copy = cloneDeep(jobInfo);
-            copy.results = [{
-                href: `${jobUrl}/results/result`,
-                mimeType: 'application/x-votable+xml',
-                id: 'result',
-            }];
-            return copy;
-        }
+    if (!isTapJob(jobInfo)) return jobInfo;
+
+    const jobUrl = jobInfo?.jobInfo?.jobUrl;
+    if (jobUrl) {       // if jobUrl is available, we can construct the result URL for TAP job since it's in the standard.
+        const copy = cloneDeep(jobInfo);
+        copy.results = [{
+            href: `${jobUrl}/results/result`,
+            mimeType: 'application/x-votable+xml',
+            id: 'result',
+        }];
+        return copy;
     }
-    return jobInfo;
+    return jobInfo;     // otherwise, return as is and hope the server provides the result URL correctly in the jobInfo.
 }
 
 
@@ -326,6 +326,10 @@ const handleLayoutChanges = (jobInfo) => {
 
 export function loadTableResult({jobInfo, request, href}) {
     const {tbl_id} = getMetadata({jobInfo});
+    if (!isURL(href)) {
+        dispatchTableUpdate(TblUtil.createErrorTbl(tbl_id, `Invalid result URL: ${href}`));
+    }
+
     const tblRequest= makeFileRequest(null, href, null, {tbl_id});
     copyRequestOptions(request, tblRequest);
 
