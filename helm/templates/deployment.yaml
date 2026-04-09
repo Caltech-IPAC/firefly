@@ -27,7 +27,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort }}
+              containerPort: 8080
               protocol: TCP
           env:
             {{- with .Values.env }}
@@ -54,6 +54,9 @@ spec:
               value: {{ include "firefly.redisName" . }}
             {{- end }}
           livenessProbe:
+            httpGet:
+              path: {{ if .Values.ingress.pathPrefix }}/{{ trimPrefix "/" .Values.ingress.pathPrefix }}{{ end }}/firefly/healthz
+              port: 8080
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

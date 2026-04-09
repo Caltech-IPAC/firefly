@@ -123,8 +123,8 @@ WHERE CONTAINS(POINT('ICRS', ra, dec),CIRCLE('ICRS', 83.63321237, 22.01446012, 0
         desc:'Show tap tables for CADC',
         params:{
             service: 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/',
-            schema:'tap_schema',
-            table:'tap_schema.tables',
+            schema:'TAP_SCHEMA',
+            table:'TAP_SCHEMA.tables',
             execute: 'true'
         }
     },

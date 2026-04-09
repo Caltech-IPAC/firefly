@@ -98,7 +98,7 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | adminPassword.secretName | string | `""` | Name of the Kubernetes secret containing the password. |
 | adminPassword.value | string | `""` | Plain text password. |
 | cleanupInterval | string | `"1h"` | Interval for cleaning up temporary files. |
-| extraEnv | list | `[]` | Additional environment variables. |
+| env | list | `[]` | Additional environment variables. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | image.repository | string | `"ghcr.io/caltech-ipac/firefly"` | Image repository. |
 | image.tag | string | `""` | Image tag. Defaults to appVersion in Chart.yaml when not set. |
@@ -124,7 +124,6 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | service.port | int | `80` | Service port. |
 | service.sessionAffinity | string | `"ClientIP"` | Session affinity type. ClientIP is used as a fallback for non-ingress traffic. |
 | service.sessionAffinityTimeout | int | `3600` | Session affinity timeout in seconds. |
-| service.targetPort | int | `8080` | Container port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | serviceAccount.create | bool | `false` | Create a service account. |
 | serviceAccount.name | string | `""` | Service account name. Defaults to the release fullname when create is true. |

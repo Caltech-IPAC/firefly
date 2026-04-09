@@ -345,8 +345,8 @@ function makeTapSchemaRequest(serviceUrl, QUERY, title) {
 
 async function loadSchemaDefJoin(serviceUrl) {
     const QUERY = ` SELECT *
-                    FROM tap_schema.schemas
-                    INNER JOIN tap_schema.tables ON  tap_schema.tables.schema_name = tap_schema.schemas.schema_name
+                    FROM TAP_SCHEMA.schemas
+                    INNER JOIN TAP_SCHEMA.tables ON  TAP_SCHEMA.tables.schema_name = TAP_SCHEMA.schemas.schema_name
                 `;
 
     const tableModel= await doFetchTable(makeTapSchemaRequest(serviceUrl, QUERY, 'loadSchemaDefJoin'));
@@ -388,8 +388,8 @@ function modifyModelForOldTap(tableModel) {
 
 async function loadSchemaDefNoJoin(serviceUrl) {
 
-    const schemasQuery = 'SELECT * FROM tap_schema.schemas';
-    const tablesQuery  = 'SELECT * FROM tap_schema.tables';
+    const schemasQuery = 'SELECT * FROM TAP_SCHEMA.schemas';
+    const tablesQuery  = 'SELECT * FROM TAP_SCHEMA.tables';
 
 
     const [schemas,tables]= await Promise.all([
@@ -474,13 +474,13 @@ export const loadSchemaDef = memoize(async (serviceUrl) => {
 export const loadTapKeys = memoize(async (serviceUrl) => {
 
     const QUERY = `
-        SELECT tap_schema.keys.key_id,
-               tap_schema.keys.from_table,
-               tap_schema.keys.target_table,
-               tap_schema.keys.description,  
-               tap_schema.key_columns.from_column,
-               tap_schema.key_columns.target_column
-        FROM tap_schema.keys INNER JOIN tap_schema.key_columns ON tap_schema.keys.key_id = tap_schema.key_columns.key_id
+        SELECT TAP_SCHEMA.keys.key_id,
+               TAP_SCHEMA.keys.from_table,
+               TAP_SCHEMA.keys.target_table,
+               TAP_SCHEMA.keys.description,  
+               TAP_SCHEMA.key_columns.from_column,
+               TAP_SCHEMA.key_columns.target_column
+        FROM TAP_SCHEMA.keys INNER JOIN TAP_SCHEMA.key_columns ON TAP_SCHEMA.keys.key_id = TAP_SCHEMA.key_columns.key_id
         `;
 
     const url= makeSyncQueryURL(serviceUrl,QUERY.trim());

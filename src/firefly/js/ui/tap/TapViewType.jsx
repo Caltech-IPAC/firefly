@@ -195,8 +195,8 @@ function BasicUI(props) {
         }
         else {
             const foundSchema= schemaOptions.find( (s) => {
-                if (schemaOptions.length===2) return s.value==='tap_schema';
-                else return s.value!=='tap_schema' && s.value!=='ivoa';
+                if (schemaOptions.length===2) return s.value==='TAP_SCHEMA';
+                else return s.value!=='TAP_SCHEMA' && s.value!=='ivoa';
             });
             if (foundSchema) setSchemaName(foundSchema.value);
         }
