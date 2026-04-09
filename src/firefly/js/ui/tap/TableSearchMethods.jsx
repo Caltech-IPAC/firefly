@@ -32,13 +32,13 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
     return obsCoreEnabled ?
         (
             <>
-                <ObsCoreSearch {...{sx:{mt:1}, cols, obsCoreMetadataModel, serviceId, initArgs}} />
+                <ObsCoreSearch {...{sx:{mt:1}, cols, obsCoreMetadataModel, serviceId, initArgs, tableName}} />
                 <CompDivide/>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, serviceId, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <CompDivide/>
-                <ExposureDurationSearch {...{initArgs}} />
+                <ExposureDurationSearch {...{initArgs, tableName}} />
                 <CompDivide/>
-                <ObsCoreWavelengthSearch {...{initArgs, serviceId}} />
+                <ObsCoreWavelengthSearch {...{initArgs, serviceId, tableName}} />
                 <CompDivide/>
                 <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>
@@ -47,7 +47,7 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
             <>
                 <SpatialSearch {...{sx:{mt:1}, cols, serviceUrl, serviceLabel, serviceId, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <CompDivide/>
-                <TemporalSearch {...{cols, columnsModel}} />
+                <TemporalSearch {...{cols, columnsModel, tableName}} />
                 <CompDivide/>
                 <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>

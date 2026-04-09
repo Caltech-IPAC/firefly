@@ -50,9 +50,9 @@ export function getMaxrecHardLimit() {
 
 export const tapHelpId = (id) => `tapSearches.${id}`;
 
-export function makeUploadSchema(uploadFileName,serverFile, columns, totalRows, fileSize, table=ADQL_UPLOAD_TABLE_NAME, asTable= 'ut') {
+export function makeUploadSchema(uploadFileName,serverFile, columns, totalRows, fileSize, table=ADQL_UPLOAD_TABLE_NAME, uploadTableAlias= 'ut') {
     return {
-        [uploadFileName] : { serverFile, uploadFileName, totalRows, fileSize, table, asTable, columns}
+        [uploadFileName] : { serverFile, uploadFileName, totalRows, fileSize, table, uploadTableAlias, columns}
     };
 }
 
@@ -61,11 +61,11 @@ export function makeUploadSchema(uploadFileName,serverFile, columns, totalRows, 
  * @typedef {Object} TapBrowserState
  *
  * @prop  columnsModel
- * @props {String} serviceUrl
+ * @prop {String} serviceUrl
  * @prop schemaOptions
  * @prop tableOptions
- * @props {String} schemaName
- * @props {String} tableName
+ * @prop {String} schemaName
+ * @prop {String} tableName
  * @prop {Map<String, String>} constraintFragments
  * @prop obsCoreTableModel
  * @prop {boolean} obsCoreEnabled
@@ -537,7 +537,12 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
 
 const hasElements= (a) => Boolean(isArray(a) && a?.length);
 
-export const getAsEntryForTableName= (tableName) => tableName?.[0] ?? 'x';
+export function getTableNameAlias(tableName) {
+    if (!tableName) return 'x';
+    if (tableName.length > 1 && tableName[0]==='"') return tableName[1].toLowerCase();
+    if (tableName.length) return tableName[0].toLowerCase();
+    return 'x';
+}
 
 export function mergeServices(startingServices, additional) {
     if (!hasElements(additional)) return startingServices;
@@ -611,16 +616,19 @@ const validColumnNameRE=/^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,3}$/;
  */
 export function maybeQuote(name, isTable=false) {
     if (!name || (name.startsWith('"') && name.endsWith('"'))) return name;
+    if (!isTable && name.includes('.')) {
+        const [table,col, ...rest]= name.split('.');
+        const colPart= rest.length ? [col,...rest].join('.') : col;
+        if (table.length && colPart.length) return `${table}.${maybeQuote(colPart)}`;
+    }
     const re= isTable ? validTableNameRE : validColumnNameRE;
     return  (name.match(re)) ? name : `"${name}"`;
 }
 
-
-/**
- * group key for fieldgroup comp
- */
-
-
+export function makeFullyQualifiedColumn(tName, cName) {
+    if (!tName) return maybeQuote(cName);
+    return `${tName}.${maybeQuote(cName)}`;
+}
 
 
 

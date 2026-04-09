@@ -58,7 +58,6 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
     const onTabSelect = (id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
     const key= (showCoverage&&coverageSide==='LEFT') +'--'+ showFits +'--' + showMeta;
-    const defaultSelected=getDefSelected(showCoverage,showFits,showMeta,dataProductTableId);
 
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
@@ -66,7 +65,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
 
     if (showCoverage || showFits || showMeta) {
         return (
-            <TabPanel key={key} value={selectedTab ?? defaultSelected} onTabSelect={onTabSelect}>
+            <TabPanel key={key} value={selectedTab} onTabSelect={onTabSelect}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab({id:TAB_IDS.COVERAGE}) }
                 { showMeta && makeMultiProductViewerTab({dataProductTableId,id:TAB_IDS.DP}) }
                 { showFits && makeFitsPinnedTab({id:TAB_IDS.PINNED_IMAGE,asTab:true}) }
@@ -249,7 +248,7 @@ function handleNewTable(layoutInfo, action) {
     }
     if (isMeta && showTables) {
         showImages = true;
-        selectedTab = TAB_IDS.DP;
+        selectedTab=getDefSelected(showCoverage,showFits,isMeta,tbl_id);
         showMeta = true;
         dataProductTableId = tbl_id;
     }

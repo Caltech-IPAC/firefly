@@ -7,7 +7,7 @@ import {
     makeFieldErrorList, getPanelPrefix, LableSaptail, makePanelStatusUpdater,
     Width_Column, DebugObsCore, makeCollapsibleCheckHeader, SpatialWidth
 } from 'firefly/ui/tap/TableSearchHelpers';
-import {tapHelpId} from 'firefly/ui/tap/TapUtil';
+import {getTableNameAlias, makeFullyQualifiedColumn, tapHelpId} from 'firefly/ui/tap/TapUtil';
 import {ValidationField} from 'firefly/ui/ValidationField';
 import PropTypes, {bool, string, object, shape, arrayOf} from 'prop-types';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
@@ -22,15 +22,16 @@ const panelValue = 'ObsCore';
 const panelPrefix = getPanelPrefix(panelValue);
 
 
-const multiConstraint = (value, columnName, siaName, quote, checkForNull) => {
+const multiConstraint = (value, preFix, columnName, siaName, quote, checkForNull) => {
     const multiConstraint = [];
     const siaConstraints = [];
     const valueList = value.split(',');
+    const col= makeFullyQualifiedColumn(preFix,columnName);
     valueList.forEach((value) => {
         if (checkForNull && value === 'null'){
-            multiConstraint.push(`${columnName} IS NULL`);
+            multiConstraint.push(`${col} IS NULL`);
         } else {
-            multiConstraint.push(`${columnName} = ${quote}${value}${quote}`);
+            multiConstraint.push(`${col} = ${quote}${value}${quote}`);
         }
         siaConstraints.push(`${siaName}=${value}`);
     });
@@ -44,9 +45,11 @@ const multiConstraint = (value, columnName, siaName, quote, checkForNull) => {
  *
  * @param hasSubType
  * @param fldObj
+ * @param {boolean} doingUpload
+ * @param {string} tableName
  * @returns {InputConstraints}
  */
-const makeConstraints = function(hasSubType, fldObj) {
+const makeConstraints = function(hasSubType, fldObj, doingUpload, tableName) {
     const errList= makeFieldErrorList();
     const adqlConstraintsAry = [];
     const siaConstraints = [];
@@ -58,16 +61,17 @@ const makeConstraints = function(hasSubType, fldObj) {
         obsCoreSubType, obsCoreInstrumentName, siaFacility}=fldObj;
 
     // const {obsCoreCollection, obsCoreCalibrationLevel, obsCoreTypeSelection, obsCoreSubType, obsCoreInstrumentName} = fields;
+    const preFix= doingUpload ? getTableNameAlias(tableName) : '';
     errList.checkForError(obsCoreCollection);
     if (obsCoreCollection?.value?.length > 0) {
-        const mcResult = multiConstraint(obsCoreCollection.value, 'obs_collection', 'COLLECTION', '\'');
+        const mcResult = multiConstraint(obsCoreCollection.value, preFix, 'obs_collection', 'COLLECTION', '\'');
         adqlConstraintsAry.push(mcResult.adqlConstraint);
         siaConstraints.push(...mcResult.siaConstraints);
     }
 
     errList.checkForError(obsCoreCalibrationLevel);
     if (obsCoreCalibrationLevel?.value) {
-        const mcResult = multiConstraint(obsCoreCalibrationLevel.value, 'calib_level', 'CALIB', '');
+        const mcResult = multiConstraint(obsCoreCalibrationLevel.value, preFix, 'calib_level', 'CALIB', '');
         adqlConstraintsAry.push(mcResult.adqlConstraint);
         siaConstraints.push(...mcResult.siaConstraints);
     }
@@ -76,7 +80,7 @@ const makeConstraints = function(hasSubType, fldObj) {
     if (siaFacility) {
         errList.checkForError(siaFacility);
         if (siaFacility?.value) {
-            const mcResult = multiConstraint(siaFacility.value, 'facility', 'FACILITY', '');
+            const mcResult = multiConstraint(siaFacility.value, preFix, 'facility', 'FACILITY', '');
             adqlConstraintsAry.push(mcResult.adqlConstraint);
             siaConstraints.push(...mcResult.siaConstraints);
         }
@@ -84,7 +88,7 @@ const makeConstraints = function(hasSubType, fldObj) {
 
     errList.checkForError(obsCoreTypeSelection);
     if (obsCoreTypeSelection?.value) {
-        const mcResult = multiConstraint(obsCoreTypeSelection.value, 'dataproduct_type', 'DPTYPE', '\'', true);
+        const mcResult = multiConstraint(obsCoreTypeSelection.value, preFix, 'dataproduct_type', 'DPTYPE', '\'', true);
         adqlConstraintsAry.push(mcResult.adqlConstraint);
 
         const siaErrorFields = ['visibility', 'event', 'null'];
@@ -95,7 +99,7 @@ const makeConstraints = function(hasSubType, fldObj) {
 
     errList.checkForError(obsCoreInstrumentName);
     if (obsCoreInstrumentName?.value?.length) {
-        const mcResult = multiConstraint(obsCoreInstrumentName.value, 'instrument_name', 'INSTRUMENT', '\'', true);
+        const mcResult = multiConstraint(obsCoreInstrumentName.value, preFix, 'instrument_name', 'INSTRUMENT', '\'', true);
         adqlConstraintsAry.push(mcResult.adqlConstraint);
         siaHasErrors(obsCoreInstrumentName.value, ['null'])
             ? siaConstraintErrors.push('null is not a valid SIA INSTRUMENT option')
@@ -105,7 +109,7 @@ const makeConstraints = function(hasSubType, fldObj) {
     if (hasSubType){
         errList.checkForError(obsCoreSubType);
         if (obsCoreSubType?.value?.length > 0) {
-            const mcResult = multiConstraint(obsCoreSubType.value, 'dataproduct_subtype', 'DPSUBTYPE', '\'');
+            const mcResult = multiConstraint(obsCoreSubType.value, preFix, 'dataproduct_subtype', 'DPSUBTYPE', '\'');
             adqlConstraintsAry.push(mcResult.adqlConstraint);
             siaConstraints.push(...mcResult.siaConstraints);
         }
@@ -162,11 +166,11 @@ const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSu
 
 export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
                                   useCalibrationLevel=true, useProductType=true, useFacility=true,
-                                  useSubtype= true,
+                                  useSubtype= true, tableName,
                                   useInstrumentName=true, useCollection=true,
                                   initArgs={}, useSIAv2, slotProps={}}) {
     const {urlApi={}}= initArgs;
-    const {setConstraintFragment}= useContext(ConstraintContext);
+    const {setConstraintFragment, doingUpload=false}= useContext(ConstraintContext);
     const {makeFldObj}= useContext(FieldGroupCtx);
     const obsCoreCollectionOptions =  getDataServiceOption('obsCoreCollection',serviceId,{});
     const obsCoreCalibrationLevelOptions =  getDataServiceOption('obsCoreCalibrationLevel',serviceId,{});
@@ -204,7 +208,7 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
 
 
     useEffect(() => {
-        updatePanelStatus(makeConstraints(hasSubType,makeFldObj(fldListAry)), constraintResult, setConstraintResult,useSIAv2);
+        updatePanelStatus(makeConstraints(hasSubType,makeFldObj(fldListAry), doingUpload, tableName), constraintResult, setConstraintResult,useSIAv2);
     });
 
     useEffect(() => {

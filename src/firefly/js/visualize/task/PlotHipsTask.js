@@ -22,7 +22,7 @@ import {makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {getRootURL, getStatusFromFetchError} from '../../util/WebUtil.js';
+import {getStatusFromFetchError} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -39,7 +39,6 @@ import {
     getPointMaxSide,
     getPropertyItem,
     makeHiPSPropertiesUrl,
-    makeHipsUrl,
     resolveHiPSConstant
 } from '../HiPSUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -242,7 +241,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
 
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
         propertiesUrlForError= makeHiPSPropertiesUrl(resolvedHipsRootUrl, false);
-        const result= await fetchUrl(makeHiPSPropertiesUrl(resolvedHipsRootUrl, PROXY), {}, true, PROXY);
+        const result= await fetchUrl(makeHiPSPropertiesUrl(resolvedHipsRootUrl));
         propertiesUrlForError= undefined;
         if (!result.text) {
             hipsFail('Could not retrieve HiPS properties file', resolvedHipsRootUrl);
@@ -250,7 +249,8 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
         const str= await result.text();
         const hipsProperties= parseProperties(str);
-        const plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
+        const proxy= isProxying(resolvedHipsRootUrl);
+        const plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, proxy);
         plot.hipsFromHipsList= await isUrlInHipsList(resolvedHipsRootUrl);
 
         if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) { //start moc retrieval but don't wait
@@ -370,13 +370,13 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
     const resolvedHipsRootUrl= await resolveHiPSIvoURL(hipsUrlRoot);
 
-    const url= makeHipsUrl(`${resolvedHipsRootUrl}/properties`, true, false);
+    const url= makeHiPSPropertiesUrl(resolvedHipsRootUrl);
 
     dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
     try {
         let result;
         try {
-            result = await fetchUrl(url, {}, true, PROXY);
+            result = await fetchUrl(url);
         } catch (error) {
             console.log('properties not found');
             hipsChangeFailP('Could not retrieve HiPS properties file');
@@ -639,4 +639,9 @@ function getSizeInDeg(imageRequest, hipsRequest) {
 function getPlotGroupId(imageRequest, hipsRequest) {
     if (imageRequest && imageRequest.getPlotGroupId()) return imageRequest.getPlotGroupId();
     if (hipsRequest && hipsRequest.getPlotGroupId()) return hipsRequest.getPlotGroupId();
+}
+
+function isProxying(url) {
+    //todo - in the future we might proxy based on location
+   return PROXY;
 }

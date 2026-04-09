@@ -1,5 +1,5 @@
 import {Divider, FormControl, FormLabel, Stack, Typography} from '@mui/joy';
-import PropTypes from 'prop-types';
+import {bool, shape, string, object} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import Validate, {maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
@@ -14,7 +14,7 @@ import {
     makePanelStatusUpdater,
     SmallFloatNumericWidth
 } from './TableSearchHelpers.jsx';
-import {tapHelpId} from './TapUtil.js';
+import {getTableNameAlias, makeFullyQualifiedColumn, tapHelpId} from './TapUtil.js';
 
 const START_EXP_GREATER_MSG= 'exposure time max must be greater than time min';
 const ONE_POPULATED= 'at least one field must be populated';
@@ -60,7 +60,7 @@ function checkExposureDuration(expLenMin, expLenMax) {
  * @param fldObj
  * @returns {InputConstraints}
  */
-function makeExposureConstraints(rangeType, fldObj) {
+function makeExposureConstraints(rangeType, fldObj, doingUpload, tableName) {
     const errList= makeFieldErrorList();
     const siaConstraints= [];
     const adqlConstraintsAry = [];
@@ -72,6 +72,10 @@ function makeExposureConstraints(rangeType, fldObj) {
     const expLenMax = expLenMaxField?.value;
 
     let seenValue = false;
+    const preFix= doingUpload ? getTableNameAlias(tableName) : '';
+    const tminCol= makeFullyQualifiedColumn(preFix,'t_min');
+    const tmaxCol= makeFullyQualifiedColumn(preFix,'t_max');
+    const tExpTimeCol= makeFullyQualifiedColumn(preFix,'t_exptime');
     if (rangeType === 'range') {
         if (exposureMin?.value || exposureMax?.value) {
             const {minValue, maxValue}=  checkExposureTime(exposureMin,exposureMax);
@@ -79,7 +83,7 @@ function makeExposureConstraints(rangeType, fldObj) {
             errList.checkForError(exposureMax);
             if (exposureMin?.valid && exposureMax?.valid) {
                 const rangeList = [[minValue, maxValue]];
-                adqlConstraintsAry.push(makeAdqlQueryRangeFragment('t_min', 't_max', rangeList, false));
+                adqlConstraintsAry.push(makeAdqlQueryRangeFragment(tminCol, tmaxCol, rangeList, false));
                 siaConstraints.push(...siaQueryRange('TIME', rangeList));
             }
             seenValue = true;
@@ -88,7 +92,7 @@ function makeExposureConstraints(rangeType, fldObj) {
         errList.checkForError(expSince);
         if (expSince?.valid) {
             const rangeList = [[`${checkSinceTimeInMjd(expSince?.value, exposureSinceOptions?.value)}`, '+Inf']];
-            adqlConstraintsAry.push(makeAdqlQueryRangeFragment('t_min', 't_max', rangeList));
+            adqlConstraintsAry.push(makeAdqlQueryRangeFragment(tminCol, tmaxCol, rangeList));
             siaConstraints.push(...siaQueryRange('TIME', rangeList));
         }
         seenValue = true;
@@ -96,7 +100,7 @@ function makeExposureConstraints(rangeType, fldObj) {
     if (expLenMin || expLenMax) {
         const {rangeList, minGreaterThanMax}= checkExposureDuration(expLenMin,expLenMax);
         if (!minGreaterThanMax) {
-            adqlConstraintsAry.push(makeAdqlQueryRangeFragment('t_exptime', 't_exptime', rangeList, true));
+            adqlConstraintsAry.push(makeAdqlQueryRangeFragment(tExpTimeCol, tExpTimeCol, rangeList, true));
             siaConstraints.push(...siaQueryRange('EXPTIME', rangeList));
         }
         seenValue = true;
@@ -117,9 +121,9 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['exposureSinceValue', 'exposureLengthMin', 'exposureLengthMax',
             'exposureMin', 'exposureMax', 'exposureSinceOptions', 'exposureRangeType'];
 
-export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLengthInput=true}) {
+export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLengthInput=true, tableName}) {
     const {getVal,makeFldObj}= useContext(FieldGroupCtx);
-    const {setConstraintFragment}= useContext(ConstraintContext);
+    const {setConstraintFragment, doingUpload=false}= useContext(ConstraintContext);
     const [constraintResult, setConstraintResult] = useState({});
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys] ); // force rerender on any change
 
@@ -129,7 +133,7 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLength
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), panelValue);
 
     useEffect(() => {
-        const constraints= makeExposureConstraints(getVal('exposureRangeType'), makeFldObj( fldListAry));
+        const constraints= makeExposureConstraints(getVal('exposureRangeType'), makeFldObj( fldListAry), doingUpload, tableName);
         updatePanelStatus(constraints, constraintResult, setConstraintResult,useSIAv2);
     });
 
@@ -169,14 +173,16 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLength
 }
 
 ExposureDurationSearch.propTypes = {
-    initArgs: PropTypes.object,
-    useSIAv2: PropTypes.bool,
-    slotProps: PropTypes.shape({
-        exposureRangeType: PropTypes.object,
-        exposureTimeRange: PropTypes.object,
-        exposureSince: PropTypes.object,
+    initArgs: object,
+    useSIAv2: bool,
+    tableName: string,
+    slotProps: shape({
+        exposureRangeType: object,
+        exposureTimeRange: object,
+        exposureSince: object,
     }),
-    showLengthInput: PropTypes.bool,
+    doingUpload: bool,
+    showLengthInput: bool,
 };
 
 

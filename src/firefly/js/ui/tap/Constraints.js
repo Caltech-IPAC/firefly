@@ -1,4 +1,5 @@
 import React from 'react';
+import {makeFullyQualifiedColumn} from './TapUtil';
 
 
 export const ConstraintContext = React.createContext({});

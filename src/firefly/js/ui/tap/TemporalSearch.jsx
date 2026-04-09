@@ -1,6 +1,6 @@
 import {Box, Stack} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import {string,object} from 'prop-types';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
@@ -12,7 +12,7 @@ import {
     DebugObsCore, getPanelPrefix, LabelWidth, makeFieldErrorList,
     makePanelStatusUpdater, Width_Column, makeCollapsibleCheckHeader
 } from './TableSearchHelpers.jsx';
-import {getColumnAttribute, maybeQuote, tapHelpId} from './TapUtil.js';
+import {getColumnAttribute, getTableNameAlias, makeFullyQualifiedColumn, maybeQuote, tapHelpId} from './TapUtil.js';
 
 const Temporal = 'Temporal';
 const TemporalColumns = 'temporalColumns';
@@ -27,11 +27,12 @@ const panelValue = title;
 const panelPrefix = getPanelPrefix(title);
 
 
-function makeTemporalConstraints(columnsModel, fldObj) {
+function makeTemporalConstraints(columnsModel, fldObj, doingUpload, tableName) {
     let adqlConstraint = '';
     const errList= makeFieldErrorList();
     const {[TimeFrom]:timeFromField, [TimeTo]:timeToField, [TemporalColumns]:temporalColumnsField}= fldObj;
 
+    const preFix= doingUpload ? getTableNameAlias(tableName) : '';
     if (timeFromField?.valid && timeToField?.valid && temporalColumnsField?.valid){
         const timeColumns = temporalColumnsField?.value?.split(',').map( (c) => c.trim()) ?? [];
 
@@ -53,7 +54,8 @@ function makeTemporalConstraints(columnsModel, fldObj) {
             const timeConstraints = timeRange.map((oneRange, idx) => {
                 if (!oneRange) return '';
                 const limit  = useISO ? `'${oneRange}'` : oneRange;
-                return idx === FROM ? `${maybeQuote(timeColumn)} >= ${limit}` : `${maybeQuote(timeColumn)} <= ${limit}`;
+                const col= makeFullyQualifiedColumn(preFix,timeColumn);
+                return idx === FROM ? `${col} >= ${limit}` : `${col} <= ${limit}`;
             });
 
             if (!timeConstraints[FROM] || !timeConstraints[TO]) {
@@ -95,13 +97,14 @@ export function findTimeColumn(columnsTable) {
  * @param props
  * @param props.cols
  * @param props.columnsModel
+ * @param props.tableName
  * @returns {JSX.Element}
  */
-export function TemporalSearch({cols, columnsModel}) {
+export function TemporalSearch({cols, columnsModel, tableName}) {
     const [constraintResult, setConstraintResult] = useState({});
 
     const {setFld,setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
-    const {setConstraintFragment}= useContext(ConstraintContext);
+    const {setConstraintFragment, doingUpload= false}= useContext(ConstraintContext);
     useFieldGroupRerender([...fldAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
     const timeCol= getVal(TemporalColumns);
 
@@ -121,7 +124,7 @@ export function TemporalSearch({cols, columnsModel}) {
         }, [checkHeaderCtl.isPanelActive()]);
 
     useEffect(() => {
-        const constraints= makeTemporalConstraints(columnsModel, makeFldObj([TimeFrom,TimeTo,TemporalColumns]));
+        const constraints= makeTemporalConstraints(columnsModel, makeFldObj([TimeFrom,TimeTo,TemporalColumns]), doingUpload, tableName);
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
 
@@ -183,5 +186,6 @@ export function TemporalSearch({cols, columnsModel}) {
 
 TemporalSearch.propTypes = {
     cols: ColsShape,
-    columnsModel: PropTypes.object,
+    columnsModel: object,
+    tableName: string,
 };

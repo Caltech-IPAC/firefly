@@ -123,6 +123,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const [getUserTitle,setUserTitle]= useFieldGroupValue(USER_ENTERED_TITLE);
     const [srvNameKey, setSrvNameKey]= useState(() => getServiceNamesAsKey());
+    const [doingUpload, setDoingUpload]= useState((() => isTapUpload(getTapBrowserState())));
     const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
@@ -166,7 +167,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     useEffect(() => {
         const {serviceUrl:u}= initArgs?.searchParams ?? {};
         u && u!==serviceUrl && setServiceUrl(u);
-    }, [initArgs?.searchParams?.serviceUrl]);
+    }, [initArgs?.searchParams?.serviceUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore( groupKey, (fields) => {
@@ -181,14 +182,16 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
 
     useEffect(() => {
         setVal('selectBy', selectBy);
-    }, [selectBy]);
+    }, [selectBy]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const ctx= {
-        setConstraintFragment: (key,value) => {
-            value ?
-                getTapBrowserState().constraintFragments.set(key,value) :
-                getTapBrowserState().constraintFragments.delete(key);
-        }
+                setConstraintFragment: (key,value) => {
+                    const fragments= getTapBrowserState().constraintFragments;
+                    value ? fragments.set(key,value) : fragments.delete(key);
+                    const nextDoingUpload= isTapUpload(getTapBrowserState());
+                    if (doingUpload!==nextDoingUpload) setDoingUpload(nextDoingUpload);
+                },
+                doingUpload,
     };
 
     return (

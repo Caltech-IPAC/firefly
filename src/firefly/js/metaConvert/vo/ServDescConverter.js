@@ -112,5 +112,5 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
 
 
 export const findDataLinkServeDescs= (sdAry=[]) =>
-    sdAry?.filter( (serDef) => isDataLinkServiceDesc(serDef) ?? []);
+    sdAry?.filter( (serDef) => Boolean(isDataLinkServiceDesc(serDef)));
 
