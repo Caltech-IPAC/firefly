@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
+import PropTypes from 'prop-types';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {Button, IconButton, Input, Stack, Typography} from '@mui/joy';
 import {LoadingMessage} from 'firefly/visualize/ui/FileUploadViewPanel';
@@ -9,7 +10,6 @@ import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
 import {dispatchDeletePlotView, dispatchPlotImage} from 'firefly/visualize/ImagePlotCntlr';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
-import {ROUTER} from 'firefly/templates/router/RouteHelper';
 import {addToRecentAlertIDs, showAlertIdDialog} from 'firefly/apps/alertviewer/AlertIDDialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import {removeTablesFromGroup} from 'firefly/tables/TableUtil';
@@ -17,41 +17,52 @@ import {getJsonData} from 'firefly/rpc/SearchServicesJson';
 import {ServerRequest} from 'firefly/data/ServerRequest';
 import {dispatchChartRemove} from 'firefly/charts/ChartsCntlr';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
+import {TitleOptions} from 'firefly/visualize/WebPlotRequest';
+import {InitArgsCtx} from 'firefly/templates/common/InitArgsCtx';
+import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
 
 const ALERT_LOAD_REQUEST = 'AlertViewerSearchProcessor';
+const IMAGE_TITLES = ['Science', 'Template', 'Difference'];
 
-export const UploadPanel = () => {
-    const instruction = 'Enter an Alert URL or ID to load in the Alert Viewer:';
+export const UploadPanel = ({}) => {
+    const instruction = 'Enter an Alert ID to load in the Alert Viewer:';
     const [isLoading, setIsLoading] = useState(false);
-    const [source, setSource] = useState('');
+    const [alertId, setAlertId] = useState('');
+    const {initArgs} = useContext(InitArgsCtx);
 
-    const doLoad = async () => {
-        const trimmedSource = source.trim();
-        if (!trimmedSource) {
-            showInfoPopup('Please enter a FITS URL.', 'Load Error');
+    const doLoad = async (loadId = alertId) => {
+        const trimmedId = loadId.trim();
+        if (!trimmedId) {
+            showInfoPopup('Please enter an alert ID.', 'Load Error');
             return;
         }
 
         setIsLoading(true);
         try {
             const request = new ServerRequest(ALERT_LOAD_REQUEST);
-            request.setParam('source', trimmedSource);
+            request.setParam('source', trimmedId);
 
             const result = await getJsonData(request);
             if (!result?.success) {
                 showInfoPopup(result?.message || 'Unable to load alert data.', 'Load Error');
                 return;
             }
-
-            addToRecentAlertIDs(trimmedSource);
+            addToRecentAlertIDs(trimmedId);
             clearAlertProducts(); //todo: keep this?
-            loadFromEntries(result);
+            loadFromEntries(result, trimmedId);
         } catch (error) {
             showInfoPopup(`Error loading file: ${error.message}`, 'Load Error');
         } finally {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const urlApiId = initArgs?.urlApi?.id?.trim?.();
+        if (!urlApiId) return;
+        setAlertId(urlApiId);
+        void doLoad(urlApiId);
+    }, [initArgs]);
 
     return (
         <Stack width={1} alignItems='center'>
@@ -60,19 +71,19 @@ export const UploadPanel = () => {
                     <Stack direction='row' spacing={1}>
                         <Input
                             sx={{width: '50rem'}}
-                            value={source}
-                            placeholder='Enter a FITS URL or Alert ID'
-                            onChange={(ev) => setSource(ev.target.value)}
+                            value={alertId}
+                            placeholder='Enter an Alert ID'
+                            onChange={(ev) => setAlertId(ev.target.value)}
                             onKeyDown={(ev) => ev.key === 'Enter' && doLoad()}
                         />
-                        <Button onClick={doLoad} loading={isLoading}>Load</Button>
+                        <Button onClick={() => doLoad()} loading={isLoading}>Load</Button>
                         <IconButton
                             size='sm'
                             variant='outlined'
                             title='Recent Alert IDs'
                             onClick={() => {
-                                showAlertIdDialog(source, (newId) => {
-                                    if (newId) setSource(newId);
+                                showAlertIdDialog(alertId, (newId) => {
+                                    if (newId) setAlertId(newId);
                                 });
                             }}
                         >
@@ -85,7 +96,9 @@ export const UploadPanel = () => {
     );
 };
 
-UploadPanel.propTypes = {};
+UploadPanel.propTypes = {
+    initArgs: PropTypes.object,
+};
 
 function clearAlertProducts() {
     removeTablesFromGroup(ALERT.TABLE_GROUP_MAIN);
@@ -97,11 +110,11 @@ function clearAlertProducts() {
     );
 }
 
-function loadFromEntries(result) {
+function loadFromEntries(result, alertId) {
     try {
         const entries = result?.entries ?? [];
-        const mainTablePart = entries[0];
-        const detailsTablePart = entries[1];
+        const mainTablePart = entries[1];
+        const detailsTablePart = entries[0];
         const imageParts = entries.slice(2, 5);
 
         if (entries.length < 5) {
@@ -121,7 +134,7 @@ function loadFromEntries(result) {
         const getExtNum = (part, fallbackIdx) => part?.extNum ?? fallbackIdx;
         const getFileLocation = (part) => part?.fileKey ?? result?.fileKey;
         const getFileName = (part) => part?.fileName ?? result?.fileName ?? result?.source ?? 'Uploaded FITS';
-        const pickedTableParts = [mainTablePart, detailsTablePart];
+        const pickedTableParts = [detailsTablePart, mainTablePart];
 
         for (let i = 0; i < 2; i++) {
             const part = pickedTableParts[i];
@@ -129,6 +142,7 @@ function loadFromEntries(result) {
             const desc = part?.desc;
             const fileLocation = getFileLocation(part);
             const uploadedFileName = getFileName(part);
+            const isDetailsTable = i === 0;
 
             if (!fileLocation) {
                 showInfoPopup(`Alert viewer table entry ${i + 1} is missing a file key.`, 'Load Error');
@@ -140,7 +154,7 @@ function loadFromEntries(result) {
                 fileLocation,
                 null,
                 {
-                    tbl_id: i === 0 ? ALERT.TABLE_1_ID : ALERT.TABLE_2_ID,
+                    tbl_id: isDetailsTable ? ALERT.TABLE_2_ID : ALERT.TABLE_1_ID,
                     pageSize: ALERT.TABLE_PAGESIZE,
                     META_INFO: {}
                 }
@@ -149,7 +163,7 @@ function loadFromEntries(result) {
 
             dispatchTableSearch(
                 tblReq,
-                {removable: true, tbl_group: i === 0 ? ALERT.TABLE_GROUP_MAIN : ALERT.TABLE_GROUP_DETAILS}
+                {removable: true, tbl_group: isDetailsTable ? ALERT.TABLE_GROUP_DETAILS : ALERT.TABLE_GROUP_MAIN}
             );
         }
 
@@ -158,9 +172,7 @@ function loadFromEntries(result) {
         for (let i = 0; i < 3; i++) {
             const part = imageParts[i];
             const extNum = getExtNum(part, i);
-            const desc = part?.desc;
             const fileLocation = getFileLocation(part);
-            const uploadedFileName = getFileName(part);
             const plotId = plotIds[i];
 
             if (!fileLocation) {
@@ -172,11 +184,17 @@ function loadFromEntries(result) {
             wpRequest.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
             wpRequest.setPlotGroupId(ALERT.IMG_VIEWER);
             wpRequest.setMultiImageExts(`${extNum}`);
-            wpRequest.setTitle(desc || `${uploadedFileName} [ext ${extNum}]`);
+            wpRequest.setTitle(IMAGE_TITLES[i] ?? `Image ${i + 1}`);
+            wpRequest.setTitleOptions(TitleOptions.NONE);
 
             dispatchPlotImage({plotId, wpRequest, viewerId: ALERT.IMG_VIEWER, setNewPlotAsActive: i === 0});
         }
-        dispatchComponentStateChange(ROUTER, {RESULTS: '/results'});
+        dispatchComponentStateChange(ALERT.STATE_ID, {
+            id: alertId,
+            source: result?.source,
+            fileName: result?.fileName,
+        });
+        dispatchFormSubmit({submitTo: '/results'});
         dispatchHideDropDown();
     } catch (error) {
         console.error('Error loading file:', error);

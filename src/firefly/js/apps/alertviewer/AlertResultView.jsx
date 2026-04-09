@@ -19,6 +19,7 @@ import {dispatchChartAdd, getChartData} from 'firefly/charts/ChartsCntlr.js';
 import {MultiViewStandardToolbar} from 'firefly/visualize/ui/MultiViewStandardToolbar';
 import {getDefaultChartProps} from 'firefly/charts/ChartUtil';
 import DockLayoutPanel from 'firefly/ui/panel/DockLayoutPanel.jsx';
+import {getComponentState} from 'firefly/core/ComponentCntlr';
 
 const ALERT_STANDARD_LAYOUT = {
     east: {index: 0, defaultSize: '50%'},
@@ -84,23 +85,29 @@ export function AlertResultView() {
     };
 
     const {hasMainTable, hasDetailTable, hasImages} = useStoreConnector(getAlertData);
+    const {id, source, fileName} = useStoreConnector(() => getComponentState(ALERT.STATE_ID));
+    const fallbackTitle = fileName || source || 'Alert Viewer';
+    const alertTitleDisplay = id ? (
+        <Stack direction='row' spacing={1}>
+            <Typography level='title-md'>
+                Alert ID:
+            </Typography>
+            <Typography level='body-md'>
+                {id}
+            </Typography>
+        </Stack>
+    ) : (
+        <Typography level='title-md'>
+            {fallbackTitle}
+        </Typography>
+    );
 
     const standardPanels = [
-        hasMainTable ? (
-            <MultiProductChoice
-                dataProductsState={null}
-                dpId='alert'
-                chartViewerId={ALERT.CHART_VIEWER_1}
-                tableGroupViewerId={ALERT.TABLE_GROUP_MAIN}
-                whatToShow={whatToShow}
-                onChange={handleShowChange}
-                mayToggle={true}
-            />
-        ) : (
-            <EmptySlot label='Table' />
-        ),
         hasDetailTable ? (
             <Stack sx={{width: 1, height: 1, pt: '28px'}}>
+                <Stack direction='row' alignItems='center' sx={{height: '28px', mt: '-28px', px: 1}}>
+                    {alertTitleDisplay}
+                </Stack>
                 <PropertySheetAsTable
                     tbl_id={ALERT.TABLE_2_ID}
                     tbl_group={ALERT.TABLE_GROUP_DETAILS}
@@ -113,8 +120,23 @@ export function AlertResultView() {
             </Stack>
         ) : (
             <Stack sx={{width: 1, height: 1, pt: '28px'}}>
+                <Stack direction='row' alignItems='center' sx={{height: '28px', mt: '-28px', px: 1}}>
+                    {alertTitleDisplay}
+                </Stack>
                 <EmptySlot label='Details Table' />
             </Stack>
+        ),
+        hasMainTable ? (
+            <MultiProductChoice
+                dpId='alert'
+                chartViewerId={ALERT.CHART_VIEWER_1}
+                tableGroupViewerId={ALERT.TABLE_GROUP_MAIN}
+                whatToShow={whatToShow}
+                onChange={handleShowChange}
+                mayToggle={true}
+            />
+        ) : (
+            <EmptySlot label='Table' />
         ),
         hasImages ? (
             <Stack sx={{width: 1, height: 1}}>
@@ -132,7 +154,7 @@ export function AlertResultView() {
     ];
 
     return (
-        <Sheet sx={{width: 1, height: 1, display: 'flex'}}>
+        <Sheet sx={{width: 1, height: 1, display: 'flex', minHeight: 0}}>
             <DockLayoutPanel config={ALERT_STANDARD_LAYOUT}>
                 {standardPanels}
             </DockLayoutPanel>

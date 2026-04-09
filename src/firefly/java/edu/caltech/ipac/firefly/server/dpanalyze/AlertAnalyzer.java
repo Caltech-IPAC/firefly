@@ -24,6 +24,8 @@ public class AlertAnalyzer implements DataProductAnalyzer {
     private static final int REQUIRED_TABLE_COUNT = 2;
     private static final int REQUIRED_IMAGE_COUNT = 3;
     private static final String TABLE_FROM_1D_PREFIX = "1D image, load as table, ";
+    private static final List<String> ORDERED_TABLE_EXT_NAMES = List.of("ALERT", "DIASOURCE");
+    private static final List<String> ORDERED_IMAGE_EXT_NAMES = List.of("SCIENCE", "TEMPLATE", "DIFFIM");
 
     @Override
     public FileAnalysisReport analyzeFits(FileAnalysisReport inputReport,
@@ -67,19 +69,20 @@ public class AlertAnalyzer implements DataProductAnalyzer {
 
         final List<Part> picked = new ArrayList<>(REQUIRED_TABLE_COUNT + REQUIRED_IMAGE_COUNT);
 
-        //table 1: main table/chart
-        Part mainTable = tableCandidates.get(0);
-        mainTable.setChartTableDefOption(showChart);
-        picked.add(mainTable);
+        List<Part> pickedTables = pickTableParts(tableCandidates, headerAry);
 
-        //table 2: details table
-        Part detailsTable = tableCandidates.get(1);
+        //table 1: details table
+        Part detailsTable = pickedTables.get(0);
         detailsTable.setChartTableDefOption(showTable);
         picked.add(detailsTable);
 
+        //table 2: main table/chart
+        Part mainTable = pickedTables.get(1);
+        mainTable.setChartTableDefOption(showChart);
+        picked.add(mainTable);
+
         //3 images
-        for (int i = 0; i < REQUIRED_IMAGE_COUNT; i++) {
-            Part img = imageCandidates.get(i);
+        for (Part img : pickImageParts(imageCandidates, headerAry)) {
             img.setChartTableDefOption(showImage);
             picked.add(img);
         }
@@ -161,6 +164,52 @@ public class AlertAnalyzer implements DataProductAnalyzer {
         return p;
     }
 
+    private static List<Part> pickTableParts(List<Part> tableCandidates, Header[] headerAry) {
+        List<Part> orderedParts = ORDERED_TABLE_EXT_NAMES.stream()
+                .map((extName) -> findPartByExtName(tableCandidates, headerAry, extName))
+                .toList();
+
+        if (orderedParts.stream().allMatch((part) -> part != null)) {
+            return orderedParts;
+        }
+
+        return new ArrayList<>(tableCandidates.subList(0, REQUIRED_TABLE_COUNT));
+    }
+
+    private static List<Part> pickImageParts(List<Part> imageCandidates, Header[] headerAry) {
+        List<Part> orderedParts = ORDERED_IMAGE_EXT_NAMES.stream()
+                .map((extName) -> findPartByExtName(imageCandidates, headerAry, extName))
+                .toList();
+
+        if (orderedParts.stream().allMatch((part) -> part != null)) {
+            return orderedParts;
+        }
+
+        return new ArrayList<>(imageCandidates.subList(0, REQUIRED_IMAGE_COUNT));
+    }
+
+    private static Part findPartByExtName(List<Part> parts, Header[] headerAry, String targetExtName) {
+        for (Part part : parts) {
+            if (targetExtName.equals(getExtName(part, headerAry))) {
+                return part;
+            }
+        }
+        return null;
+    }
+
+    private static String getExtName(Part part, Header[] headerAry) {
+        if (part == null || headerAry == null || headerAry.length == 0) return "";
+
+        int hduIdx = getHduIndex(part);
+        if (hduIdx < 0 || hduIdx >= headerAry.length) return "";
+
+        Header h = headerAry[hduIdx];
+        if (h == null) return "";
+
+        String extName = h.getStringValue("EXTNAME");
+        return extName == null ? "" : extName.trim().toUpperCase();
+    }
+
     private static FileAnalysisReport makeErrorReport(FileAnalysisReport inputReport,
                                                       String analyzerId,
                                                       String msg) {
@@ -173,6 +222,4 @@ public class AlertAnalyzer implements DataProductAnalyzer {
         return out;
     }
 }
-
-
 

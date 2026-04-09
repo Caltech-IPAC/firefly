@@ -14,11 +14,13 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.UriRef;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,7 +28,7 @@ import static edu.caltech.ipac.firefly.core.FileAnalysisReport.ReportType.Detail
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.ErrorResponse;
 
 @SearchProcessorImpl(id = "AlertViewerSearchProcessor", params = {
-        @ParamDoc(name = "source", desc = "A FITS URL or an Alert ID.")
+        @ParamDoc(name = "source", desc = "An alert ID.")
 })
 public class AlertViewerSearchProcessor extends JsonStringProcessor {
 
@@ -35,6 +37,10 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
     public static final String ID = "AlertViewerSearchProcessor";
     public static final String SOURCE = "source";
     private static final String ANALYZER_ID = "alert";
+    private static final String ALERT_ID = "ID";
+    public static final String RESPONSEFORMAT = "RESPONSEFORMAT";
+    private static final String FITS_RESPONSE_FORMAT = "fits";
+    private static final String ALERT_SERVICE_BASE_URL_PROP = "alert.viewer.fits.service.url";
 
     @Override
     public boolean doCache() {
@@ -46,32 +52,37 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
         final String source = req.getParam(SOURCE) == null ? null : req.getParam(SOURCE).trim();
 
         if (StringUtils.isEmpty(source)) {
-            return makeError(source, "A FITS URL is required.");
+            return makeError(source, "An alert ID is required.");
         }
 
-        if (!UriRef.isValid(source)) {
-            return makeError(source, "Alert ID lookup is not supported yet. Please enter a full FITS URL.");
+        if (source.contains("://")) {
+            return makeError(source, "Please enter an alert ID, URLs are not supported.");
         }
 
         try {
-            /*todo: future AlertID logic (if source is just an alert ID) and if the service returns FITS directly:
-               //makeAlertServiceUrl would construct a URL to an alert service that returns the FITS file for a given alert ID
-               URL serviceUrl = new URL(makeAlertServiceUrl(alertId));
-               File tmpFits = File.createTempFile("alert-", ".fits");
-               FileInfo fileInfo = URLDownload.getDataToFile(serviceUrl, tmpFits);
-              */
-            FileInfo fileInfo = LockingRetrieve.downloadWithCacheMsg(source);
+            final String serviceUrl = makeAlertServiceUrl(source);
+            FileInfo fileInfo = LockingRetrieve.downloadWithCacheMsg(serviceUrl);
             if (fileInfo == null) {
-                return makeError(source, "Unable to retrieve the FITS file.");
+                return makeError(source, "Unable to retrieve the FITS file for alert ID: " + source);
             }
             final int responseCode = fileInfo.getResponseCode();
             if (responseCode > 305 || responseCode < 200) {
-                final String responseMsg = StringUtils.isEmpty(fileInfo.getResponseCodeMsg())
+                String responseMsg = StringUtils.isEmpty(fileInfo.getResponseCodeMsg())
                         ? "Unknown error"
                         : fileInfo.getResponseCodeMsg();
-                return makeError(source,
-                        "Unable to retrieve the FITS file: " + responseCode + " " + responseMsg);
+
+                String message = switch (responseCode) {
+                    case 400 -> "400 Bad Request: unknown query parameter, or malformed alert ID";
+                    case 401 -> "401 Unauthorized: missing or invalid token";
+                    case 404 -> "404 Not Found: no alert exists for the given ID";
+                    case 415 -> "415 Unsupported Media Type: unrecognised RESPONSEFORMAT value";
+                    case 500 -> "500 Internal Server Error: alert service internal error.";
+                    default -> "Unable to retrieve the FITS file: " + responseCode + " " + responseMsg;
+                };
+
+                return makeError(source, message);
             }
+
 
             FileAnalysisReport report = FileAnalysis.analyze(fileInfo, Details, ANALYZER_ID, Collections.emptyMap());
             return makeSuccess(source, fileInfo, report);
@@ -159,6 +170,18 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
 
     private static String makeError(String source, String message) {
         return baseResponse(source, false, message).toJSONString();
+    }
+
+    private static String makeAlertServiceUrl(String alertId) throws DataAccessException {
+        final String baseUrl = AppProperties.getProperty(ALERT_SERVICE_BASE_URL_PROP,
+                "https://data-int.lsst.cloud/api/alerts");
+        if (StringUtils.isEmpty(baseUrl)) {
+            throw new DataAccessException("Missing required property: " + ALERT_SERVICE_BASE_URL_PROP);
+        }
+        final String joiner = baseUrl.contains("?") ? "&" : "?";
+        return String.format("%s%s%s=%s&%s=%s",
+                baseUrl, joiner, ALERT_ID, URLEncoder.encode(alertId, StandardCharsets.UTF_8),
+                RESPONSEFORMAT, FITS_RESPONSE_FORMAT);
     }
 
     private static JSONObject baseResponse(String source, boolean success, String message) {
