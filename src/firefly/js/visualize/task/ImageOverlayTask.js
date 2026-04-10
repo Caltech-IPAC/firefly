@@ -47,24 +47,14 @@ export function plotImageMaskActionCreator(rawAction) {
     return (dispatcher,getStore) => {
         var vr= getStore()[IMAGE_PLOT_KEY];
 
-        const {plotId, imageOverlayId, maskValue, hduNumber, title, fileKey,
+        const {plotId, imageOverlayId, maskValue, hduNumber, title, fileKey,description,
                uiCanAugmentTitle= true, maskNumber, relatedDataId, lazyLoad}= rawAction.payload;
         let {color}= rawAction.payload;
         if (!color) color= colorList[maskNumber % colorList.length];
 
-
-
         const payload= {
-            fileKey,
-            plotId,
-            maskValue,
-            maskNumber,
-            hduNumber,
-            color,
-            title,
-            imageOverlayId,
-            uiCanAugmentTitle,
-            relatedDataId,
+            fileKey, plotId, maskValue, maskNumber, hduNumber, color, title,
+            imageOverlayId, uiCanAugmentTitle, relatedDataId, description,
             requestKey: makeUniqueRequestKey('overlay')
         };
 

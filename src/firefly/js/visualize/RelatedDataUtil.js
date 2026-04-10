@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, difference,get, flatten, values, uniq} from 'lodash';
+import {isEmpty, get, flatten, values, uniq} from 'lodash';
 import { primePlot, getPlotViewIdListInOverlayGroup, getPlotViewById, operateOnOthersInOverlayColorGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
@@ -70,19 +70,18 @@ function unactivatedDataTypeMatches(r,idx, pv) {
     if (dataType===RDConst.IMAGE_MASK) {
         const opvAry= pv.overlayPlotViews.filter((opv) => opv.relatedDataId===r.relatedDataId);
         if (!opvAry.length) return true;
-        const maskNumberAry= values(r.availableMask);
 
         const maskDataWidth= opvAry.find( (opv) => opv?.plot?.dataWidth)?.plot?.dataWidth;
         const maskDataHeight= opvAry.find( (opv) => opv?.plot?.dataHeight)?.plot?.dataHeight;
 
         if (maskDataHeight && maskDataHeight) {
-            if (maskNumberAry.length!==opvAry.length ||
+            if (r.availableMask.length!==opvAry.length ||
                 maskDataWidth !== primePlot(pv)?.dataWidth ||
                 maskDataHeight !== primePlot(pv)?.dataHeight) {
                 return true;
             }
         }
-        else if (maskNumberAry.length!==opvAry.length) {
+        else if (r.availableMask.length!==opvAry.length) {
             return true;
         }
     }
@@ -165,49 +164,44 @@ function enableRelatedDataLayerMask(pv, relatedData) {
     const fileKey= relatedData.searchParams[WPConst.FILE];
 
 
-    const availMaskValues= values(relatedData.availableMask).map( (v) => Number(v));
-
-    availMaskValues
-        .sort( (v1,v2) => v1-v2)
-        .forEach(  (v) =>
-            {
-                addMaskLayer(pv, v, hduNumber, fileKey, relatedData);
-            }
-        );
-
-
+    relatedData.availableMask
+        .sort( (me1,me2) => me1.bit-me2.bit)
+        .forEach(  (me) => addMaskLayer(pv, me, hduNumber, fileKey, relatedData) );
 }
 
 const maskIdRoot= 'AUTO_LOADED_MASK';
 let maskCnt= 0;
 
-function addMaskLayer(pv, maskNumber, hduNumber, fileKey, relatedData) {
+function addMaskLayer(pv, maskEntry, hduNumber, fileKey, relatedData) {
 
     const {relatedDataId}= relatedData;
 
-    const title= makeMaskTitle(maskNumber, relatedData.availableMask);
+    const title= makeMaskTitle(maskEntry);
 
-    dispatchPlotMask({plotId:pv.plotId,
-        imageOverlayId:`${pv.plotId}-${maskIdRoot}_#${maskNumber}_${maskCnt}`,
-        fileKey, maskNumber, maskValue:Math.pow(2,Number(maskNumber)),
-        uiCanAugmentTitle:false, hduNumber, title,
-        relatedDataId, lazyLoad:true});
+    dispatchPlotMask({
+        plotId:pv.plotId,
+        imageOverlayId:`${pv.plotId}-${maskIdRoot}_#${maskEntry.bit}_${maskCnt}`,
+        fileKey,
+        maskNumber:maskEntry.bit,
+        maskValue:Math.pow(2,Number(maskEntry.bit)),
+        uiCanAugmentTitle:false,
+        hduNumber,
+        title,
+        description:maskEntry.desc,
+        relatedDataId,
+        lazyLoad:true
+    });
     maskCnt++;
 }
 
-function makeMaskTitle(maskNumber, availableMask) {
-    const titleRoot= 'bit # '+maskNumber;
-    let maskDesc= Object.keys(availableMask)
-        .filter( (k) => k.includes('MP'))
-        .find( (k) => parseInt(availableMask[k])===maskNumber);
-    if (maskDesc) {
-        if (maskDesc.startsWith('HIERARCH')) maskDesc= maskDesc.substring(9);
-        if (maskDesc.startsWith('MP_')) maskDesc= maskDesc.substring(3);
-        return `${titleRoot} - ${maskDesc}`;
-    }
-    else {
-        return titleRoot;
-    }
+function makeMaskTitle(maskEntry) {
+    const {name='',bit=-1,desc=''}= maskEntry;
+    let maskName;
+    const titleRoot= 'bit # '+bit;
+    if (maskEntry.desc.startsWith('HIERARCH')) maskName= name.substring(9);
+    else if (maskEntry.desc.startsWith('MP_')) maskName= name.substring(3);
+    else maskName= name;
+    return `${titleRoot} - ${maskName}`;
 }
 
 function enableRelatedDataLayerImageOverlay(pv, relatedData) { // eslint-disable-line no-unused-vars

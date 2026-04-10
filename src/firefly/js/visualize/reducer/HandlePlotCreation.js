@@ -250,7 +250,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
 
 
 function newOverlayPrep(state, action) {
-    const {plotId, imageOverlayId, hduNumber, maskValue, maskNumber,
+    const {plotId, imageOverlayId, hduNumber, maskValue, maskNumber, description,
            color, title, drawingDef, relatedDataId,lazyLoadPayload, fileKey}= action.payload;
 
     const pv= getPlotViewById(state, plotId);
@@ -264,6 +264,7 @@ function newOverlayPrep(state, action) {
         opv= makeOverlayPlotView(imageOverlayId, plotId, title, hduNumber,
                                            maskNumber, maskValue, color, drawingDef, relatedDataId,
                                            fileKey);
+        opv.description= description;
         if (lazyLoadPayload) {
             opv.lazyLoadPayload= lazyLoadPayload;
             opv.visible= false;

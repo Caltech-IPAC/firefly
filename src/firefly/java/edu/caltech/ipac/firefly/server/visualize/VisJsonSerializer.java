@@ -288,7 +288,15 @@ public class VisJsonSerializer {
         JSONObject retObj= new JSONObject();
         putStr(retObj,"dataType", rData.getDataType());
         if (!rData.getAvailableMask().isEmpty()) {
-            putJsonObj(retObj, "availableMask", new JSONObject(rData.getAvailableMask()));
+            JSONArray array= new JSONArray();
+            for(var me : rData.getAvailableMask()) {
+                JSONObject meJ= new JSONObject();
+                putStr(meJ, "name", me.name());
+                putNum(meJ, "bit", me.bit());
+                putStr(meJ, "desc", me.desc());
+                array.add(meJ);
+            }
+            retObj.put("availableMask", array);
         }
         putJsonObj(retObj, "searchParams", new JSONObject(rData.getSearchParams()));
         putStr(retObj, "desc", rData.getDesc());

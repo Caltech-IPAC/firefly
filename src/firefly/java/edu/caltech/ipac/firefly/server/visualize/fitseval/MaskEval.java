@@ -16,9 +16,9 @@ import nom.tam.util.Cursor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * @author Trey Roby
@@ -68,20 +68,61 @@ class MaskEval implements FitsEvaluation.Eval {
         }
     }
 
-    private static Map<String, String> getMaskHeaders(Header header) {
-        Map<String, String> maskHeaders = new HashMap<>(23);
-        HeaderCard hc;
+    private static List<RelatedData.MaskEntry> getMaskHeaders(Header header) {
+        Cursor<String, HeaderCard> extraIter = header.iterator();
+
+        boolean foundV1Style= false;
+        while (extraIter.hasNext() && !foundV1Style) {
+            var key = extraIter.next().getKey();
+            foundV1Style= (key.startsWith("MP") || key.startsWith("HIERARCH.MP")) ;
+        }
+        return foundV1Style ? getMaskHeadersV1(header) : getMaskHeadersV2(header);
+    }
+    
+    private static List<RelatedData.MaskEntry> getMaskHeadersV1(Header header) {
+        var maskEntries= new ArrayList<RelatedData.MaskEntry>();
         Cursor<String, HeaderCard> extraIter = header.iterator();
         while (extraIter.hasNext()) {
-            hc = extraIter.next();
+            var hc = extraIter.next();
             if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
-                maskHeaders.put(hc.getKey(), hc.getValue());
+                var v= Try.it(() -> Integer.parseInt(hc.getValue())).getOrElse(-1);
+                if (v>-1) maskEntries.add(new RelatedData.MaskEntry(hc.getKey(), v, ""));
             }
         }
-        return maskHeaders;
+        return maskEntries;
     }
 
-     public boolean isMask(FitsRead maskFr, FitsRead baseFr) {
+    private static List<RelatedData.MaskEntry> getMaskHeadersV2(Header header) {
+        var maskEntries= new ArrayList<RelatedData.MaskEntry>();
+        Cursor<String, HeaderCard> extraIter = header.iterator();
+        while (extraIter.hasNext()) {
+            var cnt= getMaskNameCnt(extraIter.next().getKey());
+            if (cnt!=null)  {
+                RelatedData.MaskEntry me= makeMaskEntry(header,cnt);
+                if (me!=null) maskEntries.add(me);
+            }
+        }
+        return maskEntries;
+    }
+
+    public static String getMaskNameCnt(String name) {
+        if (name==null) return null;
+        if (!name.startsWith("MSKN")) return null;
+        var valPartStr=  name.substring("MSKN".length());
+        var v= Try.it(() -> Integer.parseInt(valPartStr)).getOrElse(-1);
+        return v>-1 ? valPartStr : null;
+    }
+
+    public static RelatedData.MaskEntry makeMaskEntry(Header header, String cntStr) {
+        var name= header.getStringValue("MSKN"+cntStr);
+        int v= header.getIntValue("MSKM"+cntStr,-1);
+        var desc= header.getStringValue("MSKD"+cntStr,"");
+        if (v==-1 || name==null) return null;
+        return new RelatedData.MaskEntry(name,Integer.numberOfTrailingZeros(v),desc);
+    }
+
+
+    public boolean isMask(FitsRead maskFr, FitsRead baseFr) {
         boolean isCube= baseFr.isCube();
         int cubePlaneNumber=  baseFr.getPlaneNumber();
         if (!isCube && maskFr.isCube() && maskFr.getPlaneNumber()>0) return false;

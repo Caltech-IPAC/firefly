@@ -802,6 +802,7 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  * @param {string} p.fileKey file on the server
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
+ * @param {string} p.description - a more detailed description of the layer
  * @param {string} p.lazyLoad
  * @param {string} p.uiCanAugmentTitle
  * @param {string} [p.relatedDataId] pass a related data id if one exist
@@ -813,11 +814,11 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  */
 export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey,
                                   hduNumber, maskNumber=-1, color, title,
-                                  uiCanAugmentTitle,
+                                  uiCanAugmentTitle, description,
                                   relatedDataId, lazyLoad, dispatcher= flux.process}) {
 
     dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, fileKey, maskValue,
-                                              uiCanAugmentTitle, hduNumber, maskNumber,
+                                              uiCanAugmentTitle, hduNumber, maskNumber, description,
                                               color, title, relatedDataId, lazyLoad } });
 }
 

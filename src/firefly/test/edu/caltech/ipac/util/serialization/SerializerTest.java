@@ -187,7 +187,10 @@ public class SerializerTest {
         fi.setSuffix("txt");
         fi.setHasAccess(true);
 
-        RelatedData rd = RelatedData.makeMaskRelatedData(111, "file.fits", Map.of("header", "value"), false, 2, "mask-data-key");
+        RelatedData rd = RelatedData.makeMaskRelatedData(111, "file.fits",
+                List.of(new RelatedData.MaskEntry("header",0,"the header"),
+                        new RelatedData.MaskEntry("value",1,"the value")),
+                false, 2, "mask-data-key");
         fi.addRelatedData(rd);
 
         HttpServiceInput si = new HttpServiceInput("http://example.com");
