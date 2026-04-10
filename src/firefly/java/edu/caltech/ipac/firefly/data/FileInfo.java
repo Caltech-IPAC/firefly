@@ -128,6 +128,7 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public String getDesc() { return attributes.get(DESC); }
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
+    public boolean isOK() { return getResponseCode()==200; }
     public String getResponseCodeMsg() { return attributes.get(RESPONSE_CODE_MSG); }
 
 

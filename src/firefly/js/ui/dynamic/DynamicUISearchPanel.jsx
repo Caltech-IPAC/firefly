@@ -218,11 +218,12 @@ export function findTargetFromRequest(request, fieldDefAry) {
 }
 
 function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', toolbarHelpId,
-                                 obsCoreMetadataModel,
+                                 obsCoreMetadataModel, supportsPosCircleUpload=false,
                                  childComponents, slotProps={}, submitSearch, dataServiceId, children}) {
     const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry, SiaWLPanel,
         SiaObsCorePanel,
-        useSpacial}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true, submitSearch});
+        useSpacial}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId,
+        insetSpacial:true, supportsPosCircleUpload, submitSearch});
 
     let iFieldLayout= undefined;
     let nonSpacialComponents= undefined;

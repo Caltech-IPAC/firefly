@@ -53,6 +53,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
 public class URLDownload {
@@ -124,7 +125,7 @@ public class URLDownload {
 
     public static Map<String,List<String>> getQueryParams(URL url) {
         if (url==null) return Collections.emptyMap();
-        if (StringUtils.isEmpty(url.getQuery())) return Collections.emptyMap();
+        if (isEmpty(url.getQuery())) return Collections.emptyMap();
         var paramList= url.getQuery().split("&");
         var queryParamMap = new HashMap<String, List<String>>();
         for(var p : paramList) {
@@ -209,7 +210,7 @@ public class URLDownload {
     }
 
     public static String sanitizeFilename(String fName) {
-        if (StringUtils.isEmpty(fName)) return "";
+        if (isEmpty(fName)) return "";
         //trim leading/trailing whitespace and quotes
         fName = fName.trim().replaceAll("^[\"']+|[\"']+$", "");
         //replace unwanted characters
@@ -221,7 +222,7 @@ public class URLDownload {
 
     private static String sendHeadersToCompactStr(Map<String,List<String>> sendHeaders) {
 
-        if (sendHeaders.isEmpty()) return "";
+        if (sendHeaders==null || sendHeaders.isEmpty()) return "";
         var outStr= new StringBuilder();
         for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
             if (!outStr.isEmpty()) outStr.append(", ");
@@ -335,7 +336,7 @@ public class URLDownload {
 //================================================================================
 
     public static HttpResultInfo getDataFromURL(URL url,
-                                                Map<String, String> postData,
+                                                Map<String, ?> postData,
                                                 Map<String, String> requestHeaders) throws FailedRequestException {
         return getDataFromURL(url,postData,null,requestHeaders, null, Options.def());
     }
@@ -350,7 +351,7 @@ public class URLDownload {
      * @throws FailedRequestException if it fails
      */
     public static HttpResultInfo getDataFromURL(URL url,
-                                                Map<String, String> postData,
+                                                Map<String, ?> postData,
                                                 Map<String, String> cookies,
                                                 Map<String, String> requestHeaders,
                                                 ByteBuffer outByteBuffer,
@@ -385,7 +386,7 @@ public class URLDownload {
             }
             tracker.stops();
             double dlSeconds = tracker.getElapsedTime(StopWatch.Unit.SECONDS);
-            if (responseCode>300) logHeader(url.toString(), postData, conn, reqProp);
+            if (responseCode>300) logHeaderForError(url.toString(), postData, conn, reqProp);
             if (!ops.logErrorsOnly) logSuccess(result,url,dlSeconds,reqProp, postData);
             return result;
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
@@ -496,7 +497,7 @@ public class URLDownload {
      * @return a FileInfo
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
-    public static FileInfo getDataToFileUsingPost(URL url, Map<String,String> postData,
+    public static FileInfo getDataToFileUsingPost(URL url, Map<String,?> postData,
                                                   Map<String, String> cookies, Map<String, String> requestHeader,
                                                   File outfile, DownloadListener dl,
                                                   int timeoutInSec) throws FailedRequestException {
@@ -572,7 +573,7 @@ public class URLDownload {
     public static FileInfo getDataToFile(HttpURLConnection conn,
                                          File outfile,
                                          Options ops,
-                                         Map<String,String> postData,
+                                         Map<String,?> postData,
                                          int redirectCnt) throws FailedRequestException {
 
         try {
@@ -629,8 +630,8 @@ public class URLDownload {
             }
             tracker.stops();
             double dlSeconds = tracker.getElapsedTime(StopWatch.Unit.SECONDS);
-            if (responseCode>300) logHeader(originalUrl, postData, conn, sendHeaders);
-            if (!ops.logErrorsOnly && responseCode<300) logSuccess(outFileData,outfile,conn.getURL(),dlSeconds,sendHeaders);
+            if (responseCode>300) logHeaderForError(originalUrl, postData, conn, sendHeaders);
+            if (!ops.logErrorsOnly && responseCode<300) logSuccess(outFileData,outfile,conn.getURL(),dlSeconds,sendHeaders, postData);
             return outFileData;
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
             return exceptionToFileInfo(e);
@@ -660,19 +661,60 @@ public class URLDownload {
         return getDataToFile(newConn, outfile, ops, null, redirectCnt);
     }
 
-    private static String postDataToString(Map<String,String> postData) {
+    private static void putList(StringBuilder sb, String key, List<?> l) {
+        for(Object o: l) {
+            if (!isEmpty(o)) {
+                if (!sb.isEmpty()) sb.append("&");
+                sb.append(key).append("=").append(o.toString());
+            }
+        }
+    }
+
+    private static String postDataToString(Map<String,?> postData) {
         StringBuilder sBuff= new StringBuilder();
         if (postData.size()==1 && postData.get("")!=null) {
-            return postData.get("");
+            Object v= postData.get("");
+            if (v instanceof String[] sAry) return String.join(",", sAry);
+            else return v.toString();
         }
-        for(Map.Entry<String,String> entry : postData.entrySet()) {
-            if (!sBuff.isEmpty()) sBuff.append("&");
-            sBuff.append(entry.getKey()).append("=").append(entry.getValue());
+        for(Map.Entry<String,?> entry : postData.entrySet()) {
+            Object v= entry.getValue();
+            String key= entry.getKey();
+            if (v instanceof List l) {
+                putList(sBuff, key, l);
+            }
+            else if (v instanceof String[] sAry) {
+                putList(sBuff,key, Arrays.asList(sAry));
+            }
+            else {
+                if (!sBuff.isEmpty()) sBuff.append("&");
+                sBuff.append(key).append("=").append(v.toString());
+            }
         }
         return sBuff.toString();
     }
 
-    private static void pushPostData(HttpURLConnection conn, Map<String,String> postData) throws IOException {
+    private static String postDataLogString(Map<String,?> postData) {
+        var sb= new StringBuilder();
+        for(var e : postData.entrySet()) {
+            var v= e.getValue();
+            if (!sb.isEmpty()) sb.append("  &  ");
+            sb.append(e.getKey()).append("=");
+            String str;
+            if (v instanceof String[] sAry) {
+                str= String.join(",", sAry);
+            }
+            else if (v instanceof List<?> list) {
+                var strList= list.stream().map(Object::toString).toList();
+                str= String.join(",", Arrays.toString(strList.toArray(new String[0])));
+            }
+            else str= v.toString();
+            sb.append(str.length()<40?str:"<truncated>");
+        }
+        return sb.toString();
+    }
+
+    private static void pushPostData(HttpURLConnection conn, Map<String,?> postData) throws IOException {
         if (postData==null) return;
         String postStr= postDataToString(postData);
         conn.setRequestMethod("POST");
@@ -732,7 +774,7 @@ public class URLDownload {
     }
 
 
-    private static void logError(URL url, Map<String,String> postData, Exception e) {
+    private static void logError(URL url, Map<String,?> postData, Exception e) {
         List<String> strList = new ArrayList<>(6);
         strList.add("----------Network Error-----------");
         if (url != null) {
@@ -740,7 +782,7 @@ public class URLDownload {
             strList.add(url.toString());
         }
         if (postData != null) {
-            strList.add(StringUtils.pad(20, "Post Data ") + ": " + postDataToString(postData));
+            strList.add(StringUtils.pad(20, "Post Data ") + ": " + postDataLogString(postData));
         }
         if (e != null) {
             strList.add(StringUtils.pad(20,"----------Exception "));
@@ -749,7 +791,7 @@ public class URLDownload {
         _log.warn(strList.toArray(new String[0]));
     }
 
-    private static void logHeader(String originalUrl,  Map<String,String> postData, HttpURLConnection conn, Map<String,List<String>> sendHeaders) {
+    private static void logHeaderForError(String originalUrl, Map<String,?> postData, HttpURLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuilder workBuff;
         try {
             String verb= "";
@@ -759,7 +801,7 @@ public class URLDownload {
             List<String> outStr= new ArrayList<>(40);
             String key;
             if (conn.getURL() != null) {
-                outStr.add("----------Sending " + verb);
+                outStr.add("----------Error on " + verb + " status: "+ getResponseCode(conn));
                 outStr.add( conn.getURL().toString());
                 if (originalUrl!=null && !conn.getURL().toString().equals(originalUrl)) {
                     outStr.add( StringUtils.pad(20, "Original URL")+": "+originalUrl);
@@ -795,9 +837,9 @@ public class URLDownload {
                 }
             }
             if (postData != null) {
-                outStr.add(StringUtils.pad(20,"Post Data ") + ": " + postDataToString(postData));
+                outStr.add(StringUtils.pad(20,"Post Data ") + ": " + postDataLogString(postData));
             }
-            outStr.add("----------Received Headers, response status code: " + getResponseCode(conn));
+            outStr.add("----------Received Headers");
             if (hSet!=null) {
                 List<String> values;
                 for (Map.Entry<String, List<String>> e : hSet) {
@@ -826,23 +868,25 @@ public class URLDownload {
     }
 
 
-    private static void logSuccess(FileInfo fileInfo, File outfile, URL url,  double dSeconds, Map<String,List<String>> sendHeaders) {
+    private static void logSuccess(FileInfo fileInfo, File outfile, URL url,  double dSeconds, Map<String,List<String>> sendHeaders, Map<String,?> postData) {
         String formatedSize= FileUtil.getSizeAsString(fileInfo.getSizeInBytes());
         String lastMod= fileInfo.getAttribute("Last-Modified")!=null ? ", Last-Modified: " +fileInfo.getAttribute("Last-Modified") : "";
-        _log.info(
+        var strList= new ArrayList<>(Arrays.asList(
                 String.format( "DOWNLOAD (%.1f sec, %s, response: %d): Content-Type: %s, Content-Length: %s%s",
                         dSeconds, formatedSize, fileInfo.getResponseCode(), fileInfo.getContentType(), fileInfo.getSizeInBytes(), lastMod),
                 "url:  "+ url.toString(),
                 "file: "+ outfile.toPath(),
                 "send headers: "+sendHeadersToCompactStr(sendHeaders),
                 "more response headers: "+otherHeadersToStr(fileInfo)
-        );
+        ));
+        if (postData!=null) strList.add("post data: " +postDataLogString(postData));
+        _log.info(strList.toArray(new String[0]));
     }
 
-    private static void logSuccess(HttpResultInfo r, URL url, double dSeconds, Map<String,List<String>> sendHeaders, Map<String, String> postData) {
+    private static void logSuccess(HttpResultInfo r, URL url, double dSeconds, Map<String,List<String>> sendHeaders, Map<String, ?> postData) {
         String formatedSize= FileUtil.getSizeAsString(r.getContentLength());
         String lastMod= r.getAttribute("Last-Modified")!=null ? ", Last-Modified: " +r.getAttribute("Last-Modified") : "";
-        String postStr= (postData==null || postData.isEmpty()) ? "" :  "\n        Post Data :" +  postDataToString(postData);
+        String postStr= (postData==null || postData.isEmpty()) ? "" :  "\n        Post Data :" +  postDataLogString(postData);
         String send= "send headers: "+sendHeadersToCompactStr(sendHeaders)  + postStr;
 
         _log.info(

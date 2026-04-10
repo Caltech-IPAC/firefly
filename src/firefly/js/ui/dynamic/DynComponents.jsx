@@ -76,6 +76,7 @@ export function getSpacialSearchType(request, fieldDefAry) {
  * @returns {{}}
  */
 export function makeAllFields({fieldDefAry:inFieldDefAry, noLabels=false, popupHiPS, toolbarHelpId,
+                                  supportsPosCircleUpload,
                                   plotId='defaultHiPSTargetSearch', insetSpacial=false, submitSearch} )  {
 
     const fieldDefAry= inFieldDefAry.filter( ({hide}) => !hide);
@@ -86,7 +87,8 @@ export function makeAllFields({fieldDefAry:inFieldDefAry, noLabels=false, popupH
     let SiaWLPanel= undefined;
     let SiaObsCorePanel = undefined;
     if (hasCircle || hasSpacialAndArea || hasPointAndArea) {
-        dynSpacialPanel= makeDynPanel({fieldDefAry, popupHiPS, plotId, insetSpacial, submitSearch, toolbarHelpId});
+        dynSpacialPanel= makeDynPanel({fieldDefAry, popupHiPS, plotId, insetSpacial,
+            submitSearch, toolbarHelpId, supportsPosCircleUpload});
     }
     if (hasType(fieldDefAry,WAVELENGTH)) {
        SiaWLPanel= ({dataServiceId}) => <ObsCoreWavelengthSearch {...{serviceId:dataServiceId,useSIAv2:true}}/>;
@@ -112,7 +114,8 @@ export function makeAllFields({fieldDefAry:inFieldDefAry, noLabels=false, popupH
 }
 
 
-function makeDynPanel({fieldDefAry, popupHiPS, plotId='defaultHiPSTargetSearch', insetSpacial=false, submitSearch, toolbarHelpId}) {
+function makeDynPanel({fieldDefAry, popupHiPS, plotId='defaultHiPSTargetSearch', insetSpacial=false,
+                          submitSearch, toolbarHelpId, supportsPosCircleUpload}) {
     const {targetDetails, manageAllSpacial}= getFieldSpacialInfo(fieldDefAry);
     const areaType = findFieldDefType(fieldDefAry, AREA);
     const circleType = findFieldDefType(fieldDefAry, CIRCLE);
@@ -121,7 +124,8 @@ function makeDynPanel({fieldDefAry, popupHiPS, plotId='defaultHiPSTargetSearch',
     if (sizeKey && manageAllSpacial && targetDetails?.hipsUrl) {
         return popupHiPS ?
             makeCircleAndPolyPopup({fieldDefAry, plotId, toolbarHelpId}) : // popup not used anymore
-            makeEmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId,toolbarHelpId, insetSpacial, submitSearch}); // normal case
+            makeEmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId,toolbarHelpId, insetSpacial,
+                supportsPosCircleUpload, submitSearch}); // normal case
     }
     else { // fallback - rarely used
         return targetDetails?.hipsUrl ?
@@ -250,7 +254,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
 
 
 export function EmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
-                                       slotProps={}, children}) {
+                                                       supportsPosCircleUpload, slotProps={}, children}) {
 
     const polyType = findFieldDefType(fieldDefAry, POLYGON);
     const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION);
@@ -284,6 +288,7 @@ export function EmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId, toolbar
             initSelectToggle: initToggle,
             usePosition,
             usePolygon,
+            useUpload: supportsPosCircleUpload,
             targetPanelExampleRow1, targetPanelExampleRow2,
             nullAllowed,
             insetSpacial,
@@ -434,12 +439,13 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
 }
 
 
-function makeEmbeddedPositionSearchPanelWrapper({fieldDefAry,
+function makeEmbeddedPositionSearchPanelWrapper({fieldDefAry, supportsPosCircleUpload= false,
                              plotId= 'defaultHiPSTargetSearch', toolbarHelpId, insetSpacial, submitSearch}) {
 
     const DynSpacialPanel= ({slotProps, children}) => {
         return (
-            <EmbeddedPositionSearchPanelWrapper {...{fieldDefAry, plotId, insetSpacial, slotProps, toolbarHelpId, submitSearch}}>
+            <EmbeddedPositionSearchPanelWrapper {...{fieldDefAry, plotId, insetSpacial, slotProps,
+                toolbarHelpId, supportsPosCircleUpload, submitSearch}}>
                 {children}
             </EmbeddedPositionSearchPanelWrapper>
         );

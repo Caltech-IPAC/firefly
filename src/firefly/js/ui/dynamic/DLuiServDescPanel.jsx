@@ -8,7 +8,7 @@ import {FieldGroupTabs, Tab} from '../panel/TabPanel';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {getServiceMetaOptions, loadSiaV2Meta, makeObsCoreMetadataModel} from '../tap/SiaUtil';
-import {hasSpatialTypes, isSpatialTypeSupported} from './DLGenAnalyzeSearch.js';
+import {getCisxUIValue, hasSpatialTypes, isSpatialTypeSupported, supportsUpload} from './DLGenAnalyzeSearch.js';
 import {DLSearchTitle} from './DLuiDecoration';
 import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DynLayoutPanelTypes} from './DynamicUISearchPanel';
@@ -37,9 +37,12 @@ const optionsCheckBoxDefaults= new Map([['_LAST_',undefined]]);
 export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc,
                                   submitSearch, isAllSky, qAna={},dataServiceId, slotProps})  {
     const [obsCoreMetadataModel, setObsCoreMetadataModel]= useState(undefined);
+    const [getSearchOptions,setSearchOptions] = useFieldGroupValue('searchOptions');
     const {getVal,setVal} = useContext(FieldGroupCtx);
     const {concurrentSearchDef}= qAna;
     const {standardID='', accessURL}= qAna?.primarySearchDef?.[0]?.serviceDef ?? {};
+
+    const supportsPosCircleUpload= supportsUpload(qAna, standardID, Boolean(getSearchOptions()));
 
     useEffect( () => {
         if (accessURL && isSIAStandardID(standardID)) {
@@ -52,7 +55,6 @@ export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShow
 
     const coneAreaChoice = useFieldGroupValue(CONE_AREA_KEY)?.[0]() ?? CONE_CHOICE_KEY;
 
-    const [getSearchOptions,setSearchOptions] = useFieldGroupValue('searchOptions');
     const {cNames, disableNames}= getNames(concurrentSearchDef,coneAreaChoice);
     const cNamesDef= cNames?.join(' ');
 
@@ -106,11 +108,13 @@ export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShow
 
     ) : undefined;
 
+
     return  (
         <Stack {...{justifyContent:'space-between', sx}}>
             <DLSearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing,...slotProps.searchTitle}}/>
             <ConstraintContext.Provider value={constraintCtx}>
                 <DynLayoutPanelTypes.Inset {...{fieldDefAry:fds, plotId:HIPS_PLOT_ID, obsCoreMetadataModel,
+                    supportsPosCircleUpload,
                     style:{height:'100%', marginTop:4},
                     dataServiceId,
                     toolbarHelpId:'dlGenerated.VisualSelection',
