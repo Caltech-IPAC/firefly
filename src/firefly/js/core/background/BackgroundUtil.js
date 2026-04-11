@@ -295,13 +295,28 @@ export function loadJobResult({jobInfo, resultIdx}) {
     }
 }
 
+const FITS_EXTS = ['fits', 'fit'];
+const TABLE_EXTS = ['csv', 'tbl', 'tsv', 'txt', 'vot', 'xml'];
+const COMPRESSION_EXTS = ['gz'];
+
+function parseHrefExtension(href) {
+    const resource = new URL(href).pathname.split('/').pop();
+    if (!resource?.includes('.')) return null;
+
+    const parts = resource.toLowerCase().split('.');
+    const rawExt = parts.at(-1);
+    const wrapper = COMPRESSION_EXTS.includes(rawExt) ? parts.pop() : null;
+    const ext = parts.length > 1 ? parts.at(-1) : null;
+
+    return { resource, rawExt, ext, wrapper, isFile: ext !== null };
+}
+
 function  getMimeLoader(mimeType, href) {
     if (!mimeType && href) {
-        const qstr = href.split('?')[0].split('#')[0];
-        const ext = qstr.substring(qstr.lastIndexOf('.') + 1).toLowerCase();
-        if (['fits', 'fit', 'fts'].includes(ext)) {
+        const {ext} = parseHrefExtension(href) ?? {};
+        if (FITS_EXTS.includes(ext)) {
             mimeType = 'application/fits';
-        } else if (['csv', 'tbl', 'tsv', 'txt', 'vot', 'xml'].includes(ext)) {
+        } else if (TABLE_EXTS.includes(ext)) {
             mimeType = 'application/x-votable+xml';             // just to trigger table loader
         }
     }
