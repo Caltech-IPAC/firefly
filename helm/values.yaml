@@ -50,6 +50,7 @@ livenessProbe:
 resources:
   requests:
     memory: 2Gi
+    cpu: 1
   limits:
     memory: 4Gi
 
@@ -104,8 +105,10 @@ autoscaling:
   minReplicas: 1
   # -- Maximum number of replicas.
   maxReplicas: 3
-  # -- Target average CPU utilization (%) across pods to trigger scale up.
-  targetCpuUtilization: 80
+  # -- Target average CPU utilization (%) across pods to trigger scale up. Set to empty to disable.
+  targetCpuUsage: 80
+  # -- Target average memory utilization (%) across pods to trigger scale up. Set to empty to disable.
+  targetMemoryUsage: 100
   # -- Stabilization window in seconds before scaling up.
   scaleUpWindow: 60
   # -- Stabilization window in seconds before scaling down.

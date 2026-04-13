@@ -60,7 +60,7 @@ autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 3
-  targetCpuUtilization: 80
+  targetCpuUsage: 80
 
 persistence:
   sharedWorkDir:
@@ -168,7 +168,8 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | autoscaling.minReplicas | int | `1` | Minimum number of replicas. |
 | autoscaling.scaleDownWindow | int | `300` | Stabilization window in seconds before scaling down. |
 | autoscaling.scaleUpWindow | int | `60` | Stabilization window in seconds before scaling up. |
-| autoscaling.targetCpuUtilization | int | `80` | Target average CPU utilization (%) across pods to trigger scale up. |
+| autoscaling.targetCpuUsage | int | `80` | Target average CPU utilization (%) across pods to trigger scale up. Set to empty to disable. |
+| autoscaling.targetMemoryUsage | int | `100` | Target average memory utilization (%) across pods to trigger scale up. Set to empty to disable. |
 | cleanupInterval | string | `"1h"` | Interval for cleaning up temporary files. |
 | env | list | `[]` | Additional environment variables. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
@@ -191,7 +192,7 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | redis.port | int | `6379` | Redis port. |
 | redis.resources | object | `{"limits":{"memory":"256Mi"}}` | Redis resource limits. |
 | replicaCount | int | `1` | Number of replicas. When > 1, Redis is automatically deployed and session affinity annotations are injected into the ingress. Ignored when autoscaling.enabled is true — the HPA controls replica count in that case. |
-| resources | object | `{"limits":{"memory":"4Gi"},"requests":{"memory":"2Gi"}}` | Resource requests and limits. |
+| resources | object | `{"limits":{"memory":"4Gi"},"requests":{"cpu":1,"memory":"2Gi"}}` | Resource requests and limits. |
 | securityContext | object | `{}` | Pod security context. Shared by Firefly and Redis. When not set, containers run as the default image user (e.g. tomcat(91)). |
 | service.port | int | `80` | Service port. |
 | service.sessionAffinity | string | `"ClientIP"` | Session affinity type. ClientIP is used as a fallback for non-ingress traffic. |
