@@ -1,5 +1,8 @@
 replicaCount: 1
 
+image:
+  pullPolicy: Always
+
 resources:
   requests:
     memory: 1Gi

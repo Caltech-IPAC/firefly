@@ -1,3 +1,4 @@
+{{- include "firefly.validate" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,7 +6,9 @@ metadata:
   labels:
     {{- include "firefly.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "firefly.selectorLabels" . | nindent 6 }}
@@ -49,7 +52,7 @@ spec:
             - name: ADMIN_PASSWORD
               value: {{ .Values.adminPassword.value | quote }}
             {{- end }}
-            {{- if gt (int .Values.replicaCount) 1 }}
+            {{- if include "firefly.multiReplica" . }}
             - name: PROPS_redis__host
               value: {{ include "firefly.redisName" . }}
             {{- end }}

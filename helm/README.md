@@ -7,81 +7,147 @@
 
 Helm chart for deploying [Firefly](https://github.com/Caltech-IPAC/firefly), a web application for astronomical data visualization.
 
-## Chart Structure
+## Quick Start
 
-```
-helm/
-├── Chart.yaml
-├── values.yaml         # defaults
-└── env/
-    ├── dev.yaml        # sample dev overrides
-    └── prod.yaml       # sample prod overrides
-```
+**Deploy Firefly with one command:**
 
-## Install
-
-**From GHCR:**
-
-Available versions:
-https://github.com/Caltech-IPAC/firefly/pkgs/container/helm-charts%2Ffirefly/versions
-
-Inspect a specific version:
-```bash
-helm show chart oci://ghcr.io/caltech-ipac/helm-charts/firefly --version <chart-version>
-```
-
-Install:
 ```bash
 helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
-  -n my-namespace \
+  -n firefly \
   --create-namespace \
-  --version <chart-version> \
-  -f env/dev.yaml \
-  --set ingress.host=my.example.com
+  --set ingress.host=firefly.example.com
 ```
-> Omit `--version` to use the latest published chart.
 
-**From local chart:**
-```bash
-helm upgrade --install firefly ./helm \
-  -n my-namespace \
-  --create-namespace \
-  -f env/dev.yaml \
-  --set ingress.host=my.example.com
-```
+Then open `http://firefly.example.com/firefly` in your browser.
+
+> For more scenarios see [Examples](#examples). For all available options see [Configuration](#configuration) and [Reference](#reference).
 
 **Uninstall:**
 ```bash
-helm -n my-namespace uninstall firefly
+helm -n firefly uninstall firefly
 ```
+
+## Examples
+
+### Pinned version with TLS
+
+Use a specific Firefly version and enable HTTPS via an existing TLS secret:
+
+```bash
+helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
+  -n firefly \
+  --create-namespace \
+  --set image.tag=2026.2.1 \
+  --set ingress.host=firefly.example.com \
+  --set ingress.tlsSecretName=firefly-tls
+```
+
+> See [`ingress`](#configuration) in Configuration for annotation and className options.
+
+---
+
+### Multi-replica with autoscaling
+
+Scale horizontally based on CPU. Redis and session affinity are automatically enabled when running more than one replica:
+
+```yaml
+# my-values.yaml
+ingress:
+  host: firefly.example.com
+  className: nginx
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCpuUtilization: 80
+
+persistence:
+  sharedWorkDir:
+    pvc:
+      size: 50Gi
+      storageClass: efs          # create an EFS-backed StorageClass for ReadWriteMany access
+      accessMode: ReadWriteMany
+```
+
+```bash
+helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
+  -n firefly \
+  --create-namespace \
+  -f my-values.yaml
+```
+
+> `sharedWorkDir` with `ReadWriteMany` is required in multi-replica mode. See [`autoscaling`](#reference) and [`redis`](#redis) in Reference for tuning options.
 
 ## Configuration
 
+### Ingress
+
+Ingress is enabled by default and exposes Firefly at `http(s)://<host>/firefly`. The path is always `/firefly`, optionally prefixed by `pathPrefix`:
+
+| `pathPrefix` | Resulting path |
+|---|---|
+| _(empty)_ | `/firefly` |
+| `myapp` | `/myapp/firefly` |
+
+**TLS** — set `tlsSecretName` to enable HTTPS. The secret must already exist in the same namespace:
+```yaml
+ingress:
+  host: firefly.example.com
+  tlsSecretName: firefly-tls
+```
+
+**Ingress class** — omit `className` to use the cluster default, or set it explicitly:
+```yaml
+ingress:
+  className: nginx   # nginx | traefik | haproxy | <any>
+```
+
+When `className` is set to `nginx`, `traefik`, or `haproxy` and running in multi-replica mode, cookie-based session affinity annotations are automatically injected. For other controllers, add the annotations manually via `ingress.annotations`.
+
+**Disable ingress** — set `ingress.enabled: false` to skip creating the Ingress resource entirely (e.g. when using a custom gateway or accessing the service directly).
+
 ### Session Affinity
-Session affinity is required when `replicaCount > 1`. If `ingress.className` is set,
-the appropriate cookie-based affinity annotations are automatically injected. Supported
-values: `nginx`, `traefik`, `haproxy`. For other ingress controllers, set the annotations
-manually via `ingress.annotations`.
+
+Session affinity is required for multi-replica deployments and is automatically enabled when `replicaCount > 1` or `autoscaling.enabled` is `true`.
+
+When `ingress.className` is set to `nginx`, `traefik`, or `haproxy`, the appropriate cookie-based affinity annotations are automatically injected into the ingress. For other ingress controllers, add the annotations manually via `ingress.annotations`.
 
 ### Persistence
-All volumes default to `emptyDir`. Each can be overridden with a new PVC or an existing one.
-The examples below are samples — actual values for `storageClass`, `size`, and `existingClaim`
-depend on your Kubernetes setup:
 
+There are three volumes, each defaulting to `emptyDir`:
+
+| Volume | Description | Default size | Default accessMode |
+|---|---|---|---|
+| `workDir` | Working/temp files | `50Gi` | `ReadWriteOnce` |
+| `logsDir` | Application logs | _(required)_ | `ReadWriteOnce` |
+| `sharedWorkDir` | Shared work across replicas | `50Gi` | `ReadWriteMany` |
+
+> `sharedWorkDir` must use `ReadWriteMany` and is required in multi-replica mode.
+
+Each volume can be configured in one of three ways:
+
+**emptyDir** (default) — data is lost when the pod restarts:
+```yaml
+persistence:
+  workDir: {}
+```
+
+**New PVC** — chart creates and manages the PVC (`storageClass` is optional, omit to use the cluster default):
 ```yaml
 persistence:
   workDir:
     pvc:
-      size: 10Gi
-      storageClass: standard
+      size: 50Gi
+      storageClass: gp3
       accessMode: ReadWriteOnce
+```
+
+**Existing PVC** — use a PVC you already created:
+```yaml
+persistence:
   logsDir:
     existingClaim: my-logs-pvc
-  sharedWorkDir:
-    pvc:
-      size: 10Gi
-      storageClass: efs
-      accessMode: ReadWriteMany  # required for multi-replica
 ```
 
 ### Redis
@@ -97,6 +163,12 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | adminPassword.secretKey | string | `""` | Key within the secret. |
 | adminPassword.secretName | string | `""` | Name of the Kubernetes secret containing the password. |
 | adminPassword.value | string | `""` | Plain text password. |
+| autoscaling.enabled | bool | `false` | Enable horizontal pod autoscaling. When enabled, Redis is automatically deployed and session affinity annotations are injected into the ingress. |
+| autoscaling.maxReplicas | int | `3` | Maximum number of replicas. |
+| autoscaling.minReplicas | int | `1` | Minimum number of replicas. |
+| autoscaling.scaleDownWindow | int | `300` | Stabilization window in seconds before scaling down. |
+| autoscaling.scaleUpWindow | int | `60` | Stabilization window in seconds before scaling up. |
+| autoscaling.targetCpuUtilization | int | `80` | Target average CPU utilization (%) across pods to trigger scale up. |
 | cleanupInterval | string | `"1h"` | Interval for cleaning up temporary files. |
 | env | list | `[]` | Additional environment variables. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
@@ -109,17 +181,17 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | ingress.pathPrefix | string | `""` | Optional path prefix prepended to the Firefly path: [/pathPrefix]/firefly. |
 | ingress.tlsSecretName | string | `""` | TLS secret name. When set, TLS is enabled for the ingress host. |
 | livenessProbe | object | `{"initialDelaySeconds":120,"periodSeconds":60,"timeoutSeconds":10}` | Liveness probe configuration. Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ |
-| persistence | object | `{"logsDir":{},"sharedWorkDir":{},"workDir":{}}` | Persistence volume configuration. Each volume defaults to emptyDir. To use a new PVC: set pvc.size, pvc.storageClass, pvc.accessMode. To use an existing PVC: set existingClaim. |
+| persistence | object | `{"logsDir":{},"sharedWorkDir":{},"workDir":{}}` | Persistence volume configuration. Each volume defaults to emptyDir. To use a new PVC: set pvc.storageClass(Required), pvc.size[=50Gi], pvc.accessMode[=ReadWriteMany]. To use an existing PVC: set existingClaim. |
 | persistence.logsDir | object | `{}` | Logs directory volume. |
-| persistence.sharedWorkDir | object | `{}` | Shared work directory volume. Use ReadWriteMany accessMode for multi-replica. |
+| persistence.sharedWorkDir | object | `{}` | Shared work directory volume. Required in multi-replica mode; must use ReadWriteMany accessMode. |
 | persistence.workDir | object | `{}` | Work directory volume. |
 | redis.image | string | `"redis:6.2"` | Redis image. |
 | redis.maxmemory | string | `"250M"` | Redis maxmemory limit. |
 | redis.persistence | object | `{}` | Redis persistence. Falls back to sharedWorkDir PVC if configured, otherwise emptyDir. |
 | redis.port | int | `6379` | Redis port. |
 | redis.resources | object | `{"limits":{"memory":"256Mi"}}` | Redis resource limits. |
-| replicaCount | int | `1` | Number of replicas. When > 1, Redis is automatically deployed and session affinity annotations are injected into the ingress. |
-| resources | object | `{"limits":{"memory":"512Mi"},"requests":{"memory":"256Mi"}}` | Resource requests and limits. |
+| replicaCount | int | `1` | Number of replicas. When > 1, Redis is automatically deployed and session affinity annotations are injected into the ingress. Ignored when autoscaling.enabled is true — the HPA controls replica count in that case. |
+| resources | object | `{"limits":{"memory":"4Gi"},"requests":{"memory":"2Gi"}}` | Resource requests and limits. |
 | securityContext | object | `{}` | Pod security context. Shared by Firefly and Redis. When not set, containers run as the default image user (e.g. tomcat(91)). |
 | service.port | int | `80` | Service port. |
 | service.sessionAffinity | string | `"ClientIP"` | Session affinity type. ClientIP is used as a fallback for non-ingress traffic. |

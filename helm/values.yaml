@@ -1,5 +1,6 @@
 # -- Number of replicas. When > 1, Redis is automatically deployed and
 # session affinity annotations are injected into the ingress.
+# Ignored when autoscaling.enabled is true — the HPA controls replica count in that case.
 replicaCount: 1
 
 # -- Interval for cleaning up temporary files.
@@ -48,9 +49,9 @@ livenessProbe:
 # -- Resource requests and limits.
 resources:
   requests:
-    memory: 256Mi
+    memory: 2Gi
   limits:
-    memory: 512Mi
+    memory: 4Gi
 
 # -- Additional environment variables.
 env: []
@@ -67,14 +68,14 @@ adminPassword:
   secretKey: ""
 
 # -- Persistence volume configuration. Each volume defaults to emptyDir.
-# To use a new PVC: set pvc.size, pvc.storageClass, pvc.accessMode.
+# To use a new PVC: set pvc.storageClass(Required), pvc.size[=50Gi], pvc.accessMode[=ReadWriteMany].
 # To use an existing PVC: set existingClaim.
 persistence:
   # -- Work directory volume.
   workDir: {}
   # -- Logs directory volume.
   logsDir: {}
-  # -- Shared work directory volume. Use ReadWriteMany accessMode for multi-replica.
+  # -- Shared work directory volume. Required in multi-replica mode; must use ReadWriteMany accessMode.
   sharedWorkDir: {}
 
 # -- Pod security context. Shared by Firefly and Redis. When not set, containers
@@ -94,6 +95,21 @@ redis:
       memory: 256Mi
   # -- Redis persistence. Falls back to sharedWorkDir PVC if configured, otherwise emptyDir.
   persistence: {}
+
+autoscaling:
+  # -- Enable horizontal pod autoscaling. When enabled, Redis is automatically deployed
+  # and session affinity annotations are injected into the ingress.
+  enabled: false
+  # -- Minimum number of replicas.
+  minReplicas: 1
+  # -- Maximum number of replicas.
+  maxReplicas: 3
+  # -- Target average CPU utilization (%) across pods to trigger scale up.
+  targetCpuUtilization: 80
+  # -- Stabilization window in seconds before scaling up.
+  scaleUpWindow: 60
+  # -- Stabilization window in seconds before scaling down.
+  scaleDownWindow: 300
 
 serviceAccount:
   # -- Create a service account.
