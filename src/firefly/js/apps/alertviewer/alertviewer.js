@@ -4,6 +4,7 @@ import {createRouter} from 'firefly/templates/router/RoutedApp.jsx';
 import {FormWatcher} from 'firefly/templates/router/RouteHelper';
 import {UploadPanel} from 'firefly/apps/alertviewer/AlertUploadPanel';
 import {AlertResultView} from 'firefly/apps/alertviewer/AlertResultView';
+import {getAlertViewerCommands} from 'firefly/api/webApiCommands/AlertViewerCommands';
 
 function getBasename() {
     const p = window.location.pathname || '';
@@ -45,7 +46,7 @@ export const alertviewer = {
         {label:'Alert', action: 'AlertUpload', primary: true, path:'/upload'},
         {label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
     ],
-    webApiCommands: {},
+    webApiCommands: getAlertViewerCommands(),
 };
 
 

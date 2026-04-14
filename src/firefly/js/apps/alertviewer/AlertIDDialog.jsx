@@ -57,7 +57,7 @@ function AlertIdPanel({currId, onChange}) {
                 <ValidationField
                     groupKey={GROUP_KEY}
                     fieldKey={ID_KEY}
-                    label='Enter Alert URL or ID'
+                    label='Enter Alert ID'
                     initialState={{value:''}}
                     onKeyPress={(ev, v) => {
                         if (ev.key === 'Enter') handleSuccess(v, onChange, true);

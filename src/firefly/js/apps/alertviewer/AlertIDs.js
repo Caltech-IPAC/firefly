@@ -1,6 +1,7 @@
 const MAX_ROW = Math.pow(2, 31) - 1;
 
 export const ALERT = {
+    STATE_ID: 'ALERT_VIEWER_STATE',
     TABLE_GROUP_MAIN: 'main',
     TABLE_GROUP_DETAILS: 'details',
 
