@@ -61,7 +61,7 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
 
         try {
             final String serviceUrl = makeAlertServiceUrl(source);
-            FileInfo fileInfo = LockingRetrieve.downloadWithCacheMsg(serviceUrl);
+            FileInfo fileInfo = LockingRetrieve.downloadWithCacheMsg(serviceUrl, ServerContext.getUploadDir());
             if (fileInfo == null) {
                 return makeError(source, "Unable to retrieve the FITS file for alert ID: " + source);
             }
