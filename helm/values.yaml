@@ -1,5 +1,6 @@
 # -- Number of replicas. When > 1, Redis is automatically deployed and
 # session affinity annotations are injected into the ingress.
+# Ignored when autoscaling.enabled is true — the HPA controls replica count in that case.
 replicaCount: 1
 
 # -- Interval for cleaning up temporary files.
@@ -18,8 +19,6 @@ service:
   type: ClusterIP
   # -- Service port.
   port: 80
-  # -- Container port.
-  targetPort: 8080
   # -- Session affinity type. ClientIP is used as a fallback for non-ingress traffic.
   sessionAffinity: ClientIP
   # -- Session affinity timeout in seconds.
@@ -43,10 +42,6 @@ ingress:
 
 # -- Liveness probe configuration. Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
-  # @ignored
-  httpGet:
-    path: firefly/healthz
-    port: 8080
   initialDelaySeconds: 120
   periodSeconds: 60
   timeoutSeconds: 10
@@ -54,12 +49,13 @@ livenessProbe:
 # -- Resource requests and limits.
 resources:
   requests:
-    memory: 256Mi
+    memory: 2Gi
+    cpu: 1
   limits:
-    memory: 512Mi
+    memory: 4Gi
 
 # -- Additional environment variables.
-extraEnv: []
+env: []
 #  - name: FOO
 #    value: bar
 
@@ -73,14 +69,14 @@ adminPassword:
   secretKey: ""
 
 # -- Persistence volume configuration. Each volume defaults to emptyDir.
-# To use a new PVC: set pvc.size, pvc.storageClass, pvc.accessMode.
+# To use a new PVC: set pvc.storageClass(Required), pvc.size[=50Gi], pvc.accessMode[=ReadWriteMany].
 # To use an existing PVC: set existingClaim.
 persistence:
   # -- Work directory volume.
   workDir: {}
   # -- Logs directory volume.
   logsDir: {}
-  # -- Shared work directory volume. Use ReadWriteMany accessMode for multi-replica.
+  # -- Shared work directory volume. Required in multi-replica mode; must use ReadWriteMany accessMode.
   sharedWorkDir: {}
 
 # -- Pod security context. Shared by Firefly and Redis. When not set, containers
@@ -100,6 +96,23 @@ redis:
       memory: 256Mi
   # -- Redis persistence. Falls back to sharedWorkDir PVC if configured, otherwise emptyDir.
   persistence: {}
+
+autoscaling:
+  # -- Enable horizontal pod autoscaling. When enabled, Redis is automatically deployed
+  # and session affinity annotations are injected into the ingress.
+  enabled: false
+  # -- Minimum number of replicas.
+  minReplicas: 1
+  # -- Maximum number of replicas.
+  maxReplicas: 3
+  # -- Target average CPU utilization (%) across pods to trigger scale up. Set to empty to disable.
+  targetCpuUsage: 80
+  # -- Target average memory utilization (%) across pods to trigger scale up. Set to empty to disable.
+  targetMemoryUsage: 100
+  # -- Stabilization window in seconds before scaling up.
+  scaleUpWindow: 60
+  # -- Stabilization window in seconds before scaling down.
+  scaleDownWindow: 300
 
 serviceAccount:
   # -- Create a service account.

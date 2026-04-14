@@ -10,7 +10,7 @@ spec:
     - {{ .Values.persistence.workDir.pvc.accessMode | default "ReadWriteOnce" }}
   resources:
     requests:
-      storage: {{ .Values.persistence.workDir.pvc.size }}
+      storage: {{ .Values.persistence.workDir.pvc.size | default "50Gi" }}
   {{- if .Values.persistence.workDir.pvc.storageClass }}
   storageClassName: {{ .Values.persistence.workDir.pvc.storageClass }}
   {{- end }}
@@ -46,7 +46,7 @@ spec:
     - {{ .Values.persistence.sharedWorkDir.pvc.accessMode | default "ReadWriteMany" }}
   resources:
     requests:
-      storage: {{ .Values.persistence.sharedWorkDir.pvc.size }}
+      storage: {{ .Values.persistence.sharedWorkDir.pvc.size | default "50Gi" }}
   {{- if .Values.persistence.sharedWorkDir.pvc.storageClass }}
   storageClassName: {{ .Values.persistence.sharedWorkDir.pvc.storageClass }}
   {{- end }}

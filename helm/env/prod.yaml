@@ -1,4 +1,5 @@
-replicaCount: 2
+autoscaling:
+  enabled: true
 
 resources:
   requests:
@@ -11,3 +12,8 @@ redis:
   resources:
     limits:
       memory: 512Mi
+
+persistence:
+  sharedWorkDir:
+    pvc:
+      storageClass: "efs"

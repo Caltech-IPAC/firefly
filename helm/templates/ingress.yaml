@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $affinityAnnotations := dict }}
-{{- if gt (int .Values.replicaCount) 1 }}
+{{- if include "firefly.multiReplica" . }}
   {{- if eq .Values.ingress.className "nginx" }}
     {{- $affinityAnnotations = dict
       "nginx.ingress.kubernetes.io/affinity" "cookie"
