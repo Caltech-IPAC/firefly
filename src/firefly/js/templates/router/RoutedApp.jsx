@@ -62,7 +62,8 @@ export  default function RoutedApp({slotProps, menu, mainPanel, children, dropdo
 
     useEffect(() => {
         startTTFeatureWatchers(getAllStartIds());
-        dispatchSetMenu({menuItems: menu});
+        const {backgroundMonitor = true} = props;
+        dispatchSetMenu({menuItems: menu, showBgMonitor: backgroundMonitor});
         dispatchOnAppReady(() => {
             dispatchNotifyRemoteAppReady();
         });
