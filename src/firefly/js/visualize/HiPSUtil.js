@@ -208,7 +208,7 @@ export function makeHiPSAllSkyUrl(urlRoot,exts,cubeIdx= 0, proxy= false) {
     return makeHipsUrl(`${root}Norder3/Allsky${cubeExt}.${getHiPSTileExt(exts)}`, proxy, true);
 }
 
-export function makeHiPSPropertiesUrl(urlRoot,proxy) {
+export function makeHiPSPropertiesUrl(urlRoot,proxy=true) {
     const root= urlRoot.endsWith('/') ? urlRoot : urlRoot+'/';
     return makeHipsUrl(`${root}properties`, proxy, false);
 }

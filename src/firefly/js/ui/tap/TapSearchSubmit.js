@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    ADQL_QUERY_KEY, getAsEntryForTableName, getServiceHiPS, getServiceId, getServiceLabel,
+    ADQL_QUERY_KEY, getTableNameAlias, getServiceHiPS, getServiceId, getServiceLabel,
     makeTapSearchTitle,
     maybeQuote, TAP_UPLOAD_SCHEMA,
     USER_ENTERED_TITLE
@@ -137,15 +137,15 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnCons
     }
 
     const helperFragment = getHelperConstraints(tapBrowserState);
-    const tableAsName = getAsEntryForTableName(tableName); // alias is used when upload table is present
+    const tNameAlias = getTableNameAlias(tableName); // alias is used when upload table is present
     const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel,
-        isUpload ? tableAsName : undefined);
+        isUpload ? tNameAlias : undefined);
 
-    const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns} = isUpload ?
+    const { table:uploadTable, uploadTableAlias, columns:uploadColumns} = isUpload ?
         getTapUploadSchemaEntry(tapBrowserState) : {};
 
     const fromTables= isUpload ?
-        `${tableName} AS ${tableAsName}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
+        `${tableName} AS ${tNameAlias}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadTableAlias ? 'AS '+uploadTableAlias : ''}` :
         tableName;
 
     // check for errors
@@ -159,9 +159,9 @@ export function getAdqlQuery(tapBrowserState, additionalClauses, allowColumnCons
     }
 
     // build columns
-    let selcols = tableCol.selcols || (isUpload ? `${tableAsName}.*` : '*');
+    let selcols = tableCol.selcols || (isUpload ? `${tNameAlias}.*` : '*');
     if (isUpload) {
-        const ut= uploadAsTable ?? uploadTable ?? '';
+        const ut= uploadTableAlias ?? uploadTable ?? '';
         const tCol= uploadColumns.filter(({use}) => use).map( ({name}) => ut+'.'+name);
         selcols+= tCol.length ? ',\n' + makeColsLines(tCol,true) : '';
     }

@@ -225,7 +225,6 @@ export function loadCancelableImage(src) {
     let imageCompleted= false;
     const promise= new Promise( (resolve, reject) => {
         promiseReject= reject;
-        im.src= src;
         im.onload= () => {
             imageCompleted= true;
             continueExecution && resolve(im);
@@ -234,6 +233,7 @@ export function loadCancelableImage(src) {
             imageCompleted= true;
             continueExecution && reject(ev);
         };
+        im.src= src;
     });
 
     const cancelImageLoad= () => {

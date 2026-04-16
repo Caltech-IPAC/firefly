@@ -239,8 +239,9 @@ function supportsWebGpu() {
         if (!foundGpu || !isVersionAtLeast(147)) return false;
         if (BrowserInfo.isPlatform(Platform.WINDOWS)) return true;
         if (BrowserInfo.isPlatform(Platform.MACOS)) {
-            return (isVersionAtLeast(149) && BrowserInfo.firefoxWebGpuEnabled);
-            // I think webgpu worked with ff 147. ff 148 enabled more webgpu features but seems to have bugs, We will wait for 149
+            return false;
+            //todo - when firefox fixes its bug then then the fix version should go below
+            //return (isVersionAtLeast(????160?????) && BrowserInfo.firefoxWebGpuEnabled);
         }
         return false;
     }

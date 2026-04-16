@@ -6,7 +6,7 @@ import {getCellValue, getColumn, getColumns, getColumnValues, getTblById, watchT
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchTableFilter, dispatchTableAddLocal, TABLE_LOADED, TABLE_REPLACE, TABLE_SELECT} from '../../tables/TablesCntlr.js';
 import {ColumnConstraintsPanel, getTableConstraints} from './ColumnConstraintsPanel.jsx';
-import {ADQL_LINE_LENGTH, maybeQuote} from './TapUtil.js';
+import {makeFullyQualifiedColumn, ADQL_LINE_LENGTH, maybeQuote} from './TapUtil.js';
 
 const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
@@ -242,6 +242,8 @@ export function tableColumnsConstraints(columnsModel,tableName) {
     const {whereFragment, selcolsArray, errors} = tableConstraints;
     if (errors) return {valid: false, message: errors};
 
-    const selcols= tableName ? makeColsLines(selcolsArray.map( (c) => `${tableName}.${c}`)) : makeColsLines(selcolsArray);
+    const selcols= tableName
+        ? makeColsLines(selcolsArray.map( (c) => makeFullyQualifiedColumn(tableName, c)))
+        : makeColsLines(selcolsArray);
     return {valid: true, where: whereFragment, selcols, selcolsArray};
 }

@@ -82,7 +82,7 @@ export function getDownloadTypeDesc(contentType) {
  * @param {ServiceDescriptorDef} sd
  * @return {boolean}
  */
-export const isDataLinkServiceDesc = (sd) => sd?.standardID?.includes(standardIDs.datalink);
+export const isDataLinkServiceDesc = (sd) => Boolean(sd?.standardID?.includes(standardIDs.datalink));
 
 /**
  * return true if there are service descriptor blocks in this table, false otherwise

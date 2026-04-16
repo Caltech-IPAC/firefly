@@ -197,8 +197,8 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                 let insertTname= tname;
                 if (upload) {
                     insertTname= TAP_UPLOAD_SCHEMA+'.'+tname;
-                    const asTable= Object.values(uploadSchema).find( (o) => o.table===tname)?.asTable;
-                    if (asTable) insertTname+= ' AS '+asTable;
+                    const uploadTableAlias= Object.values(uploadSchema).find( (o) => o.table===tname)?.uploadTableAlias;
+                    if (uploadTableAlias) insertTname+= ' AS '+uploadTableAlias;
                 }
                 setVal(adqlKey, `SELECT TOP 1000 * FROM ${maybeQuote(insertTname,true)}`);
                 window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
@@ -484,7 +484,7 @@ function expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventK
         const schemaEntry=uploadSchema[tableKey];
         if (!schemaEntry) return Promise.resolve();
         const cols= schemaEntry.columns
-            .map( ({name}) => ( {key:makeColKey(key,schemaEntry.asTable?? schemaEntry.table,name),c: name, title:name, isLeaf:true}));
+            .map( ({name}) => ( {key:makeColKey(key,schemaEntry.uploadTableAlias?? schemaEntry.table,name),c: name, title:name, isLeaf:true}));
         addChildNodes(treeData, eventKey, cols);
         setTreeData(cloneDeep(treeData));
         return Promise.resolve();

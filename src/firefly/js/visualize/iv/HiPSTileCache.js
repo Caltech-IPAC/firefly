@@ -108,7 +108,7 @@ export function addTileCachedImage(url, image, colorTableId,bias,contrast) {
     const key= makeKey(url,colorTableId,bias,contrast);
     try {
         if (cacheImage.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
-            cachedImages.remove(key); // remove any previous version of this tile
+            cachedImages.delete(key); // remove any previous version of this tile
             return; // if any pixel is fully transparent, then something is wrong with the tile, don't cache
         }
     } catch (e) { // probably getImageData failed. This can happen in some CORS environments

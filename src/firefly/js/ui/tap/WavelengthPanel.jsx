@@ -13,7 +13,7 @@ import {
     makeFieldErrorList,
     makePanelStatusUpdater, SpatialWidth,
 } from './TableSearchHelpers.jsx';
-import {tapHelpId} from './TapUtil.js';
+import {getTableNameAlias, makeFullyQualifiedColumn, tapHelpId} from './TapUtil.js';
 import {
     BASE_UNIT,
     convertWvlUnits,
@@ -35,7 +35,7 @@ const obsCoreWvlFieldKeys = {
     wvlMax: 'obsCoreWavelengthMaxRange',
 };
 
-function makeWavelengthConstraints(filterDefinitions, fldObj) {
+function makeWavelengthConstraints(filterDefinitions, fldObj, doingUpload, tableName) {
     const errList= makeFieldErrorList();
     const siaConstraints= [];
     const adqlConstraintsAry = [];
@@ -46,6 +46,9 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
 
 
     // pull out the fields we care about
+    const preFix= doingUpload ? getTableNameAlias(tableName) : '';
+    const emMinCol= makeFullyQualifiedColumn(preFix,'em_min');
+    const emMaxCol= makeFullyQualifiedColumn(preFix,'em_max');
     if (wavelengthSelection?.value === 'filter') {
         const rangeList = [];
         filterDefinitions.forEach((filterDefinition) => {
@@ -65,7 +68,7 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             }
         });
         if (rangeList.length) {
-            adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
+            adqlConstraintsAry.push(makeAdqlQueryRangeFragment(emMinCol, emMaxCol, rangeList, true));
             siaConstraints.push(...siaQueryRange('BAND', rangeList));
         } else {
             // Need at least one field to be non-empty
@@ -79,7 +82,7 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
                 const rangeBound = convertWvlUnits(wlContains.value, BASE_UNIT, 'm');
                 if (rangeBound) {
                     const rangeList = [[rangeBound, rangeBound]];
-                    adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
+                    adqlConstraintsAry.push(makeAdqlQueryRangeFragment(emMinCol, emMaxCol, rangeList, true));
                     siaConstraints.push(...siaQueryRange('BAND', rangeList));
                 }
                 else {
@@ -96,7 +99,7 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
                 const lowerValue = convertWvlUnits(wlMinRange?.value, BASE_UNIT, 'm') || '-Inf';
                 const upperValue = convertWvlUnits(wlMaxRange?.value, BASE_UNIT, 'm') || 'Inf';
                 const rangeList = [[lowerValue, upperValue]];
-                adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList));
+                adqlConstraintsAry.push(makeAdqlQueryRangeFragment(emMinCol, emMaxCol, rangeList, false));
                 siaConstraints.push(...siaQueryRange('BAND', rangeList));
             } else {
                 errList.addError('at least one field must be populated');
@@ -252,13 +255,13 @@ WavelengthOptions.propTypes = {
 };
 
 
-export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIAv2 }) {
+export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIAv2, tableName }) {
     const filterDefinitions = getDataServiceOption('filterDefinitions', serviceId, []);
     const fdDefsKeys = filterDefinitions.length ? filterDefinitions.map((fd) => 'filter' + fd.name) : [];
     const fldKeys = Object.values(obsCoreWvlFieldKeys);
 
     const { makeFldObj } = useContext(FieldGroupCtx);
-    const { setConstraintFragment } = useContext(ConstraintContext);
+    const { setConstraintFragment, doingUpload= false } = useContext(ConstraintContext);
     const [constraintResult, setConstraintResult] = useState({});
     useFieldGroupRerender([...fldKeys, ...fdDefsKeys, ...collapsibleCheckHeaderKeys]); // force rerender on any change
 
@@ -266,7 +269,7 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
 
     useEffect(() => {
         const fldObj = makeFldObj([...fdDefsKeys, ...fldKeys]);
-        const constraints = makeWavelengthConstraints(filterDefinitions, fldObj);
+        const constraints = makeWavelengthConstraints(filterDefinitions, fldObj, doingUpload, tableName );
         updatePanelStatus(constraints, constraintResult, setConstraintResult, useSIAv2);
     });
 
@@ -305,6 +308,7 @@ ObsCoreWavelengthSearch.propTypes = {
     initArgs: PropTypes.object,
     serviceId: PropTypes.string,
     useSIAv2: PropTypes.bool,
+    tableName: PropTypes.string,
     slotProps: PropTypes.shape({
         root: PropTypes.object,
         wavelengthOptions: PropTypes.shape({...omit(WavelengthOptions.propTypes, ['fieldKeys'])})
