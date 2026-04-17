@@ -18,7 +18,7 @@ import {logger} from '../../util/Logger';
 import * as TblUtil from 'firefly/tables/TableUtil';
 import {copyRequestOptions, getRequestFromJob, getTblId, makeFileRequest} from 'firefly/tables/TableRequestUtil';
 import {dispatchTableRemove, dispatchTableSearch, dispatchTableUpdate} from 'firefly/tables/TablesCntlr';
-import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
+import WebPlotRequest, {TitleOptions} from 'firefly/visualize/WebPlotRequest';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {dispatchPlotImage} from 'firefly/visualize/ImagePlotCntlr';
 import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
@@ -368,10 +368,17 @@ export function loadMixedResult({jobInfo, href}) {
     loadImageResult({jobInfo, href});      // placeholder for mixed content loader to be implemented later
 }
 
-export function loadImageResult({jobInfo, href}) {
+export function loadImageResult({jobInfo, request, href}) {
     const wpRequest = WebPlotRequest.makeURIPlotRequest(href);
     const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
     wpRequest.setPlotGroupId(viewerId);
+
+    const requestTitle = request?.META_INFO?.title;
+    if (requestTitle) {
+        wpRequest.setTitleOptions(TitleOptions.NONE);
+        wpRequest.setTitle(requestTitle);
+    }
+
     const plotId = `${href.replace('.', '_')}-${jobInfo.jobId}`;
     dispatchPlotImage({plotId, wpRequest, viewerId});
     handleLayoutChanges(jobInfo);
