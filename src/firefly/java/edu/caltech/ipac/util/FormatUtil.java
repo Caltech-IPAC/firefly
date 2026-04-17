@@ -238,7 +238,7 @@ public class FormatUtil {
             case "application/gzip", "application/x-gzip" -> GZIP;
             case "application/java-archive" -> JAR;
             case "application/x-tar", "application/tar" -> TAR;
-            case "application/html" -> HTML;            // some text file with HTML comments will appear as text/html.  to avoid false positive, we will not accept text/html.
+            case "application/html", "text/html" -> HTML;
             case "application/json", "text/json" -> JSON;
             default -> null;
         };

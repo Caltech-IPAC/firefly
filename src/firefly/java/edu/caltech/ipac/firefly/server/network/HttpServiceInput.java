@@ -4,7 +4,6 @@
 
 package edu.caltech.ipac.firefly.server.network;
 
-import com.google.common.net.HttpHeaders;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -52,8 +51,8 @@ public class HttpServiceInput implements Cloneable, Serializable {
      */
     public HttpServiceInput(String requestUrl) {
         // set default headers
-        setHeader(HttpHeaders.USER_AGENT, VersionUtil.getUserAgentString());
-        setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+        setHeader("User-Agent", VersionUtil.getUserAgentString());
+        setHeader("Accept-Encoding", "gzip");
         setRequestUrl(requestUrl);
     }
 
@@ -172,7 +171,7 @@ public class HttpServiceInput implements Cloneable, Serializable {
         Map<String, String> hdrs = headers == null ? new Hashtable<>() : new Hashtable<>(headers);
         String cookieStr = getCookieString();
         if (!isEmpty(cookieStr)) {
-            hdrs.put(HttpHeaders.COOKIE, cookieStr);
+            hdrs.put("Cookie", cookieStr);
         }
         return hdrs;
     }

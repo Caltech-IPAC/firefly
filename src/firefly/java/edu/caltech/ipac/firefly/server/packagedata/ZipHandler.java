@@ -24,7 +24,7 @@ import java.util.zip.ZipOutputStream;
 
 import static edu.caltech.ipac.util.download.URLDownload.getFileNameFromUrl;
 import static java.util.Optional.ofNullable;
-import static org.reflections.util.Utils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * @author tatianag
