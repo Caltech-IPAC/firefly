@@ -206,16 +206,16 @@ public class FormatUtilTest extends ConfigTest {
     @Test
     public void mimeType() {
         File tfile = FileLoader.resolveFile("FileUpload-samples/VOTable/binary/binary_gaia.xml");
-        assertEquals(tfile.getName(), "text/xml", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), "application/xml", FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("FileUpload-samples/VOTable/fits/starlinkVOfits.xml");
-        assertEquals(tfile.getName(), "text/xml", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), "application/xml", FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/firefly/server/query/ptf-lc.tbl");
-        assertEquals(tfile.getName(), "text/plain", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), "application/x-unknown", FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("stripe82-testfits/calexp-i-0-366,0.fits.gz");
         String mtype = FormatUtil.getMimeType(tfile).mime();
-        assertEquals(tfile.getName(), "application/gzip", mtype);
+        assertEquals(tfile.getName(), "application/x-gzip", mtype);
     }
 }

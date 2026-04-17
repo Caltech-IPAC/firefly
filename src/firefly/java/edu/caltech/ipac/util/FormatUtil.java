@@ -7,7 +7,6 @@
  ****************************************************************************/
 package edu.caltech.ipac.util;
 
-import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import nom.tam.fits.Fits;
@@ -32,6 +31,77 @@ import static edu.caltech.ipac.util.FormatUtil.Format.*;
 public class FormatUtil {
     private static final int SAMPLE_SIZE = (int) (8 * FileUtil.K);
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+
+    /**
+     * Detects the MIME type of file using magic-byte inspection of the file header,
+     * falling back to OS-level and extension-based guessing for unrecognized types.
+     * This is platform-independent for all binary formats handled here; text-based
+     * formats (FITS text headers, VOTable, IPAC table, etc.) are handled downstream
+     * by {@link FormatUtil#detect}.
+     */
+    @Nonnull
+    public static MimeDesc getMimeType(String inFile) {
+        try {
+            // Read enough bytes to cover all magic signatures (TAR magic is at offset 257)
+            byte[] hdr = new byte[264];
+            try (var fis = new java.io.FileInputStream(inFile)) {
+                fis.read(hdr);
+            }
+
+            // Parquet: PAR1 at offset 0
+            if (magic(hdr, 0, 'P','A','R','1'))
+                return new MimeDesc("application/vnd.apache.parquet", "Parquet data file");
+            // PNG: \x89PNG\r\n\x1a\n
+            if (magic(hdr, 0, 0x89,'P','N','G','\r','\n',0x1a,'\n'))
+                return new MimeDesc("image/png", "PNG image");
+            // JPEG: FF D8 FF
+            if (magic(hdr, 0, 0xFF,0xD8,0xFF))
+                return new MimeDesc("image/jpeg", "JPEG image");
+            // PDF: %PDF
+            if (magic(hdr, 0, '%','P','D','F'))
+                return new MimeDesc("application/pdf", "PDF document");
+            // GZIP: 1F 8B
+            if (magic(hdr, 0, 0x1F,0x8B))
+                return new MimeDesc("application/x-gzip", "gzip compressed data");
+            // BZIP2: BZh
+            if (magic(hdr, 0, 'B','Z','h'))
+                return new MimeDesc("application/x-bzip2", "bzip2 compressed data");
+            // ZIP / JAR: PK\x03\x04
+            if (magic(hdr, 0, 'P','K',0x03,0x04)) {
+                String name = inFile.toLowerCase();
+                if (name.endsWith(".jar")) return new MimeDesc("application/java-archive", "Java archive");
+                return new MimeDesc("application/zip", "Zip archive");
+            }
+            // TAR (ustar): "ustar" at offset 257
+            if (magic(hdr, 257, 'u','s','t','a','r'))
+                return new MimeDesc("application/x-tar", "POSIX tar archive");
+            // Binary FITS: header block starts with "SIMPLE  ="
+            if (magic(hdr, 0, 'S','I','M','P','L','E',' ',' ','='))
+                return new MimeDesc("image/fits", "FITS image data");
+
+        } catch (Exception ex) {
+            Logger.getLogger().error(ex, "Failed to read header for mime detection: " + inFile);
+        }
+
+        // Fall back to OS content probing and extension-based guess for text formats
+        try {
+            String mime = java.nio.file.Files.probeContentType(java.nio.file.Path.of(inFile));
+            if (mime == null) mime = java.net.URLConnection.guessContentTypeFromName(inFile);
+            if (mime != null) return new MimeDesc(mime, mime);
+        } catch (Exception ex) {
+            Logger.getLogger().error(ex, "Failed to detect mime type for: " + inFile);
+        }
+        return new MimeDesc("application/x-unknown", "unknown");
+    }
+
+    /** Returns true when {@code data[offset..]} starts with the given byte values. */
+    private static boolean magic(byte[] data, int offset, int... expected) {
+        if (data.length < offset + expected.length) return false;
+        for (int i = 0; i < expected.length; i++) {
+            if ((data[offset + i] & 0xFF) != (expected[i] & 0xFF)) return false;
+        }
+        return true;
+    }
 
     public enum Format {
         TSV("tsv", ".tsv"),
@@ -78,8 +148,8 @@ public class FormatUtil {
      * @param inFile input file to detect
      * @return A String representing the MIME type of the file, or "application/x-unknown" otherwise
      */
-    public static DuckDbAdapter.MimeDesc getMimeType(File inFile) {
-        return DuckDbAdapter.getMimeType(inFile.getAbsolutePath());
+    public static MimeDesc getMimeType(File inFile) {
+        return getMimeType(inFile.getAbsolutePath());
     }
 
     /**
@@ -93,7 +163,7 @@ public class FormatUtil {
     public static Format detect(File inFile) throws IOException {
 
         Format format = null;
-        DuckDbAdapter.MimeDesc mimeDesc = DuckDbAdapter.getMimeType(inFile.getAbsolutePath());
+        MimeDesc mimeDesc = getMimeType(inFile.getAbsolutePath());
         String mime = mimeDesc.mime();
         format = mapToFormat(mimeDesc.mime(), mimeDesc.desc());
         LOGGER.trace("detectFormat: " + inFile, "mime-type: " + mime, "description: " + mimeDesc.desc());
@@ -121,17 +191,14 @@ public class FormatUtil {
         }
 
         // all failed; fallback to trial and error
-        if ( mime.startsWith("text/") && !FileUtil.getExtension(inFile).equalsIgnoreCase("html")) {     // including "text/xml"
-            // if text file, we'll test it against ipactable, region, csv, and tsv
-            if (isIpacTable(inFile)) {
-                format = IPACTABLE;
-            } else if (isRegionFile(inFile)) {
-                format = REGION;
-            } else {
-                // check for csv or tsv
-                Format dformat = DuckDbReadable.Csv.detect(inFile.getAbsolutePath());
-                if (dformat != null) format = dformat;
-            }
+        if (isIpacTable(inFile)) {
+            format = IPACTABLE;
+        } else if (isRegionFile(inFile)) {
+            format = REGION;
+        } else {
+            // check for csv or tsv
+            Format dformat = DuckDbReadable.Csv.detect(inFile.getAbsolutePath());
+            if (dformat != null) format = dformat;
         }
 
         if (format == null && mimeDesc.mime().equals("text/html"))  format = HTML;      // allow text/html here if all failed.
@@ -235,5 +302,6 @@ public class FormatUtil {
         return isUws && line.matches("<(.+:)?job .*");
     }
 
+    public record MimeDesc(String mime, String desc) {}
 }
 

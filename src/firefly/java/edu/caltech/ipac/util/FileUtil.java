@@ -811,7 +811,30 @@ public class FileUtil
         }
     }
 
-
+    /**
+     * Parses a memory size string such as "500M", "2G", "1024K", or a plain byte count
+     * into a byte count.  Suffix is case-insensitive: G/GB, M/MB, K/KB.
+     */
+    public static long parseMemoryBytes(String sizeStr) {
+        if (sizeStr == null || sizeStr.isBlank()) return -1;
+        String s = sizeStr.trim();
+        // strip optional trailing 'B' from "MB", "GB", "KB"
+        if (s.length() > 1 && Character.toUpperCase(s.charAt(s.length() - 1)) == 'B'
+                && Character.isLetter(s.charAt(s.length() - 2))) {
+            s = s.substring(0, s.length() - 1);
+        }
+        char unit = Character.toUpperCase(s.charAt(s.length() - 1));
+        if (Character.isLetter(unit)) {
+            long num = Long.parseLong(s.substring(0, s.length() - 1).trim());
+            return switch (unit) {
+                case 'G' -> num * 1024L * 1024 * 1024;
+                case 'M' -> num * 1024L * 1024;
+                case 'K' -> num * 1024L;
+                default  -> num;
+            };
+        }
+        return Long.parseLong(s);
+    }
 
     public static String getSizeAsString(long size) { return getSizeAsString(size,false, false); }
     public static String getSizeAsString(long size,boolean truncate) { return getSizeAsString(size,truncate, false); }

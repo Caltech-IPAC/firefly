@@ -36,6 +36,7 @@ dependencies {
 
     // log4j
     implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
 
     // nom tam fits
     implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.21.2'
@@ -50,7 +51,7 @@ dependencies {
     implementation 'io.lettuce:lettuce-core:7.0.0.RELEASE'
 
     // ehcache
-    implementation ('net.sf.ehcache:ehcache:2.10.9.2')
+    implementation ('org.ehcache:ehcache:3.11.0')
 
     // java mail
     implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
@@ -99,10 +100,10 @@ dependencies {
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.33.11'
 
     // jackson serialization support, including msgpack
-    implementation "org.msgpack:jackson-dataformat-msgpack:0.9.8"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.2"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.17.2"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2"
+    implementation "org.msgpack:jackson-dataformat-msgpack:0.9.11"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.21.2"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.21"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2"
 
     // asdf
     implementation 'org.asdf-format:asdf-core:0.1-alpha-9'
