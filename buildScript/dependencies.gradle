@@ -35,15 +35,15 @@ dependencies {
     implementation 'commons-io:commons-io:2.4', 'commons-lang:commons-lang:2.2', 'org.apache.commons:commons-csv:1.0', 'org.apache.commons:commons-compress:1.28.0'
 
     // log4j
-    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
-    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.25.4'
 
     // nom tam fits
     implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.21.2'
 
     // openidconnect
     implementation ('net.minidev:json-smart:2.4.9')
-    implementation ('com.nimbusds:nimbus-jose-jwt:9.37.2') { transitive = false }
+    implementation ('com.nimbusds:nimbus-jose-jwt:9.37.4') { transitive = false }
 
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') { transitive = false }
 
@@ -54,7 +54,7 @@ dependencies {
     implementation ('org.ehcache:ehcache:3.11.0')
 
     // java mail
-    implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
+    implementation 'org.eclipse.angus:jakarta.mail:2.0.4'
 
     // xstream
     implementation ('com.thoughtworks.xstream:xstream:1.4.21')
@@ -72,7 +72,7 @@ dependencies {
     implementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
 
     // FileUpload Jakarta fork for servlet api 6.0+
-    implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
+    implementation 'org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M5'
 
     // spring jdbc
     implementation ('org.springframework:spring-jdbc:2.5.6.SEC03')
@@ -97,7 +97,7 @@ dependencies {
     implementation 'com.github.codemonstur:embedded-redis:1.4.3'
 
     // amazon s3 support
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.33.11'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.42.35'
 
     // jackson serialization support, including msgpack
     implementation "org.msgpack:jackson-dataformat-msgpack:0.9.11"
