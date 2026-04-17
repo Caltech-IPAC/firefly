@@ -23,7 +23,8 @@ import {getTableUiById, getTableUiByTblId, getTblIdsByGroup} from '../TableUtil.
 const logger = Logger('Tables').tag('TablesContainer');
 
 export function TablesContainer(props) {
-    const {mode='both', closeable=true, tableOptions, style, expandedMode:xMode=false} = props;
+    const {mode='both', closeable=true, tableOptions, style, expandedMode:xMode=false,
+        forceSingleTableAsTab=false} = props;
     const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
     const tbl_group = expandedMode && mode !== 'standard' ? TblUtil.getTblExpandedInfo().tbl_group : props.tbl_group;
 
@@ -38,9 +39,11 @@ export function TablesContainer(props) {
     logger.debug('render... tbl_group: ' + tbl_group);
 
     if (expandedMode) {
-        return <ExpandedView {...{active, tables, tableOptions, expandedMode, closeable, tbl_group}} />;
+        return <ExpandedView {...{active, tables, tableOptions, expandedMode, closeable, tbl_group, forceSingleTableAsTab}} />;
     } else {
-        return isEmpty(tables) ? <div/> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
+        return isEmpty(tables)
+            ? <div/>
+            : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, forceSingleTableAsTab, style}} />;
     }
 }
 
@@ -50,6 +53,7 @@ TablesContainer.propTypes = {
     tbl_group: PropTypes.string,
     style: PropTypes.object,
     tableOptions: PropTypes.object,
+    forceSingleTableAsTab: PropTypes.bool,
     mode: PropTypes.oneOf(['expanded', 'standard', 'both'])
 };
 
@@ -76,13 +80,13 @@ function ExpandedView(props) {
 
 
 function StandardView(props) {
-    const {tables, tableOptions, expandedMode, active, tbl_group, style={}} = props;
+    const {tables, tableOptions, expandedMode, active, tbl_group, forceSingleTableAsTab, style={}} = props;
 
     const onTabSelect = (tbl_id) => {
         tbl_id && dispatchActiveTableChanged(tbl_id, tbl_group);
     };
     const keys = Object.keys(tables);
-    if (keys.length === 1) {
+    if (keys.length === 1 && !forceSingleTableAsTab) {
         return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode} tableOptions={tableOptions}/>;
     } else {
         const uid = hashCode(keys.join());
