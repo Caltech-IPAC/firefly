@@ -3,7 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
-import {bool, number, string, func} from 'prop-types';
+import {bool, number, string, func, elementType} from 'prop-types';
 import {isEmpty} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {
@@ -13,7 +13,7 @@ import {
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import {getPlotViewById} from '../PlotViewUtil.js';
+import {getPlotViewById, getPlotViewProxyById} from '../PlotViewUtil.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {getActivePlotView} from '../PlotViewUtil';
 
@@ -102,7 +102,9 @@ export class MultiImageViewer extends PureComponent {//todo: turn this into a fu
             if (!gridDefFunc) return false;
             if (isEmpty(gridDefFunc([]))) return false; // it is possible the function will return some messages
         }
-        if (!viewer?.itemIdAry.find( (id) => getPlotViewById(visRoot,id))) return false; //make sure a least one id has a PlotView
+        if (!viewer?.itemIdAry.find( (id) => getPlotViewById(visRoot,id) || getPlotViewProxyById(visRoot,id))) {
+            return false;
+        } //make sure a least one id has a PlotView
         return (
             <MultiImageViewerView {...{
                 ...this.props, handleToolbar, visRoot, dlAry,
@@ -121,6 +123,7 @@ MultiImageViewer.propTypes= {
     canReceiveNewPlots : string,
     Toolbar : func,
     Legend : func,
+    PlotViewProxy: elementType,
     handleToolbar : bool,
     forceRowSize : number,
     forceColSize : number,

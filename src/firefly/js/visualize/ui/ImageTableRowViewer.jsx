@@ -243,7 +243,7 @@ function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, 
                             ? <Box sx={{display: 'inline-block', position: 'absolute', top: 0, width: 1, height: 1}}>
                                 {makeItemViewer(makePlotId(viewerId,i))}
                             </Box>
-                            : <ImageViewerPlaceHolder plotId={makePlotId(viewerId,i)}/>
+                            : <ImageViewerPlaceHolder plotId={makePlotId(viewerId,i)} fromWorkingTask={true}/>
                         }
                     </div>
                 ))}

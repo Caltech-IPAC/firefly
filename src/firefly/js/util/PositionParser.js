@@ -111,146 +111,170 @@ export function parsePosition(s) {
 
 
 function parseAndConvertToMeta(text) {
+    //1. convert string to Ra&DEC&{CoordSys} format
+    let result;
+    if (text.indexOf(',')>-1) {
+        result= parseCommaSeparated(text);
+    }
+    else {
+        // Ra DEC {coordSys} case (no comma)
+        const useNumeric= text.split(/\s+/).some( (token) => !isNaN(token));
+        result= useNumeric ? parseNumericTokens(text) : parseAlphaNumericTokens(text);
+    }
+    const {raStr, decStr, csysStr} = result;
+    return {raStr:raStr.trim(), decStr:decStr.trim(), csysStr:getvalidCoordSys(csysStr) || DEFAULT_COORD_SYS};
+}
+
+function parseCommaSeparated(text) {
     const numericList = [];
     const alphabetList = [];
-    let idx;
-
-    //1. convert string to Ra&DEC&{CoordSys} format
-    let ra='';
-    let dec='';
-    let coordSys='';
-    let i;
-    let item;
-
-    if (text.indexOf(',')>-1) {
-        // Ra, DEC {Coord-Sys} case
-        const values = text.split(',');
-        ra = values[0];
-        if (values.length>1) {
-            var aVal= values[1].split(/[ ]|[,]/);
-            for (i=0; (i<aVal.length); i++) {
-                item= aVal[i];
-                if (item.length>0) {
-                    if (isNaN(item)) {
-                        alphabetList.push(item);
-                    } else {
-                        numericList.push(item);
-                    }
-                }
-            }
-            if (numericList.length>0) {
-                for (i=0; (i<numericList.length); i++) {
-                    dec += (numericList[i] + ' ');
-                }
-                for (i=0; (i<alphabetList.length); i++) {
-                    coordSys += (alphabetList[i]+' ');
-                }
-            } else {
-                if (alphabetList.length===1) {
-                    dec = alphabetList[0];
-                    coordSys = DEFAULT_COORD_SYS;
-                } else if (alphabetList.length>1){
-                    for (i=0; (i<alphabetList.length); i++) {
-                        if (i) {
-                            coordSys +=(alphabetList[i]+' ');
-                        }
-                        else {
-                            dec = alphabetList[i];
-                        }
-                    }
-                }
-
-            }
-        }
-    } else {
-        // Ra DEC {coordSys} case (no comma)
-        const tokenAry= text.split(' ');
-        let token;
-        for (i=0; (i<tokenAry.length); i++) {
-            token= tokenAry[i];
-            if (token.length>0) {
-                if (isNaN(token)) {
-                    alphabetList.push(token);
+    // Ra, DEC {Coord-Sys} case
+    const values = text.split(',').filter(Boolean);
+    const raStr = values[0];
+    let decStr = '';
+    let csysStr = '';
+    if (values.length > 1) {
+        const aVal = values[1].split(/[ ]|[,]/);
+        for (let i = 0; (i < aVal.length); i++) {
+            const item = aVal[i];
+            if (item.length > 0) {
+                if (isNaN(item)) {
+                    alphabetList.push(item);
                 } else {
-                    numericList.push(token);
+                    numericList.push(item);
                 }
             }
         }
-        if (numericList.length>0) {
-            //so we have more than one numeric strings, divide numeric strings
-            //list in half, first half = ra, second half = dec.
-            if (numericList.length===2) {
-                ra = numericList[0];
-                dec = numericList[1];
-
-            } else if (numericList.length>2) {
-                idx=0;
-                for (i=0; (i<numericList.length); i++) {
-                    item= numericList[i];
-                    if ((idx++)*2<numericList.length) {
-                        ra += (item + ' ');
-                    } else {
-                        dec += (item + ' ');
-                    }
-                }
-            } else if (numericList.length===1) {
-                ra= tokenAry[0];
-                if (tokenAry.length>1) {
-                    dec= tokenAry[1];
-                }
+        if (numericList.length > 0) {
+            for (let i = 0; (i < numericList.length); i++) {
+                decStr += (numericList[i] + ' ');
             }
-
-            if (tokenAry.length>=3) {
-                for (i=0; (i<alphabetList.length); i++) {
-                    coordSys += (alphabetList[i]+' ');
-                }
+            for (let i = 0; (i < alphabetList.length); i++) {
+                csysStr += (alphabetList[i] + ' ');
             }
+            if (!csysStr && values.length===3) csysStr= values[2];
         } else {
-            // Ra and DEC are non-numeric strings
-            if (alphabetList.length>0) {
-                idx =0;
-                ra = '';
-                dec = '';
-                coordSys = '';
-                let array;
-                for (i=0; (i<alphabetList.length); i++) {
-                    item= alphabetList[i];
-                    if (idx===0) {
-                        if (item.indexOf('+')>0) {
-                            // 0042443+411608 case
-                            array = item.split('+');
-                            ra = array[0];
-                            dec = array[1];
-                            if (!isNaN(ra)) ra = convertRa(ra);
-                            if (!isNaN(dec)) dec = convertDEC(dec);
-                        } else if (item.indexOf('-')>0) {
-                            // 0042443-411608 case
-                            array = item.split('-');
-                            ra = array[0];
-                            dec = '-'+array[1];
-                            if (!isNaN(ra)) ra = convertRa(ra);
-                            if (!isNaN(dec)) dec = convertDEC(dec);
-                        } else {
-                            ra = item;
-                        }
+            if (alphabetList.length === 1) {
+                decStr = alphabetList[0];
+                csysStr = values.length===3 ? values[2] : DEFAULT_COORD_SYS;
+            } else if (alphabetList.length > 1) {
+                for (let i = 0; (i < alphabetList.length); i++) {
+                    if (i) {
+                        csysStr += (alphabetList[i] + ' ');
                     } else {
-                        if (dec.length===0) {
-                            dec = item;
-                        }
-                        else {
-                            coordSys += (item+' ');
-                        }
+                        decStr = alphabetList[i];
                     }
-                    idx++;
                 }
+                if (!csysStr && values.length===3) csysStr= values[2];
             }
         }
     }
-    coordSys = getvalidCoordSys(coordSys);
-    if (coordSys.length===0) coordSys = DEFAULT_COORD_SYS;
-    return {raStr:ra.trim(), decStr:dec.trim(), csysStr:coordSys};
+    return {raStr, decStr, csysStr};
 }
 
+function parseNumericTokens(text) {
+    const tokenAry= text.split(/\s+/);
+    const numericList=[];
+    const alphabetList=[];
+
+    text.split(/\s+/).forEach( (token) => {
+        if (!token.length) return;
+        if (isNaN(token)) alphabetList.push(token);
+        else numericList.push(token);
+    });
+    let raStr= '';
+    let decStr= '';
+    let csysStr= '';
+    //so we have more than one numeric strings, divide numeric strings
+    //list in half, first half = ra, second half = dec.
+    if (numericList.length===2) {
+        raStr = numericList[0];
+        decStr = numericList[1];
+
+    } else if (numericList.length>2) {
+        let idx=0;
+        for (let i=0; (i<numericList.length); i++) {
+            const item= numericList[i];
+            if ((idx++)*2<numericList.length) {
+                raStr += (item + ' ');
+            } else {
+                decStr += (item + ' ');
+            }
+        }
+    } else if (numericList.length===1) {
+        raStr= tokenAry[0];
+        if (tokenAry.length>1) {
+            decStr= tokenAry[1];
+        }
+    }
+
+    if (tokenAry.length>=3) {
+        for (let i=0; (i<alphabetList.length); i++) {
+            csysStr += (alphabetList[i]+' ');
+        }
+    }
+    return {raStr, decStr, csysStr};
+}
+
+function parseAlphaNumericTokens(text) {
+    const tokenAry= text.split(/\s+/);
+    const alphabetList= tokenAry.filter( (s) => isNaN(s)) ;
+    // Ra and DEC are non-numeric strings
+    let aList;
+    let raStr = '';
+    let decStr = '';
+    let csysStr = '';
+    if (alphabetList.length>3) { // a weird case, spaces between the parts
+        const aParts= alphabetList.filter( (n) => n.startsWith('+') || n.startsWith('-') || Number(n[0])>=0 );
+        if (aParts.every( (v,i) => v===alphabetList[i])) {
+            const aJoin= aParts.map( (p) => {
+                if (!p.endsWith('d')) return p;
+                return (p.startsWith('-') || p.startsWith('+')) ? p : '+'+p;
+            }).join('');
+            aList= [aJoin,...alphabetList.slice(aParts.length)];
+        }
+        else {
+            return {raStr, decStr, coordSys: csysStr};
+        }
+    }
+    else {
+        aList= alphabetList;
+    }
+    if (!aList.length) return {raStr, decStr, coordSys: csysStr};
+    let idx =0;
+    let array;
+    for (let i=0; (i<aList.length); i++) {
+        const item= aList[i];
+        if (idx===0) {
+            if (item.indexOf('+')>0) {
+                // 0042443+411608 case
+                array = item.split('+');
+                raStr = array[0];
+                decStr = array[1];
+                if (!isNaN(raStr)) raStr = convertRa(raStr);
+                if (!isNaN(decStr)) decStr = convertDEC(decStr);
+            } else if (item.indexOf('-')>0) {
+                // 0042443-411608 case
+                array = item.split('-');
+                raStr = array[0];
+                decStr = '-'+array[1];
+                if (!isNaN(raStr)) raStr = convertRa(raStr);
+                if (!isNaN(decStr)) decStr = convertDEC(decStr);
+            } else {
+                raStr = item;
+            }
+        } else {
+            if (!decStr.length) {
+                decStr = item;
+            }
+            else {
+                csysStr += (item+' ');
+            }
+        }
+        idx++;
+    }
+    return {raStr, decStr, csysStr};
+}
 
 function convertRa(s) {
     const hms= ['','',''];

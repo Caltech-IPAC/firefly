@@ -3,8 +3,8 @@
  */
 
 import {Box} from '@mui/joy';
+import {bool, func, string} from 'prop-types';
 import React, {memo, useState, useEffect, useRef, useDeferredValue, use, Suspense} from 'react';
-import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
@@ -107,22 +107,50 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, makeToolbar, m
 
 ImageViewer.displayName= 'ImageViewer';
 ImageViewer.propTypes= {
-    plotId : PropTypes.string.isRequired,
-    showWhenExpanded : PropTypes.bool,
-    makeToolbar : PropTypes.func,
-    makeLegend : PropTypes.func,
+    plotId : string.isRequired,
+    showWhenExpanded : bool,
+    makeToolbar : func,
+    makeLegend : func,
 };
 
 
-export function ImageViewerPlaceHolder({plotId}){
-    const {promise,message}= useStoreConnector( () => getWorkingTask(plotId)  ) ?? {};
+export function ImageViewerPlaceHolder({fromWorkingTask:task=false, ...rest}){
+    return task ? <WorkingTaskPlaceHolder {...rest}/> : <MessagePlaceHolder {...rest}/>;
+}
+
+ImageViewerPlaceHolder.propTypes= {
+    plotId : string.isRequired,
+    fromWorkingTask: bool,
+    message : string,
+};
+
+function MessagePlaceHolder({plotId,message,children}){
+    if (!plotId) return <div/>;
+    return (
+        <Box sx={{ position:'absolute', left:0, right:0, top:0, bottom:0}}>
+            <ImageViewStatusPanel {...{
+                maskShowing:true, messageShowing:Boolean(message || children),useMessageAlpha:true,
+                slotProps :{ message: { text: message} },
+                sx: {left:2, right:2},
+            }}>
+                {children}
+            </ImageViewStatusPanel>
+        </Box>
+    );
+}
+
+
+function WorkingTaskPlaceHolder({plotId,children,message:defMessage}){
+    const {promise,message=defMessage}= useStoreConnector( () => getWorkingTask(plotId)  ) ?? {};
     const Empty= ({promise}) => void (promise && use(promise));
     const workingPanel= (
         <ImageViewStatusPanel {...{
-            maskShowing:true, messageShowing:Boolean(message),useMessageAlpha:true,
+            maskShowing:true, messageShowing:Boolean(message || children),useMessageAlpha:true,
             slotProps :{ message: { text: message} },
             sx: {left:2, right:2},
-        }}/>
+        }}>
+            {children}
+        </ImageViewStatusPanel>
     );
     return (
         <Box sx={{ position:'absolute', left:0, right:0, top:0, bottom:0}}>
@@ -131,5 +159,4 @@ export function ImageViewerPlaceHolder({plotId}){
             </Suspense>
         </Box>
     );
-
 }

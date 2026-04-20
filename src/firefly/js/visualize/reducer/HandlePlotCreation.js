@@ -35,6 +35,12 @@ export function reducer(state, action) {
             const {setNewPlotAsActive=true}= action.payload;
             retState= addPlot(state,action, action.payload.setNewPlotAsActive, setNewPlotAsActive);
             break;
+        case Cntlr.PLOT_PROXY:
+            retState= addProxy(state,action);
+            break;
+        case Cntlr.REMOVE_PROXY:
+            retState= removeProxy(state,action);
+            break;
 
         case Cntlr.PLOT_HIPS  :
             retState= addHiPS(state,action);
@@ -103,12 +109,38 @@ function updateDefaults(plotRequestDefaults, action) {
 }
 
 
+function addProxy(state,action={}) {
+    const {plotProxyAry}= state;
+    const {payload:{plotId, ...rest}={}}= action;
+    if (!plotId) return state;
+    const hasProxy= Boolean(plotProxyAry.find( (proxy) => proxy.plotId === plotId));
+
+    const newPAry= hasProxy
+        ? plotProxyAry.map( (proxy) => proxy.id===plotId ? {plotId, ...rest} : proxy)
+        : [...plotProxyAry, {plotId,...rest}];
+    return { ...state, plotProxyAry: newPAry};
+}
+
+function removeProxy(state,action) {
+    const {plotProxyAry}= state;
+    const {payload:{plotId}={}}= action;
+    if (!plotId) return state;
+    return {
+        ...state,
+        plotProxyAry: plotProxyAry.filter( (proxy) => proxy.plotId!==plotId),
+    };
+}
+
 function startPlot(state, action) {
     const plotRequestDefaults= action.payload.enableRestore && updateDefaults(state.plotRequestDefaults,action);
     const plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
     const plotViewAry= preNewPlotPrep(state,action, plotGroupAry);
     const retState= {...state};
-    if (plotViewAry) retState.plotViewAry= plotViewAry;
+    if (plotViewAry) {
+        retState.plotViewAry= plotViewAry;
+        retState.plotProxyAry= state.plotProxyAry
+            .filter( (proxy) => !plotViewAry.some( (pv) => pv.plotId===proxy.plotId));
+    }
     if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
     if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
     if (action.payload.setNewPlotAsActive) retState.activePlotId= action.payload.plotId;

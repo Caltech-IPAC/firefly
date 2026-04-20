@@ -98,6 +98,11 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
     return plotGroupAry?.findIndex( (pg) => pg.plotGroupId===plotGroupId);
 }
 
+export function getPlotViewProxyById(visRoot,plotId) {
+    if (!plotId || !visRoot) return undefined;
+    if (!visRoot.plotProxyAry?.length) return undefined;
+    return visRoot.plotProxyAry.find( (p) => p.plotId===plotId);
+}
 
 /**
  * @param {PlotView[]|PlotView|VisRoot|CysConverter|WebPlot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
@@ -1187,4 +1192,23 @@ export function canConvertBetweenHipsAndFits(pv) {
 export function getMatchingRotationAngle(masterPv, pv) {
     const masterPlot = primePlot(masterPv);
     return getMatchingPlotRotationAngle(masterPlot,primePlot(pv),masterPv?.rotation,masterPv?.flipY);
+}
+
+/**
+ * smartly decides the next plotId given the existing plotId to avoid duplicates
+ * @param {string} [inId] the default id
+ * @return {string} returns a numbered id
+ */
+export function makeUniquePlotIdFromBase(inId) {
+    if (!getPlotViewById(visRoot(), inId)) return inId;
+
+    const numList= getPlotViewAry(visRoot())
+        .filter((pv) => pv.plotId.startsWith(inId))
+        .map((pv) => pv.plotId)
+        .map((id) => id?.substring(inId.length).trim().split('-')?.[1])
+        .map(Number)
+        .filter(Boolean);
+
+    const maxNum = numList?.length ? Math.max(...numList) : 0;
+    return `${inId} - ${maxNum + 1}`;
 }
