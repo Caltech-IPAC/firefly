@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.api;
 
 import edu.caltech.ipac.firefly.core.background.JobUtil;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -189,7 +190,7 @@ public class Async extends BaseHttpServlet {
 
     private static void sendResponse(String json, HttpServletResponse res) throws Exception {
         json = json + "\n";
-        res.setContentType("application/json");
+        res.setContentType(JSON.mime());
         res.setContentLength(json.length());
         ServletOutputStream out = res.getOutputStream();
         out.write(json.getBytes());

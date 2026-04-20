@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -23,12 +23,10 @@ import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
-import org.springframework.jdbc.UncategorizedSQLException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
+
+import edu.caltech.ipac.firefly.server.db.jdbc.TransactionTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.exceptions.UncategorizedSQLException;
 
 import java.io.File;
 import java.io.IOException;
@@ -531,7 +529,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                         sql =  si.isSelectAll() ? "TRUE" : "(ROW_IDX in (%s))".formatted(StringUtils.toString(si.getSelected()));
                     } else {
                         String rowNums = StringUtils.toString(si.getSelected());
-                        List<Integer> rowIdxs = new SimpleJdbcTemplate(jdbc).query(String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", resultSetID, rowNums), (resultSet, i) -> resultSet.getInt(1));
+                        List<Integer> rowIdxs = jdbc.query(String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", resultSetID, rowNums), (resultSet, i) -> resultSet.getInt(1));
                         sql = "(ROW_IDX in (%s))".formatted(StringUtils.toString(rowIdxs));
                     }
                 }
@@ -625,13 +623,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
             var db = getDbInstance(false);
             if (db == null)  return dbStats;
 
-            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(db);
-            jdbc.queryForObject("SELECT count(*), sum(cardinality) from INFORMATION_SCHEMA.SYSTEM_TABLESTATS where table_schema = 'PUBLIC' and not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(db);
+            jdbc.query("SELECT count(*), sum(cardinality) from INFORMATION_SCHEMA.SYSTEM_TABLESTATS where table_schema = 'PUBLIC' and not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
                 dbStats.tblCnt = rs.getInt(1);
                 dbStats.totalRows = rs.getInt(2);
                 return null;
             });
-            jdbc.queryForObject("SELECT count(column_name), cardinality from INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
+            jdbc.query("SELECT count(column_name), cardinality from INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
                     " where c.table_name = t.table_name" +
                     " and t.table_name = 'DATA'" +
                     " group by cardinality", (rs, i) -> {
@@ -674,10 +672,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
             String insertDataSql = insertDataSql(colsAry, tblName);
             if (useTxnDuringLoad()) {
                 TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
-                txnJdbc.execute(new TransactionCallbackWithoutResult() {
-                    public void doInTransactionWithoutResult(TransactionStatus status) {
-                        EmbeddedDbUtil.loadDataToDb(jdbc, insertDataSql, dg);
-                    }
+                txnJdbc.execute(conn -> {
+                    EmbeddedDbUtil.loadDataToDb(jdbc, insertDataSql, dg);
+                    return null;
                 });
             } else {
                 EmbeddedDbUtil.loadDataToDb(jdbc, insertDataSql, dg);
@@ -854,8 +851,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return page;
     }
 
-    SimpleJdbcTemplate getJdbc() {
-        return JdbcFactory.getSimpleTemplate(getDbInstance());
+    JdbcTemplate getJdbc() {
+        return JdbcFactory.getTemplate(getDbInstance());
     }
 
     JdbcTemplate getJdbcTmpl() {

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.ws;
 
-import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.LocalFSWorkspace;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -22,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static edu.caltech.ipac.firefly.util.FileLoader.resolveFile;
+import static edu.caltech.ipac.util.FormatUtil.Format.OCTET_STREAM;
 
 /**
  * Created by ejoliet on 6/16/17.
@@ -68,7 +68,7 @@ public class LocalWsGetTest extends ConfigTest {
 
 
         WsResponse wsResponse = wsm.putFile(testUri,true,
-                testFile, MediaType.OCTET_STREAM.type());
+                testFile, OCTET_STREAM.mime());
 
         Assert.assertTrue("Upload went wrong, status code <200 " + wsResponse.getStatusCode(), Integer.parseInt(wsResponse.getStatusCode()) >= 200);
         Assert.assertTrue("Uploaded file name is wrong " + wsResponse.getResponse(), wsResponse.getResponse().endsWith(testFile.getName()));

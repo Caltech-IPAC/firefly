@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.RedisService;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.messaging.Subscriber;
@@ -69,7 +70,7 @@ public class ServerStatus extends BaseHttpServlet {
         boolean execRedisCleanup = Boolean.parseBoolean(req.getParameter("execRedisCleanup"));
 
 
-        res.addHeader("content-type", "text/html");
+        res.addHeader("content-type", HTML.mime());
         PrintWriter writer = res.getWriter();
         writer.println("<pre style='font-size: -1'>");
 

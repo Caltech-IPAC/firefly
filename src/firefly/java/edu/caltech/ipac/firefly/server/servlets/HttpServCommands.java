@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.Counters;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -45,7 +46,7 @@ public class HttpServCommands {
             boolean tableSave = sp.getOptionalBoolean("save_to_temp", false); //if this is true, don't want to download tbl, instead load it into a tmp file
 
             FormatUtil.Format tblFormat = sp.getTableFormat();
-            String fileNameExt = tblFormat.getFileNameExt();
+            String fileNameExt = tblFormat.fileExt();
 
             if (fileNameExt.equalsIgnoreCase(".reg")) {
                 String cols = sp.getOptional("center_cols");
@@ -78,7 +79,7 @@ public class HttpServCommands {
                     json.put("error",  e.getMessage());
                 }
                 String rVal = json.toJSONString();
-                res.setContentType("application/json");
+                res.setContentType(JSON.mime());
                 res.setContentLength(rVal.length());
                 res.getOutputStream().print(rVal);
                 return;

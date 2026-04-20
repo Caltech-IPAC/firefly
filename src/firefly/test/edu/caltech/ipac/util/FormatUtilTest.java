@@ -89,7 +89,7 @@ public class FormatUtilTest extends ConfigTest {
         assertEquals(tfile.getName(), PNG, FormatUtil.detect(tfile));
 
         tfile = FileLoader.resolveFile("stripe82-testfits/calexp-005882-i1-0406.fits.gz");
-        assertEquals(tfile.getName(), GZIP, FormatUtil.detect(tfile));
+        assertEquals(tfile.getName(), FITS, FormatUtil.detect(tfile));
 
         tfile = FileLoader.resolveFile("FileUpload-samples/ErrorSamples/genindex.html");
         assertEquals(tfile.getName(), HTML, FormatUtil.detect(tfile));
@@ -111,10 +111,10 @@ public class FormatUtilTest extends ConfigTest {
         assertEquals(tfile.getName(), UNKNOWN, FormatUtil.detect(tfile));
 
         tfile = FileLoader.resolveFile("stripe82-testfits/put-data-here.txt");
-        assertEquals(tfile.getName(), UNKNOWN, FormatUtil.detect(tfile));
+        assertEquals(tfile.getName(), TEXT, FormatUtil.detect(tfile));
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/visualize/plot/projection/ProjectionTestInfo.txt");
-        assertEquals(tfile.getName(), UNKNOWN, FormatUtil.detect(tfile));
+        assertEquals(tfile.getName(), TEXT, FormatUtil.detect(tfile));
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/table/cars.ul");
         assertEquals(tfile.getName(), CSV, FormatUtil.detect(tfile));
@@ -212,10 +212,10 @@ public class FormatUtilTest extends ConfigTest {
         assertEquals(tfile.getName(), "application/xml", FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/firefly/server/query/ptf-lc.tbl");
-        assertEquals(tfile.getName(), "application/x-unknown", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), UNKNOWN.mime(), FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("stripe82-testfits/calexp-i-0-366,0.fits.gz");
         String mtype = FormatUtil.getMimeType(tfile).mime();
-        assertEquals(tfile.getName(), "application/x-gzip", mtype);
+        assertEquals(tfile.getName(), GZIP.mime(), mtype);
     }
 }

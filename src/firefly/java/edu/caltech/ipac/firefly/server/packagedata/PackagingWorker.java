@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
@@ -157,7 +158,7 @@ public final class PackagingWorker implements Job.Worker {
             String suggName = suggestedName == null ? "DownloadPackage" : suggestedName;
             suggName = "%s%s.zip".formatted(suggName, curZipIdx > 0 ? "-part" + curZipIdx : "");
 
-            var result = new JobInfo.Result(suggName,  getDownloadURL(zipFile, suggName), "application/zip", zipFile.length()+"");
+            var result = new JobInfo.Result(suggName,  getDownloadURL(zipFile, suggName), ZIP.mime(), zipFile.length()+"");
             sendJobUpdate(ji -> ji.addResult(result));
 
             failed.clear();

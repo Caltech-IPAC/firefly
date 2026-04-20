@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableWriter;
@@ -20,7 +21,7 @@ import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
@@ -33,8 +34,8 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.core.NestedRuntimeException;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.exceptions.NestedRuntimeException;
+
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
@@ -190,7 +191,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             FileInfo dbFileInfo = ingestDataIntoDb(treq, dbAdapter);
             if (dbAdapter.hasTable(dbAdapter.getDataTable())) {
-                int totalRows = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance()).queryForInt("Select count(*) from " + dbAdapter.getDataTable());
+                int totalRows = JdbcFactory.getTemplate(dbAdapter.getDbInstance()).queryForInt("Select count(*) from " + dbAdapter.getDataTable());
                 var headers = dbAdapter.getHeaders(dbAdapter.getDataTable());
                 if (doLogging()) {
                     SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
@@ -438,7 +439,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         int hlRowByRowIdx = StringUtils.getInt(treq.getOption(HIGHLIGHTED_ROW_BY_ROWIDX), -1);
         if (hlRowByRowIdx >= 0) {
             try {
-                highlightedRow =  JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
+                highlightedRow =  JdbcFactory.getTemplate(dbAdapter.getDbInstance())
                         .queryForInt(String.format("select row_num from %s where ROW_IDX = %d", resultSetID, hlRowByRowIdx));
             } catch (Exception e) {
                 // row does not exist in new resultset; reset highlightedRow.
@@ -527,7 +528,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             prevResultSetID = ensurePrevResultSetIfExists(treq, dbAdapter, prevResultSetID);
 
             String rowNums = StringUtils.toString(selectInfo.getSelected());
-            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance());
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(dbAdapter.getDbInstance());
             String origRowIds = String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", prevResultSetID, rowNums);
 
             List<Integer> newRowNums = new ArrayList<>();

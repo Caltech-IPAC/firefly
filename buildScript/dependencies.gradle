@@ -74,8 +74,7 @@ dependencies {
     // FileUpload Jakarta fork for servlet api 6.0+
     implementation 'org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M5'
 
-    // spring jdbc
-    implementation ('org.springframework:spring-jdbc:2.5.6.SEC03')
+
 
     // starlink
     implementation ':starlink-registry-1.2+2016.05.03'

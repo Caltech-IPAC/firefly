@@ -189,7 +189,7 @@ public class WsServerCommands {
             if (request == null) throw new IllegalArgumentException("Invalid/Missing table request");
 
             FormatUtil.Format tblFormat = sp.getTableFormat();
-            String fileNameExt = tblFormat.getFileNameExt();
+            String fileNameExt = tblFormat.fileExt();
             TableUtil.Mode mode = sp.contains("mode") ? TableUtil.Mode.valueOf(sp.getOptional("mode")) : null;
 
             File file = File.createTempFile(request.getRequestId(), fileNameExt, QueryUtil.getTempDir(request));

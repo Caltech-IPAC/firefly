@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -11,9 +13,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
-import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceUtils;
+
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -83,7 +83,7 @@ public class TemplateGenerator {
                     ps.close();
                 }
                 if (conn != null) {
-                    DataSourceUtils.releaseConnection(conn, dataSource);
+                    JdbcFactory.releaseConnection(conn, dataSource);
                 }
             }
     }
@@ -91,38 +91,36 @@ public class TemplateGenerator {
     private static DataGroup loadTemplate(String templateName, DataSource dataSource) {
 
         String sql = "select name, display_name, description, sel, format  from " + templateName + " order by cntr asc";
-        SimpleJdbcTemplate jdbc = new SimpleJdbcTemplate(dataSource);
-        List<DataType> headers = jdbc.query(sql, new ParameterizedRowMapper<DataType>() {
-            public DataType mapRow(ResultSet rs, int i) throws SQLException {
-                String name = rs.getString("name");
-                String label = rs.getString("display_name");
-                String desc = rs.getString("description");
-                String sel = rs.getString("sel");
-                String format = rs.getString("format");
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        List<DataType> headers = jdbc.query(sql, (rs, i) -> {
+            String name = rs.getString("name");
+            String label = rs.getString("display_name");
+            String desc = rs.getString("description");
+            String sel = rs.getString("sel");
+            String format = rs.getString("format");
 
-                if (StringUtils.isEmpty(name)) {
-                    return null;
-                }
-
-                label = StringUtils.isEmpty(label) ? name : label;
-                desc = StringUtils.isEmpty(desc) ? label : desc;
-
-                DataType dt = new DataType(name, label, String.class);
-                dt.setDesc(desc);
-
-                if (StringUtils.areEqual(sel, "n")) {
-                    dt.setVisibility(DataType.Visibility.hide);
-                }
-                if (!StringUtils.isEmpty(format)) {
-                    if (format.equals("RA") || format.equals("DEC")) {
-                        // this is weird.. should see how it's used.
-                        dt.setUnits(format);
-                    } else {
-                        dt.setFormat(format);
-                    }
-                }
-                return dt;
+            if (StringUtils.isEmpty(name)) {
+                return null;
             }
+
+            label = StringUtils.isEmpty(label) ? name : label;
+            desc = StringUtils.isEmpty(desc) ? label : desc;
+
+            DataType dt = new DataType(name, label, String.class);
+            dt.setDesc(desc);
+
+            if (StringUtils.areEqual(sel, "n")) {
+                dt.setVisibility(DataType.Visibility.hide);
+            }
+            if (!StringUtils.isEmpty(format)) {
+                if (format.equals("RA") || format.equals("DEC")) {
+                    // this is weird.. should see how it's used.
+                    dt.setUnits(format);
+                } else {
+                    dt.setFormat(format);
+                }
+            }
+            return dt;
         });
 
         return new DataGroup(templateName, headers);

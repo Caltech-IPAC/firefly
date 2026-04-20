@@ -13,12 +13,15 @@ import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 
 import javax.annotation.Nonnull;
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.table.IpacTableUtil.isIpacTable;
 import static edu.caltech.ipac.util.FormatUtil.Format.*;
 
@@ -31,6 +34,78 @@ import static edu.caltech.ipac.util.FormatUtil.Format.*;
 public class FormatUtil {
     private static final int SAMPLE_SIZE = (int) (8 * FileUtil.K);
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+
+    public record MimeDesc(String mime, String desc) {}
+
+    public enum Format {
+        TSV          ("tsv",                    ".tsv",  "text/tab-separated-values"),
+        CSV          ("csv",                    ".csv",  "text/csv"),
+        IPACTABLE    ("ipac",                   ".tbl",  "application/ipac-table"),
+        UNKNOWN      ("null",                   null,    "application/x-unknown"),
+        TEXT         ("text",                   ".txt",  "text/plain"),
+        FIXEDTARGETS ("fixed-targets",          ".tbl",  "application/fixed-targets"),
+        FITS         ("fits",                   ".fits", "image/fits"),
+        ASDF         ("asdf",                   ".asdf", "application/asdf"),
+        JSON         ("json",                   ".json", "application/json"),
+        PDF          ("pdf",                    ".pdf",  "application/pdf"),
+        TAR          ("tar",                    ".tar",  "application/x-tar"),
+        JAR          ("jar",                    ".jar",  "application/java-archive"),
+        HTML         ("html",                   ".html", "text/html"),
+        VO_TABLE     ("votable",                ".xml",  "application/x-votable+xml"),
+        VO_TABLE_TABLEDATA  ("votable-tabledata",        ".vot",  "application/x-votable+xml"),
+        VO_TABLE_BINARY     ("votable-binary-inline",    ".vot",  "application/x-votable+xml"),
+        VO_TABLE_BINARY2    ("votable-binary2-inline",   ".vot",  "application/x-votable+xml"),
+        VO_TABLE_FITS       ("votable-fits-inline",      ".vot",  "application/x-votable+xml"),
+        REGION       ("reg",                    ".reg",  "application/region-file"),
+        PNG          ("png",                    ".png",  "image/png"),
+        JPEG         ("jpeg",                   ".jpg",  "image/jpeg"),
+        UWS          ("uws",                    ".xml",  "application/xml+uws"),
+        PARQUET      (DuckDbReadable.Parquet.NAME, "."+DuckDbReadable.Parquet.NAME, "application/vnd.apache.parquet"),
+        ZIP          ("zip",                    ".zip",  "application/zip"),
+        GZIP         ("gzip",                   ".gz",   "application/gzip"),
+        BZIP2        ("bzip2",                  ".bz2",  "application/x-bzip2"),
+        OCTET_STREAM ("octet-stream",           null,    "application/octet-stream");
+
+        public final String type;
+        private final String fileNameExt;
+        private final String mime;
+
+        Format(String type, String ext, String mime) {
+            this.type = type;
+            this.fileNameExt = ext;
+            this.mime = mime;
+        }
+
+        public String fileExt() { return fileNameExt; }
+        public String mime() { return mime; }
+        public String toString() { return type; }
+
+        private static final Set<Format> LOADABLE = EnumSet.of(TSV, CSV, IPACTABLE, FITS, ASDF, JSON, VO_TABLE, VO_TABLE_TABLEDATA, VO_TABLE_BINARY, VO_TABLE_BINARY2, VO_TABLE_FITS, REGION, PARQUET);
+        public static boolean isLoadable(Format f) { return LOADABLE.contains(f); }
+
+        /** Returns the primary Format for a given mime type string, or UNKNOWN. */
+        public static Format fromMime(String mime) {
+            if (mime == null) return UNKNOWN;
+            for (Format f : values()) {
+                if (f.mime.equalsIgnoreCase(mime)) return f;
+            }
+            // common aliases
+            return switch (mime.toLowerCase()) {
+                case "application/fits"             -> FITS;
+                case "text/xml-votable"             -> VO_TABLE;
+                case "application/x-parquet"        -> PARQUET;
+                case "application/csv"              -> CSV;
+                case "application/tsv"              -> TSV;
+                case "image/jpg"                    -> JPEG;
+                case "application/x-zip-compressed" -> ZIP;
+                case "application/x-gzip"           -> GZIP;
+                case "application/tar"              -> TAR;
+                case "application/html"             -> HTML;
+                case "text/json"                    -> JSON;
+                default                             -> UNKNOWN;
+            };
+        }
+    }
 
     /**
      * Detects the MIME type of file using magic-byte inspection of the file header,
@@ -50,34 +125,34 @@ public class FormatUtil {
 
             // Parquet: PAR1 at offset 0
             if (magic(hdr, 0, 'P','A','R','1'))
-                return new MimeDesc("application/vnd.apache.parquet", "Parquet data file");
+                return new MimeDesc(PARQUET.mime(), "Parquet data file");
             // PNG: \x89PNG\r\n\x1a\n
             if (magic(hdr, 0, 0x89,'P','N','G','\r','\n',0x1a,'\n'))
-                return new MimeDesc("image/png", "PNG image");
+                return new MimeDesc(PNG.mime(), "PNG image");
             // JPEG: FF D8 FF
             if (magic(hdr, 0, 0xFF,0xD8,0xFF))
-                return new MimeDesc("image/jpeg", "JPEG image");
+                return new MimeDesc(JPEG.mime(), "JPEG image");
             // PDF: %PDF
             if (magic(hdr, 0, '%','P','D','F'))
-                return new MimeDesc("application/pdf", "PDF document");
+                return new MimeDesc(PDF.mime(), "PDF document");
             // GZIP: 1F 8B
             if (magic(hdr, 0, 0x1F,0x8B))
-                return new MimeDesc("application/x-gzip", "gzip compressed data");
+                return new MimeDesc(GZIP.mime(), "gzip compressed data");
             // BZIP2: BZh
             if (magic(hdr, 0, 'B','Z','h'))
-                return new MimeDesc("application/x-bzip2", "bzip2 compressed data");
+                return new MimeDesc(BZIP2.mime(), "bzip2 compressed data");
             // ZIP / JAR: PK\x03\x04
             if (magic(hdr, 0, 'P','K',0x03,0x04)) {
                 String name = inFile.toLowerCase();
-                if (name.endsWith(".jar")) return new MimeDesc("application/java-archive", "Java archive");
-                return new MimeDesc("application/zip", "Zip archive");
+                if (name.endsWith(".jar")) return new MimeDesc(JAR.mime(), "Java archive");
+                return new MimeDesc(ZIP.mime(), "Zip archive");
             }
             // TAR (ustar): "ustar" at offset 257
             if (magic(hdr, 257, 'u','s','t','a','r'))
-                return new MimeDesc("application/x-tar", "POSIX tar archive");
+                return new MimeDesc(TAR.mime(), "POSIX tar archive");
             // Binary FITS: header block starts with "SIMPLE  ="
             if (magic(hdr, 0, 'S','I','M','P','L','E',' ',' ','='))
-                return new MimeDesc("image/fits", "FITS image data");
+                return new MimeDesc(FITS.mime(), "FITS image data");
 
         } catch (Exception ex) {
             Logger.getLogger().error(ex, "Failed to read header for mime detection: " + inFile);
@@ -91,55 +166,7 @@ public class FormatUtil {
         } catch (Exception ex) {
             Logger.getLogger().error(ex, "Failed to detect mime type for: " + inFile);
         }
-        return new MimeDesc("application/x-unknown", "unknown");
-    }
-
-    /** Returns true when {@code data[offset..]} starts with the given byte values. */
-    private static boolean magic(byte[] data, int offset, int... expected) {
-        if (data.length < offset + expected.length) return false;
-        for (int i = 0; i < expected.length; i++) {
-            if ((data[offset + i] & 0xFF) != (expected[i] & 0xFF)) return false;
-        }
-        return true;
-    }
-
-    public enum Format {
-        TSV("tsv", ".tsv"),
-        CSV("csv", ".csv"),
-        IPACTABLE("ipac", ".tbl"),
-        UNKNOWN("null", null),
-        TEXT("text", "txt"),
-        FIXEDTARGETS("fixed-targets", ".tbl"),
-        FITS("fits",".fits"),
-        ASDF("asdf",".asdf"),
-        JSON("json", ".json"),
-        PDF("pdf", ".pdf"),
-        TAR("tar", ".tar"),
-        JAR("jar", ".jar"),
-        HTML("html", ".html"),
-        VO_TABLE("votable", ".xml"),
-        VO_TABLE_TABLEDATA("votable-tabledata", ".vot"),
-        VO_TABLE_BINARY("votable-binary-inline", ".vot"),
-        VO_TABLE_BINARY2("votable-binary2-inline", ".vot"),
-        VO_TABLE_FITS("votable-fits-inline",".vot"),
-        REGION("reg", ".reg"),
-        PNG("png", ".png"),
-        JPEG("jpeg", ".jpg"),
-        UWS("uws", ".xml"),
-        PARQUET(DuckDbReadable.Parquet.NAME, "."+DuckDbReadable.Parquet.NAME),
-        ZIP("zip", ".zip"),
-        GZIP("gzip", ".gz");
-
-        public final String type;
-        final String fileNameExt;
-        Format(String type, String ext) {
-            this.type = type;
-            this.fileNameExt = ext;
-        }
-        public String getFileNameExt() {
-            return fileNameExt;
-        }
-        public String toString() {return type;}
+        return new MimeDesc(UNKNOWN.mime(), "unknown");
     }
 
     /**
@@ -162,19 +189,18 @@ public class FormatUtil {
     @Nonnull
     public static Format detect(File inFile) throws IOException {
 
-        Format format = null;
         MimeDesc mimeDesc = getMimeType(inFile.getAbsolutePath());
         String mime = mimeDesc.mime();
-        format = mapToFormat(mimeDesc.mime(), mimeDesc.desc());
+        Format format = mapToFormat(mimeDesc.mime(), mimeDesc.desc());
         LOGGER.trace("detectFormat: " + inFile, "mime-type: " + mime, "description: " + mimeDesc.desc());
 
-        if (format != null) {
+        if (isLoadable(format)) {
             LOGGER.debug("Format: %s resolved via mime-type/magic number".formatted(format));
             return format;
         }
 
 
-        if (("application/x-bzip2".equals(mime) || "application/x-gzip".equals(mime)) &&
+        if ((format == BZIP2 || format == GZIP) &&
                 inFile.getName().toLowerCase().contains("fit")) {
             // special case and a very heavy operation: we can handle fits bz2 or gzip files but don't try unless we are pretty sure
             // in archives: legacy files are often named a.fits.gz or a.fits.bz2
@@ -184,26 +210,26 @@ public class FormatUtil {
             catch (FitsException ignore) {}
         }
 
-        format = guessBySamplingContent(inFile);
-        if (format != null) {
+        format = ifNotNull(guessBySamplingContent(inFile)).getOrElse(format);
+        if (isLoadable(format)) {
             LOGGER.debug("Format: %s resolved via file sampling".formatted(format));
             return format;
         }
 
         // all failed; fallback to trial and error
-        if (isIpacTable(inFile)) {
-            format = IPACTABLE;
-        } else if (isRegionFile(inFile)) {
-            format = REGION;
-        } else {
-            // check for csv or tsv
-            Format dformat = DuckDbReadable.Csv.detect(inFile.getAbsolutePath());
-            if (dformat != null) format = dformat;
+        if (EnumSet.of(TEXT, HTML, UNKNOWN).contains(format)) {
+            if (isIpacTable(inFile)) {
+                format = IPACTABLE;
+            } else if (isRegionFile(inFile)) {
+                format = REGION;
+            } else if (format != HTML) {
+                // check for csv or tsv
+                Format dformat = DuckDbReadable.Csv.detect(inFile.getAbsolutePath());
+                if (dformat != null) format = dformat;
+            }
         }
 
-        if (format == null && mimeDesc.mime().equals("text/html"))  format = HTML;      // allow text/html here if all failed.
-
-        if (format != null) {
+        if (isLoadable(format)) {
             LOGGER.debug("Format: %s resolved via trial and error".formatted(format));
             return format;
         } else {
@@ -211,9 +237,13 @@ public class FormatUtil {
                     "mime: " + mime,
                     "desc: " + mimeDesc.desc()
             );
-            return UNKNOWN;
+            return format;
         }
     }
+
+//====================================================================
+//  Helper methods
+//====================================================================
 
     private static boolean isRegionFile(File inFile) {
         try {
@@ -224,34 +254,19 @@ public class FormatUtil {
         }
     }
 
+    @Nonnull
     private static Format mapToFormat(String mime, String desc) {
-        Format format = switch (mime) {
-            case "image/fits", "application/fits" -> FITS;
-            case "application/x-votable+xml", "text/xml-votable"-> VO_TABLE;
-            case "application/vnd.apache.parquet", "application/x-parquet" -> PARQUET;
-            case "text/csv", "application/csv" -> CSV;
-            case "text/tab-separated-values", "application/tsv" -> TSV;
-            case "image/png" -> PNG;
-            case "image/jpeg", "image/jpg" -> JPEG;
-            case "application/pdf" -> PDF;
-            case "application/zip", "application/x-zip-compressed" -> ZIP;
-            case "application/gzip", "application/x-gzip" -> GZIP;
-            case "application/java-archive" -> JAR;
-            case "application/x-tar", "application/tar" -> TAR;
-            case "application/html", "text/html" -> HTML;
-            case "application/json", "text/json" -> JSON;
-            default -> null;
-        };
-        if (format != null) return format;
+        Format format = Format.fromMime(mime);
+        if (format != UNKNOWN) return format;
         // mime type failed, try desc
         if (desc != null) {
             desc = desc.toLowerCase();
-            if (desc.contains("parquet"))   return PARQUET;
-            if (desc.contains("csv"))       return CSV;
-            if (desc.contains("json"))      return JSON;
-            if (desc.contains("tab-separated"))   return TSV;
+            if (desc.contains("parquet"))       return PARQUET;
+            if (desc.contains("csv"))           return CSV;
+            if (desc.contains("json"))          return JSON;
+            if (desc.contains("tab-separated")) return TSV;
         }
-        return null;
+        return UNKNOWN;
     }
 
     private static Format guessBySamplingContent(File inf) throws IOException {
@@ -302,6 +317,14 @@ public class FormatUtil {
         return isUws && line.matches("<(.+:)?job .*");
     }
 
-    public record MimeDesc(String mime, String desc) {}
+    /** Returns true when {@code data[offset..]} starts with the given byte values. */
+    private static boolean magic(byte[] data, int offset, int... expected) {
+        if (data.length < offset + expected.length) return false;
+        for (int i = 0; i < expected.length; i++) {
+            if ((data[offset + i] & 0xFF) != (expected[i] & 0xFF)) return false;
+        }
+        return true;
+    }
+
 }
 

@@ -6,7 +6,8 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -15,7 +16,7 @@ import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +91,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     }
 
     void createUDFs() {
-        SimpleJdbcTemplate jdbc = getJdbc();
+        JdbcTemplate jdbc = getJdbc();
         for (String cf : customFunctions) {
             try {
                 jdbc.update(cf);
@@ -103,7 +104,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     @Override
     List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
         String sql = "select column_name from duckdb_columns() where table_name = '%s'".formatted(forTable.toUpperCase());
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+        return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
     protected void renameColumn(String from, String to) {
@@ -142,7 +143,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     public List<String> getTableNames() {
         String sql = "SELECT table_name FROM duckdb_tables()";
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
+        return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
     }
 
     public DbAdapter.DbStats getDbStats() {
@@ -151,13 +152,13 @@ public class DuckDbAdapter extends BaseDbAdapter {
             var db = getDbInstance(false);
             if (db == null)  return dbStats;
 
-            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(db);
-            jdbc.queryForObject("SELECT count(*), sum(estimated_size) from duckdb_tables() where not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(db);
+            jdbc.query("SELECT count(*), sum(estimated_size) from duckdb_tables() where not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
                 dbStats.tblCnt = rs.getInt(1);
                 dbStats.totalRows = rs.getInt(2);
                 return null;
             });
-            jdbc.queryForObject("SELECT column_count, estimated_size from duckdb_tables() where table_name = 'DATA'", (rs, i) -> {
+            jdbc.query("SELECT column_count, estimated_size from duckdb_tables() where table_name = 'DATA'", (rs, i) -> {
                 dbStats.colCnt = rs.getInt(1);
                 dbStats.rowCnt = rs.getInt(2);
                 return null;

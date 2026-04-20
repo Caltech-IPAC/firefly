@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.Job;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
@@ -100,7 +101,7 @@ public final class DownloadScriptWorker implements Job.Worker {
             ji.getAux().setProgress(new Progress(summary));
             ji.addResult(new JobInfo.Result("curl-script", curlScriptUrl, "text/x-shellscript", curlScript.length() + ""));
             ji.addResult(new JobInfo.Result("wget-script", wgetScriptUrl, "text/x-shellscript", wgetScript.length() + ""));
-            ji.addResult(new JobInfo.Result("url-list", urlsFileUrl, "text/plain", urlsFile.length() + ""));
+            ji.addResult(new JobInfo.Result("url-list", urlsFileUrl, TEXT.mime(), urlsFile.length() + ""));
         });
 
         return "";

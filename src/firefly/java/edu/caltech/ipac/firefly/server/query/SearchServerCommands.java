@@ -2,6 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.query;
+
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 /**
  * User: roby
  * Date: 3/5/12
@@ -153,7 +155,7 @@ public class SearchServerCommands {
                 }
             }
 
-            res.setContentType("application/octet-stream");
+            res.setContentType(OCTET_STREAM.mime());
             ByteBuffer decByteBuf = ByteBuffer.allocateDirect( len * Integer.BYTES);
             decByteBuf.order(ByteOrder.LITTLE_ENDIAN);
             IntBuffer decIntBuff= decByteBuf.asIntBuffer();
