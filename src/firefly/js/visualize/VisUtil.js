@@ -815,9 +815,9 @@ export function convertAngle(from, to, angle, limitPrecision=true) {
 
         switch (to) {
             case 'arcsec':
-                return Math.trunc(1000*v)/1000; // limit to 3 decimal places by truncating extra digits
+                return Math.round(10*v)/10; // limit to 1 decimal places by truncating extra digits
             case 'arcmin':
-                return Math.trunc(100000*v)/100000; // limit to 5 decimal places by truncating extra digits
+                return Math.round(10000*v)/10000; // limit to 4 decimal places by truncating extra digits
             case 'degree':
                 return v;
         }

@@ -84,6 +84,8 @@ const PLOT_IMAGE_START= `${PLOTS_PREFIX}.PlotImageStart`;
 const PLOT_IMAGE_FAIL= `${PLOTS_PREFIX}.PlotImageFail`;
 /** Action Type: plot of new image completed */
 const PLOT_IMAGE= `${PLOTS_PREFIX}.PlotImage`;
+const PLOT_PROXY= `${PLOTS_PREFIX}.PlotProxy`;
+const REMOVE_PROXY= `${PLOTS_PREFIX}.RemoveProxy`;
 
 /** Action Type: plot of new HiPS image */
 const PLOT_HIPS= `${PLOTS_PREFIX}.PlotHiPS`;
@@ -206,6 +208,7 @@ const initState= () => {
      *
      * @prop {String} activePlotId the id of the active plot
      * @prop {PlotView[]} plotViewAry view array
+     * @prop {Object[]} plotProxyAry view array
      * @prop {PlotGroup[]} plotGroupAry view array
      * @prop {object} plotRequestDefaults - can have multiple values
      * @prop {ExpandType} expandedMode status of expand mode
@@ -224,6 +227,7 @@ const initState= () => {
         activePlotId: null,
         plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
+        plotProxyAry : [],  // a proxy for a plot view when we need a placeholder before a plot request is made
 
         prevActivePlotId: null, // previous active plot before current one
         plotRequestDefaults : {}, // object:
@@ -329,7 +333,7 @@ export default {
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, BYTE_DATA_REFRESH,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
     CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA,
-    CHANGE_SUBHIGHLIGHT_PLOT_VIEW, MARK_OUT_OF_MEMORY
+    CHANGE_SUBHIGHLIGHT_PLOT_VIEW, MARK_OUT_OF_MEMORY, PLOT_PROXY, REMOVE_PROXY
 };
 
 const KEY_ROOT= 'progress-';
@@ -623,6 +627,22 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
     dispatcher({type: RESTORE_DEFAULTS, payload: {plotId} });
 }
 
+/**
+ * @summary add placeholder for a plot.  message is optional and any other parameters will the passed through to the
+ * react component
+ * @param {Object}  p
+ * @param {string} p.plotId is required unless defined in the WebPlotRequest
+ * @param {string} [p.message] is required unless defined in the WebPlotRequest
+ * @param {string} p.viewerId - viewer that this plot should be put into
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ */
+export function dispatchPlotProxy({plotId,message,viewerId,dispatcher= flux.process, ...rest}) {
+    dispatcher({ type: PLOT_PROXY, payload: {plotId,message,viewerId, ...rest} });
+}
+
+export function dispatchRemoveProxy({plotId,dispatcher= flux.process}) {
+    dispatcher({ type: REMOVE_PROXY, payload: {plotId} });
+}
 
 /**
  * @summary Plot an image.
@@ -1061,7 +1081,7 @@ const changePrimeActionCreator= (rawAction) => (dispatcher, getState) => changeP
 
 const creationActions= convertToIdentityObj([
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CROP_START,
-    CROP_FAIL, CROP, PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT
+    CROP_FAIL, CROP, PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT, PLOT_PROXY, REMOVE_PROXY,
 ]);
 
 const changeActions= convertToIdentityObj([

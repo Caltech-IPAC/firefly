@@ -5,6 +5,7 @@
 import {cloneDeep, get, isNil} from 'lodash';
 import Enum from 'enum';
 import moment from 'moment';
+import {makeUniquePlotIdFromBase} from '../../visualize/PlotViewUtil';
 
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
@@ -25,6 +26,30 @@ import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
 import {showJobMonitor, showMultiMultiResults} from 'firefly/core/background/JobMonitor';
 import {getTableUiByTblId} from 'firefly/tables/TableUtil';
 
+
+
+
+
+
+/** @typedef Phase
+ * enum can be one of
+ * @prop PENDING
+ * @prop QUEUED
+ * @prop EXECUTING
+ * @prop COMPLETED
+ * @prop ERROR
+ * @prop ABORTED
+ * @prop HELD
+ * @prop SUSPENDED
+ * @prop ARCHIVED
+ * @prop UNKNOWN
+ * @prop {Function} get
+ * @type {Enum}
+ */
+
+
+
+/** @type Phase */
 export const Phase = new Enum(['PENDING', 'QUEUED', 'EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED', 'HELD', 'SUSPENDED', 'ARCHIVED', 'UNKNOWN'], {ignoreCase: true});
 
 export function getPhaseTips(phase) {
@@ -133,7 +158,7 @@ export function getBgEmail() {
 
 /**
  * returns the background related info.  Currently, it's email and sendNotif.
- * @returns {object.<string>}
+ * @returns {Object.<string>}
  */
 export function getBgInfo() {
     const {email, notifEnabled} =  get(flux.getState(), BACKGROUND_PATH) || {};
@@ -196,7 +221,7 @@ export function getJobPctComplete (jobInfo) {
     if (percentComplete < 0 && totalItems < 1) return -1;
     const pct = percentComplete >= 0 ? percentComplete : itemsProcessed / totalItems * 100;
     return Math.min(Math.round(pct), 100);
-};
+}
 
 export function getProgressMsg(jobInfo) {
     const {message, itemsProcessed, totalItems} = jobInfo?.jobInfo?.progress ?? {};
@@ -379,7 +404,7 @@ export function loadImageResult({jobInfo, request, href}) {
         wpRequest.setTitle(requestTitle);
     }
 
-    const plotId = `${href.replace('.', '_')}-${jobInfo.jobId}`;
+    const plotId= makeUniquePlotIdFromBase(request.META_INFO.jobPlotId ?? `image-${jobInfo.jobId}`);
     dispatchPlotImage({plotId, wpRequest, viewerId});
     handleLayoutChanges(jobInfo);
 }

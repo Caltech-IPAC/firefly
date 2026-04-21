@@ -464,10 +464,12 @@ function reducer(state=initState(), action={}) {
         case UPDATE_VIEWER_CUSTOM_DATA:
             return updateCustomData(state,action);
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
+        case ImagePlotCntlr.REMOVE_PROXY:
             return deleteSingleItem(state,payload.plotId, IMAGE);
         case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE_START:
-            const {viewerId, plotId, renderTreeId, pvOptions:{canBeExpanded= true} } = payload;
+        case ImagePlotCntlr.PLOT_PROXY:
+            const {viewerId, plotId, renderTreeId, pvOptions:{canBeExpanded= true}={} } = payload;
             if (!imageViewerCanAdd(state,viewerId, plotId)) return state;
             state= addItems(state,payload.viewerId,[payload.plotId], IMAGE, renderTreeId);
             return canBeExpanded ? addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE) : state;

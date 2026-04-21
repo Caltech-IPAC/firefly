@@ -8,9 +8,9 @@ import {object, arrayOf, bool, func, number, oneOf, string, elementType, any} fr
 import {omit} from 'lodash';
 import {checkProps} from '../../ui/SimpleComponent';
 import {SINGLE, GRID, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {getPlotViewById, getPlotViewProxyById, primePlot} from '../PlotViewUtil.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
-import {ImageViewer} from '../iv/ImageViewer';
+import {ImageViewer, ImageViewerPlaceHolder} from '../iv/ImageViewer';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
 import {lastMouseCtx, lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
 import {isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
@@ -28,12 +28,22 @@ function makeState() {
     };
 }
 
+
+function makeViewer(visRoot, plotId, makeToolbar, makeLegend, showWhenExpanded, PlotViewProxy) {
+    if (getPlotViewById(visRoot, plotId)) {
+        return ( <ImageViewer {...{plotId, key:plotId, makeToolbar, makeLegend, showWhenExpanded}} /> );
+    }
+    const proxy= getPlotViewProxyById(visRoot, plotId);
+    return proxy ? <PlotViewProxy {...{...proxy}}/> : <div/>;
+}
+
 export function MultiImageViewerView(props)  {
     checkProps(props, MultiImageViewerView);
 
     const {current:elementWrapper}= useRef({element:undefined});
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
-    const {Toolbar, Legend, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
+    const {Toolbar, Legend, PlotViewProxy= ImageViewerPlaceHolder, visRoot, viewerPlotIds=[],
+        showWhenExpanded=false, mouseReadoutEmbedded=true,
         handleToolbar=true, layoutType=GRID, scrollGrid=false, viewerId, ref}= props;
 
     const viewer= getViewer(getMultiViewRoot(),viewerId) ?? {};
@@ -41,7 +51,8 @@ export function MultiImageViewerView(props)  {
 
     const makeToolbar = Toolbar && (() => (<Toolbar {...{...props, containerElement:elementWrapper?.element}} />));
     const makeLegend =  Legend && ((plotId) => (<Legend {...{...props,plotId}}/>));
-    const makeItemViewer = (plotId) => ( <ImageViewer {...{plotId, key:plotId, makeToolbar, makeLegend, showWhenExpanded}} /> );
+    const makeItemViewer = (plotId) =>
+        makeViewer(visRoot, plotId, makeToolbar, makeLegend, showWhenExpanded, PlotViewProxy);
 
     const newProps = {...omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
         activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds,
@@ -80,6 +91,7 @@ MultiImageViewerView.propTypes= {
     showWhenExpanded : bool,
     Toolbar : elementType,
     Legend : elementType,
+    PlotViewProxy: elementType,
     viewerId : string.isRequired,
     style : object,
     defaultDecoration : bool,

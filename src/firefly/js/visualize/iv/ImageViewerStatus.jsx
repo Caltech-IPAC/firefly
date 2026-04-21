@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Card, Skeleton, Typography} from '@mui/joy';
+import {Box, Card, Skeleton, Stack, Typography} from '@mui/joy';
 import React, {useEffect, memo, useState} from 'react';
 import PropTypes, {bool, func, object, shape, string} from 'prop-types';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -67,7 +67,7 @@ ImageViewerStatus.propTypes= {
 };
 
 export function ImageViewStatusPanel(props) {
-    const {maskShowing=false, messageShowing, useMessageAlpha, sx, slotProps={}}=
+    const {maskShowing=false, messageShowing, useMessageAlpha, sx, slotProps={}, children}=
         checkProps(props,ImageViewStatusPanel);
 
     const {sx:messageSx={}, text:messageText=''}= slotProps.message ?? {};
@@ -76,7 +76,7 @@ export function ImageViewStatusPanel(props) {
     const finalMsgSx= { py: 1, textAlign:'center', flex:buttonCB ?'10 10 auto' : '1 1 auto' , ...messageSx};
     const statusTextSx= {
         position:'absolute', left:0, top:0, width:1, minHeight : '15%', color:'black', display:'flex',
-        alignItems:'center', justifyContent:'flex-start', flexDirection:'row', zIndex: maskShowing ? 10 : 'auto'
+        justifyContent:'center', flexDirection:'column', zIndex: maskShowing ? 10 : 'auto'
     };
 
     return (
@@ -89,10 +89,17 @@ export function ImageViewStatusPanel(props) {
                     sx: (theme) =>
                         !useMessageAlpha ? statusTextSx : { ...statusTextSx, backgroundColor: ctxBG(theme,65)}
                 }}>
-                    <Typography level='body-lg' sx={finalMsgSx}>{messageText}</Typography>
-                    { buttonCB && <CompleteButton text={buttonText} sx={{flex: '2 2 auto',...buttonSx}} onSuccess={buttonCB}/> }
+                    <Stack>
+                        <Stack {...{direction:'row', sx:{alignItems:'center', justifyContent:'flex-start'} }}>
+                            { messageText && <Typography level='body-lg' sx={finalMsgSx}>{messageText}</Typography>}
+                            { buttonCB && <CompleteButton text={buttonText} sx={{flex: '2 2 auto',...buttonSx}} onSuccess={buttonCB}/> }
+                        </Stack>
+                        <Box>
+                            {children}
+                        </Box>
+                    </Stack>
                 </Card>
-            }
+            }>
         </Box>
     );
 }

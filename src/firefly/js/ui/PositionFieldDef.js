@@ -30,7 +30,8 @@ function positionValidateInternal(s, hard, nullAllowed= true) {
     else {
         // check coordinate system
         if (coordSys === CoordinateSys.UNDEFINED) {
-            throw errMsgRoot + 'Invalid coordinate system';
+            if (hard) throw errMsgRoot + 'Invalid coordinate system';
+            return {valid:false,inputType};
         }
 
         // validate RA
