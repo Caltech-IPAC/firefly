@@ -37,6 +37,7 @@ export const UploadPanel = ({}) => {
             return;
         }
 
+        addToRecentAlertIDs(trimmedId);
         setIsLoading(true);
         try {
             const request = new ServerRequest(ALERT_LOAD_REQUEST);
@@ -47,7 +48,6 @@ export const UploadPanel = ({}) => {
                 showInfoPopup(result?.message || 'Unable to load alert data.', 'Load Error');
                 return;
             }
-            addToRecentAlertIDs(trimmedId);
             clearAlertProducts(); //todo: keep this?
             loadFromEntries(result, trimmedId);
         } catch (error) {
