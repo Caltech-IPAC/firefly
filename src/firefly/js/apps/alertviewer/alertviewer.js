@@ -5,7 +5,7 @@ import {Sheet, Stack, Typography} from '@mui/joy';
 import {createRouter} from 'firefly/templates/router/RoutedApp.jsx';
 import {FormWatcher} from 'firefly/templates/router/RouteHelper';
 import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
-import {UploadPanel} from 'firefly/apps/alertviewer/AlertUploadPanel';
+import {AlertIdPanel} from 'firefly/apps/alertviewer/AlertUploadPanel';
 import {AlertResultView} from 'firefly/apps/alertviewer/AlertResultView';
 import {getAlertViewerCommands} from 'firefly/api/webApiCommands/AlertViewerCommands';
 import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr';
@@ -24,7 +24,7 @@ const basename = getBasename(); //'/firefly/alertviewer';
 const routes = [
     {
         path: '/upload',
-        element: <FormWatcher submitTo='/results'><UploadPanel/></FormWatcher>
+        element: <FormWatcher submitTo='/results'><AlertIdPanel loadInPlace={false}/></FormWatcher>
     },
     {
         path: '/results',
