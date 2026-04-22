@@ -137,7 +137,7 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
                    justifyContent:'space-evenly',
                }}
         >
-            <Typography level='h4' whiteSpace='nowrap'>
+            <Typography level='h4' whiteSpace='nowrap' sx={{pr:1}}>
                 {layoutType==='single' ? getChartTitle(activeItemId, viewerItemIds) : 'Tiled View'}
             </Typography>
             <Stack direction='row' sx={{whiteSpace:'nowrap'}}>
