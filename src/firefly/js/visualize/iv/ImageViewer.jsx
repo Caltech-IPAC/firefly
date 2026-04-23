@@ -7,8 +7,8 @@ import {bool, func, string} from 'prop-types';
 import React, {memo, useState, useEffect, useRef, useDeferredValue, use, Suspense} from 'react';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {ImageViewerView} from './ImageViewerDecorate.jsx';
+import {getPlotViewById, getAllDrawLayersForPlot, getPlotViewProxyById} from '../PlotViewUtil.js';
+import {ImageViewerView, getImageViewerDecorateSx} from './ImageViewerDecorate.jsx';
 import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState, addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
@@ -114,24 +114,31 @@ ImageViewer.propTypes= {
 };
 
 
-export function ImageViewerPlaceHolder({fromWorkingTask:task=false, ...rest}){
-    return task ? <WorkingTaskPlaceHolder {...rest}/> : <MessagePlaceHolder {...rest}/>;
+export function ImageViewerPlaceHolder({fromWorkingTask:task=false, plotId, ...rest}){
+    const {pv, vr} = useStoreConnector(() => {
+        const vr= visRoot();
+        return {vr, pv: getPlotViewById(vr, plotId) ?? getPlotViewProxyById(vr, plotId)};
+    });
+    const decorateSx = getImageViewerDecorateSx(plotId, pv, vr);
+    return task
+        ? <WorkingTaskPlaceHolder {...rest} plotId={plotId} sx={decorateSx}/>
+        : <MessagePlaceHolder {...rest} plotId={plotId} sx={decorateSx}/>;
 }
 
 ImageViewerPlaceHolder.propTypes= {
     plotId : string.isRequired,
     fromWorkingTask: bool,
     message : string,
+    maskShowing: bool,
 };
 
-function MessagePlaceHolder({plotId,message,children}){
+function MessagePlaceHolder({plotId,message,maskShowing=true,sx,children}){
     if (!plotId) return <div/>;
     return (
-        <Box sx={{ position:'absolute', left:0, right:0, top:0, bottom:0}}>
+        <Box sx={sx}>
             <ImageViewStatusPanel {...{
-                maskShowing:true, messageShowing:Boolean(message || children),useMessageAlpha:true,
+                maskShowing, messageShowing:Boolean(message || children),useMessageAlpha:true,
                 slotProps :{ message: { text: message} },
-                sx: {left:2, right:2},
             }}>
                 {children}
             </ImageViewStatusPanel>
@@ -140,20 +147,19 @@ function MessagePlaceHolder({plotId,message,children}){
 }
 
 
-function WorkingTaskPlaceHolder({plotId,children,message:defMessage}){
+function WorkingTaskPlaceHolder({plotId,children,message:defMessage,sx}){
     const {promise,message=defMessage}= useStoreConnector( () => getWorkingTask(plotId)  ) ?? {};
     const Empty= ({promise}) => void (promise && use(promise));
     const workingPanel= (
         <ImageViewStatusPanel {...{
             maskShowing:true, messageShowing:Boolean(message || children),useMessageAlpha:true,
             slotProps :{ message: { text: message} },
-            sx: {left:2, right:2},
         }}>
             {children}
         </ImageViewStatusPanel>
     );
     return (
-        <Box sx={{ position:'absolute', left:0, right:0, top:0, bottom:0}}>
+        <Box sx={sx}>
             <Suspense fallback={workingPanel}>
                 <Empty promise={promise}/>
             </Suspense>
