@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.CollectionUtil.isEmpty;
+
 /**
  * JDBC template for executing SQL against a DataSource.
  * May participates in transactions started by {@link TransactionTemplate} via a thread-local connection registry.
@@ -225,7 +227,7 @@ public class JdbcTemplate {
     }
 
     public void batchUpdate(String sql, List<Object[]> paramsList) {
-        if (paramsList == null || paramsList.isEmpty()) return;
+        if (isEmpty(paramsList)) return;
         batchUpdate(sql, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 Object[] row = paramsList.get(i);
