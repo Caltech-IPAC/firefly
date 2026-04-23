@@ -45,7 +45,7 @@ public class FitsValidation extends ConfigTest{
         FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
         FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
        for (int i=0;  i<fitsReads.length; i++){
-            Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
+            Assert.assertArrayEquals(fitsReads[i].getDataFloatForOlderUtils(), expectedFitsRead[i].getDataFloatForOlderUtils(), (float) delta);
         }
 
     }

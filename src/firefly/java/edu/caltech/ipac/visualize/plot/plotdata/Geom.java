@@ -166,7 +166,7 @@ public class Geom {
                 throw new FitsException("Image contains no projection info");
 
             try {
-                in_data = inFitsRead.getDataFloat();
+                in_data = inFitsRead.getDataFloatForOlderUtils();
                 //System.out.println("creating in_data  in_data.length = " + in_data.length);
             } catch (OutOfMemoryError e) {
                 GeomException ge = new GeomException(

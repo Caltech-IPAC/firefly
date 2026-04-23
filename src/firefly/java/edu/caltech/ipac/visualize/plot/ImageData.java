@@ -191,11 +191,12 @@ public class ImageData implements Serializable {
     private void constructImage(FitsRead[] fitsReadAry)  {
         DataBufferByte db= (DataBufferByte) getRaster().getDataBuffer();
         if (imageType ==ImageType.TYPE_8_BIT) {
-            if (imageMasks!=null && imageMasks.length!=0){
-                bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
-                fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
-            }
-            else {
+            // make is not used in this mode anymore
+//            if (imageMasks!=null && imageMasks.length!=0){
+//                bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
+//                fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
+//            }
+//            else {
                 bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
                 ImageHeader imHead= new ImageHeader(fitsReadAry[0].getHeader());
                 ImageStretch.stretchPixels8Bit(rangeValuesAry[Band.NO_BAND.getIdx()],
@@ -203,7 +204,7 @@ public class ImageData implements Serializable {
                                                imHead,  fitsReadAry[0].getHistogram(),
                                                x, lastPixel, y, lastLine );
 
-            }
+//            }
         }
         else if (imageType ==ImageType.TYPE_24_BIT) {
             float[][] float1dAry= new float[3][];

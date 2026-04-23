@@ -317,12 +317,18 @@ public class FitsReadUtil {
 
     }
 
-    public static float[] dataArrayFromHDUAndPlane(File file, int hduNumber, int planeNumber) {
+    public static float[] dataArrayFromHDUAndPlaneAsFloat(File file, int hduNumber, int planeNumber) {
+        return (float [])dataArrayFromHDUAndPlane(file, hduNumber, planeNumber, Float.TYPE);
+    }
+
+
+
+    public static Object dataArrayFromHDUAndPlane(File file, int hduNumber, int planeNumber, Class<?> arrayType) {
         try (Fits fits = new Fits(file)) {
             BasicHDU<?> hdu= fits.read()[hduNumber];
             if (!(hdu instanceof ImageHDU)) return null;
             var h= hdu.getHeader();
-            return (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(h),getNaxis2(h), planeNumber,Float.TYPE);
+            return dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(h),getNaxis2(h), planeNumber,arrayType);
         }
         catch (Exception e) {
             Logger.getLogger("FitsRead").error(e,"Could not read FITS data");
@@ -392,11 +398,11 @@ public class FitsReadUtil {
         return new ImageHDU(newHeader,  null);
     }
 
-    public static void writeFitsFile(File outfile, FitsRead[] fitsReadAry, Fits refFits) throws IOException {
+    public static void writeFitsFileForCropOnly(File outfile, FitsRead[] fitsReadAry, Fits refFits) throws IOException {
         Fits outputFits = new Fits();
         for (FitsRead fr : fitsReadAry) {
             BasicHDU<?> refHdu = refFits.getHDU(0);
-            ImageHDU imageHDU = makeImageHDU(refHdu.getHeader(), FitsReadUtil.getImageData(refHdu, fr.getDataFloat()));
+            ImageHDU imageHDU = makeImageHDU(refHdu.getHeader(), FitsReadUtil.getImageData(refHdu, fr.getDataFloatForOlderUtils()));
             outputFits.addHDU(imageHDU);
         }
         outputFits.write(outfile);

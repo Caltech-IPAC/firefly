@@ -154,20 +154,15 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
     const retAry= pv.overlayPlotViews.map( (opv,idx) => (
         <DrawLayerItemView key={'MaskControl-'+idx}
                            maxTitleChars={maxTitleChars}
-                           helpLine={opv.description ?? ''}
+                           helpLine={opv.description}
                            lastItem={hasLast ? idx===last : false}
-                           canUserDelete={true}
-                           canUserChangeColor={true}
-                           isPointData={false}
                            packWithNext= {idx!==last}
                            color={opv.colorAttributes.color}
-                           autoFormatTitle={true}
                            title= {makeOverlayTitle(opv, Boolean(mouseOverMaskValue & opv.maskValue), dataWidth, dataHeight) }
                            visible={opv.visible}
                            modifyColor={() => modifyMaskColor(opv)}
                            deleteLayer={() => deleteMaskLayer(opv)}
                            changeVisible={() => setMaskVisibleInGroup(opv, !opv.visible)}
-                           UIComponent={null}
     />));
     return retAry;
 }

@@ -5,16 +5,16 @@
 import {isString} from 'lodash';
 import React from 'react';
 import {Box, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
-import PropTypes from 'prop-types';
+import {object, any, bool, func, number, string} from 'prop-types';
 import {getTitleTag, makeColorChange, makeShape} from './DrawLayerUIComponents';
 import Layers from '@mui/icons-material/Layers';
 
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
-                            color, canUserChangeColor, canUserDelete, title, helpLine,
-                            isPointData, drawingDef, autoFormatTitle, canUserHide=true,
+                            color, canUserChangeColor=true, canUserDelete=false, title, helpLine='',
+                            isPointData=false, drawingDef, autoFormatTitle=true, canUserHide=true,
                             packWithNext=false,
-                            visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
+                            visible, changeVisible, modifyColor, modifyShape, UIComponent=undefined}) {
 
     const sx= { width:1, height:1, pr:1.5, position: 'relative', overflow:'hidden', whiteSpace : 'nowrap'};
     const useDivide= lastItem || !packWithNext;
@@ -44,24 +44,24 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
 
 
 DrawLayerItemView.propTypes= {
-    maxTitleChars  : PropTypes.number.isRequired,
-    lastItem       : PropTypes.bool.isRequired,
-    visible        : PropTypes.bool.isRequired,
-    canUserChangeColor : PropTypes.any.isRequired,
-    color          : PropTypes.string.isRequired,
-    title          : PropTypes.any.isRequired,
-    helpLine       : PropTypes.string.isRequired,
-    canUserDelete  : PropTypes.bool.isRequired,
-    canUserHide    : PropTypes.bool,
-    isPointData    : PropTypes.bool.isRequired,
-    drawingDef     : PropTypes.object,
-    deleteLayer    : PropTypes.func,
-    changeVisible  : PropTypes.func,
-    modifyColor    : PropTypes.func,
-    modifyShape    : PropTypes.func,
-    UIComponent    : PropTypes.object,
-    autoFormatTitle: PropTypes.bool,
-    packWithNext: PropTypes.bool,
+    maxTitleChars  : number.isRequired,
+    lastItem       : bool.isRequired,
+    visible        : bool.isRequired,
+    canUserChangeColor : any,
+    color          : string.isRequired,
+    title          : any.isRequired,
+    helpLine       : string.isRequired,
+    canUserDelete  : bool,
+    canUserHide    : bool,
+    isPointData    : bool,
+    drawingDef     : object,
+    deleteLayer    : func,
+    changeVisible  : func,
+    modifyColor    : func,
+    modifyShape    : func,
+    UIComponent    : object,
+    autoFormatTitle: bool,
+    packWithNext: bool,
 };
 
 
@@ -105,7 +105,7 @@ export function DrawLayerLegendView({maxTitleChars, color, canUserChangeColor, t
 
 
 function makeColorChangeUIElement(color, canUserChangeColor, modifyColor, text) {
-    return canUserChangeColor ? makeColorChange(color,modifyColor, {width: 'calc(33%)'},text) : false;
+    return canUserChangeColor ? makeColorChange(color,modifyColor, text) : false;
 }
 
 function makePointDataShape(isPointData, drawingDef, modifyShape) {
@@ -113,17 +113,13 @@ function makePointDataShape(isPointData, drawingDef, modifyShape) {
 }
 
 function makeHelpLine(helpLine) {
-    if (helpLine) {
-        return (
-            <Typography {...{level:'body-sm',
-                paddingBottom:1,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
-                {helpLine}
-            </Typography>
-        );
-    }
-    else {
-        return false;
-    }
+    if (!helpLine) return false;
+    return (
+        <Typography {...{level:'body-sm',
+            paddingBottom:1,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
+            {helpLine}
+        </Typography>
+    );
 }
 
 function makeDelete(canUserDelete,deleteLayer) {
@@ -139,4 +135,3 @@ function makeDelete(canUserDelete,deleteLayer) {
     );
 
 }
-

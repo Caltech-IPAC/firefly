@@ -227,7 +227,7 @@ public class FlipXYTest extends FitsValidation {
 
         validateSingleHDU(fitsRead.getHDU(), flipedTwiceFR.getHDU());
 
-        Assert.assertArrayEquals(fitsRead.getDataFloat(), flipedTwiceFR.getDataFloat(), (float) delta);
+        Assert.assertArrayEquals(fitsRead.getDataFloatForOlderUtils(), flipedTwiceFR.getDataFloatForOlderUtils(), (float) delta);
 
     }
 
@@ -251,7 +251,7 @@ public class FlipXYTest extends FitsValidation {
         FitsRead flipedTwiceFR = flipY_2.doFlip();
 
         validateSingleHDU(fitsRead.getHDU(), flipedTwiceFR.getHDU());
-        Assert.assertArrayEquals(fitsRead.getDataFloat(), flipedTwiceFR.getDataFloat(), (float) delta);
+        Assert.assertArrayEquals(fitsRead.getDataFloatForOlderUtils(), flipedTwiceFR.getDataFloatForOlderUtils(), (float) delta);
     }
 
     @Test
@@ -273,7 +273,7 @@ public class FlipXYTest extends FitsValidation {
             FitsRead  expectedFlipXY = FitsReadFactory.createFitsReadArray(inFits)[0];
 
             validateSingleHDU(expectedFlipXY.getHDU(),flipedXY.getHDU());
-            Assert.assertArrayEquals(expectedFlipXY.getDataFloat(),flipedXY.getDataFloat(), (float) delta);
+            Assert.assertArrayEquals(expectedFlipXY.getDataFloatForOlderUtils(),flipedXY.getDataFloatForOlderUtils(), (float) delta);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;

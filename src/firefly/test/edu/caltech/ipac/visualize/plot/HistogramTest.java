@@ -267,7 +267,7 @@ public class HistogramTest extends ConfigTest {
         String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
         FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
         ImageHeader imageHeader = new ImageHeader(fitsRead.getHeader());
-        inData = fitsRead.getDataFloat();
+        inData = fitsRead.getDataFloatForOlderUtils();
 
         float[] float1d = new float[inData.length];
         //get the raw data
@@ -344,7 +344,7 @@ public class HistogramTest extends ConfigTest {
         String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
         FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
         ImageHeader imageHeader = new ImageHeader(fitsRead.getHeader());
-        float[] inData = fitsRead.getDataFloat();
+        float[] inData = fitsRead.getDataFloatForOlderUtils();
 
         float[] float1d = new float[inData.length];
         //get the raw data

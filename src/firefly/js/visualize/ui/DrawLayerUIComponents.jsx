@@ -19,7 +19,7 @@ import {
 const symbolSize= 10;
 
 
-export function makeColorChange(color, modifyColor, sx= {}, text='Color') {
+export function makeColorChange(color, modifyColor, text='Color') {
     const feedBackStyle= { width:symbolSize, height:symbolSize, backgroundColor: color};
     if (!text) {
         return <Chip onClick={() => modifyColor()}> <div style={feedBackStyle} /> </Chip> ;
@@ -138,7 +138,7 @@ export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
     });
 }
 
-export function getTitleTag(title, maxTitleChars, autoFormatTitle, level, sx, maxMax=30) {
+export function getTitleTag(title, maxTitleChars, autoFormatTitle, level=undefined, sx=undefined, maxMax=30) {
     if (!autoFormatTitle) {
         return isFunction(title) ? title() : title;
     }

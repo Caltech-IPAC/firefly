@@ -113,7 +113,7 @@ public class ImageMask {
      * @param  mask value to check
      * @return <code>true</code> if any are set
      */
-    public final boolean isSet(final int mask) {
+    public final boolean isSet(final long mask) {
         return (check & mask) != 0;
     }
 
