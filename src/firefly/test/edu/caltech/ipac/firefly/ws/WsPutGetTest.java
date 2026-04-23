@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.ws;
 
-import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -11,7 +10,6 @@ import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.client.methods.DavMethodBase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -20,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static edu.caltech.ipac.firefly.util.FileLoader.resolveFile;
+import static edu.caltech.ipac.util.FormatUtil.Format.OCTET_STREAM;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -62,7 +61,7 @@ public class WsPutGetTest extends ConfigTest {
     public void testPut() throws WsException {
 
         WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
-                testFile, MediaType.OCTET_STREAM.type());
+                testFile, OCTET_STREAM.mime());
 
         assertTrue("Upload went wrong, status code <200 " + wsResponse.getStatusCode(), Integer.parseInt(wsResponse.getStatusCode()) == 201);
         assertTrue("Uploaded file name is wrong " + wsResponse.getResponse(), wsResponse.getStatusText().equals("Created"));
@@ -96,7 +95,7 @@ public class WsPutGetTest extends ConfigTest {
     public void testGetAllLeaves() throws WsException {
 
         WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
-                testFile, MediaType.OCTET_STREAM.type());
+                testFile, OCTET_STREAM.mime());
 
 
         WspaceMeta meta = wsm.getMeta("/", WspaceMeta.Includes.CHILDREN_PROPS);
@@ -131,7 +130,7 @@ public class WsPutGetTest extends ConfigTest {
     public void testGet() throws WsException {
 
         WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
-                testFile, MediaType.OCTET_STREAM.type());
+                testFile, OCTET_STREAM.mime());
 
         assertTrue("Upload went wrong, status code <200 " + wsResponse.getStatusCode(), Integer.parseInt(wsResponse.getStatusCode()) == 201);
         assertTrue("Uploaded file name is wrong " + wsResponse.getResponse(), wsResponse.getStatusText().equals("Created"));
@@ -161,7 +160,7 @@ public class WsPutGetTest extends ConfigTest {
         testRelPathFolder = "tmp-" + UUID.randomUUID().toString() + "/tmp1?/t2#$%^&*9";
 
         WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
-                testFile, MediaType.OCTET_STREAM.type());
+                testFile, OCTET_STREAM.mime());
         if (wsResponse.getStatusCode().endsWith("301")) {
             assertTrue(wsResponse.getStatusCode().equals("-1"));
             assertTrue(wsResponse.getResponse().startsWith("java.net.URISyntaxException"));

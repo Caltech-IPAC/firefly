@@ -3,12 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.decimate.DecimateKey;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.BadSqlGrammarException;
+import edu.caltech.ipac.firefly.server.db.jdbc.exceptions.BadSqlGrammarException;
+import edu.caltech.ipac.firefly.server.db.jdbc.exceptions.DataIntegrityViolationException;
 
 import java.io.File;
 import java.sql.SQLDataException;

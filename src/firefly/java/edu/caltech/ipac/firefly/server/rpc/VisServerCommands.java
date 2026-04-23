@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.firefly.core.Util;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
@@ -88,7 +89,7 @@ public class VisServerCommands {
 //            PlotState state= sp.getState();
 //            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
 //            float [] float1D= VisServerOps.getFloatDataArray(state,band);
-//            res.setContentType("application/octet-stream");
+//            res.setContentType(OCTET_STREAM.getMime());
 //
 //            ByteBuffer byteBuf = ByteBuffer.allocateDirect(float1D.length * Float.BYTES); //4 bytes per float
 //            byteBuf.order(ByteOrder.nativeOrder());
@@ -131,7 +132,7 @@ public class VisServerCommands {
                 return;
             }
             res.addHeader("tile-number", tileNumber+"");
-            res.setContentType("application/octet-stream");
+            res.setContentType(OCTET_STREAM.mime());
             ByteBuffer byteBuf = ByteBuffer.wrap(data);
             byteBuf.position(0);
             WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
@@ -160,7 +161,7 @@ public class VisServerCommands {
 
         private static void sendJsonDataRet(HttpServletResponse res, Map<?,?> data) throws IOException {
             String jsonData= makeJsonRetData(data);
-            res.setContentType("application/json");
+            res.setContentType(JSON.mime());
             res.setContentLength(jsonData.length());
             ServletOutputStream out = res.getOutputStream();
             out.write(jsonData.getBytes());
@@ -217,7 +218,7 @@ public class VisServerCommands {
                 default -> throw new IllegalArgumentException(ServerParams.EXTRACTION_TYPE + " is not supported");
             };
 
-            res.setContentType("application/octet-stream");
+            res.setContentType(OCTET_STREAM.mime());
             int valueSize= useFloat ? Float.BYTES : Double.BYTES; //4 bytes per float, 8 bytes per double
             ByteBuffer byteBuf = ByteBuffer.allocateDirect(extractList.size() * valueSize);
             byteBuf.order(ByteOrder.nativeOrder());

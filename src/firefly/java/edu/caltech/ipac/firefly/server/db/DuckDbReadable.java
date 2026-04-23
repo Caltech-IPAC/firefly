@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -108,7 +108,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     public DataGroup getInfo(String source) throws DataAccessException {
         StopWatch.getInstance().start("getInfo: " + source);
         String readSource = sqlReadSource(source);
-        int count = JdbcFactory.getSimpleTemplate(getDbInstance()).queryForInt("SELECT count(*) from %s".formatted(readSource));
+        int count = JdbcFactory.getTemplate(getDbInstance()).queryForInt("SELECT count(*) from %s".formatted(readSource));
         DataGroup table = getTableMeta(source, null);
         Arrays.stream(table.getDataDefinitions()).forEach(dt -> dt.setKeyName(getAliasName(dt)));  // show case-sensitive column names if exists
         table.setSize(count);
@@ -132,7 +132,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         // import data directly from source file.
         // no need to get data from dataGroupSupplier.  query the data directly from the dbFile
-        var jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
+        var jdbc = JdbcFactory.getTemplate(getDbInstance());
 
         StopWatch.getInstance().start("  ingestData: load data for " + forTable);
 
@@ -181,7 +181,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         @Override
         protected DataGroup getTableMeta(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
-            var jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
+            var jdbc = JdbcFactory.getTemplate(getDbInstance());
             try {
                 var votable = jdbc.queryForObject(
                         "SELECT decode(value) FROM parquet_kv_metadata('%s') where key = 'IVOA.VOTable-Parquet.content'".formatted(source),

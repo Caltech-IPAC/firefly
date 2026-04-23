@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.RedisService;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.messaging.Subscriber;
@@ -19,18 +20,17 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.distribution.CacheManagerPeerProvider;
-import net.sf.ehcache.distribution.CachePeer;
-import net.sf.ehcache.statistics.StatisticsGateway;
+import org.ehcache.CacheManager;
+import org.ehcache.config.ResourceType;
+import org.ehcache.config.SizedResourcePool;
+import org.ehcache.config.units.MemoryUnit;
+import org.ehcache.core.statistics.CacheStatistics;
+import org.ehcache.core.statistics.TierStatistics;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.PrintWriter;
-import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
@@ -70,7 +70,7 @@ public class ServerStatus extends BaseHttpServlet {
         boolean execRedisCleanup = Boolean.parseBoolean(req.getParameter("execRedisCleanup"));
 
 
-        res.addHeader("content-type", "text/html");
+        res.addHeader("content-type", HTML.mime());
         PrintWriter writer = res.getWriter();
         writer.println("<pre style='font-size: -1'>");
 
@@ -173,7 +173,7 @@ public class ServerStatus extends BaseHttpServlet {
 
         EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
 
-        Try.it(() -> displayCacheInfo(writer, prov.getEhcacheManager(), sInfo)).getOrElse(e -> writer.println("Failed to load Cache Info: " + e.getMessage()));
+        Try.it(() -> displayCacheInfo(writer, prov, sInfo)).getOrElse(e -> writer.println("Failed to load Cache Info: " + e.getMessage()));
 
     }
     private static void redisView(PrintWriter writer) {
@@ -195,44 +195,56 @@ public class ServerStatus extends BaseHttpServlet {
         skip(writer);
     }
 
-    private static void displayCacheInfo(PrintWriter writer, CacheManager cm, ServerContext.Info sInfo) {
-        writer.println(cm.getName() + " EHCACHE INFORMATION:");
+    private static void displayCacheInfo(PrintWriter writer, EhcacheProvider prov, ServerContext.Info sInfo) {
+        writer.println("EHCACHE INFORMATION:");
         writer.println("-------------------:");
-        writer.println("Manager Status: " + cm.getStatus());
-        writer.println("DiskStore Path: " + cm.getConfiguration().getDiskStoreConfiguration().getPath());
-        writer.println();
         writer.println("Host IP Address: " + sInfo.ip());
+        writer.println();
 
-        writer.println("Caches: ");
-        Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
-        String[] cacheNames = cm.getCacheNames();
-        CachePeer cachePeer = CachePeerProviderFactory.getFirstLocalRmiCachePeer(cm);
-        for(String n : cacheNames) {
-            Ehcache c = cm.getCache(n);
-            try {
-                writer.println("\t" + c.getName() + " @" + (cachePeer == null? c.hashCode() : cachePeer.getUrlBase()));
-            } catch (RemoteException e) {
-                // should not happen
-            }
-            writer.println("\tCache Status    : " + c.getStatus());
-            writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap()/(1024 * 1024) + "MB");
-            writer.println("\tMax Entries    : " + c.getCacheConfiguration().getMaxEntriesLocalHeap());
-            writer.println("\tStatistics     : " + getStats(c));
-            if (peerProvs.size()>0) {
-                for (CacheManagerPeerProvider peerProv : peerProvs.values()) {
-                    List<?> peers = peerProv.listRemoteCachePeers(c);
-                    for(Object o : peers) {
-                        CachePeer cp = (CachePeer) o;
-                        try {
-                            writer.println("\tReplicating with: " + cp.getUrl());
-                        } catch (RemoteException e) {
-                            writer.println("\tFail to connect: " + cp);
-                        }
-                    }
+        for (String alias : new String[]{EhcacheProvider.VIS_SHARED_MEM, EhcacheProvider.PERM_SMALL}) {
+            CacheManager cm = alias.equals(EhcacheProvider.VIS_SHARED_MEM) ? prov.getVisManager() : prov.getPermManager();
+            var config = cm.getRuntimeConfiguration().getCacheConfigurations().get(alias);
+            if (config == null) continue;
+
+            SizedResourcePool heapPool = config.getResourcePools().getPoolForResource(ResourceType.Core.HEAP);
+            SizedResourcePool diskPool = config.getResourcePools().getPoolForResource(ResourceType.Core.DISK);
+
+            CacheStatistics stats = prov.getCacheStats(alias);
+            TierStatistics heapTier = stats != null ? stats.getTierStatistics().get("OnHeap") : null;
+            TierStatistics diskTier = stats != null ? stats.getTierStatistics().get("Disk")   : null;
+
+            writer.println(alias + "  [" + cm.getStatus() + "]");
+
+            // Heap
+            if (heapPool != null) {
+                if (heapPool.getUnit() instanceof MemoryUnit) {
+                    long usedMB = heapTier != null && heapTier.getOccupiedByteSize() >= 0 ? heapTier.getOccupiedByteSize() / 1024 / 1024 : -1;
+                    String usedStr = usedMB >= 0 ? String.format("%,d MB", usedMB) : "n/a";
+                    writer.println(String.format("  Memory  max=%,d %s,  used=%s", heapPool.getSize(), heapPool.getUnit(), usedStr));
+                    long usedEntries = heapTier != null ? heapTier.getMappings() : -1;
+                    String entriesStr = usedEntries >= 0 ? String.format("%,d", usedEntries) : "n/a";
+                    writer.println(String.format("  Entries  used=%s", entriesStr));
+                } else {
+                    long usedEntries = heapTier != null ? heapTier.getMappings() : -1;
+                    String usedStr = usedEntries >= 0 ? String.format("%,d", usedEntries) : "n/a";
+                    writer.println(String.format("  Entries  max=%,d,  used=%s", heapPool.getSize(), usedStr));
                 }
             }
-            else {
-                writer.println("\tNot replicating");
+
+            // Disk
+            if (diskPool != null) {
+                String persistStr = diskPool.isPersistent() ? " (persistent)" : "";
+                long usedEntries = diskTier != null ? diskTier.getMappings() : -1;
+                String usedStr = usedEntries >= 0 ? String.format("%,d", usedEntries) : "n/a";
+                writer.println(String.format("  Disk  max=%,d %s%s,  used=%s", diskPool.getSize(), diskPool.getUnit(), persistStr, usedStr));
+            }
+
+            // Hits / misses / evictions / expirations
+            if (stats != null) {
+                writer.println(String.format("  Hits=%-,10d  Misses=%-,10d  Hit%%=%.1f%%",
+                        stats.getCacheHits(), stats.getCacheMisses(), stats.getCacheHitPercentage()));
+                writer.println(String.format("  Puts=%-,10d  Evictions=%-,10d  Expirations=%,d",
+                        stats.getCachePuts(), stats.getCacheEvictions(), stats.getCacheExpirations()));
             }
             writer.println();
         }
@@ -306,19 +318,6 @@ public class ServerStatus extends BaseHttpServlet {
                 w.printf("| %20s | %20s | %60s | %10s | %10s |\n".formatted(r.getData()));
             });
         }
-    }
-
-    private static String getStats(Ehcache c) {
-        StatisticsGateway sg = c.getStatistics();
-        String s = "[" +
-                "  Size:" + sg.getSize() +
-                "  Expired:" + sg.cacheExpiredCount() +
-                "  Evicted:" + sg.cacheEvictedCount() +
-                "  Hits:" + sg.cacheHitCount() +
-                "  Hit-Ratio:" + sg.cacheHitRatio() +
-                "  Heap-Size:" + sg.getLocalHeapSizeInBytes()/(1024 * 1024) + "MB" +
-                "  ]";
-        return s;
     }
 
     private static void skip(PrintWriter w) { w.println("\n\n"); }

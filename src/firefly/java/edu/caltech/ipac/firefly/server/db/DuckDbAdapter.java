@@ -6,10 +6,9 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
@@ -17,9 +16,8 @@ import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
-import javax.annotation.Nonnull;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -31,7 +29,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.db.DuckDbUDF.*;
@@ -94,7 +91,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     }
 
     void createUDFs() {
-        SimpleJdbcTemplate jdbc = getJdbc();
+        JdbcTemplate jdbc = getJdbc();
         for (String cf : customFunctions) {
             try {
                 jdbc.update(cf);
@@ -107,7 +104,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     @Override
     List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
         String sql = "select column_name from duckdb_columns() where table_name = '%s'".formatted(forTable.toUpperCase());
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+        return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
     protected void renameColumn(String from, String to) {
@@ -146,7 +143,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     public List<String> getTableNames() {
         String sql = "SELECT table_name FROM duckdb_tables()";
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
+        return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
     }
 
     public DbAdapter.DbStats getDbStats() {
@@ -155,13 +152,13 @@ public class DuckDbAdapter extends BaseDbAdapter {
             var db = getDbInstance(false);
             if (db == null)  return dbStats;
 
-            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(db);
-            jdbc.queryForObject("SELECT count(*), sum(estimated_size) from duckdb_tables() where not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(db);
+            jdbc.query("SELECT count(*), sum(estimated_size) from duckdb_tables() where not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
                 dbStats.tblCnt = rs.getInt(1);
                 dbStats.totalRows = rs.getInt(2);
                 return null;
             });
-            jdbc.queryForObject("SELECT column_count, estimated_size from duckdb_tables() where table_name = 'DATA'", (rs, i) -> {
+            jdbc.query("SELECT column_count, estimated_size from duckdb_tables() where table_name = 'DATA'", (rs, i) -> {
                 dbStats.colCnt = rs.getInt(1);
                 dbStats.rowCnt = rs.getInt(2);
                 return null;
@@ -278,43 +275,5 @@ public class DuckDbAdapter extends BaseDbAdapter {
         return replaceUnquoted(input, "like", "ILIKE");
     }
 
-    public record MimeDesc(String mime, String desc) {}
-    @Nonnull
-    public static MimeDesc getMimeType(String inFile) {
-        try(JdbcFactory.SharedDS ds = JdbcFactory.getSharedDS(new DuckDbAdapter().createDbInstance())) {
-            loadExtension(ds, "magic");
-            Map<String, Object> rs = ds.getJdbc().queryForMap("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile));
-            if (!rs.isEmpty()) {
-                return new MimeDesc(String.valueOf(rs.get("mime")), String.valueOf(rs.get("desc")));
-            }
-        } catch (Exception ex) {
-            Logger.getLogger().error(ex, "Failed to detect mime type");
-        }
-        return new MimeDesc("application/x-unknown", "unknown");
-    }
-
-    /**
-     * Loads the specified extension in DuckDB.
-     *
-     * @param ds the shared data source
-     * @param name the name of the extension to load
-     */
-    static void loadExtension(JdbcFactory.SharedDS ds, String name) {
-        SimpleJdbcTemplate jdbc = ds.getJdbc();
-        Ref<Boolean> installed = new Ref<>(false);
-        Ref<Boolean> loaded = new Ref<>(false);
-        jdbc.query("SELECT installed, loaded FROM duckdb_extensions() WHERE extension_name = '%s'".formatted(name), (rs, idx) -> {
-            installed.set(rs.getBoolean("installed"));
-            loaded.set(rs.getBoolean("loaded"));
-            return null;
-        });
-        // Install and load the extension if not already done
-        if (!installed.get()) {
-            jdbc.update("INSTALL %s FROM community".formatted(name));
-        }
-        if (!loaded.get()) {
-            jdbc.update("LOAD %s".formatted(name));
-        }
-    }
 
 }

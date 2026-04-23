@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.ws;
 
-import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -17,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static edu.caltech.ipac.util.FormatUtil.Format.OCTET_STREAM;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -223,7 +223,7 @@ public class WsTest extends ConfigTest {
         if (!resourceList.contains(ufilePath)) {
             resourceList.add(ufilePath);
         }
-        man.putFile(relFolder, true,testFile, MediaType.OCTET_STREAM.type());
+        man.putFile(relFolder, true,testFile, OCTET_STREAM.mime());
         return ufilePath;
     }
 

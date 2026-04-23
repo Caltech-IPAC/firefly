@@ -6,9 +6,9 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.table.DataGroup;
-import org.springframework.jdbc.core.JdbcTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.dbToDataGroup;
 
@@ -47,9 +47,7 @@ public interface Query {
      */
     default DataGroup executeQuery(TableServerRequest request) {
         JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
-        DataGroup dg = (DataGroup) jdbc.query(getSql(request), getSqlParams(request), rs -> {
-            return dbToDataGroup(rs, getDbInstance());
-        });
+        DataGroup dg = jdbc.query(getSql(request), rs -> dbToDataGroup(rs, getDbInstance()), getSqlParams(request));
         String ddSql = getDDSql(request);
         if (ddSql != null) {
             try {

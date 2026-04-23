@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -43,7 +44,7 @@ public class CommandService extends BaseHttpServlet {
         String msg = rval.toJSONString();
         res.setStatus(statusCode);
         res.setContentLength(msg.length());
-        res.setContentType("application/json");
+        res.setContentType(JSON.mime());
         res.setCharacterEncoding("UTF-8");
         try {
             res.getOutputStream().print(msg);

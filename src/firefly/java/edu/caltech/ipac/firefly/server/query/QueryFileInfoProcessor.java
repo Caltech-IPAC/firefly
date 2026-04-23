@@ -5,12 +5,12 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
-import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -36,17 +36,13 @@ abstract public class QueryFileInfoProcessor extends BaseFileInfoProcessor imple
             throw new IllegalArgumentException("FileInfoProcessor.loadData Requires an TableServerRequest");
         }
         TableServerRequest request= (TableServerRequest)sr;
-        SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
+        JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
 
         String sql = getSql(request);
         Object[] params = getSqlParams(request);
 
         final FileInfoRowMapper fim = makeRowMapper(request);
-        ParameterizedRowMapper<FileInfo> mapper = new ParameterizedRowMapper<FileInfo>() {
-            public FileInfo mapRow(ResultSet resultSet, int i) throws SQLException {
-                return fim.mapRow(resultSet, i);
-            }
-        };
+        JdbcTemplate.ParameterizedRowMapper<FileInfo> mapper = (resultSet, i) -> fim.mapRow(resultSet, i);
 
         LOGGER.info("Executing SQL query: " + sql,
                  "         Parameters: " + "{" + CollectionUtil.toString(params) + "}");

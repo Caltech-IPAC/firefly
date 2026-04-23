@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.StopWatch;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.util.ComparisonUtil;
 
@@ -63,7 +64,7 @@ public abstract class BaseHttpServlet extends HttpServlet {
         String retstr = status + "::" + (msg == null ? "": msg.replace("\n", "<br>")) + "::" + (value == null ? "" : value);
         res.setStatus(status);
         res.setContentLength(retstr.length());
-        res.setContentType("text/html");
+        res.setContentType(HTML.mime());
         res.setCharacterEncoding("utf-8");
         res.getOutputStream().print(retstr);
 

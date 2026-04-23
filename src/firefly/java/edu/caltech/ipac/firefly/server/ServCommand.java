@@ -1,7 +1,8 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.core.RedisService;
+import static edu.caltech.ipac.util.FormatUtil.Format.*;
+
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -47,7 +48,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
             jsonData= makeOneEntryArray(json);
         }
 
-        res.setContentType("application/json");
+        res.setContentType(JSON.mime());
         res.setContentLength(jsonData.length());
         ServletOutputStream out = res.getOutputStream();
         out.write(jsonData.getBytes());

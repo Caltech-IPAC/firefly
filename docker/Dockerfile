@@ -130,7 +130,7 @@ CMD ./devMode.sh
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:11.0.11-jre21-temurin-jammy
+FROM tomcat:11.0-jre21-temurin
 
 ARG build_dir=firefly
 ARG user=tomcat

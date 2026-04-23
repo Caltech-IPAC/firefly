@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -23,9 +23,8 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.support.TransactionTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
+import edu.caltech.ipac.firefly.server.db.jdbc.TransactionTemplate;
 
 import javax.validation.constraints.NotNull;
 import java.sql.*;
@@ -320,14 +319,14 @@ public class EmbeddedDbUtil {
                     .map(dt -> "count(distinct \"%s\") as \"%s\"".formatted(dt.getKeyName(), dt.getKeyName()))
                     .collect(Collectors.joining(", "));
 
-            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
+            List<Map<String, Object>> rs = JdbcFactory.getTemplate(dbAdapter.getDbInstance())
                     .queryForList("SELECT %s FROM %s limit 500".formatted(cols, dbAdapter.getDataTable()));
 
             List<Object[]> params = new ArrayList<>();
             rs.get(0).forEach( (cname,v) -> {
                 Long count = (Long) v ;
                 if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
-                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
+                    List<Map<String, Object>> vals = JdbcFactory.getTemplate(dbAdapter.getDbInstance())
                             .queryForList("SELECT distinct \"%s\" FROM data order by 1".formatted(cname));
 
                     DataType col = findColByName(inclCols, cname);
@@ -561,7 +560,7 @@ public class EmbeddedDbUtil {
             int batchSize = Math.min(rows-loaded, 10000);   // set batchSize limit to 10k to  ensure HUGE table do not require unnecessary amount of memory to load
             final int roffset = loaded;
             loaded += batchSize;
-            jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
+            jdbc.batchUpdate(insertDataSql, new JdbcTemplate.BatchPreparedStatementSetter() {
                 final DataType[] cols = data.getDataDefinitions();
                 List<Boolean> cIsAry = isColumnTypeArray(cols);
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
