@@ -10,7 +10,7 @@ import {createRoot} from 'react-dom/client';
 import {set, defer, once, isArray} from 'lodash';
 import 'styles/global.css';
 
-import {APP_LOAD, dispatchAppOptions, dispatchConnectionStatus, dispatchUpdateAppData} from './core/AppDataCntlr.js';
+import {APP_LOAD, dispatchAppOptions, dispatchConnectionStatus, dispatchUpdateAppData, getConnectionStatus} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LandingPage} from './templates/fireflyviewer/LandingPage.jsx';
@@ -45,6 +45,7 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -463,7 +464,11 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
     return new Promise(async (resolve) => {
 
         const processDecor= (process) => (rawAction) => {
-            getOrCreateWsConn().catch(() => dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'}));
+            getOrCreateWsConn().catch(() => {
+                if (!getConnectionStatus()?.lost) {         // set lost status only when it's not already set, to avoid circular dispatches
+                    dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'});
+                }
+            });
             process(rawAction);
             recordHistory(rawAction);
         };
