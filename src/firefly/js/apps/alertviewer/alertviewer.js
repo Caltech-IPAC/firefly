@@ -24,7 +24,7 @@ const basename = getBasename(); //'/firefly/alertviewer';
 const routes = [
     {
         path: '/upload',
-        element: <FormWatcher submitTo='/results'><AlertIdPanel loadInPlace={false}/></FormWatcher>
+        element: <FormWatcher submitTo='/results'><AlertIdPanel loadInPlace={true}/></FormWatcher>
     },
     {
         path: '/results',
