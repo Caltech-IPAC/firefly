@@ -99,7 +99,7 @@ export function ImageViewStatusPanel(props) {
                         </Box>
                     </Stack>
                 </Card>
-            }>
+            }
         </Box>
     );
 }
