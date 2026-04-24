@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.firefly.data.HasSizeOf;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
@@ -143,7 +144,8 @@ public class EhcacheProvider implements Cache.Provider {
     //====================================================================
     private static CacheManager setupPermCacheManager() {
         // Disk store for PERM_SMALL persistence
-        File diskDir = new File(System.getProperty("java.io.tmpdir"), "ehcache");
+        File ehcacheRoot = new File(System.getProperty("java.io.tmpdir"), "ehcache");
+        File diskDir = new File(ehcacheRoot, ServerContext.getAppName());
         PersistentCacheManager manager = CacheManagerBuilder.newCacheManagerBuilder()
                 .using(permStats)
                 .with(CacheManagerBuilder.persistence(diskDir))
