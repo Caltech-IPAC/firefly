@@ -39,7 +39,7 @@ public class ZscaleTest {
 
         Fits fits = FileLoader.loadFits(ZscaleTest.class,filename );
         FitsRead[] fry = FitsReadFactory.createFitsReadArray(fits);
-        float1d = fry[0].getDataFloat();
+        float1d = fry[0].getDataFloatForOlderUtils();
         imageHeader = new ImageHeader(fry[0].getHeader());
 
     }

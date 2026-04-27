@@ -49,7 +49,7 @@ public class DirectStretchUtils {
     public static StretchDataInfo getStretchDataMask(PlotState state, ActiveFitsReadGroup frGroup, int tileSize, long maskBits)
             throws Exception {
         FitsRead fr= frGroup.getFitsRead(state.firstBand());
-        float [] flip1d= fr.getRawFloatAryFlipped(false);
+        long [] flip1d= fr.getRawLongAryFlipped(false);
         StretchVars sv= getStretchVars(fr,tileSize, CompressType.FULL);
         List<ImageMask> maskList=  new ArrayList<>();
 
@@ -323,14 +323,14 @@ public class DirectStretchUtils {
     private static class StretchMaskTile {
         byte[] result;
 
-        Void stretch(StretchTileDef stdef, List<ImageMask> maskList, final float [] float1d, final int naxis1) {
+        Void stretch(StretchTileDef stdef, List<ImageMask> maskList, final long [] long1d, final int naxis1) {
             byte [] byteAry= new byte[stdef.width * stdef.height];
             int[] pixelhist = new int[256];
             int lastPixel = stdef.x + stdef.width -1;
             int lastLine = stdef.y + stdef.height -1;
             ImageMask[] iMasks= maskList.toArray(new ImageMask[0]);
             ImageStretch.stretchPixelsForMask(stdef.x, lastPixel, stdef.y, lastLine, naxis1,
-                    (byte) 255, float1d, byteAry, pixelhist, iMasks);
+                    long1d, byteAry, pixelhist, iMasks);
             this.result = byteAry;
             return null;
         }

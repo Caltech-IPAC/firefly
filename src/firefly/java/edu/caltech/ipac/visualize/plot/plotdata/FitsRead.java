@@ -40,6 +40,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     private final int totalImageHdusInFile;
     private ImageHDU hdu;
     private float[] float1d;
+    private long[] long1d;
     private final Header header;
     private Histogram hist;
     private final File file;
@@ -117,8 +118,14 @@ public class FitsRead implements Serializable, HasSizeOf {
 
     public float[] getRawFloatAry() {
         if (float1d!=null) return float1d;
-        float1d= FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber);
+        float1d= FitsReadUtil.dataArrayFromHDUAndPlaneAsFloat(this.file,this.hduNumber, planeNumber);
         return float1d;
+    }
+
+    public long[] getRawLongAry() {
+        if (long1d!=null) return long1d;
+        long1d= (long[])FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber, Long.TYPE);
+        return long1d;
     }
 
     private String makeSyncKey() {
@@ -129,12 +136,41 @@ public class FitsRead implements Serializable, HasSizeOf {
     public float[] getRawFloatAryFlipped(boolean cacheOnSecondRequest) {
         float[] retAry;
         synchronized (syncKey) {
+            if (long1d!=null) {
+                float1d= null;
+                long1d= null;
+                dataFlipped= false;
+            }
             if (float1d==null && cacheOnSecondRequest && !requestedFlipped) {
-                retAry= FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber);
+                retAry= FitsReadUtil.dataArrayFromHDUAndPlaneAsFloat(this.file,this.hduNumber, planeNumber);
                 flipInPlace(retAry,getNaxis1(),getNaxis2());
             }
             else {
                 retAry= getRawFloatAry();
+                if (!dataFlipped) {
+                    flipInPlace(retAry,getNaxis1(),getNaxis2());
+                    dataFlipped = true;
+                }
+            }
+            requestedFlipped= true;
+            return retAry;
+        }
+    }
+
+    public long[] getRawLongAryFlipped(boolean cacheOnSecondRequest) {
+        long[] retAry;
+        synchronized (syncKey) {
+            if (float1d!=null) {
+                float1d= null;
+                long1d= null;
+                dataFlipped= false;
+            }
+            if (long1d==null && cacheOnSecondRequest && !requestedFlipped) {
+                retAry= (long[])FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber, Long.TYPE);
+                flipInPlace(retAry,getNaxis1(),getNaxis2());
+            }
+            else {
+                retAry= getRawLongAry();
                 if (!dataFlipped) {
                     flipInPlace(retAry,getNaxis1(),getNaxis2());
                     dataFlipped = true;
@@ -170,6 +206,20 @@ public class FitsRead implements Serializable, HasSizeOf {
         }
     }
 
+    private static void flipInPlace(long [] long1d, int naxis1, int naxis2) {
+        int idx=0;
+        long val;
+        for (int y= naxis2-1; y>=naxis2/2; y--) {
+            for (int x= 0; x<naxis1; x++) {
+                val= long1d[idx];
+                long1d[idx]= long1d[y*naxis1+x];
+                long1d[y*naxis1+x]= val;
+                idx++;
+                if (idx==(naxis1*naxis2)/2) return;
+            }
+        }
+    }
+
     private static float [] flipFloatArray(float [] float1d, int naxis1, int naxis2) {
         float [] flipped= new float[float1d.length];
         int idx=0;
@@ -197,6 +247,7 @@ public class FitsRead implements Serializable, HasSizeOf {
      * @param startLine start line
      * @param lastLine list line
      * @param lsstMasks mask array
+     * @deprecated
      */
     public synchronized void doStretchMask(
                                        byte[] pixelData,
@@ -206,10 +257,9 @@ public class FitsRead implements Serializable, HasSizeOf {
                                        int lastLine,
                                        ImageMask[] lsstMasks)  {
 
-        byte blank_pixel_value = (byte) 255;
         int[] pixelhist = new int[256];
         ImageStretch.stretchPixelsForMask(startPixel, lastPixel, startLine, lastLine, this.getNaxis1(),
-                        blank_pixel_value, getRawFloatAry(), pixelData, pixelhist, lsstMasks);
+                        getRawLongAry(), pixelData, pixelhist, lsstMasks);
     }
 
 
@@ -330,8 +380,10 @@ public class FitsRead implements Serializable, HasSizeOf {
      * physical_values = BZERO + BSCALE × array_value	(5.3)
      * <p>
      * This method return the physical data value at the pixels as an one dimensional array
+     *
+     * This function should not be used for any new development
      */
-    public float[] getDataFloat() {
+    public float[] getDataFloatForOlderUtils() {
         float[] floatAry= getRawFloatAryStandard();
         if (getBscale()==1.0 && getBzero()==0) return floatAry;
         float[] fData = new float[floatAry.length];

@@ -359,7 +359,7 @@ public class VisServerOps {
                 FitsRead[] fr= FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
 
 
-                if (saveCropFits) FitsReadUtil.writeFitsFile(cropFile,fr,cropFits);
+                if (saveCropFits) FitsReadUtil.writeFitsFileForCropOnly(cropFile,fr,cropFits);
 
 
 

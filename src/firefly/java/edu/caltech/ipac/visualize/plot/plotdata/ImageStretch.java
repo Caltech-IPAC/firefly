@@ -542,8 +542,7 @@ public class ImageStretch {
      * @param startLine (tile info) start line
      * @param lastLine (tile info) end line
      * @param naxis1 number of pixels in a line
-     * @param blank_pixel_value blank pixel value
-     * @param float1dArray array of raw values
+     * @param long1dArray array of raw values
      * @param pixeldata array to populate
      */
     public static void stretchPixelsForMask(int startPixel,
@@ -551,8 +550,7 @@ public class ImageStretch {
                                             int startLine,
                                             int lastLine,
                                             int naxis1,
-                                            byte blank_pixel_value,
-                                            float[] float1dArray,
+                                            long[] long1dArray,
                                             byte[] pixeldata,
                                             int[] pixelhist,
                                             ImageMask[] lsstMasks) {
@@ -567,36 +565,32 @@ public class ImageStretch {
 
             for (int index = start_index; index <= last_index; index++) {
 
-                if (Double.isNaN(float1dArray[index])) { //original pixel value is NaN, assign it to blank
-                    pixeldata[pixelCount] = blank_pixel_value;
-                } else {
-                    /*
-                     The IndexColorModel is designed in the way that each pixel[index] contains the color in
-                     lsstMasks[index].  In pixel index0, it stores the lsstMasks[0]'s color. Thus, assign
-                     pixelData[pixelCount]=index of the lsstMasks, this pixel is going to be plotted using the
-                     color stored there.  The color model is indexed.  For 8 bit image, it has 256 maximum colors.
-                     For detail, see the indexColorModel defined in ImageData.java.
-                     */
-                    int maskPixel= (int)float1dArray[index];
-                    if (combinedMask.isSet(maskPixel )) {
-                        for (int i = 0; i < lsstMasks.length; i++) {
-                            if (lsstMasks[i].isSet(maskPixel)) {
-                                pixeldata[pixelCount] = (byte) i;
-                                break;
-                            }
+                /*
+                 The IndexColorModel is designed in the way that each pixel[index] contains the color in
+                 lsstMasks[index].  In pixel index0, it stores the lsstMasks[0]'s color. Thus, assign
+                 pixelData[pixelCount]=index of the lsstMasks, this pixel is going to be plotted using the
+                 color stored there.  The color model is indexed.  For 8 bit image, it has 256 maximum colors.
+                 For detail, see the indexColorModel defined in ImageData.java.
+                 */
+                long maskPixel= long1dArray[index];
+                if (combinedMask.isSet(maskPixel )) {
+                    for (int i = 0; i < lsstMasks.length; i++) {
+                        if (lsstMasks[i].isSet(maskPixel)) {
+                            pixeldata[pixelCount] = (byte) i;
+                            break;
                         }
                     }
-                    else {
-
-                        /*
-                        The transparent color is stored at pixel[lsstMasks.length].  The pixelData[pixelCount]=(byte) lsstMasks.length,
-                        this pixel will be transparent.
-                         */
-                        pixeldata[pixelCount]= (byte) lsstMasks.length;
-                    }
-
-                    pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
+                else {
+
+                    /*
+                    The transparent color is stored at pixel[lsstMasks.length].  The pixelData[pixelCount]=(byte) lsstMasks.length,
+                    this pixel will be transparent.
+                     */
+                    pixeldata[pixelCount]= (byte) lsstMasks.length;
+                }
+
+                pixelhist[pixeldata[pixelCount] & 0xff]++;
                 pixelCount++;
 
             }

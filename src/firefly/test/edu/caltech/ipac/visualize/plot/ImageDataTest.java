@@ -176,10 +176,10 @@ public class ImageDataTest {
         compareImage(expectedImage,calculatedImage);
 
 
-        //Test the ImageData withmask
-        ImageData  imageDataWithMask = new ImageData(imageMasks, rangeValues, 0,0, 100, 100);
-        BufferedImage calculatedImageWithMask  = imageDataWithMask.getImage(frArray);
-        compareImage(expectedImageWithMask,calculatedImageWithMask);
+        //Test the ImageData withmask - make are no long used in this more
+//        ImageData  imageDataWithMask = new ImageData(imageMasks, rangeValues, 0,0, 100, 100);
+//        BufferedImage calculatedImageWithMask  = imageDataWithMask.getImage(frArray);
+//        compareImage(expectedImageWithMask,calculatedImageWithMask);
 
     }
 
