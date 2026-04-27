@@ -3,12 +3,12 @@
 ## Version 2026.1
 - 2026.1.0 — (tentatively planned for May 7, 2026), _Docker tag_: `nightly`
 
-This release includes significant image and HiPS updates, alpha ASDF file support, 
-background monitor and UWS improvements, major infrastructure updates, a new drawing layer, and an alert viewer.
+This release includes Alert viewer, significant image and HiPS updates, alpha ASDF file support, 
+background monitor and UWS improvements, major infrastructure updates, a new drawing layer, and many bug fixes.
 
 #### General Features
 
-- Alert Viewer (Rubin only so far) — Firefly-1935 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1916), [PR](https://github.com/Caltech-IPAC/firefly/pull/1917)), Firefly-1964 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1934), [PR](https://github.com/Caltech-IPAC/firefly/pull/1939))
+- Alert Viewer (Rubin only so far) — Firefly-1935 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1916), [PR](https://github.com/Caltech-IPAC/firefly/pull/1917)), Firefly-1964 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1934), [PR](https://github.com/Caltech-IPAC/firefly/pull/1939)), Firefly-1997 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1943))
 - Improved Firefly on iPad and iPhone — Firefly-1947 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1913))
 - New box mode for Search Select tool (currently only used with SPHEREx) — Firefly-1942 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1925))
 
@@ -30,6 +30,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - UWS Client: Allow `errorSummary` to exist even when the phase is not `ERROR` — IRSA-7589 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1914))
 - UWS Client: Apply destruction time for job cleanup and update job retention policy — Firefly-1830 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1898))
 - UWS Client: Fixed handling of ZIP encoding — Firefly-1976 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1931))
+- Background Monitor: UI improvements IRSA-7687 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
 
 #### Infrastructure Updates
 
@@ -54,6 +55,8 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed heatmap plotting failure with `bigint` data — Firefly-1959 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1921))
 - Fixed cutout UI rounding error — Firefly-1995 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
 - Fixed parsing of certain target types causing crashes; improved parsing — Firefly-1941 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
+- Fixed mask should be read as long not float — Firefly-1999 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
+- Fixed failed circular websocket reconnection attempts — Firefly-1990 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1946))
 
 ---
 
