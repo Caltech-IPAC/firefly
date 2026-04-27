@@ -325,15 +325,19 @@ const TABLE_EXTS = ['csv', 'tbl', 'tsv', 'txt', 'vot', 'xml'];
 const COMPRESSION_EXTS = ['gz'];
 
 function parseHrefExtension(href) {
-    const resource = new URL(href).pathname.split('/').pop();
-    if (!resource?.includes('.')) return null;
+    try {
+        const resource = new URL(href).pathname.split('/').pop();
+        if (!resource?.includes('.')) return null;
 
-    const parts = resource.toLowerCase().split('.');
-    const rawExt = parts.at(-1);
-    const wrapper = COMPRESSION_EXTS.includes(rawExt) ? parts.pop() : null;
-    const ext = parts.length > 1 ? parts.at(-1) : null;
+        const parts = resource.toLowerCase().split('.');
+        const rawExt = parts.at(-1);
+        const wrapper = COMPRESSION_EXTS.includes(rawExt) ? parts.pop() : null;
+        const ext = parts.length > 1 ? parts.at(-1) : null;
 
-    return { resource, rawExt, ext, wrapper, isFile: ext !== null };
+        return { resource, rawExt, ext, wrapper, isFile: ext !== null };
+    } catch {
+        return null;
+    }
 }
 
 function  getMimeLoader(mimeType, href) {
