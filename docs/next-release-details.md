@@ -14,7 +14,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 
 #### Images and HiPS
 
-- Use WebGPU when available to process images — Firefly-1897 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1890))
+- Use new WebGPU when available to process images or HiPS — Firefly-1897 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1890))
 - Images: Optimized tile generation, transfer, and memory usage — Firefly-1926 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1900)), Firefly-1949 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1918))
 - Images: Support mask cubes — Firefly-1921 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1897))
 - Images: Support Rubin v2 mask header format — Firefly-1974 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1932))
@@ -27,10 +27,10 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Background Monitor: Move `pct_complete` to `progress` under `uws:jobInfo` — Firefly-1770 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1912))
 - Background Monitor: Handle non-table results — Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1907))
 - Background Monitor: Fixed dark mode/light mode bug — IRSA-7544 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1902))
+- Background Monitor: small UI improvements — IRSA-7687 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
 - UWS Client: Allow `errorSummary` to exist even when the phase is not `ERROR` — IRSA-7589 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1914))
 - UWS Client: Apply destruction time for job cleanup and update job retention policy — Firefly-1830 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1898))
 - UWS Client: Fixed handling of ZIP encoding — Firefly-1976 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1931))
-- Background Monitor: UI improvements IRSA-7687 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
 
 #### Infrastructure Updates
 
