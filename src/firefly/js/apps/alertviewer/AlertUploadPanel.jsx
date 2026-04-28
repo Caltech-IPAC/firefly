@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
-import {Button, IconButton, Input, Stack, Typography} from '@mui/joy';
+import {Button, FormHelperText, IconButton, Input, Link, Stack, Typography} from '@mui/joy';
 import {LoadingMessage} from 'firefly/visualize/ui/FileUploadViewPanel';
 import {addToRecentAlertIDs, showAlertIdDialog} from 'firefly/apps/alertviewer/AlertIDDialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -23,6 +23,7 @@ import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
 
 const ALERT_LOAD_REQUEST = 'AlertViewerSearchProcessor';
 const IMAGE_TITLES = ['Science', 'Template', 'Difference'];
+const ALERT_ID_EXAMPLES = ['170059278837088375', '170112073844916273', '170270399209668654', '170301167642345602', '170059294376985743'];
 
 export const AlertIdPanel = ({loadInPlace=false}) => {
     const instruction = 'Enter an Alert ID to load in the Alert Viewer:';
@@ -112,6 +113,25 @@ export const AlertIdPanel = ({loadInPlace=false}) => {
                             <EditOutlinedIcon/>
                         </IconButton>
                     </Stack>
+                    <FormHelperText sx={{justifyContent: 'left', mt: 0}}>
+                        <Typography level='body-sm' sx={{pr: 1}}>Examples:</Typography>
+                        <Stack direction='column' spacing={0.5} alignItems='center' sx={{lineHeight: '1.2em'}}>
+                            <Stack direction='row' spacing={1.5}>
+                                {ALERT_ID_EXAMPLES.slice(0, 2).map((exampleId) => (
+                                    <Link fontSize='smaller' key={exampleId} onClick={() => setAlertId(exampleId)}>
+                                        {exampleId}
+                                    </Link>
+                                ))}
+                            </Stack>
+                            <Stack direction='row' spacing={1.5}>
+                                {ALERT_ID_EXAMPLES.slice(2).map((exampleId) => (
+                                    <Link fontSize='smaller' key={exampleId} onClick={() => setAlertId(exampleId)}>
+                                        {exampleId}
+                                    </Link>
+                                ))}
+                            </Stack>
+                        </Stack>
+                    </FormHelperText>
                     {isLoading && <LoadingMessage/>}
             </Stack>
         </Stack>
@@ -178,7 +198,7 @@ function loadFromEntries(result, alertId) {
                 {
                     tbl_id: isDetailsTable ? ALERT.TABLE_2_ID : ALERT.TABLE_1_ID,
                     pageSize: ALERT.TABLE_PAGESIZE,
-                    META_INFO: {}
+                    META_INFO: part?.chartMeta ?? {}
                 }
             );
             tblReq.tbl_index = extNum;

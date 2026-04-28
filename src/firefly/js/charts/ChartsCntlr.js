@@ -528,6 +528,12 @@ function handleFireflyTraceTypes(payload) {
             if (isFireflyType(d.type)) {
                 const fd = get(d, 'firefly', {});
                 if (!fd.dataType) fd.dataType = d.type;     // use data.type if not defined.
+                if (d?.error_x?.array || d?.error_x?.arrayminus) {
+                    set(fd, 'error_x.visible', 'true');
+                }
+                if (d?.error_y?.array || d?.error_y?.arrayminus) {
+                    set(fd, 'error_y.visible', 'true');
+                }
                 fireflyData.push(fd);
                 plotlyData.push(omit(d, ['firefly']));
             } else {
