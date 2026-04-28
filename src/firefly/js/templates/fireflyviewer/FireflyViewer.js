@@ -16,7 +16,6 @@ import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {getActiveRowToImageDef} from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
-import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
 import {LayoutChoiceVisualAccordion} from './LayoutChoice.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
@@ -57,7 +56,6 @@ export function FireflyViewer ({menu, options, views='images | tables | xyplots'
             [
                 getMocWatcherDef().id,
                 getCatalogWatcherDef().id,
-                getUrlLinkWatcherDef().id,
                 getActiveRowToImageDef().id,
                 getAppOptions().enableObsCoreDownload && getObsCoreWatcherDef().id,
             ]

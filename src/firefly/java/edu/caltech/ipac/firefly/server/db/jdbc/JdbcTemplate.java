@@ -35,7 +35,7 @@ public class JdbcTemplate {
             ThreadLocal.withInitial(HashMap::new);
 
     private final DataSource dataSource;
-    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final Logger.LoggerImpl LOGGER = Logger.getLogger().withMaxLen(1000);
 
     public JdbcTemplate(DataSource dataSource) {
         this.dataSource = dataSource;
