@@ -216,7 +216,8 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     );
 }
 
-export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, sx}) {
+export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
+                                      onFilterSelected, sx}) {
     return (
         <Stack alignItems='center' height={1} justifyContent='space-between' py='2px' sx={sx}>
             <Checkbox size='sm'
@@ -225,7 +226,7 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
                 onChange={(e) => onSelectAll(e.target.checked)}/>
             {/*{showUnits && <Box height='1em'/>}*/}
             {/*{showTypes && <Box height='1em'/>}*/}
-            {showFilters && <FilterButton  iconButtonSize='28px'
+            {showFilters && showSelectRowFilter && <FilterButton  iconButtonSize='28px'
                                  onClick={onFilterSelected}
                                  tip='Filter on selected rows'/>}
         </Stack>

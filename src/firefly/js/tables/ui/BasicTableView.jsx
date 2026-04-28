@@ -109,13 +109,16 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers, onRowDoubleClick} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showUnits, filterInfo,
-            selectable, sortInfo, textView} = uiStates;
+    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showSelectRowFilter,
+            showUnits, filterInfo, selectable, sortInfo, textView} = uiStates;
     const tableRef = useRef();
 
     useEffect( () => {
         if (!isEmpty(columns)) {
-            const changes = omitBy(pick(props, 'showTypes', 'showFilters', 'showUnits', 'filterInfo','selectable', 'sortInfo', 'textView'), isUndefined);
+            const changes = omitBy(
+                pick(props, 'showTypes', 'showFilters', 'showSelectRowFilter', 'showUnits', 'filterInfo', 'selectable', 'sortInfo', 'textView'),
+                isUndefined
+            );
 
             const showUnits = !!columns.find?.((col) => col?.units);
             if (isUndefined(changes.showUnits)) changes.showUnits = showUnits;
@@ -169,7 +172,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
     }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop]);
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
-        columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters,
+        columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, cellRenderers, tbl_id};
 
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
@@ -474,7 +477,8 @@ function makeColumnTag(props, col, idx) {
     );
 }
 
-function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, selectInfoCls, onRowSelect}) {
+function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter,
+                           onFilterSelected, selectInfoCls, onRowSelect}) {
 
     if (!selectable) return false;
 
@@ -483,7 +487,7 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
         <Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected}} />}
+            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter, onFilterSelected}} />}
             cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
@@ -491,4 +495,3 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
         />
     );
 }
-

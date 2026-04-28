@@ -641,7 +641,7 @@ function AnalysisInfo({report,supported=true,UNKNOWN_FORMAT}) {
     );
 }
 
-const tblOptions = {showToolbar:false, border:false, showOptionButton:false, showFilters:true};
+const tblOptions = {showToolbar:false, border:false, showOptionButton:false, showFilters:true, showSelectRowFilter:false};
 
 function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem}) {
     if (!summaryModel) return null;
@@ -916,4 +916,3 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
         );
     }
 };
-

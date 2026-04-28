@@ -285,6 +285,7 @@
  * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
  * @prop {boolean} [showFilterButton=true]
+ * @prop {boolean} [showSelectRowFilter=true] show the checkbox-header action to filter on selected rows
  * @prop {boolean} [showAddColumn=true]  when true, allow add column to table
  * @prop {boolean} [showInfoButton=true] when true, shows additional information about table, if available
  * @prop {boolean} [showOptionButton=true]
