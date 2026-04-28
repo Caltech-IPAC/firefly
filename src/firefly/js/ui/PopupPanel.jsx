@@ -4,7 +4,7 @@
 import {Box, Card, ChipDelete, DialogTitle, Stack} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
-import {object,element,func,number,string,bool,oneOfType} from 'prop-types';
+import {object, element, func, number, string, bool, oneOfType, shape} from 'prop-types';
 import {debounce} from 'lodash';
 import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './PopupPanelHelper.js';
 
@@ -28,7 +28,7 @@ export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'T
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
         requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, sx,
-        initLeft, initTop, onMove, element}= props;
+        initLeft, initTop, onMove, element, slotProps, handleResize=false}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
@@ -80,7 +80,7 @@ export const PopupPanel= memo((props) => {
     if (!visible) return false;
     return (
         <PopupLayout {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, sx,
-            dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
+            slotProps, handleResize, dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupLayout>
     );
@@ -102,11 +102,18 @@ PopupPanel.propTypes= {
     initLeft: number,
     initTop: number,
     onMove: func,
+    handleResize: bool,
     element,
+    slotProps: shape({ // all slotProps are optional except for formPanel.onSuccess
+        dialogTitle: shape(
+            {
+                sx: object
+            }),
+    }),
 };
 
-function PopupLayout({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,sx,
-                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
+function PopupLayout({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,sx, slotProps={},
+                         handleResize=false, onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
     return (
         <Box sx={{...sx, zIndex, position:'relative'}}>
             {modal &&
@@ -125,27 +132,30 @@ function PopupLayout({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,di
                         '& .ff-dialog-title-bar' : { cursor:'grab' },
                         '& .ff-dialog-title-bar:active' : { cursor:'grabbing' }
                     }) }}>
-                <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center',
-                    sx:{width:1, position:'relative', mb:.5, ml:.5, pr:.5},
-                    ref:(c) => ctxRef.titleBarRef=c, }}>
-                    <Stack {...{
-                        direction:'row', justifyContent:'space-between', alignItems:'center',
-                        className: 'ff-dialog-title-bar',
-                        sx:{ width:1, position:'relative', height:'1.8em' },
-                        onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
-                        onTouchEnd:dialogMoveEnd, onMouseDownCapture:dialogMoveStart,
-                        onMouseEnter, onMouseLeave}}>
-                        <DialogTitle  sx= {{ width:1, display:'block', textOverflow:'ellipsis',
-                             flex:'1 1 auto',
-                            whiteSpace:'nowrap', overflow:'hidden'}} >
-                            {title}
-                        </DialogTitle>
+                <Stack sx={{p:1/4, overflow:'hidden', resize:handleResize?'both':undefined}}>
+                    <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center',
+                        sx:{width:1, position:'relative', mb:.5, ml:.5, pr:.5},
+                        ref:(c) => ctxRef.titleBarRef=c, }}>
+                        <Stack {...{
+                            direction:'row', justifyContent:'space-between', alignItems:'center',
+                            className: 'ff-dialog-title-bar',
+                            sx:{ width:1, position:'relative', height:'1.8em' },
+                            onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
+                            onTouchEnd:dialogMoveEnd, onMouseDownCapture:dialogMoveStart,
+                            onMouseEnter, onMouseLeave}}>
+                            <DialogTitle  sx= {{ width:1, display:'block', textOverflow:'ellipsis',
+                                flex:'1 1 auto',
+                                whiteSpace:'nowrap', overflow:'hidden',
+                                ...slotProps.dialogTitle?.sx}} >
+                                {title}
+                            </DialogTitle>
+                        </Stack>
+                        <ChipDelete onClick={askParentToClose}/>
                     </Stack>
-                    <ChipDelete onClick={askParentToClose}/>
+                    <Box className='ff-dialog-content' sx={{ml:.5}}>
+                        {children}
+                    </Box>
                 </Stack>
-                <Box className='ff-dialog-content' sx={{ml:.5}}>
-                    {children}
-                </Box>
             </Card>
         </Box>
     );
