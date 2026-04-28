@@ -8,7 +8,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 
 #### General Features
 
-- Alert Viewer (Rubin only so far) — Firefly-1935 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1916), [PR](https://github.com/Caltech-IPAC/firefly/pull/1917)), Firefly-1964 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1934), [PR](https://github.com/Caltech-IPAC/firefly/pull/1939)), Firefly-1997 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1943))
+- Alert Viewer (Rubin only so far) — Firefly-1935 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1916), [PR](https://github.com/Caltech-IPAC/firefly/pull/1917)), Firefly-1964 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1934), [PR](https://github.com/Caltech-IPAC/firefly/pull/1939)), Firefly-1997 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1943)), Firefly-2003 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1947))
 - Improved Firefly on iPad and iPhone — Firefly-1947 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1913))
 - New box mode for Search Select tool (currently only used with SPHEREx) — Firefly-1942 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1925))
 
@@ -43,20 +43,22 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
  
 #### Bug Fixes
 
-- Fixed network issue: certain Rubin files not loading — Firefly-1946 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1911))
 - Fixed MultiProductViewer: improved handling of calibration files — IRSA-7247 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1909))
 - Fixed MultiProductViewer: improved titling — Firefly-1936 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1909))
-- Fixed `firefly_client` integration: functions did not switch to Results tab when another tab was selected — Firefly-1833 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1906))
+- Fixed MultiProductViewer: cutout UI rounding error — Firefly-1995 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
 - Fixed TAP: VizieR uploads now work — Firefly-1978 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1935))
+- Fixed Tables: column resizing after multiple sorts — Firefly-1945 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1924))
+- Fixed Tables: not able to filter some access_url columns — Firefly-2002 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1949)) 
+- Fixed Chart: heatmap plotting failure with `bigint` data — Firefly-1959 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1921))
+- Fixed Images: parsing of certain target types causing crashes; improved parsing — Firefly-1941 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
+- Fixed Images: mask should be read as long not float — Firefly-1999 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
+- Fixed Images: network issue: certain Rubin images not loading — Firefly-1946 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1911))
+- Fixed `firefly_client` integration: functions did not switch to Results tab when another tab was selected — Firefly-1833 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1906))
 - Fixed non-datalink service descriptor parsing; ZTF light curves not displaying — Firefly-1978 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1935))
 - Fixed precision handling for SizeInputField — IRSA-7653 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1928))
-- Fixed table column resizing after multiple sorts — Firefly-1945 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1924))
 - Fixed URL parsing for some legacy formats — Firefly-1958 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1923))
-- Fixed heatmap plotting failure with `bigint` data — Firefly-1959 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1921))
-- Fixed cutout UI rounding error — Firefly-1995 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
-- Fixed parsing of certain target types causing crashes; improved parsing — Firefly-1941 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
-- Fixed mask should be read as long not float — Firefly-1999 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
 - Fixed failed circular websocket reconnection attempts — Firefly-1990 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1946))
+- Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948)) 
 
 ---
 
