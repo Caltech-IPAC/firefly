@@ -163,6 +163,7 @@ public class Logger {
     public static class LoggerImpl {
         private static final String CLASS_NAME = Logger.class.getName();
         private final String name;
+        private int maxMsgLen = 0;
 
         /**
          * use static Logger.getLogger() instead
@@ -174,6 +175,11 @@ public class Logger {
 
         LoggerImpl(String name) {
             this.name = name;
+        }
+
+        public LoggerImpl withMaxLen(int maxMsgLen) {
+            this.maxMsgLen = maxMsgLen;
+            return this;
         }
 
         public void trace(String... msgs) { log(Type.NORMAL, Level.TRACE, msgs); }
@@ -269,7 +275,7 @@ public class Logger {
         private void log(Type type, Level level, Throwable t, Supplier<String> msg) {
             org.apache.logging.log4j.Logger logger = getLogger(type);
             if (logger != null) {
-                logger.log(level, msg, t);
+                logger.log(level, withMaxLength(msg), t);
             }
         }
 
@@ -281,6 +287,17 @@ public class Logger {
             return logger;
         }
 
+        private Supplier<String> withMaxLength(Supplier<String> original) {
+            if (maxMsgLen <= 0) return original;
+
+            return () -> {
+                String s = original.get();
+                if (s == null) return null;
+                return s.length() > maxMsgLen
+                        ? s.substring(0, maxMsgLen) + " ...(truncated, total length=" + s.length() + ")"
+                        : s;
+            };
+        }
     }
 
 
