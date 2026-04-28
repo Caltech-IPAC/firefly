@@ -350,7 +350,7 @@ export function getLayoutRoot() {
 export function getLayouInfo() {
     const state= flux.getState() ?? {};
     const layout = state[LAYOUT_PATH] ?? {initLoadCompleted:false};
-    const hasImages = getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults);
+    const hasImages = getPlotViewAry(visRoot())?.some( (pv) => pv.plotViewCtx.useForSearchResults);
     const hasTables = !isEmpty(state[TABLE_SPACE_PATH]?.results?.main?.tables);
     /*
       to make plot area disappear if it's not possible to create a plot use

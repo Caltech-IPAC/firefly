@@ -185,13 +185,29 @@ function hasManyPlots(pv,visRoot) {
 
 function getBorderColor(manyPlots, theme, pv,visRoot) {
     if (!pv?.plotId) return 'rgba(0,0,0,.4)';
-    if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
+    if (!pv?.plotViewCtx?.highlightFeedback) return 'rgba(0,0,0,.1)';
     if (isActivePlotView(visRoot,pv.plotId) || pv.subHighlight) {
         return manyPlots ? `rgba(${theme.vars.palette.warning.mainChannel} / 1)` : 'rgba(0,0,0,.02)';
     }
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
     if (group?.overlayColorLock) return 'rgba(0, 0, 0, .1)';
     else return 'rgba(0,0,0,.2)';
+}
+
+export function getImageViewerDecorateSx(plotId, pv, vr) {
+    const manyPlots= hasManyPlots(pv, vr);
+    const expandedToSingle= vr.expandedMode===ExpandType.SINGLE;
+    return (theme) => ({
+        width: !manyPlots ? 1 : 'calc(100% - 4px)',
+        bottom: 0,
+        top: 0,
+        overflow: 'hidden',
+        position: 'absolute',
+        borderStyle: !manyPlots ? undefined : (pv?.subHighlight && !isActivePlotView(vr, plotId)) ? 'dashed' : 'solid',
+        borderWidth: (expandedToSingle || !manyPlots) ? '0 0 0 0' : '1px',
+        borderRadius: manyPlots ? '5px' : undefined,
+        borderColor: getBorderColor(manyPlots, theme, pv, vr),
+    });
 }
 
 
@@ -268,7 +284,6 @@ const ImageViewerDecorate= memo((props) => {
 
     const showDelete= pv.plotViewCtx.userCanDeletePlots;
     const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
-    const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
     const plot= primePlot(pv);
     const iWidth= Math.trunc(width);
     const iHeight=Math.trunc(height);
@@ -276,22 +291,7 @@ const ImageViewerDecorate= memo((props) => {
     const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
 
     const outerStyle= { width: '100%', height: '100%', overflow:'hidden', position:'relative'};
-
-    const innerStyle= (theme) => {
-        const manyPlots= hasManyPlots(pv,visRoot);
-        const active= isActivePlotView(visRoot,pv.plotId);
-        return {
-            width: !manyPlots  ? 1 : 'calc(100% - 4px)',
-            bottom: 0,
-            top: 0,
-            overflow: 'hidden',
-            position: 'absolute',
-            borderStyle: !manyPlots ? undefined : (pv.subHighlight && !active) ? 'dashed' : 'solid' ,
-            borderWidth: (expandedToSingle || !manyPlots) ? '0 0 0 0' : '1px',
-            borderRadius: manyPlots ? '5px' : undefined,
-            borderColor: getBorderColor(manyPlots, theme, pv,visRoot),
-        };
-    };
+    const innerStyle= getImageViewerDecorateSx(pv.plotId, pv, visRoot);
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);
     const showZoom= mousePlotId===pv?.plotId;

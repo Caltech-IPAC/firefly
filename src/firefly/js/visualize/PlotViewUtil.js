@@ -188,7 +188,7 @@ export const isActivePlotView= (visRoot,plotId) => visRoot.activePlotId===plotId
  * @param {VisRoot} visRoot - root of the visualization object in store
  * @return {PlotView} the active plot view
  */
-export const getActivePlotView= (visRoot) => visRoot?.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
+export const getActivePlotView= (visRoot) => visRoot?.plotViewAry?.find( (pv) => pv.plotId===visRoot.activePlotId);
 
 /**
  *
