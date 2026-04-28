@@ -49,6 +49,10 @@ import {computeDistance, computeScreenDistance, getLinePointAry} from '../../Vis
 import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart.jsx';
 import {keepDataExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
 
+const CUBE_WARNING=`
+Values are taken directly from cube plane pixels without spatial interpolation, background subtraction, or PSF corrections. 
+This is a quick-look tool for exploration, not a research-ready product.
+`;
 
 const DIALOG_ID= 'extractionDialog';
 const CHART_ID= 'extractionChart';
@@ -120,8 +124,11 @@ function ExtractDialog({extractionType,wasCanceled}) {
     };
 
     return(
-        <PopupPanel title={`Extract: ${primePlot(pv)?.title ?? ''}`}
-                    closeCallback={doCancel} requestToClose={doCancel}  >
+        <PopupPanel {...{
+            title:`Extract: ${primePlot(pv)?.title ?? ''}`,
+            slotProps: {dialogTitle:{sx:{maxWidth:'30rem'}}},
+            closeCallback:doCancel,
+            requestToClose:doCancel }}>
             <Panel canCreateExtractionTable={canCreateExtractionTable} pv={pv} pvCnt={pvCnt}/>
         </PopupPanel>
     );
@@ -365,6 +372,21 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 }
 
 
+const CubeStartUpHelp= ({plot}) => (
+    <Stack spacing={3}>
+        <Typography >
+            {isImageCube(plot) ?
+                'Click on a pixel to extract data from all planes of the cube' :
+                'Please choose a cube to extract z-axis data'}
+        </Typography>
+        <Stack spacing={1}>
+            <Divider orientation='horizontal'/>
+            {isImageCube(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
+                {CUBE_WARNING}
+            </Typography>}
+        </Stack>
+    </Stack>
+);
 
 const LineStartUpHelp= ({helpWarning,plot,pvCnt}) => (
     <Stack alignItems='center'>
@@ -575,12 +597,7 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
             hasFloatingData:hasFloatingData(plot),
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
-            startUpHelp:
-                (<Typography>
-                    {isImageCube(plot) ?
-                    'Click on a pixel to extract data from all planes of the cube' :
-                    'Please choose a cube to extract z-axis data'}
-                </Typography>),
+            startUpHelp: <CubeStartUpHelp {...{plot}}/>,
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
             callKeepExtraction: (download, doOverlay) =>
                 keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(),
