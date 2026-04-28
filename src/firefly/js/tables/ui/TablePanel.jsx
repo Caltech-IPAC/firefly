@@ -51,6 +51,7 @@ const defaultOptions = {
     showSave: true,
     showOptionButton: true,
     showFilterButton: true,
+    showSelectRowFilter: true,
     showInfoButton: true,
     showAddColumn: true,
     showTypes: true,
@@ -88,7 +89,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 
     const {selectable, renderers, title, removable, rowHeight, rowHeightGetter,
         showToolbar, showTitle, showMetaInfo,
-        columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView,
+        columns, showHeader, showUnits, allowUnits, showTypes, showFilters, showSelectRowFilter, textView,
         error, startIdx, hlRowIdx, currentPage, selectInfo, showMask,
         filterInfo, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers, onRowDoubleClick} = tblState;
 
@@ -132,7 +133,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                         <BasicTableView
                             callbacks={connector}
                             { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
-                                allowUnits, showTypes, showFilters, selectInfoCls, filterInfo, sortInfo, textView,
+                                allowUnits, showTypes, showFilters, showSelectRowFilter, selectInfoCls, filterInfo, sortInfo, textView,
                                 showMask, currentPage, showHeader, renderers, tbl_ui_id, highlightedRowHandler,
                                 startIdx, cellRenderers, onRowDoubleClick} }
                         />
@@ -169,6 +170,7 @@ TablePanel.propTypes = {
     showToggleTextView: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    showSelectRowFilter: PropTypes.bool,
     showAddColumn: PropTypes.bool,
     showInfoButton: PropTypes.bool,
     showSearchButton: PropTypes.bool,
