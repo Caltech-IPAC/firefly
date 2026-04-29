@@ -167,7 +167,10 @@ public class AppServerCommands {
                 }
                 versionData = versionMap;
             }
-            return Serializer.getJsonMapper().writeValueAsString(versionData);
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("data", versionData);
+            return Serializer.getJsonMapper().writeValueAsString(result);
         }
     }
 

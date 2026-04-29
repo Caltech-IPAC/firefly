@@ -132,12 +132,11 @@ public class VersionUtil {
         Version v = getAppVersion();
 
         List<KeyVal<String, String>> versionInfo = new ArrayList<>(6);
-        versionInfo.add(new KeyVal<>("Version", getVersionStr(v)));
+        versionInfo.add(new KeyVal<>("Application Version", getVersionStr(v)));
         versionInfo.add(new KeyVal<>("Built On", v.getBuildTime()));
         versionInfo.add(new KeyVal<>("Git commit", v.getBuildCommit()));
 
-        if (v.getMajor()>0)
-            versionInfo.add(new KeyVal<>("Firefly Library Version", getFireflyVersionStr(v)));
+        versionInfo.add(new KeyVal<>("Firefly Version", getFireflyVersionStr(v)));
         if (!StringUtils.isEmpty(v.getBuildCommitFirefly()))
             versionInfo.add(new KeyVal<>("Firefly Git Commit", v.getBuildCommitFirefly()));
         if (!StringUtils.isEmpty(v.getBuildFireflyTag()))
