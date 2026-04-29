@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.JsonStringProcessor;
@@ -14,6 +15,9 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONArray;
@@ -21,8 +25,10 @@ import org.json.simple.JSONObject;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.ReportType.Details;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.ErrorResponse;
@@ -41,6 +47,10 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
     public static final String RESPONSEFORMAT = "RESPONSEFORMAT";
     private static final String FITS_RESPONSE_FORMAT = "fits";
     private static final String ALERT_SERVICE_BASE_URL_PROP = "alert.viewer.fits.service.url";
+    private static final int DIASOURCE_TBL_INDEX = 1; //the main table on the right is the DIASOURCE tbl
+    private static final String DEFAULT_CHART_X = "midpointMjdTai";
+    private static final String DEFAULT_CHART_Y = "psfFlux";
+    private static final String DEFAULT_CHART_Y_ERROR = "psfFluxErr";
 
     @Override
     public boolean doCache() {
@@ -136,7 +146,14 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
             JSONArray entries = new JSONArray();
             for (int i = 0; i < Math.min(parts.size(), 5); i++) {
                 FileAnalysisReport.Part part = parts.get(i);
-                entries.add(makeEntry(part, i, fileKey, fileName));
+                JSONObject entry = makeEntry(part, i, fileKey, fileName);
+                if (i == DIASOURCE_TBL_INDEX) {
+                    JSONObject chartMeta = buildDiaSourceTableChartMeta(fileInfo, part);
+                    if (chartMeta != null) {
+                        entry.put("chartMeta", chartMeta);
+                    }
+                }
+                entries.add(entry);
             }
 
             out.put("entries", entries);
@@ -152,20 +169,72 @@ public class AlertViewerSearchProcessor extends JsonStringProcessor {
         return out.toJSONString();
     }
 
-    private static JSONObject makeEntry(FileAnalysisReport.Part part, int fallbackIdx, String fileKey, String fileName) {
+    private static JSONObject makeEntry(FileAnalysisReport.Part part, int entryIndex, String fileKey, String fileName) {
         JSONObject entry = new JSONObject();
         entry.put("type", part.getType().name());
         entry.put("desc", part.getDesc());
-        entry.put("extNum", getExtNum(part, fallbackIdx));
+        entry.put("extNum", getExtNum(part, entryIndex));
         //have each entry take a fileKey and fileName in case the viewer needs to retrieve the file for that specific entry (e.g. if it's an image or a table that can be retrieved as a separate file)
         if (!StringUtils.isEmpty(fileKey)) entry.put("fileKey", fileKey);
         if (!StringUtils.isEmpty(fileName)) entry.put("fileName", fileName);
         return entry;
     }
 
-    private static int getExtNum(FileAnalysisReport.Part part, int fallbackIdx) {
+    private static JSONObject buildDiaSourceTableChartMeta(FileInfo fileInfo, FileAnalysisReport.Part part) {
+        if (fileInfo == null || fileInfo.getFile() == null || part == null) return null;
+
+        try {
+            int extNum = getExtNum(part, DIASOURCE_TBL_INDEX);
+            DataGroup dg = TableUtil.readAnyFormat(fileInfo.getFile(), extNum, null);
+            if (dg == null || !hasRequiredChartColumns(dg)) return null;
+            boolean hasYError = hasColumn(dg, DEFAULT_CHART_Y_ERROR);
+            return makeDefaultChartMeta(hasYError);
+        } catch (Exception e) {
+            LOGGER.warn(e, "Unable to validate alert chart columns for default chart metadata");
+            return null;
+        }
+    }
+
+    private static boolean hasRequiredChartColumns(DataGroup dg) {
+        return hasColumn(dg, DEFAULT_CHART_X) && hasColumn(dg, DEFAULT_CHART_Y);
+    }
+
+    private static boolean hasColumn(DataGroup dg, String columnName) {
+        if (dg == null || columnName == null) return false;
+        return Arrays.stream(dg.getDataDefinitions())
+                .map(DataType::getKeyName)
+                .filter(Objects::nonNull)
+                .anyMatch(name -> name.equalsIgnoreCase(columnName));
+    }
+
+
+    private static JSONObject makeDefaultChartMeta(boolean includeYError) {
+        JSONObject trace = new JSONObject();
+        trace.put("x", "tables::" + DEFAULT_CHART_X);
+        trace.put("y", "tables::" + DEFAULT_CHART_Y);
+        trace.put("mode", "markers");
+
+        if (includeYError) {
+            JSONObject errorY = new JSONObject();
+            errorY.put("array", "tables::" + DEFAULT_CHART_Y_ERROR);
+            trace.put("error_y", errorY);
+        }
+
+        JSONArray data = new JSONArray();
+        data.add(trace);
+
+        JSONObject defaultChartDef = new JSONObject();
+        defaultChartDef.put("data", data);
+
+        JSONObject chartMeta = new JSONObject();
+        chartMeta.put(MetaConst.DEFAULT_CHART_DEF, defaultChartDef.toJSONString());
+        return chartMeta;
+    }
+
+
+    private static int getExtNum(FileAnalysisReport.Part part, int entryIndex) {
         return part.getFileLocationIndex() > -1 ? part.getFileLocationIndex() :
-                part.getIndex() > -1 ? part.getIndex() : fallbackIdx;
+                part.getIndex() > -1 ? part.getIndex() : entryIndex;
     }
 
     private static String makeError(String source, String message) {
