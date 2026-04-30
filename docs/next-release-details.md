@@ -20,7 +20,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Images: Support Rubin v2 mask header format — Firefly-1974 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1932))
 - Images: ASDF files (alpha support) — Firefly-1931 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1905)), Firefly-1963 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1926))
 - HiPS: Add Ecliptic coordinate system — Firefly-1973 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1929))
-- Add legend support — Firefly-1924 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1924))
+- Add legend support — Firefly-1924 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1920))
 
 #### Background Monitor & UWS
 
