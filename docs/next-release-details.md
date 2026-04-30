@@ -50,7 +50,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed Tables: column resizing after multiple sorts — Firefly-1945 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1924))
 - Fixed Tables: not able to filter some access_url columns — Firefly-2002 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1949)) 
 - Fixed Chart: heatmap plotting failure with `bigint` data — Firefly-1959 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1921))
-- Fixed Images: parsing of certain target types causing crashes; improved parsing — Firefly-1941 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
+- Fixed Images: parsing of certain target types causing crashes; improved parsing — Firefly-1996 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
 - Fixed Images: mask should be read as long not float — Firefly-1999 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
 - Fixed Images: network issue: certain Rubin images not loading — Firefly-1946 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1911))
 - Fixed `firefly_client` integration: functions did not switch to Results tab when another tab was selected — Firefly-1833 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1906))
