@@ -85,10 +85,17 @@ function setupObsCorePackaging(tbl_id) {
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons});
 }
 
+function getHostname(url) {
+    if (!url) return undefined;
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return undefined;
+    }
+}
+
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
-    const hostname = sRequest?.source || sRequest?.serviceUrl
-        ? new URL(sRequest.source || sRequest.serviceUrl).hostname
-        : null;
+    const hostname = getHostname(sRequest?.source) ?? getHostname(sRequest?.serviceUrl);
     const serviceId= getMetaEntry(tbl_id,MetaConst.DATA_SERVICE_ID);
     const ops= getDataServiceOptionsFallback(serviceId, hostname) ?? {};
     const template= ops.productTitleTemplate;
