@@ -7,23 +7,18 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
-import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -86,13 +81,9 @@ public interface DbAdapter {
     DbAdapter.DbStats getDbStats();
 
     default boolean hasTable(String tableName) {
-        try {
-            if (isEmpty(tableName) || getDbFile() == null || !getDbFile().exists()) return false;
-            return getTableNames().stream()
-                    .anyMatch(s -> s.equalsIgnoreCase(tableName));
-        } catch (Exception e) {
-            return false;
-        }
+        if (isEmpty(tableName) || getDbFile() == null || !getDbFile().exists()) return false;
+        return getTableNames().stream()
+                .anyMatch(s -> s.equalsIgnoreCase(tableName));
     }
 
 
@@ -188,6 +179,16 @@ public interface DbAdapter {
     void deleteColumn(String cname);
 
     DataAccessException handleSqlExp(String msg, Exception e);
+
+    /**
+     * Create a _DD table for tblName by copying matching column metadata from sourceTbl's _DD.
+     */
+    default void copyDDFromSource(String tblName, String sourceTbl) {}
+
+    /**
+     * Persist a DataGroup's table metadata into the tblName_META table.
+     */
+    default void metaToDb(DataGroup dg, String tblName) {}
 
 //====================================================================
 //  management functions
@@ -296,6 +297,7 @@ public interface DbAdapter {
         boolean isCompact;
         DbStats dbStats;
         boolean isResourceDb;
+        volatile Connection rootConn;
 
         EmbeddedDbInstance(String type, DbAdapter dbAdapter, String dbUrl, String driver) {
             this(type, dbAdapter, dbUrl, driver, System.currentTimeMillis());

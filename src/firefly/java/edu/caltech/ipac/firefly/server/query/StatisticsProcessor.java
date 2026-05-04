@@ -48,8 +48,10 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         // check to see if a resultset table exists... if not, use original data table.
         if (!dbAdapter.hasTable(origDataTblName)) {
             origDataTblName = dbAdapter.getDataTable();
+            if (!dbAdapter.hasTable(origDataTblName)) {
+                throw new DataAccessException("Original DATA table does not exist in the database.");
+            }
         }
-
         // get all column info from DATA table
         DataGroup dd = dbAdapter.getHeaders(origDataTblName);
         var cols = dd.getDataDefinitions();

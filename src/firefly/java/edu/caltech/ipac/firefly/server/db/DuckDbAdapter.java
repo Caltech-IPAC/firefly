@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.jdbc.DbInstanceDataSource;
 import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -18,6 +19,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -27,8 +29,10 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.db.DuckDbUDF.*;
@@ -45,6 +49,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public static final String EXT_DIR = AppProperties.getProperty("duckdb.ext.dir", System.getProperty("java.io.tmpdir"));
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
     private static int threadCnt=1;    // min 125mb per thread.  recommend 5gb per thread; we will config 1gb per thread but not more than 4.
+    private static String allowedDirs = null;
 
     static {
         if (DEF_DB_TYPE.equals(NAME)) {
@@ -78,16 +83,48 @@ public class DuckDbAdapter extends BaseDbAdapter {
         String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
         String dbUrl = "jdbc:duckdb:" + filePath;
         var db = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER) {
-            public boolean testConn(Connection conn) {
-                // test connection plus additional session-scoped properties
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.execute("SET errors_as_json = true");
-                    return true;
-                } catch (SQLException e) { return false; }
+            @Override
+            public DataSource createDataSource() {
+                EmbeddedDbInstance self = this;
+                return new DbInstanceDataSource(this) {
+                    @Override
+                    public Connection getConnection(String username, String password) throws SQLException {
+                        synchronized (self) {
+                            if (self.rootConn == null || self.rootConn.isClosed()) {
+                                self.rootConn = super.getConnection(username, password);
+                            }
+                            try {
+                                return ((DuckDBConnection) self.rootConn).duplicate();
+                            } catch (SQLException e) {
+                                // rootConn may be in a dirty state; reset and retry once
+                                try { self.rootConn.close(); } catch (Exception ignored) {}
+                                self.rootConn = super.getConnection(username, password);
+                                return ((DuckDBConnection) self.rootConn).duplicate();
+                            }
+                        }
+                    }
+                };
             }
         };
         db.consumeProps("memory_limit=%s,threads=%d,extension_directory=%s".formatted(maxMemory, threadCnt, EXT_DIR));
+        db.getProps().put("errors_as_json", "true");
+        // As of v1.5.2.1, security can only be enforced if external access is disabled.
+        // When we need to query from s3 or other external sources, we will need enforce security at a different layer.
+        db.getProps().put("enable_external_access", "false");
+        db.getProps().put("allowed_directories", "[%s]".formatted(getAllowedDirs()));
         return db;
+    }
+
+    private static String getAllowedDirs() {
+        if (allowedDirs == null) {
+            List<File> dirs = new ArrayList<>();
+            dirs.add(ServerContext.getWorkingDir());
+            dirs.add(ServerContext.getSharedWorkingDir());
+            allowedDirs = dirs.stream()
+                    .map(f -> "'" + f.getAbsolutePath() + "'")
+                    .collect(Collectors.joining(", "));
+        }
+        return allowedDirs;
     }
 
     void createUDFs() {
@@ -126,7 +163,14 @@ public class DuckDbAdapter extends BaseDbAdapter {
         ((EmbeddedDbInstance) getDbInstance()).setCompact(true);
     }
 
-    protected void shutdown(EmbeddedDbInstance db) {}
+    @Override
+    protected void shutdown(EmbeddedDbInstance db) {
+        try {
+            if (db.rootConn != null && !db.rootConn.isClosed()) db.rootConn.close();
+        } catch (SQLException ignored) {}
+        db.rootConn = null;
+    }
+
     protected void removeDbFile() {
         var dbFile = getDbFile();
         if (dbFile.exists()) {
@@ -207,7 +251,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
         appender.beginRow();
         for (Object d : row) {
             switch (d) {
-                case null -> appender.append(null);
+                case null -> appender.appendNull();
                 case Boolean v -> appender.append(v);
                 case Byte v -> appender.append(v);
                 case Short v -> appender.append(v);
@@ -218,10 +262,10 @@ public class DuckDbAdapter extends BaseDbAdapter {
                 case String v -> appender.append(v);
                 case Character v -> appender.append(String.valueOf(v));
                 case BigDecimal v -> appender.append(v.doubleValue());
-                case java.sql.Date v -> appender.appendLocalDateTime(v.toLocalDate().atStartOfDay());
-                case LocalDate v -> appender.appendLocalDateTime(v.atStartOfDay());
-                case LocalDateTime v -> appender.appendLocalDateTime(v.atZone(ZoneOffset.UTC).toLocalDateTime());
-                case Date v -> appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneOffset.UTC));    // date/time should be stored as utc.
+                case java.sql.Date v -> appender.append(v.toLocalDate().atStartOfDay());
+                case LocalDate v -> appender.append(v.atStartOfDay());
+                case LocalDateTime v -> appender.append(v.atZone(ZoneOffset.UTC).toLocalDateTime());
+                case Date v -> appender.append(LocalDateTime.ofInstant(v.toInstant(), ZoneOffset.UTC));    // date/time should be stored as utc.
                 default -> throw new IllegalStateException("Unexpected value: " + d);
             }
         }
@@ -251,7 +295,10 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public String interpretError(Throwable e) {
         try {
             if (e instanceof SQLException ex) {
-                JSONObject json = (JSONObject) JSONValue.parse(ex.getMessage().replace("%s:".formatted(ex.getClass().getName()), ""));
+                String raw = ex.getMessage();
+                int jsonStart = raw.indexOf('{');
+                if (jsonStart > 0) raw = raw.substring(jsonStart);
+                JSONObject json = (JSONObject) JSONValue.parse(raw);
                 String msg = json.get("exception_message").toString().split("\n")[0];
                 String type = Try.it(() -> json.get("error_subtype").toString())
                                     .getOrElse(json.get("exception_type").toString());

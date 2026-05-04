@@ -90,7 +90,7 @@ dependencies {
     implementation 'junit:junit:4.12'
 
     // duckdb - SQL support for parquet, csv, and tsv files
-    implementation 'org.duckdb:duckdb_jdbc:1.1.3'
+    implementation 'org.duckdb:duckdb_jdbc:1.5.2.1'
 
     // embedded redis server; version ~ 6.2
     implementation 'com.github.codemonstur:embedded-redis:1.4.3'
