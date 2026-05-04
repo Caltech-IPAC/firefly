@@ -105,7 +105,7 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2"
 
     // asdf
-    implementation 'org.asdf-format:asdf-core:0.1-alpha-9'
+    implementation 'org.asdf-format:asdf-core:0.1-alpha-10'
     implementation 'edu.stsci:roman-datamodels:0.1-alpha-3'
 
 }
