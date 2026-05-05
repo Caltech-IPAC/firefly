@@ -141,6 +141,7 @@ export function getSIAv2ServicesByName(nameList) {
 function makeServices() {
     return [
         siaEntry('IRSA', 'IRSA', 'https://irsa.ipac.caltech.edu/SIA'),
+        siaEntry('IRSA Simulated', 'IRSA Simulated', 'https://irsa.ipac.caltech.edu/simulated/SIA'),
         siaEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/v2query', cadcMetaOptionsFallback),
     ];
 }

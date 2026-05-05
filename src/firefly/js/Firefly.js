@@ -225,7 +225,7 @@ const defFireflyOptions = {
         defaultMaxrec: 50000
     },
     SIAv2 : {
-        services: getSIAv2ServicesByName( ['IRSA', 'CADC', ]),
+        services: getSIAv2ServicesByName( ['IRSA', 'IRSA Simulated', 'CADC', ]),
         defaultMaxrec: 50000
     },
     background : {
