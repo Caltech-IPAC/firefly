@@ -234,7 +234,9 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
         );
 
         return makeConstraintEntry(constraints);
-    }, [...fldListAry.map((v) => getVal(v))]);  // eslint-disable-line
+    }, [isSpatialPanelActive, columnsModel, obsCoreEnabled, uploadInfo, tableName, canUpload,
+        useSIAv2, ...fldListAry.map((v) => getVal(v)),
+    ]);
 
     useEffect(() => {
         setConstraintFragment(panelPrefix, constraintResult);
