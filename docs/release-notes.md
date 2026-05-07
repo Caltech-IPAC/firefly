@@ -6,300 +6,78 @@
   - use docker tag: `nightly`
   - [Notes on the next version](next-release-details.md)
 
+---
 
-## Version 2025.5
-- 2025.5.4 - (Feb 3, 2025),   _docker tag_: `2025.5.4`, `2025.5`, `latest`
-- 2025.5.3 - (Jan 23, 2025),  _docker tag_: `2025.5.3`
-- 2025.5.2 - (Dec 17, 2025),  _docker tag_: `2025.5.2`,
-- 2025.5.1 - (Dec 16, 2025),  _docker tag_: `2025.5.1`,
-- 2025.5.0 - (Dec 10, 2025),  _docker tag_: `2025.5.0`
+## Version 2026.1
+- 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`, `2026.1`, `latest`
 
-This release includes broad range of features Job Monitor cleanup, Spectrum/Chart cleanup, Packaging/Download cleanup, S3 support, more FITS projections supported and improved color support
-It also includes significant infrastructure updates.
+This release includes Alert viewer, significant image and HiPS updates, alpha ASDF file support,
+background monitor and UWS improvements, major infrastructure updates, a new drawing layer, and many bug fixes.
 
-#### Major Features
-- S3 Support- Firefly-1840 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1840))
-- Concurrent downloads- Firefly-1869 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1858))
-- Images: SDSS: Upgrade to dr17 and images bz2 compression support- Firefly-1848 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1842))
-- Images: Pan-STARRS pixel readout support- Firefly-168 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1861))
-- Images: HPX projection-  Firefly-1889 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1874))
-- Images: Stereographic projection- Firefly-1834 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1854))
-- Images: Improve extract tool behavior for MEFs- Firefly-1866 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1868))
-- Images: User can not set the nan-pixel color and add reverse color maps- Firefly-1867 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1883))
-- MOC: Support additional MOCs- IRSA-7208 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1862))
-- Name Resolution: add types to resolution display- Firefly-1891 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1877))
-- SPHEREx: Support spectrum-cutout view-  Firefly-1887 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1870)), Firefly-1888 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1873))
-- Charts: Add LaTex support for unit labels- Firefly-1788 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1836))
-- Charts: Charts can now save plot.ly json - Firefly-1837 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1884))
+#### General Features
 
-#### Cleaned Up and improved
-- Job Monitor: Firefly-1839 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1847)), Firefly-1809 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1841)), Firefly-1802 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1849)), Firefly-1824 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1865)),
-- Download & Packaging: Firefly-7274 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1855)), IRSA-7344 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1864))
-- Charts: IRSA-7248 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1860)), Firefly-1884 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1869)), Firefly-1851 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1872))
-- Images: Firefly-1267 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1887))
+- Alert Viewer (Rubin only so far) — Firefly-1935 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1916), [PR](https://github.com/Caltech-IPAC/firefly/pull/1917)), Firefly-1964 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1934), [PR](https://github.com/Caltech-IPAC/firefly/pull/1939)), Firefly-1997 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1943)), Firefly-2003 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1947))
+- Improved Firefly on iPad and iPhone — Firefly-1947 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1913))
+- New box mode for Search Select tool (currently only used with SPHEREx) — Firefly-1942 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1925))
+
+#### Images and HiPS
+
+- Use new WebGPU when available to process images or HiPS — Firefly-1897 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1890))
+- Images: Optimized tile generation, transfer, and memory usage — Firefly-1926 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1900)), Firefly-1949 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1918))
+- Images: Support mask cubes — Firefly-1921 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1897))
+- Images: Support Rubin v2 mask header format — Firefly-1974 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1932))
+- Images: ASDF files (alpha support) — Firefly-1931 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1905)), Firefly-1963 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1926))
+- HiPS: Add Ecliptic coordinate system — Firefly-1973 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1929))
+- Add legend support — Firefly-1924 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1920))
+
+#### Background Monitor & UWS
+
+- Background Monitor: Move `pct_complete` to `progress` under `uws:jobInfo` — Firefly-1770 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1912))
+- Background Monitor: Handle non-table results — Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1907))
+- Background Monitor: Fixed dark mode/light mode bug — IRSA-7544 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1902))
+- Background Monitor: small UI improvements — IRSA-7687 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
+- UWS Client: Allow `errorSummary` to exist even when the phase is not `ERROR` — IRSA-7589 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1914))
+- UWS Client: Apply destruction time for job cleanup and update job retention policy — Firefly-1830 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1898))
+- UWS Client: Fixed handling of ZIP encoding — Firefly-1976 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1931))
 
 #### Infrastructure Updates
-- Upgrade: Tomcat 11- Firefly-1836 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1851))
-- Upgrade: React 19 && JS libraries- Firefly-1835 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1866))
-- Upgrade: Java libraries security patches- Firefly-1805 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1856))
-- Docker: Multi-platform build (`amd64` and `aarch64`)- Firefly-1836 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1875))
-- Improved Redis integration: changed java client to Lettuce- Firefly-1883 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1860))
 
-#### Bug fix
-- Fixed: TAP selected cols number missing upon filtering Firefly-1638 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1850))
-- Fixed: Incorrect pixel readout in 3-color with reprojection- Firefly-1865 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1857))
-- Fixed: Line extraction doesn't work in image scroll mode- Firefly-1863 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1862))
-- Fixed: All table rows highlight with secondary highlight- Firefly-1881 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1862))
-- Fixed: Cube visualizer shows 0.0 um for all planes- Firefly-1870 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1862))
-- Fixed: grid options not showing in MultiProductViewer- IRSA-7404 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1871))
-- Fixed: Inconsistent CSV handling between API and direct upload- Firefly-1838 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1886))
-- Fixed: Per-plane spectral coord display when WCSAXES != NAXIS - Firefly-1919 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
+- Added GitHub Actions to build and publish to GHCR — Firefly-1951 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1915))
+- Added GitHub Actions to build Helm charts — Firefly-1966 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1927))
+- Security: Upgraded Java packages and fixed high and critical CVEs — Firefly-1982 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1942))
+- `firefly_client` integration: Added version endpoint for validation — Firefly-1931 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1936))
+- Use `MessagePack` for Redis storage — Firefly-1925 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1901))
+- Improved detection of Firefly running in AWS — Firefly-1975 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1930))
 
-### _Patches 2025.5_
-#### 2025.5.4
-- Fixed: TAP: In certain cases the TAP UI shows a never resolving loading view of the table list. ([commit](https://github.com/Caltech-IPAC/firefly/commit/8ecf9616c3e1c4765147f541bbb12706ba50cae1))
-#### 2025.5.3
-- Fixed: Firefly-1932- Regression bug: Firefly not working with URL request type ([PR](https://github.com/Caltech-IPAC/firefly/pull/1904))
-- Fixed: Firefly-1929- Regression bug: re-enabled compression for binary transfers ([PR](https://github.com/Caltech-IPAC/firefly/pull/1903))
-- Fixed: Firefly-1830- Clean no completely working ([commit](https://github.com/Caltech-IPAC/firefly/commit/140a6a019d040b2dfde93d45083d9865ec115ed3))
-- Fixed: new chart creation from Python crashing the app ([commit](https://github.com/Caltech-IPAC/firefly/commit/5bfc4a8fb629ca39b73a8aeb2af0678f13d53e48))
+#### Bug Fixes
 
-#### 2025.5.2
-- Fixed: healpix catalog drawing fails at time when on the corner of a tile- ([commit](https://github.com/Caltech-IPAC/firefly/commit/d24939b9e88f943d3a1f9b761fd5f86d8eff4bf2))
-#### 2025.5.1
-- Fixed: Empty HiPS tiles with Firefox- Firefly-1918 ([commit](https://github.com/Caltech-IPAC/firefly/commit/d6373c98244771f2f0094184ace95f84e3544e4c))
-- Fixed: Fix email notification stopped working- ([commit](https://github.com/Caltech-IPAC/firefly/commit/413eb71e5e18b72e721b9ebc552dc01e20a90cda))
-- Update: Table toolbar needs to wrap when table is narrow- Firefly-1634 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1893))
-- Update: Expose any data file upload functionality- Firefly-1854 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1895))
-
-##### _Pull Requests in this release_
-- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.5+label%3abug)
-- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.5+)
+- Fixed MultiProductViewer: improved handling of calibration files — IRSA-7247 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1909))
+- Fixed MultiProductViewer: improved titling — Firefly-1936 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1909))
+- Fixed MultiProductViewer: cutout UI rounding error — Firefly-1995 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
+- Fixed TAP: VizieR uploads now work — Firefly-1978 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1935))
+- Fixed Tables: column resizing after multiple sorts — Firefly-1945 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1924))
+- Fixed Tables: not able to filter some access_url columns — Firefly-2002 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1949))
+- Fixed Chart: heatmap plotting failure with `bigint` data — Firefly-1959 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1921))
+- Fixed Images: parsing of certain target types causing crashes; improved parsing — Firefly-1996 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1941))
+- Fixed Images: mask should be read as long not float — Firefly-1999 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1944))
+- Fixed Images: network issue: certain Rubin images not loading — Firefly-1946 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1911))
+- Fixed `firefly_client` integration: functions did not switch to Results tab when another tab was selected — Firefly-1833 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1906))
+- Fixed non-datalink service descriptor parsing; ZTF light curves not displaying — Firefly-1978 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1935))
+- Fixed precision handling for SizeInputField — IRSA-7653 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1928))
+- Fixed URL parsing for some legacy formats — Firefly-1958 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1923))
+- Fixed failed circular websocket reconnection attempts — Firefly-1990 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1946))
+- Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948))
 
 
-## Version 2025.4
-- 2025.4.2 - (Sep 18, 2025), _docker tag_: `2025.4.2`, `2025.4`,
-- 2025.4.1 - (Sep 3, 2025), _docker tag_: `2025.4.1`
-- 2025.4.0 - (Sep 2, 2025), _docker tag_: `2025.4.0`
+##### _Pull Requests in this Release_
 
-#### This release include Job Monitor improvements, more image extraction features, and improvements other updates to support the applications
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2026.1+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2026.1+)
 
-#### Major Features
-- Packaging: Datalink tables can now be packaged- Firefly-1759 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1797)) 
-- Spectrum: Improved unit recognition- Firefly-1694,11,05,1784 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1798)) 
-- Image: Wavelength support for 3-color images- Firefly-1776 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1799)) 
-- Image: Extraction now supported across multiple images- Firefly-1801 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1814)) 
-- MOC: Add auto display mode- Firefly-1806 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1817)) 
-- TAP: Column selection improvements- Firefly-1787 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1831)), Firefly-1827 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1829))
-- Job Monitor: Fully support Job ABORT- Firefly-1829 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1833)) 
-- Job Monitor: UI Enhancements- IRSA-7229 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1834)) 
-- API: remote load file to upload panel using firefly_client- Firefly-1815 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1825)) 
-- URL API: load url to upload panel- Firefly-1815 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1825)) 
-
-
-#### Bug fix
- - Fixed: Packaging: Cutout size, ra, dec not updating in download script- Firefly-1803 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1816)) 
- - Fixed: Job Monitor issues- Firefly-1804 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1818)), Firefly-1812, Firefly-1813([PR](https://github.com/Caltech-IPAC/firefly/pull/1822))
- - Fixed: Mishandling of UTINYINT JDBCType- IRSA-7144 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1820)) 
- - Fixed: Packaging: ZipHandler fix to better handle GZIP- Firefly-1811 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1821)) 
- - Fixed: Table: Failed to load multi-dimension array of strings- Firefly-1828 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1823)) 
- - Fixed: Fails to detect broken Redis connection; misleading server-status and client UI-  Firefly-1807 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1828)) 
- - Fixed: Alert banner handles both light and dark mode, better handles html alert files-   Firefly-1795 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1830)) 
- - Fixed: Issues with WCS aligning (rotation off) some images when large and near pole- ([commit](https://github.com/Caltech-IPAC/firefly/commit/a4e6a94dbae692fa6627d594f49257928bb74874))
- - Fixed: Target panel selection issues: Firefly-1820, Firefly-1821 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1832)) 
-
-### _Patches 2025.4_
-#### 2025.4.2
-  - Fixed: Wrong warning cutouts and serach by ID- Firefly-1850 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1846))
-  - Fixed: Prepare download button show when it should not- IRSA-7231 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1845))
-  - Fixed: several issue found in SPHEREx- IRSA-7251, IRSA-7250, IRSA-7249 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1843))
-  - Fixed: SDSS url out of date- ([commit](https://github.com/Caltech-IPAC/firefly/commit/12d16237c02edd1e3f040d23ed3b976f5178ec8b))
-  - Fixed: Username display issue- Firefly-1837 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1837))
-  - Fixed: Uploading from URL: should be in a shared upload directory on server- Firefly-1841 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1839))
-  - Improved Render Euclid spectral units in charts- Firefly-1847 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1844))
-#### 2025.4.1
-  - Fixed: Target entry bug- IRSA-7239 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1835))
-
-### _All Pull Requests in this release_
-- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.4+label%3abug)
-- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.4+)
-
-
-
-## Version 2025.3
-- 2025.3.7 - (July 23, 2025), _docker tag_: `2025.3.7`, `2025.3`, `latest`
-- 2025.3.6 - (July 3, 2025), _docker tag_: `2025.3.6`
-- 2025.3.5 - (July 1, 2025), _docker tag_: `2025.3.5`
-- 2025.3.4 - (June 26, 2025), _docker tag_: `2025.3.4`
-- 2025.3.3 - (June 20, 2025), _docker tag_: `2025.3.3`
-- 2025.3.2 - (June 16, 2025), _docker tag_: `2025.3.2`
-- 2025.3.1 - (June 9, 2025), _docker tag_: `2025.3.1`
-- 2025.3.0 - (June 6, 2025), planned _docker tag_: `2025.3.0`, 
-
-#### This release has a complete revamp of the Job monitor and extensive work to support Rubin, SPHEREx, and Euclid needs
-
-#### Major Features
-- Job Monitor (formally Background Monitor): Complete revamp: Firefly-1698 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1742)), Firefly-1735 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760)), Firefly-1327 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1765)), Firefly-1749 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1770)), Firefly-1754 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1791))
-- Packaging: download script supports cutouts- Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
-- Packaging: download script checks for duplicates, better naming- Firefly-1704 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1745)),
-- Images: Wavelength readout includes bandwidth- Firefly-1482 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1733))
-- Color Dialog: color lock button more prominent, Hue preserving better integrated, disabled bound checking for data range- Firefly-1740, Firefly-48 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1766))
-- URL API: goto tab: Firefly-1336 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1763))
-
-#### TAP
-- Support for recognizing and querying array ra/dec `xtype==='point'`, `pos.eq;meta.main` columns- Firefly-1763 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760))
-- Added CANFAR TAP service: https://ws-uv.canfar.net/youcat Firefly-1763 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1760))
-- Updated the MAST TAP URL: https://mast.stsci.edu/vo-tap/api/v0.1/caom  Firefly-1728 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
-- Improved Scheme and tables navigation-  Firefly-1733 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
-- Server logging, for working issues: A TAP UWS call will now log a synchronous version url - Firefly-1733 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1759))
-
-#### Data Product Viewer Updates
-- Supports pdf, yaml, json and plain text files - Firefly-1701([PR](https://github.com/Caltech-IPAC/firefly/pull/1741))
-- Better UI with service descriptors and catalogs with service descriptors - Firefly-1730 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1741))
-- Support related grid for more types of image products- Firefly-1743 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1767))
-- Charts that are spectra or timeseries are pinned with the table- Firefly-1755 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1777))
-- Tables keep state when switching to another tab- Firefly-1772 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1785))
-
-#### Enhancements to support applications built on Firefly
-- Improved Dock layout-  IRSA-6898 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1769))
-- More flexible layout with EmbedPositionSearchPanel-  IRSA-6794 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1771))
-- Better UI feedback in EmbedPositionSearchPanel-  IRSA-6747 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1739))
-- Improve Wavelength panel- Firefly-1723, Firefly-1726 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1758))
-- Create a WavelengthInputField component to handle trailing units- Firefly-1653 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1734))
-- Generalize UploadTableSelector for handling shape fit columns- Firefly-1720 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1751))
-- Improved DCE SIA support - Firefly-1469 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1742))
-
-#### Not user facing
-- Images: FITS memory management optimizations- Firefly-1725([PR](https://github.com/Caltech-IPAC/firefly/pull/1680))
-- Packaging: download scripting and zipping behave the same way- Firefly-1693 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1738))
-- Better handling of Redis failure and reconnection- Firefly-1727 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1754))
-
-#### Bug fix
-- Fixed: Added columns go away- Firefly-1721 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1764))
-- Fixed: Filtering not working for some very small selections- Firefly-1734 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1762))
-- Fixed: Catalog not scrolling on center change- Firefly-6890 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1762))
-- Fixed: Table image point upload does not work anymore- Firefly-1390 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1761))
-- Fixed: Client tables reset scroll on column width change- Firefly-1729 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1757))
-- Fixed: No error when upload table can't be ready- Firefly-1695 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1756))
-- Fixed: Better handle data product catalog that connect to images- Firefly-1718 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1747))
-- Fixed: Failed to recognize single column CSV file- Firefly-1715 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1746))
-- Fixed: Refine search region stays on when it shouldn't- Firefly-1706 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1744))
-- Fixed: TAP search from selection tool is broken- Firefly-1195 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1744))
-- Fixed: chart filter icon does not work on column mapped to a label- Firefly-1378 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1726))
-- Fixed: Table column filter misinterpret 'NOT LIKE'- Firefly-1265 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1773))
-- Fixed: Charts X/Y Ratio ui cutting off problem- Firefly-1753 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1775))
-- Fixed: when HiPS is changed, the associated MOC is added- Firefly-1667 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1786))
-- Fixed: table upload is only uploaded page size and not whole table- Firefly-1771 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1788))
-- Fixed: table names had a zero appended to the name when there are zero rows- ([commit](https://github.com/Caltech-IPAC/firefly/commit/0384e4f7b966c7e8c4cca3b0c4be63ae8e4fb5a1))
-- Fixed: admin/status page list of host using shared work area sorted wrong - ([commit](https://github.com/Caltech-IPAC/firefly/commit/60f0144c5ec2604ace58cb32a242cec76cf13b75))
-
-
-### _Patches 2025.3_
-- 2025.3.7
-  - Fixed: username switching unexpectedly for same user - ([PR](https://github.com/Caltech-IPAC/firefly/pull/1811))
-  - Optimized: Redis usage when querying jobs by user - Firefly-1796  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1810))
-- 2025.3.6
-  - Handle Importing job histories URL that have parameters - Firefly-1794  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1807))
-- 2025.3.5
-  - Fixed: Images: mouse readout with some compressed images- Firefly-1793,Firefly-1792,Firefly-1789  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
-- 2025.3.4 
-  - Timeseries: improve save table filename- Firefly-1354 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1802))
-  - Better messaging for Position Cols in TAP Spatial Search- Firefly-1677 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1803))
-  - Fixed: TAP and SIA issues- Firefly-1786, rubin DM-51532  ([PR](https://github.com/Caltech-IPAC/firefly/pull/1804))
-  - Fixed: Image expansion in bi-view mode fails ([commit](https://github.com/Caltech-IPAC/firefly/commit/1d2c3f222cb6d8611f0361ffa4ad5aaa63d278f5))
-- 2025.3.3 
-  - Sanitize header values when logging and handle HiPS /properties url- (rubin DM-51480) Patch ([PR](https://github.com/Caltech-IPAC/firefly/pull/1801))
-  - Improve Redis configuration and administration features- FIREFLY-1779 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1794))
-- 2025.3.2 
-  - Fixed: TAP: Upload fails when using a `*` in the ADQL statement-  Firefly-1581 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1796))
-  - Improved download performance for some calls- Firefly-1682 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1795))
-- 2025.3.1 
-  - Fixed: cutouts not changing when the table is not the datalink table ([commit](https://github.com/Caltech-IPAC/firefly/commit/7a3b8cfb88eecb4bd2f34b1500213cf52f7bd95a))
-  - Fixed: handle datalink for obscore tables that claim to be all images but are not ([commit](https://github.com/Caltech-IPAC/firefly/commit/37269537815ad886f445210f85335ab976c57d30))
-  - Fixed: datalink text/plain files not processed correctly ([commit](https://github.com/Caltech-IPAC/firefly/commit/37269537815ad886f445210f85335ab976c57d30))
-  - Fixed: Start tooltip layout. Firefly-1754 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1791))
-  - Fixed: VoTableWriter missing RESOURCES in output file. Firefly-1563 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1790))
-
-
-
-## Version 2025.2
-- 2025.2.3 - (April 8, 2025), _docker tag_: `2025.2.3`, `2025.2`, `latest`
-- 2025.2.2 - (March 20, 2025), _docker tag_: `2025.2.2`,
-- 2025.2.1 - (March 14, 2025), _docker tag_: `2025.2.1`
-- 2025.2.0 - (March 13, 2025), _docker tag_: `2025.2.0`
-
-#### Major Features
-- Improved datalink cutout handling- Firefly-1666([PR](https://github.com/Caltech-IPAC/firefly/pull/1717)), Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
-- Healpix catalog display will even larger tables (50 million or more)- Firefly-1661 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1713))
-- Readout options are saved as preferences- Firefly-1660 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1707))
-- Target Panel: example clickable- Firefly-441 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1696))
-- Time Series: Now shows loaded file name in period finder- IRSA-4725 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1721))
-
-#### Not user facing
-- Improved job completion framework- Firefly-1609([PR](https://github.com/Caltech-IPAC/firefly/pull/1719)),
-- Docker: Firefly Entrypoint Extractions- CADC-13454 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1708))
-- Docker: Improved ingestion of parameters- Firefly-1648 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1698))
-
-#### Bug fix
-- Better Simbad search errors- IRSA-6654 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1714))
-- Fixed multiple MOC issues- Firefly-1663 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1716))
-- Result showing search target is more accurate- IRSA-6574 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1712))
-- Table: does not function correctly when a column contains non-ASCII characters- Firefly-1616 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1716))
-
-
-### _Patches 2025.2_
-- 2025.2.3
-  - Enhancement: Enable experimental LSDB panel behind url api option - Firefly-1702: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1740))
-  - Bug fix: Multi product viewer referencing tar files crash- Firefly-1688: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1732))
-  - Bug fix: Image filtering with checkbox broken- Firefly-1689: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1732))
-- 2025.2.2
-  - Bug fix: datalink processing not recognizing application/fits as image ([commit](https://github.com/Caltech-IPAC/firefly/commit/f5b447e6a22e1ef53131b61926efc516411527af))
-- 2025.2.1
-  - Bug fix: prevent excessive thread use- Firefly-1683 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1727))
-  - Bug fix: computation of healpix for visible tables to rough ([commit](https://github.com/Caltech-IPAC/firefly/commit/48df3f87857b01209a9cb0e54876c8ed2f1d2721))
-
-##### _Pull Requests in this release_
-- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.2+label%3abug)
-- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.2+)
-
-
-
-## Version 2025.1
-- 2025.1.1 - (Feb  6, 2025),  _docker tag_: `2025.1`, `2025.1.1`
-- 2025.1.0 - (Jan 27, 2025),  _docker tag_: `2025.1.0`
-
-### _Notes_
-#### Major updates in ingesting tables, SIAv2 and better handling of obscore table cutouts
-
-#### Major Features
- - Improve cutout handling- Firefly-1633([PR](https://github.com/Caltech-IPAC/firefly/pull/1689)),
-Firefly-1581([PR](https://github.com/Caltech-IPAC/firefly/pull/1581))
- - SIAv2 implementation- Firefly-1622([PR](https://github.com/Caltech-IPAC/firefly/pull/1677))
- - Support image sub-highlighting- Firefly-1571([PR](https://github.com/Caltech-IPAC/firefly/pull/1642))
-
-#### Not user facing
- - Improved table ingest speed- Firefly-1592([PR](https://github.com/Caltech-IPAC/firefly/pull/1667)), 
-Firefly-1591([PR](https://github.com/Caltech-IPAC/firefly/pull/1662)), Firefly-1592([PR](https://github.com/Caltech-IPAC/firefly/pull/1667)) 
- - Improve file type detection- Firefly-1615([PR](https://github.com/Caltech-IPAC/firefly/pull/1670))
- - Alternate way to set a FIREFLY_OPTIONS entry using `OP_path_to_option` style- Firefly-1641([PR](https://github.com/Caltech-IPAC/firefly/pull/1691)), 
-
-#### Bug fix
-- Fixed: cascade combining spectra broken- Firefly-1635([PR](https://github.com/Caltech-IPAC/firefly/pull/1683)), 
-- Fixed: improved mouse readout for bottom layout- Firefly-1624([PR](https://github.com/Caltech-IPAC/firefly/pull/1682)), 
-- Fixed: table tab color wrong- Firefly-1612([PR](https://github.com/Caltech-IPAC/firefly/pull/1681)), 
-
-### _Patches 2025.1_
-
-- 2025.1.1
-  - Bug fix: Sometime heatmap fails to display after filtering- Firefly-1652 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1700))
-  - Bug fix: NaNs values should not show up in Heatmap- Firefly-1649 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1701))
-
-##### _Pull Requests in this release_
-- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.1+label%3abug)
-- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.1+)
-
+---
 
 # Older Release notes 2019 - 2024
+- [2025](old-release-notes/older-release-notes-2025.md)
 - [2024](old-release-notes/older-release-notes-2024.md)
 - [2023](old-release-notes/older-release-notes-2023.md)
 - [2022](old-release-notes/older-release-notes-2022.md)
