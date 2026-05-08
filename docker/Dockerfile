@@ -200,7 +200,7 @@ RUN sed -i 's/<Connector port="8080" protocol="HTTP\/1.1"/<Connector port="8080"
     && sed -i 's/<Connector /<Connector server="" allowTrace="false" /' \
         $CATALINA_HOME/conf/server.xml \
     # Disable runtime auto-deploy
-    && sed -i 's/autoDeploy="true"/autoDeploy="false">/' \
+    && sed -i 's/autoDeploy="true"/autoDeploy="false"/' \
         $CATALINA_HOME/conf/server.xml  \
     && sed -i '/<\/Host>/i\    <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false" />' \
           $CATALINA_HOME/conf/server.xml

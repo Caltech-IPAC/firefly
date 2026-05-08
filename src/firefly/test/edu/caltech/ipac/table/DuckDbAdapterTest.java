@@ -8,8 +8,10 @@ import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbMonitor;
+import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -28,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -276,6 +279,27 @@ public class DuckDbAdapterTest extends ConfigTest {
 		// mixing single and double quotes
 		assertEquals("'test ILIKE inside\" badly quoted ILIKE ",
 				replaceLike("'test like inside\" badly quoted like "));
+	}
+
+	@Test
+	public void testDuckDbExternalAccessIsRestrictedToAllowedDirs() throws Exception {
+		DuckDbAdapter db = new DuckDbAdapter((File) null);
+
+		File allowedCsv = new File(ServerContext.getWorkingDir(), "duckdb-allowed.csv");
+		Files.writeString(allowedCsv.toPath(), "id,name\n1,allowed\n");
+		assertEquals(1, db.execQuery("select * from read_csv('%s')".formatted(allowedCsv.getAbsolutePath()), null).size());
+
+		File deniedCsv = new File(ServerContext.getWorkingDir().getParentFile(), "duckdb-denied.csv");
+		Files.writeString(deniedCsv.toPath(), "id,name\n1,denied\n");
+		try {
+			db.execQuery("select * from read_csv('%s')".formatted(deniedCsv.getAbsolutePath()), null);
+			fail("DuckDB should block reads outside allowed_directories");
+		} catch (DataAccessException expected) {
+			assertNotNull(expected.getMessage());
+		} finally {
+			allowedCsv.delete();
+			deniedCsv.delete();
+		}
 	}
 
 //====================================================================
