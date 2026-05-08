@@ -187,10 +187,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             execUpdate(sql);
 
             // copy dd
-            List<String> cnames = getColumnNamesFromSys(resultSetID, "'");
-            String ddSql = "select * from DATA_DD" + (cnames.size() > 0 ? " where cname in (%s)".formatted(StringUtils.toString(cnames)) : "");
-            ddSql = createTableFromSelect(resultSetID + "_DD", ddSql);
-            execUpdate(ddSql);
+            copyDDFromSource(resultSetID, getDataTable());
 
             // copy meta
             String metaSql = "select * from DATA_META";
@@ -958,6 +955,15 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     void handleSpecialDTypes(DataType dtype, DataGroup dg, ResultSet rs) {
         applyIfNotEmpty(deserialize(rs, "links"), v -> dtype.setLinkInfos((List<LinkInfo>) v));
+    }
+
+    public void copyDDFromSource(String tblName, String sourceTbl) {
+        List<String> cnames = getColumnNamesFromSys(tblName, "'");
+        String ddSql = "select * from %s_DD".formatted(sourceTbl) +
+                (cnames.isEmpty() ? " WHERE 1=0" : " where cname in (%s)".formatted(StringUtils.toString(cnames)));
+        try {
+            execUpdate(createTableFromSelect(tblName + "_DD", ddSql));
+        } catch (Exception ignored) {}
     }
 
     void ddToDb(DataGroup dg, String tblName) {

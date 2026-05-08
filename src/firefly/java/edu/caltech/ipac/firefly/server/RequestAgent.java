@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 
 import jakarta.servlet.http.Cookie;
@@ -29,6 +30,8 @@ import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
  * @version $Id: $
  */
 public class RequestAgent {
+
+    public static final String SERVER_HOST = AppProperties.getProperty("server.host");
 
     private Map<String, Cookie> cookies;
     private String requestUrl;      // the request url
@@ -153,7 +156,7 @@ public class RequestAgent {
 //  RequestAgent implementations...
 //====================================================================
 
-    public static class HTTP extends RequestAgent {
+    public static final class HTTP extends RequestAgent {
         private static final String AUTH_KEY = "JOSSO_SESSIONID";
         private static final Logger.LoggerImpl LOG = Logger.getLogger();
         private final HashMap<String, String> headers = new HashMap<>();      // key stored as lowercase;
@@ -173,46 +176,52 @@ public class RequestAgent {
                 Arrays.stream(v).forEach(c -> cookies.put(c.getName(), c));
             });
 
-            // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
-            String port = String.valueOf(request.getServerPort());
-            String host  = getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", getHeader("host", request.getServerName())));
-            String[] parts = host.split(":");       // host may contains port; needs to handle it.
-            if (parts.length > 1) {
-                host = parts[0];
-                port = parts[1];
-            }
-            port  = getHeader("X-Forwarded-Port", port);
-            String proto = getHeader("X-Forwarded-Proto", port.equals("443") ? "https" : "http");
-            port = port.matches("443|80") ? "" : ":" + port;
-            String proxiedPath = getHeader("X-Forwarded-Path", getHeader("X-Forwarded-Prefix", "") + request.getContextPath());
+            OriginInfo origin = resolveOrigin(request);
 
-            String hostUrl = String.format("%s://%s%s", proto, host, port);
-            String baseUrl = hostUrl + proxiedPath;
+            String hostUrl = String.format("%s://%s%s", origin.proto, origin.host, origin.port);
+            String baseUrl = hostUrl + origin.path;
             baseUrl = baseUrl.endsWith("/") ? baseUrl :  baseUrl + "/";
 
-            String requestUrl =  getHeader("X-Original-URI");
+            String requestUrl = getHeader("X-Original-URI");
             if (requestUrl == null) {
                 String queryStr = request.getQueryString() == null ? "" : "?" + request.getQueryString();
-                String path = request.getRequestURI();
-                if (!proxiedPath.equals(request.getContextPath())) {
-                    path = path.replace(request.getContextPath(), proxiedPath);
-                }
+                String path = request.getRequestURI().replace(request.getContextPath(), origin.path);
                 requestUrl = path + queryStr;
             }
-            requestUrl = requestUrl.startsWith(proto) ? requestUrl : hostUrl + requestUrl;
-
-            String remoteIP = getHeader("x-original-forwarded-for", getHeader("X-Forwarded-For", request.getRemoteAddr()));
+            requestUrl = requestUrl.startsWith(origin.proto + "://") ? requestUrl : hostUrl + requestUrl;
 
             setBaseUrl(baseUrl);
             setHostUrl(hostUrl);
-            setHost(host);
+            setHost(origin.host);
             setRequestUrl(requestUrl);
             setContextPath(request.getContextPath());
-            setRemoteIP(remoteIP);
+            setRemoteIP(origin.remoteIP());
             setSessId(request.getSession(true).getId());
             setServletPath(request.getServletPath());
 
             realPath = request.getServletContext().getRealPath("/");
+        }
+
+        private record OriginInfo(String host, String port, String proto, String path, String remoteIP) {}
+
+        // Trusts the 'server.host' property/env over request headers, which can be spoofed.
+        private OriginInfo resolveOrigin(HttpServletRequest request) {
+            String raw = !StringUtils.isEmpty(SERVER_HOST) ? SERVER_HOST
+                    : getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", getHeader("host", request.getServerName())));
+            // X-Forwarded-Host may be a comma-separated list when behind multiple proxies; take the first entry
+            raw = raw.split(",")[0].trim();
+            // host may contain a port, e.g. hostname:8080
+            String[] parts = raw.split(":");
+            String host = parts.length == 2 && parts[1].matches("\\d+") ? parts[0] : raw;
+            String port  = getHeader("X-Forwarded-Port", parts.length == 2 ? parts[1] : String.valueOf(request.getServerPort()));
+            String proto = getHeader("X-Forwarded-Proto", port.equals("443") ? "https" : "http");
+            port = port.matches("443|80") ? "" : ":" + port;
+            String path = getHeader("X-Forwarded-Path", getHeader("X-Forwarded-Prefix", "") + request.getContextPath());
+            // X-Forwarded-For is a comma-separated list of IPs; the leftmost is the original client
+            String remoteIP = getHeader("x-original-forwarded-for", getHeader("X-Forwarded-For", request.getRemoteAddr()));
+            remoteIP = remoteIP.split(",")[0].trim();
+
+            return new OriginInfo(host, port, proto, path, remoteIP);
         }
 
         @Override
@@ -222,6 +231,7 @@ public class RequestAgent {
 
         @Override
         public String getRealPath(String relPath) {
+            if (realPath == null) return null;
             return new File(realPath, relPath).getAbsolutePath();
         }
 

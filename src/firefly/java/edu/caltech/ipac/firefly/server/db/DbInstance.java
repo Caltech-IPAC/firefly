@@ -3,8 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.server.db.jdbc.DbInstanceDataSource;
 import edu.caltech.ipac.util.AppProperties;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -107,6 +109,7 @@ public class DbInstance {
     }
     public boolean isPooled() { return isPooled; }
     public void setPooled(boolean pooled) { isPooled = pooled;}
+    public DataSource createDataSource() { return new DbInstanceDataSource(this); }
     public boolean testConn(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("SELECT 1 FROM (VALUES (0)) AS dummy");     // HSQL required FROM clause; postgres required alias

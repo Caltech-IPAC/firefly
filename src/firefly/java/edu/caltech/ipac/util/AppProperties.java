@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.util;
 
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +12,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 
 /**
@@ -207,27 +208,22 @@ public class AppProperties {
   }
 
   public static String getProperty(String key, String def, Properties overridePDB) {
-      // NOTE use of == on String instead of .equal is intentional
-      //
-      // Applications property search order
-      //    - search the system database
-      //    - search the mainProperties database
-      //    - the priority for application properties
-      //        follows from highest to lowest:
-      //        1. system
-      //        2. mainProperties
 
-      String retval= def;
-      if (overridePDB==null) {
-          try {
-               retval= System.getProperty(key, def);
-          } catch (Exception e) { /*do nothing*/ }
-          if (retval==def) retval= mainProperties.getProperty(key, def);
+      // Applications property lookup order
+      //   - overridePDB (if not null)
+      //   - environment variable
+      //   - system properties
+      //   - configured properties
+
+      String retval;
+      if (overridePDB == null) {
+          retval = Try.it(() -> System.getenv(key)).get();
+          if (retval == null) retval = Try.it(() -> System.getProperty(key)).get();
+          if (retval == null) retval = mainProperties.getProperty(key);
+      } else {
+          retval = overridePDB.getProperty(key, def);
       }
-      else {
-          retval= overridePDB.getProperty(key, def);
-      }
-      return retval;
+      return retval == null ? def : retval;
   }
 
     public static Map<String,String> getWithStartingMatch(String startOfKey) {

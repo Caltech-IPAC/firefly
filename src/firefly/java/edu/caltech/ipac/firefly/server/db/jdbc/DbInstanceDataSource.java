@@ -18,11 +18,11 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
 /**
  * DataSource implementation backed by a {@link DbInstance}, creating a new connection per call via DriverManager.
  */
-public class DriverManagerDataSource implements DataSource {
+public class DbInstanceDataSource implements DataSource {
 
     private final DbInstance dbInstance;
 
-    public DriverManagerDataSource(DbInstance dbInstance) {
+    public DbInstanceDataSource(DbInstance dbInstance) {
         this.dbInstance = dbInstance;
         if (dbInstance.jdbcDriver != null) {
             try { Class.forName(dbInstance.jdbcDriver); } catch (ClassNotFoundException ignored) {}

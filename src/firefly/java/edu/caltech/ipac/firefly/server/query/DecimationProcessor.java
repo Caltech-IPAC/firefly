@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -109,8 +108,10 @@ public class DecimationProcessor extends TableFunctionProcessor {
             long maxW = (long) minMax.getData("maxWeight", 0);
             DataGroup meta = new DataGroup();
             insertDecimateInfo(meta, deciInfo, deciKey, minW, maxW);
-            ((BaseDbAdapter)dbAdapter).metaToDb(meta, tblName);
+            dbAdapter.metaToDb(meta, tblName);
         }
+
+        dbAdapter.copyDDFromSource(tblName, dataTbl);
     }
 
     /* Old method of doing decimation */
