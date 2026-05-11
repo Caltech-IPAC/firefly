@@ -7,6 +7,7 @@ import {Box, IconButton, Sheet, Stack, Typography} from '@mui/joy';
 import React, {isValidElement, memo, useContext} from 'react';
 import {bool, element, node, object, shape, string} from 'prop-types';
 import {dispatchShowDialog, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
+import {dispatchUpdateHintAnchorNodes} from '../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {getVersionInfoStr, showFullVersionInfoDialog} from 'firefly/ui/VersionInfo.jsx';
 import {menuTabsBorderSx} from 'firefly/ui/Menu';
@@ -67,7 +68,10 @@ Banner.propTypes= {
 function AppConfigButton({sx}) {
     return (
         <Stack sx={sx}>
-            <IconButton variant='outlined'  onClick={() => dispatchShowDialog(SIDE_BAR_ID)}>
+            <IconButton
+                ref={(el) => el && dispatchUpdateHintAnchorNodes({sideMenuBtn: el})}
+                variant='outlined'
+                onClick={() => dispatchShowDialog(SIDE_BAR_ID)}>
                 <MenuRoundedIcon/>
             </IconButton>
         </Stack>

@@ -13,12 +13,12 @@ import 'styles/global.css';
 import {APP_LOAD, dispatchAppOptions, dispatchConnectionStatus, dispatchUpdateAppData, getConnectionStatus} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
-import {LandingPage} from './templates/fireflyviewer/LandingPage.jsx';
+import {StandaloneFireflyLanding, StandaloneFireflyFooter} from './templates/fireflyviewer/StandaloneFireflyLanding.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
 import {initApi} from './api/ApiBuild.js';
-import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {dispatchShowDropDown, dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
 import {getSIAv2ServicesByName} from './ui/tap/SiaUtil';
@@ -45,7 +45,6 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
-import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -119,7 +118,8 @@ const defAppProps = {
     showUserInfo: false,
     showViewsSwitch: true,
     rightButtons: undefined,
-    landingPage: <LandingPage/>,
+    landingPage: <StandaloneFireflyLanding/>,
+    footer: <StandaloneFireflyFooter/>,
     fileDropEventAction: 'FileUploadDropDownCmd',
 
     menu: [
@@ -340,22 +340,25 @@ function setupGatorProtocolPanel(installedOptions, appProps) {
  */
 export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'}) {
 
-
+    // TODO: test and improvise the look
     const Message = ({}) => (
         <Stack alignItems='center'>
             <Typography sx={{fontSize: 'xl4'}} color='neutral'> Welcome to Firefly Viewer for Python</Typography>
         </Stack>
     );
 
-    const landingPage= (<LandingPage slotProps={{
+    const landingPage = (<StandaloneFireflyLanding slotProps={{
         topSection: {component: Message},
-        bottomSection : {
+        bottomSection: {
             actionItems: [
-                { text: 'Use API to send data', subtext: 'load data using Python API' },
-                { text: 'Search for data', subtext: 'using the tabs above or side menu' },
-                { text: 'Upload a file', subtext: 'drag & drop here' }
-            ]
-        }
+                {title: 'Use API to send data', desc: 'load data using Python API'},
+                {title: 'Search for data', desc: 'using the tabs above or side menu',
+                    onClick: () => dispatchShowDropDown({view: 'TAPSearch'})},
+                {title: 'Upload a file', desc: 'drag & drop here',
+                    onClick: () => dispatchShowDropDown({view: 'FileUploadDropDownCmd'})},
+            ],
+            chips: [],
+        },
     }}/>);
 
     const props = {
