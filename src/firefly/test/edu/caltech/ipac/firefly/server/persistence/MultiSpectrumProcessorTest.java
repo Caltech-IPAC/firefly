@@ -34,7 +34,6 @@ public class MultiSpectrumProcessorTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        setupServerContext(null);
         testFile = FileLoader.resolveFile(VotableTest.class, "/multispectrum-array.vot");       // uses same ./table test data directory
         if (false) Logger.setLogLevel(Level.DEBUG);
     }

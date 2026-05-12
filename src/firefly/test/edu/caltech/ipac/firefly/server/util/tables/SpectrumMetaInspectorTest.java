@@ -32,7 +32,6 @@ public class SpectrumMetaInspectorTest extends ConfigTest {
     
     @Before
     public void setUp() {
-        setupServerContext(null);
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 

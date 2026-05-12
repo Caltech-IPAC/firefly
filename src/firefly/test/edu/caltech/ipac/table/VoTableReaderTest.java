@@ -28,8 +28,6 @@ public class VoTableReaderTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
         midFile = FileLoader.resolveFile("FileUpload-samples/VOTable/tabledata/multiTables_Ned.xml");                   // 8.6 MB
         largeFile = FileLoader.resolveFile("LSSTFoorprintSources/combined_sources_and_footprints_5000.xml");            // 44 MB
     }

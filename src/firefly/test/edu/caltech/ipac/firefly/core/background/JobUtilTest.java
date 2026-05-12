@@ -38,8 +38,6 @@ public class JobUtilTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
         Logger.setLogLevel(Level.DEBUG);
 
         xmlJob = """

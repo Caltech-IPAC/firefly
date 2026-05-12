@@ -13,6 +13,8 @@ import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 
 import javax.annotation.Nonnull;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Set;
 import java.io.BufferedReader;
@@ -160,7 +162,7 @@ public class FormatUtil {
 
         // Fall back to OS content probing and extension-based guess for text formats
         try {
-            String mime = java.nio.file.Files.probeContentType(java.nio.file.Path.of(inFile));
+            String mime = Files.probeContentType(Path.of(inFile));
             if (mime == null) mime = java.net.URLConnection.guessContentTypeFromName(inFile);
             if (mime != null) return new MimeDesc(mime, mime);
         } catch (Exception ex) {

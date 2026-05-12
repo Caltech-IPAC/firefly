@@ -62,8 +62,6 @@ public class HealpixProcessorTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        // needed because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
         testFile = FileLoader.resolveFile(DuckDbAdapterTest.class, "/table_1mil.parquet");
         if (false) Logger.setLogLevel(Level.TRACE, "edu.caltech.ipac.firefly.server.util.StopWatch");			// for debugging; show elapsed time only
     }

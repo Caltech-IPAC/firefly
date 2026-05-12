@@ -32,7 +32,6 @@ public class CacheTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() throws InterruptedException {
-        setupServerContext(null);
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 

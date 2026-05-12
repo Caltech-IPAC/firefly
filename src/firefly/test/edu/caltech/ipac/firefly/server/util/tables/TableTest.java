@@ -34,8 +34,6 @@ public class TableTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        // needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
     }
 
     @Test

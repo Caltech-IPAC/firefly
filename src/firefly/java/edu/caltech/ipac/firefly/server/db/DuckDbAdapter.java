@@ -47,6 +47,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public static final String NAME = "duckdb";
     public static final String DRIVER = "org.duckdb.DuckDBDriver";
     public static final String EXT_DIR = AppProperties.getProperty("duckdb.ext.dir", System.getProperty("java.io.tmpdir"));
+    public static final String ALLOWED_DIRS = "duckdb.allowed.dirs";
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
     private static int threadCnt=1;    // min 125mb per thread.  recommend 5gb per thread; we will config 1gb per thread but not more than 4.
     private static String allowedDirs = null;
@@ -120,6 +121,14 @@ public class DuckDbAdapter extends BaseDbAdapter {
             List<File> dirs = new ArrayList<>();
             dirs.add(ServerContext.getWorkingDir());
             dirs.add(ServerContext.getSharedWorkingDir());
+            String addtlAllowed = AppProperties.getProperty(ALLOWED_DIRS);
+            if (!isEmpty(addtlAllowed)) {
+                for (String d : addtlAllowed.split(",")) {
+                    File f = new File(d.trim());
+                    if (f.exists() && f.isDirectory()) dirs.add(f);
+                }
+            }
+
             allowedDirs = dirs.stream()
                     .map(f -> "'" + f.getAbsolutePath() + "'")
                     .collect(Collectors.joining(", "));

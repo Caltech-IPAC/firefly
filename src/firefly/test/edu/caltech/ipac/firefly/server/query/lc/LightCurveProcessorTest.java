@@ -77,10 +77,8 @@ public class LightCurveProcessorTest extends LightCurveTestCommon  {
 
     @BeforeClass
     public static void setUp() {
-
-        setupServerContext(null);
-
     }
+
     @After
     /**
      * Release the memories

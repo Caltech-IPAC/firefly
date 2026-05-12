@@ -41,8 +41,6 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	@BeforeClass
 	public static void setUp() {
 		try {
-			// needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-			setupServerContext(null);
 			File tmp = new File(System.getProperty("java.io.tmpdir"));
 			var dbAdapter = DbAdapter.getAdapter("", (ext) -> new File(tmp, "%d.%s".formatted(System.currentTimeMillis(), ext)));
 			dbFile = dbAdapter.initDbFile();

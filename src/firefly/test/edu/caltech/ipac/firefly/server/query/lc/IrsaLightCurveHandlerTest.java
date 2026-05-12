@@ -41,7 +41,6 @@ public class IrsaLightCurveHandlerTest extends LightCurveTestCommon {
 
     @BeforeClass
     public static void setUp() {
-        setupServerContext(null);
     }
 
 

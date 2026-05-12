@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.logging.log4j.Level;
@@ -31,6 +32,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +47,6 @@ public class DuckDbAdapterTest extends ConfigTest {
 
 	@Before
 	public void setUp() {
-		setupServerContext(null);
 		if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
 	}
 
@@ -289,7 +290,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		Files.writeString(allowedCsv.toPath(), "id,name\n1,allowed\n");
 		assertEquals(1, db.execQuery("select * from read_csv('%s')".formatted(allowedCsv.getAbsolutePath()), null).size());
 
-		File deniedCsv = new File(ServerContext.getWorkingDir().getParentFile(), "duckdb-denied.csv");
+		File deniedCsv = new File("./duckdb-denied.csv");
 		Files.writeString(deniedCsv.toPath(), "id,name\n1,denied\n");
 		try {
 			db.execQuery("select * from read_csv('%s')".formatted(deniedCsv.getAbsolutePath()), null);

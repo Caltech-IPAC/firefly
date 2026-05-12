@@ -23,7 +23,6 @@ public class ResourceProcessorTest extends ConfigTest {
 
 	@Before
 	public void setUp() {
-		setupServerContext(null);
 	}
 
 	@After

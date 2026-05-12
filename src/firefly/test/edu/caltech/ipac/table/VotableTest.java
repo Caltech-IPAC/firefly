@@ -27,9 +27,6 @@ public class VotableTest extends ConfigTest {
     @BeforeClass
     public static void setUp() {
         try {
-            // needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-            setupServerContext(null);
-
             dbFile = File.createTempFile("TestDb_", ".hsql");
             dbFile.deleteOnExit();
 

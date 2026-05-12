@@ -35,8 +35,6 @@ public class FileAnalysisTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() {
-        // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
     }
 
     @Test

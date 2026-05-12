@@ -33,8 +33,6 @@ public class JobManagerTest extends ConfigTest {
         // set so JobManager does not wait for results
         AppProperties.setProperty("job.wait.complete", "0");
 
-        // needed when dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-        setupServerContext(null);
         Logger.setLogLevel(Level.DEBUG);
     }
 

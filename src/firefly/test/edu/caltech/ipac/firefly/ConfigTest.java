@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import org.apache.logging.log4j.Level;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+
+import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.ALLOWED_DIRS;
 
 /**
  * Should load the logger and app properties to apply to any test runner
@@ -31,6 +33,7 @@ public class ConfigTest {
 
     public static String TEST_PROP_FILE = "app-test.prop";
     public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
+    private static final String tempDir = System.getProperty("java.io.tmpdir");
 
     /**
      * Use the logger in the test case that would extend this class.
@@ -121,9 +124,11 @@ public class ConfigTest {
         AppProperties.setProperty("work.directory", Paths.get("build").toAbsolutePath().toString());
         Path buildConfg = Paths.get(webappConfigPath);
 
-        String tmpDir = Paths.get("build/%s/tmp".formatted(contextName)).toAbsolutePath().toString();
-        new File(tmpDir).mkdirs();
-        System.setProperty("java.io.tmpdir", tmpDir);
+        // allow duckdb to read/write temp files and test data files
+        AppProperties.setProperty(ALLOWED_DIRS, String.join(",", List.of(
+                tempDir,
+                Path.of("../firefly_test_data").toAbsolutePath().normalize().toString()
+        )));
 
         copyWithSub(Paths.get("./config/ehcache.xml"), buildConfg, "app-name", contextName);
         copy(Paths.get("config/test/app-test.prop"), buildConfg);
