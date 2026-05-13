@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.server.query.lc.PhaseFoldedLightCurve;
 import edu.caltech.ipac.firefly.util.FileLoader;
@@ -15,7 +16,7 @@ import org.junit.Test;
  *  DM-8028
  *    Use teh UnitTestUtility to load file
  */
-public class PhaseFoldedLightCurveTest {
+public class PhaseFoldedLightCurveTest extends ConfigTest {
 
     private static final float period = 0.140630f;
     private static final String timeColName = "mjd";

@@ -83,12 +83,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             getRuntimeStats().peakMemDbs = Math.max(getDbInstances().size(), getRuntimeStats().peakMemDbs);
         }
         if (ins != null && create) {        // only update access time when create is requested.
-            try {
-                ins.getLock().lock();
-                ins.touch();
-            } finally {
-                ins.getLock().unlock();
-            }
+            ins.touch();
         }
         return ins;
 
@@ -591,16 +586,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
         LOGGER.debug("%s -> closing DB, delete(%s): %s".formatted(getName(), deleteFile, getDbFile().getPath()));
         EmbeddedDbInstance db = getDbInstances().get(getDbFile().getPath());
         if (db != null) {
-            try {
-                db.getLock().lock();
+            synchronized (db) {
                 if (!deleteFile) {
                     compact();
                 }
                 shutdown(db);
-            } finally {
-                db.getLock().unlock();
-                getDbInstances().remove(db.getDbFile().getPath());
             }
+            getDbInstances().remove(db.getDbFile().getPath());
         }
         if (deleteFile) removeDbFile();
     }

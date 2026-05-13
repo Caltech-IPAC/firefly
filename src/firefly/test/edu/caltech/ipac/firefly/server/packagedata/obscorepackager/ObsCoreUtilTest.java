@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata.obscorepackager;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.table.MappedData;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,7 +21,7 @@ import java.util.Map;
  * @author kartik
  * @version : $
  */
-public class ObsCoreUtilTest {
+public class ObsCoreUtilTest extends ConfigTest {
 
     @Test
     public void testTestSem() {

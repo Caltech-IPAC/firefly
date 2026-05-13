@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata.obscorepackager;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -20,7 +21,7 @@ import java.util.List;
  * @author kartik
  * @version : $
  */
-public class DatalinkUtilTest {
+public class DatalinkUtilTest extends ConfigTest {
 
     @Test
     public void testCreateUrlFromServDesc_withValuesAndRefs() {

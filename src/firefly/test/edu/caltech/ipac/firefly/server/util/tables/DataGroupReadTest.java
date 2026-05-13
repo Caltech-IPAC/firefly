@@ -43,7 +43,7 @@ import static edu.caltech.ipac.firefly.TestUtil.logMemUsage;
  * @author loi
  * @version $Id: IpacTableParser.java,v 1.18 2011/12/08 19:34:02 loi Exp $
  */
-public class DataGroupReadTest {
+public class DataGroupReadTest extends ConfigTest {
 
     private static final File largeIpacTable = getDataFile("large-ipac-tables/wise-950000.tbl");
     private static final File midIpacTable = getDataFile(DataGroupReadTest.class, "50k.tbl");
