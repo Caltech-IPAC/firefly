@@ -22,6 +22,8 @@ import org.json.simple.JSONValue;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -95,12 +97,12 @@ public class DuckDbAdapter extends BaseDbAdapter {
                                 self.rootConn = super.getConnection(username, password);
                             }
                             try {
-                                return ((DuckDBConnection) self.rootConn).duplicate();
+                                return newTrackedConn(self, self.rootConn);
                             } catch (SQLException e) {
                                 // rootConn may be in a dirty state; reset and retry once
                                 try { self.rootConn.close(); } catch (Exception ignored) {}
                                 self.rootConn = super.getConnection(username, password);
-                                return ((DuckDBConnection) self.rootConn).duplicate();
+                                return newTrackedConn(self, self.rootConn);
                             }
                         }
                     }
@@ -174,10 +176,53 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     @Override
     protected void shutdown(EmbeddedDbInstance db) {
-        try {
-            if (db.rootConn != null && !db.rootConn.isClosed()) db.rootConn.close();
-        } catch (SQLException ignored) {}
-        db.rootConn = null;
+        synchronized (db) {
+            try {
+                if (db.rootConn != null && !db.rootConn.isClosed()) db.rootConn.close();
+            } catch (SQLException ignored) {}
+            db.rootConn = null;
+            db.activeConns.set(0);
+        }
+    }
+
+    /** Wraps a duplicate connection in a proxy that closes the root when the last active connection is released. */
+    private static Connection newTrackedConn(EmbeddedDbInstance db, Connection rootConn) throws SQLException {
+        DuckDBConnection dup = ((DuckDBConnection) rootConn).duplicate();
+        db.activeConns.incrementAndGet();
+        return (Connection) Proxy.newProxyInstance(
+            Connection.class.getClassLoader(),
+            new Class[]{Connection.class},
+            (proxy, method, args) -> {
+                if ("close".equals(method.getName())) {
+                    releaseConn(db, dup);
+                    return null;
+                }
+                if ("isWrapperFor".equals(method.getName()) && args != null && args[0] == DuckDBConnection.class) {
+                    return true;
+                }
+                if ("unwrap".equals(method.getName()) && args != null && args[0] == DuckDBConnection.class) {
+                    return dup;
+                }
+                try {
+                    return method.invoke(dup, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            }
+        );
+    }
+
+    private static void releaseConn(EmbeddedDbInstance db, DuckDBConnection dup) {
+        try { dup.close(); } catch (Exception ignored) {}
+        synchronized (db) {
+            if (db.activeConns.decrementAndGet() <= 0) {
+                db.activeConns.set(0);
+                if (db.rootConn != null) {
+                    try { db.rootConn.close(); } catch (Exception ignored) {}
+                    db.rootConn = null;
+                }
+            }
+        }
     }
 
     protected void removeDbFile() {
@@ -230,11 +275,12 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
         String createDataSql = createDataSql(colsAry, tblName);
 
-        try (DuckDBConnection conn = (DuckDBConnection) JdbcFactory.getDataSource(getDbInstance()).getConnection();
-             Statement  stmt = conn.createStatement() ) {
-
+        try (Connection wrapper = JdbcFactory.getDataSource(getDbInstance()).getConnection()) {
+            DuckDBConnection conn = wrapper.unwrap(DuckDBConnection.class);
             conn.setAutoCommit(false);
-            stmt.execute(createDataSql);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute(createDataSql);
+            }
 
             if (totalRows > 0) {
                 // using try-with-resources to automatically close the appender at the end of the scope

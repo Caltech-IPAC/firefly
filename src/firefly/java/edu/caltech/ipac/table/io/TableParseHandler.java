@@ -15,6 +15,7 @@ import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +104,7 @@ public interface TableParseHandler {
         DataType[] cols;
         int rowCnt;
         DuckDBAppender appender;
+        Connection connWrapper;
         DuckDBConnection conn;
         List<Integer> aryIdx;
 
@@ -121,7 +123,8 @@ public interface TableParseHandler {
                 dbAdapter.ingestData(() -> table, dbAdapter.getDataTable());
 
                 // prepare to ingest data into database
-                conn = (DuckDBConnection) JdbcFactory.getDataSource(dbAdapter.getDbInstance()).getConnection();
+                connWrapper = JdbcFactory.getDataSource(dbAdapter.getDbInstance()).getConnection();
+                conn = connWrapper.unwrap(DuckDBConnection.class);
                 conn.setAutoCommit(false);
                 appender = conn.createAppender(DuckDBConnection.DEFAULT_SCHEMA, dbAdapter.getDataTable());
             } catch (SQLException | DataAccessException e) {
@@ -139,9 +142,9 @@ public interface TableParseHandler {
         }
 
         public void end() {
-            if (conn != null)       Try.it(() -> conn.commit());
-            if (appender != null)   Try.it(() -> appender.close());
-            if (conn != null)       Try.it(() -> conn.close());
+            if (conn != null)           Try.it(() -> conn.commit());
+            if (appender != null)       Try.it(() -> appender.close());
+            if (connWrapper != null)    Try.it(() -> connWrapper.close());
         }
     }
 }

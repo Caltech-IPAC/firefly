@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -298,6 +299,7 @@ public interface DbAdapter {
         DbStats dbStats;
         boolean isResourceDb;
         volatile Connection rootConn;
+        final AtomicInteger activeConns = new AtomicInteger(0);
 
         EmbeddedDbInstance(String type, DbAdapter dbAdapter, String dbUrl, String driver) {
             this(type, dbAdapter, dbUrl, driver, System.currentTimeMillis());
