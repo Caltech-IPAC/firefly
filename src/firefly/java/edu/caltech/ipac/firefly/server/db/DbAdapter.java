@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -290,7 +290,6 @@ public interface DbAdapter {
      * so Firefly can enforce policy to manage memory usage.
      */
     class EmbeddedDbInstance extends DbInstance {
-        ReentrantLock lock = new ReentrantLock();
         long lastAccessed;
         long created;
         DbAdapter dbAdapter;
@@ -298,6 +297,7 @@ public interface DbAdapter {
         DbStats dbStats;
         boolean isResourceDb;
         volatile Connection rootConn;
+        final AtomicInteger activeConns = new AtomicInteger(0);
 
         EmbeddedDbInstance(String type, DbAdapter dbAdapter, String dbUrl, String driver) {
             this(type, dbAdapter, dbUrl, driver, System.currentTimeMillis());
@@ -346,9 +346,6 @@ public interface DbAdapter {
             return isResourceDb ? DbMonitor.MAX_IDLE_TIME_RSC : DbMonitor.MAX_IDLE_TIME;
         }
 
-        public ReentrantLock getLock() {
-            return lock;
-        }
         public void setCompact(boolean compact) { isCompact = compact;}
         public boolean isCompact() { return isCompact; }
 

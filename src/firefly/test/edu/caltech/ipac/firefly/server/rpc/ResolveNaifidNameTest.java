@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import org.junit.Assert;
@@ -8,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class ResolveNaifidNameTest {
+public class ResolveNaifidNameTest extends ConfigTest {
 
     @Test
     public void testDoCommand() throws Exception {

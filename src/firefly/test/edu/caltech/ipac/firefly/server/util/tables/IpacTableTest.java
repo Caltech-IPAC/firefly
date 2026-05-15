@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.util.tables;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -33,7 +34,7 @@ import static edu.caltech.ipac.table.JsonTableUtil.getMetaFromAllMeta;
  * @author loi
  * @version $Id: IpacTableParser.java,v 1.18 2011/12/08 19:34:02 loi Exp $
  */
-public class IpacTableTest {
+public class IpacTableTest extends ConfigTest {
 
     private static final File ipacTable = FileLoader.resolveFile(IpacTableTest.class,  "IpacTableTest.tbl");
 
