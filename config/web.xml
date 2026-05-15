@@ -105,7 +105,7 @@
 
     <servlet>
         <servlet-name>alertviewer</servlet-name>
-        <jsp-file>/alertviewer.html</jsp-file>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.AlertViewerServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>alertviewer</servlet-name>
