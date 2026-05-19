@@ -100,7 +100,7 @@ const tapPanelExamples= [
         }
     },
     {
-        desc:'Open tap panel - setup GAIA search for data release 2',
+        desc:'Open tap panel - setup Gaia search for data release 2',
         params:{
             service: 'https://gea.esac.esa.int/tap-server/tap',
             schema:'gaiadr2',
@@ -110,7 +110,7 @@ const tapPanelExamples= [
         }
     },
     {
-        desc:'Execute adql GAIA search on sources for data release 2',
+        desc:'Execute adql Gaia search on sources for data release 2',
         params:{
             service: 'https://gea.esac.esa.int/tap-server/tap',
             adql: ` SELECT * 

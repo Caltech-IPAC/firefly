@@ -1,0 +1,23 @@
+{
+  "javaVersion" : "21.0.11",
+  "linux64" : {
+    "url": "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.11+10-jre/bin/java"
+  },
+  "linuxArm64" : {
+    "url": "https://api.adoptium.net/v3/binary/latest/21/ga/linux/aarch64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.11+10-jre/bin/java"
+  },
+  "macOSIntel" : {
+    "url": "https://api.adoptium.net/v3/binary/latest/21/ga/mac/x64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.11+10-jre/Contents/Home/bin/java"
+  },
+  "macOSArm64" : {
+    "url": "https://api.adoptium.net/v3/binary/latest/21/ga/mac/aarch64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.11+10-jre/Contents/Home/bin/java"
+  },
+  "window" : {
+    "url": "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse",
+    "java" : "don't know"
+  }
+}

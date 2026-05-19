@@ -108,6 +108,8 @@ dependencies {
     implementation 'org.asdf-format:asdf-core:0.1-alpha-10'
     implementation 'edu.stsci:roman-datamodels:0.1-alpha-3'
 
+    // tomcat for standalone
+
 }
 
 

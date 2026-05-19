@@ -10,6 +10,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {
     hasCoverageData, isCatalog, isDataProductsTable, isObsCoreLike, isOrbitalPathTable
 } from '../../voAnalyzer/TableAnalysis.js';
+import {getTableModel} from '../../voAnalyzer/VoCoreUtils';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
@@ -20,7 +21,9 @@ import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {
     DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
     META_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge, getActiveTableId} from '../../tables/TableUtil.js';
+import {
+    getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge, getActiveTableId, getColumnIdx
+} from '../../tables/TableUtil.js';
 import {
     LO_MODE,
     LO_VIEW,
@@ -147,7 +150,12 @@ function getDefSelected(showCoverage, showFits, showMeta, tbl_id) {
         if (!showCoverage || isObsCoreLike(tbl_id)) return TAB_IDS.DP;
         const sdAry= getServiceDescriptors(tbl_id);
         if (sdAry) {
-            if (sdAry.some((sd) => isDataLinkServiceDesc(sd) )) return TAB_IDS.DP; // treat just like an obbscore table
+            if (sdAry.some((sd) => isDataLinkServiceDesc(sd) )) {
+                const tableModel= getTableModel(tbl_id);
+                const idx= getColumnIdx(tableModel,'designation', true);
+                if (idx>-1) return TAB_IDS.COVERAGE; // if there is a designation it is more like a catalog
+                return TAB_IDS.DP; // treat just like an obscore table
+            }
             return TAB_IDS.COVERAGE; // probably a catalog with some secondary data products, a pretty common case
         }
         return TAB_IDS.DP; // probably not obscore but some other data product table (like an upload of images)

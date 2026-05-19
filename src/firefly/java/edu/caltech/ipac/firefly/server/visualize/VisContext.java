@@ -27,7 +27,9 @@ public class VisContext {
 
     static public void init() {
         if (_initialized) return;
-        System.setProperty("java.awt.headless", "true");
+//        System.setProperty("java.awt.headless", "true");
+        boolean desktop= AppProperties.getBooleanProperty("runAsDesktopApplication", false);
+        System.setProperty("java.awt.headless", desktop ? "false" : "true"); //todo make this smart depending on context, no PR until it is done!!!!
         initFootprints();
         initCounters();
         _initialized = true;

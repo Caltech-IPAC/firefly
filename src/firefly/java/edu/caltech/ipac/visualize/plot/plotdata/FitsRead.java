@@ -249,6 +249,7 @@ public class FitsRead implements Serializable, HasSizeOf {
      * @param lsstMasks mask array
      * @deprecated
      */
+    @Deprecated
     public synchronized void doStretchMask(
                                        byte[] pixelData,
                                        int startPixel,

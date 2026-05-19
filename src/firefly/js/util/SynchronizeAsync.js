@@ -8,27 +8,7 @@
  * firefly. It may do import of lodash but right now it is unnecessary
  */
 
-
-const loadBegin= new Map();
-const waitingResolvers= new Map();
-const waitingRejectors= new Map();
-const EMPTY_RESULT_ERR_MSG='promise failed, result was undefined';
-
-function clearAll(pKey) {
-    loadBegin.delete(pKey);
-    waitingResolvers.delete(pKey);
-    waitingRejectors.delete(pKey);
-}
-
-function resolveAll(pKey, result) {
-    (waitingResolvers.get(pKey)??[]).forEach((r) => r(result));
-    clearAll(pKey);
-}
-
-function rejectAll(pKey, error) {
-    (waitingRejectors.get(pKey)??[]).forEach( (r) => r(error));
-    clearAll(pKey);
-}
+const waitingPromises= new Map();
 
 
 /**
@@ -43,19 +23,15 @@ function rejectAll(pKey, error) {
  */
 export function synchronizeAsyncFunctionById(pKey, asyncFunction) {
 
-    if (!waitingResolvers.has(pKey)) waitingResolvers.set(pKey,[]);
-    if (!waitingRejectors.has(pKey)) waitingRejectors.set(pKey,[]);
+    if (waitingPromises.has(pKey)) return waitingPromises.get(pKey);
 
-    if (!loadBegin.get(pKey)) {
-        loadBegin.set(pKey, true);
-        asyncFunction()
-            .then((result) => result!==undefined ? resolveAll(pKey, result) : rejectAll(pKey, Error(EMPTY_RESULT_ERR_MSG)))
-            .catch((err) => rejectAll(pKey, err));
-    }
-    return new Promise( function(resolve, reject) {
-        waitingResolvers.get(pKey).push(resolve);
-        waitingRejectors.get(pKey).push(reject);
-    });
+    const promise= asyncFunction();
+    waitingPromises.set(pKey, promise);
+    const clear= () => waitingPromises.delete(pKey);
+    promise
+        .then(() => clear())
+        .catch(() => clear());
+    return promise;
 }
 
 
@@ -70,10 +46,5 @@ export function synchronizeAsyncFunctionById(pKey, asyncFunction) {
  * @param {string} pKey
  * @return {Promise<unknown>}
  */
-export function blockWhileAsyncIdWaiting(pKey) {
-    if (!loadBegin.get(pKey)) return Promise.resolve();
-    return new Promise( function(resolve, reject) {
-        waitingResolvers.get(pKey).push(resolve);
-        waitingRejectors.get(pKey).push(reject);
-    });
-}
+export const blockWhileAsyncIdWaiting= (pKey) =>
+    waitingPromises.has(pKey) ? waitingPromises.get(pKey) : Promise.resolve();
