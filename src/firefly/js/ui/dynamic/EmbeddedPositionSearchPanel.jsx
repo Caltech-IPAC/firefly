@@ -4,7 +4,7 @@ import PropTypes, {oneOf, bool, string, number, arrayOf, object, func, shape, el
 import {defaultsDeep, isString} from 'lodash';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POINT_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {BoxSearchInputFields} from '../BoxSearchInputFields.jsx';
 import {
     DEFAULT_INSTRUCTIONS_CIRCLE, DEFAULT_INSTRUCTIONS_RECT,
@@ -378,7 +378,6 @@ EmbeddedPositionSearchPanel.propTypes= {
         }),
         searchSummary: shape({
             component: elementType,
-            getSummaryInfo: func,
         }),
         spatialSearch: shape({
             component: elementType,
@@ -449,6 +448,9 @@ function SearchSummary({
     const summaryFragments = [];
     if (searchTypeValue === CONE_CHOICE_KEY) {
         if (radius) summaryFragments.push(`${toMaxFixed(radius, 6).toString()}° at `);
+        summaryFragments.push(coords);
+    }
+    if (searchTypeValue === POINT_CHOICE_KEY) {
         summaryFragments.push(coords);
     }
     if (searchTypeValue === POLY_CHOICE_KEY && coords) {

@@ -203,18 +203,24 @@ const quantityBoundsValidator = (min, max, nullAllowed, unit, quantityName, form
 /**Uncontrolled component for Quantity Input that wires QuantityInputFieldView's state with the FieldGroup store.**/
 export const QuantityInputField = memo((props) => {
     const { quantityBaseUnit, convertQuantityUnits, quantityName, formatQuantity } = props;
+    const normalizedInitialState = normalizeInitState(props?.initialState, quantityBaseUnit, convertQuantityUnits);
+    const { unit: initUnit } = normalizedInitialState;
     const { viewProps, fireValueChange } = useFieldGroupConnector({
         ...props,
-        initialState: normalizeInitState(props?.initialState, quantityBaseUnit, convertQuantityUnits),
+        initialState: normalizedInitialState,
     });
 
     useEffect(() => {
-        // if value changed in the store (for e.g. by a setFieldValue()) and there's no displayValue, set it
-        if ((viewProps?.value || viewProps?.value===0) && viewProps?.unit && !viewProps?.displayValue) {
+        if (!viewProps?.unit && initUnit) {
+            // if unit is missing from store, set it from initialState
+            fireValueChange({unit: initUnit});
+        } else if ((viewProps?.value || viewProps?.value===0) && viewProps?.unit && !viewProps?.displayValue) {
+            // if value changed in the store (for e.g. by a setFieldValue()) and there's no displayValue, set it
             const newDisplayValue = convertQuantityUnits(viewProps.value, quantityBaseUnit, viewProps.unit);
             fireValueChange({displayValue: newDisplayValue});
         }
-        }, [viewProps?.value, viewProps?.unit, viewProps?.displayValue, fireValueChange, convertQuantityUnits, quantityBaseUnit]);
+        }, [viewProps?.value, viewProps?.unit, viewProps?.displayValue,
+            fireValueChange, convertQuantityUnits, quantityBaseUnit, initUnit]);
 
     const handleOnChange = (ev, quantityInfoUpdate) => {
         const { value, displayValue, unit=quantityBaseUnit, validator,

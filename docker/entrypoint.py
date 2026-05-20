@@ -305,7 +305,6 @@ def main():
             f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:TrimNativeHeapInterval=30000",
-            "-XX:+UseZGC",
             f"-DADMIN_USER={admin_user}",
             f"-DADMIN_PASSWORD={admin_password}",
             f"-Dhost.name={os.getenv('HOSTNAME', '')}",
