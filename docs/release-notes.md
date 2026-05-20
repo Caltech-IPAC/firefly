@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.1
-- 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`, `2026.1`, `latest`
+- 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`, `2026.1`, `latest`
+- 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`
 
 This release includes Alert viewer, significant image and HiPS updates, alpha ASDF file support,
 background monitor and UWS improvements, major infrastructure updates, a new drawing layer, and many bug fixes.
@@ -68,6 +69,12 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed failed circular websocket reconnection attempts — Firefly-1990 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1946))
 - Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948))
 
+### _Patches 2026.1_
+#### 2026.1.1
+- Fixed coverage overlays: color and naming issues — Firefly-2015 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1963))
+- Fixed fix embed panel collapse bug — Firefly-2009 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1958))
+- Fixed SizeInputField not getting correct props — IRSA-7677 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1957))
+- Removed -XX:+UseZGC; may be the cause of oomkill— ([commit](https://github.com/Caltech-IPAC/firefly/commit/4f67324df8e66bf45bedde463a82089606d4d6af))
 
 ##### _Pull Requests in this Release_
 
