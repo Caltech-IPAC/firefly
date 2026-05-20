@@ -1,6 +1,8 @@
 import {Box, Button, Chip, Stack, Switch, Typography} from '@mui/joy';
 import {isFunction, truncate} from 'lodash';
 import React from 'react';
+import Catalog from '../../drawingLayers/Catalog';
+import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr';
 import {getTableUiByTblId, getTblById} from '../../tables/TableUtil';
 import {hideColorPickerDialog, showColorPickerDialog} from '../../ui/ColorPicker';
@@ -118,12 +120,13 @@ export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
             const rgbStr = `rgba(${r},${g},${b},${a})`;
 
             if (tbl_id && inDl.tableCanControlColor) {
-                const dlAryForTable= getDlAry().filter( (dl) => tbl_id===dl.tbl_id && dl.tableCanControlColor);
+                // const dlAryForTable= getDlAry().filter( (dl) => tbl_id===dl.tbl_id && dl.tableCanControlColor);
+                const {dlAryForTable,updateTable}= getMatchLayers(tbl_id,inDl);
                 dlAryForTable.forEach( (dl) => {
                     dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({}, dl.drawingDef, {color: rgbStr}), plotId, dl.titleMatching);
                     plotId= dl.plotIdAry?.[0];
                     const {tbl_ui_id} = getTableUiByTblId(tbl_id) ?? {};
-                    if (!tbl_ui_id && !plotId) return;
+                    if ((!tbl_ui_id && !plotId) || !updateTable) return;
                     dispatchTableUiUpdate({tbl_ui_id,
                         title:makeTableColorTitle(rgbStr,dl.drawLayerId,plotId,tbl_id),
                         color: rgbStr
@@ -136,6 +139,18 @@ export function modifyDrawColor(inDl, plotId, tbl_id, postTitle, topComponent) {
             }
         }
     });
+}
+
+function getMatchLayers(tbl_id, inDl) {
+    const dlAryForTable= getDlAry().filter( (dl) => tbl_id===dl.tbl_id && dl.tableCanControlColor);
+    if (dlAryForTable.length===2) { // special case, when I have region and point, I only want to change the regions
+        if (dlAryForTable.some( (dl) => dl.drawLayerTypeId===HpxCatalog.TYPE_ID) &&
+            dlAryForTable.some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID)) { //special case
+            const outDl= dlAryForTable.find( (dl) => dl.drawLayerId===inDl.drawLayerId);
+            if (outDl) return {dlAryForTable:[outDl], updateTable: outDl.drawLayerTypeId===Catalog.TYPE_ID};
+        }
+    }
+    return {dlAryForTable, updateTable:true};
 }
 
 export function getTitleTag(title, maxTitleChars, autoFormatTitle, level=undefined, sx=undefined, maxMax=30) {

@@ -751,8 +751,8 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
         createDrawLayer(coverageCatalogId(tbl_id), covType, catV);
     } else if (covType === CoverageType.REGION) {
         const regionV= isVisible(visibleMap,regionId(tbl_id));
-        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',shortTitle+' positions',drawOp,options, catV);
-        createDrawLayer(regionId(tbl_id),CoverageType.REGION,regionV,' regions');
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' (center positions)',shortTitle+' (center positions)',drawOp,options, catV);
+        createDrawLayer(regionId(tbl_id),CoverageType.REGION,regionV,' (regions)');
     }
 
     if (searchTarget) {
