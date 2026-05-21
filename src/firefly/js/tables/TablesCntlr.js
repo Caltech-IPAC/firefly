@@ -5,7 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, unset, merge}
 
 import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from './TableUtil.js';
-import {MAX_ROW} from './TableRequestUtil.js';
+import {MAX_ROW, setJobIdToTbl} from './TableRequestUtil.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
@@ -18,7 +18,7 @@ import {trackBackgroundJob, isSuccess, isDone, getErrMsg, handleJobResult} from 
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
-import {ensureEnumVals, fixPageSize} from './TableUtil.js';
+import {ensureEnumVals, fixPageSize, getTblById} from './TableUtil.js';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 
 
@@ -686,6 +686,7 @@ export function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
         .then ( (jobInfo) => {
             const jobId = jobInfo?.meta?.jobId;
             dispatchJobAdd(jobInfo);
+            setJobIdToTbl(jobId, getTblById(tbl_id));  // update table inflight, because the real table may not be created yet.
 
             const inProgress = !isDone(jobInfo);
             dispatchComponentStateChange(bgKey, {inProgress, jobId});
