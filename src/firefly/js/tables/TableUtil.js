@@ -262,7 +262,8 @@ export function getTableUiById(tbl_ui_id) {
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
-    return Object.values(uiRoot).find( (tblUiState) => tblUiState?.tbl_id === tbl_id);
+    const tblUiStates = Object.values(uiRoot).filter( (tblUiState) => tblUiState?.tbl_id === tbl_id);
+    return tblUiStates.find( (tblUiState) => tblUiState?.tbl_ui_id) ?? tblUiStates[0];
 }
 
 /**
@@ -1690,4 +1691,3 @@ function watchForTableLoaded(afterLoaded, tbl_id) {
         });
     }
 }
-
