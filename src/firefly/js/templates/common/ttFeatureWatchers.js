@@ -54,8 +54,6 @@ function isObsCoreish(tableOrId) {
 
 function watchForObsCoreTable(tbl_id, action, cancelSelf) {
     if (action) return;
-    const {leftButtons=[]} = getTableUiByTblId(tbl_id);
-    if (leftButtons.some((lb) => lb.prepareDownloadBtn)) return;
     setupObsCorePackaging(tbl_id);
     cancelSelf();
 }
@@ -78,7 +76,7 @@ function setupObsCorePackaging(tbl_id) {
 
     const dlProps = getDataServiceOptionByTable('obsCoreDownloadProps', table, {}) || {};
 
-    const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {} ;
+    const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {};
     const prepareDownloadFunc = () => <PrepareDownload {...dlProps} />;
     prepareDownloadFunc.prepareDownloadBtn = true;
     leftButtons.unshift(prepareDownloadFunc);
@@ -281,5 +279,5 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
 });
 
 PrepareDownload.Props = {
-    tbl_id: String,
+    table_id: String,
 };
