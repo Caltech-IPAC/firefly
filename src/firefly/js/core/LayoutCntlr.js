@@ -579,10 +579,14 @@ function getColFitIdx(gridView, row, testIdx, gridColumns, testWidth) {
 
 }
 
-// getter/setters for the DOM nodes of Menu Tabs, stored in the layout info
-export const MENU_TAB_NODES = 'menuTabNodes';
-export const getMenuTabNodes = () => getLayouInfo()?.[MENU_TAB_NODES] ?? {};
-export const dispatchUpdateMenuTabNodes = (menuTabNodes) => dispatchUpdateLayoutInfo({[MENU_TAB_NODES]: menuTabNodes});
+/**
+ * A shared namespace in the layout store for DOM nodes exposed by components as
+ * hint anchors (used by GuidedHint / AppHint). Any component that needs
+ * to anchor a hint should dispatch its node here.
+ */
+export const HINT_ANCHOR_NODES = 'hintAnchorNodes';
+export const getHintAnchorNodes = () => getLayouInfo()?.[HINT_ANCHOR_NODES] ?? {};
+export const dispatchUpdateHintAnchorNodes = (nodes) => dispatchUpdateLayoutInfo({[HINT_ANCHOR_NODES]: nodes});
 
 // get LayoutInfo based on the viewerId of the chart add action
 const getChartViewerLayout = (viewerId) => {

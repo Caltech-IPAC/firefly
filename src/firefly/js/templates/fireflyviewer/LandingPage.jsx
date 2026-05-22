@@ -4,22 +4,46 @@ import {elementType, shape, object, string, arrayOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
 
 import {getBackgroundInfo, isMonitored, isSearchJob} from '../../core/background/BackgroundUtil.js';
-import {dispatchShowDropDown, getMenuTabNodes} from '../../core/LayoutCntlr.js';
+import {dispatchShowDropDown, getHintAnchorNodes} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
-import {APP_HINT_IDS, AppHint, HINT_TIP_PLACEMENTS} from 'firefly/ui/AppHint';
+import {APP_HINT_IDS, AppHint} from 'firefly/ui/AppHint';
 
 
+/**
+ * Full-page landing screen shown before the user has any results to display.
+ * Wraps content in a {@link FileDropZone} so drag-and-drop file upload works everywhere.
+ * AppHint overlays (tabs menu, background monitor) are mounted automatically when relevant.
+ *
+ * All visual regions are customizable via `slotProps`. Each slot accepts an optional `component`
+ * key to replace the default renderer; all remaining keys are forwarded as props to that component.
+ *
+ * Slot layout:
+ * ```
+ *  tabsMenuHint  → AppHint  (anchored to first tab after Results tab)
+ *  bgMonitorHint → AppHint  (anchored to last tab: Job Monitor)
+ *  ┌─ bgContainer (Box) ──────────────────────────────────────┐
+ *  │  ┌─ contentSection (Stack) ───────────────────────────┐  │
+ *  │  │  topSection    → DefaultAppBranding  (title/desc)  │  │
+ *  │  │  bottomSection → EmptyResults        (actions)     │  │
+ *  │  └────────────────────────────────────────────────────┘  │
+ *  └──────────────────────────────────────────────────────────┘
+ * ```
+ *
+ * @param {object} props
+ * @param {object} [props.slotProps={}]        - Per-slot overrides (see layout above).
+ * @param {object} [props.sx]                  - sx forwarded to the root Sheet.
+ */
 export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
-    const {first: tabsMenuHintAnchor, last: bgMonitorHintAnchor} = useStoreConnector(getMenuTabNodes);
+    const {first: tabsMenuHintAnchor, last: bgMonitorHintAnchor} = useStoreConnector(getHintAnchorNodes);
 
     const defSlotProps = {
-        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, anchorNode: tabsMenuHintAnchor, hintText: 'Choose a tab to search for or upload data.'},
-        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, anchorNode: bgMonitorHintAnchor, hintText: 'Load job results from background monitor', tipPlacement: HINT_TIP_PLACEMENTS.START},
+        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, anchorEl: tabsMenuHintAnchor, hintText: 'Choose a tab to search for or upload data.'},
+        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, anchorEl: bgMonitorHintAnchor, hintText: 'Load job results from background monitor', placement: 'bottom-start'},
         topSection: { title: `Welcome to ${appTitle}` },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,

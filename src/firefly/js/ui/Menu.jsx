@@ -18,8 +18,8 @@ import {flux} from '../core/ReduxFlux.js';
 import {
     dispatchHideDropDown,
     dispatchShowDropDown,
-    dispatchUpdateMenuTabNodes,
-    getLayouInfo, getMenuTabNodes,
+    dispatchUpdateHintAnchorNodes,
+    getLayouInfo, getHintAnchorNodes,
     getResultCounts, isResultsViewDropdown, resultsViewDropdown,
 } from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
@@ -121,8 +121,8 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInf
     const {current:tabRenderedInfo}= useRef({tabWidths:{}});
     const {current:lastButtonSize}= useRef({size:'lg'});
 
-    const storedMenuTabNodes = useStoreConnector(getMenuTabNodes);
-    const tabNodesRef = useRef({first: undefined, last: undefined});
+    const storedHintAnchorNodes = useStoreConnector(getHintAnchorNodes);
+    const tabNodesRef = useRef({first: undefined, last: undefined, upload: undefined});
 
     const showHelp= Boolean(helpItem);
 
@@ -139,9 +139,9 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInf
 
     useEffect(() => {
         const newTabNodes = Object.fromEntries(Object.entries(tabNodesRef.current).filter(
-            ([k, node])=> storedMenuTabNodes?.[k] !== node));
+            ([k, node])=> storedHintAnchorNodes?.[k] !== node));
         if (Object.keys(newTabNodes).length > 0) {
-            dispatchUpdateMenuTabNodes(newTabNodes);
+            dispatchUpdateHintAnchorNodes(newTabNodes);
         }
     });
 
@@ -150,12 +150,13 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInf
         if (ts && tabCount===-1) setTabCount(menuTabItems.length); // force a rerender when we know the html element of the tab bar
     },[]);
 
-    const setElement= useCallback( (key,el) => {
+    const setElement= useCallback( (key,el,action) => {
         if (!el) return;
 
-        // save the first and last tab elements as they are needed for positioning the app hints
+        // save first, last, and upload tab elements as anchors for app hints
         if (key==='0') tabNodesRef.current['first'] = el;
         if (key===menuTabItems.length-1+'') tabNodesRef.current['last'] = el;
+        if (action===UploadCmd) tabNodesRef.current['upload'] = el;
 
         const {tabWidths}= tabRenderedInfo;
         tabWidths[key]= Math.trunc(el.getBoundingClientRect()?.width ?? 0);
@@ -226,7 +227,7 @@ function MenuTabBar({menuTabItems=[], size, selected, displayMask, setElement}) 
             .map(({action,label,TabRenderer,title}, idx) =>
             {
                 const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
-                    ref: (el) => setElement(idx + '', el),
+                    ref: (el) => setElement(idx + '', el, action),
                     sx: (theme) => ({ ...setupTabCss(theme,size) })
                 };
                 const tab= TabRenderer ? <TabRenderer {...tabProps} /> : <Tab {...tabProps}> {label}</Tab>;

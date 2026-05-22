@@ -12,6 +12,7 @@
     "@emotion/react": "^11.11",
     "@emotion/styled": "^11.11",
     "@fontsource/inter": "^5.0",
+    "@mui/base": "^5.0.0-beta.22",
     "@mui/icons-material": "^5.18",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^5.18",
