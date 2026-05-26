@@ -428,26 +428,24 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
                 </div>
             </div>
         );
-    } else {
+    } else if(error) {
         const prevReq = getResultSetRequest(tbl_id);
-        const reloadTable = () => {
+        const reloadTable = prevReq && ( () => {
             dispatchTableFetch(JSON.parse(prevReq));
-        };
-        if (error) {
-            return <TableErrorMsg {...{error, prevReq, reloadTable, tbl_id}}/>;
-        } else {
-            return <TableMask/>;
-        }
+        } );
+        const showDismiss = removable && showTitle && !reloadTable;
+        return <TableErrorMsg {...{error, reloadTable, tbl_id, showDismiss}}/>;
     }
+    return <TableMask/>;
 }
 
-export function TableErrorMsg({error, prevReq, reloadTable, tbl_id, ...props}) {
+export function TableErrorMsg({error, reloadTable, tbl_id, showDismiss, ...props}) {
     const {message, type, cause} = parseError(error);
     return (
         <Stack spacing={1} m='auto' width={.8} height={1} justifyContent='center' {...props}>
             <Stack direction='row' spacing={1} alignItems='center'>
                 <Typography level='title-lg' color='danger'>{message}</Typography>
-                {!prevReq && <JobInfoPopup tbl_id={tbl_id}/>}
+                {!reloadTable && <JobInfoPopup tbl_id={tbl_id}/>}
             </Stack>
             { cause && (
                 <Stack>
@@ -458,7 +456,8 @@ export function TableErrorMsg({error, prevReq, reloadTable, tbl_id, ...props}) {
                     <Typography level='body-md' ml={1}>{cause}</Typography>
                 </Stack>
             )}
-            {prevReq && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+            {reloadTable && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+            {showDismiss && <Button color='neutral' variant='solid' onClick={() => dispatchTableRemove(tbl_id, true)} sx={{alignSelf: 'baseline'}}>Dismiss</Button>}
         </Stack>
     );
 }
