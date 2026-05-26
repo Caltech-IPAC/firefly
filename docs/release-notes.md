@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.1
-- 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`, `2026.1`, `latest`
+- 2026.1.2 — (May 26, 2026), _docker tag_: `2026.1.2`, `2026.1`, `latest`
+- 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`
 - 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`
 
 This release includes Alert viewer, significant image and HiPS updates, alpha ASDF file support,
@@ -70,6 +71,8 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948))
 
 ### _Patches 2026.1_
+#### 2026.1.2
+- Fixed Prepare Download button sometimes not appearing  — Firefly-2023 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1965))
 #### 2026.1.1
 - Fixed coverage overlays: color and naming issues — Firefly-2015 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1963))
 - Fixed fix embed panel collapse bug — Firefly-2009 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1958))
