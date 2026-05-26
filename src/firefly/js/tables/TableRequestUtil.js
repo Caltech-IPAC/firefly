@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId, merge} from 'lodash';
+import {set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId, merge} from 'lodash';
 
 import {getTblById, uniqueTblId} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
@@ -394,3 +394,10 @@ export function getJobIdFromTblId(tbl_id) {
     return request?.META_INFO?.[ServerParams.JOB_ID];
 }
 
+/**
+ * @param {string} jobId
+ * @param {Object} tableModel
+ */
+export function setJobIdToTbl(jobId, tableModel) {
+    set(tableModel, ['request', 'META_INFO', ServerParams.JOB_ID], jobId);
+}
