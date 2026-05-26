@@ -30,8 +30,9 @@ import {Logger} from '../../util/Logger.js';
 import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 import WarningIcon from '@mui/icons-material/WarningAmberRounded';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
-import {META} from '../TableRequestUtil.js';
+import {getJobIdFromTblId, META} from '../TableRequestUtil.js';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
+import {showJobInfo} from 'firefly/core/background/JobInfo';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -41,6 +42,7 @@ const TT_SAVE = 'Save the table';
 const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
+const TT_JOB_INFO = 'Show job info for this table';
 
 const defaultOptions = {
     showMetaInfo: false,
@@ -426,24 +428,25 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
                 </div>
             </div>
         );
-    } else {
+    } else if(error) {
         const prevReq = getResultSetRequest(tbl_id);
-        const reloadTable = () => {
+        const reloadTable = prevReq && ( () => {
             dispatchTableFetch(JSON.parse(prevReq));
-        };
-        if (error) {
-            return <TableErrorMsg {...{error, prevReq, reloadTable}}/>;
-        } else {
-            return <TableMask/>;
-        }
+        } );
+        const showDismiss = removable && showTitle && !reloadTable;
+        return <TableErrorMsg {...{error, reloadTable, tbl_id, showDismiss}}/>;
     }
+    return <TableMask/>;
 }
 
-export function TableErrorMsg({error, prevReq, reloadTable, ...props}) {
+export function TableErrorMsg({error, reloadTable, tbl_id, showDismiss, ...props}) {
     const {message, type, cause} = parseError(error);
     return (
         <Stack spacing={1} m='auto' width={.8} height={1} justifyContent='center' {...props}>
-            <Typography level='title-lg' color='danger'>{message}</Typography>
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <Typography level='title-lg' color='danger'>{message}</Typography>
+                {!reloadTable && <JobInfoPopup tbl_id={tbl_id}/>}
+            </Stack>
             { cause && (
                 <Stack>
                     <Stack direction='row'>
@@ -453,7 +456,16 @@ export function TableErrorMsg({error, prevReq, reloadTable, ...props}) {
                     <Typography level='body-md' ml={1}>{cause}</Typography>
                 </Stack>
             )}
-            {prevReq && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+            {reloadTable && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+            {showDismiss && <Button color='neutral' variant='solid' onClick={() => dispatchTableRemove(tbl_id, true)} sx={{alignSelf: 'baseline'}}>Dismiss</Button>}
         </Stack>
     );
+}
+
+function JobInfoPopup({tbl_id}) {
+    const jobId = getJobIdFromTblId(tbl_id);
+    if (!jobId) return null;
+
+    const showInfo = () => showJobInfo(jobId);
+    return <InfoButton tip={TT_JOB_INFO}  onClick={showInfo}/>;
 }
