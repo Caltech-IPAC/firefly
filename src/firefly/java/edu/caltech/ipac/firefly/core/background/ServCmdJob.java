@@ -9,8 +9,11 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.core.background.JobInfo.LIFE_SPAN;
 import static edu.caltech.ipac.firefly.core.background.JobManager.*;
 
 /**
@@ -70,6 +73,11 @@ public abstract class ServCmdJob extends ServCommand implements Job {
             this.worker = worker;
             worker.setJob(this);
             updateManagedStatus(ji -> {     // set these only if it's not a self-managed job
+                Instant start = Instant.now();
+                ji.setCreationTime(start);
+                ji.setStartTime(Instant.now());
+                ji.setExecutionDuration(LIFE_SPAN);
+                ji.setDestruction(start.plus(JOB_TTL_DAYS, ChronoUnit.DAYS));
                 ji.setPhase(JobInfo.Phase.EXECUTING);
             });
             sendUpdate(jobId, ji -> {      // needs to update clients, because these values may change after the job has submitted

@@ -122,9 +122,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 jobUrl = submitJob(req);
                 if (jobUrl != null) runJob(jobUrl);
                 updateJob(ji -> {
-                    ji.setPhase(Phase.QUEUED);
+                    ji.setPhase(Phase.PENDING);
                 });
             }
+            if (isEmpty(jobUrl)) throw new DataAccessException("Job URL is missing");
         } catch (Exception e) {
             updateJob(ji -> {
                 ji.setPhase(Phase.ERROR);
@@ -137,60 +138,70 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             });
         }
 
-        int cnt = 0;
+        long startTimeMs = System.currentTimeMillis();
         try {
             while (true) {
-                cnt++;
-                Phase phase = null;
-                try {
-                    JobInfo uwsJob = getUwsJobInfo(jobUrl);
-                    if (uwsJob == null) {
-                        String msg = "Failed to retrieve UWS job info";
-                        sendJobUpdate(ji -> {
-                            ji.setPhase(Phase.ERROR);
-                            ji.setErrorSummary(new ErrorSummary(msg));
-                        });
-                        throw new DataAccessException(msg);
-                    }
+                long elapsedMs = System.currentTimeMillis() - startTimeMs;
+                JobInfo uwsJob = Try.it(() -> getUwsJobInfo(jobUrl)).get();     //
+                if (uwsJob != null) {
                     updateJob(ji -> ji.copyFrom(uwsJob));
-                    phase = ifNotNull(uwsJob.getPhase()).getOrElse(Phase.UNKNOWN);
-                    switch (phase) {
-                        case Phase.COMPLETED:
-                            return getResult(req);
-                        case Phase.ABORTED:
-                            throw new DataAccessException.Aborted();        // exit; stop tracking
-                        case Phase.HELD:
-                            throw new DataAccessException("The job is HELD pending execution and will not automatically be executed");
-                        case Phase.PENDING:
-                            throw new DataAccessException("The job was submitted, but no execution request has been made.");
-                        case Phase.ERROR:
-                            throw new DataAccessException("Job has failed with the error: " + uwsJob.getErrorSummary().message());
-                        case Phase.UNKNOWN: {
-                            if (cnt > 70) {
-                                updateJob(ji -> {
-                                    ji.setPhase(Phase.ABORTED);
-                                    ji.setErrorSummary(new ErrorSummary("Job aborted: unknown phase for over 2 minutes"));
-                                });
-                                throw new DataAccessException("Job aborted: unknown phase for over 2 minutes");
-                            }
+                }
+                Phase phase = uwsJob == null ? Phase.UNKNOWN : uwsJob.getPhase();
+                switch (phase) {
+                    case Phase.COMPLETED:
+                        return getResult(req);
+                    case Phase.ABORTED:
+                        throw new DataAccessException.Aborted();        // exit; stop tracking
+                    case Phase.HELD:
+                        failAfterDelay(elapsedMs, "Job on hold", "The job is in the HELD phase pending execution and will not be executed automatically.");
+                    case Phase.PENDING:
+                        failAfterDelay(elapsedMs, "Job not started", "The job was submitted, but no execution request has been made.");
+                    case Phase.ERROR:
+                        if (isTransientError(uwsJob.getErrorSummary())) {
+                            failAfterDelay(elapsedMs, "Job failed with a transient error", uwsJob.getErrorSummary().message());
                         }
-                        default:
-                            // continue to wait
+                        throwException("Job has failed with the error", uwsJob.getErrorSummary().message());
+                    case Phase.UNKNOWN: {
+                        failAfterDelay(elapsedMs, "Job aborted", "UNKNOWN phase for over 2 minutes", Phase.ABORTED);
                     }
-                } catch (Exception e) {
-                    sendJobUpdate(ji -> {
-                        ji.setPhase(Phase.ERROR);
-                        ji.setErrorSummary(new ErrorSummary(e.getMessage()));
-                    });
-                    throw e;  // catch exception to send update job status, then re-throw to let the caller handle it.
+                    default:
+                        // continue to wait
                 }
                 sendJobUpdate(null);        // send update to client on each poll.
-                int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
+                int wait = elapsedMs < 5_000   ? 500  :
+                           elapsedMs < 30_000  ? 1000 :
+                           elapsedMs < 120_000 ? 2000 :
+                                                 5000;
                 TimeUnit.MILLISECONDS.sleep(wait);
             }
         } catch (InterruptedException e) {
             throw new DataAccessException.Aborted();
         }
+    }
+
+    void throwException(String error, String cause) throws DataAccessException {
+        throw new DataAccessException("%s: %s".formatted(error, cause));
+    }
+
+    void failAfterDelay(long elapsedMs, String error, String cause) throws DataAccessException {
+         failAfterDelay(elapsedMs, error, cause, null);
+    }
+
+    void failAfterDelay(long elapsedMs, String error, String cause, Phase phaseToSet) throws DataAccessException {
+        if (elapsedMs > 120_000) {     // after 2 minutes, throw exception and stop tracking
+            if (phaseToSet != null) {
+                updateJob(ji -> {
+                    ji.setPhase(phaseToSet);
+                    ji.setErrorSummary(new ErrorSummary(cause));
+                });
+            }
+            throwException(error, cause);
+        }
+    }
+
+    boolean isTransientError(ErrorSummary es) {
+        String type = ifNotNull(es.type()).getOrElse("");
+        return type.equalsIgnoreCase("transient");
     }
 
     /**
@@ -449,9 +460,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 String type = errsum.getAttribute(ERROR_TYPE);
                 String hasDetails = errsum.getAttribute(ERROR_HAS_DETAILS);
                 String msg = getVal(errsum, prefix + ERROR_MSG);
-                if (!isEmpty(msg)) {
-                    jobInfo.setErrorSummary(new ErrorSummary(msg, type, Boolean.parseBoolean(hasDetails)));
-                }
+                jobInfo.setErrorSummary(new ErrorSummary(msg, type, Boolean.parseBoolean(hasDetails)));
             });
 
             Element progress = ifNotEmpty(getEl(root, prefix + JOB_INFO))
