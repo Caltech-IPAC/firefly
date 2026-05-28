@@ -30,7 +30,7 @@ ingress:
   # -- Ingress class name. Omit to use the cluster default. When set to nginx, traefik,
   # or haproxy, cookie-based session affinity annotations are automatically injected
   # when replicaCount > 1.
-  className: ""
+  className: "nginx"
   # -- Additional ingress annotations.
   annotations: {}
   # -- Hostname. This value is environment-specific. The default value is a placeholder and should be overridden.
