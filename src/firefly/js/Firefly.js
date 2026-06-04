@@ -4,7 +4,6 @@
  */
 
 import 'isomorphic-fetch';
-import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {set, defer, once, isArray} from 'lodash';
@@ -18,7 +17,7 @@ import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
 import {initApi} from './api/ApiBuild.js';
-import {dispatchShowDropDown, dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
 import {getSIAv2ServicesByName} from './ui/tap/SiaUtil';
@@ -340,37 +339,20 @@ function setupGatorProtocolPanel(installedOptions, appProps) {
 
 
 /*
+ * Starts app from Firefly API mode - used by jupyter-firefly-extensions
  *
  * @param {string} divId
  * @param {AppProps} props
  * @return {Object} return object has two functions {unrender:Function, render:Function}
  */
 export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'}) {
-
-    // TODO: test and improvise the look
-    const Message = ({}) => (
-        <Stack alignItems='center'>
-            <Typography sx={{fontSize: 'xl4'}} color='neutral'> Welcome to Firefly Viewer for Python</Typography>
-        </Stack>
-    );
-
-    const landingPage = (<StandaloneFireflyLanding slotProps={{
-        topSection: {component: Message},
-        bottomSection: {
-            actionItems: [
-                {title: 'Use API to send data', desc: 'load data using Python API'},
-                {title: 'Search for data', desc: 'using the tabs above or side menu',
-                    onClick: () => dispatchShowDropDown({view: 'TAPSearch'})},
-                {title: 'Upload a file', desc: 'drag & drop here',
-                    onClick: () => dispatchShowDropDown({view: 'FileUploadDropDownCmd'})},
-            ],
-            chips: [],
-        },
-    }}/>);
-
+    // start with defAppProps before overriding with other props to maintain consistency with fireflyInit()
+    const appProps = mergeObjectOnly(defAppProps, window.firefly.originalAppProps);
     const props = {
-        landingPage,
-        ...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId, appFromApi:true};
+        ...mergeObjectOnly(appProps, overrideProps),
+        div: divId, appFromApi: true
+    };
+
     const viewer = Templates[props.template];
     if (!divId || !viewer) {
         !divId  && logger.error('required: divId');
@@ -384,19 +366,6 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
     props.apiHandlesExpanded= true;
 
     dispatchAppOptions({ charts: { allowPinnedCharts: true}});
-
-    if (!props.menu) {
-        const other= 'Other Searches';
-        const general= 'General Searches';
-        props.menu= [
-            { label: 'Upload', action: 'FileUploadDropDownCmd', primary:true },
-            { label: 'TAP Searches', action: 'TAPSearch', primary:true, category: general },
-            { label: 'SIAv2 Searches', action: 'SIAv2Search', primary:true, category: general },
-            { label: 'IRSA Images', action: 'ImageSelectDropDownSlateCmd', category: other },
-            { label: 'IRSA Catalogs', action: 'IrsaCatalogDropDown', category: other },
-        ];
-    }
-
 
     const e= document.getElementById(divId);
 
