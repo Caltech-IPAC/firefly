@@ -123,15 +123,22 @@ const defAppProps = {
     fileDropEventAction: 'FileUploadDropDownCmd',
 
     menu: [
-        {label:'Images', action:'ImageSelectDropDownCmd', primary: true, category:IRSA_CAT},
-        {label:'TAP', action: 'TAPSearch', primary: true, category: ARCHIVE},
-        {label: 'SIAv2 Searches', action: 'SIAv2Search', primary:true, category: ARCHIVE},
-        {label:'IRSA Catalogs', action: 'IrsaCatalog', primary: true, category:IRSA_CAT},
-        {label:'VO SCS Search', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
+        // archive searches category
+        {label:'Tables (TAP)', action: 'TAPSearch', primary: true, category: ARCHIVE},
+        {label:'Images (SIAv2)', action: 'SIAv2Search', primary:true, category: ARCHIVE},
+        {label:'Survey Maps (HiPS)', action: 'HiPSSearchPanel', primary: true, category:ARCHIVE},
+        {label:'Catalogs (SCS)', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
+
+        // IRSA searches category
+        {label:'IRSA Images', action:'ImageSelectDropDownCmd', primary: false, category:IRSA_CAT},
+        {label:'IRSA Catalogs', action: 'IrsaCatalog', primary: false, category:IRSA_CAT},
+        {label:'IRSA Images (SIAv2)', action: 'IRSA_USING_SIAv2', primary: false, category:IRSA_CAT},
+
+        // NED searches category
         {label:'NED', action: 'ClassicNedSearchCmd', primary: false, category:'NED Search'},
+
+        // no category
         {label:'Upload', action: 'FileUploadDropDownCmd', primary: true},
-        {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:ARCHIVE},
-        {label:'IRSA SIAv2', action: 'IRSA_USING_SIAv2', primary: false, category:IRSA_CAT},
     ],
 
     dropdownPanels: [
