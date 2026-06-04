@@ -23,7 +23,7 @@ import {getTableUiById, getTableUiByTblId, getTblIdsByGroup} from '../TableUtil.
 const logger = Logger('Tables').tag('TablesContainer');
 
 export function TablesContainer(props) {
-    const {mode='both', closeable=true, tableOptions, style, expandedMode:xMode=false,
+    const {mode='both', closeable=true, tableOptions, style, sx, expandedMode:xMode=false,
         forceSingleTableAsTab=false} = props;
     const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
     const tbl_group = expandedMode && mode !== 'standard' ? TblUtil.getTblExpandedInfo().tbl_group : props.tbl_group;
@@ -43,7 +43,7 @@ export function TablesContainer(props) {
     } else {
         return isEmpty(tables)
             ? <div/>
-            : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, forceSingleTableAsTab, style}} />;
+            : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, forceSingleTableAsTab, style, sx}} />;
     }
 }
 
@@ -80,7 +80,7 @@ function ExpandedView(props) {
 
 
 function StandardView(props) {
-    const {tables, tableOptions, expandedMode, active, tbl_group, forceSingleTableAsTab, style={}} = props;
+    const {tables, tableOptions, expandedMode, active, tbl_group, forceSingleTableAsTab, style={}, sx} = props;
 
     const onTabSelect = (tbl_id) => {
         tbl_id && dispatchActiveTableChanged(tbl_id, tbl_group);
@@ -91,7 +91,7 @@ function StandardView(props) {
     } else {
         const uid = hashCode(keys.join());
         return (
-            <TabPanel key={uid} sx={style} value={active}
+            <TabPanel key={uid} style={style} sx={sx} value={active}
                       onTabSelect={onTabSelect} resizable={true} showOpenTabs={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </TabPanel>

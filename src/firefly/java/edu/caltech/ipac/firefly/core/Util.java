@@ -142,6 +142,18 @@ public class Util {
         }
 
         /**
+         * Log the given message and the exception if an exception was thrown, then throw the exception
+         * @param msg the message to log if an exception was thrown
+         * @throws Exception the exception that was thrown by the function
+         */
+        public void logThenFail(String msg) throws Exception {
+            if (ex != null) {
+                logger.error(msg, "cause: " + ex.getMessage());
+                throw ex;
+            }
+        }
+
+        /**
          * Execute the given function and parameter and return a Try object that can be used to
          * get the result or handle the exception.
          * @param func the function to call

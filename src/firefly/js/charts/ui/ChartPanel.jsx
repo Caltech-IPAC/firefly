@@ -17,7 +17,7 @@ import {CombinePinnedCharts} from './CombineChart.jsx';
 function ChartPanelView(props) {
 
     const {chartId, Chart= PlotlyChartArea, tbl_group, chartData, expandable, expandedMode, Toolbar=PlotlyToolbar,
-        showToolbar=true, showChart=true, glass} = props;
+        showToolbar=true, showChart=true, glass, sx} = props;
 
     useEffect(() => {
         dispatchChartMounted(chartId);
@@ -33,15 +33,15 @@ function ChartPanelView(props) {
     if (showToolbar) {
         // chart with toolbar
         return (
-            <Stack id='chart-panel' height={1} overflow='hidden'>
+            <Stack id='chart-panel' height={1} overflow='hidden' sx={sx}>
                 <ChartToolbar {...{Chart, chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
                 <Divider orientation='horizontal'/>
-                <ChartArea glass={glass} {...props}/>
+                <ChartArea glass={glass} {...{...props, sx: undefined, Chart}}/>
             </Stack>
         );
     } else {
         // chart only
-        return <ChartArea glass={glass} {...{...props, showToolbar, showChart, Chart}}/>;
+        return <ChartArea glass={glass} {...{...props, sx: undefined, showToolbar, showChart, Chart}}/>;
     }
 }
 

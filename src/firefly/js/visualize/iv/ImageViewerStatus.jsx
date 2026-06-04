@@ -84,8 +84,7 @@ export function ImageViewStatusPanel(props) {
             {maskShowing && <Box sx={{ position:'absolute', left:0, top:0, width:1, height:1}}> <Skeleton/> </Box> }
             { messageShowing &&
                 <Card {...{
-                    color:'warning', variant:'soft', position:'relative',
-                    zIndex: maskShowing ? 10 : 'auto',
+                    color:'warning', variant:'soft',
                     sx: (theme) =>
                         !useMessageAlpha ? statusTextSx : { ...statusTextSx, backgroundColor: ctxBG(theme,65)}
                 }}>

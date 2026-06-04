@@ -66,7 +66,7 @@ export function TabPanel ({value, onTabSelect, showOpenTabs, actions, slotProps,
                      sticky === 'bottom' ? {position: 'sticky', bottom:0, zIndex:1} : {};
 
     return (
-        <JoyTabs size='sm'
+        <JoyTabs size='sm' style={style}
                  sx={{height: 1, overflow: 'hidden', borderRadius:5, ...sx}}
                  aria-label='tabs'
                  value={value}

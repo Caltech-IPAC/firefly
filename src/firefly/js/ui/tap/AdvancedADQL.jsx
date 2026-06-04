@@ -302,7 +302,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                     title='Enter partial string to filter the visible nodes on the Schema Browser.  Leave blank to display all.'
                                 />
                             </Stack>
-                            <Typography level='body-xs'>Schema->Table->Column</Typography>
+                            <Typography level='body-xs'>{'Schema->Table->Column'}</Typography>
                         </Stack>
                     </Tooltip>
                     <Divider orientation='horizontal'/>

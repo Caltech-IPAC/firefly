@@ -99,7 +99,7 @@ export function VisualTargetPanel({fieldKey, label, feedbackStyle,
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </Box>
     );
-    return ( <TargetPanel {...{key:groupKey, fieldKey, button:popupButton, label, feedbackStyle,
+    return ( <TargetPanel key={groupKey} {...{fieldKey, button:popupButton, label, feedbackStyle,
         targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 

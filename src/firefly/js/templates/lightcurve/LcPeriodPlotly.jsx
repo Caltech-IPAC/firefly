@@ -22,7 +22,7 @@ import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getActiveTableId, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
-import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable, getUploadFileName} from './LcManager.js';
+import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId, startPeriodogramPopup} from './LcPeriodogram.jsx';
 import {getTypeData} from './LcUtil.jsx';

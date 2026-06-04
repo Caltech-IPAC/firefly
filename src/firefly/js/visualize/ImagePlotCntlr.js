@@ -2,14 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import {has, isArray} from 'lodash';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {convertToIdentityObj} from '../util/WebUtil.js';
 import {changePrime} from './ChangePrime.js';
 
-import {dispatchReplaceViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from './MultiViewCntlr.js';
+import {dispatchReplaceViewerItems} from './MultiViewCntlr.js';
+import {ExpandType, WcsMatchType, ActionScope, IMAGE, EXPANDED_MODE_RESERVED} from './VisConst.js';
+export {ExpandType, WcsMatchType, ActionScope} from './VisConst.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import {getOnePvOrGroup, getPlotViewById, isActivePlotView, isImageExpanded, primePlot} from './PlotViewUtil.js';
 import {reducer as plotAdminReducer} from './reducer/HandlePlotAdmin.js';
@@ -36,45 +37,8 @@ import {ZoomType} from './ZoomType.js';
 
 import {UserZoomTypes} from './ZoomUtil.js';
 
-/** @typedef ExpandType
- * enum can be one of
- * @prop COLLAPSE
- * @prop GRID
- * @prop SINGLE
- * @type {Enum}
- */
-
-/** @type ExpandType*/
-export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
-
-/**
- * @typedef {Object} WcsMatchType
- * enum can be one of
- * @prop Standard
- * @prop Target
- * @prop Pixel
- * @prop PixelCenter
- * @type {Enum}
- */
-
-/** @type WcsMatchType */
-export const WcsMatchType= new Enum(['Standard', 'Target', 'Pixel', 'PixelCenter']);
-
-
-
-/**
- * @typedef ActionScope
- * enum can be one of
- * @prop GROUP
- * @prop SINGLE
- * @prop LIST'
- * @type {Enum}
- * @public
- * @global
- */
-
-/** @type ActionScope */
-export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
+// ExpandType, WcsMatchType, ActionScope are defined in VisConst.js and
+// re-exported above (near the import) to keep this file free of circular deps.
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';
 

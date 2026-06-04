@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import PropTypes, {number, oneOfType, string} from 'prop-types';
 
 import {InputFieldView, propTypes} from './InputFieldView.jsx';
-import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';        // this is not right.. should revisit
+import {NOT_CELL_DATA} from '../tables/TableUtil.js';
 import {Stack, Typography} from '@mui/joy';
 
 

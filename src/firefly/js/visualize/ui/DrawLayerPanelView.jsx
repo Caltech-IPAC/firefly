@@ -97,7 +97,7 @@ function makeAddRelatedDataAry(pv) {
         .filter( (d) => d.primaryHduIdx===getHDU(primePlot(pv)))
         .map( (d,idx) => {
             return (
-                <Stack {...{spacing:1, direction:'row', pr: 2, alignItems:'center', key:idx+''}}>
+                <Stack key={idx+''} {...{spacing:1, direction:'row', pr: 2, alignItems:'center'}}>
                     <Typography {...{color:'warning', mr:.5}}>
                         {`${d.desc} Layer found :`}
                     </Typography>

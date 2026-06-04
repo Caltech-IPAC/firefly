@@ -334,7 +334,7 @@ export function DisplayTypeButtonGroup({config, variant='outlined', size='sm', v
     return (
         <ToggleButtonGroup {...{variant, size, value, sx}}>
             {config.map( ({value,title,onClick}) =>
-                (<IconButton {...{value, title, onClick, key:value,
+                (<IconButton key={value} {...{value, title, onClick,
                             sx:{ '--IconButton-size':'38px', minHeight:'unset', minWidth:'unset', p:1/4} }}>
                     {lookup(value)}
                 </IconButton>)

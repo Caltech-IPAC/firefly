@@ -351,9 +351,12 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          options={PlotlyCS.map((e)=>({value:e}))}
                                          nullAllowed={true}
                                          {...withDefaults(props)}/>), deps),
-        UseSpectrum: useCallback((props) => (null && <CheckboxGroupInputField fieldKey={`fireflyData.${activeTrace}.useSpectrum`}    // null to temporarily disable it
+        /* temporarily disabled:
+        UseSpectrum: useCallback((props) => <CheckboxGroupInputField fieldKey={`fireflyData.${activeTrace}.useSpectrum`}
                                          initialState={{value: getFieldVal(groupKey, `fireflyData.${activeTrace}.useSpectrum`) ?? fireflyData?.[activeTrace]?.useSpectrum}}
-                                         options={[{label: 'Use spectrum preset', value: 'true'}]} {...withDefaults(props)}/>), deps),
+                                         options={[{label: 'Use spectrum preset', value: 'true'}]} {...withDefaults(props)}/>, deps),
+        */
+        UseSpectrum: useCallback(() => null, deps),
     };
 };
 

@@ -31,7 +31,7 @@ function makeState() {
 
 function makeViewer(visRoot, plotId, makeToolbar, makeLegend, showWhenExpanded, PlotViewProxy) {
     if (getPlotViewById(visRoot, plotId)) {
-        return ( <ImageViewer {...{plotId, key:plotId, makeToolbar, makeLegend, showWhenExpanded}} /> );
+        return ( <ImageViewer key={plotId} {...{plotId, makeToolbar, makeLegend, showWhenExpanded}} /> );
     }
     const proxy= getPlotViewProxyById(visRoot, plotId);
     return proxy ? <PlotViewProxy {...{...proxy}}/> : <div/>;

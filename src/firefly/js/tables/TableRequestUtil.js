@@ -15,14 +15,7 @@ import {Logger} from '../util/Logger.js';
 
 const logger = Logger('Tables').tag('TableRequestUtil');
 
-export const MAX_ROW = Math.pow(2,31) - 1;
-/* TABLE_REQUEST should match QueryUtil on the server-side */
-
-export const META = {
-    // should match TableMeta.java
-    doclink: {url: 'doclink.url', desc: 'doclink.desc', label: 'doclink.label'}
-};
-
+export {MAX_ROW, META} from './TableConst.js';
 
 /**
  * Creates a table request object for the given id.

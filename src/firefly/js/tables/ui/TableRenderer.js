@@ -8,7 +8,7 @@ import {get, isEmpty, isString, omit, set, toNumber} from 'lodash';
 import {Box, Button, Checkbox, Chip, Link, MenuItem, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 
 import {FILTER_CONDITION_TTIPS, FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
-import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isExternalSource, isHtml, isOfType, splitCols, splitVals} from '../TableUtil.js';
+import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isExternalSource, isHtml, isOfType, NOT_CELL_DATA, splitCols, splitVals} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -474,7 +474,7 @@ export const createLinkCell = ({hrefColIdx, value}) => {
     };
 };
 
-export const NOT_CELL_DATA = '__NOT_A_VALID_DATA___';
+
 /**
  * creates an input field cell renderer.
  * @param tooltips
