@@ -39,7 +39,7 @@ const ACTION_CARD_CONFIG = [
     {
         icon:      <Flare sx={{fontSize: '1.5rem'}}/>,
         title:     'Search for data',
-        desc:      'Images, TAP, SIAv2 & more',
+        desc:      'TAP, SIAv2, HiPS & more',
         sub:       'using the tabs above',
         hintId:    'search',
         hintText:  'Choose a tab to search for data',
@@ -47,7 +47,7 @@ const ACTION_CARD_CONFIG = [
     {
         icon:      <ManageSearch sx={{fontSize: '1.75rem'}}/>,
         title:     'Find more search options',
-        desc:      'VO SCS, HiPS search & more',
+        desc:      'SCS, IRSA, NED & more',
         sub:       'in the side menu ☰',
         hintId:    'sideMenu',
         hintText:  'Click on the menu to find more search options',
