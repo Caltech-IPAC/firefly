@@ -20,7 +20,8 @@ const jobRunner= makeJobRunningContext(3);
 
 export async function doRawDataWork({type,payload,sendStatus}) {
     let scheduleClose= false;
-    if (shouldUseGpuInWorker() && !BrowserInfo.supportsWebGpu() && !getGpuJsImmediate()  && payload.rootUrl) {
+    const webGpu= await BrowserInfo.supportsWebGpu();
+    if (shouldUseGpuInWorker() && !webGpu && !getGpuJsImmediate()  && payload.rootUrl) {
         await getGpuJs(payload.rootUrl); // make sure the GPU code is loaded up front
     }
     try {
@@ -185,7 +186,7 @@ export async function callStretchedByteData(payload,sendStatus ) {
     const {plotImageId,plotStateSerialized,plotState, dataWidth,dataHeight,
         nanPixelColor,colorTableId, mask=false,maskBits,cmdSrvUrl:url, dataCompress= 'FULL'}= payload;
 
-    const colorModel= !mask && !plotState.isThreeColor() && getColorModelByGPUType(colorTableId,nanPixelColor);
+    const colorModel= !mask && !plotState.isThreeColor() && await getColorModelByGPUType(colorTableId,nanPixelColor);
     const ct= getCompressParam(dataCompress, payload.veryLargeData);
     const {options}=  makeFetchOptions(plotImageId,
         {

@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.LIFE_SPAN;
 import static edu.caltech.ipac.firefly.core.background.JobManager.sendUpdate;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
@@ -50,9 +51,6 @@ public interface Job extends Callable<String> {
 
     default String call() {
         try {
-            updateJobInfo(getJobId(), ji -> {
-                ji.setStartTime(Instant.now());
-            });
             String results = run();
             // the worker is set at onStart().
             getWorker().onComplete();

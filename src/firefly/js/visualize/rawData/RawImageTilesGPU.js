@@ -4,8 +4,8 @@ import {toRGB} from 'firefly/util/Color.js';
 import {gpujs_createRawDataTile3CRGB, gpujs_createRawDataTileImageRGB} from './GpuJsJobs';
 import {process3CTileViaWebGPU, processMaskTileViaWebGPU, processSingleBandTileViaWebGPU} from './WebGpuJobs';
 
-const getTilingFuncs= once(() => {
-    const webGpu= BrowserInfo.supportsWebGpu();
+const getTilingFuncs= once(async () => {
+    const webGpu= await BrowserInfo.supportsWebGpu();
     return {
         threeCTile: webGpu ? process3CTileViaWebGPU: gpujs_createRawDataTile3CRGB,
         maskTile: webGpu ? processMaskTileViaWebGPU: createRawDataTileImageForMask,
@@ -29,7 +29,7 @@ const getTilingFuncs= once(() => {
  */
 export async function createTileWithGPU(inData, colorModel, mask= false, maskColor='', bias=.5, contrast=1, bandUse) {
     const {width,height, pixelData3C, pixelDataStandard}= inData;
-    const {threeCTile, maskTile, singleBandTile} = getTilingFuncs();
+    const {threeCTile, maskTile, singleBandTile} = await getTilingFuncs();
 
     if (isArray(pixelData3C)) { // three color
         const ary= pixelData3C.map( (a) => a && get8BitAry(a));

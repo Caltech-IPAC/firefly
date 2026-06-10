@@ -33,7 +33,7 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 public class JobInfo implements Serializable {
 
     public enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED, HELD, SUSPENDED, ARCHIVED, UNKNOWN}
-    private static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
+    public static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
 
     // these are uws:job defined properties
     public static final String JOB_ID = "jobId";
@@ -81,7 +81,7 @@ public class JobInfo implements Serializable {
     private Instant creationTime;
     private Instant startTime;
     private Instant endTime;
-    private int executionDuration = LIFE_SPAN;
+    private int executionDuration;
     private Instant destruction;
     private Map<String, String> parameters = new HashMap<>();
     private List<Result> results = new ArrayList<>();

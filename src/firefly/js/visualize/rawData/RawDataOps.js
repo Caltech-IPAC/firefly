@@ -56,8 +56,9 @@ async function populateTilesAsync({rawTileDataGroup:groupFromWorker, colorTableI
     }
     else { // worker returned array data because no worker gpu support, todo: can I deprecate this else?
         rawTileDataAry= [];
-        if (!BrowserInfo.supportsWebGpu() && !getGpuJsImmediate() ) await getGpuJs(); // make sure the GPU code is loaded up front
-        const cm=getColorModelByGPUType(colorTableId,nanPixelColor);
+        const webGpu= await BrowserInfo.supportsWebGpu();
+        if (!webGpu && !getGpuJsImmediate() ) await getGpuJs(); // make sure the GPU code is loaded up front
+        const cm= await getColorModelByGPUType(colorTableId,nanPixelColor);
         for(let i=0; (i<tileFromWorker.length); i++) {
             const bitMap= await createTileWithGPU(tileFromWorker[i],cm,mask, maskColor, bias, contrast,bandUse);
             rawTileDataAry[i]= { ...tileFromWorker[i], workerBitMapTile, rawImageTile:bitMap};

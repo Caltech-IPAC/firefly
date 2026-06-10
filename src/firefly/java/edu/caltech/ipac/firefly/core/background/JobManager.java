@@ -73,7 +73,7 @@ public class JobManager {
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 60);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
-    private static final int JOB_TTL_DAYS = AppProperties.getIntProperty("job.ttl.days", 7);                    // Time in days to keep a job in redis.  Default to 7 days.
+    static final int JOB_TTL_DAYS = AppProperties.getIntProperty("job.ttl.days", 7);                    // Time in days to keep a job in redis.  Default to 7 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
@@ -147,9 +147,6 @@ public class JobManager {
         RequestOwner reqOwner = ServerContext.getRequestOwner();
         String jobId = nextJobId();
         updateJobInfo(jobId, true, ji -> {      // setting 'true' to add this jobInfo into the datastore
-            Instant start = Instant.now();
-            ji.setCreationTime(start);
-            ji.setDestruction(start.plus(JOB_TTL_DAYS, ChronoUnit.DAYS));
             ji.getMeta().setType(job.getType());
             ji.getMeta().setRunHost(hostName());
         });
@@ -157,9 +154,7 @@ public class JobManager {
         job.runAs(reqOwner);
         job.setJobId(jobId);
 
-        sendUpdate(jobId, ji -> {
-            ji.setPhase(QUEUED);
-        });
+        sendUpdate(jobId, null);
 
         try {
             Future<String> future = job.getType() == PACKAGE ? packagers.submit(job) : searches.submit(job);
@@ -169,7 +164,7 @@ public class JobManager {
             // it's ok; job may take longer to complete
         } catch (Exception e) {
             // job run() handles exceptions; this only happens if submit or future.get() fails
-            sendUpdate(jobId, (ji) -> {
+            updateJobInfo(jobId, (ji) -> {
                 ji.setPhase(ERROR);
                 ji.setErrorSummary(new ErrorSummary(e.getMessage()));
             });
@@ -180,6 +175,7 @@ public class JobManager {
                 ji.setOwnerId(reqOwner.getUserKey());
             });
         }
+        sendUpdate(jobId, null);  // send update to client
         return getJobInfo(jobId);
     }
 

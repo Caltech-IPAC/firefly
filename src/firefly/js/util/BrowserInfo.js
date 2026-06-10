@@ -3,6 +3,7 @@
  */
 import Enum from 'enum';
 import {getProp} from 'firefly/util/WebUtil.js';
+import {synchronizeAsyncFunctionById} from './SynchronizeAsync';
 
 /**
  * @typedef {Object} Browser
@@ -91,17 +92,28 @@ export default BrowserInfo;
     BrowserInfo.majorVersion=majorVersion;
     BrowserInfo.minorVersion=minorVersion;
     BrowserInfo.browser=browser;
+    BrowserInfo.webGpuVerifiedPromise= verifyWebGpuDevice();
     BrowserInfo.browserDesc= BrowserInfo.minorVersion!==UNKNOWN_VER ?
             BrowserInfo.getBrowserString()+ ' Version: ' + BrowserInfo.majorVersion + '.' +BrowserInfo.minorVersion :
             BrowserInfo.getBrowserString()+ ' Version: ' + BrowserInfo.majorVersion;
-    if (BrowserInfo.isFirefox()) {
-        navigator?.gpu?.requestAdapter()
-            .then( () => BrowserInfo.firefoxWebGpuEnabled= true)
-            .catch(() => BrowserInfo.firefoxWebGpuEnabled= false);
-    }
     BrowserInfo.platformMajorVerison= platformMajorVersion(ua,BrowserInfo.platform);
     logIfVersionNotSupported();
 })();
+
+
+async function verifyWebGpuDevice() {
+    if (!navigator?.gpu?.requestAdapter) return false;
+    const verified= await synchronizeAsyncFunctionById('webGpuDeviceVarification',
+        async () => {
+            try {
+                return Boolean(await navigator.gpu.requestAdapter());
+            }
+            catch(ignore) {// eslint-disable-line no-unused-vars
+                return false;
+            }
+        });
+    return verified;
+}
 
 function logIfVersionNotSupported() {
     if (isBrowserVersionSupported()) return;
@@ -230,20 +242,24 @@ function supportsCssColorMix() {
     return false;
 }
 
-function supportsWebGpu() {
-    const foundGpu= Boolean(navigator.gpu);
-    if (isBrowser(Browser.CHROME)) return isVersionAtLeast(113) && foundGpu;
-    if (isBrowser(Browser.EDGE)) return isVersionAtLeast(113) && foundGpu;
-    if (isBrowser(Browser.OPERA)) return isVersionAtLeast(99) && foundGpu;
-    if (isBrowser(Browser.FIREFOX)) {
-        if (!foundGpu || !isVersionAtLeast(147)) return false;
-        if (BrowserInfo.isPlatform(Platform.WINDOWS)) return true;
-        if (BrowserInfo.isPlatform(Platform.MACOS)) {
-            return false;
-            //todo - when firefox fixes its bug then then the fix version should go below
-            //return (isVersionAtLeast(????160?????) && BrowserInfo.firefoxWebGpuEnabled);
-        }
+async function supportsWebGpu() {
+    const verified= await(BrowserInfo.webGpuVerifiedPromise);
+    const linux= (BrowserInfo.isPlatform(Platform.LINUX));
+    if (isBrowser(Browser.CHROME) || isBrowser(Browser.EDGE))  {
+        if (linux) return false;
+        return isVersionAtLeast(113) && verified;
+    }
+    else if (isBrowser(Browser.OPERA)) {
+        if (linux) return false;
+        return isVersionAtLeast(99) && verified;
+    }
+    else if (isBrowser(Browser.FIREFOX)) {
+        if (linux) return false;
+        if (!isVersionAtLeast(145)) return false;
+        if (BrowserInfo.isPlatform(Platform.WINDOWS)) return verified;
+        if (BrowserInfo.isPlatform(Platform.MACOS)) return verified;
         return false;
     }
-    return foundGpu;
+    else if (isBrowser(Browser.SAFARI)) return isVersionAtLeast(26) && verified;
+    return verified;
 }
