@@ -24,8 +24,8 @@ export const isOffscreenCanvas= (b) => globalThis.OffscreenCanvas && (b instance
 
 
 
-export const logGpuState= once(() => {
-    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
+export const logGpuState= once(async () => {
+    const gpuType= await BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
     const outStr= shouldUseGpuInWorker()
         ? `Images: gpu in worker, gpu: ${gpuType}`
         : `Images: gpu in main thread: ${gpuType}`;
@@ -71,7 +71,7 @@ async function populateTileDataInWorker(obj) {
 export async function populateRawImagePixelDataInWorker(obj) {
     const {rawTileDataGroup, colorTableId, mask, nanPixelColor, threeColor=false}= obj;
     if (shouldUseGpuInWorker()) {
-        const colorModel = !mask && !threeColor && getColorModelByGPUType(colorTableId,nanPixelColor);
+        const colorModel = !mask && !threeColor && await getColorModelByGPUType(colorTableId,nanPixelColor);
         const rawTileDataAry = await populateTileDataInWorker({...obj,colorModel});
 
 

@@ -71,8 +71,9 @@ function getRawColorTableEntry(id) {
     return ctMap[originalId+REVERSED_END_CHAR];
 }
 
-export function getColorModelByGPUType(colorTableId, nanPixelColor=undefined) {
-   const asPercent= !BrowserInfo.supportsWebGpu();
+export async function getColorModelByGPUType(colorTableId, nanPixelColor=undefined) {
+    const webGpu= await BrowserInfo.supportsWebGpu();
+   const asPercent= !webGpu
    return getColorModel(colorTableId,nanPixelColor,asPercent);
 }
 
