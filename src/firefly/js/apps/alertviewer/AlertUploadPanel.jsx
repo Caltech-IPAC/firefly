@@ -14,12 +14,13 @@ import {ALERT} from './AlertIDs.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import WebPlotRequest, {TitleOptions} from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
-import {dispatchDeletePlotView, dispatchPlotImage} from 'firefly/visualize/ImagePlotCntlr';
+import {dispatchDeletePlotView, dispatchPlotImage, dispatchWcsMatch, WcsMatchType} from 'firefly/visualize/ImagePlotCntlr';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 import {removeTablesFromGroup} from 'firefly/tables/TableUtil';
 import {dispatchChartRemove} from 'firefly/charts/ChartsCntlr';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
+import {onPlotComplete} from 'firefly/visualize/PlotCompleteMonitor';
 
 const ALERT_LOAD_REQUEST = 'AlertViewerSearchProcessor';
 const IMAGE_TITLES = ['Science', 'Template', 'Difference'];
@@ -223,6 +224,7 @@ function loadFromEntries(result, alertId) {
             }
 
             const wpRequest = WebPlotRequest.makeFilePlotRequest(fileLocation);
+            wpRequest.setInitialColorTable('0');
             wpRequest.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
             wpRequest.setPlotGroupId(ALERT.IMG_VIEWER);
             wpRequest.setMultiImageExts(`${extNum}`);
@@ -231,6 +233,7 @@ function loadFromEntries(result, alertId) {
 
             dispatchPlotImage({plotId, wpRequest, viewerId: ALERT.IMG_VIEWER, setNewPlotAsActive: i === 0});
         }
+        lockAlertImagesByPixelOrigin();
         dispatchComponentStateChange(ALERT.STATE_ID, {
             id: alertId,
             source: result?.source,
@@ -242,4 +245,16 @@ function loadFromEntries(result, alertId) {
         console.error('Error loading file:', error);
         showInfoPopup(`Error loading file: ${error.message}`, 'Load Error');
     }
+}
+
+function lockAlertImagesByPixelOrigin() {
+    void onPlotComplete(ALERT.IMG_PLOT_1).then((pv) => {
+        if (pv) {
+            dispatchWcsMatch({
+                matchType: WcsMatchType.PixelCenter,
+                plotId: ALERT.IMG_PLOT_1,
+                lockMatch: true
+            });
+        }
+    });
 }
