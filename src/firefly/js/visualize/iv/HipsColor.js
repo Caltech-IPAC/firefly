@@ -8,8 +8,8 @@ import {once} from 'lodash';
 import {remapColorsViaWebGpu} from '../rawData/WebGpuJobs';
 import {removeNonNativeCachedTiles} from './HiPSTileCache.js';
 
-export const logGpuState= once(() => {
-    const gpuType= BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
+export const logGpuState= once(async () => {
+    const gpuType= await BrowserInfo.supportsWebGpu() ? 'webgpu' : 'webgl (using gpu.js)';
     console.log(`HiPS color gpu : ${gpuType}`);
 });
 
@@ -45,10 +45,11 @@ export const getHipsColorOps= once(() => {
 
         const getInData= (x,y,w,h) => inCtx.getImageData(x,y,w,h).data;
 
-        const cm= getColorModelByGPUType(ct);
+        const cm= await getColorModelByGPUType(ct);
 
         if (width===512 && height===512) {
-            if (BrowserInfo.supportsWebGpu()) {
+            const webGpu= await BrowserInfo.supportsWebGpu();
+            if (webGpu) {
                 const bitMap= await remapColorsViaWebGpu(cm,getInData(0,0,width,height),width,height,bias,contrast);
                 outCtx.drawImage(bitMap,0,0);
             }
@@ -61,7 +62,8 @@ export const getHipsColorOps= once(() => {
             const updateAllSky= async (gx,gy) => {
                 const w2=864;
                 const h2=928;
-                if (BrowserInfo.supportsWebGpu()) {
+                const webGpu= await BrowserInfo.supportsWebGpu();
+                if (webGpu) {
                     const bitMap= await remapColorsViaWebGpu(cm,getInData(w2*gx,h2*gy,w2,h2),w2,h2,bias,contrast);
                     outCtx.drawImage(bitMap, 0,0,w2,h2, w2*gx,h2*gy,w2,h2);
                 }
