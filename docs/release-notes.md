@@ -9,8 +9,8 @@
 ---
 
 ## Version 2026.1
-- 2026.1.3 — (June 16, 2026), _docker tag_: `2026.1.3`
-- 2026.1.2 — (May 26, 2026), _docker tag_: `2026.1.2`, `2026.1`, `latest`
+- 2026.1.3 — (June 11, 2026), _docker tag_: `2026.1.3`, `2026.1`, `latest`
+- 2026.1.2 — (May 26, 2026), _docker tag_: `2026.1.2`
 - 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`
 - 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`
 
@@ -75,7 +75,9 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 #### 2026.1.3
 - Fixed Prepare Download button sometimes not appearing — Firefly-2037 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1968))
 - Fixed properly initialize jobs, distinguishing between — Firefly-2007 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1966))
+- Fixed tap area coordinates not populated in "Search Area: image or visible" mode ([commit](https://github.com/Caltech-IPAC/firefly/commit/81b21c2bf69223e156791f649c77c3517a50a4d1))
 - When UWS job fails, display (i) icon — Firefly-2012 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1964))
+- Alert viewer user feedback updates — Firefly-2031 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1969))
 #### 2026.1.2
 - Fixed Prepare Download button sometimes not appearing  — Firefly-2023 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1965))
 #### 2026.1.1
