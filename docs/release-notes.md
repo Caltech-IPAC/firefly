@@ -73,7 +73,7 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 
 ### _Patches 2026.1_
 #### 2026.1.3
-- Fixed Prepare Download button sometimes not appearing — Firefly-2037 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1968))
+- Webgpu disabled for linux, use webgl instead — Firefly-2037 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1968))
 - Fixed properly initialize jobs, distinguishing between — Firefly-2007 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1966))
 - Fixed tap area coordinates not populated in "Search Area: image or visible" mode ([commit](https://github.com/Caltech-IPAC/firefly/commit/81b21c2bf69223e156791f649c77c3517a50a4d1))
 - When UWS job fails, display (i) icon — Firefly-2012 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1964))
