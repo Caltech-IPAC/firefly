@@ -200,7 +200,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
 
     const onChangeToPolygonMethod = () => {
         if (!handleHiPSConnection) return;
-        const pv = getActivePlotView();
+        const pv = getActivePlotView(visRoot());
         const plot = primePlot(visRoot(),pv);
         if (!plot) return;
         const cornerCalcV = getVal(cornerCalcType);

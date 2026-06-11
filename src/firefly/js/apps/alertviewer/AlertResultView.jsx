@@ -69,7 +69,7 @@ export function AlertResultView() {
 
     useEnsureMainChart();
 
-    const [whatToShow, setWhatToShow] = useState(SHOW_TABLE);
+    const [whatToShow, setWhatToShow] = useState(SHOW_CHART);
 
     const handleShowChange = (...args) => {
         const v =

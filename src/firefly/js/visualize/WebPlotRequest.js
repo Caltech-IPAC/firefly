@@ -467,9 +467,7 @@ export class WebPlotRequest extends ServerRequest {
      */
     setOverlayPosition(worldPt) { this.setParam(WPConst.OVERLAY_POSITION, worldPt ? worldPt.toString() : false); }
 
-    /**
-     * @return {WorldPt}
-     */
+    /** @return {WorldPt} */
     getOverlayPosition() { return this.getWorldPtParam(WPConst.OVERLAY_POSITION); }
 
 
@@ -478,15 +476,14 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     /**
-     * @param {int} id integer, color table id number
+     * @param {String} id integer, color table id number
      */
     setInitialColorTable(id) { this.setParam(WPConst.INIT_COLOR_TABLE, id + ''); }
 
-    /** * @return {int} color table id number */
+    /** @return {String} color table id number */
     getInitialColorTable() { return this.getIntParam(WPConst.INIT_COLOR_TABLE,defColorTable); }
 
     /**
-     *
      * @param rangeValues RangeValues
      */
     setInitialRangeValues(rangeValues) {
