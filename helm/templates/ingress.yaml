@@ -5,14 +5,20 @@
     {{- $affinityAnnotations = dict
       "nginx.ingress.kubernetes.io/affinity" "cookie"
       "nginx.ingress.kubernetes.io/affinity-mode" "persistent"
-      "nginx.ingress.kubernetes.io/session-cookie-change-on-failure" "true" }}
+      "nginx.ingress.kubernetes.io/session-cookie-change-on-failure" "true"
+      "nginx.ingress.kubernetes.io/session-cookie-samesite" "None"
+      "nginx.ingress.kubernetes.io/session-cookie-secure" "true" }}
   {{- else if eq .Values.ingress.className "traefik" }}
     {{- $affinityAnnotations = dict
-      "traefik.ingress.kubernetes.io/service.sticky.cookie" "true" }}
+      "traefik.ingress.kubernetes.io/service.sticky.cookie" "true"
+      "traefik.ingress.kubernetes.io/service.sticky.cookie.secure" "true"
+      "traefik.ingress.kubernetes.io/service.sticky.cookie.samesite" "none" }}
   {{- else if eq .Values.ingress.className "haproxy" }}
     {{- $affinityAnnotations = dict
       "haproxy.org/load-balance" "leastconn"
-      "haproxy.org/cookie-persistence" "SERVERID" }}
+      "haproxy.org/cookie-persistence" "SERVERID"
+      "haproxy.org/cookie-samesite" "None"
+      "haproxy.org/cookie-secure" "true" }}
   {{- end }}
 {{- end }}
 {{- $mergedAnnotations := merge .Values.ingress.annotations $affinityAnnotations }}
