@@ -11,7 +11,6 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 
@@ -29,19 +28,19 @@ public class CommonFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest httpReq) {
-            try {
-                ServerContext.clearRequestOwner();
+        try {
+            ServerContext.clearRequestOwner();
+            if (request instanceof HttpServletRequest httpReq) {
                 setupRequestOwner(httpReq, (HttpServletResponse)response);
-
-                filterChain.doFilter( request, response );
-            } finally {
-                if (ALLOW_CROSS_ORIGIN) {
-                    applyCookieAttributes((HttpServletResponse)response, Set.of("JSESSIONID", "usrkey"));
-                }
-                // clean up ThreadLocal instances.
-                StopWatch.clear();
             }
+
+            filterChain.doFilter( request, response );
+
+        } finally {
+            if (ALLOW_CROSS_ORIGIN) {
+                applyCookieAttributes((HttpServletResponse)response, Set.of("JSESSIONID", "usrkey"));
+            }
+            StopWatch.clear();
         }
     }
 
@@ -53,7 +52,7 @@ public class CommonFilter implements Filter {
     }
 
     public static void applyCookieAttributes(HttpServletResponse response, Set<String> cookieNames) {
-        Collection<String> headers = response.getHeaders("Set-Cookie");
+        java.util.List<String> headers = new java.util.ArrayList<>(response.getHeaders("Set-Cookie"));
         boolean first = true;
         for (String header : headers) {
             String modified = header;
