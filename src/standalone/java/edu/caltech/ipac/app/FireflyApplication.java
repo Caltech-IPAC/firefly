@@ -165,7 +165,7 @@ public class FireflyApplication {
                 for(Object entry: assetsAry){
                     JSONObject asset= (JSONObject)entry;
                     if (StringUtils.areEqual((String)asset.get("name"),"standalone.zip")) {
-                        urlStr= (String)asset.get("url");
+                        urlStr= (String)asset.get("browser_download_url");
                     }
                 }
             }
@@ -200,7 +200,14 @@ public class FireflyApplication {
         if (cVer.length!=3 || nVer.length!=3) return false;
         var curr= Arrays.stream(cVer).map((s) -> StringUtils.getInt(s,0)).toList();
         var next= Arrays.stream(nVer).map((s) -> StringUtils.getInt(s,0)).toList();
-        return (next.get(0)>curr.get(0) || next.get(1)>curr.get(1) || next.get(2)>curr.get(2));
+        if (next.get(0)>curr.get(0)) return true;
+        else if (next.get(0).equals(curr.get(0))) {
+            if (next.get(1)>curr.get(1)) return true;
+            else if (next.get(1).equals(curr.get(1))) {
+                return next.get(2)>curr.get(2);
+            }
+        }
+        return false;
     }
 
 
