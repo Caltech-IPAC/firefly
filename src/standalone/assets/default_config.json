@@ -1,0 +1,7 @@
+{
+  "ports" : {
+    "firefly" : 10233,
+    "redis" : 10234
+  },
+  "java" : "auto"
+}

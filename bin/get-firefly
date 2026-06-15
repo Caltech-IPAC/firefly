@@ -1,0 +1,9 @@
+#!/bin/bash
+INSTALL_SCRIPT="https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/install.sh"
+# use the following line for testing the code from a PR, modify for your PR
+# INSTALL_SCRIPT="https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/FIREFLY-1980-standalone/bin/install.sh"
+
+curl -s ${INSTALL_SCRIPT} > ./install.sh
+chmod +x ./install.sh
+./install.sh -dontConfirm "$@"
+/bin/rm -f ./install.sh

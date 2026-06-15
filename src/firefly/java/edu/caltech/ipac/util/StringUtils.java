@@ -4,7 +4,6 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.firefly.core.Util;
-import edu.caltech.ipac.firefly.server.util.Logger;
 
 import javax.validation.constraints.NotNull;
 import java.net.MalformedURLException;
@@ -44,8 +43,6 @@ public class StringUtils {
     public static final long MEG_TENTH    = MEG / 10;
     public static final long GIG_HUNDREDTH= GIG / 100;
     public static final long K            = 1024;
-
-    private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     public static String[] groupMatch(String regex, String val) {
         return groupMatch(regex, val, 0);

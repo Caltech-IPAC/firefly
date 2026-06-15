@@ -58,7 +58,6 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 public class URLDownload {
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
-    private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final int MAX_REDIRECT= 2;
 
     static {
@@ -83,7 +82,7 @@ public class URLDownload {
             sc.init(null, trustAllCerts, null);
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
-            _log.error(e);
+            loggerError(e);
         }
     }
 
@@ -200,11 +199,13 @@ public class URLDownload {
         if (requestHeaders== null) requestHeaders= Collections.emptyMap();
         Map<String, String> h = new HashMap<>(requestHeaders);
         if (ops==null || ops.useCredentials) {
-            var inputs= new HttpServiceInput(url.toString());
-            var credentials= inputs.getHeaders();
-            if (credentials!=null && !credentials.isEmpty()) {
-                if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
-            }
+            try {
+                var inputs= new HttpServiceInput(url.toString());
+                var credentials= inputs.getHeaders();
+                if (credentials!=null && !credentials.isEmpty()) {
+                    if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
+                }
+            } catch (NoClassDefFoundError ignore) { }
         }
         return h;
     }
@@ -247,7 +248,11 @@ public class URLDownload {
                 }
             }
             else {
-                workBuff.append(sanitizeHeader(se.getKey(), String.valueOf(se.getValue())));
+                try {
+                    workBuff.append(sanitizeHeader(se.getKey(), String.valueOf(se.getValue())));
+                } catch (NoClassDefFoundError e) {
+                    workBuff.append(se.getKey()+"="+se.getValue());
+                }
             }
             outStr.append(workBuff.toString());
         }
@@ -306,7 +311,7 @@ public class URLDownload {
             }
             return conn;
         } catch (IOException e) {
-            logError(url,null,e);
+            loggerError(url,null,e);
             throw e;
         }
     }
@@ -390,10 +395,10 @@ public class URLDownload {
             if (!ops.logErrorsOnly) logSuccess(result,url,dlSeconds,reqProp, postData);
             return result;
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
-            logError(url, postData, e);
+            loggerError(url, postData, e);
             return exceptionToResponse(e,requestHeaders);
         } catch (IOException e) {
-            logError(url, postData, e);
+            loggerError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
         }
     }
@@ -418,7 +423,7 @@ public class URLDownload {
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
             return exceptionToResponse(e,h);
         } catch (IOException e) {
-            logError(url, null, e);
+            loggerError(url, null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, -1);
         }
     }
@@ -476,10 +481,10 @@ public class URLDownload {
             }
             return result;
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
-            logError(conn.getURL(), null , e);
+            loggerError(conn.getURL(), null , e);
             return exceptionToResponse(e,requestHeaders);
         } catch (IOException e) {
-            logError(conn.getURL(), null, e);
+            loggerError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
         }
     }
@@ -505,7 +510,7 @@ public class URLDownload {
             Options ops= new Options(true, true, 0L, false, false, timeoutInSec, dl, false, false);
             return getDataToFile(makeURLConnection(url, cookies, requestHeader), outfile, ops, postData,0);
         } catch (IOException e) {
-            logError(url, postData, e);
+            loggerError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
     }
@@ -636,7 +641,7 @@ public class URLDownload {
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
             return exceptionToFileInfo(e);
         } catch (IOException e) {
-            logError(conn.getURL(), null, e);
+            loggerError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e, getResponseCode(conn));
         }
     }
@@ -760,7 +765,7 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (getResponseCode(urlConn) == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     String urlStr= urlConn.getURL().toString();
-                    _log.info(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
+                    loggerInfo(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
                     retval = new FileInfo(outfile, getSuggestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
                                      ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");
@@ -774,7 +779,7 @@ public class URLDownload {
     }
 
 
-    private static void logError(URL url, Map<String,?> postData, Exception e) {
+    private static void loggerError(URL url, Map<String,?> postData, Exception e) {
         List<String> strList = new ArrayList<>(6);
         strList.add("----------Network Error-----------");
         if (url != null) {
@@ -788,7 +793,7 @@ public class URLDownload {
             strList.add(StringUtils.pad(20,"----------Exception "));
             strList.add(e.toString());
         }
-        _log.warn(strList.toArray(new String[0]));
+        loggerInfo(strList.toArray(new String[0]));
     }
 
     private static void logHeaderForError(String originalUrl, Map<String,?> postData, HttpURLConnection conn, Map<String,List<String>> sendHeaders) {
@@ -861,9 +866,9 @@ public class URLDownload {
             else {
                 outStr.add("No headers or status received, invalid http response, using work around");
             }
-            _log.info(outStr.toArray(new String[0]));
+            loggerInfo(outStr.toArray(new String[0]));
         } catch (Exception e) {
-            _log.info(e.getMessage() + ":" + " url=" + (conn.getURL()!=null ? conn.getURL().toString() : "none"));
+            loggerInfo(e.getMessage() + ":" + " url=" + (conn.getURL()!=null ? conn.getURL().toString() : "none"));
         }
     }
 
@@ -880,7 +885,7 @@ public class URLDownload {
                 "more response headers: "+otherHeadersToStr(fileInfo)
         ));
         if (postData!=null) strList.add("post data: " +postDataLogString(postData));
-        _log.info(strList.toArray(new String[0]));
+        loggerInfo(strList.toArray(new String[0]));
     }
 
     private static void logSuccess(HttpResultInfo r, URL url, double dSeconds, Map<String,List<String>> sendHeaders, Map<String, ?> postData) {
@@ -889,7 +894,7 @@ public class URLDownload {
         String postStr= (postData==null || postData.isEmpty()) ? "" :  "\n        Post Data :" +  postDataLogString(postData);
         String send= "send headers: "+sendHeadersToCompactStr(sendHeaders)  + postStr;
 
-        _log.info(
+        loggerInfo(
                 String.format( "DOWNLOAD to memory (%.1f sec, %s, response: %d): Content-Type: %s, Content-Length: %s%s",
                         dSeconds, formatedSize, r.getResponseCode(), r.getContentType(), r.getContentLength(), lastMod),
                 "url:  "+ url.toString(),
@@ -960,14 +965,14 @@ public class URLDownload {
         } else if (encodeType.toLowerCase().endsWith("deflate")) {
             return  new DataInputStream(new InflaterInputStream(makeInStream(conn)));
         } else {
-            _log.warn("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
+            loggerInfo("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
             return  makeDataInStream(conn);
         }
     }
 
     private static DataInputStream makeDataInStream(HttpURLConnection conn) throws IOException {
         if (getResponseCode(conn)==-1) {
-            _log.warn("Http Response Code is -1, invalid http protocol, " +
+            loggerInfo("Http Response Code is -1, invalid http protocol, " +
                                                       "probably no status line in response headers- trying anyway");
             return new DataInputStream(makeInStream(conn));
         }
@@ -998,6 +1003,23 @@ public class URLDownload {
             workBuff.append(valIter.next());
         }
         return workBuff.toString();
+    }
+
+    private static void loggerInfo(String ...msgs) {
+        try {
+            Logger.getLogger().info(msgs);
+        } catch (NoClassDefFoundError t) {
+            Arrays.stream(msgs).forEach(System.out::println);
+        }
+    }
+
+    private static void loggerError(Throwable t, String ...msgs) {
+        try {
+            Logger.getLogger().error(t, msgs);
+        } catch (NoClassDefFoundError e) {
+            System.out.println(t.getMessage());
+            Arrays.stream(msgs).forEach(System.out::println);
+        }
     }
 
     public static class Options {

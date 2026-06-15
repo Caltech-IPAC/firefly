@@ -1,0 +1,76 @@
+group 'edu.caltech.ipac'
+
+ext["app-name"] = 'standalone'
+
+configurations {
+  bundled
+}
+
+sourceSets {
+  main.java.srcDir '.'
+  main.resources {
+    srcDirs "."
+    exclude "**/*.gradle"
+  }
+}
+
+dependencies {
+  implementation ':firefly'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-jasper:11.0.21'
+  bundled 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
+  bundled 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21'
+  bundled 'org.apache.tomcat.embed:tomcat-embed-jasper:11.0.21'
+}
+
+// sourceSets {
+//   main.java {
+//     srcDir '**/firefly_standalone/**'
+//   }
+// }
+
+
+jar {
+  archiveFileName = 'firefly_standalone.jar'
+  include "**/*"
+  from sourceSets.main.allJava
+}
+
+
+def stageTarget= file("${buildDir}/zipFiles")
+def fireflyWar= project(':firefly').tasks.named('war')
+def fireflyData= project(':firefly_data').tasks.named('jar')
+def fireflyWarFile= file("$rootDir/build/dist/firefly.war")
+
+compileJava.dependsOn fireflyWar
+
+task stageFiles(type: Copy) {
+     dependsOn jar
+     into stageTarget
+//      from { fireflyWar.get().archivePath }  // show firefly-1.0.war
+     from { fireflyWarFile }
+     from { jar.archivePath }
+     from configurations.bundled
+
+     from("${rootDir}/src/standalone/assets")
+ }
+
+task zip(type: Jar, dependsOn: stageFiles) {
+    archiveFileName = "standalone.zip"
+    from "${buildDir}/zipFiles"
+    destinationDirectory = file ("$rootDir/build/dist")
+}
+
+task copyStandaloneDependencies(dependsOn: jar) {
+    doLast {
+        def homePath = System.properties['user.home']
+        def publishDir = project.group.replaceAll("\\.", "/") + "/${project.name}/${project.version}"
+        def repoDir = file("${homePath}/.m2/repository/" + publishDir)
+        copy {
+            from(configurations.bundled)
+            into repoDir
+        }
+        println "Firefly local maven directory: ${repoDir}"
+    }
+}

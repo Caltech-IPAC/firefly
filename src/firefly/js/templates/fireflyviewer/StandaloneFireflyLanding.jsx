@@ -75,7 +75,7 @@ const DEFAULT_CHIPS = [
         url: '?api=image&service=SEIP&SurveyKey=spitzer.seip_science&SurveyKeyBand=IRAC4&WorldPt=210.80227;54.34895;EQ_J2000&sr=500s',
     },
     {
-        label: '🔭 GAIA DR3 cone search at M101 →',
+        label: '🔭 Gaia DR3 cone search at M101 →',
         url: '?api=tap&service=https://gea.esac.esa.int/tap-server/tap&schema=gaiadr3&table=gaiadr3.gaia_source&WorldPt=210.80227;54.34895;EQ_J2000&sr=500s',
     },
     {

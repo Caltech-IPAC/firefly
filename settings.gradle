@@ -1,7 +1,8 @@
 rootProject.name = 'firefly_root'
 
-include 'firefly', 'firefly_data'
+include 'firefly', 'firefly_data', "standalone"
 
 project(":firefly").projectDir  = file('src/firefly')
 project(":firefly_data").projectDir = file('src/firefly_data')
+project(":standalone").projectDir = file('src/standalone')
 

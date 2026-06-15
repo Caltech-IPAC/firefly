@@ -1,0 +1,137 @@
+#!/bin/bash
+
+
+# ----------------
+# control the firefly server environment
+# script will start, stop, show logs, uninstall, etc
+# ----------------
+
+
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+testFile="$SCRIPT_DIR/../application/current/startFireflyServer.sh"
+fireflyDir="${HOME}/.firefly"
+logsDir="${fireflyDir}/server/logs"
+pidFile="$fireflyDir/pid.txt"
+space="  "
+
+if [ -x "$testFile" ]; then
+   INSTALL_DIR=$(realpath "$SCRIPT_DIR/..")
+else
+   INSTALL_DIR=$(cat "$fireflyDir/applicationPath.txt")
+fi
+
+binDir="${INSTALL_DIR}/bin"
+applicationDir="${INSTALL_DIR}/application/current"
+
+isTrue() {
+     v=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+     if [[ "$v" == "true" || "$v" == "t" ]]; then return 0; else return 1; fi
+}
+
+
+stop() {
+  if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "stop the firefly server"
+  else
+   if [[ -f "$pidFile" && -s "$pidFile" && -r "$pidFile" ]]; then
+        pid=$(cat "$pidFile");
+        kill "$pid"
+        echo "Stopping firefly at process id $pid"
+   else
+        echo "Filefly is not running or pid file was lost"
+   fi
+  fi
+}
+
+uninstall() {
+  if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Uninstall the firefly server."
+    echo "The uninstall command will remove $fireflyDir and $INSTALL_DIR"
+  else
+    echo "uninstall will remove $fireflyDir and $INSTALL_DIR"
+    read -n1 -s -p  "do you want to uninstall the firefly server? (y/n [n]): " doUninstall
+    echo
+    doUninstallLower=$(echo "$doUninstall" | tr '[:upper:]' '[:lower:]')
+    if [ "$doUninstallLower" = "y" ]; then
+      echo removing "$fireflyDir"
+      /bin/rm -rf "$fireflyDir"
+      echo removing "$INSTALL_DIR"
+      exec /bin/rm -rf "$INSTALL_DIR"
+    fi
+  fi
+}
+
+logs() {
+  if [[ "$1" == "-f" || "$1" == "--follow" ]]; then
+     tail -f "$logsDir/application.log" "$logsDir/firefly.log"
+  elif [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "show the log files"
+    echo "-f: tail the logs, -f will follow, like tail -f"
+  else
+    echo "------------------------------------------------------------"
+    echo "---------------------- application.log ---------------------"
+    echo "------------------------------------------------------------"
+    cat "$logsDir/application.log"
+    echo
+    echo
+    echo "------------------------------------------------------------"
+    echo "---------------------- firefly.log -------------------------"
+    echo "------------------------------------------------------------"
+    cat "$logsDir/firefly.log"
+  fi
+}
+
+stat() {
+  if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "show if the firefly server is running and healthy"
+  else
+    up=$(curl -sD - -o /dev/null http://localhost:8888/firefly/healthz | head -1)
+    if [[ "$up" == *200* ]]; then
+        echo "The Firefly server is running and healthy"
+    elif [[ "$up" == "" ]]; then
+        echo "The Firefly server is not running"
+    else
+        echo "The Firefly server is return an error: $up"
+    fi
+  fi
+}
+
+
+help() {
+  echo
+  echo "-------- Help -------- "
+  echo "The ff command controls the firefly server and provides utilities"
+  echo "commands"
+  echo "$space start:  start the firefly server"
+  echo "$space stop:   stop the firefly server"
+  echo "$space logs:   show the log files"
+  echo "$space status: show the server status"
+  echo "$space uninstall: uninstall the firstly server"
+  echo "$space help:   show this message"
+  echo "you may follow a command with -h to get help on that command"
+  echo "example- ${binDir#$PWD/}/ff start -h"
+  echo "example- ${binDir#$PWD/}/ff logs -f"
+}
+
+cmd=$1
+shift;
+if [[ "$cmd" == "start" || "$cmd" == "s" ]]; then
+  exec "$applicationDir/startFireflyServer.sh" "$@"
+elif [ "$cmd" == "stop" ]; then
+  stop "$@"
+elif [[ "$cmd" == "logs" || "$cmd" == "log" || "$cmd" == "l" ]]; then
+  logs "$@"
+elif [ "$cmd" == "status" ]; then
+  stat "$@"
+elif [ "$cmd" == "uninstall" ]; then
+  uninstall "$@"
+elif [[ "$cmd" == "help" || "$cmd" == "-h" || "$cmd" == "--help" ]]; then
+  help
+elif [[ "$cmd" == "" ]]; then
+  help
+else
+  echo "invalid command: $cmd"
+  help
+fi
+

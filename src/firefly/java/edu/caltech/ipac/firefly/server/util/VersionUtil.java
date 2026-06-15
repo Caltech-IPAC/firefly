@@ -64,30 +64,33 @@ public class VersionUtil {
     }
 
     public static void ingestVersion(ServletContext context) {
-
-        _version.setAppName(context.getServletContextName());
-        _version.setConfigLastModTime(ServerContext.getConfigLastModTime());
-
-        File confDir = ServerContext.getWebappConfigDir();
-        Properties props = new Properties();
         try {
+            _version.setAppName(context.getServletContextName());
+            _version.setConfigLastModTime(ServerContext.getConfigLastModTime());
+
+            File confDir = ServerContext.getWebappConfigDir();
+            Properties props = new Properties();
             props.load(new FileInputStream(new File(confDir, VERSION_FILE)));
-            _version.setMajor(getNum(props.getProperty(MAJOR)));
-            _version.setMinor(getNum(props.getProperty(MINOR)));
-            _version.setRev(props.getProperty(REV));
-            _version.setVersionType(Version.convertVersionType(props.getProperty(TYPE)));
-            _version.setBuild(getNum(props.getProperty(BUILD_NUMBER)));
-            _version.setBuildDate(props.getProperty(BUILD_DATE));
-            _version.setBuildTime(props.getProperty(BUILD_TIME));
-            _version.setBuildTag(props.getProperty(BUILD_TAG));
-            _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
-            _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
-            _version.setBuildFireflyTag(props.getProperty(BUILD_FIREFLY_TAG));
-            _version.setBuildFireflyBranch(props.getProperty(BUILD_FIREFLY_BRANCH));
-            _version.setDevCycleTag(props.getProperty(DEV_CYCLE_TAG));
+            ingestVersion(props);
         } catch (IOException e) {
             // just ignore
         }
+    }
+
+    public static void ingestVersion(Properties props) {
+        _version.setMajor(getNum(props.getProperty(MAJOR)));
+        _version.setMinor(getNum(props.getProperty(MINOR)));
+        _version.setRev(props.getProperty(REV));
+        _version.setVersionType(Version.convertVersionType(props.getProperty(TYPE)));
+        _version.setBuild(getNum(props.getProperty(BUILD_NUMBER)));
+        _version.setBuildDate(props.getProperty(BUILD_DATE));
+        _version.setBuildTime(props.getProperty(BUILD_TIME));
+        _version.setBuildTag(props.getProperty(BUILD_TAG));
+        _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
+        _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
+        _version.setBuildFireflyTag(props.getProperty(BUILD_FIREFLY_TAG));
+        _version.setBuildFireflyBranch(props.getProperty(BUILD_FIREFLY_BRANCH));
+        _version.setDevCycleTag(props.getProperty(DEV_CYCLE_TAG));
     }
 
     public static Version getAppVersion() { return _version;  }
