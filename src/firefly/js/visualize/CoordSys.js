@@ -69,7 +69,7 @@ export const CoordinateSys = function () {
             return GALACTIC;
         } else if (desc===SUPERGALACTIC.toString()) {
             return SUPERGALACTIC;
-        } else if (desc===ECL_J2000.toString() || desc==='ECJ2000' | desc==='ECLJ2000' || desc==='ECJ') {
+        } else if (desc===ECL_J2000.toString() || desc==='ECJ2000' || desc==='ECLJ2000' || desc==='ECJ') {
             return ECL_J2000;
         } else if (desc===ECL_B1950.toString() || desc==='ECLB1950'|| desc==='ECB') {
             return ECL_B1950;
