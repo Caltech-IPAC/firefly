@@ -59,6 +59,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             LOG.info(PREFIX+" open "+makeChannelStr(session));
         } catch (Exception e) {
             LOG.error(e, PREFIX+" Unable to open websocket connection:" + makeChannelStr(session));
+            try { session.close(new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, "Server error during connection setup")); } catch (Exception ignored) {}
         }
     }
 
@@ -93,8 +94,18 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
-        ServerEventManager.removeEventQueue(eventQueue);
-        updateClientConnections(CONN_UPDATED, channelID, userKey);
+
+        try {
+            ServerEventManager.removeEventQueue(eventQueue);
+        } catch (Exception e) {
+            LOG.error(e, PREFIX+" Failed to remove event queue on close: " + (eventQueue != null ? eventQueue.getConnID() : "null"));
+        }
+        try {
+            updateClientConnections(CONN_UPDATED, channelID, userKey);
+        } catch (Exception e) {
+            LOG.error(e, PREFIX+" Failed to update client connections on close");
+        }
+
         if (closeReason!=null && session!=null) {
             String reason= closeReason.getCloseCode().toString() +
                     (closeReason.getReasonPhrase()!=null ? " - "+closeReason.getReasonPhrase() : "");

@@ -13,10 +13,14 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * @author Trey Roby
@@ -24,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ServerEventManager {
 
     private static final boolean USE_MESSAGE_EVENT_WORKER = true;
+    static final int MAX_WS_PER_CHANNEL = AppProperties.getIntProperty("max.ws.per.channel", 10);
     private static final EventWorker eventWorker = USE_MESSAGE_EVENT_WORKER ?
                                                     new MessageEventWorker() : new LocalEventWorker();
     private static final List<ServerEventQueue> localEventQueues = new CopyOnWriteArrayList<>();
@@ -100,10 +105,27 @@ public class ServerEventManager {
         }
     }
 
-    public static void addEventQueue(ServerEventQueue queue) {
+    public static synchronized void addEventQueue(ServerEventQueue queue) {
         Logger.info("Channel: create new Queue for: "+ queue.getQueueID() );
+        enforceChannelLimit(queue.getChannel(), MAX_WS_PER_CHANNEL);
         localEventQueues.add(queue);
-        allEventQueues.setQueueListForNode(localEventQueues);
+        allEventQueues.setQueueListForNode(new ArrayList<>(localEventQueues));
+    }
+
+    private static void enforceChannelLimit(String channelID, int maxConn) {
+        List<ServerEventQueue> channelConns = localEventQueues.stream()
+                .filter(q -> channelID.equals(q.getChannel()) && q.getEventConnector().isOpen())
+                .collect(Collectors.toList());
+        if (channelConns.size() >= maxConn) {
+            channelConns.sort(Comparator.comparing(ServerEventQueue::getConnID));
+            int toEvict = channelConns.size() - (maxConn - 1);
+            Logger.warn("Channel: " + channelID + " at limit (" + maxConn + "), evicting " + toEvict + " oldest connection(s)");
+            for (int i = 0; i < toEvict; i++) {
+                ServerEventQueue q = channelConns.get(i);
+                q.getEventConnector().close();
+                localEventQueues.remove(q);
+            }
+        }
     }
 
     /**
@@ -148,9 +170,9 @@ public class ServerEventManager {
         if (delivered) deliveredEventCnt++;
     }
 
-    public static void removeEventQueue(ServerEventQueue queue) {
+    public static synchronized void removeEventQueue(ServerEventQueue queue) {
         localEventQueues.remove(queue);
-        allEventQueues.setQueueListForNode(localEventQueues);
+        allEventQueues.setQueueListForNode(new ArrayList<>(localEventQueues));
     }
 
 //====================================================================
@@ -167,10 +189,16 @@ public class ServerEventManager {
         return cnt;
     }
 
-    public static List<ServerEventQueue.QueueDescription> getQueueDescriptionList(int limit) {
-        return localEventQueues.stream()
+    public record ChannelSummary(String channel, int count, long lastPutTime) {}
+
+    public static List<ChannelSummary> getChannelSummary(int limit) {
+        return getAllEventQueue().stream()
                 .map(ServerEventQueue::convertToDescription)
-                .sorted((d1,d2) -> (int)(d2.lastPutTime()-d1.lastPutTime()))
+                .collect(Collectors.groupingBy(ServerEventQueue.QueueDescription::channel))
+                .entrySet().stream()
+                .map(e -> new ChannelSummary(e.getKey(), e.getValue().size(),
+                        e.getValue().stream().mapToLong(ServerEventQueue.QueueDescription::lastPutTime).max().orElse(0)))
+                .sorted(Comparator.comparingInt(ChannelSummary::count).reversed())
                 .limit(limit)
                 .toList();
     }

@@ -382,15 +382,16 @@ public class ServerStatus extends BaseHttpServlet {
         int qCnt= ServerEventManager.getActiveQueueCnt();
         w.println("  - Total active queues:" + qCnt);
         if(qCnt>0) {
-            w.println("  - "+ (qCnt>10? "10 Most recently used channels:" :  "Channel list, ordered by last use:"));
-            w.println(makeQueueList());
+            w.println("  - "+ (qCnt>20? "Top 20 channels by connection count:" :  "Channel list, ordered by connection count:"));
+            w.println(makeQueueList(20));
         }
     }
 
-    private static String makeQueueList() {
-        return ServerEventManager.getQueueDescriptionList(10).stream()
-                .map( d -> String.format("     - %s, %s\n",d.channel(), new Date(d.lastPutTime())))
-                .reduce("", (all, entry) -> all+entry);
+    private static String makeQueueList(int limit) {
+        return ServerEventManager.getChannelSummary(limit).stream()
+                .map(s -> String.format("     - %s (%d conn), last use: %s\n",
+                        s.channel(), s.count(), new Date(s.lastPutTime())))
+                .reduce("", (all, entry) -> all + entry);
     }
 
     private static void showMessagingStatus(PrintWriter w) {
