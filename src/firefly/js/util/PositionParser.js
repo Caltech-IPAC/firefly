@@ -224,23 +224,28 @@ function parseAlphaNumericTokens(text) {
     let raStr = '';
     let decStr = '';
     let csysStr = '';
-    if (alphabetList.length>3) { // a weird case, spaces between the parts
-        const aParts= alphabetList.filter( (n) => n.startsWith('+') || n.startsWith('-') || Number(n[0])>=0 );
-        if (aParts.every( (v,i) => v===alphabetList[i])) {
-            const aJoin= aParts.map( (p) => {
-                if (!p.endsWith('d')) return p;
-                return (p.startsWith('-') || p.startsWith('+')) ? p : '+'+p;
-            }).join('');
-            aList= [aJoin,...alphabetList.slice(aParts.length)];
+    if (alphabetList.length>3) {
+        if (alphabetList.length===4 && isValidCoordSys(alphabetList[2]+' '+alphabetList[3])) {
+            aList=[alphabetList[0],alphabetList[1], alphabetList[2]+' '+alphabetList[3]];
         }
-        else {
-            return {raStr, decStr, coordSys: csysStr};
+        else {// a weird case, spaces between the parts
+            const aParts= alphabetList.filter( (n) => n.startsWith('+') || n.startsWith('-') || Number(n[0])>=0 );
+            if (aParts.every( (v,i) => v===alphabetList[i])) {
+                const aJoin= aParts.map( (p) => {
+                    if (!p.endsWith('d')) return p;
+                    return (p.startsWith('-') || p.startsWith('+')) ? p : '+'+p;
+                }).join('');
+                aList= [aJoin,...alphabetList.slice(aParts.length)];
+            }
+            else {
+                return {raStr, decStr, coordSys: csysStr, csysStr};
+            }
         }
     }
     else {
         aList= alphabetList;
     }
-    if (!aList.length) return {raStr, decStr, coordSys: csysStr};
+    if (!aList.length) return {raStr, decStr, coordSys: csysStr, csysStr};
     let idx =0;
     let array;
     for (let i=0; (i<aList.length); i++) {
@@ -404,6 +409,9 @@ function getvalidCoordSys(s) {
         return INVALID+' COORDINATE SYSTEM: '+s.trim();
     }
 }
+
+
+const isValidCoordSys= (csysStr) => Boolean(CoordinateSys.parse(getvalidCoordSys(csysStr)));
 
 function stringToLon(s, coordSys) {
     try {
