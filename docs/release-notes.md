@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.1
-- 2026.1.3 — (June 11, 2026), _docker tag_: `2026.1.3`, `2026.1`, `latest`
+- 2026.1.4 — (June 17, 2026), _docker tag_: `2026.1.4`, `2026.1`, `latest`
+- 2026.1.3 — (June 11, 2026), _docker tag_: `2026.1.3`
 - 2026.1.2 — (May 26, 2026), _docker tag_: `2026.1.2`
 - 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`
 - 2026.1.0 — (May 7, 2026), _docker tag_: `2026.1.0`
@@ -72,6 +73,10 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948))
 
 ### _Patches 2026.1_
+#### 2026.1.4
+- Support for cross-origin session affinity cookies — Firefly-2038 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1971))
+- Prevent runaway websocket connections — Firefly-2045 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1972))
+- Fixed regression error target panel parsing with two word coordinate sys  ([commit](https://github.com/Caltech-IPAC/firefly/commit/c48df775afd3469e8c5b5b74178e00b2e4b80501))
 #### 2026.1.3
 - Webgpu disabled for linux, use webgl instead — Firefly-2037 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1968))
 - Fixed properly initialize jobs, distinguishing between — Firefly-2007 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1966))
