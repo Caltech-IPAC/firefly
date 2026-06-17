@@ -89,8 +89,16 @@ public class EhcacheProvider implements Cache.Provider {
     }
 
     public void shutdown() {
-        visManager.close();
-        permManager.close();
+        try {
+            visManager.close();
+            permManager.close();
+        } finally {
+            new File(getPermDiskDir(), ".lock").delete();
+        }
+    }
+
+    private static File getPermDiskDir() {
+        return new File(new File(System.getProperty("java.io.tmpdir"), "ehcache"), ServerContext.getAppName());
     }
 
     /** Returns live statistics for a named cache, or null if not found. */
@@ -144,8 +152,7 @@ public class EhcacheProvider implements Cache.Provider {
     //====================================================================
     private static CacheManager setupPermCacheManager() {
         // Disk store for PERM_SMALL persistence
-        File ehcacheRoot = new File(System.getProperty("java.io.tmpdir"), "ehcache");
-        File diskDir = new File(ehcacheRoot, ServerContext.getAppName());
+        File diskDir = getPermDiskDir();
         PersistentCacheManager manager = CacheManagerBuilder.newCacheManagerBuilder()
                 .using(permStats)
                 .with(CacheManagerBuilder.persistence(diskDir))

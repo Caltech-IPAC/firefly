@@ -7,6 +7,7 @@ import {parseUrl, getRootURL} from '../../util/WebUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {WSCH} from '../History.js';
 import {dispatchConnectionStatus, getAppOptions} from '../AppDataCntlr.js';
+import {synchronizeAsyncFunctionById} from '../../util/SynchronizeAsync.js';
 
 export const CH_ID = 'channelID';
 
@@ -29,43 +30,38 @@ const logger = Logger('WebSocket');
 /**
  * returns a wsClient for the given baseUrl
  * @param baseUrl   the base URL to connect to
- * @return {Promise<wsClient>}
+ * @return {wsClient}
  */
 export function getWsConn(baseUrl=getRootURL()) {
-    return conns[baseUrl] || {isConnected: ()=>false, isConnecting: false};
+    return conns[baseUrl] || {isConnected: ()=>false};
 }
 
 /**
- * returns a wsClient for the given baseUrl, create if one does not exists
+ * returns a wsClient for the given baseUrl, create if one does not exist.
+ * guaranteed to only open one connection at a time per baseUrl.
  * @param baseUrl   the base URL to connect to
  * @return {Promise<wsClient>}
  */
 export function getOrCreateWsConn(baseUrl=getRootURL()) {
     const wsProxy = conns[baseUrl];
-    if (wsProxy) {
-        if (wsProxy.isConnected()) {
-            logger.debug(`getOrCreateWsConn -> existing connection: ${baseUrl} :: ${JSON.stringify(wsProxy)}`);
-            return Promise.resolve(wsProxy);
-        } else if (wsProxy.isConnecting) {
-            logger.debug('getOrCreateWsConn -> isConnecting ' + baseUrl);
-            return wsProxy.promise;
-        }
+    if (wsProxy?.isConnected()) {
+        logger.debug(`getOrCreateWsConn -> existing connection: ${baseUrl}`);
+        return Promise.resolve(wsProxy);
     }
-    const p = new Promise( (resolve, reject) => {
-        const mResolve = (proxy) => {
-            conns[baseUrl] = proxy;
-            dispatchConnectionStatus({lost: false, reason: null});
-            resolve?.(proxy);
-        };
-        const mReject = (e) => {
-            Reflect.deleteProperty(conns, baseUrl);
-            reject?.(e);
-        };
+    return synchronizeAsyncFunctionById(baseUrl, () => new Promise((resolve, reject) => {
         logger.debug('getOrCreateWsConn -> create new connection ' + baseUrl);
-        makeWsConn(baseUrl, mResolve, mReject);
-    });
-    conns[baseUrl] = {isConnecting: true, isConnected: ()=>false, promise: p};
-    return p;
+        makeWsConn(baseUrl,
+            (proxy) => {
+                conns[baseUrl] = proxy;
+                dispatchConnectionStatus({lost: false, reason: null});
+                resolve(proxy);
+            },
+            (e) => {
+                Reflect.deleteProperty(conns, baseUrl);
+                reject(e);
+            }
+        );
+    }));
 }
 
 const listeners = [];
@@ -176,7 +172,7 @@ function makeWsConn(baseUrl, resolve, reject) {
     wsConn.onmessage = onMessage;
     wsConn.onopen = () => {};
     wsConn.onerror = (e) => {
-        onClose('WebSocket onerror: ' + JSON.stringify(e));
+        logger.warn('WebSocket onerror: ' + JSON.stringify(e));
         reject?.(e);
     };
     wsConn.onclose = (r) => {

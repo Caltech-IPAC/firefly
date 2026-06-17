@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.events.ServerEventQueue;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.KeyVal;
@@ -35,6 +36,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -375,22 +377,40 @@ public class ServerStatus extends BaseHttpServlet {
         return (hostname!=null && hostname.contains("-") && !hostname.contains("."));
     }
 
+    private record ChannelSummary(String channel, int count, long lastPutTime) {}
+
+    private static List<ChannelSummary> getChannelSummaries(List<ServerEventQueue.QueueDescription> conns) {
+        return conns.stream()
+                .collect(Collectors.groupingBy(ServerEventQueue.QueueDescription::channel))
+                .entrySet().stream()
+                .map(e -> new ChannelSummary(e.getKey(), e.getValue().size(),
+                        e.getValue().stream().mapToLong(ServerEventQueue.QueueDescription::lastPutTime).max().orElse(0)))
+                .toList();
+    }
+
     private static void showEventsStatus(PrintWriter w) {
         w.println("Server Events Information");
         w.println("  - Total events fired:" + ServerEventManager.getTotalEventCnt());
         w.println("  - Total events delivered:" + ServerEventManager.getDeliveredEventCnt());
         int qCnt= ServerEventManager.getActiveQueueCnt();
         w.println("  - Total active queues:" + qCnt);
-        if(qCnt>0) {
-            w.println("  - "+ (qCnt>10? "10 Most recently used channels:" :  "Channel list, ordered by last use:"));
-            w.println(makeQueueList());
+        if (qCnt > 0) {
+            List<ServerEventQueue.QueueDescription> conns = ServerEventManager.getQueueList();
+            w.println("  - Top 10 channels by connection count:");
+            w.println(formatSummaries(getChannelSummaries(conns).stream()
+                    .sorted(Comparator.comparingInt(ChannelSummary::count).reversed())
+                    .limit(10).toList()));
+            w.println("  - Top 10 most recently active connections:");
+            conns.stream().limit(10).forEach(d ->
+                    w.printf("     - id: %-8s  channel: %s, last use: %s\n", d.connID(), d.channel(), new Date(d.lastPutTime())));
         }
     }
 
-    private static String makeQueueList() {
-        return ServerEventManager.getQueueDescriptionList(10).stream()
-                .map( d -> String.format("     - %s, %s\n",d.channel(), new Date(d.lastPutTime())))
-                .reduce("", (all, entry) -> all+entry);
+    private static String formatSummaries(List<ChannelSummary> summaries) {
+        return summaries.stream()
+                .map(s -> String.format("     - %s (%d conn), last use: %s\n",
+                        s.channel(), s.count(), new Date(s.lastPutTime())))
+                .reduce("", (all, entry) -> all + entry);
     }
 
     private static void showMessagingStatus(PrintWriter w) {
