@@ -236,6 +236,7 @@ public class RequestOwner implements Cloneable {
         Cookie cookie = new Cookie(USER_KEY, userKey);
         cookie.setMaxAge(USER_KEY_EXPIRY);
         cookie.setPath(requestAgent.getContextPath());
+        cookie.setHttpOnly(true);
         requestAgent.sendCookie(cookie);
     }
 
