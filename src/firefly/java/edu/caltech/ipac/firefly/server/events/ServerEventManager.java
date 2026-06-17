@@ -189,17 +189,10 @@ public class ServerEventManager {
         return cnt;
     }
 
-    public record ChannelSummary(String channel, int count, long lastPutTime) {}
-
-    public static List<ChannelSummary> getChannelSummary(int limit) {
+    public static List<ServerEventQueue.QueueDescription> getQueueList() {
         return getAllEventQueue().stream()
                 .map(ServerEventQueue::convertToDescription)
-                .collect(Collectors.groupingBy(ServerEventQueue.QueueDescription::channel))
-                .entrySet().stream()
-                .map(e -> new ChannelSummary(e.getKey(), e.getValue().size(),
-                        e.getValue().stream().mapToLong(ServerEventQueue.QueueDescription::lastPutTime).max().orElse(0)))
-                .sorted(Comparator.comparingInt(ChannelSummary::count).reversed())
-                .limit(limit)
+                .sorted(Comparator.comparingLong(ServerEventQueue.QueueDescription::lastPutTime).reversed())
                 .toList();
     }
 

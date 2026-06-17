@@ -27,8 +27,7 @@ public class ServerEventQueue implements Serializable {
     private String connID;
     private String channel;
     private String userKey;
-    private transient long lastPutTime= 0;
-    private transient long createTime= System.currentTimeMillis();
+    private transient long lastPutTime= System.currentTimeMillis();
 
     protected ServerEventQueue() {
         this.eventTerminal = null;
@@ -160,7 +159,7 @@ public class ServerEventQueue implements Serializable {
         public void close();
     }
 
-    public QueueDescription convertToDescription() { return new QueueDescription(connID,channel,userKey, lastPutTime > 0 ? lastPutTime : createTime); }
+    public QueueDescription convertToDescription() { return new QueueDescription(connID,channel,userKey,lastPutTime); }
 
     public record QueueDescription(String connID, String channel, String userKey, long lastPutTime) {}
 }
