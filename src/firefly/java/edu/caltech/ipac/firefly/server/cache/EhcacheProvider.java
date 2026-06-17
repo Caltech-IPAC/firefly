@@ -62,8 +62,8 @@ public class EhcacheProvider implements Cache.Provider {
      *   permManager — PERM_SMALL only; no custom SizeOfEngine so entry-count heap works, and
      *                 arbitrary objects (Semaphore, ConcurrentHashMap, …) are never deep-sized.
      */
-    private static CacheManager visManager;
-    private static CacheManager permManager;
+    private static final CacheManager visManager;
+    private static final CacheManager permManager;
     private static final DefaultStatisticsService visStats  = new DefaultStatisticsService();
     private static final DefaultStatisticsService permStats = new DefaultStatisticsService();
 
@@ -73,10 +73,15 @@ public class EhcacheProvider implements Cache.Provider {
      */
     private static final int DEF_TTI_SEC = 60 * 60;
 
+    static {
+        visManager = setupVisCacheManager();
+        permManager = setupPermCacheManager();
+    }
+
     public <T> Cache<T> getCache(String type) {
         org.ehcache.Cache<String, Object> ehcache = switch (type) {
-            case VIS_SHARED_MEM -> getVisManager().getCache(type, String.class, Object.class);
-            case PERM_SMALL     -> getPermManager().getCache(type, String.class, Object.class);
+            case VIS_SHARED_MEM -> visManager.getCache(type, String.class, Object.class);
+            case PERM_SMALL     -> permManager.getCache(type, String.class, Object.class);
             default -> throw new IllegalArgumentException("Unknown cache type.  Make sure cache type '" +
                     type + "' is defined in EhcacheProvider.");
         };
@@ -84,8 +89,16 @@ public class EhcacheProvider implements Cache.Provider {
     }
 
     public void shutdown() {
-        getVisManager().close();
-        getPermManager().close();
+        try {
+            visManager.close();
+            permManager.close();
+        } finally {
+            new File(getPermDiskDir(), ".lock").delete();
+        }
+    }
+
+    private static File getPermDiskDir() {
+        return new File(new File(System.getProperty("java.io.tmpdir"), "ehcache"), ServerContext.getAppName());
     }
 
     /** Returns live statistics for a named cache, or null if not found. */
@@ -97,15 +110,8 @@ public class EhcacheProvider implements Cache.Provider {
         };
     }
 
-    public synchronized CacheManager getVisManager() {
-        if (visManager == null) visManager = setupVisCacheManager();
-        return visManager;
-    }
-
-    public synchronized CacheManager getPermManager() {
-        if (permManager == null) permManager = setupPermCacheManager();
-        return permManager;
-    }
+    public CacheManager getVisManager()  { return visManager; }
+    public CacheManager getPermManager() { return permManager; }
 
     //====================================================================
     // VIS_SHARED_MEM: byte-based heap with CustomSizeOfEngine to handle HasSizeOf objects
@@ -146,8 +152,7 @@ public class EhcacheProvider implements Cache.Provider {
     //====================================================================
     private static CacheManager setupPermCacheManager() {
         // Disk store for PERM_SMALL persistence
-        File ehcacheRoot = new File(System.getProperty("java.io.tmpdir"), "ehcache");
-        File diskDir = new File(ehcacheRoot, ServerContext.getAppName());
+        File diskDir = getPermDiskDir();
         PersistentCacheManager manager = CacheManagerBuilder.newCacheManagerBuilder()
                 .using(permStats)
                 .with(CacheManagerBuilder.persistence(diskDir))

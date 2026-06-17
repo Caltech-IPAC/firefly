@@ -455,8 +455,6 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
         bootstrapRedux( getBootstrapRegistry(), processDecor);
         flux.process( {type : APP_LOAD} );  // setup initial store/state
 
-        ensureUsrKey();
-
         let srvAppSpecificOptions={};
         try {
             srvAppSpecificOptions= await getJsonProperty('FIREFLY_OPTIONS');
@@ -555,32 +553,3 @@ function handleWebApi(webApiCommands, appProps, element, doAppRender) {
             break;
     }
 }
-
-function ensureUsrKey() {
-    if (hasOldUsrKey()) {
-        document.cookie = 'usrkey=;path=/;max-age=-1';
-        document.cookie = `usrkey=;path=${location.pathname};max-age=-1`;
-    }
-    const usrKey = getCookie('usrkey');
-    if (!usrKey) {
-        document.cookie = `usrkey=${uuid()};max-age=${3600 * 24 * 7 * 2}`;
-    }
-}
-
-function hasOldUsrKey() {
-    return document.cookie.split(';').map((s) => s.trim())
-        .some( (c) => {
-            const [name='', val=''] = c.split('=');
-            return name === 'usrkey' && val.includes('/');
-        });
-
-}
-
-function getCookie(name) {
-    return ('; ' + document.cookie)
-        .split('; ' + name + '=')
-        .pop()
-        .split(';')
-        .shift();
-}
-
