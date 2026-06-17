@@ -1,7 +1,7 @@
 /* eslint prefer-template:0 */
 import {makeWorldPt} from '../visualize/Point.js';
-import CoordinateSys from '../visualize/CoordSys.js';
-import {crunch, matchesIgCase} from './WebUtil';
+import CoordinateSys, {findValidCoordSysStr} from '../visualize/CoordSys.js';
+import {crunch} from './WebUtil';
 import CoordUtil, {parseDBIdToCoord} from 'firefly/visualize/CoordUtil.js';
 
 export const PositionParsedInputType={Name: 'Name', Position:'Position', DB_ID:'DB_ID'};
@@ -122,7 +122,7 @@ function parseAndConvertToMeta(text) {
         result= useNumeric ? parseNumericTokens(text) : parseAlphaNumericTokens(text);
     }
     const {raStr, decStr, csysStr} = result;
-    return {raStr:raStr.trim(), decStr:decStr.trim(), csysStr:getvalidCoordSys(csysStr) || DEFAULT_COORD_SYS};
+    return {raStr:raStr.trim(), decStr:decStr.trim(), csysStr:getValidCoordSys(csysStr) || DEFAULT_COORD_SYS};
 }
 
 function parseCommaSeparated(text) {
@@ -339,79 +339,13 @@ function convertDEC(s) {
     return dms[0]+' '+dms[1]+' '+dms[2];
 }
 
-const F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
-const FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
-const EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
-const E1950 = 'B1950$|B195$|B19$|B1$|B$';
-const SECL = '^ECLIPTIC|^ECL|^EC|^EC_|ECL_';
-const SEQ = '^EQUATORIAL|^EQU|^EQ|^EQ_';
 
-
-const COMBINE_SYS = '(^ECLIPTIC|^ECL|^ECL_|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
-const ECL_1950 = '('+SECL +')('+E1950+ ')';
-const ECL_2000 = '('+SECL +')('+EJ2000+ ')';
-
-const EQ_1950 = '('+SEQ+')(' +E1950+ ')';
-const EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
-
-
-function getvalidCoordSys(s) {
-    const array = s.trim().split(' ');
-    if (!s || array.length===0 ) return 'EQ_J2000';
-    const inCoord0= array[0].toUpperCase();
-    if (array.length===1 && matches(inCoord0,COMBINE_SYS)) {
-        if (inCoord0.startsWith('EC')) {
-            if (matches(array[0],ECL_1950)) {
-                return 'EC_B1950';
-            } else if (matches(inCoord0,ECL_2000)) {
-                return 'EC_J2000';
-            }
-        } else if (inCoord0.startsWith('EQ')) {
-            if (matches(inCoord0,EQ_1950)) {
-                return 'EQ_B1950';
-            } else if (matches(inCoord0,EQ_2000)) {
-                return 'EQ_J2000';
-            }
-        }
-    } else if (matches(inCoord0,'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
-        if (array.length>1) {
-            if (matches(array[1], F1950)) {
-                return 'EQ_B1950';
-            } else if (matches(array[1], FJ2000)) {
-                return 'EQ_J2000';
-            }
-            else {
-                return INVALID+' COORDINATE SYSTEM: '+s.trim();
-            }
-        } else {
-            return 'EQ_J2000';
-        }
-    } else if (matches(inCoord0,'^ECLIPTIC$|^ECL$|^EC$|^EC_$|^ECL_$')) {
-        if (array.length>1) {
-            if (matches(array[1], F1950)) {
-                return 'EC_B1950';
-            } else if (matches(array[1], FJ2000)) {
-                return 'EC_J2000';
-            }
-            else {
-                return INVALID+' COORDINATE SYSTEM: '+s.trim();
-            }
-        } else {
-            return 'EC_J2000';
-        }
-    } else if (matches(inCoord0,'^GALACTIC$|^GAL$|^GA$|^G$')) {
-        return 'GALACTIC';
-    } else if (matches(inCoord0, FJ2000)) {
-        return 'EQ_J2000';
-    } else if (matches(inCoord0, F1950)) {
-        return 'EQ_B1950';
-    } else {
-        return INVALID+' COORDINATE SYSTEM: '+s.trim();
-    }
+function getValidCoordSys(s) {
+    if (!s?.trim()) return 'EQ_J2000';
+    return findValidCoordSysStr(s) ?? INVALID+' COORDINATE SYSTEM: '+s.trim();
 }
 
-
-const isValidCoordSys= (csysStr) => Boolean(CoordinateSys.parse(getvalidCoordSys(csysStr)));
+const isValidCoordSys= (csysStr) => Boolean(findValidCoordSysStr(csysStr));
 
 function stringToLon(s, coordSys) {
     try {
@@ -467,7 +401,6 @@ function determineType(s) {
 
 
 
-const matches= (s, regExp) => matchesIgCase(s, regExp);
 const getCoordSysFromString= (s) => !s ? null : CoordinateSys.parse(s);
 const polishString= (str) => str ? convertExtendedAscii(str) : str;
 const replaceAt= (str, index, replacement) => str.substr(0, index) + replacement+ str.substr(index + replacement.length);

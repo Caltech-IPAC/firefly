@@ -8,9 +8,11 @@ import {getAppOptions} from '../../core/AppDataCntlr';
 import {dispatchHideDialog} from '../../core/ComponentCntlr';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr';
 import {MetaConst} from '../../data/MetaConst';
-import {makeFileRequest, setNoCache} from '../../tables/TableRequestUtil';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import {makeFileRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr';
 import {intValidator} from '../../util/Validate';
+import {makeSearchOnce} from '../../util/WebUtil';
 import {FieldGroup, FieldGroupCtx} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel';
 import {InputField} from '../InputField';
@@ -19,10 +21,12 @@ import {showInfoPopup, showYesNoPopup} from '../PopupUtil';
 import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SwitchInputField} from '../SwitchInputField';
 import {ValidationField} from '../ValidationField';
-import {ConstraintContext} from './Constraints';
+import {ConstraintContext, getHelperConstraints} from './Constraints';
 import {ROW_POSITION} from './Cutout';
 import {showResultTitleDialog} from './ResultTitleDialog';
 import {SiaUI} from './SiaUI';
+import {validateAutoSearch} from './TapSearchRootPanel';
+import {getAdqlQuery} from './TapSearchSubmit';
 import {getMaxrecHardLimit} from './TapUtil';
 import {
     SIA_SERVICE_META, SIA_SERVICE_URL, SIA_USER_ENTERED_TITLE,
@@ -33,6 +37,7 @@ import {
 import {makeNumberedTitle} from 'firefly/tables/TableUtil';
 
 const DEFAULT_SIA_PANEL_GROUP_KEY = 'SIAv2_PANEL_GROUP_KEY';
+const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
 
 export function SIAv2SearchPanel({initArgs= {}, titleOn=false,
@@ -59,6 +64,8 @@ function SIAV2SearchPanelImpl({initArgs, titleOn, lockService, lockedServiceUrl,
     const [srvNameKey, setSrvNameKey]= useState(() => getServiceNamesAsKey());
     const [working, setWorking]= useState(() => false);
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
+    if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true,undefined,initArgs?.urlApi?.callId); // if not execute then mark as done, i.e. disable any auto searching
+    const hasMeta= Boolean(getServiceMeta());
 
     const siaOps= getSiaServiceOptions();
     const serviceUrl= getServiceUrl();
@@ -102,6 +109,14 @@ function SIAV2SearchPanelImpl({initArgs, titleOn, lockService, lockedServiceUrl,
         setServicesShowingInternal(showing);
         setSiaState({...getSiaState(), lastServicesShowing:showing});
     };
+
+    useEffect(() => {
+        searchFromAPIOnce( // searchFromAPIOnce only matters if the urlApi.execute is true
+            () => hasMeta,
+            () => setTimeout(() => clickFuncRef.clickFunc?.(), 5),
+            initArgs?.urlApi?.callId
+        );
+    }, [hasMeta]);
 
     return (
         <Box width={1} height={1}>

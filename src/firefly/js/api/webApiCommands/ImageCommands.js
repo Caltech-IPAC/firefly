@@ -113,15 +113,15 @@ const hipsExamples= [
 
 const hipsPanelOverview= {
     overview: [
-        'Show HiPS Panel, configure HiPS panel, show HiPS: you may also use any parameter from the hips command'
+        'Show HiPS Panel and/or load, configure HiPS panel, or just display HiPS: you may also use any parameter from the hips command'
     ],
     parameters: {
-        showPanel: {desc:'show HiPS panel'},
+        showPanel: {desc:'Show HiPS search panel. If not included or false, loads the HiPS (executes the HiPS search'},
         [ReservedParams.POSITION.name]: ['coordinates to center HiPS',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['Radius of the field of view of the HiPS',...ReservedParams.SR.desc],
         hipsListName: {desc:'a HiPS list server name'},
         hipsListUrl: {desc:'a HiPS list server url'},
-        uri: {desc:'if included, the HiPS panel will not initially show: the HiPS will load'},
+        uri: {desc: 'URI of the HiPS to load, same as in cmd=hips. If showPanel is true, it selects the HiPS from the HiPS list else it loads the HiPS.' },
     },
 };
 
@@ -214,11 +214,22 @@ function showHiPs(cmd,inParams) {
 }
 
 function validateHiPSPanel(params) {
+    const {hipsListUrl,uri,showPanel}= params;
+    if (!hipsListUrl && !uri && !showPanel) {
+        return {valid:false, msg:'hipsListUrl or showPanel or uri is required'};
+    }
     return {valid:true};
 }
 
 function showHiPSPanel(cmd,inParams) {
     setTimeout( async () => void showHiPSPanelAsync(cmd,inParams) );
+}
+
+function executeHiPSUri(cmd, plotParams) {
+    setTimeout(() => {
+        dispatchHideDropDown();
+        showHiPs(cmd, plotParams);
+    });
 }
 
 async function showHiPSPanelAsync(cmd, inParams) {
@@ -228,7 +239,7 @@ async function showHiPSPanelAsync(cmd, inParams) {
         urlApi.radius= inParams[ReservedParams.SR.name];
     }
 
-    const {hipsListName,hipsListUrl,showPanel, ...plotParams}= inParams;
+    const {hipsListName,hipsListUrl,showPanel, execute, ...plotParams}= inParams;
     if (hipsListUrl) {
         const name= hipsListName || hipsListUrl;
         dispatchAppOptions({extraHiPSListName:name});
@@ -242,24 +253,17 @@ async function showHiPSPanelAsync(cmd, inParams) {
         await doFetchTable( makeTblRequest('HiPSSearch', 'ensure hips source', params, { tbl_id, pageSize: MAX_ROW, }));
     }
 
-    if (toBoolean(showPanel)) {
-        const {menuItems,selected,showBgMonitor}= getMenu();
-        if (!menuItems?.find(({action}) => action==='HiPSSearchPanel')) { // add the toolbar option
-            const newMenuItems= [...menuItems];
-            const hipsPanel= {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:'extra'};
-            newMenuItems.splice(1,0,hipsPanel);
-            dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
-        }
-        dispatchShowDropDown({view:'HiPSSearchPanel', initArgs:{urlApi}});
+    const {uri}=plotParams;
+    if (uri) urlApi.uri=uri;
+    const {menuItems,selected,showBgMonitor}= getMenu();
+    if (!menuItems?.find(({action}) => action==='HiPSSearchPanel')) { // add the toolbar option
+        const newMenuItems= [...menuItems];
+        const hipsPanel= {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:'extra'};
+        newMenuItems.splice(1,0,hipsPanel);
+        dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
     }
-
-    if (plotParams.uri) {
-        // dispatchShowDropDown( {view: undefined});
-        setTimeout(() => {
-            dispatchHideDropDown();
-            showHiPs(cmd,plotParams);
-        },10);
-    }
+    dispatchShowDropDown({view:'HiPSSearchPanel', initArgs:{urlApi}});
+    if (!showPanel) executeHiPSUri(cmd,plotParams);
 }
 
 

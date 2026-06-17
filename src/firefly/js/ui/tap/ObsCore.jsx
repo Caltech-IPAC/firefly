@@ -161,7 +161,7 @@ const getCalibrationOptions= (obsCoreCalibrationLevelOptions, obsCoreMetadataMod
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
-const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'obsCoreInstrumentName', 'obsCoreCollection', 'siaFacility'];
+const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'facility', 'obsCoreInstrumentName', 'obsCoreCollection', 'siaFacility'];
 
 
 export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
@@ -176,6 +176,11 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
     const obsCoreCalibrationLevelOptions =  getDataServiceOption('obsCoreCalibrationLevel',serviceId,{});
     const obsCoreSubTypeOptions =  getDataServiceOption('obsCoreSubType',serviceId,{});
     const obsCoreInstrumentNameOptions =  getDataServiceOption('obsCoreInstrumentName',serviceId,{});
+
+
+    const {obsCoreCalibrationLevel, obsCoreTypeSelection, obsCoreInstrumentName, obsCoreCollection, obsCoreSubType}= initArgs?.urlApi ?? {};
+    const apiTurnOn= Boolean(obsCoreCalibrationLevel || obsCoreTypeSelection || obsCoreInstrumentName || obsCoreCollection || obsCoreSubType);
+
 
     const [constraintResult, setConstraintResult] = useState({});
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
@@ -214,7 +219,15 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
     useEffect(() => {
         setConstraintFragment?.(panelPrefix, constraintResult);
         return () => setConstraintFragment?.(panelPrefix, '');
-    }, [constraintResult]);
+    }, [constraintResult, setConstraintFragment]);
+
+    useEffect(() => {
+        if (!apiTurnOn) return;
+        checkHeaderCtl.setPanelActive(true);
+        checkHeaderCtl.setPanelOpen(true);
+    }, [apiTurnOn]);
+
+
 
     const hasFacility= obsCoreMetadataModel?.tableData?.data?.some( (row) => row[0]==='facility');
 
@@ -246,7 +259,7 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
                                                        tooltip='Select ObsCore Data Product Type'
                                                        placeholder={'Any'}
                                                        label='Data Product Type'
-                                                       initialState={{ value: urlApi.obsCoreCollection || '' }}
+                                                       initialState={{ value: urlApi.obsCoreTypeSelection || '' }}
                                                        columnName='dataproduct_type'
                                                        obsCoreMetadataModel={obsCoreMetadataModel}
                                     />
@@ -269,7 +282,7 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
                                                        tooltip={'Select Facility'}
                                                        placeholder={'Any'}
                                                        label='Facility'
-                                                       initialState={{ value: urlApi.obsCoreCollection || '' }}
+                                                       initialState={{ value: urlApi.facility || '' }}
                                                        columnName='facility'
                                                        obsCoreMetadataModel={obsCoreMetadataModel}
                                     />
