@@ -10,6 +10,9 @@
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{ include "firefly.selectorLabels" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.extraLabels }}
+{{ toYaml . | trimSuffix "\n" }}
+{{- end }}
 {{- end }}
 
 {{- define "firefly.selectorLabels" -}}
