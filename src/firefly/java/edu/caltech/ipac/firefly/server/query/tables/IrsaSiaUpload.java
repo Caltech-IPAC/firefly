@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.Util.Try;
-import static edu.caltech.ipac.util.CollectionUtil.isEmpty;
 
 /**
  * @author Trey Roby
@@ -85,13 +84,20 @@ public class IrsaSiaUpload extends EmbeddedDbProcessor {
 
         // build SIA parameters, call service, make DataGroup
         try {
-            var collection= Try.it(() -> (JSONArray)new JSONParser().parse(req.getParam("COLLECTION"))).get();
             var postData= new HashMap<String,Object>( Map.of(
                     "POS",       String.format("CIRCLE my_table.%s my_table.%s %s", lonCol, latCol, circleSize),
                     "UPLOAD",    "my_table,param:table.tbl",
                     "table.tbl", FileUtil.readFile(uploadFile)
             ) );
-            if (!isEmpty(collection)) postData.put("collection", collection);
+            JSONArray collectionArray= Try.it(() -> (JSONArray)new JSONParser().parse(req.getParam("COLLECTION"))).get();
+            if (collectionArray !=null) {
+                if (!collectionArray.isEmpty()) postData.put("collection", collectionArray);
+            }
+            else {
+                String collectionStr= req.getParam("COLLECTION");
+                if (collectionStr!=null) postData.put("collection", collectionStr);
+            }
+
 
             req.getParams().stream()
                     .filter(p -> !ignore.contains(p.getName()))
