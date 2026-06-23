@@ -84,9 +84,13 @@ class MaskEval implements FitsEvaluation.Eval {
         Cursor<String, HeaderCard> extraIter = header.iterator();
         while (extraIter.hasNext()) {
             var hc = extraIter.next();
-            if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
+            var inKey= hc.getKey();
+            if (inKey.startsWith("MP") || inKey.startsWith("HIERARCH.MP")) {
                 var v= Try.it(() -> Integer.parseInt(hc.getValue())).getOrElse(-1);
-                if (v>-1) maskEntries.add(new RelatedData.MaskEntry(hc.getKey(), v, ""));
+                if (v>-1) {
+                    String key= inKey.startsWith("HIERARCH.MP") ? inKey.substring(12) : inKey.substring(3);
+                    maskEntries.add(new RelatedData.MaskEntry(key, v, ""));
+                }
             }
         }
         return maskEntries;
