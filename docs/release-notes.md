@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.1
-- 2026.1.4 — (June 17, 2026), _docker tag_: `2026.1.4`, `2026.1`, `latest`
+- 2026.1.5 — (June 23, 2026), _docker tag_: `2026.1.5`, `2026.1`, `latest`
+- 2026.1.4 — (June 17, 2026), _docker tag_: `2026.1.4`
 - 2026.1.3 — (June 11, 2026), _docker tag_: `2026.1.3`
 - 2026.1.2 — (May 26, 2026), _docker tag_: `2026.1.2`
 - 2026.1.1 — (May 20, 2026), _docker tag_: `2026.1.1`
@@ -73,6 +74,9 @@ background monitor and UWS improvements, major infrastructure updates, a new dra
 - Fixed Upload panel should not show a column checked filter — Firefly-1977 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1948))
 
 ### _Patches 2026.1_
+#### 2026.1.5
+- Fixed DCE SIA upload: collection was not passed in certain cases  ([commit](https://github.com/Caltech-IPAC/firefly/commit/e4ab5d4b1dfdf82b5ff7db6c760bcb4d40301def))
+- Fixed regression error, `MP_` style mask plane layer display — Firefly-2026 ([commit](https://github.com/Caltech-IPAC/firefly/commit/aa95f3c4a8b40bfcb0cd1c2eb228426a5998a932))
 #### 2026.1.4
 - Support for cross-origin session affinity cookies — Firefly-2038 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1971))
 - Prevent runaway websocket connections — Firefly-2045 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1972))
