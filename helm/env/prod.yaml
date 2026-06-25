@@ -1,5 +1,11 @@
-autoscaling:
-  enabled: true
+ingress:
+  tlsSecretName: firefly-ssl-cert
+
+replicaCount: 2
+
+image:
+  repository: ipac/firefly
+  pullPolicy: Always
 
 resources:
   requests:
@@ -7,13 +13,6 @@ resources:
   limits:
     memory: 8Gi
 
-redis:
-  maxmemory: 500M
-  resources:
-    limits:
-      memory: 512Mi
-
 persistence:
   sharedWorkDir:
-    pvc:
-      storageClass: "efs"
+    existingClaim: firefly-workarea

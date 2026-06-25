@@ -1,6 +1,10 @@
+ingress:
+  tlsSecretName: firefly-ssl-cert
+
 replicaCount: 1
 
 image:
+  repository: ipac/firefly
   pullPolicy: Always
 
 resources:
@@ -8,3 +12,7 @@ resources:
     memory: 1Gi
   limits:
     memory: 4Gi
+
+persistence:
+  sharedWorkDir:
+    existingClaim: firefly-workarea
