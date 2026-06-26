@@ -261,12 +261,12 @@ export async function processMaskTileViaWebGPU(maskColor, pixelData,width,height
     const pixelBuf= makePixelBuf(device, pixelData);
     const outBuf = device.createBuffer({ size: width*height*4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
     const colorBuf = makeUnsignedIntUniform(device, [color]);
-    const pixelCountBuf = makeUnsignedIntUniform(device, [pixelData.length]);
+    const outputPixelsBuf = makeUnsignedIntUniform(device, [width * height]);
     const {module,wgSize}= modules.getWgslImageMask();
     const pipeline = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' } });
-    const buffers= [pixelBuf, outBuf, colorBuf, pixelCountBuf];
+    const buffers= [pixelBuf, outBuf, colorBuf, outputPixelsBuf];
     const bindGroup= makeBindGroup(device, pipeline, buffers);
-    const encoder= makeEncoder(device, bindGroup, pipeline, pixelData.length, wgSize);
+    const encoder= makeEncoder(device, bindGroup, pipeline, pixelData.length / 4, wgSize);
     const readBuf= runIt(device, encoder, outBuf, width * height * 4);
     const bitmap= makeBitmapFromBuffer(readBuf,width,height, wgSize);
     destroyBuffers(buffers);

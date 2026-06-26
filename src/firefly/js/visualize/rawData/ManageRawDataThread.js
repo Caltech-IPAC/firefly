@@ -99,11 +99,17 @@ async function doMaskColorChange(payload) {
 }
 
 function convertToBits(ary) {
-    const retAry= new Uint8ClampedArray(Math.trunc(ary.length/8)+1);
     const len= ary.length;
+    const evenRetLen= Math.trunc(len/8);
+    const retAry= new Uint8ClampedArray((len % 8 === 0) ? evenRetLen : evenRetLen+1);
+    let j;
     for(let i=0;(i<len);i++) {
-        if (ary[i]) {
-            retAry[Math.trunc(i / 8)] = retAry[Math.trunc(i / 8)] | (1 << (i % 8));
+        if (i % 8 === 0) {
+            j= Math.trunc(i / 8);
+            retAry[j] = 0xff;
+        }
+        if (!ary[i]) {
+            retAry[j]&= ~(1 << (i % 8));
         }
     }
     return retAry;
