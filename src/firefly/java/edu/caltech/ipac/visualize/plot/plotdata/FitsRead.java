@@ -99,7 +99,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     public int getNaxis() { return FitsReadUtil.getNaxis(header); }
     public int getNaxis1() { return FitsReadUtil.getNaxis1(header); }
     public int getNaxis2() { return FitsReadUtil.getNaxis2(header); }
-    public int getNaxis3() { return FitsReadUtil.getNaxis3(header); }
+    public int getNaxisLength(int axis) { return FitsReadUtil.getNaxisLength(header, axis); }
     public String getBUnit() { return this.bunit;}
     public double getBscale() { return FitsReadUtil.getBscale(header); }
     public double getBzero() { return FitsReadUtil.getBzero(header); }

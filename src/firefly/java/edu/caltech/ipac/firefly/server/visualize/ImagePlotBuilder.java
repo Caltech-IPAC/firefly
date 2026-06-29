@@ -217,6 +217,9 @@ public class ImagePlotBuilder {
             }
             case USE_EXTS -> {
                 var infoList = getFileReadList( req.getMultiImageExts(), readAry);
+                if (infoList.isEmpty()) {
+                    throw new FailedRequestException("No supported image HDUs at " +req.getMultiImageExts());
+                }
                 var stateArys = makeNoBandMultiImagePlotStateOnList( req, readAry, infoList);
                 yield ImagePlotCreator.makeAllNoBandByState(stateArys,readAry);
             }

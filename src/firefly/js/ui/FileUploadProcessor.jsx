@@ -31,6 +31,7 @@ import {dispatchHideDropDown, dispatchShowDropDown} from '../core/LayoutCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {getIntHeaderFromAnalysis, getTableHeaderFromAnalysis} from '../metaConvert/PartAnalyzer.js';
 import {upload} from '../rpc/CoreServices';
+import {getAllSelectedIndexes} from '../tables/HpxIndexCntlr';
 import {getHttpErrorMessage} from '../util/HttpErrorMessage';
 import {getStatusFromFetchError} from '../util/WebUtil';
 
@@ -79,12 +80,20 @@ export function resultSuccess(request,cacheKey) {
     const fileCacheKey = cacheKey ?? getFileCacheKey(groupKey);
 
     //determine if the file type or selections are valid to be loaded
-    const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel,
+    const {valid, errorMsg, title, unsupportedIndexes=0} = determineValidity(acceptList, uniqueTypes, summaryModel,
         summaryTblId, report, acceptOneItem, message);
 
     if (!valid) {
         showInfoPopup(errorMsg, title);
         return false;
+    }
+
+    if (unsupportedIndexes.length>0) {
+        showInfoPopup(unsupportedIndexes.length===1
+                ? 'You have select a unsupported item, loading the rest'
+                : 'You have select some unsupported items, loading the rest',
+            'Unsupported items'
+        );
     }
 
     const {loadType, tableIndices, imageIndices} = determineLoadType(acceptList, uniqueTypes, summaryModel,
@@ -145,7 +154,6 @@ export function resultSuccess(request,cacheKey) {
 
         default: return false;
     }
-    return false;
 }
 
 function showWarning(warningMsg,sendRequest) {
@@ -247,6 +255,8 @@ const errorObj = {
     noImgSelectedErr: {valid: false, errorMsg: 'You must select at least one Image.', title: 'Validation Error'},
     imgNotAcceptedErr: {valid: false, errorMsg: 'You may not load an image file from here.', title: 'File Type Mismatch'},
     tblNotAcceptedErr: {valid: false, errorMsg: 'You may not load tables from here.', title: 'File Type Mismatch'},
+    unsupportedMultiErr: {valid: false, errorMsg: 'All selected images are not supported', title: 'Unsupported'},
+    unsupportedSingleErr: {valid: false, errorMsg: 'Unsupported item', title: 'Unsupported'},
 };
 
 export function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
@@ -267,6 +277,8 @@ export function determineValidity(acceptList, uniqueTypes, summaryModel, summary
     const isMocFits =  isMOCFitsFromUploadAnalsysis(report);
     const isDL=  isAnalysisTableDatalink(report);
 
+    const allIdxs= [...tableIndices, ...imageIndices];
+
     if (!report) {// report is the basis for all the checks below, handle it early on if undefined
         errorMsg = message || fileAnalysisErr.errorMsg;
         return {...fileAnalysisErr, errorMsg};
@@ -276,10 +288,23 @@ export function determineValidity(acceptList, uniqueTypes, summaryModel, summary
         return errorObj.regionMismatchErr;
     }
 
+    const unsupportedIndexes= allIdxs.filter( (i) => report.parts[i].unsupported);
+    if (allIdxs.length &&  unsupportedIndexes.length === allIdxs.length) {
+        if (allIdxs.length === 1) {
+            const reason= report.parts[allIdxs[0]]?.unsupportedReason;
+            const errorMsg= reason ? errorObj.unsupportedSingleErr.errorMsg + ': ' + reason : unsupportedSingleErr.errorMsg;
+            return { ...errorObj.unsupportedSingleErr, errorMsg };
+        }
+        else {
+            return errorObj.unsupportedMultiErr;
+        }
+    }
+
     //check for url because user may try and upload a uws job xml file from the 'Upload File' option instead of 'Upload from URL'
     if (uniqueTypes.includes(UWS) && (!acceptUWS(acceptList) || !report.parts[0].url)) {
         return errorObj.uwsMismatchErr;
     }
+
 
     if (!isFileSupported(summaryModel, report)) {
         errorMsg = getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type';
@@ -355,7 +380,7 @@ export function determineValidity(acceptList, uniqueTypes, summaryModel, summary
             return errorObj.noTblSelectedErr;
         }
     }
-    return {valid, errorMsg, title}; //valid will be true here
+    return {valid, errorMsg, title, unsupportedIndexes}; //valid will be true here
 }
 
 export function getFileCacheKey(groupKey) {

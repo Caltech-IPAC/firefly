@@ -62,14 +62,12 @@ public class TableUtil {
             return DsvTableIO.parse(inf, format, request);
         } else if (format == FormatUtil.Format.FITS ) {
             try {
-                // Switch to the new function:
-                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), request, tableIndex);
+                return FITSTableReader.readFitsTable(inf.getAbsolutePath(), request, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }
         } else if (format == FormatUtil.Format.ASDF ) {
             try {
-                // Switch to the new function:
                 return AsdfAccess.convertAsdfTableToDataGroup(inf, request, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
