@@ -2,6 +2,7 @@ import {isEmpty} from 'lodash';
 import {getAnyFileLoadCommands} from './AnyFileLoadCommands';
 import {getImageCommands} from './ImageCommands';
 import {getLsdbCommands} from './LsdbCommands';
+import {getSiaCommands} from './SiaCommands';
 import {getTabCommands} from './TabCommands';
 import {getTableCommands} from './TableCommands';
 import {getTapCommands} from './TapCommands';
@@ -17,6 +18,7 @@ export function getFireflyViewerWebApiCommands(cmdNameList, tapPanelList=[]) {
         ...getImageCommands(),
         ...getTableCommands(),
         ...getTapCommands(tapPanelList),
+        ...getSiaCommands(),
         ...getLsdbCommands(),
         ...getAnyFileLoadCommands()
     ];

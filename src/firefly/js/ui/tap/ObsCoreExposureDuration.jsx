@@ -127,6 +127,9 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLength
     const [constraintResult, setConstraintResult] = useState({});
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys] ); // force rerender on any change
 
+    const  {exposureRangeType, exposureSinceValue, exposureSinceOptions, exposureLengthMin, exposureLengthMax}= initArgs?.urlApi ?? {};
+    const apiTurnOn= Boolean(exposureRangeType || exposureSinceValue || exposureSinceOptions || exposureLengthMin || exposureLengthMax);
+
     const turnOnPanel= () => checkHeaderCtl.setPanelActive(true);
 
     const isRange= getVal('exposureRangeType') === 'range';
@@ -142,6 +145,15 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLength
         return () => setConstraintFragment(panelPrefix, '');
     },[constraintResult]);
 
+    useEffect(() => {
+        if (!apiTurnOn) return;
+        turnOnPanel();
+        checkHeaderCtl.setPanelOpen(true);
+    }, [apiTurnOn]);
+
+
+
+
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
@@ -151,19 +163,19 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLength
                         <ListBoxInputField
                             {...{fieldKey:'exposureRangeType', options: exposureRangeOptions,
                                 label:'Time of Observation',
-                                initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'},
+                                initialState:{value: exposureRangeType || 'since'},
                                 ...slotProps?.exposureRangeType
                             }} />
                         {isRange
-                            ? <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                            ? <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()||apiTurnOn,
                                 fromTip:"'Exposure start from' time (t_min)",
                                 toTip:"'Exposure end to' time (t_min)",
                                 ...slotProps?.exposureTimeRange}}/>
-                            : <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                            : <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()||apiTurnOn,
                                 ...slotProps?.exposureSince}} />
                         }
                         {showLengthInput &&
-                            <ExposureLength {...{initArgs, turnOnPanel, panelActive: checkHeaderCtl.isPanelActive()}}/>}
+                            <ExposureLength {...{initArgs, turnOnPanel, panelActive: checkHeaderCtl.isPanelActive()||apiTurnOn}}/>}
                         <DebugObsCore {...{constraintResult}}/>
                     </Stack>
                 </ForceFieldGroupValid>

@@ -267,6 +267,12 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
 
     const updatePanelStatus = makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), panelValue);
 
+
+    const  {obsCoreWavelengthRangeType, obsCoreWavelengthContains, obsCoreWavelengthMinRange, obsCoreWavelengthMaxRange}= initArgs?.urlApi ?? {};
+    const apiTurnOn= Boolean(obsCoreWavelengthRangeType || obsCoreWavelengthContains || obsCoreWavelengthMinRange || obsCoreWavelengthMaxRange);
+
+
+
     useEffect(() => {
         const fldObj = makeFldObj([...fdDefsKeys, ...fldKeys]);
         const constraints = makeWavelengthConstraints(filterDefinitions, fldObj, doingUpload, tableName );
@@ -276,12 +282,18 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
     useEffect(() => {
         setConstraintFragment?.(panelPrefix, constraintResult);
         return () => setConstraintFragment?.(panelPrefix, '');
-    }, [constraintResult]);
+    }, [constraintResult, setConstraintFragment]);
 
     useFieldGroupWatch([...fdDefsKeys, obsCoreWvlFieldKeys.wvlContains, obsCoreWvlFieldKeys.wvlMin, obsCoreWvlFieldKeys.wvlMax],
         (valAry, isInit) => {
         !isInit && valAry.some((v) => v) && checkHeaderCtl.setPanelActive(true);
     });
+
+    useEffect(() => {
+        if (!apiTurnOn) return;
+        checkHeaderCtl.setPanelActive(true);
+        checkHeaderCtl.setPanelOpen(true);
+    }, [apiTurnOn]);
 
     return (
         <CollapsibleCheckHeader

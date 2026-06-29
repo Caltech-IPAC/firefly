@@ -1,7 +1,7 @@
 /**
  * Created by roby on 12/2/14.
  */
-
+import {matchesIgCase} from '../util/WebUtil';
 
 
 export const EQUATORIAL_J = 0;
@@ -58,8 +58,8 @@ export const CoordinateSys = function () {
 
     const parse= (desc) => {
         if (!desc) return undefined;
-        desc= desc.toUpperCase();
-        if        (desc===EQ_J2000.toString() || desc==='EQJ2000' ||desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
+        desc= normalizeCoordSysStr(desc);
+        if (desc===EQ_J2000.toString() || desc==='EQJ2000' ||desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
             return EQ_J2000;
         } else if (desc===EQ_B2000.toString() || desc==='EQB2000' )  {
             return EQ_B2000;
@@ -101,6 +101,82 @@ export function findCoordSys(jsys, equinox) {
     else if (jsys===GALACTIC_JSYS) return CoordinateSys.GALACTIC;
     else if (jsys===SUPERGALACTIC_JSYS) return CoordinateSys.SUPERGALACTIC;
     else return CoordinateSys.UNDEFINED;
+}
+
+
+
+const matches= (s, regExp) => matchesIgCase(s, regExp);
+
+const normalizeCoordSysStr= (s) => findValidCoordSysStr(s) ?? s;
+
+
+const F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
+const FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
+const EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
+const E1950 = 'B1950$|B195$|B19$|B1$|B$';
+const SECL = '^ECLIPTIC|^ECL|^EC|^EC_|ECL_';
+const SEQ = '^EQUATORIAL|^EQU|^EQ|^EQ_';
+
+
+const COMBINE_SYS = '(^ECLIPTIC|^ECL|^ECL_|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
+const ECL_1950 = '('+SECL +')('+E1950+ ')';
+const ECL_2000 = '('+SECL +')('+EJ2000+ ')';
+
+const EQ_1950 = '('+SEQ+')(' +E1950+ ')';
+const EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
+
+export function findValidCoordSysStr(s) {
+    const array = s.trim().split(' ');
+    const inCoord0= array[0].toUpperCase();
+    if (array.length===1 && matches(inCoord0,COMBINE_SYS)) {
+        if (inCoord0.startsWith('EC')) {
+            if (matches(array[0],ECL_1950)) {
+                return 'EC_B1950';
+            } else if (matches(inCoord0,ECL_2000)) {
+                return 'EC_J2000';
+            }
+        } else if (inCoord0.startsWith('EQ')) {
+            if (matches(inCoord0,EQ_1950)) {
+                return 'EQ_B1950';
+            } else if (matches(inCoord0,EQ_2000)) {
+                return 'EQ_J2000';
+            }
+        }
+    } else if (matches(inCoord0,'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
+        if (array.length>1) {
+            if (matches(array[1], F1950)) {
+                return 'EQ_B1950';
+            } else if (matches(array[1], FJ2000)) {
+                return 'EQ_J2000';
+            }
+            else {
+                return undefined;
+            }
+        } else {
+            return 'EQ_J2000';
+        }
+    } else if (matches(inCoord0,'^ECLIPTIC$|^ECL$|^EC$|^EC_$|^ECL_$')) {
+        if (array.length>1) {
+            if (matches(array[1], F1950)) {
+                return 'EC_B1950';
+            } else if (matches(array[1], FJ2000)) {
+                return 'EC_J2000';
+            }
+            else {
+                return undefined;
+            }
+        } else {
+            return 'EC_J2000';
+        }
+    } else if (matches(inCoord0,'^GALACTIC$|^GAL$|^GA$|^G$')) {
+        return 'GALACTIC';
+    } else if (matches(inCoord0, FJ2000)) {
+        return 'EQ_J2000';
+    } else if (matches(inCoord0, F1950)) {
+        return 'EQ_B1950';
+    } else {
+        return undefined;
+    }
 }
 
 export default CoordinateSys;

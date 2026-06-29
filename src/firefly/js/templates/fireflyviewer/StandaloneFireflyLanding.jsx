@@ -69,19 +69,16 @@ const DEFAULT_CHIPS = [
         url: '?api=tap&service=https://irsa.ipac.caltech.edu/TAP&schema=wise&table=allwise_p3as_psd&ra=210.8022671&dec=54.34895&sr=300s',
     },
     {
-        // TODO: api=image loads image directly, need to create api=sia and use that (also because image&service is IRSA-dependent)
         label: '🌌 Spitzer SEIP image of M101 →',
-        // url: '?api=image&service=TWOMASS&SurveyKey=mosaic&SurveyKeyBand=j&WorldPt=210.80227;54.34895;EQ_J2000&sr=500s',
-        url: '?api=image&service=SEIP&SurveyKey=spitzer.seip_science&SurveyKeyBand=IRAC4&WorldPt=210.80227;54.34895;EQ_J2000&sr=500s',
+        url: '?api=sia&obsCoreCollection=spitzer_seip&obsCoreInstrumentName=IRAC&ra=210.802&dec=54.34&sr=500s',
     },
     {
         label: '🔭 Gaia DR3 cone search at M101 →',
         url: '?api=tap&service=https://gea.esac.esa.int/tap-server/tap&schema=gaiadr3&table=gaiadr3.gaia_source&WorldPt=210.80227;54.34895;EQ_J2000&sr=500s',
     },
     {
-        // TODO: api=hipsPanel doesn't allowing selecting a HiPS server without executing the search, need to make "uri" not execute
         label: '🌐 SDSS HiPS view of M81 →',
-        uri: '?api=hipsPanel&showPanel=true&ra=148.88822&dec=69.06529&sr=40m&uri=ivo://CDS/P/SDSS9/color',
+        url: '?api=hipsPanel&showPanel=true&ra=148.88822&dec=69.06529&sr=2d&uri=ivo://CDS/P/SDSS9/color',
     },
     {
         label: '📈 Euclid Q1 spectrum from cloud →',

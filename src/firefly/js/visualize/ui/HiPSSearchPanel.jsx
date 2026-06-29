@@ -49,7 +49,7 @@ export function HiPSSearchPanel({initArgs= {}, name:groupKey = 'HiPSSearchPanel'
                                     <SpacialContent {...{isHips:true,initArgs}}/>
                                 </Stack>
                             </Sheet>
-                            <HiPSImageSelect {...{ variant:'plain', datasetTitleText: 'Select Data Set', urlTitleText: 'Enter URL'}} />
+                            <HiPSImageSelect {...{ variant:'plain', initArgs, datasetTitleText: 'Select Data Set', urlTitleText: 'Enter URL'}} />
                         </Sheet>
                     </Stack>
                 </FormPanel>

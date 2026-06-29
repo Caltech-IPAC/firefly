@@ -125,7 +125,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     const [srvNameKey, setSrvNameKey]= useState(() => getServiceNamesAsKey());
     const [doingUpload, setDoingUpload]= useState((() => isTapUpload(getTapBrowserState())));
     const tapState= getTapBrowserState();
-    if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
+    if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true,undefined,initArgs?.urlApi?.callId); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
@@ -176,7 +176,9 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
 
             searchFromAPIOnce( // searchFromAPIOnce only matters if the urlApi.execute is true
                 () => validateAutoSearch(fields,initArgs,ts),
-                () => setTimeout(() => clickFuncRef.clickFunc?.(), 5));
+                () => setTimeout(() => clickFuncRef.clickFunc?.(), 5),
+                initArgs?.urlApi?.callId
+                );
         });
     }, []);
 
