@@ -36,6 +36,8 @@ jar {
   includes = ['edu/caltech/ipac/**/*']
 }
 
+warAll.dependsOn ':componentLibrary:buildStories'
+
 onlinehelp {
     onlineHelpDir = "$fireflyPath/../firefly-help/"
 }

@@ -3,7 +3,7 @@ import { DataTable, makeFileRequest } from '../../src/tables/index.js';
 import { EventLog } from '../helpers.jsx';
 
 const EXAMPLE_CODE = `\
-import { DataTable, makeFileRequest } from '@ipac/firefly-component-library/tables';
+import { DataTable, makeFileRequest } from '@ipac/firefly-components/tables';
 
 () => {
     const request = makeFileRequest('My Table', 'https://sample-data.com/my-table.vot');

@@ -23,6 +23,7 @@ firefly/
     index.js            # Core package entry point
     vite.config.js      # Build config
     .storybook/         # Storybook config
+    build.gradle        # Gradle tasks for this subproject
 ```
 
 ### Subpath packages
@@ -31,7 +32,7 @@ The library is published with multiple entry points to avoid loading heavy depen
 
 | Subpath | Entry file | Why separate |
 |---|---|---|
-| `@ipac/firefly-component-library` | `index.js` | Core: theme, inputs, FieldGroup |
+| `@ipac/firefly-components` | `index.js` | Core: theme, inputs, FieldGroup |
 | `.../tables` | `src/tables/index.js` | Heavy: table state, virtual scroll |
 | `.../charts` | `src/charts/index.js` | Heavy: Plotly.js |
 | `.../images` | `src/images/index.js` | Heavy: FITS processing, WebGL |
@@ -48,10 +49,19 @@ Store-connected components (`ValidationField`, `TargetPanel`, `ListBoxInputField
 
 ## Development setup
 
+### Prerequisites
+
+- Node.js and yarn installed
+- Firefly monorepo cloned
+- Gradle (for build tasks that inject global properties)
+
+### Install dependencies
+
 ```bash
-cd component-library
-yarn install
+gradle componentLibrary:installDeps
 ```
+
+Dependencies are installed automatically before any build task, so this step is rarely needed explicitly.
 
 ---
 
@@ -60,57 +70,86 @@ yarn install
 ### 1. Storybook dev server
 
 ```bash
-yarn storybook
+gradle componentLibrary:dev
 ```
 
 Starts a live-reload dev server at `http://localhost:6006`. Stories load directly from Firefly source files — no `dist/` build step is needed. Changes to source files or stories are reflected immediately.
 
-Use this mode when writing or debugging stories, or when iterating on a component.
+Global properties (browser version targets, build env, etc.) from `config/app.config` are injected automatically via Gradle.
 
 ---
 
 ### 2. Static Storybook build
 
 ```bash
-yarn build-storybook
+gradle componentLibrary:buildStories
 ```
 
-Produces a fully self-contained static site in `storybook-static/`. Open `storybook-static/index.html` in a browser to verify the output, or deploy the directory to any static host.
+Produces a fully self-contained static site in `build/war/component-library/` inside the `:firefly` subproject. To include it in the Firefly WAR file:
 
-Use this mode to check the final published docs site, or to reproduce a build-time error that does not appear in the dev server.
+```bash
+gradle firefly:warAll
+```
+
+This runs the full build: `componentLibrary:buildStories` → `war` → `buildJsDoc` → `onlinehelp`.
 
 ---
 
 ### 3. Library build
 
 ```bash
-yarn build
+gradle componentLibrary:buildLib
 ```
 
-Compiles the library into `dist/` with both ES module (`*.js`) and CommonJS (`*.cjs`) outputs, one chunk per entry point (`index`, `tables`, `charts`, `images`). This is what gets published to npm.
-
-Use this mode before publishing, or to test the built package locally (see below).
+Compiles the library into `component-library/dist/` with both ES module (`*.js`) and CommonJS (`*.cjs`) outputs, one chunk per entry point (`index`, `tables`, `charts`, `images`). This is what gets published to npm.
 
 ---
 
-### 4. Testing the built dist locally
-
-Use `yarn pack` to verify the built `dist/` in a consuming project without publishing. It produces the exact tarball that `yarn publish` would upload, including only the files listed in the `files` field of `package.json`, so it tests the real published surface rather than the full source tree.
+### 4. Pack for local testing
 
 ```bash
-yarn build
-yarn pack
-# creates package.tgz in component-library/
-
-# in the test project:
-yarn add /absolute/path/to/component-library/package.tgz
+gradle componentLibrary:pack
 ```
 
-> **Yarn cache gotcha.** yarn caches `.tgz` installs by version number. If you rebuild and repack without bumping the version in `package.json`, consumers who installed via `yarn add /path/to/package.tgz` will silently get the cached copy instead of your new build. Either bump the version before repacking, or clear the cache first:
+Builds the library then produces a tarball at `build/firefly-components.tgz`. Use it to test the built package in a consuming project without publishing:
+
+```bash
+# in the consuming project
+yarn add /absolute/path/to/build/firefly-components.tgz
+```
+
+> **Yarn cache gotcha.** Yarn caches `.tgz` installs by version number. If you rebuild and repack without bumping the version in `package.json`, consumers will silently get the cached copy. Either bump the version before repacking, or clear the cache first:
 > ```bash
-> yarn cache clean @ipac/firefly-component-library
-> yarn add /path/to/component-library/package.tgz
+> yarn cache clean @ipac/firefly-components
+> yarn add /path/to/package.tgz
 > ```
+
+---
+
+### 5. Publish to registry
+
+```bash
+gradle componentLibrary:publishLib
+```
+
+Builds the library then publishes to the npm registry in one step. `yarn pack` is not needed before publishing.
+
+---
+
+## Global properties and Gradle
+
+The `vite.config.js` reads build-time constants (browser version targets, `BUILD_ENV`, etc.) from environment variables injected by Gradle. These originate from `config/app.config` and are forwarded as `FF___`-prefixed env vars by Gradle's `NODE` task.
+
+`vite.config.js` collects them via `getGradleProps()` and merges them into `__PROPS__` with hardcoded defaults as fallback:
+
+```js
+__PROPS__: {
+    MIN_SAFARI_VERSION: '17',   // default — overridden by FF___MIN_SAFARI_VERSION if set
+    ...getGradleProps(),
+}
+```
+
+When running `yarn storybook` or `yarn build` directly (without Gradle), the hardcoded defaults apply. When running via `gradle componentLibrary:dev` or `componentLibrary:buildLib`, values from `app.config` override the defaults.
 
 ---
 
@@ -171,7 +210,7 @@ Define `EXAMPLE_CODE` at module level and wire it into `parameters`:
 
 ```js
 const EXAMPLE_CODE = `\
-import { ValidationField, FieldGroup } from '@ipac/firefly-component-library';
+import { ValidationField, FieldGroup } from '@ipac/firefly-components';
 
 () => (
     <FieldGroup groupKey='my-form'>

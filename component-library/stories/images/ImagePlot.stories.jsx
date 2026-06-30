@@ -3,7 +3,7 @@ import { ImagePlot } from '../../src/images/index.js';
 
 
 const EXAMPLE_CODE = `\
-import { ImagePlot } from '@ipac/firefly-component-library/images';
+import { ImagePlot } from '@ipac/firefly-components/images';
 
 () => {
     return (

@@ -2,23 +2,25 @@
 
 A React component library for astronomical data visualization, built on
 [Firefly](https://github.com/Caltech-IPAC/firefly), the web visualization
-framework from [IPAC / Caltech](https://www.ipac.caltech.edu/).
+framework from [Caltech/IPAC](https://www.ipac.caltech.edu/).
 
-The library provides ready-to-use components for displaying catalog tables,
-interactive charts, and FITS sky images that integrate with a running Firefly
-server.
+The library provides ready-to-use components for displaying catalog tables, 
+interactive charts, and astronomical imagery, including FITS and HiPS sky images, 
+that integrate with a running Firefly server.
 
 ---
 
 ## Installation
 
 ```bash
-yarn add @ipac/firefly-component-library
+yarn add @ipac/firefly-components
 ```
 
 ### Peer dependencies
 
-The library requires these packages in your project:
+These packages are expected to be provided by the host application, allowing 
+our library to share your project's existing instance of React, Joy UI, 
+etc. without duplicating core code or breaking your global theme context:
 
 ```bash
 yarn add "react@^19.0.0" "react-dom@^19.0.0" \
@@ -36,7 +38,7 @@ any components. It connects to the Firefly server that handles data processing,
 FITS image serving, and catalog queries.
 
 ```js
-import { initFirefly } from '@ipac/firefly-component-library';
+import { initFirefly } from '@ipac/firefly-components';
 
 await initFirefly({ serverUrl: 'https://your-firefly-server/firefly/' });
 ```
@@ -70,8 +72,8 @@ Wrap your app in `CssVarsProvider` from MUI Joy and apply the Firefly theme:
 
 ```jsx
 import { CssVarsProvider, extendTheme } from '@mui/joy';
-import { initFirefly, defaultTheme } from '@ipac/firefly-component-library';
-import '@ipac/firefly-component-library/styles';
+import { initFirefly, defaultTheme } from '@ipac/firefly-components';
+import '@ipac/firefly-components/styles';
 
 await initFirefly({ serverUrl: 'https://your-firefly-server/firefly/' });
 
@@ -90,30 +92,32 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 The library is split into subpath packages so you only import what you need.
 
-**`@ipac/firefly-component-library`** is the core package. It contains `initFirefly`,
+**`@ipac/firefly-components`** is the core package. It contains `initFirefly`,
 the Firefly theme, form inputs, and field group utilities.
 
-**`@ipac/firefly-component-library/tables`** contains catalog table components and
+**`@ipac/firefly-components/tables`** contains catalog table components and
 utilities for loading, searching, and manipulating tabular data.
 
-**`@ipac/firefly-component-library/charts`** contains interactive chart components
+**`@ipac/firefly-components/charts`** contains interactive chart components
 (scatter plots, histograms, and more) that link directly to table data.
 
-**`@ipac/firefly-component-library/images`** contains FITS image viewer components
+**`@ipac/firefly-components/images`** contains FITS image viewer components
 for sky image display with WCS overlays and color stretch controls.
 
 ```js
-import { initFirefly }       from '@ipac/firefly-component-library';
-import { DataTable }         from '@ipac/firefly-component-library/tables';
-import { HistogramChart }    from '@ipac/firefly-component-library/charts';
-import { ImagePlot }         from '@ipac/firefly-component-library/images';
+import { initFirefly }       from '@ipac/firefly-components';
+import { DataTable }         from '@ipac/firefly-components/tables';
+import { HistogramChart }    from '@ipac/firefly-components/charts';
+import { ImagePlot }         from '@ipac/firefly-components/images';
 ```
 
 ---
 
 ## Try it locally
 
-This walks through creating a minimal React app that renders three linked components: a FITS image viewer on the left, a scatter chart on the right, and a catalog table at the bottom, all driven by the same WISE dataset.
+This walks through creating a minimal React app that renders three linked components: 
+a survey map (HiPS) viewer on the left, a scatter chart on the right, and a catalog table at the bottom, 
+all driven by the same WISE dataset.
 
 ### 1. Create the app
 
@@ -133,7 +137,14 @@ See [Peer dependencies](#peer-dependencies) above for the full install command.
 
 ### 3. Install the library
 
-If you have a local build:
+Install the package from npm:
+
+```bash
+yarn add @ipac/firefly-components
+```
+
+
+Or install it from a local build:
 
 ```bash
 # from component-library/
@@ -144,12 +155,6 @@ cd /path/to/test-firefly-comp-lib
 yarn add /path/to/component-library/package.tgz
 ```
 
-Or once published:
-
-```bash
-yarn add @ipac/firefly-component-library
-```
-
 ### 4. Set up the entry point
 
 Replace `src/main.jsx`:
@@ -158,8 +163,8 @@ Replace `src/main.jsx`:
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { CssVarsProvider, extendTheme } from '@mui/joy';
-import { initFirefly, defaultTheme } from '@ipac/firefly-component-library';
-import '@ipac/firefly-component-library/styles';
+import { initFirefly, defaultTheme } from '@ipac/firefly-components';
+import '@ipac/firefly-components/styles';
 import { App } from './App';
 
 await initFirefly({ serverUrl: 'http://localhost:8080/firefly/' });
@@ -178,11 +183,11 @@ Create `src/App.jsx`:
 ```jsx
 import React from 'react';
 import {DataTable, makeFileRequest}
-    from '@ipac/firefly-component-library/tables';
+    from '@ipac/firefly-components/tables';
 import {ScatterChart}
-    from '@ipac/firefly-component-library/charts';
+    from '@ipac/firefly-components/charts';
 import {Coverage}
-    from '@ipac/firefly-component-library/images';
+    from '@ipac/firefly-components/images';
 
 const TABLE_URL = 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl';
 const TBL_ID = 'wise-demo';
@@ -203,7 +208,8 @@ export function App() {
 }
 ```
 
-Selecting or filtering rows in the table highlights the corresponding points in the scatter chart because they share the same `tbl_id`.
+Selecting or filtering rows in the table highlights the corresponding points in the scatter chart
+and corresponding overlay markers in the coverage image because they share the same `tbl_id`.
 
 ### 6. Run it
 

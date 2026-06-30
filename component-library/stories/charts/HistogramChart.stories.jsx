@@ -3,7 +3,7 @@ import { HistogramChart } from '../../src/charts/index.js';
 import { DataTable, makeFileRequest, dispatchTableSearch } from '../../src/tables/index.js';
 
 const EXAMPLE_CODE = `\
-import { HistogramChart } from '@ipac/firefly-component-library/charts';
+import { HistogramChart } from '@ipac/firefly-components/charts';
 
 () => {
     return <HistogramChart tbl_id="my-table" column="magzp" sx={{ height: 400 }} />;

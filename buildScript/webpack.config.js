@@ -32,11 +32,6 @@ export default function makeWebpackConfig(config) {
     const ENV_DEV_MODE= process.env.DEV_MODE;
     const {BUILD_ENV='local'}   = process.env;
     const localBuild= BUILD_ENV === 'local';
-    const MIN_SAFARI_VERSION= '17';
-    const MIN_CHROME_VERSION= '130';
-    const MIN_FIREFOX_VERSION= '134';
-    const MIN_EDGE_VERSION= '130';
-    const useReactCompiler = false;
 
     if (!process.env.NODE_ENV) {
         process.env.NODE_ENV = ['local', 'dev'].includes(BUILD_ENV) ? 'development' : 'production';
@@ -84,28 +79,8 @@ export default function makeWebpackConfig(config) {
         });
     }
 
-
-
-    const globals = {
-        __PROPS__       : {
-            BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV),
-            SCRIPT_NAME : JSON.stringify(script_names),
-            MODULE_NAME : JSON.stringify(config.name),
-            MIN_SAFARI_VERSION,
-            MIN_CHROME_VERSION,
-            MIN_FIREFOX_VERSION,
-            MIN_EDGE_VERSION,
-        }
-
-    };
-
-    // add all of the env that starts with 'FF___' as global props
-    Object.keys(process.env).filter((k) => k.startsWith('FF___')).forEach((k) => {
-        const rkey = k.substring(5).replace(/___/g, '.');
-        globals.__PROPS__[rkey] = JSON.stringify(process.env[k]);
-        // console.log('<<<<>> ' + rkey + ': ' +  process.env[k]);
-
-    });
+    const globalProps = getGlobalProps(script_names, config.name);
+    const useReactCompiler    = globalProps.USE_REACT_COMPILER  === 'true';
 
     /*
      * creating the webpackConfig based on the project's config for webpack to work on.
@@ -123,7 +98,7 @@ export default function makeWebpackConfig(config) {
     const output =  {filename, path: out_path};
 
     /*------------------------ PLUGINS -----------------------------*/
-    const plugins = [ new webpack.DefinePlugin(globals)];
+    const plugins = [ new webpack.DefinePlugin({__PROPS__: globalProps}) ];
     if (ENV_DEV_MODE) plugins.push( dev_progress() );
 
     if (config.use_loader) {
@@ -149,10 +124,10 @@ export default function makeWebpackConfig(config) {
                             {
                                 targets: {
                                     browsers: [
-                                        'safari >= '+MIN_SAFARI_VERSION,
-                                        'chrome >= '+MIN_CHROME_VERSION,
-                                        'firefox >= '+MIN_FIREFOX_VERSION,
-                                        'edge >= '+MIN_EDGE_VERSION
+                                        `safari >= ${toNumber(globalProps.MIN_SAFARI_VERSION)}`,
+                                        `chrome >= ${toNumber(globalProps.MIN_CHROME_VERSION)}`,
+                                        `firefox >= ${toNumber(globalProps.MIN_FIREFOX_VERSION)}`,
+                                        `edge >= ${toNumber(globalProps.MIN_EDGE_VERSION)}`
                                     ],
                                 },
                                 debug: false,
@@ -204,7 +179,7 @@ export default function makeWebpackConfig(config) {
 
     if (!ENV_DEV_MODE) { // Adding this so we see it in the log file of our builds
         console.log('Building client with Global Props:');
-        console.log(globals.__PROPS__);
+        console.log(globalProps);
     }
 
     const webpack_config = {
@@ -272,5 +247,23 @@ function dev_progress() {
             process.stdout.write('.');
         }
     });
+}
+
+function toNumber(quotedStr) {
+    return Number(JSON.parse(quotedStr));
+}
+
+function getGlobalProps(scriptName, moduleName) {
+    const gradleProps = Object.fromEntries(
+        Object.keys(process.env)
+            .filter((k) => k.startsWith('FF___'))
+            .map((k) => [k.slice(5).replace(/___/g, '.'), JSON.stringify(process.env[k])])
+    );
+    return {
+        BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV),
+        SCRIPT_NAME : JSON.stringify(scriptName),
+        MODULE_NAME : JSON.stringify(moduleName),
+        ...gradleProps,
+    };
 }
 

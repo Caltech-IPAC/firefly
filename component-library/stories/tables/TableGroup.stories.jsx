@@ -3,7 +3,7 @@ import { TableGroup, dispatchTableSearch, makeFileRequest } from '../../src/tabl
 import {EventLog} from '../helpers.jsx';
 
 const EXAMPLE_CODE = `\
-import { TableGroup, dispatchTableSearch, makeFileRequest } from '@ipac/firefly-component-library';
+import { TableGroup, dispatchTableSearch, makeFileRequest } from '@ipac/firefly-components';
 
 () => {
     useEffect(() => {

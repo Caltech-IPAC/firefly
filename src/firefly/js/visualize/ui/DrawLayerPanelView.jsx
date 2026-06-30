@@ -124,8 +124,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
     const sortedGroupedLayer= Object.values(sortedGroupedObj).flat(1);
 
     return sortedGroupedLayer.map( (l,idx) => (
-        <DrawLayerItemView {...{
-            key:l.drawLayerId,
+        <DrawLayerItemView key={l.drawLayerId} {...{
             maxTitleChars,
             helpLine: l.helpLine,
             lastItem: idx===last,

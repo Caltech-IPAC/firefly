@@ -1,8 +1,8 @@
-import React, { useId, useEffect, useRef } from 'react';
+import React, { useId, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { ChartPanel as FireflyChartPanel } from 'firefly/charts/ui/ChartPanel.jsx';
 import { useStoreConnector } from 'firefly/ui/SimpleComponent.jsx';
-import { dispatchChartAdd, dispatchChartRemove, getChartData } from 'firefly/charts/ChartsCntlr.js';
+import { dispatchChartAdd, dispatchChartUpdate, getChartData } from 'firefly/charts/ChartsCntlr.js';
 
 /**
  * Displays a Firefly/Plotly chart.
@@ -17,13 +17,18 @@ import { dispatchChartAdd, dispatchChartRemove, getChartData } from 'firefly/cha
 export function ChartPanel({ chartId: chartId_prop, chartData, options = {}, events = {}, ...props }) {
     const generatedId = useId();
     const chartId = chartId_prop ?? `chart-${generatedId}`;
+    const prevChartDataRef = useRef();
 
-    useEffect(() => {
-        if (chartData) {
-            dispatchChartAdd({ chartId, chartType: 'plot.ly', ...chartData });
+    useMemo(() => {
+        if (chartData && chartData !== prevChartDataRef.current) {
+            prevChartDataRef.current = chartData;
+            if (getChartData(chartId)?.chartType) {
+                dispatchChartUpdate({ chartId, changes: chartData });
+            } else {
+                dispatchChartAdd({ chartId, chartType: 'plot.ly', ...chartData });
+            }
         }
-        return () => dispatchChartRemove(chartId);
-    }, [chartId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [chartId, chartData]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useChartEventHandlers(chartId, events);
 

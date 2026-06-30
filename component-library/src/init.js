@@ -14,6 +14,7 @@ const DEFAULT_SERVER_URL = 'http://localhost:8080/firefly/';
  * @returns {Promise<void>}
  */
 export function initFirefly({ serverUrl = DEFAULT_SERVER_URL, appOptions = {} } = {}) {
+    if (typeof window === 'undefined') return Promise.resolve();
     setRootURL(serverUrl);
     return firefly.bootstrap({}, { serverUrl, ...appOptions });
 }

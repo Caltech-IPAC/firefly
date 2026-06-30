@@ -2,7 +2,7 @@ import React from 'react';
 import { ValidationField, FieldGroup, emailValidator, floatValidator } from '../../index.js';
 
 const EXAMPLE_CODE = `\
-import { ValidationField, FieldGroup, emailValidator } from '@ipac/firefly-component-library';
+import { ValidationField, FieldGroup, emailValidator } from '@ipac/firefly-components';
 
 () => (
     <FieldGroup groupKey='my-form'>

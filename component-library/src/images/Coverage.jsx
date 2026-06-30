@@ -5,7 +5,7 @@ import { CoverageViewer } from 'firefly/visualize/ui/CoveraeViewer.jsx';
 import { DEFAULT_COVERAGE_VIEWER_ID } from 'firefly/visualize/PlotViewUtil.js';
 
 /**
- * Displays table coverage/footprint overlaid on a sky image.
+ * Displays table coverage/footprint overlaid on a sky image as markers.
  *
  * Features:
  * - **Auto-detection**: watches loaded tables and renders coverage when available.

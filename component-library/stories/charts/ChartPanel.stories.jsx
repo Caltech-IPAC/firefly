@@ -4,7 +4,7 @@ import { DataTable, makeFileRequest, dispatchTableSearch } from '../../src/table
 import { EventLog } from '../helpers.jsx';
 
 const EXAMPLE_CODE = `\
-import { ChartPanel } from '@ipac/firefly-component-library/charts';
+import { ChartPanel } from '@ipac/firefly-components/charts';
 
 () => {
     return (
@@ -46,14 +46,16 @@ StaticData.parameters = { storyDescription: 'Pure Plotly data, no table needed. 
 // ─── Linked Table ─────────────────────────────────────────────────────────────
 
 export const LinkedTable = () => {
-    const request = makeFileRequest('WISE Demo', 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, { tbl_id: 'wise-chartpanel-linked' });
+    const tbl_id = 'wise-chartpanel-linked';
+    const request = makeFileRequest('WISE Demo', 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, { tbl_id });
     return (
         <div style={{ display: 'flex', gap: 8, height: 380 }}>
             <DataTable sx={{flex: 1}} source={request} />
             <ChartPanel
+                chartId={tbl_id + '-chart'}
                 chartData={{
                     data: [{
-                        tbl_id: 'wise-chartpanel-linked',
+                        tbl_id,
                         type: 'scatter', mode: 'markers',
                         x: 'tables::crval1', y: 'tables::crval2',
                     }],
@@ -73,16 +75,18 @@ export const EventHooks = () => {
     const [log, setLog] = useState([]);
     const emit = (msg) => setLog((prev) => [msg, ...prev].slice(0, 8));
 
+    const tbl_id = 'wise-chartpanel-events';
     useEffect(() => {
-        dispatchTableSearch(makeFileRequest('WISE Demo', 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, { tbl_id: 'wise-chartpanel-events' }));
-    }, []);
+        dispatchTableSearch(makeFileRequest('WISE Demo', 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {tbl_id}));
+    }, [tbl_id]);
 
     return (
         <div style={{ display: 'flex', gap: 8, height: 380 }}>
             <ChartPanel
+                chartId={tbl_id + '-chart'}
                 chartData={{
                     data: [{
-                        tbl_id: 'wise-chartpanel-events',
+                        tbl_id,
                         type: 'scatter', mode: 'markers',
                         x: 'tables::crval1', y: 'tables::crval2',
                     }],

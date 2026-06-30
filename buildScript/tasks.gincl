@@ -779,28 +779,7 @@ task buildClient (dependsOn: [loadConfig, createVersionTag]) {
 
 
 
-// ── Storybook ─────────────────────────────────────────────────────────────
-task buildStorybook(type: Exec) {
-    description = 'Build the component-library Storybook static site.'
-    group = 'build'
-    workingDir "$rootDir/component-library"
-    commandLine 'yarn', 'build-storybook'
-    inputs.dir  "$rootDir/component-library/stories"
-    inputs.dir  "$rootDir/component-library/src"
-    inputs.dir  "$rootDir/component-library/.storybook"
-    inputs.file "$rootDir/component-library/vite.config.js"
-    inputs.file "$rootDir/component-library/package.json"
-    outputs.dir "$rootDir/component-library/storybook-static"
-
-    doLast {
-        copy {
-            from "$rootDir/component-library/storybook-static"
-            into "${warDir}/component-library"
-        }
-    }
-}
-
-task warAll( dependsOn:[war, buildJsDoc, onlinehelp, buildStorybook] ) {
+task warAll( dependsOn:[war, buildJsDoc, onlinehelp] ) {
     description= 'Build the war file with JSDoc generated.'
     group = MAIN_GROUP
 }
@@ -875,7 +854,6 @@ prepareWebapp.mustRunAfter buildClient
 buildJsDoc.mustRunAfter   buildClient
 onlinehelp.mustRunAfter   buildJsDoc
 war.mustRunAfter          onlinehelp
-war.mustRunAfter          buildStorybook
 deploy.mustRunAfter       war
 
 

@@ -5,8 +5,8 @@ import { DataTable, makeFileRequest } from '../../src/tables/index.js';
 const WISE_URL = 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl';
 
 const EXAMPLE_CODE = `\
-import { Coverage } from '@ipac/firefly-component-library/images';
-import { DataTable, makeFileRequest } from '@ipac/firefly-component-library/tables';
+import { Coverage } from '@ipac/firefly-components/images';
+import { DataTable, makeFileRequest } from '@ipac/firefly-components/tables';
 
 () => {
     const request = makeFileRequest('My Table', 'https://example.com/catalog.tbl', null, { tbl_id: 'my-table' });

@@ -86,11 +86,10 @@ export function SmallLegend(props) {
                         <Stack>
                             {layersLoading && <Typography level={'body-sm'}>Layers Loading....</Typography>}
                             {layers.map( (dl) => (
-                                <DrawLayerLegendView {...{
+                                <DrawLayerLegendView key={getShortTitle(plotId,dl)} {...{
                                     maxTitleChars,
                                     color: dl.drawingDef.color,
                                     canUserChangeColor: dl.canUserChangeColor,
-                                    key: getShortTitle(plotId,dl),
                                     title: getShortTitle(plotId,dl),
                                     tip: getLayerTitle(plotId,dl),
                                     autoFormatTitle: dl.autoFormatTitle,

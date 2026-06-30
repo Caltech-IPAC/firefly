@@ -1,8 +1,9 @@
 rootProject.name = 'firefly_root'
 
-include 'firefly', 'firefly_data', "standalone"
+include 'firefly', 'firefly_data', "standalone", 'componentLibrary'
 
-project(":firefly").projectDir  = file('src/firefly')
-project(":firefly_data").projectDir = file('src/firefly_data')
-project(":standalone").projectDir = file('src/standalone')
+project(":firefly").projectDir          = file('src/firefly')
+project(":firefly_data").projectDir     = file('src/firefly_data')
+project(":standalone").projectDir       = file('src/standalone')
+project(":componentLibrary").projectDir = file('component-library')
 

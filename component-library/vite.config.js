@@ -6,6 +6,14 @@ import { defineConfig } from 'vite';
 // Exported so .storybook/main.js can import it directly.
 export const root = fileURLToPath(new URL('..', import.meta.url));
 
+function getGradleProps() {
+    return Object.fromEntries(
+        Object.keys(process.env)
+            .filter((k) => k.startsWith('FF___'))
+            .map((k) => [k.slice(5).replace(/___/g, '.'), JSON.stringify(process.env[k])])
+    );
+}
+
 // ── Shared plugins (used by both the library build and Storybook) ──────────
 
 // Firefly source imports web workers as  import Worker from '*.worker.js'.
@@ -69,12 +77,14 @@ export const sharedConfig = {
             { find: 'html',    replacement: `${root}/src/firefly/html` },
             { find: 'styles',  replacement: `${root}/src/firefly/html/css` },
             { find: 'images',  replacement: `${root}/src/firefly/html/images` },
+            { find: '~images', replacement: `${root}/src/firefly/html/images` },
         ],
     },
     server: {
         // Allow serving files from the parent firefly/ directory,
         // which the aliases above point into.
         fs: { allow: [root] },
+        hmr: { host: 'localhost' },
     },
     define: {
         // Bundled CJS packages (redux, redux-saga) reference the Node.js
@@ -82,20 +92,18 @@ export const sharedConfig = {
         global: 'globalThis',
         // Build-time constants read by Firefly's WebUtil.js at runtime.
         __PROPS__: {
-            BUILD_ENV:           JSON.stringify('dev'),
+            BUILD_ENV:           JSON.stringify(process.env.BUILD_ENV ?? 'dev'),
             SCRIPT_NAME:         JSON.stringify([]),
-            MODULE_NAME:         JSON.stringify('firefly-component-library'),
+            MODULE_NAME:         JSON.stringify('firefly-components'),
             MIN_SAFARI_VERSION:  '17',
             MIN_CHROME_VERSION:  '130',
             MIN_FIREFOX_VERSION: '134',
             MIN_EDGE_VERSION:    '130',
+            ...getGradleProps(),
         },
     },
     // Storybook uses Vite's dep optimiser; tell esbuild to parse .js files
     // as JSX so source files compile correctly during development.
-    // Note: the dep-scan phase logs an error about *.worker.js having no
-    // default export — this is harmless. workerPlugin handles the rewrite
-    // at serve time and Storybook renders correctly.
     optimizeDeps: {
         esbuildOptions: {
             loader: { '.js': 'jsx' },
@@ -184,7 +192,7 @@ export default defineConfig(({ command }) => ({
                     // older releases lack clean ESM default exports.
                 ],
                 output: {
-                    assetFileNames: 'firefly-component-library.[ext]',
+                    assetFileNames: 'firefly-components.[ext]',
                 },
             },
         },

@@ -4,7 +4,7 @@ import { DataTable, makeFileRequest, dispatchTableSearch } from '../../src/table
 import { EventLog } from '../helpers.jsx';
 
 const EXAMPLE_CODE = `\
-import { ScatterChart } from '@ipac/firefly-component-library/charts';
+import { ScatterChart } from '@ipac/firefly-components/charts';
 
 () => {
     return <ScatterChart tbl_id="my-table" x_axis="ra" y_axis="dec" sx={{ height: 400 }} />;
