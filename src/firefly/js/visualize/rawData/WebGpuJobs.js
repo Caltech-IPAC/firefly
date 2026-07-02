@@ -261,12 +261,15 @@ export async function processMaskTileViaWebGPU(maskColor, pixelData,width,height
     const pixelBuf= makePixelBuf(device, pixelData);
     const outBuf = device.createBuffer({ size: width*height*4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
     const colorBuf = makeUnsignedIntUniform(device, [color]);
-    const pixelCountBuf = makeUnsignedIntUniform(device, [pixelData.length]);
+    const u32Count = Math.ceil(pixelData.length / 4);  // Number of u32s to iterate over
+    const u32CountBuf = makeUnsignedIntUniform(device, [u32Count]);
+    const totalPixels = width * height;  // Actual pixel count for bounds checking
+    const totalPixelsBuf = makeUnsignedIntUniform(device, [totalPixels]);
     const {module,wgSize}= modules.getWgslImageMask();
     const pipeline = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' } });
-    const buffers= [pixelBuf, outBuf, colorBuf, pixelCountBuf];
+    const buffers= [pixelBuf, outBuf, colorBuf, u32CountBuf, totalPixelsBuf];
     const bindGroup= makeBindGroup(device, pipeline, buffers);
-    const encoder= makeEncoder(device, bindGroup, pipeline, pixelData.length, wgSize);
+    const encoder= makeEncoder(device, bindGroup, pipeline, u32Count, wgSize);
     const readBuf= runIt(device, encoder, outBuf, width * height * 4);
     const bitmap= makeBitmapFromBuffer(readBuf,width,height, wgSize);
     destroyBuffers(buffers);
