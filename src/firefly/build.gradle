@@ -36,6 +36,7 @@ jar {
   includes = ['edu/caltech/ipac/**/*']
 }
 
+war.mustRunAfter ':componentLibrary:buildStories'
 warAll.dependsOn ':componentLibrary:buildStories'
 
 onlinehelp {
