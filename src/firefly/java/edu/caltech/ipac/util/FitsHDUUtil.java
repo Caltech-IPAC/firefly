@@ -31,6 +31,7 @@ import java.util.List;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.*;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getNaxisLength;
 
 
 /**
@@ -51,7 +52,8 @@ public class FitsHDUUtil {
             headerAry= new Header[parts.length];
             for(int i = 0; i < parts.length; i++) {
                 FileAnalysisReport.Type ptype;
-                int naxis= FitsReadUtil.getNaxis(parts[i].getHeader());
+                Header header = parts[i].getHeader();
+                int naxis= FitsReadUtil.getNaxis(header);
 
                 if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
                 else if (parts[i] instanceof ImageHDU)  ptype= Image;
@@ -61,7 +63,6 @@ public class FitsHDUUtil {
 
                 boolean isCompressed = (parts[i] instanceof CompressedImageHDU);
 
-                Header header = parts[i].getHeader();
                 headerAry[i]= header;
 
                 if (ptype == Image && !hasGoodData(header)) {
@@ -69,52 +70,48 @@ public class FitsHDUUtil {
                 }
 
                 var compAttach= isCompressed ? " (compressed)" : "";
-                String desc=null;
-                if (FitsReadUtil.getExtName(header)!=null) desc= FitsReadUtil.getExtName(header) + compAttach;
-                else if (header.getStringValue("NAME")!=null) desc = header.getStringValue("NAME") + compAttach;
-                else if (header.getStringValue("HDUCLAS2")!=null) desc = header.getStringValue("HDUCLAS2") + compAttach;
-                else if (isCompressed) desc = "Compressed image";
+                StringBuilder desc= new StringBuilder();
+                if (FitsReadUtil.getExtName(header)!=null) desc = new StringBuilder(FitsReadUtil.getExtName(header) + compAttach);
+                else if (header.getStringValue("NAME")!=null) desc = new StringBuilder(header.getStringValue("NAME") + compAttach);
+                else if (FitsReadUtil.getExtType(header,null)!=null) desc = new StringBuilder(FitsReadUtil.getExtType(header,null) + compAttach);
+                else if (header.getStringValue("HDUCLAS2")!=null) desc = new StringBuilder(header.getStringValue("HDUCLAS2") + compAttach);
+                else if (isCompressed) desc = new StringBuilder("Compressed image");
 
 
 
-                FileAnalysisReport.Part part = new FileAnalysisReport.Part(ptype, desc);
+                FileAnalysisReport.Part part = new FileAnalysisReport.Part(ptype, desc.toString());
                 part.setIndex(i);
                 part.setFileLocationIndex(i);
                 if (ptype == Table) {
                     TableHDU<?> tHdu= (TableHDU<?>)parts[i];
-                    if (desc!=null) {
-                        desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
-                    }
-                    else {
-                        desc = String.format(" %d cols x %d rows ",  tHdu.getNCols(), tHdu.getNRows());
-                    }
+                    desc.append(String.format(" (%d cols x %d rows)", tHdu.getNCols(), tHdu.getNRows()));
                     part.setTotalTableRows(tHdu.getNRows());
-                    part.setDesc(desc);
+                    part.setDesc(desc.toString());
                     var spec= SpectrumMetaInspector.isPossiblySpectrum(FITSTableReader.readTableHeader(parts[i]),parts[i]);
                     part.setTableDataType(spec ? Spectrum : NotSpecified);
                 }
                 if (ptype == Image) {
-                    if (desc==null) desc= "";
-                    int naxis1;
-                    int naxis2;
-                    int naxis3;
-                    if (isCompressed) {
-                        naxis1= FitsReadUtil.getZNaxis1(header)>-1 ? FitsReadUtil.getZNaxis1(header) : FitsReadUtil.getNaxis1(header);
-                        naxis2= FitsReadUtil.getZNaxis2(header)>-1 ? FitsReadUtil.getZNaxis2(header) : FitsReadUtil.getNaxis2(header);
-                        naxis3= FitsReadUtil.getZNaxis3(header)>-1 ? FitsReadUtil.getZNaxis3(header) : FitsReadUtil.getNaxis3(header);
+
+                    int axisCnt= (naxis != 4)
+                            ? naxis
+                            : getNaxisLength(header, 4, isCompressed)==1 ? 3 :naxis;
+                    desc.append((axisCnt <= 2) ? " (" : axisCnt == 3 ? " (cube " : " (" + axisCnt + "d ");
+                    if (axisCnt>1) {
+                        for(int d=1;(d<=axisCnt);d++) {
+                            desc.append(String.format("%d", getNaxisLength(header,d,isCompressed)));
+                            desc.append(d < axisCnt ? " x " : ")");
+                        }
+                        if (axisCnt>=4) {
+                            desc.append(", not supported");
+                            part.setUnsupported(true);
+                            part.setUnsupportedReason(axisCnt + " axis images are not supported");
+                        }
                     }
                     else {
-                        naxis1= FitsReadUtil.getNaxis1(header);
-                        naxis2= FitsReadUtil.getNaxis2(header);
-                        naxis3= FitsReadUtil.getNaxis3(header);
+                        desc.append(String.format("%d x 1)", getNaxisLength(header, 1, isCompressed)));
                     }
-                    if (naxis>=3 && naxis3>1) {
-                        desc+= String.format(" (cube %d x %d x %d)",naxis1,naxis2,naxis3);
-                    }
-                    else {
-                        desc+= String.format(" (%d x %d)",naxis1,Math.max(naxis2,1));
-                    }
-                    part.setDesc(desc);
+
+                    part.setDesc(desc.toString());
                 }
                 report.addPart(part);
 

@@ -408,7 +408,7 @@ public class FitsExtract {
         String hduNumStr= "HDU #"+hduNum;
         int nAxis= FitsReadUtil.getNaxis(header);
         if (nAxis<3) throw new FitsException(hduNumStr + " is not a cube");
-        if (nAxis==4 && FitsReadUtil.getNaxis4(header)!=1) throw new FitsException(hduNumStr + " is not a cube, 4 axes");
+        if (nAxis==4 && FitsReadUtil.getNaxisLength(header,4)!=1) throw new FitsException(hduNumStr + " is not a cube, 4 axes");
     }
 
     private static void validateImageAtHDU(BasicHDU<?>[] hdus, int hduNum) throws FitsException {

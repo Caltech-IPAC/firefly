@@ -31,7 +31,6 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,69 +47,116 @@ public final class FITSTableReader
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final Pattern TDISP = Pattern.compile("(A|I|B|O|Z|F|E|EN|ES|G|D)(\\d+)?(?:\\.(\\d+))?.*");
     private static final Pattern EXPONENTIAL = Pattern.compile("E|EN|ES|D");                                    // Table 20 from https://fits.gsfc.nasa.gov/standard30/fits_standard30aa.pdf
+    private static final int MAX_IMAGE_COLS= 30;
+
+    record FitsTableReadInfo(DataGroup dataGroup, EvalVal[] evaluator) {};
 
     public static boolean debug = true;
-
-    public static DataGroup convertFitsToDataGroup(String fits_filename, TableServerRequest request,
-                                                   int table_idx) throws FitsException, IOException {
-        return convertFitsToDataGroup(fits_filename,null,null,request,table_idx);
-    }
 
     /**
      * Convert a table from a FITS file to DataGroup based on table index
      * @param fits_filename the file name
-     * @param dataCols The names of the columns which will be copied to the data section of the DataGroups.
-     *                If dataCols = null, get all the columns into the data group.
-     * @param headerCols The names of the columns which will be copied to the header section of the DataGroups.
-     *                If headerCols = null, get none of the columns into the header of the data group.
      * @param table_idx table index, i.e. HDU number in FITS
      * @return the data group
      */
-    public static DataGroup convertFitsToDataGroup(String fits_filename,
-                                                         String[] dataCols,
-                                                         String[] headerCols,
-                                                         TableServerRequest request,
-                                                         int table_idx) throws FitsException, IOException {
+    public static DataGroup readFitsTable(String fits_filename, TableServerRequest request, int table_idx)
+            throws FitsException, IOException {
 
-
-        FitsFactory.useThreadLocalSettings(true);
-        var metaInfo= request!=null ? request.getMeta() : null;
+        int workingTableIdx= table_idx;
         try (Fits fits = new Fits(fits_filename)) {
-            // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
-            // the exception error sent from nom.tam.fits.
-            DataGroup result;
-            ;
+            FitsFactory.useThreadLocalSettings(true);
+            DataGroup result= null;
+
             BasicHDU<?>[] hdus = fits.read();
 
             if (table_idx >= hdus.length) {
-                throw new FitsException( "table index of " +table_idx+" exceeds the number of HDUS " + hdus.length);
+                throw new FitsException("table index of " + table_idx + " exceeds the number of HDUS " + hdus.length);
             }
-            BasicHDU<?> hdu= hdus[table_idx];
+            workingTableIdx= normalizeTableIndex(hdus,table_idx);
+            BasicHDU<?> hdu= hdus[workingTableIdx];
 
-            if (table_idx==0) { //FITS tables are not at 0, if at zero try to read it as an image first
-                result = getFitsImageAsTable(hdu,request);
-                if (result==null && hdus.length>1) {
-                    FitsFactory.setLongStringsEnabled(false);
-                    result = readFitsTable(hdus[1], fits_filename, dataCols, headerCols, table_idx);
-                }
+            if (hdu instanceof TableHDU<?>) {
+                result = doReadFitsTable(hdu, fits_filename, table_idx);
             }
-            else { // if >0 then try to read it as a FITS table first.
-                FitsFactory.setLongStringsEnabled(false);
-                result = readFitsTable(hdu, fits_filename, dataCols, headerCols, table_idx);
-                FitsFactory.setLongStringsEnabled(true);
-                if (result == null) result = getFitsImageAsTable(hdu,request);
+            else if (isImageLike(hdu) && canReadImageAsTable(hdu)) {
+                result = getFitsImageAsTable(hdu, request,null);
             }
-            String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
-            var spectrumHint= dataTypeHint.equalsIgnoreCase(FileAnalysisReport.TableDataType.Spectrum.name());
-            if (result != null) SpectrumMetaInspector.searchForSpectrum(result,hdus[table_idx], spectrumHint);
+            if (result != null) SpectrumMetaInspector.searchForSpectrum(result, hdus[table_idx], isSpectrumHint(request));
             return result;
-        } catch (FitsException|IOException e) {
-            logTableReadError(fits_filename,table_idx,e.getMessage());
+        } catch (FitsException | IOException e) {
+            logTableReadError(fits_filename, workingTableIdx, e.getMessage());
             throw e;
         } finally {
             FitsFactory.useThreadLocalSettings(false);
         }
     }
+
+
+
+    public static boolean ingestFitsTable(TableParseHandler handler, String fits_filename, TableServerRequest request, int table_idx)
+                throws FitsException, IOException {
+
+        FitsFactory.useThreadLocalSettings(true);
+        int workingTableIdx= table_idx;
+        try (Fits fits = new Fits(fits_filename)) {
+            BasicHDU<?>[] hdus = fits.read();
+            if (table_idx >= hdus.length) {
+                throw new FitsException( "table index of " +table_idx+" exceeds the number of HDUS " + hdus.length);
+            }
+            workingTableIdx= normalizeTableIndex(hdus,table_idx);
+            BasicHDU<?> hdu= hdus[workingTableIdx];
+            if (hdu instanceof TableHDU<?> hduTable) {
+                doIngestFitsTable(handler,hduTable,fits_filename,workingTableIdx,isSpectrumHint(request));
+                return true;
+            } else if (isImageLike(hdu) && canReadImageAsTable(hdu)) {
+                getFitsImageAsTable(hdu, request,handler);
+                return true;
+            }
+            else {
+                return false;
+            }
+        } catch (FitsException|IOException e) {
+            logTableReadError(fits_filename,workingTableIdx,e.getMessage());
+            throw e;
+        } finally {
+            FitsFactory.useThreadLocalSettings(false);
+        }
+    }
+
+    public static DataGroup readTableHeader(BasicHDU<?> hdu) {
+        if (!(hdu instanceof TableHDU<?> hduTable)) return null;
+        try {
+            var fitsTableReadInfo= doReadFitsTableHeader(hduTable,"unknown");
+            var dataGroup= fitsTableReadInfo.dataGroup();
+            dataGroup.trimToSize();
+            return dataGroup;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * tables are never at hdu 0, if zero is passed and there is not an image hdu at 0 and there is more than 1 hdu
+     * then return 1. Otherwise, return the passed index.
+     * @param hdus hdu array
+     * @param table_idx hdu index of the table
+     * @return new index
+     */
+    private static int normalizeTableIndex(BasicHDU<?>[] hdus, int table_idx) {
+        if (table_idx!= 0 || hdus.length==0) return table_idx; // only do a change it idx is 0 and there is more than 0 hdu
+        return isImageLike(hdus[table_idx]) ? table_idx : 1;
+    }
+
+    private static boolean isSpectrumHint(TableServerRequest request) {
+        var metaInfo= request!=null ? request.getMeta() : null;
+        String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
+        return dataTypeHint.equalsIgnoreCase(FileAnalysisReport.TableDataType.Spectrum.name());
+    }
+
+    private static boolean isImageLike(BasicHDU<?> hdu) {
+        return ((hdu instanceof ImageHDU || hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU));
+    }
+
 
     private static boolean is1dImage(BasicHDU<?> hdu) {
         Header header = hdu.getHeader();
@@ -125,9 +171,23 @@ public final class FITSTableReader
         return hasNAxis1Data && otherDimsAre1;
     }
 
-    private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,TableServerRequest request)
+    private static boolean canReadImageAsTable(BasicHDU<?> hdu) {
+        if (!isImageLike(hdu)) return false;
+        Header header = hdu.getHeader();
+        int naxis = FitsReadUtil.getNaxis(header);
+        if (naxis < 1) return false;
+        int naxis1 = FitsReadUtil.getNaxis1(header);
+        if (naxis1 < 1) return false;
+        int naxis2 = FitsReadUtil.getNaxis2(header);
+        if (is1dImage(hdu)) return true;
+        return (naxis2 <= MAX_IMAGE_COLS);
+    }
+
+
+    private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,TableServerRequest request, TableParseHandler handler)
                                                  throws FitsException, IOException {
 
+        if (!isImageLike(hdu)) return null;
         Header header = hdu.getHeader();
         var indexColName= header.getStringValue("CNAME1", "Index");
         String[] colNames= new String[]{indexColName};
@@ -141,87 +201,138 @@ public final class FITSTableReader
             if (colUnitsStr != null && colUnitsStr.length() > 1) colUnits =colUnitsStr.split(",");
         }
 
-        if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
-            int naxis = FitsReadUtil.getNaxis(header);
-            if (naxis < 1) return null;
-            int naxis1 = FitsReadUtil.getNaxis1(header);
-            if (naxis1 < 1) return null;
-            int naxis2 = FitsReadUtil.getNaxis2(header);
-            String desc = FitsReadUtil.getExtName(header);
-            if (desc == null) desc = header.getStringValue("NAME");
-            if (desc == null) desc = "No Name";
-            ArrayList<DataType> dataTypes = new ArrayList<>();
-            DataType idxDT = new DataType(colNames[0], colNames[0], Integer.class);
-            idxDT.setUnits("pixel");
-            if (colUnits!=null) idxDT.setUnits(colUnits[0]);
-            dataTypes.add(idxDT);
+        int naxis = FitsReadUtil.getNaxis(header);
+        if (naxis < 1) return null;
+        int naxis1 = FitsReadUtil.getNaxis1(header);
+        if (naxis1 < 1) return null;
+        int naxis2 = FitsReadUtil.getNaxis2(header);
+        String desc = FitsReadUtil.getExtName(header);
+        if (desc == null) desc = header.getStringValue("NAME");
+        if (desc == null) desc = "No Name";
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        DataType idxDT = new DataType(colNames[0], colNames[0], Integer.class);
+        idxDT.setUnits("pixel");
+        if (colUnits!=null) idxDT.setUnits(colUnits[0]);
+        dataTypes.add(idxDT);
 
-            if (is1dImage(hdu)) {
-                double[] data = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
-                if (data == null) return null;
-                String bunit= FitsReadUtil.getBUnit(header);
-                String extname= FitsReadUtil.getExtName(header);
+        if (is1dImage(hdu)) {
+            double[] data = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
+            if (data == null) return null;
+            String bunit= FitsReadUtil.getBUnit(header);
+            String extname= FitsReadUtil.getExtName(header);
 
-                String dataCName = (colNames.length > 1) ? colNames[1] : !isEmpty(extname) ? extname : "value";
-                DataType dataDT = new DataType(dataCName, dataCName, Double.class);
-                if (!isEmpty(bunit)) dataDT.setUnits(bunit);
-                if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
-                dataTypes.add(dataDT);
-                DataGroup dataGroup = new DataGroup(desc, dataTypes);
-                dataGroup.setInitCapacity(data.length);
-                for (int i = 0; (i < data.length); i++) {
-                    DataObject aRow = new DataObject(dataGroup);
-                    aRow.setDataElement(idxDT, i);
-                    aRow.setDataElement(dataDT, data[i]);
-                    dataGroup.add(aRow);
+            String dataCName = (colNames.length > 1) ? colNames[1] : !isEmpty(extname) ? extname : "value";
+            DataType dataDT = new DataType(dataCName, dataCName, Double.class);
+            if (!isEmpty(bunit)) dataDT.setUnits(bunit);
+            if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
+            dataTypes.add(dataDT);
+            DataGroup dataGroup = new DataGroup(desc, dataTypes);
+            load1dRows(dataGroup,data,handler);
+            return dataGroup;
+        } else if ((naxis == 2 || naxis == 3)  && naxis2 > 0) {
+            double[][] data= null;
+            if (naxis2 > MAX_IMAGE_COLS) return null; // right now we only support 30 columns, this could be a parameter
+            if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
+                ImageHDU imageHDU = (hdu instanceof CompressedImageHDU cihdu) ? cihdu.asImageHDU() : (ImageHDU) hdu;
+                if (naxis==2) {
+                    ImageData imageDataObj = imageHDU.getData();
+                    data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
                 }
-                dataGroup.trimToSize();
-                return dataGroup;
-            } else if ((naxis == 2 || naxis == 3)  && naxis2 > 0) {
-                double[][] data= null;
-                if (naxis2 > 30) return null; // right now we only support 30 columns, this could be a parameter
-                if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
-                    ImageHDU imageHDU = (hdu instanceof CompressedImageHDU) ?
-                            ((CompressedImageHDU) hdu).asImageHDU() : (ImageHDU) hdu;
-                    if (naxis==2) {
-                        ImageData imageDataObj = imageHDU.getData();
-                        data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
-                    }
-                    else if (naxis2==1) {
-                        double[] data1D = (double[])dataArrayFromFitsFile(imageHDU,0,0,naxis1,naxis2, planeNumber,Double.TYPE);
-                        data= new double[1][data1D.length];
-                        data[0]= data1D;
-                    }
-                } else { //hdu instanceof UndefinedHDU is always true here
-                    data = (double[][]) ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
+                else if (naxis2==1) {
+                    double[] data1D = (double[])dataArrayFromFitsFile(imageHDU,0,0,naxis1,naxis2, planeNumber,Double.TYPE);
+                    data= new double[1][data1D.length];
+                    data[0]= data1D;
                 }
-                if (data == null) return null;
-
-                for (int i = 0; (i < data.length); i++) {
-                    String cName = (i + 1 < colNames.length) ? colNames[i+1] : "data" + i;
-                    DataType dt= new DataType(cName, cName, Double.class);
-                    if (colUnits!=null && colUnits.length>i) dt.setUnits(colUnits[i+1]);
-                    dataTypes.add(dt);
-                }
-
-                DataGroup dataGroup = new DataGroup(desc, dataTypes);
-                dataGroup.setInitCapacity(data[0].length);
-
-                DataType[] dd;
-                for (int row = 0; row < data[0].length; row++) {
-                    DataObject aRow = new DataObject(dataGroup);
-                    dd = dataGroup.getDataDefinitions();
-                    aRow.setDataElement(dd[0], row);
-                    for (int dtIdx = 1; dtIdx < dd.length; dtIdx++) {
-                        aRow.setDataElement(dd[dtIdx], data[dtIdx - 1][row]);
-                    }
-                    dataGroup.add(aRow);
-                }
-                dataGroup.trimToSize();
-                return dataGroup;
+            } else { //hdu instanceof UndefinedHDU is always true here
+                data = (double[][]) ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
             }
+            if (data == null) return null;
+
+            for (int i = 0; (i < data.length); i++) {
+                String cName = (i + 1 < colNames.length) ? colNames[i+1] : "data" + i;
+                DataType dt= new DataType(cName, cName, Double.class);
+                if (colUnits!=null && colUnits.length>i) dt.setUnits(colUnits[i+1]);
+                dataTypes.add(dt);
+            }
+
+            DataGroup dataGroup = new DataGroup(desc, dataTypes);
+            load2dRows(dataGroup,data,handler);
+            return dataGroup;
         }
         return null;
+    }
+
+
+    private static void load2dRows(DataGroup dataGroup, double[][] data, TableParseHandler handler) throws FitsException, IOException {
+        DataType[] dd= dataGroup.getDataDefinitions();;
+        if (handler!=null) {
+            try {
+                handler.start();
+                handler.startTable(0);
+                handler.header(dataGroup);
+                Object [] outRow;
+
+                for (int row = 0; row < data[0].length; row++) {
+                    DataObject aRow = new DataObject(dataGroup);
+                    outRow= new Object[dd.length];
+                    outRow[0] = row;
+                    for (int dtIdx = 1; dtIdx < dd.length; dtIdx++) {
+                        outRow[dtIdx] = data[dtIdx - 1][row];
+                    }
+                    handler.data(outRow);
+                    dataGroup.add(aRow);
+                }
+            } catch (Exception e) {
+                throw new IOException(e.toString(),e);
+            } finally {
+                handler.endTable(0);
+                handler.end();
+                FitsFactory.setLongStringsEnabled(false);
+            }
+        }
+        else {
+            dataGroup.setInitCapacity(data[0].length);
+            for (int row = 0; row < data[0].length; row++) {
+                DataObject aRow = new DataObject(dataGroup);
+                aRow.setDataElement(dd[0], row);
+                for (int dtIdx = 1; dtIdx < dd.length; dtIdx++) {
+                    aRow.setDataElement(dd[dtIdx], data[dtIdx - 1][row]);
+                }
+                dataGroup.add(aRow);
+            }
+        }
+        dataGroup.trimToSize();
+    }
+
+
+    private static void load1dRows(DataGroup dataGroup, double[] data , TableParseHandler handler) throws FitsException, IOException {
+        if (handler!=null) {
+            try {
+                handler.start();
+                handler.startTable(0);
+                handler.header(dataGroup);
+                for (int i = 0; (i < data.length); i++) {
+                    handler.data(new Object[] {i, data[i]});
+                }
+            } catch (Exception e) {
+                throw new IOException(e.toString(),e);
+            } finally {
+                handler.endTable(0);
+                handler.end();
+                FitsFactory.setLongStringsEnabled(false);
+            }
+        }
+        else {
+            DataType[] dd= dataGroup.getDataDefinitions();;
+            dataGroup.setInitCapacity(data.length);
+            for (int i = 0; (i < data.length); i++) {
+                DataObject aRow = new DataObject(dataGroup);
+                aRow.setDataElement(dd[0], i);
+                aRow.setDataElement(dd[1], data[i]);
+                dataGroup.add(aRow);
+            }
+        }
+        dataGroup.trimToSize();
     }
 
 
@@ -231,14 +342,14 @@ public final class FITSTableReader
     }
 
     //This function is loosely based on the packagedType function from the FitsStarTable class (uk.ac.starlink.fits package)
-    private static Class<?> getClassType(Object base, int icol, boolean[] isScaled, String colFormat) {
+    private static Class<?> getClassType(Object base, boolean isScaled, String colFormat) {
         if (base == null) {
-            if (isScaled[icol]) return Double.class;
+            if (isScaled) return Double.class;
             return getClassByTform(colFormat);
         } else {
             Class<?> cls = base.getClass().getComponentType();
             if (cls != null && Array.getLength(base) == 1) {
-                if (isScaled[icol]) {
+                if (isScaled) {
                     return Double.class;
                 }
                 return cls;
@@ -258,7 +369,6 @@ public final class FITSTableReader
         int arrayLen;
         try {
             arrayLen= !startStr.isEmpty() ? Integer.parseInt(startStr) : 0;
-
         } catch (NumberFormatException e) {
             arrayLen= 0;
         }
@@ -275,93 +385,123 @@ public final class FITSTableReader
         };
     }
 
-    public static DataGroup readTableHeader(BasicHDU<?> hdu) {
-        if (!(hdu instanceof TableHDU<?> hduTable)) return null;
-        try {
-            return doReadFitsTable(hduTable,"unknown", null, null, false);
-        } catch (IOException e) {
-            return null;
-        }
-    }
 
     /**
      *
      * @param hdu hdu to use for reading
      * @param fitsFilename fits fileName string
-     * @param inclCols cols to include when creating DataType entries
-     * @param inclHeaders headers to include when creating DataGroup TableMeta
      * @param tableIdx the hdu index to read
      * @return DataGroup converted from the hdu
      * @throws IOException thrown if error reading table entry
      * @throws FitsException call to convertHDUToDataType may throw FitsException
      */
 
-    private static DataGroup readFitsTable(BasicHDU<?> hdu,
-                                           String fitsFilename,
-                                           String[] inclCols,
-                                           String[] inclHeaders,
-                                           int tableIdx) throws IOException, FitsException {
+    private static DataGroup doReadFitsTable(BasicHDU<?> hdu,
+                                             String fitsFilename,
+                                             int tableIdx) throws IOException, FitsException {
 
         if (!(hdu instanceof TableHDU<?> hduTable)) {
             logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
             return null;
         }
-        return doReadFitsTable(hduTable,fitsFilename,inclCols,inclHeaders,true);
+
+        FitsFactory.setLongStringsEnabled(false);
+        try {
+            var fitsTableReadInfo= doReadFitsTableHeader(hduTable,fitsFilename);
+            var dataGroup= fitsTableReadInfo.dataGroup();
+            var evaluator= fitsTableReadInfo.evaluator();
+            int totalRows = hduTable.getNRows();
+            DataType[] dataDefinitions= dataGroup.getDataDefinitions();
+            hduTable.getKernel();
+            for (int row = 0; row < totalRows; row++){
+                addRowToDG(dataGroup, dataDefinitions, row, hduTable, evaluator);
+            }
+            dataGroup.trimToSize();
+            return dataGroup;
+        } finally {
+            FitsFactory.setLongStringsEnabled(false);
+        }
+    }
+
+    private static void doIngestFitsTable(TableParseHandler handler,
+                                          TableHDU<?> hduTable,
+                                          String fitsFilename,
+                                          int tableIdx,
+                                          boolean spectrumHint) throws IOException, FitsException {
+
+        try {
+            FitsFactory.setLongStringsEnabled(false);
+            var fitsTableReadInfo= doReadFitsTableHeader(hduTable,fitsFilename);
+            var dataGroup= fitsTableReadInfo.dataGroup();
+            var evaluator= fitsTableReadInfo.evaluator();
+            int totalRows = hduTable.getNRows();
+            SpectrumMetaInspector.searchForSpectrum(dataGroup,hduTable, spectrumHint);
+            DataType[] dataDefinitions= dataGroup.getDataDefinitions();
+            dataGroup.trimToSize();
+
+            handler.start();
+            handler.startTable(0);
+            handler.header(dataGroup);
+
+            hduTable.getKernel();
+            for (int row = 0; row < totalRows; row++){
+                ingestRow(handler, dataGroup, dataDefinitions, row, hduTable, evaluator);
+            }
+        } catch (Exception e) {
+            throw new IOException(e.toString(),e);
+        } finally {
+            handler.endTable(0);
+            handler.end();
+            FitsFactory.setLongStringsEnabled(false);
+        }
     }
 
 
 
 
-    private static DataGroup doReadFitsTable(TableHDU<?> hduTable,
-                                          String title,
-                                          String[] inclCols,
-                                          String[] inclHeaders,
-                                          boolean loadData  ) throws IOException, FitsException {
+    private static FitsTableReadInfo doReadFitsTableHeader(TableHDU<?> hduTable, String title) throws IOException, FitsException {
 
         int colCount = hduTable.getNCols();
         Class<?>[] bases = new Class[colCount];
         String[] colNames = new String[colCount];
 
-        int nrow = hduTable.getNRows();
-        int ncol = hduTable.getNCols();
+        int nRow = hduTable.getNRows();
+        int nCol = hduTable.getNCols();
 
-        double[] scales = new double[ncol];
-        double[] zeros = new double[ncol];
-        boolean[] isScaled = new boolean[ncol];
-        long[] blanks = new long[ncol];
-        boolean[] hasBlank = new boolean[ncol];
-
-        Arrays.fill(scales, 1.0);
-
+        EvalVal[] evaluator = new EvalVal[nCol];
         try {
-            for (int icol = 0; icol < ncol; ++icol) {
+            for (int icol = 0; icol < nCol; ++icol) {
                 colNames[icol] = hduTable.getColumnName(icol);
 
                 String tscal = hduTable.getColumnMeta(icol, "TSCAL");
                 String tzero = hduTable.getColumnMeta(icol, "TZERO");
                 double zeroval;
+                double scale=1.0;
+                long blank=0;
+                boolean hasBlank=false;
+                boolean isScaled = false;
+                double zeros= 0;
                 if (tscal != null) {
                     zeroval = Double.parseDouble(tscal);
-                    scales[icol] = zeroval;
+                    scale = zeroval;
                 }
                 if (tzero != null) {
                     zeroval = Double.parseDouble(tzero);
-                    zeros[icol] = zeroval;
+                    zeros = zeroval;
                 }
-                if (scales[icol] != 1.0 || zeros[icol] != 0.0) {
-                    isScaled[icol] = true;
+                if (scale != 1.0 || zeros != 0.0) {
+                    isScaled = true;
                 }
 
                 String blankKey = "TNULL" + (icol + 1);
                 if (hduTable.getHeader().containsKey(blankKey)) {
-                    long nullval = hduTable.getHeader().getLongValue(blankKey); //hduTable.getBlankValue();
-                    blanks[icol] = nullval;
-                    hasBlank[icol] = true;
+                    blank = hduTable.getHeader().getLongValue(blankKey); //hduTable.getBlankValue();
+                    hasBlank= true;
                 }
 
                 Object entry = null;
                 try {
-                    for (int irow = 0; entry == null && irow < nrow; ++irow) {
+                    for (int irow = 0; entry == null && irow < nRow; ++irow) {
                         entry = hduTable.getElement(irow, icol);
                     }
                 } catch (Exception e) {
@@ -370,7 +510,8 @@ public final class FITSTableReader
 
                 bases[icol] =
                         hduTable.getNRows()==0 ? getClassByTform(hduTable.getColumnFormat(icol)) :
-                                getClassType(entry, icol, isScaled, hduTable.getColumnFormat(icol));
+                                getClassType(entry, isScaled, hduTable.getColumnFormat(icol));
+                evaluator[icol] = new EvalVal(blank, isScaled, hasBlank, scale, zeros);
             }
         }
         catch (NumberFormatException e) {
@@ -378,26 +519,15 @@ public final class FITSTableReader
         }
         //creating DataType list ... column info
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        List<String> colList = inclCols == null ? null : Arrays.asList(inclCols);
 
         for (int colIdx = 0; colIdx < colCount; colIdx++) {
-            if ((colList == null) || colList.contains(colNames[colIdx])) {
-                DataType dt = convertHDUToDataType(colNames, bases, hduTable, colIdx);
-                dataTypes.add(dt);
-            }
+            DataType dt = convertHDUToDataType(colNames, bases, hduTable, colIdx);
+            dataTypes.add(dt);
         }
 
         DataGroup dataGroup = new DataGroup(title, dataTypes);
         // creating DataGroup rows.
-        dataGroup.setInitCapacity(nrow);
-        DataType[] dataDefinitions= dataGroup.getDataDefinitions();
-
-        if (loadData) {
-            hduTable.getKernel();
-            for (int row = 0; row < nrow; row++){
-                addRowToDG(dataGroup, dataDefinitions, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
-            }
-        }
+        dataGroup.setInitCapacity(nRow);
 
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
@@ -421,16 +551,12 @@ public final class FITSTableReader
             headerParams.put(key, value);
         }
 
-        List<String> hdList = inclHeaders == null ? null : Arrays.asList(inclHeaders);
         for (Map.Entry<String, String> entry : headerParams.entrySet()) {
             String n = entry.getKey();
             String v = entry.getValue();
-            if (hdList == null || hdList.contains(n)) {
-                dataGroup.getTableMeta().addKeyword(n, v); //should keywords be in order as they appear in the Table Header?
-            }
+            dataGroup.getTableMeta().addKeyword(n, v); //should keywords be in order as they appear in the Table Header?
         }
-        dataGroup.trimToSize();
-        return dataGroup;
+        return   new FitsTableReadInfo(dataGroup,evaluator);
     }
 
     record EvalVal(long blank, boolean scaled, boolean hasBlank, double scale, double zero) {
@@ -442,8 +568,7 @@ public final class FITSTableReader
     }
 
     //This function is loosely based on the packageValue function from the FitsStarTable class in the uk.ac.starlink.fits package
-    private static Object getValAsObject(Object elem, int icol, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
-                                         double[] scales, double[] zeros) throws FitsException {
+    private static Object getValAsObject(Object elem, int icol, EvalVal[] evaluator) throws FitsException {
             if (elem == null) {
                 return null;
             }
@@ -454,14 +579,13 @@ public final class FITSTableReader
             }
             else if (Array.getLength(elem) == 1) {
                 String cls = elem.getClass().getComponentType().toString();
-                EvalVal evaluator = new EvalVal(blanks[icol], isScaled[icol], hasBlank[icol], scales[icol], zeros[icol]);
                 return switch (cls) {
-                    case "byte" -> evaluator.evalValue((int)((byte[])(elem))[0]);
-                    case "short" -> evaluator.evalValue((int)((short[])(elem))[0]);
-                    case "int" -> evaluator.evalValue(((int[])(elem))[0]);
-                    case "long" -> evaluator.evalValue(((long[])(elem))[0]);
-                    case "float" -> evaluator.evalValue(((float[])(elem))[0]);
-                    case "double" -> evaluator.evalValue(((double[])(elem))[0]);
+                    case "byte" -> evaluator[icol].evalValue((int)((byte[])(elem))[0]);
+                    case "short" -> evaluator[icol].evalValue((int)((short[])(elem))[0]);
+                    case "int" -> evaluator[icol].evalValue(((int[])(elem))[0]);
+                    case "long" -> evaluator[icol].evalValue(((long[])(elem))[0]);
+                    case "float" -> evaluator[icol].evalValue(((float[])(elem))[0]);
+                    case "double" -> evaluator[icol].evalValue(((double[])(elem))[0]);
                     case "boolean" -> ((boolean[]) (elem))[0];
                     case "class java.lang.String" -> isEmpty(((String[])(elem))[0]) ? null : ((String[])(elem))[0];
                     default -> throw new FitsException( "Unrecognized class type in FITS table file entry: " + cls);
@@ -472,14 +596,33 @@ public final class FITSTableReader
             }
     }
 
-    private static void addRowToDG(DataGroup dataGroup, DataType[] dataDefinitions, int rowIdx, TableHDU<?> hduTable, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
-                                   double[] scales, double[] zeros) {
+
+
+    private static void ingestRow(TableParseHandler handler, DataGroup dataGroup, DataType[] dataDefinitions,
+                                      int rowIdx, TableHDU<?> hduTable, EvalVal[] evaluator) throws FitsException {
+        Object[] outRow= new Object[dataDefinitions.length];
+        try {
+            Object[] rowData= hduTable.getRow(rowIdx);
+            for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
+                //so cast the val object to an array of its type by calling the getValAsObject function
+                outRow[dtIdx] = getValAsObject(rowData[dtIdx], dtIdx, evaluator);
+            }
+            handler.data(outRow);
+        } catch (Exception e) {
+            logger.error("Unable to read table row:" + rowIdx + "   msg:" + e.getMessage());
+        }
+    }
+
+
+
+    private static void addRowToDG(DataGroup dataGroup, DataType[] dataDefinitions, int rowIdx, TableHDU<?> hduTable,
+                                   EvalVal[] evaluator) throws FitsException {
         DataObject aRow = new DataObject(dataGroup);
         try {
             Object[] rowData= hduTable.getRow(rowIdx);
             for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
                 //so cast the val object to an array of its type by calling the getValAsObject function
-                Object unpackedVal = getValAsObject(rowData[dtIdx], dtIdx, hasBlank, blanks, isScaled, scales, zeros);
+                Object unpackedVal = getValAsObject(rowData[dtIdx], dtIdx, evaluator);
                 aRow.setDataElement(dataDefinitions[dtIdx], unpackedVal);
             }
             dataGroup.add(aRow);
@@ -488,7 +631,7 @@ public final class FITSTableReader
         }
     }
 
-    public static Class<?> formatClass(Class<?> c) throws FitsException {
+    private static Class<?> formatClass(Class<?> c) throws FitsException {
         String cname = c.getName();
         //check if dimension is 0 then cname is of type "boolean" or "byte", etc.
         //but if dimension is > 0, then cname may be of type "[[[B" or "[S", etc.

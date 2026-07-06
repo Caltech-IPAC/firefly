@@ -199,6 +199,8 @@ public class FileAnalysisReport {
         private boolean interpretedData= false;
         private String searchProcessorId="";
         private DataGroup details;
+        private boolean unsupported= false;
+        private String unsupportedReason= null;
         private ChartTableDefOption chartTableDefOption= ChartTableDefOption.auto;
         private int totalTableRows=-1;
 
@@ -270,6 +272,12 @@ public class FileAnalysisReport {
 
         public String getUrl() { return url; }
         public void setUrl(String url) { this.url = url; }
+
+        public void setUnsupported(boolean unsupported) { this.unsupported= unsupported; }
+        public boolean isUnsupported() { return unsupported; }
+
+        public void setUnsupportedReason(String unsupportedReason) { this.unsupportedReason= unsupportedReason; }
+        public String getUnsupportedReason() { return unsupportedReason; }
 
         public void setSearchProcessorId(String searchProcessorId) {this.searchProcessorId=searchProcessorId;}
         public String getSearchProcessorId() {return searchProcessorId;}

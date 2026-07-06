@@ -204,6 +204,10 @@ public class FileAnalysis {
 
                 putPartVal(h, p.getDesc(), i, "desc");
                 putPartVal(h, p.getUrl(), i, "url");
+                if (p.isUnsupported()) {
+                    putPartVal(h, p.isUnsupported(), i, "unsupported");
+                    putPartVal(h, p.getUnsupportedReason(), i, "unsupportedReason");
+                }
                 putPartVal(h, p.getSearchProcessorId(), i, "searchProcessorId");
                 putPartVal(h, p.getConvertedFileName(),i,"convertedFileName");
                 putPartVal(h, p.getConvertedFileFormat(),i,"convertedFileFormat");

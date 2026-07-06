@@ -51,7 +51,7 @@ public class DbDataIngestor {
                 case IPACTABLE -> ingestIpacTable(dbAdapter, srcFile, extraMetaSetter, searchForSpectrum);
                 case VO_TABLE -> ingestVoTable(dbAdapter, source, extraMetaSetter, tblIdx, searchForSpectrum);
                 case CSV, TSV, PARQUET -> ingestDuckReadable(format, dbAdapter, source, extraMetaSetter, searchForSpectrum);
-                case FITS -> ingestFitsTable(req, dbAdapter, source, tblIdx);
+                case FITS -> ingestFitsTable(req, dbAdapter, source, tblIdx, extraMetaSetter);
                 case ASDF -> ingestAsdfTable(req, dbAdapter, source, tblIdx, extraMetaSetter, searchForSpectrum);
                 case JSON -> ingestJsonTable(req, dbAdapter, srcFile, searchForSpectrum);
                 default -> throw new DataAccessException("Unsupported format (%s), file: %s".formatted(format, source));
@@ -103,9 +103,18 @@ public class DbDataIngestor {
         }
     }
 
-    static FileInfo ingestFitsTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex) throws IOException, DataAccessException {
-        var table = FITSTableReader.convertFitsToDataGroup(source, req, tableIndex);
-        return ingestTable(dbAdapter, table, false);        //logic is already in the reader
+    static FileInfo ingestFitsTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex,
+                                    Consumer<DataGroup> extraMetaSetter) throws IOException, DataAccessException {
+        if (dbAdapter instanceof DuckDbAdapter ){
+            var h= new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, true);
+            var success= FITSTableReader.ingestFitsTable(h, source, req, tableIndex);
+            if (!success) throw new IOException("FITS Table ingest failed");
+            return new FileInfo(dbAdapter.getDbFile());
+        }
+        else {
+            var table = FITSTableReader.readFitsTable(source, req, tableIndex);
+            return ingestTable(dbAdapter, table, false);        //logic is already in the reader
+        }
     }
     static FileInfo ingestAsdfTable(TableServerRequest req, DbAdapter dbAdapter, String source, int tableIndex,
                                     Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum) throws IOException, DataAccessException {

@@ -135,7 +135,7 @@ class MaskEval implements FitsEvaluation.Eval {
         extType= extType==null ? "" : extType.toUpperCase();
         if (!maskNames.contains(extType)) return false;
         if (!maskFr.isCube()) return true;
-        return (maskFr.getNaxis3()==baseFr.getNaxis3() && cubePlaneNumber==maskFr.getPlaneNumber());
+        return (maskFr.getNaxisLength(3)==baseFr.getNaxisLength(3) && cubePlaneNumber==maskFr.getPlaneNumber());
     }
 
     public boolean isVariance(FitsRead fr) {
