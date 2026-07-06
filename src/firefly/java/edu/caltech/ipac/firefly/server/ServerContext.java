@@ -888,7 +888,9 @@ public class ServerContext {
             try {
                 System.out.println("contextDestroyed...");
                 ServerContext.shutdown();
-                ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
+                if (CacheManager.getCacheProvider(false) instanceof EhcacheProvider provider) {
+                    provider.shutdown();
+                }
                 try {
                     SHORT_TASK_EXEC.shutdownNow();
                     SHORT_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);

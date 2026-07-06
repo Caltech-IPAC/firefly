@@ -18,6 +18,6 @@ export const ValidationField = memo( (props) => {
                                onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
 });
 
-ValidationField.propType= {
+ValidationField.propTypes= {
     ...fgConnectPropsTypes
 };

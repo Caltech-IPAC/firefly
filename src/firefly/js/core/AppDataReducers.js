@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {SECTIONS, WorkingType} from './AppDataCntlr.js';
+import {WorkingType} from './AppDataCntlr.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 import * as AppDataCntlr from './AppDataCntlr.js';
 import {mergeObjectOnly, updateSet} from '../util/WebUtil.js';

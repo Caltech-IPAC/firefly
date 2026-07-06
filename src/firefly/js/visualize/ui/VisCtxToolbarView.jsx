@@ -139,18 +139,16 @@ function HipsOptionsDropdown({pv}) {
                     <Tooltip title='Choose the projection for the all-sky HiPS image'>
                         <Typography>Projection</Typography>
                     </Tooltip>
-                    <ToolbarButton {...{
+                    <ToolbarButton key='change Hips' {...{
                         hasCheckBox: true,
                         checkBoxOn: !isHiPSAitoff(plot),
-                        key: 'change Hips',
                         text: SPHER_TEXT,
                         tip: 'All-sky multi-resolution image with spherical projection, up to 180 degrees',
                         onClick: () => dispatchChangeCenterOfProjection({plotId: pv.plotId, fullSky: false})
                     }}/>
-                    <ToolbarButton {...{
+                    <ToolbarButton key='change aitoff' {...{
                         hasCheckBox: true,
                         checkBoxOn: isHiPSAitoff(plot),
-                        key: 'change aitoff',
                         text: AITOFF_TEXT,
                         tip: 'All-sky multi-resolution image with Aitoff projection, up to 360 degrees',
                         onClick: () => dispatchChangeCenterOfProjection({plotId: pv.plotId, fullSky: true})
@@ -203,16 +201,16 @@ function HiPSDataSelect({pv}) {
             {canConvertHF  && isHiPS(plot) && <DropDownVerticalSeparator useLine={true}/>}
             {canConvertHF && <>
                 <Typography sx={{whiteSpace:'nowrap'}}>HiPS to FITS Conversion</Typography>
-                <ToolbarButton {...{
-                    hasCheckBox: true, checkBoxOn: auto, key: 'autoFITS',
+                <ToolbarButton key='autoFITS' {...{
+                    hasCheckBox: true, checkBoxOn: auto,
                     text: isHiPS(plot) ? `Auto Zoom-in to ${imageTitle} FITS` : 'Auto Zoom-out to HiPS',
                     tip: isHiPS(plot) ?
                         `${autoTipStart} Switch to ${imageTitle} FITS image at current view center; coverage extent will be limited` :
                         `${autoTipStart} Switch to All-Sky (HiPS) image`,
                     onClick: () => changeAutoConvert(pv, !auto)
                 }}/>
-                <ToolbarButton {...{
-                    hasCheckBox: true, key: 'toFITS',
+                <ToolbarButton key='toFITS' {...{
+                    hasCheckBox: true,
                     text: isHiPS(plot) ? `Switch to ${imageTitle} FITS image` : 'Switch to HiPS',
                     tip: isHiPS(plot) ?
                         `Switch to ${imageTitle} FITS image at current view center; coverage extent will be limited` :

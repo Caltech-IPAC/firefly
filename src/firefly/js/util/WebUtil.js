@@ -35,7 +35,11 @@ const getScriptURL = once(() => {
             .some((name) => s.src.indexOf(name) > -1))[0]?.src;
 });
 
+let _rootURLOverride = null;
+export const setRootURL = (url) => { _rootURLOverride = url.endsWith('/') ? url : url + '/'; };
+
 export const getRootURL = once(() => {
+    if (_rootURLOverride) return _rootURLOverride;
     if (getProp('SCRIPT_NAME') === undefined) return 'http://localhost:8080/';
     const workingURL = getScriptURL() || globalThis?.location.href;
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';

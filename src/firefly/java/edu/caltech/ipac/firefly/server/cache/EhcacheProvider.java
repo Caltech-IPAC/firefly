@@ -33,6 +33,7 @@ import java.time.Duration;
 
 import static edu.caltech.ipac.firefly.server.cache.EhcacheImpl.makeExpiryPolicy;
 import static edu.caltech.ipac.util.FileUtil.parseMemoryBytes;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * 11/21/2024
@@ -62,8 +63,8 @@ public class EhcacheProvider implements Cache.Provider {
      *   permManager — PERM_SMALL only; no custom SizeOfEngine so entry-count heap works, and
      *                 arbitrary objects (Semaphore, ConcurrentHashMap, …) are never deep-sized.
      */
-    private static final CacheManager visManager;
-    private static final CacheManager permManager;
+    private static CacheManager visManager;
+    private static CacheManager permManager;
     private static final DefaultStatisticsService visStats  = new DefaultStatisticsService();
     private static final DefaultStatisticsService permStats = new DefaultStatisticsService();
 
@@ -88,10 +89,16 @@ public class EhcacheProvider implements Cache.Provider {
         return new EhcacheImpl<>(ehcache);
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         try {
-            visManager.close();
-            permManager.close();
+            if (visManager != null) {
+                visManager.close();
+                visManager = null;
+            }
+            if (permManager != null) {
+                permManager.close();
+                permManager = null;
+            }
         } finally {
             new File(getPermDiskDir(), ".lock").delete();
         }

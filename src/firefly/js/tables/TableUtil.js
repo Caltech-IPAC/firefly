@@ -4,13 +4,14 @@
 
 import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainObject, isString, isUndefined, omitBy,
     padEnd, set, uniqueId, omit, uniq} from 'lodash';
-import Enum from 'enum';
 import DOMPurify from 'dompurify';
+import {SYS_COLUMNS, NOT_CELL_DATA, DOC_FUNCTIONS_URL, COL_TYPE, TBL_STATE, MAX_ROW} from './TableConst.js';
+export {SYS_COLUMNS, NOT_CELL_DATA, DOC_FUNCTIONS_URL, COL_TYPE, TBL_STATE} from './TableConst.js';
 
 import {getWsConnId} from '../core/AppDataCntlr.js';
 import {sprintf} from '../externalSource/sprintf.js';
 import {fetchUrl} from '../util/fetch';
-import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
+import {makeFileRequest} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo, getNumFilters, FILTER_SEP} from './FilterInfo.js';
@@ -26,8 +27,6 @@ import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 import {Logger} from '../util/Logger';
 
-export const SYS_COLUMNS = ['ROW_IDX', 'ROW_NUM'];
-export const DOC_FUNCTIONS_URL = 'https://duckdb.org/docs/sql/functions/overview.html';
 const HtmlRegex = /<\/?[a-z][\s\S]*>|&[a-zA-Z]+;/i;     // this will detect HTML Entities as well
 const logger = Logger('Tables').tag('TableUtil');
 
@@ -43,18 +42,6 @@ const local = {
 };
 export default local;
 
-const TEXT  = ['char'];
-const INT   = ['long', 'int', 'short', 'integer'];
-const FLOAT = ['double', 'float', 'real'];
-const BOOL  = ['boolean','bool'];
-const DATE  = ['date'];
-const NUMBER= [...INT, ...FLOAT];
-const USE_STRING = [...TEXT, ...DATE];
-const ENUM_TYPES = [...TEXT, ...INT, ...BOOL];
-
-// export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
-export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING, ENUM_TYPES});
-export const TBL_STATE = new Enum(['ERROR', 'LOADING', 'NO_DATA', 'NO_MATCH', 'OK']);
 
 /**
  * @param {TableColumn} col
@@ -1246,7 +1233,7 @@ export function fixRequest(request) {
  * @func uniqueTblId
  */
 export function uniqueTblId() {
-    const uid = getWsConnId();
+    const uid = getWsConnId() || '';
     const id = uniqueId(`tbl_id-c${uid}-`);
     if (getTblById(id)) {
         return uniqueTblId();

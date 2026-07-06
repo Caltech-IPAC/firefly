@@ -280,13 +280,13 @@ function ThreeColor({imageMasterData, multiSelect, archiveName, noScroll}) {
         <div className='flex-full' style={{marginTop: 5}}>
             <StatefulTabs componentKey='ImageSearchPanelV2'>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
-                    <SingleChannel {...{key: FG_KEYS.red, groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName, noScroll}}/>
+                    <SingleChannel key={FG_KEYS.red} {...{groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
                 <Tab key='ImageSearchGreen' name='green' label={<div style={{width:40, color:'green'}}>Green</div>}>
-                    <SingleChannel {...{key: FG_KEYS.green, groupKey: FG_KEYS.green, imageMasterData, multiSelect, archiveName, noScroll}}/>
+                    <SingleChannel key={FG_KEYS.green} {...{groupKey: FG_KEYS.green, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
                 <Tab key='ImageSearchBlue' name='blue' label={<div style={{width:40, color:'blue'}}>Blue</div>}>
-                    <SingleChannel {...{key: FG_KEYS.blue, groupKey: FG_KEYS.blue, imageMasterData, multiSelect, archiveName, noScroll}}/>
+                    <SingleChannel key={FG_KEYS.blue} {...{groupKey: FG_KEYS.blue, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
             </StatefulTabs>
         </div>

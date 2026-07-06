@@ -421,7 +421,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
     const makeItems = () => {
         return ctArray.map((ct) => {
             if (ct.ignore) return undefined;
-            return <ColorItem {...{key:ct.id,colorTableId:colorTableId+'',ct,bias,contrast,changeBiasContrastColor}}/>;
+            return <ColorItem key={ct.id} {...{colorTableId:colorTableId+'',ct,bias,contrast,changeBiasContrastColor}}/>;
         }).filter(Boolean);
     };
 

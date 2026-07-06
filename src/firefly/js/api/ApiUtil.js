@@ -31,7 +31,7 @@ export {ServerParams} from  '../data/ServerParams.js';
 export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 export {getAppOptions} from '../core/AppDataCntlr.js';
 
-export {startAsAppFromApi, getVersion} from '../Firefly.js';
+export {startAsAppFromApi} from '../Firefly.js';
 
 /**
  * show a debug message if debugging is enabled

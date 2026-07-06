@@ -1,0 +1,68 @@
+{
+  "name": "@ipac/firefly-components",
+  "version": "0.1.0-beta-4",
+  "description": "Firefly React component library",
+  "license": "SEE LICENSE IN ../License.txt",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./tables": {
+      "import": "./dist/tables.js",
+      "require": "./dist/tables.cjs"
+    },
+    "./charts": {
+      "import": "./dist/charts.js",
+      "require": "./dist/charts.cjs"
+    },
+    "./images": {
+      "import": "./dist/images.js",
+      "require": "./dist/images.cjs"
+    },
+    "./styles": "./dist/firefly-components.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "chroma-js": "~3.1",
+    "dompurify": "~3.3",
+    "fixed-data-table-2": "~2.0.4",
+    "immutability-helper": "~3.1",
+    "lodash": "~4.17",
+    "md5": "~2.3.0",
+    "prop-types": "~15.8",
+    "shallowequal": "~1.1"
+  },
+  "peerDependencies": {
+    "@emotion/react": "^11.11",
+    "@emotion/styled": "^11.11",
+    "@mui/icons-material": "^5.18",
+    "@mui/joy": "^5.0.0-beta.52",
+    "@mui/material": "^5.18",
+    "@mui/x-date-pickers": "^6.19",
+    "moment": "^2.30",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@emotion/babel-plugin": "^11.0.0",
+    "@storybook/addon-essentials": "^8.0.0",
+    "@storybook/addon-storysource": "^8.6.14",
+    "@storybook/react-vite": "^8.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "storybook": "^8.0.0",
+    "vite": "^5.0.0",
+    "vite-plugin-css-injected-by-js": "^5.0.1"
+  }
+}

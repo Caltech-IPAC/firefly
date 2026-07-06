@@ -29,7 +29,7 @@ import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {logger} from '../../util/Logger.js';
 
 
-const MAX_ROW = Math.pow(2,31) - 1; // same as in '../../tables/TableRequestUtil.js', couldn't import from there
+import {MAX_ROW} from '../../tables/TableConst.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id

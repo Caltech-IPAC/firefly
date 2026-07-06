@@ -37,3 +37,7 @@ package-lock.json
 # ignore build and dist directories made by pip
 src/firefly/python/display/dist
 src/firefly/python/display/firefly_client.egg-info
+
+# component library build outputs
+component-library/dist/
+component-library/storybook-static/

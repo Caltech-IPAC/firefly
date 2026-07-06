@@ -1,4 +1,4 @@
-const MAX_ROW = Math.pow(2, 31) - 1;
+import {MAX_ROW} from '../../tables/TableConst.js';
 
 export const ALERT = {
     STATE_ID: 'ALERT_VIEWER_STATE',

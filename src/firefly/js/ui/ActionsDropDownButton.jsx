@@ -24,7 +24,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id, style, tip='Se
     const {cenWpt} = spacial ? getDetailsFromSelection(primePlot(pv)) :
                                 {cenWpt:getWorldPtFromTableRow(getTblById(tbl_id))};
     if (!cenWpt || !mi?.clickToSearch) return <div/>;
-    const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id, key:'searchDropDown'}}/>;
+    const dropDown = <SearchDropDown key='searchDropDown' {...{searchActions, buttonRef, spacial, tbl_id}}/>;
 
     return (
         <div ref={buttonRef} style={style}>
@@ -149,7 +149,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                 const text = getSearchTypeDesc({sa, wp:cenWpt, size:radius, areaPtsLength:corners?.length, tbl_id});
                 const tip= sa.tip ? `${sa.tip} for\n${text}` : text;
                 return (
-                    <ToolbarButton {...{text, tip, horizontal:false, key:sa.cmd+sa.tip,
+                    <ToolbarButton key={sa.cmd+sa.tip} {...{text, tip, horizontal:false,
                                    visible:isSupported(sa, cenWpt, radius, cornerStr, table),
                                    onClick:() => doExecute(sa, cenWpt, radius, cornerStr, table) }}/>
                 );

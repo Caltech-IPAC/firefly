@@ -104,7 +104,11 @@ public class CacheManager {
 //====================================================================
 
     public static Cache.Provider getCacheProvider() {
-        if (cacheProvider == null) {
+        return getCacheProvider(true);
+    }
+
+    public static Cache.Provider getCacheProvider(boolean createIfNull) {
+        if (cacheProvider == null && createIfNull) {
             cacheProvider = newInstanceOf(DEF_PROVIDER);
         }
 

@@ -15,7 +15,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {getWavelength} from './projection/Wavelength.js';
 import {removeRawData} from './rawData/RawDataCache.js';
-import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
+import {hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
 import {computeDistance, WAVELENGTH_UNITS} from './VisUtil';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 

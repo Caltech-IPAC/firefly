@@ -1,13 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import Enum from 'enum';
 import {difference, has, union, without} from 'lodash';
 import {call, race, take} from 'redux-saga/effects';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../core/ReduxFlux.js';
-import ImagePlotCntlr, {dispatchRecenter, ExpandType, visRoot, WcsMatchType} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchRecenter, visRoot} from './ImagePlotCntlr.js';
+import {ExpandType, WcsMatchType, IMAGE, EXPANDED_MODE_RESERVED, NewPlotMode} from './VisConst.js';
+export {IMAGE, EXPANDED_MODE_RESERVED, NewPlotMode} from './VisConst.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 
@@ -45,28 +46,16 @@ export default {
 
 export const SINGLE='single';
 export const GRID='grid';
-export const IMAGE='image';
+// IMAGE and EXPANDED_MODE_RESERVED are defined in VisConst.js and re-exported above.
 export const PLOT2D='plot2d';
 export const WRAPPER='wrapper';
 export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
 export const DEFAULT_PLOT2D_VIEWER_ID= 'DEFAULT_PLOT2D_VIEWER_ID';
 export const PINNED_CHART_VIEWER_ID = 'PINNED_CHART_VIEWER_ID';
-export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
 
-/**
- * @typedef NewPlotMode
- * enum one of
- * @prop create_replace
- * @prop replace_only
- * @prop none
- * @type {Enum}
- */
-
-
-/** @type NewPlotMode*/
-export const NewPlotMode = new Enum(['create_replace', 'replace_only', 'none']);
+// NewPlotMode is defined in VisConst.js and re-exported above.
 
 function initState() {
     /**

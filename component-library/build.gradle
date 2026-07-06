@@ -1,0 +1,89 @@
+def runNode = { ...cmd ->
+    project.ext.properties['NODE'].call(*cmd)
+}
+
+def libDistDir = "${projectDir}/dist"
+def libPackDir = "${rootDir}/build"
+def libVersion = new groovy.json.JsonSlurper().parse(file('package.json')).version
+def libTgz     = "${libPackDir}/firefly-components-v${libVersion}.tgz"
+
+// tasks.gincl is applied via subprojects{} — disable JS/Java test pipeline for this subproject
+jsTest.actions.clear()
+jsTest.dependsOn = []
+
+task installDeps {
+    description = 'Install component-library node dependencies.'
+    group = 'build'
+    inputs.file  'package.json'
+    inputs.file  'yarn.lock'
+    outputs.dir  'node_modules'
+    doLast {
+        exec {
+            workingDir = projectDir
+            executable 'yarn'
+            args 'install', '--ignore-platform', '--frozen-lockfile'
+        }
+    }
+}
+
+clean {
+    delete 'dist', 'storybook-static', libDistDir, libTgz
+}
+
+task buildLib(dependsOn: [loadConfig, installDeps]) {
+    description = 'Build the component library (Vite).'
+    group = 'build'
+    inputs.dir  'src'
+    inputs.file 'vite.config.js'
+    inputs.file 'package.json'
+    outputs.dir libDistDir
+    doLast {
+        def res = runNode('yarn', '--cwd', projectDir.toString(), 'build', '--outDir', libDistDir)
+        if (res.getExitValue() != 0) throw new GradleException('component-library build failed')
+    }
+}
+
+task pack(dependsOn: buildLib) {
+    description = 'Pack the component library into a tarball.'
+    group = 'build'
+    inputs.dir  libDistDir
+    inputs.file 'package.json'
+    outputs.file libTgz
+    doLast {
+        def res = runNode('yarn', '--cwd', projectDir.toString(), 'pack', '--filename', libTgz)
+        if (res.getExitValue() != 0) throw new GradleException('component-library pack failed')
+    }
+}
+
+task publishLib(dependsOn: buildLib) {
+    description = 'Publish the component library to the npm registry.'
+    group = 'publishing'
+    doLast {
+        def res = runNode('yarn', '--cwd', projectDir.toString(), 'publish')
+        if (res.getExitValue() != 0) throw new GradleException('component-library publish failed')
+    }
+}
+
+task buildStories(dependsOn: [loadConfig, installDeps]) {
+    description = 'Build the Storybook static site.'
+    group = 'build'
+    inputs.dir  'src'
+    inputs.dir  'stories'
+    inputs.dir  '.storybook'
+    inputs.file 'vite.config.js'
+    inputs.file 'package.json'
+    outputs.dir "${rootProject.project(':firefly').buildDir}/war/component-library"
+    doLast {
+        def outDir = "${rootProject.project(':firefly').buildDir}/war/component-library"
+        def res = runNode('yarn', '--cwd', projectDir.toString(), 'build-storybook', '--output-dir', outDir)
+        if (res.getExitValue() != 0) throw new GradleException('Storybook build failed')
+    }
+}
+
+task dev(dependsOn: [loadConfig, installDeps]) {
+    description = 'Start Storybook dev server on port 6006.'
+    group = 'application'
+    doLast {
+        runNode('yarn', '--cwd', projectDir.toString(), 'storybook')
+    }
+}
