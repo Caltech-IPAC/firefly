@@ -7,7 +7,7 @@ import {makeDevicePt, makeImagePt, makeImageWorkSpacePt, makeWorldPt} from './Po
 import {
     contains, containsEllipse, containsRec, findIntersectionPt, getAngleInDeg, getBoundingBox, getPositionAngle
 } from './VisUtil';
-import {getPixScaleDeg, isImage} from './WebPlot';
+import {getPixScaleDeg} from './WebPlot';
 
 
 export function isPlotRotatedNorth(plot, csys = CoordinateSys.EQ_J2000) {
@@ -127,27 +127,6 @@ export function isEastLeftOfNorth(plot) {
  * @return {boolean}
  */
 export const isCsysDirMatching = (p1, p2) => isEastLeftOfNorth(p1) === isEastLeftOfNorth(p2);
-
-
-export function getMatchingPlotRotationAngle(masterPlot, plot, masterRotationAngle, isMasterFlipY) {
-    if (!plot || !masterPlot) return 0;
-    const centerMasterPlot= isImage(plot) ? getCenterPtOfPlot(plot) : undefined; // if image use center point method
-    const masterRot = masterRotationAngle * (isMasterFlipY ? -1 : 1);
-    const rot = getRotationAngle(plot,centerMasterPlot);
-    let targetRotation;
-    if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + masterRot) - rot) * (isMasterFlipY ? 1 : -1);
-    } else {
-        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + (360 - masterRot)) - rot) * (isMasterFlipY ? 1 : -1);
-
-    }
-    if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;
-    if (targetRotation < 0) targetRotation += 360;
-    if (targetRotation > 359) targetRotation %= 360;
-    return targetRotation;
-}
-
-
 
 /**
  * @param {WebPlot|undefined} plot

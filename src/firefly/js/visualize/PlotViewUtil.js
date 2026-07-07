@@ -9,7 +9,9 @@ import {Band} from './Band';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {getViewer} from './MultiViewCntlr.js';
-import {getCenterPtOfPlot, getMatchingPlotRotationAngle, getRotationAngle, isPlotNorth} from './WebPlotAnalysis';
+import {
+    getCenterPtOfPlot, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth
+} from './WebPlotAnalysis';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
@@ -89,6 +91,27 @@ export const getPlotViewById= memorizeLastCall( (ref,plotId) =>{
     if (!plotViewAry) return undefined;
     return plotViewAry.find( (pv) => pv.plotId===plotId);
 },4);
+
+
+/**
+ * get the newest version of a plot or a plotview from the store
+ * @param {WebPlot|PlotView|undefined} plotOrPv
+ * @return {WebPlot|PlotView|undefined} the new version
+ */
+export function refreshP(plotOrPv) {
+    if (!plotOrPv?.plotId) return;
+    if (plotOrPv.plots && plotOrPv.primeIdx>=0) return getPlotViewById(visRoot(), plotOrPv.plotId);
+    if (plotOrPv.plotImageId) return primePlot(visRoot(), plotOrPv.plotId);
+}
+
+
+export function refreshPlotView(pv) {
+    return getPlotViewById(visRoot(), pv?.plotId);
+}
+
+export function refreshPlot(plot) {
+    return primePlot(visRoot(), plot?.plotId);
+}
 
 export const getPlotViewIdxById= (ref,plotId) =>
                     plotId && getPlotViewAry(ref)?.findIndex( (pv) => pv.plotId===plotId);
@@ -1103,8 +1126,8 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
 
 /**
  * Return true if the plot in both PlotViews are rotated the same
- * @param {PlotView} pv1
- * @param {PlotView} pv2
+ * @param {PlotView|undefined} pv1
+ * @param {PlotView|undefined} pv2
  * @return {boolean}
  */
 export function isRotationMatching(pv1, pv2) {
@@ -1191,7 +1214,23 @@ export function canConvertBetweenHipsAndFits(pv) {
  */
 export function getMatchingRotationAngle(masterPv, pv) {
     const masterPlot = primePlot(masterPv);
-    return getMatchingPlotRotationAngle(masterPlot,primePlot(pv),masterPv?.rotation,masterPv?.flipY);
+    const plot = primePlot(pv);
+    if (!plot || !masterPlot) return 0;
+    const centerMasterPlot= isImage(plot) ? getCenterPtOfPlot(plot) : undefined; // if image use center point method
+    const flipDiff= masterPv.flipY!==pv.flipY;
+    const masterRot = masterPv?.rotation * (flipDiff ? -1 : 1);
+    const rot = getRotationAngle(plot,centerMasterPlot);
+    let targetRotation;
+    if (isEastLeftOfNorth(masterPlot) && !masterPv.flipY) {
+        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + masterRot) - rot) * (flipDiff ? 1 : -1);
+    } else {
+        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + (360 - masterRot)) - rot) * (flipDiff ? 1 : -1);
+
+    }
+    if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;
+    if (targetRotation < 0) targetRotation += 360;
+    if (targetRotation > 359) targetRotation %= 360;
+    return targetRotation;
 }
 
 /**
