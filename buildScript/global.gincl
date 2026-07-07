@@ -15,6 +15,11 @@ ext {
     DEV_GROUP = "~ Development"
     MISC_GROUP = "~ Misc"
     DOCKER_GROUP = "~ Docker"
+
+    __$MIN_SAFARI_VERSION = "17"
+    __$MIN_CHROME_VERSION = "130"
+    __$MIN_FIREFOX_VERSION = "134"
+    __$MIN_EDGE_VERSION = "130"
 }
 
 apply from: "${fireflyPath}/buildScript/dependencies.gradle"
