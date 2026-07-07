@@ -144,7 +144,7 @@ public final class FITSTableReader
      */
     private static int normalizeTableIndex(BasicHDU<?>[] hdus, int table_idx) {
         if (table_idx!= 0 || hdus.length==0) return table_idx; // only do a change it idx is 0 and there is more than 0 hdu
-        return isImageLike(hdus[table_idx]) ? table_idx : 1;
+        return isImageLike(hdus[table_idx]) && canReadImageAsTable(hdus[table_idx]) ? table_idx : 1;
     }
 
     private static boolean isSpectrumHint(TableServerRequest request) {
