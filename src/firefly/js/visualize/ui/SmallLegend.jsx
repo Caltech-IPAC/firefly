@@ -85,8 +85,8 @@ export function SmallLegend(props) {
                     <Box sx={ {maxHeight:'12em', overflowY:'auto', pb: 1/2}}>
                         <Stack>
                             {layersLoading && <Typography level={'body-sm'}>Layers Loading....</Typography>}
-                            {layers.map( (dl) => (
-                                <DrawLayerLegendView key={getShortTitle(plotId,dl)} {...{
+                            {layers.map( (dl, idx) => (
+                                <DrawLayerLegendView key={idx} {...{
                                     maxTitleChars,
                                     color: dl.drawingDef.color,
                                     canUserChangeColor: dl.canUserChangeColor,

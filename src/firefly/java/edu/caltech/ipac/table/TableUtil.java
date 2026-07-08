@@ -113,6 +113,18 @@ public class TableUtil {
         return new DataGroupPart(dg, start, (int) totalRow);
     }
 
+    public static String getTblId(TableServerRequest treq) {
+        if (treq == null) return null;
+        String tblId = null;
+        if (treq.getMeta() != null) {
+            tblId = treq.getMeta().get(TableServerRequest.TBL_ID);
+        }
+        if (tblId == null) {
+            tblId = treq.getParam(TableServerRequest.TBL_ID);
+        }
+        return tblId;
+    }
+
     /**
      * takes all the TableMeta that is column's related and use it to set column's properties.
      * remove the TableMeta that was used.

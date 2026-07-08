@@ -197,7 +197,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
                 }
                 // check for values that can be enumerated
-                enumeratedValuesCheck(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
+                if (headers.getDataDefinitions().length > 100) {
+                    enumeratedValuesCheckBG(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
+                } else {
+                    enumeratedValuesCheck(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
+                }
             }
         } catch (Exception e) {
             logger.error(e);
