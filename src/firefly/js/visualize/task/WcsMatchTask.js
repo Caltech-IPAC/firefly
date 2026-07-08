@@ -12,7 +12,7 @@ import {isEastLeftOfNorth, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {
     applyToOnePvOrAll, findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType,
     getMatchingRotationAngle,
-    getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot
+    getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot, refreshP
 } from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
@@ -209,13 +209,15 @@ export const {matchImageToHips, matchHiPStoPlotView}= (() => {
 })();
 
 function imageToHips(hipsPv, imagePv) {
-    const imagePlot= primePlot(imagePv);
+    let imagePlot= primePlot(imagePv);
     const hipsPlot= primePlot(hipsPv);
     if (!imagePlot || !hipsPlot) return;
     const wp= getCenterOfProjection(hipsPlot);
     const imageCenter= CCUtil.getWorldCoords(imagePlot, findCurrentCenterPoint(imagePv));
     if (!pointEquals(imageCenter,wp)) {
         dispatchRecenter({plotId: imagePlot.plotId, centerPt:wp});
+        imagePv= refreshP(imagePv);
+        imagePlot= refreshP(imagePlot);
     }
 
     const targetASpix= getArcSecPerPix(hipsPlot,hipsPlot.zoomFactor);
@@ -224,7 +226,14 @@ function imageToHips(hipsPv, imagePv) {
         dispatchZoom({plotId:imagePlot.plotId, userZoomType:UserZoomTypes.LEVEL, level, actionScope:ActionScope.GROUP});
     }
 
-    visRoot().plotViewAry.forEach( (iPv) => isImage(primePlot(iPv)) && rotateToMatch(iPv, hipsPv));
+    visRoot().plotViewAry.forEach( (iPv) => {
+        if (!isImage(primePlot(iPv))) return;
+
+        if (!isEast(iPv)) {
+            dispatchFlip({plotId:iPv.plotId, rematchAfterFlip:false, actionScope: ActionScope.SINGLE});
+        }
+        rotateToMatch(refreshP(iPv), hipsPv);
+    });
 }
 
 
@@ -306,8 +315,11 @@ function syncPlotToLevelForWcsMatching(pv, masterPv, targetASpix) {
     }
 
 
-    if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);
-    zoomToLevel(plot, newZoomLevel);
+    const newPv= refreshP(pv);
+    if (!isRotationMatching(newPv, masterPv)) {
+        rotateToMatch(newPv, masterPv);
+    }
+    zoomToLevel(primePlot(visRoot(),pv.plotId), newZoomLevel);
 }
 
 
@@ -360,6 +372,10 @@ function isFlipYMatching(pv1, pv2) {
     return isEast(pv1) === isEast(pv2);
 }
 
+/**
+ * @param {PlotView|undefined} pv
+ * @return {boolean|false|*|boolean}
+ */
 function isEast(pv) {
     const p= primePlot(pv);
     if (!p) return true;
