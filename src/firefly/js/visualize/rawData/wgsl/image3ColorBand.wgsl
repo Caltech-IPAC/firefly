@@ -36,6 +36,7 @@ fn processBand(v:u32, band:u32) -> vec4<u32> {
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let idx = gid.x;
+    let outBufLength= arrayLength(&outBuf);
 
     let r= processBand(redAry[idx],0);
     let g= processBand(greenAry[idx],1);
@@ -43,8 +44,20 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     let packed = ALPHA_SHIFT | (b << SHIFT16) | (g << SHIFT8) | r;
     let outIdx= idx*4;
-    outBuf[outIdx + 0u] = packed.x;
-    outBuf[outIdx + 1u] = packed.y;
-    outBuf[outIdx + 2u] = packed.z;
-    outBuf[outIdx + 3u] = packed.w;
+
+
+    let outPixelCnt = min(4u, outBufLength- outIdx);
+    if (outPixelCnt == 4u) {
+       outBuf[outIdx + 0u] = packed.x;
+       outBuf[outIdx + 1u] = packed.y;
+       outBuf[outIdx + 2u] = packed.z;
+       outBuf[outIdx + 3u] = packed.w;
+    }
+    else {
+       if (outPixelCnt >= 1u) {outBuf[outIdx + 0u] = packed.x;}
+       if (outPixelCnt >= 2u) {outBuf[outIdx + 1u] = packed.y;}
+       if (outPixelCnt >= 3u) {outBuf[outIdx + 2u] = packed.z;}
+    }
+
+
 }

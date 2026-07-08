@@ -1,7 +1,7 @@
 import chroma from 'chroma-js';
 import {isArray} from 'lodash';
 
-export default { makeSimpleColorMap, getBWBackground, shadeColor};
+export default { getBWBackground, shadeColor};
 
 export const toRGBA= (color, alpha=1) => chroma.valid(color) ? chroma(color).alpha(alpha).rgba() : [0,0,0,alpha];
 export const toRGB= (color) => chroma.valid(color) ? chroma(color).rgb() : [0,0,0];
