@@ -16,24 +16,15 @@ struct Params {
 @group(0) @binding(2) var<storage, read_write> outBuf : array<u32>; //each output 32 big contains a r,g,b,a
 @group(0) @binding(3) var<uniform>  params : Params;
 
-const ALPHA_SHIFT = 255u << 24u;
-
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let idx = gid.x;
-    let numPixels = arrayLength(&pixelAry.p);
-
-    if (idx >= numPixels) { return; }
+    if (idx >= arrayLength(&pixelAry.p)) { return; }
     let v= pixelAry.p[idx];
 
     let r= f32(v & 255u);
     let g= f32((v>>8) & 255u);
     let b= f32((v>>16) & 255u);
     let avg= (r+g+b) * params.contrastThird + params.offsetShift;
-    let colorMapIdx= u32(clamp(i32(floor(avg)),0,255)* 3);
-    let rNew= colorModel[colorMapIdx+0];
-    let gNew= colorModel[colorMapIdx+1];
-    let bNew= colorModel[colorMapIdx+2];
-    let color= ALPHA_SHIFT | (bNew << 16u) | (gNew << 8u) | rNew; // Pack into little-endian, byte array will be r,g,b,a so write a,b,g,r
-    outBuf[idx] = color;
+    outBuf[idx] = colorModel[u32(clamp(avg,0,254))];
 }

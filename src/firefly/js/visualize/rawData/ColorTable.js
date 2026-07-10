@@ -10,6 +10,9 @@ import {getColorTableDefinitionInfo} from './ColorTableDefinitions';
 
 export const REVERSED_END_CHAR='R';
 export const NO_COLOR_TABLE='NO_COLOR_TABLE';
+export const PERCENT= 'PERCENT';
+export const PACKED= 'PACKED';
+export const RGB= 'RBG';
 
 
 export const getColorTableMap = () => getColorTableDefinitionInfo().map;
@@ -73,29 +76,34 @@ function getRawColorTableEntry(id) {
 
 export async function getColorModelByGPUType(colorTableId, nanPixelColor=undefined) {
     const webGpu= await BrowserInfo.supportsWebGpu();
-   const asPercent= !webGpu
-   return getColorModel(colorTableId,nanPixelColor,asPercent);
+   return getColorModel(colorTableId,nanPixelColor,webGpu ? PACKED : PERCENT);
 }
+
+
+
 
 /**
  *
  * @param colorTableId
  * @param [nanPixelColor]
- * @param [asPercent]
+ * @param {String} [modelForm] one of PERCENT, PACKED, RGB
  * @return {*|undefined|Float32Array}
  */
-export const getColorModel= (colorTableId,nanPixelColor=undefined,asPercent=false) => {
+export const getColorModel= (colorTableId,nanPixelColor=undefined,modelForm=RGB) => {
 
     if (colorTableId===NO_COLOR_TABLE) return undefined;
-    const basePaletteData= getColorModelBase(colorTableId,asPercent);
+    const basePaletteData= getColorModelBase(colorTableId,modelForm);
     if (!nanPixelColor || !basePaletteData) return basePaletteData;
 
-    const paletteData = asPercent ? Float32Array.of(...basePaletteData) : Uint32Array.of(...basePaletteData);
+    const paletteData = modelForm===PERCENT ? Float32Array.of(...basePaletteData) : Uint32Array.of(...basePaletteData);
     const nanPix= nanPixelColor.length >2 ? nanPixelColor : [0,0,0];
-    if (asPercent) {
+    if (modelForm===PERCENT) {
         paletteData[3*255]     = nanPix[0]/255;
         paletteData[3*255 + 1] = nanPix[1]/255;
         paletteData[3*255 + 2] = nanPix[2]/255;
+    }
+    else if (modelForm===PACKED) {
+        paletteData[255]= packColor(...nanPix);
     }
     else {
         paletteData[3*255]     = nanPix[0];
@@ -107,14 +115,19 @@ export const getColorModel= (colorTableId,nanPixelColor=undefined,asPercent=fals
 
 
 
-export const getColorModelBase= memorizeLastCall((colorTableId,asPercent) => {
+/**
+ *
+ * @param colorTableId
+ * @param {String} [modelForm] one of PERCENT, PACKED, RGB
+ * @return {*|undefined|Float32Array}
+ */
+export const getColorModelBase= memorizeLastCall((colorTableId,modelForm=RGB) => {
     let old_dn, old_red, old_green, old_blue;
     let offset;
     let k;
 
     //palette: 3 bytes per color * 256 colors = 768 bytes in length
-    const paletteData = asPercent ? new Float32Array(768) : new Uint32Array(768);
-    // const ct= getColorTableMap()[colorTableId+''];
+    const paletteData = modelForm===PERCENT ? new Float32Array(768) : new Uint32Array(768);
     const ct = getRawColorTableEntry(colorTableId);
 
     if (colorTableId === 'file') console.log('file color tables not yet supported');
@@ -153,11 +166,6 @@ export const getColorModelBase= memorizeLastCall((colorTableId,asPercent) => {
                 paletteData[idx] = (old_red + Math.trunc(offset * (red - old_red)));
                 paletteData[idx + 1] = (old_green + Math.trunc(offset * (green - old_green)));
                 paletteData[idx+ 2] = (old_blue + Math.trunc(offset * (blue - old_blue)));
-                if (asPercent) {
-                    paletteData[idx]= paletteData[idx]/255;
-                    paletteData[idx+1]= paletteData[idx+1]/255;
-                    paletteData[idx+2]= paletteData[idx+2]/255;
-                }
             }
         }
     }
@@ -167,18 +175,27 @@ export const getColorModelBase= memorizeLastCall((colorTableId,asPercent) => {
         paletteData[idx] = old_red;
         paletteData[idx + 1] = old_green;
         paletteData[idx + 2] = old_blue;
-        if (asPercent) {
-            paletteData[idx]= paletteData[idx]/255;
-            paletteData[idx+1]= paletteData[idx+1]/255;
-            paletteData[idx+2]= paletteData[idx+2]/255;
-        }
     }
 
-    return paletteData;
-});
+    switch (modelForm) {
+        case PERCENT:
+            return paletteData.map((p) => p/255);
+        case PACKED:
+            const packedPalette = new Uint32Array(256);
+            for (let i = 0; i < 256; i++) {
+                const i3= i*3;
+                packedPalette[i] = packColor(paletteData[i3], paletteData[i3 + 1], paletteData[i3 + 2]);
+            }
+            return packedPalette;
+        default:
+            return paletteData;
+    }
+
+},3);
 
 
 const toRGBAString= (r,g,b,a) => `rgba(${r}, ${g}, ${b}, ${a})`;
+export const packColor= (r,g,b,a=255) => a<<24 | b<<16 | g<<8 | r; // Pack into little-endian, byte array will be r,g,b,a so write a,b,g,r
 
 function drawLine(ctx,color, lineWidth, sx, sy, ex, ey) {
 	ctx.save();

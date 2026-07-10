@@ -2,6 +2,7 @@
 import {isArray, once} from 'lodash';
 import {toRGB} from '../../util/Color';
 import {synchronizeAsyncFunctionById} from '../../util/SynchronizeAsync';
+import {packColor} from './ColorTable';
 import wgslSingleBandSource from './wgsl/imageSingleBand.wgsl?raw';
 import wgsl3ColorSource from './wgsl/image3ColorBand.wgsl?raw';
 import wgslImageRemapColor from './wgsl/imageRemapColor.wgsl?raw';
@@ -181,10 +182,9 @@ async function submitAndGetResults(device,pipeline,bindGroup, outBuf,width,heigh
     return bitmap;
 }
 
-
 /**
  *
- * @param {Uint32Array} colorModelU32
+ * @param {Uint32Array} colorModelPacked
  * @param {Uint8ClampedArray} pixelAry
  * @param {number} width
  * @param {number} height
@@ -192,21 +192,19 @@ async function submitAndGetResults(device,pipeline,bindGroup, outBuf,width,heigh
  * @param {number} contrast
  * @return {Promise<ArrayBuffer|SharedArrayBuffer>}
  */
-export async function processSingleBandTileViaWebGPU(colorModelU32, pixelAry, width, height, bias=.5, contrast= 1.0) {
+export async function processSingleBandTileViaWebGPU(colorModelPacked, pixelAry, width, height, bias=.5, contrast= 1.0) {
     const device= await initWebGPUDevice();
     const colorBuf = device.createBuffer({
-        size: colorModelU32.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        size: colorModelPacked.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(colorBuf, 0, colorModelU32);
+    device.queue.writeBuffer(colorBuf, 0, colorModelPacked);
 
     const pixelBuf= makePixelBuf(device, pixelAry);
     const outBuf = device.createBuffer({ size: width * height * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
     const uniformBuf = makeFloatUniform(device, [contrast, getOffsetShift(bias,contrast)]);
 
     const {module,wgSize}= modules.getWgslSingleBand();
-    const pipeline = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' }
-    });
-
+    const pipeline = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' } });
     const buffers= [colorBuf, pixelBuf, outBuf, uniformBuf];
     const bindGroup= makeBindGroup(device, pipeline, buffers);
 
@@ -215,7 +213,7 @@ export async function processSingleBandTileViaWebGPU(colorModelU32, pixelAry, wi
 
 /**
  *
- * @param {Uint32Array} colorModelU32
+ * @param {Uint32Array} colorModelPacked
  * @param {Uint8ClampedArray} colorRGBAAry - array of repeating r,g,b,a
  * @param {number} width
  * @param {number} height
@@ -223,12 +221,12 @@ export async function processSingleBandTileViaWebGPU(colorModelU32, pixelAry, wi
  * @param {number} contrast
  * @return {Promise<ImageBitmap>}
  */
-export async function remapColorsViaWebGpu(colorModelU32, colorRGBAAry, width, height, bias=.5, contrast= 1.0) {
+export async function remapColorsViaWebGpu(colorModelPacked, colorRGBAAry, width, height, bias=.5, contrast= 1.0) {
     const device = await initWebGPUDevice();
     const colorBuf = device.createBuffer({
-        size: colorModelU32.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        size: colorModelPacked.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(colorBuf, 0, colorModelU32);
+    device.queue.writeBuffer(colorBuf, 0, colorModelPacked);
 
     const colorRGBABuf= makePixelBuf(device, colorRGBAAry);
     const outBuf = device.createBuffer({ size: colorRGBAAry.length, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
@@ -255,12 +253,10 @@ export async function remapColorsViaWebGpu(colorModelU32, colorRGBAAry, width, h
 
 export async function processMaskTileViaWebGPU(maskColor, pixelData,width,height) {
     const device = await initWebGPUDevice();
-    const [r,g,b]= toRGB(maskColor);
-    const color= 255<<24 | b<<16 | g<<8 | r; // Pack into little-endian, byte array will be r,g,b,a so write a,b,g,r
 
     const pixelBuf= makePixelBuf(device, pixelData);
     const outBuf = device.createBuffer({ size: width*height*4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
-    const colorBuf = makeUnsignedIntUniform(device, [color]);
+    const colorBuf = makeUnsignedIntUniform(device, [packColor(...toRGB(maskColor))]);
     const outputPixelsBuf = makeUnsignedIntUniform(device, [width * height]);
     const {module,wgSize}= modules.getWgslImageMask();
     const pipeline = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' } });

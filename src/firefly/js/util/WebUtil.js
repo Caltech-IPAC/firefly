@@ -148,8 +148,8 @@ export function loadScript(scriptName) {
 
 /**
  * Create a function that caches last N (up to 20) function call results
- * This is better for functions that take immutable objects. it compare every argument using ===
- * This cache size has to be smaller (<29=0) since if must iterate though all the last results.
+ * This is better for functions that take immutable objects. it compares every argument using ===
+ * This cache size has to be smaller since it must iterate though all the last results.
  * @param fn - the function to wrap
  * @param {number} [cacheSize=1] the number of saved calls with a maximum of 20
  * @return {function}
