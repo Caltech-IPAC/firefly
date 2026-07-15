@@ -18,7 +18,9 @@ public class DuckDbUDF {
     public static String deg2pix = importDeg2Pix();
     public static final String decimate_key = """
         CREATE OR REPLACE FUNCTION decimate_key(xVal, yVal, xMin, yMin, nX, nY, xUnit, yUnit) AS
-        TRUNC((xVal-xMin)/xUnit)::INT || ':' || TRUNC((yVal-yMin)/yUnit)::INT
+        CASE WHEN NOT isfinite(xVal) OR NOT isfinite(yVal) THEN NULL
+        ELSE TRUNC((xVal-xMin)/xUnit)::INT || ':' || TRUNC((yVal-yMin)/yUnit)::INT
+        END
     """;         // make sure this matches DecimateKey.getKey()
     public static final String lg = "CREATE OR REPLACE FUNCTION lg(val) AS LOG10(val)";
     public static final String nvl2 = """

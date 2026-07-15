@@ -95,7 +95,7 @@ public class DecimationProcessor extends TableFunctionProcessor {
                        count(*) as "weight",
                        %s as "dkey"
                     FROM %s GROUP BY "dkey"
-                ) WHERE "%s" IS NOT NULL AND "%s" IS NOT NULL
+                ) WHERE "%s" IS NOT NULL AND "%s" IS NOT NULL AND "dkey" IS NOT NULL
                 )
                 """.formatted(tblName, ROW_NUM, ROW_IDX, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), deciFunc, dataTbl, deciKey.getXCol(), deciKey.getYCol());
             dbAdapter.execUpdate(sql);
@@ -157,8 +157,10 @@ public class DecimationProcessor extends TableFunctionProcessor {
     }
 
     public static DecimateKey getDeciKey(DecimateInfo deciInfo, DbAdapter dbAdapter, String tblName) throws DataAccessException {
+        // exclude NaN and +/-Infinity from the stats: either can poison MAX/MIN.
         String sql = """
-                SELECT MAX(%1$s) as "xMax", MIN(%1$s) as "xMin", COUNT(%1$s) as "xCount", MAX(%2$s) as "yMax", MIN(%2$s) as "yMin", COUNT(%2$s) as "yCount" from %3$s
+                SELECT MAX(x) as "xMax", MIN(x) as "xMin", COUNT(x) as "xCount", MAX(y) as "yMax", MIN(y) as "yMin", COUNT(y) as "yCount"
+                FROM (SELECT CASE WHEN NOT isfinite(%1$s) THEN NULL ELSE %1$s END as x, CASE WHEN NOT isfinite(%2$s) THEN NULL ELSE %2$s END as y FROM %3$s)
                 """.formatted(deciInfo.getxExp(), deciInfo.getyExp(), tblName);
 
         DataGroup stats = dbAdapter.execQuery(sql, null);
@@ -169,6 +171,13 @@ public class DecimationProcessor extends TableFunctionProcessor {
         double yMax = toDouble(stats.getData("yMax", 0));
         int xCount = toInt(stats.getData("xCount", 0));
         int yCount = toInt(stats.getData("yCount", 0));
+
+        // a column with zero finite values makes MAX/MIN come back SQL NULL, which toDouble()
+        // turns into NaN;
+        if (xCount == 0 || yCount == 0) {
+            String badCol = xCount == 0 ? deciInfo.getxColumnName() : deciInfo.getyColumnName();
+            throw new DataAccessException("Unable to decimate: column \"%s\" has no valid (finite) values".formatted(badCol));
+        }
 
         var deciKey = getDecimateKey(deciInfo, xMax, xMin, yMax, yMin);
         deciKey.setxCount(xCount);

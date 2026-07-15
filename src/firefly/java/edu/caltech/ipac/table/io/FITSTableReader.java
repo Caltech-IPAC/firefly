@@ -435,17 +435,31 @@ public final class FITSTableReader
             var dataGroup= fitsTableReadInfo.dataGroup();
             var evaluator= fitsTableReadInfo.evaluator();
             int totalRows = hduTable.getNRows();
+            int nCol = hduTable.getNCols();
             SpectrumMetaInspector.searchForSpectrum(dataGroup,hduTable, spectrumHint);
-            DataType[] dataDefinitions= dataGroup.getDataDefinitions();
             dataGroup.trimToSize();
 
             handler.start();
             handler.startTable(0);
             handler.header(dataGroup);
 
-            hduTable.getKernel();
-            for (int row = 0; row < totalRows; row++){
-                ingestRow(handler, dataGroup, dataDefinitions, row, hduTable, evaluator);
+            // makeRowExtractor() resolves getValAsObject()'s reflection-based dispatch once per
+            // column instead of once per cell (nRow x nCol times).
+            RowExtractor[] extractors = new RowExtractor[nCol];
+            for (int icol = 0; icol < nCol; icol++) {
+                extractors[icol] = makeRowExtractor(hduTable.getColumn(icol), evaluator[icol]);
+            }
+
+            for (int row = 0; row < totalRows; row++) {
+                try {
+                    Object[] outRow = new Object[nCol];
+                    for (int icol = 0; icol < nCol; icol++) {
+                        outRow[icol] = extractors[icol].get(row);
+                    }
+                    handler.data(outRow);
+                } catch (Exception e) {
+                    logger.error("Unable to read table row:" + row + "   msg:" + e.getMessage());
+                }
             }
         } catch (Exception e) {
             throw new IOException(e.toString(),e);
@@ -567,6 +581,31 @@ public final class FITSTableReader
         }
     }
 
+    @FunctionalInterface
+    private interface RowExtractor {
+        Object get(int row);
+    }
+
+    /**
+     * Resolves how to pull a single row's value out of a whole-column array returned by
+     * {@link TableHDU#getColumn}, once per column rather than once per cell.
+     * scale/blank handling below mirrors getValAsObject().
+     */
+    private static RowExtractor makeRowExtractor(Object col, EvalVal ev) {
+        return switch (col) {
+            case double[]  a -> row -> ev.evalValue(a[row]);
+            case float[]   a -> row -> ev.evalValue(a[row]);
+            case int[]     a -> row -> ev.evalValue(a[row]);
+            case long[]    a -> row -> ev.evalValue(a[row]);
+            case short[]   a -> row -> ev.evalValue((int) a[row]);
+            case byte[]    a -> row -> ev.evalValue((int) a[row]);
+            case boolean[] a -> row -> a[row];
+            case String[]  a -> row -> isEmpty(a[row]) ? null : a[row];
+            case Object[]  a -> row -> ArrayFuncs.flatten(a[row]);     // vector-valued column (repeat > 1)
+            default -> throw new IllegalStateException("Unrecognized FITS column type: " + col.getClass());
+        };
+    }
+
     //This function is loosely based on the packageValue function from the FitsStarTable class in the uk.ac.starlink.fits package
     private static Object getValAsObject(Object elem, int icol, EvalVal[] evaluator) throws FitsException {
             if (elem == null) {
@@ -598,20 +637,6 @@ public final class FITSTableReader
 
 
 
-    private static void ingestRow(TableParseHandler handler, DataGroup dataGroup, DataType[] dataDefinitions,
-                                      int rowIdx, TableHDU<?> hduTable, EvalVal[] evaluator) throws FitsException {
-        Object[] outRow= new Object[dataDefinitions.length];
-        try {
-            Object[] rowData= hduTable.getRow(rowIdx);
-            for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
-                //so cast the val object to an array of its type by calling the getValAsObject function
-                outRow[dtIdx] = getValAsObject(rowData[dtIdx], dtIdx, evaluator);
-            }
-            handler.data(outRow);
-        } catch (Exception e) {
-            logger.error("Unable to read table row:" + rowIdx + "   msg:" + e.getMessage());
-        }
-    }
 
 
 
