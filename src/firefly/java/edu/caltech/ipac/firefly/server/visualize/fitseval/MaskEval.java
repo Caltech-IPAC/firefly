@@ -25,7 +25,7 @@ import static edu.caltech.ipac.firefly.core.Util.Try;
  */
 class MaskEval implements FitsEvaluation.Eval {
 
-    private final List<String> imageNames= Arrays.asList("IMAGE", "FLUX");
+    private final List<String> imageNames= Arrays.asList("IMAGE", "FLUX", "SCI");
     private final List<String> maskNames= Arrays.asList("MASK", "FLAGS");
     /**
      * This method attempts to find how data might be related in a multi-extension fits file. I expect it will grow
