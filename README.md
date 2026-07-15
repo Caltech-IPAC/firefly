@@ -74,7 +74,7 @@ There are several branches in the repository.  Here are the ones that you should
  -  [Tomcat 11] (https://tomcat.apache.org/download-11.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
- -  [Node v18] (https://nodejs.org/)
+ -  [Node v26] (https://nodejs.org/)
     Javascript interpreter for command line environment, used for development tools
 
 ### Prepare before the build

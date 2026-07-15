@@ -5,12 +5,11 @@
 
 import React from 'react';
 import {get} from 'lodash';
-import SplitPane from 'react-split-pane';
+import {SplitPanel, Pane, SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {LO_VIEW} from '../../core/LayoutCntlr.js';
-import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {TABLE_SEARCH} from '../../tables/TablesCntlr.js';
 
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
@@ -113,24 +112,32 @@ function Triview({layout}) {
     return (
         <div style={{flexGrow:1, display:'flex', flexDirection:'column'}}>
             <div style={{flexGrow:1, position:'relative'}}>
-                <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
-                    <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={'50%'}>
+                <SplitPanel direction='vertical' maxSize={-20} minSize={20} defaultSize={'60%'} pKey='sample-hydra-triview-outer'>
+                    <Pane>
+                        <SplitPanel direction='horizontal' maxSize={-20} minSize={20} defaultSize={'50%'} pKey='sample-hydra-triview-inner'>
+                            <Pane>
+                                <SplitContent>
+                                    <TriViewImageSection key='res-tri-img'
+                                                         closeable={closeable}
+                                                         imageExpandedMode={expanded===LO_VIEW.images}
+                                                         {...images}  />
+                                </SplitContent>
+                            </Pane>
+                            <Pane>
+                                <SplitContent>
+                                    <TablesContainer expandedMode={expanded===LO_VIEW.tables}
+                                                     tableOptions={{help_id:'main1TSV.table'}}/>
+                                </SplitContent>
+                            </Pane>
+                        </SplitPanel>
+                    </Pane>
+                    <Pane>
                         <SplitContent>
-                            <TriViewImageSection key='res-tri-img'
-                                                 closeable={closeable}
-                                                 imageExpandedMode={expanded===LO_VIEW.images}
-                                {...images}  />
+                            <ChartsContainer closeable={true}
+                                             expandedMode={expanded===LO_VIEW.xyPlots}/>
                         </SplitContent>
-                        <SplitContent>
-                            <TablesContainer expandedMode={expanded===LO_VIEW.tables}
-                                             tableOptions={{help_id:'main1TSV.table'}}/>
-                        </SplitContent>
-                    </SplitPane>
-                    <SplitContent>
-                        <ChartsContainer closeable={true}
-                                         expandedMode={expanded===LO_VIEW.xyPlots}/>
-                    </SplitContent>
-                </SplitPane>
+                    </Pane>
+                </SplitPanel>
             </div>
         </div>
     );
@@ -140,16 +147,20 @@ function Triview({layout}) {
 function TableChart ({layout}) {
     const expanded = get(layout, 'mode.expanded');
     return (
-        <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
-            <SplitContent>
-                <TablesContainer expandedMode={expanded===LO_VIEW.tables}
-                                 tableOptions={{help_id:'main1TSV.table'}}/>
-            </SplitContent>
-            <SplitContent>
-                <ChartsContainer closeable={true}
-                                 expandedMode={expanded===LO_VIEW.xyPlots}/>
-            </SplitContent>
-        </SplitPane>
+        <SplitPanel direction='vertical' maxSize={-20} minSize={20} defaultSize={'60%'} pKey='sample-hydra-table-chart'>
+            <Pane>
+                <SplitContent>
+                    <TablesContainer expandedMode={expanded===LO_VIEW.tables}
+                                     tableOptions={{help_id:'main1TSV.table'}}/>
+                </SplitContent>
+            </Pane>
+            <Pane>
+                <SplitContent>
+                    <ChartsContainer closeable={true}
+                                     expandedMode={expanded===LO_VIEW.xyPlots}/>
+                </SplitContent>
+            </Pane>
+        </SplitPanel>
     );
 }
 

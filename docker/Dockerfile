@@ -9,7 +9,7 @@ RUN echo "============> Build platform: $(uname -m)"
 
 RUN apt-get update && apt-get install -y \
       curl git unzip wget ca-certificates gnupg htmldoc \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g yarn \
 # gradle version 8.10  Not available via apt-get

@@ -2,13 +2,12 @@ import {Box, Button, Divider, Sheet, Skeleton, Stack, Tooltip, Typography} from 
 import {truncate} from 'lodash';
 import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
-import SplitPane from 'react-split-pane';
+import {SplitPanel, Pane, SplitContent} from '../panel/DockLayoutPanel';
 import {getColumnIdx, getColumnValues} from '../../tables/TableUtil.js';
 import {isColumnsMatchingToObsTap} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
 import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
-import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
 import {getDataServiceOption} from './DataServicesOptions';
@@ -389,32 +388,36 @@ function BasicUI(props) {
                     <TableColumnsConstraintsToolbar key={tableName} tableName={tableName} columnsModel={columnsModel} />
                 </div>
                 <Box sx={expandableTapSectionSx}>
-                    <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
-                        <SplitContent>
-                            {(capabilities && columnsModel) ?
-                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled,
-                                    capabilities, obsCoreMetadataModel,
-                                    sx:{mt:1},
-                                    tableName:getTapBrowserState().tableName}}/>
-                                : <Skeleton/>
-                            }
-                        </SplitContent>
-                        <SplitContent>
-                            { columnsModel ?
-                                <Stack {...{height:1}}>
-                                    <Typography title='Number of columns to be selected' color='neutral'  level='body-xs'>
-                                        Output Column Selection and Constraints
-                                    </Typography>
-                                    <TableColumnsConstraints
-                                        key={tableName}
-                                        fieldKey={'tableconstraints'}
-                                        columnsModel={columnsModel}
-                                    />
-                                </Stack>
-                                : <TableMask/>
-                            }
-                        </SplitContent>
-                    </SplitPane>
+                    <SplitPanel direction='horizontal' maxSize={splitMax} minSize={20} defaultSize={splitDef} pKey='tap-view-type-basic'>
+                        <Pane>
+                            <SplitContent>
+                                {(capabilities && columnsModel) ?
+                                    <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled,
+                                        capabilities, obsCoreMetadataModel,
+                                        sx:{mt:1},
+                                        tableName:getTapBrowserState().tableName}}/>
+                                    : <Skeleton/>
+                                }
+                            </SplitContent>
+                        </Pane>
+                        <Pane>
+                            <SplitContent>
+                                {columnsModel ?
+                                    <Stack {...{height:1}}>
+                                        <Typography title='Number of columns to be selected' color='neutral' level='body-xs'>
+                                            Output Column Selection and Constraints
+                                        </Typography>
+                                        <TableColumnsConstraints
+                                            key={tableName}
+                                            fieldKey={'tableconstraints'}
+                                            columnsModel={columnsModel}
+                                        />
+                                    </Stack>
+                                    : <TableMask/>
+                                }
+                            </SplitContent>
+                        </Pane>
+                    </SplitPanel>
                 </Box>
             </Stack>
         </Fragment>

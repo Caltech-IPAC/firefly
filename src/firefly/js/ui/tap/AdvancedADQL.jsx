@@ -5,7 +5,7 @@
 import {Box, Chip, Divider, FormHelperText, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {useState, useRef, useEffect, useContext, useCallback} from 'react';
 import PropTypes, {shape, string, object} from 'prop-types';
-import SplitPane from 'react-split-pane';
+import {SplitPanel, Pane, SplitContent} from '../panel/DockLayoutPanel';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy, defaultsDeep} from 'lodash';
@@ -17,7 +17,6 @@ import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {InputFieldView} from '../InputFieldView.jsx';
-import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {defaultADQLExamples} from './TapKnownServices';
@@ -100,13 +99,35 @@ function getExamples(serviceUrl) {
     );
 }
 
+function useRetryUntilReady(tryRun) {
+    useEffect(() => {
+        let cancelled = false;
+        let timeoutId;
+
+        const run = () => {
+            if (cancelled) return;
+            if (!tryRun()) {
+                timeoutId = window.setTimeout(run, 10);
+            }
+        };
+
+        run();
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timeoutId);
+        };
+    }, [tryRun]);
+}
+
 export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, style={}, setError}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
     const [displayedTreeData, setDisplayedTreeData] = useState((treeData));
     const {canUpload=false}= capabilities ?? {};
     const adqlEl = useRef(null);                                                // using a useRef hook
+    const sqlExamplesEl = useRef(null);
     const prismLiveRef = useRef(null);
+    const syncStyles = () => window.setTimeout(() => prismLiveRef.current?.syncStyles?.(), 10);
     const {groupKey, setVal, getVal} = useContext(FieldGroupCtx);
     const [getUploadSchema, setUploadSchema]= useFieldGroupValue(TAP_UPLOAD_SCHEMA);
     const [getFullQualified, setFullQualified]= useFieldGroupValue(FULLY_QUALIFIED);
@@ -161,7 +182,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                 setTreeData(treeData);
             }
         });
-        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
+        syncStyles();
     }, [serviceUrl, uploadSchema]);
 
     useEffect(() => {
@@ -172,17 +193,31 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                 alias: 'function'
             }
         });
+    }, [serviceUrl]);
 
-        // highlight help text/code snippets
-        Prism.highlightAll();
+    const highlightSqlExamples = useCallback(() => {
+        const codeBlocks = sqlExamplesEl.current?.querySelectorAll('code.language-sql');
+        //react-split-pane v3 waits for ResizeObserver sizing before rendering pane content,
+        //so Prism's static SQL examples may not exist when this effect runs the first time
+        if (!codeBlocks?.length) return false;
+
+        Prism.highlightAllUnder(sqlExamplesEl.current);
+        return true;
     },  [serviceUrl]);
 
-    useEffect(() => {
-        // We need to get prism-live to adopt to the textarea
+    useRetryUntilReady(highlightSqlExamples);
+
+    const initPrismLive = useCallback(() => {
         const textArea = adqlEl.current?.querySelector('textarea');
-        // adopt textArea
+        //react-split-pane v3 measures its container with ResizeObserver before rendering panes
+        //so the textarea may not exist on the first pass
+        if (!textArea) return false;
+
         prismLiveRef.current = new Prism.Live(textArea);
+        return true;
     }, []);
+
+    useRetryUntilReady(initPrismLive);
 
     const onSelect = async (selectedKeys, evt) => {
         const textArea = document.getElementById('adqlEditor');
@@ -201,7 +236,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                     if (uploadTableAlias) insertTname+= ' AS '+uploadTableAlias;
                 }
                 setVal(adqlKey, `SELECT TOP 1000 * FROM ${maybeQuote(insertTname,true)}`);
-                window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
+                    syncStyles();
             }
         } else if (type === 'column') {
             const val = fullyQualified ? `${maybeQuote(tname,true)}.${maybeQuote(cname)}` : maybeQuote(cname);
@@ -244,14 +279,14 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     const onClear = () => {
         setVal(adqlKey, '');
         // trigger prismLive style sync
-        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
+        syncStyles();
     };
 
     const onReset = () => {
         const value = getVal(defAdqlKey) ?? '';
         setVal(adqlKey, value);
         // trigger prismLive style sync
-        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
+        syncStyles();
     };
 
     const onFilter = useCallback((e) => {
@@ -286,7 +321,8 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         : '#f5f2f0'; //bgColor on L59 in prismLightCss
 
     return (
-            <SplitPane split='vertical' defaultSize={275} style={{position: 'relative', ...style}}>
+            <SplitPanel direction='horizontal' defaultSize={275} style={{position: 'relative', ...style}} pKey='advanced-adql'>
+                <Pane>
                 <SplitContent style={{display:'flex', flexDirection:'column'}}>
                     <Tooltip title={SB_TIP}>
                         <Stack>
@@ -310,10 +346,12 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                         <Tree treeData={displayedTreeData} defaultExpandAll={true} showLine={true} selectedKeys={[]} loadData={onLoadData} onSelect={onSelect} />
                     </div>
                 </SplitContent>
+                </Pane>
+                <Pane>
                 <SplitContent style={{overflow: 'auto'}}>
                     <CssStrThemeWrapper cssStr={{light: prismLightCss, dark: prismDarkCss}}>
                         <Stack flexGrow={1} ml={1} spacing={1}>
-                            <Stack {...{spacing:4}}>
+                            <Stack ref={sqlExamplesEl} {...{spacing:4}}>
                                 <Stack {...{spacing:1}}>
                                     <Stack {...{direction: 'row', spacing:10, mr: 3, justifyContent: 'flex-start', alignItems: 'center'}}>
                                         <Typography level='title-lg'>ADQL Query</Typography>
@@ -433,7 +471,8 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                         </Stack>
                     </CssStrThemeWrapper>
                 </SplitContent>
-            </SplitPane>
+                </Pane>
+            </SplitPanel>
     );
 }
 
