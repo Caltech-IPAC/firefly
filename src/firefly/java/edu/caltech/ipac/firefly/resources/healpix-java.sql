@@ -16,6 +16,23 @@ AS
 -- java's >>> unsigned bitwise right shift for int64
 CREATE OR REPLACE FUNCTION uRightShift(v, n) AS (v >> n) & ((1::LONG << (64 - n)) - 1);
 
+-- unlike built-in LEAST()/GREATEST(), these return NULL instead of skipping it.
+CREATE OR REPLACE FUNCTION least_null(a, b)
+AS (
+    CASE WHEN a IS NULL OR b IS NULL THEN NULL
+         WHEN a < b THEN a
+         ELSE b
+    END
+);
+
+CREATE OR REPLACE FUNCTION greatest_null(a, b)
+AS (
+    CASE WHEN a IS NULL OR b IS NULL THEN NULL
+         WHEN a > b THEN a
+         ELSE b
+    END
+);
+
 -- Return remainder of the division v1/v2; positive and smaller than v2
 -- v1 dividend; can be positive or negative
 -- v2 divisor; must be positive
@@ -117,9 +134,12 @@ AS (
             END AS tmp
     ),
     p_f AS (
+        -- clamp to [0, nside-1] on both ends: tp/tmp can land outside this range when
+        -- a_ra/a_dec are outside the physical ra/dec domain (e.g. non ra/dec columns
+        -- used as if they were coordinates)
         SELECT
-            LEAST(TRUNC(tp * tmp)::LONG, nside - 1) AS jp,
-            LEAST(TRUNC((1.0 - tp) * tmp)::LONG, nside - 1) AS jm,
+            greatest_null(0, least_null(TRUNC(tp * tmp)::LONG, nside - 1)) AS jp,
+            greatest_null(0, least_null(TRUNC((1.0 - tp) * tmp)::LONG, nside - 1)) AS jm,
         FROM p_1
     )
     SELECT
@@ -135,9 +155,11 @@ AS (
 CREATE OR REPLACE FUNCTION deg2pix(n_order, a_ra, a_dec)
 AS (
     WITH step_1 AS (
+        -- replace NaN with NULL up front: NULL propagates safely through the casts
+        -- below, but NaN cannot be cast to LONG which causes query to fail.
         SELECT
-            radians(90 - a_dec)     AS theta,
-            adj_phi(radians(a_ra))  AS phi,
+            radians(90 - (CASE WHEN isnan(a_dec) THEN NULL ELSE a_dec END))    AS theta,
+            adj_phi(radians(CASE WHEN isnan(a_ra) THEN NULL ELSE a_ra END))    AS phi,
     ),
     step_2 AS (
         SELECT
@@ -171,7 +193,7 @@ AS (
             WHEN ((2.0/3) >= za) THEN
                 pix_equatorial(n_order, nside, tt, z)
             ELSE
-                pix_polar(n_order, nside, have_sth, sth, tt, LEAST(3, TRUNC(tt)::LONG), z, za)
+                pix_polar(n_order, nside, have_sth, sth, tt, least_null(3, TRUNC(tt)::LONG), z, za)
         END AS pixel
     FROM step_f
 );
