@@ -28,7 +28,7 @@ public class SpectrumMetaInspector {
     private static final String[] specColNames;
     private static final String[] waveLoColName= new String[] {"wave_lo"};
     private static final String[] waveHiColName= new String[] {"wave_hi"};
-    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux",
+    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density",
             "flx", "fl", "fls", "flu", "data", "value", "signal", "SurfBrtness",
             "fullap and psf (two different extractions)", "c(lambda)",
             "t_mb", "t(k)", "main beam temperature",

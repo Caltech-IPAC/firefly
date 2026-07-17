@@ -29,8 +29,8 @@ export const getCutoutTitleFromTitle= (baseTitle) => 'Cutout: ' + baseTitle;
  * @return {string}
  */
 export function getSerDescTitling(serDef,sourceTable,sourceRow) {
-    const name= makeDatalinkTitles({dlData:{serDef},sourceTable,sourceRow});
-    return {name,dropDownText:'Show: '+name};
+    const ret= makeDatalinkTitles({dlData:{serDef},sourceTable,sourceRow});
+    return {...ret,dropDownText:'Show: '+ret.name};
 
 }
 
@@ -146,7 +146,7 @@ export function getAnalysisPartTableTitling({title='',part,fileFormat,table,useI
         retTitle= getAnalysisSSATitle(table,table.highlightedRow);
     }
     else {
-       retTitle= totalParts===1 ? title :`Part #${part.index} ${title}`;
+       retTitle= totalParts===1 ? originalTitle :`Part #${part.index} ${title}`;
     }
 
     const dropDownText= originalTitle ? `${originalTitle} - ${retTitle}` : retTitle;
