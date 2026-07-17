@@ -239,10 +239,11 @@ public class DuckDbAdapterTest extends ConfigTest {
 		proc.getData(treq);
 		assertEquals("Data table and its associated tables are created", 4, dbAdapter.getTableNames().size());
 
-		// sort by model.  this should create a temp table
+		// sort by model.  this should create a resultset: a thin (ROW_IDX, ROW_NUM) index table, a view
+		// joining it back to DATA, plus that view's own _DD, _META, and _AUX -- 5 new objects total.
 		treq.setSortInfo(new SortInfo("sepal.width"));
 		proc.getData(treq);
-		assertEquals("New set of temp tables created for the request", 8, dbAdapter.getTableNames().size());
+		assertEquals("New set of temp tables created for the request", 9, dbAdapter.getTableNames().size());
 
 		dbAdapter.clearCachedData();
 		assertEquals("Temp tables are removed", 4, dbAdapter.getTableNames().size());

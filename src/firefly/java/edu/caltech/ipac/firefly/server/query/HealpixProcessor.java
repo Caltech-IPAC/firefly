@@ -4,18 +4,14 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
 
 import static edu.caltech.ipac.firefly.server.query.HealpixProcessor.*;
-import static edu.caltech.ipac.table.DataGroup.HEALPIX_IDX;
 import static edu.caltech.ipac.util.StringUtils.split;
 
 @SearchProcessorImpl(id = HealpixProcessor.ID, params = {
@@ -71,9 +67,10 @@ public class HealpixProcessor extends TableFunctionProcessor {
         EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(sreq.getRequestId());
         String dataTable = proc.getResultSetID(sreq);
         String healpixTable = getResultSetTablePrefix() + "_" + dataTable;
+        String healpixIdxTable = healpixTable + "_IDX";
 
         // create healpix table if it does not exist
-        ensureHealpixExists(dbAdapter, sreq, ra, dec, dataTable, healpixTable);
+        ensureHealpixExists(dbAdapter, sreq, ra, dec, dataTable, healpixTable, healpixIdxTable);
 
         DataGroup results;
         if (mode.equals(MAP)) {
@@ -90,9 +87,11 @@ public class HealpixProcessor extends TableFunctionProcessor {
             results = dbAdapter.execQuery(sql, null);
         } else if (mode.equals(POINTS)) {
             if (pixels == null || pixels.length == 0) throw new DataAccessException("POINTS mode: pixels parameter is missing");
-            String lhs = orderDelta > 0 ? "TRUNC(%s/4^%s)".formatted(HEALPIX_IDX, orderDelta) : HEALPIX_IDX;
+            String lhs = orderDelta > 0 ? "TRUNC(i.pixel/4^%s)".formatted(orderDelta) : "i.pixel";
             String rhs =  pixels.length == 1 ? " = %s".formatted(pixels[0]) : " IN (%s)".formatted(String.join(",", pixels));
-            String sql = "SELECT %s, %s, ROW_NUM from %s WHERE %s %s".formatted(ra, dec, dataTable, lhs, rhs);   // need ra,dec(?)
+            // join against the precomputed (ROW_IDX -> pixel) index
+            String sql = "SELECT d.%s, d.%s, d.ROW_NUM from %s d JOIN %s i ON d.ROW_IDX = i.ROW_IDX WHERE %s %s"
+                    .formatted(ra, dec, dataTable, healpixIdxTable, lhs, rhs);
             results = dbAdapter.execQuery(sql, null);
         } else {
             throw new DataAccessException("Unsupported mode: " + mode);
@@ -102,34 +101,31 @@ public class HealpixProcessor extends TableFunctionProcessor {
         return new DataGroupPart(results,0, results.size());
     }
 
-    private void ensureHealpixExists( DbAdapter dbAdapter, TableServerRequest sreq, String ra, String dec, String dataTable, String healpixTable) throws DataAccessException {
+    private void ensureHealpixExists( DbAdapter dbAdapter, TableServerRequest sreq, String ra, String dec, String dataTable, String healpixTable, String healpixIdxTable) throws DataAccessException {
 
         // if search data table does not exist; load it.
         if (!dbAdapter.hasTable(dataTable)) {
             sreq.setPageSize(1);    // load table into database; ignore results.
             new SearchManager().getDataGroup(sreq);
         }
-        // if healpix map doesn't exist, index the data table, then create the map
+        // if healpix map doesn't exist, index the data, then create the map from the index.
         if (!dbAdapter.hasTable(healpixTable)) {
 
-            // create healpix index at BASE_ORDER
-            DataType healpixCol = makeHealPixColumn();
+            // the (ROW_IDX -> pixel) index is kept as its own small table rather than a column on dataTable,
             StopWatch.getInstance().start("HealpixProcessor: create index");
-            EmbeddedDbUtil.addColumn(dbAdapter, dataTable, healpixCol, "deg2pix(%s, %s, %s)".formatted(BASE_ORDER, ra, dec));
+            String healpixExpr = healpixIdxExpr(ra, dec);
+            dbAdapter.execUpdate("create table %s as (select ROW_IDX, %s as pixel from %s)".formatted(healpixIdxTable, healpixExpr, dataTable));
             StopWatch.getInstance().printLog("HealpixProcessor: create index");
 
-            // create healpix map at BASE_ORDER
             StopWatch.getInstance().start("HealpixProcessor: create pixel map");
-            dbAdapter.execUpdate("create table %s as (select %s as 'pixel', count() as 'count' from %s group by 1)".formatted(healpixTable, HEALPIX_IDX, dataTable));
+            dbAdapter.execUpdate("create table %s as (select pixel, count() as 'count' from %s group by 1)".formatted(healpixTable, healpixIdxTable));
             StopWatch.getInstance().printLog("HealpixProcessor: create pixel map");
 
         }
     }
 
-    private static DataType makeHealPixColumn() {
-        DataType dt = new DataType(HEALPIX_IDX, Long.class);
-        dt.setVisibility(DataType.Visibility.hidden);
-        return dt;
+    private static String healpixIdxExpr(String ra, String dec) {
+        return "deg2pix(%s, %s, %s)".formatted(BASE_ORDER, ra, dec);
     }
 
 }

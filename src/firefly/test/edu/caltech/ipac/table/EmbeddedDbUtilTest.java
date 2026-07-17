@@ -40,6 +40,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 	@BeforeClass
 	public static void setUp() {
+		ConfigTest.setupServerContext(null);
 		try {
 			File tmp = new File(System.getProperty("java.io.tmpdir"));
 			var dbAdapter = DbAdapter.getAdapter("", (ext) -> new File(tmp, "%d.%s".formatted(System.currentTimeMillis(), ext)));
@@ -230,7 +231,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 		DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 
-		Logger.setLogLevel(Level.TRACE, "edu.caltech");
+		Logger.setLogLevel(Level.TRACE, "edu.caltech.ipac.firefly.server.util.StopWatch");
 		DataGroup data = IpacTableReader.read(testFile);
 		StopWatch.getInstance().start("ingest DB file");
 		dbAdapter.initDbFile();

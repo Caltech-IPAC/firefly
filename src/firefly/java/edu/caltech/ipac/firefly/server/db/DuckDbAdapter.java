@@ -11,8 +11,10 @@ import edu.caltech.ipac.firefly.server.db.jdbc.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.jdbc.JdbcTemplate;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.StringUtils;
 import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
 import org.json.simple.JSONObject;
@@ -240,8 +242,99 @@ public class DuckDbAdapter extends BaseDbAdapter {
     }
 
     public List<String> getTableNames() {
-        String sql = "SELECT table_name FROM duckdb_tables()";
+        // includes views because resultset tables (DATA_<hash>) are materialized as views;
+        String sql = "SELECT table_name FROM duckdb_tables() UNION ALL SELECT view_name FROM duckdb_views() WHERE NOT internal";
         return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
+    }
+
+    private List<String> getViewNames() {
+        String sql = "SELECT view_name FROM duckdb_views() WHERE NOT internal";
+        return JdbcFactory.getTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
+    }
+
+    /**
+     * Instead of materializing the full resultset, which duplicates every requested
+     * column for every matching row, and is what makes this expensive on a big table.
+     * This builds:
+     *   1. resultSetID_IDX: a small temp table of just (ROW_IDX, ROW_NUM), capturing the row's identity
+     *      and its position in the requested order.
+     *   2. resultSetID: a view joining that thin index back to DATA, projecting only the requested columns.
+     *      Every existing caller keeps working unchanged. A view is still just a named, queryable object with
+     *      the expected columns.  ROW_IDX/ROW_NUM are exposed from the index side so point lookups on them
+     *      (highlighted row, selection remap) don't need the join at all.
+     * See execRequestQuery() for the other half of this: paging against resultSetID must filter explicitly
+     * on ROW_NUM rather than relying on plain LIMIT/OFFSET, or DuckDB ends up joining everything before it
+     * can slice out a page.
+     */
+    @Override
+    protected void buildResultSet(TableServerRequest treq, String resultSetID) {
+        List<String> cols = getResultSetCols(treq);
+
+        String wherePart = wherePart(treq);
+        // without an explicit sort, fall back to ROW_IDX so ROW_NUM is deterministic and matches natural
+        // ingest order. DuckDB does not otherwise guarantee scan order is preserved without an ORDER BY.
+        String orderBy = treq.getSortInfo() != null ? orderByPart(treq) : "ORDER BY ROW_IDX";
+
+        String idxTable = getIdxTable(resultSetID);
+        String idxSql = "select ROW_IDX, (%s -1) as %s from (select ROW_IDX FROM %s %s %s) as b"
+                .formatted(rowNumSql(), DataGroup.ROW_NUM, getDataTable(), wherePart, orderBy);
+        execUpdate("CREATE TABLE IF NOT EXISTS %s AS (%s)".formatted(idxTable, idxSql));
+
+        String selectCols = cols.isEmpty() ? "" : StringUtils.toString(cols) + ",";
+        String viewSql = "select %s i.ROW_IDX, i.ROW_NUM from %s i join %s d on d.ROW_IDX = i.ROW_IDX"
+                .formatted(selectCols, idxTable, getDataTable());
+        execUpdate("CREATE VIEW IF NOT EXISTS %s AS (%s)".formatted(resultSetID, viewSql));
+    }
+
+    /**
+     * A join has no inherent row order the way a materialized, physically-sorted table does, so any read of a
+     * resultset backed by our thin (ROW_IDX, ROW_NUM) index needs an explicit ORDER BY ROW_NUM to be correct.
+     * For paging specifically, ROW_NUM also needs to be filtered (not just sorted) so
+     * DuckDB can prune the (small) index before joining to DATA; plain LIMIT/OFFSET against the view instead
+     * joins everything first and slices afterward.
+     * Only applies when there's no filter/sort of its own (ie. plain reads of an already-resolved resultset);
+     * anything else falls back to normal.
+     */
+    @Override
+    public DataGroupPart execRequestQuery(TableServerRequest treq, String forTable) throws DataAccessException {
+        if (isEmpty(wherePart(treq)) && treq.getSortInfo() == null && hasTable(getIdxTable(forTable))) {
+            return execIndexedPage(treq, forTable);
+        }
+        return super.execRequestQuery(treq, forTable);
+    }
+
+    private DataGroupPart execIndexedPage(TableServerRequest treq, String forTable) throws DataAccessException {
+        String selectPart = selectPart(treq);
+        boolean isPaged = !isEmpty(pagingPart(treq));
+        String rowNumFilter = isPaged
+                ? "WHERE ROW_NUM >= %d AND ROW_NUM < %d".formatted(treq.getStartIndex(), treq.getStartIndex() + treq.getPageSize())
+                : "";
+        String sql = "%s FROM %s %s ORDER BY ROW_NUM".formatted(selectPart, forTable, rowNumFilter);
+        DataGroup data = execQuery(sql, forTable);
+
+        int rowCnt = data.size();
+        if (isPaged) {
+            rowCnt = getJdbc().queryForInt("select count(*) FROM %s".formatted(getIdxTable(forTable)));
+        }
+
+        DataGroupPart page = toDataGroupPart(data, treq);
+        page.setRowCount(rowCnt);
+        if (!isEmpty(treq.getTblTitle())) {
+            page.getData().setTitle(treq.getTblTitle());
+        }
+        return page;
+    }
+
+    private static String getIdxTable(String resultSetID) {
+        return resultSetID + "_IDX";
+    }
+
+    @Override
+    protected String[] dropStatementsFor(List<String> names) {
+        List<String> views = getViewNames();
+        return names.stream()
+                .map(n -> (views.contains(n) ? "drop view IF EXISTS " : "drop table IF EXISTS ") + n)
+                .toArray(String[]::new);
     }
 
     public DbAdapter.DbStats getDbStats() {
