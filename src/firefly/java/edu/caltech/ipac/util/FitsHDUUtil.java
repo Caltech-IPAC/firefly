@@ -30,7 +30,10 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
-import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.*;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.HeaderOnly;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.Image;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.Table;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getAxisCnt;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getNaxisLength;
 
 
@@ -92,9 +95,11 @@ public class FitsHDUUtil {
                 }
                 if (ptype == Image) {
 
-                    int axisCnt= (naxis != 4)
-                            ? naxis
-                            : getNaxisLength(header, 4, isCompressed)==1 ? 3 :naxis;
+                    var workingAxis= getAxisCnt(header,isCompressed);
+
+                    int axisCnt= (workingAxis != 4)
+                            ? workingAxis
+                            : getNaxisLength(header, 4, isCompressed)==1 ? 3 :workingAxis;
                     desc.append((axisCnt <= 2) ? " (" : axisCnt == 3 ? " (cube " : " (" + axisCnt + "d ");
                     if (axisCnt>1) {
                         for(int d=1;(d<=axisCnt);d++) {
