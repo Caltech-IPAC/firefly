@@ -164,41 +164,15 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
     
 
-    public void createTempResults(TableServerRequest treq, String resultSetID) {
+    /**
+     * Builds resultSetID table including _DD/_META/_AUX related tables.
+     */
+    public final void createTempResults(TableServerRequest treq, String resultSetID) {
         StopWatch.getInstance().start("%s:createTempResults for %s".formatted(getName(), resultSetID));
         try {
-            List<String> cols = isEmpty(treq.getInclColumns()) ? getColumnNames(getDataTable(), "\"")
-                    : StringUtils.asList(treq.getInclColumns(), ",");
-            cols = cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
-
-            String selectPart = (cols.size() == 0 ? "*" : StringUtils.toString(cols) + ", " )+ DataGroup.ROW_IDX;
-            String wherePart = wherePart(treq);
-            String orderBy = orderByPart(treq);
-
-            // copy data
-            String datasetSql = "select %s FROM %s %s %s".formatted(selectPart, getDataTable(), wherePart, orderBy);
-            String datasetSqlWithIdx = "select b.*, (%s -1) as %s from (%s) as b".formatted(rowNumSql(), DataGroup.ROW_NUM, datasetSql);
-            String sql = createTableFromSelect(resultSetID, datasetSqlWithIdx);
-            execUpdate(sql);
-
-            // copy dd
-            copyDDFromSource(resultSetID, getDataTable());
-
-            // copy meta
-            String metaSql = "select * from DATA_META";
-            metaSql = createTableFromSelect(resultSetID + "_META", metaSql);
-            try {
-                getJdbc().update(metaSql);
-            } catch (Exception mx) {/*ignore table may not exist*/}
-
-            // copy aux
-            String auxSql = "select * from DATA_AUX";
-            auxSql = createTableFromSelect(resultSetID + "_AUX", auxSql);
-            try {
-                getJdbc().update(auxSql);
-            } catch (Exception ax) {/*ignore table may not exist*/}
-
-        }catch (RuntimeException e) {
+            buildResultSet(treq, resultSetID);
+            copyAuxTables(resultSetID);
+        } catch (RuntimeException e) {
             LOGGER.error("createTempResults failed with error: " + e.getMessage(),
                     "resultSetID: " + resultSetID,
                     "dbFile: " + getDbFile().getAbsolutePath());
@@ -206,6 +180,54 @@ abstract public class BaseDbAdapter implements DbAdapter {
         } finally {
             StopWatch.getInstance().printLog("%s:createTempResults for ".formatted(getName(), resultSetID));
         }
+    }
+
+    /**
+     * Builds the queryable table named resultSetID
+     */
+    protected void buildResultSet(TableServerRequest treq, String resultSetID) {
+        List<String> cols = getResultSetCols(treq);
+
+        String selectPart = (cols.size() == 0 ? "*" : StringUtils.toString(cols) + ", " )+ DataGroup.ROW_IDX;
+        String wherePart = wherePart(treq);
+        String orderBy = orderByPart(treq);
+
+        String datasetSql = "select %s FROM %s %s %s".formatted(selectPart, getDataTable(), wherePart, orderBy);
+        String datasetSqlWithIdx = "select b.*, (%s -1) as %s from (%s) as b".formatted(rowNumSql(), DataGroup.ROW_NUM, datasetSql);
+        execUpdate(createTableFromSelect(resultSetID, datasetSqlWithIdx));
+    }
+
+    /**
+     * The columns to include in a resultset: the request's inclColumns if given, otherwise all of DATA's
+     * columns.  Either way, with ROW_IDX/ROW_NUM excluded since those are always added automatically.
+     */
+    protected List<String> getResultSetCols(TableServerRequest treq) {
+        List<String> cols = isEmpty(treq.getInclColumns()) ? getColumnNames(getDataTable(), "\"")
+                : StringUtils.asList(treq.getInclColumns(), ",");
+        return cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * Copies DATA's _DD, _META, and _AUX tables into resultSetID's own, so the resultset carries the same
+     * column metadata, table metadata, and aux info as the main data table.
+     */
+    protected void copyAuxTables(String resultSetID) {
+        // copy dd
+        copyDDFromSource(resultSetID, getDataTable());
+
+        // copy meta
+        String metaSql = "select * from DATA_META";
+        metaSql = createTableFromSelect(resultSetID + "_META", metaSql);
+        try {
+            getJdbc().update(metaSql);
+        } catch (Exception mx) {/*ignore table may not exist*/}
+
+        // copy aux
+        String auxSql = "select * from DATA_AUX";
+        auxSql = createTableFromSelect(resultSetID + "_AUX", auxSql);
+        try {
+            getJdbc().update(auxSql);
+        } catch (Exception ax) {/*ignore table may not exist*/}
     }
     
     protected String buildSqlFrom(TableServerRequest treq, String forTable) {
@@ -570,11 +592,17 @@ abstract public class BaseDbAdapter implements DbAdapter {
         LOGGER.debug("DbAdapter -> compacting DB: %s".formatted(getDbFile().getPath()));
         List<String> tables = getTempTables();
         if (tables.size() > 0) {
-            // remove all temporary tables
-            String[] stmts = tables.stream().map(s -> "drop table IF EXISTS " + s).toArray(String[]::new);
+            // remove all temp DB objects created for this database
+            String[] stmts = dropStatementsFor(tables);
             getJdbcTmpl().batchUpdate(stmts);
-
         }
+    }
+
+    /**
+     * @return the DROP statements needed to remove the given temporary database objects.
+     */
+    protected String[] dropStatementsFor(List<String> names) {
+        return names.stream().map(s -> "drop table IF EXISTS " + s).toArray(String[]::new);
     }
 
     public void compact() {

@@ -7,7 +7,9 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.HealpixProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
@@ -21,12 +23,14 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.server.query.HealpixProcessor.*;
 import static edu.caltech.ipac.table.JsonTableUtil.toJsonTableRequest;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class HealpixProcessorTest extends ConfigTest {
@@ -121,6 +125,39 @@ public class HealpixProcessorTest extends ConfigTest {
         } catch (Exception e) {
             fail("HealpixProcessorTest.healpixFiltered failed with exception: " + e.getMessage());
         }
+    }
+
+    /**
+     * The healpix map and its (ROW_IDX -> pixel) index are extra temp tables created alongside the
+     * search's own resultset table/view.  They must be swept up by clearCachedData() like any other
+     * temp table, even though dataTable here is filtered (i.e. a view, not the raw DATA table).
+     */
+    @Test
+    public void healpixCleansUpTempTables() throws Exception {
+        TableServerRequest sreq = makeSearchReq();
+        sreq.setFilters(Arrays.asList("auto_flag = 2"));       // force a resultset view rather than plain DATA
+        TableServerRequest req = makeMapReq(sreq);
+
+        new SearchManager().getDataGroup(req).getData();       // creates the healpix map + index
+
+        req.setParam(MODE, POINTS);
+        req.setParam(PIXELS, "6974934");
+        new SearchManager().getDataGroup(req).getData();       // exercises the index-join path
+
+        EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(IpacTableFromSource.PROC_ID);
+        DbAdapter dbAdapter = proc.getDbAdapter(sreq);
+
+        List<String> beforeCleanup = dbAdapter.getTableNames();
+        assertTrue("healpix pixel map table was created",
+                beforeCleanup.stream().anyMatch(n -> n.startsWith("HEALPIX_") && !n.endsWith("_IDX")));
+        assertTrue("healpix ROW_IDX->pixel index table was created",
+                beforeCleanup.stream().anyMatch(n -> n.startsWith("HEALPIX_") && n.endsWith("_IDX")));
+
+        dbAdapter.clearCachedData();
+
+        List<String> afterCleanup = dbAdapter.getTableNames();
+        assertTrue("only the main DATA tables remain after cleanup",
+                afterCleanup.stream().allMatch(DbAdapter.MAIN_TABLES::contains));
     }
 
     @Test
