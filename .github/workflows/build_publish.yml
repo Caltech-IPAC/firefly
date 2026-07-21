@@ -16,11 +16,15 @@ on:
         required: false
         default: false
         type: boolean
+      release_tag:
+        description: "Optional: Firefly release tag for standalone.zip artifact (e.g. release-xxxx.x.x)"
+        required: false
+        type: string
   release:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -29,7 +33,7 @@ jobs:
 
     steps:
       # initial checkout to make local actions available
-      - name: Checkout Firefly
+      - name: Checkout Firefly for local actions
         uses: actions/checkout@v4
         with:
           path: firefly
@@ -47,11 +51,21 @@ jobs:
       # ------------------------------------------------------------
       # Checkout firefly (this repo)
       # ------------------------------------------------------------
-      - name: Checkout Firefly
+      - name: Checkout Firefly depth==1
         uses: actions/checkout@v4
+        if: github.event_name == 'release'
         with:
           ref: ${{ steps.resolve_tags.outputs.ref }}
           path: firefly
+          
+      - name: Checkout Firefly full depth
+        uses: actions/checkout@v4
+        if: github.event_name != 'release'
+        with:
+          ref: ${{ steps.resolve_tags.outputs.ref }}
+          path: firefly
+          fetch-depth: 0
+
 
       # ------------------------------------------------------------
       # Checkout Firefly online help
@@ -99,6 +113,39 @@ jobs:
             env=ops
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ------------------------------------------------------------
+      # Export standalone.zip. Same build-args as the image build
+      # above, so the `builder` stage is a cache hit; only the extra
+      # `standalone-builder` layer (gradle standalone:zip) runs.
+      # ------------------------------------------------------------
+      - name: Build and export standalone.zip
+        if: github.event_name == 'release' || inputs.release_tag != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: firefly/docker/Dockerfile
+          platforms: linux/amd64
+          target: standalone-zip
+          push: false
+          outputs: type=local,dest=./dist-zip
+          build-args: |
+            env=ops
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ------------------------------------------------------------
+      # use gh (GitHub api) command to add standalone.zip
+      # to release artifacts
+      # using `gh release upload` requires setting `contents: write`
+      # ------------------------------------------------------------
+      - name: Add standalone.zip to release artifacts
+        if: github.event_name == 'release' || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}"
+          gh release upload "$TAG" --repo "${{ github.repository }}"  ./dist-zip/standalone.zip --clobber
 
       # ------------------------------------------------------------
       # Package and push Helm chart to GHCR
