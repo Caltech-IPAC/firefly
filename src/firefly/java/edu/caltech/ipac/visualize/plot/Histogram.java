@@ -234,8 +234,10 @@ public class Histogram implements HasSizeOf {
                     else {
                         partialHist[i] ++;
                     }
-                    if (float1dArray[k] < histDatamin) histDatamin = float1dArray[k];
-                    if (float1dArray[k] > histDatamax) histDatamax = float1dArray[k];
+                    if (!Double.isInfinite(float1dArray[k])) {
+                        if (float1dArray[k] < histDatamin) histDatamin = float1dArray[k];
+                        if (float1dArray[k] > histDatamax) histDatamax = float1dArray[k];
+                    }
                 }
             }
             return null;

@@ -109,8 +109,8 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers, onRowDoubleClick} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showSelectRowFilter,
-            showUnits, filterInfo, selectable, sortInfo, textView} = uiStates;
+    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes=false, showFilters=false, showSelectRowFilter,
+            showUnits=false, filterInfo, selectable, sortInfo, textView} = uiStates;
     const tableRef = useRef();
 
     useEffect( () => {

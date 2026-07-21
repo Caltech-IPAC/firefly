@@ -32,11 +32,14 @@ class ColumnRecognizer {
         return this.centerColumnsInfo;
     }
 
-    getColumnsWithUCDWord(cols, ucdWord) {
+    getColumnsWithUCDWord(cols, ucdWord, maxWords=0) {
         if (isEmpty(cols)) return [];
 
         return cols.filter((oneCol) => {
-            return has(oneCol, 'ucd') && isUCDWith(oneCol.ucd, ucdWord, get(ucdSyntaxMap, ucdWord));
+            if (has(oneCol, 'ucd') && isUCDWith(oneCol.ucd, ucdWord, ucdSyntaxMap[ucdWord])) {
+                return maxWords === 0 || oneCol.ucd.split(';').length <= maxWords;
+            }
+            return false;
         });
     }
 
@@ -84,7 +87,8 @@ class ColumnRecognizer {
         }, []);
 
         const metaMainPair = posPairs.map((posCols, idx) => {
-            const mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta);
+            let mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta,2);
+            if (isEmpty(mainMetaCols)) mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta);
             if (!isEmpty(posCols) && isEmpty(mainMetaCols)) {
                 alternateMainPos.find((oneAlt) => {
                     const altCols = this.getColumnsWithUCDWord(posCols, oneAlt[idx], ucdSyntaxMap.any);

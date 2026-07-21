@@ -72,7 +72,7 @@ function imageCouldBeTable(part) {
     const naxisAry= [];
     for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeaderFromAnalysis(`NAXIS${i+1}`,part,0);
     if (naxis===2) return naxisAry[1]<=30;
-    if (naxis===3) return naxisAry[1]===1;
+    if (naxis===3) return naxisAry[1]<=30 && naxisAry[2]===1;
     else {
         let couldBeTable= true;
         for(let i=1; (i<naxis);i++) if (naxisAry[i]>1) couldBeTable= false;
@@ -92,8 +92,8 @@ function is1DImage(part) {
 }
 
 
-const C_COL1= ['index','wave'];
-const C_COL2= ['flux','data','data1','data2'];
+const C_COL1= ['index','wave','wavelength', 'wavelengths', 'wl', 'wls', 'lambda', 'lambda_eff', 'v_lsr', 'centralwavelng'];
+const C_COL2= ['flux','data','data1','data2', 'fluxdensity', 'flux_density', 'flx', 'fl', 'fls', 'flu', 'value', 'signal', 'SurfBrtness',];
 
 const TS_C_COL1= ['mjd'];
 const TS_C_COL2= [ 'psfflux', /psf.*flux/, 'mag','flux',];
@@ -245,15 +245,15 @@ function analyzeChartTableResult(table, row, part, fileFormat, source, title, to
     const imageAsTableColCnt= useImageAsTable ? getImageAsTableColCount(part,fileFormat) : 0;
     const {title:ddTitleStr, dropDownText} = getAnalysisPartTableTitling({title,part,fileFormat:partFormat, table,
         useImageAsTable, imageAsTableColCnt, totalParts, originalTitle});
-    const {chartInfo, imageAsTableInfo}= getTableChartColInfo(title, part, partFormat, table);
+    const {chartInfo, imageAsTableInfo}= getTableChartColInfo(ddTitleStr, part, partFormat, table);
 
-    let titleInfo=title || `table_${part.index}`;
+    let titleInfo=ddTitleStr || `table_${part.index}`;
     if (isSSATable(table)) titleInfo= getAnalysisSSATitle(table,row)??'spectrum';
     
 
     if (chartInfo.hasChart) {
         const chartTableDefOption= getChartTableDefaultOption(part,chartInfo,partFormat);
-        if (isSingleRowChart(part,partFormat,chartInfo)) { // a common case: single row table with array columns
+        if (isSingleRowChart(part,partFormat,chartInfo) && partFormat===Format.FITS) { // a common case: single row table with array columns
             return makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartInfo,tbl_index, imageAsTableInfo,
                                                        chartTableDefOption, interpretedData, dropDownText});
         }
@@ -280,7 +280,7 @@ function getIds(options,title) {
 
 function makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartInfo,tbl_index:paIdx, imageAsTableInfo,
                                            chartTableDefOption, interpretedData, dropDownText}) {
-    const titleStr= 'Row 1 Chart';
+    const titleStr= 'Single Row Chart';
     const activate= createChartSingleRowArrayActivate(source,titleStr,activateParams,chartInfo,0,paIdx);
     const extraction= createTableExtraction(source,titleStr,paIdx, imageAsTableInfo,
         0, chartInfo.tableDataType);

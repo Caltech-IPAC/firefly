@@ -43,7 +43,7 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
         const wp= ShapeDataObj.draw.getCenterPt(drawObj);
         const validPts = drawObj.pts.filter( (pt) => pt);
         const results= computeCentralPtRadiusAverage([validPts],.11);
-        fovSize= results.fovSize * 2.4;
+        fovSize= results.fovSize * 4.5;
         console.log(wp);
     }
 
