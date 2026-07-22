@@ -1,11 +1,13 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {object, string, shape} from 'prop-types';
-import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
+import {IconButton, Button, Sheet, Skeleton, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
 import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
+import {OptionsFilterStats} from '../../tables/ui/TablePanelOptions';
+import {HeaderText} from '../../tables/ui/TableRenderer';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
@@ -40,7 +42,9 @@ export const jobMonitorPath = '/jobMonitor';
 export const jobMonitorGroupKey = 'jobMonitor';
 export const useLocalTimeKey = 'useLocalTime';
 
-const jobIdColIdx = 7;  // the index of the jobId column in the table
+const jobIdColIdx = 7;   // the index of the jobId column in the table
+const jobHistoryTblId = 'JobHistoryTable';
+let seenJobIds = null;      // map of jobIds seen in the previous poll, used to detect newly submitted jobs
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const pollInterval = getAppOptions()?.background?.historyPollInterval || 30000;       // every 30 seconds
@@ -60,7 +64,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const titleProps = {...slotProps?.title, ...title};
     const tableProps = {...slotProps?.table, ...table};
     const width = useStoreConnector(() => {
-        const {columnWidths=[]} = getTableUiById('JobHistoryTable-ui') || {};
+        const {columnWidths=[]} = getTableUiById(`${jobHistoryTblId}-ui`) || {};
         return columnWidths.reduce((acc, val, idx) => idx < 8 ? acc + val : acc, 3);
 
     });
@@ -218,17 +222,28 @@ function Notification({email='', notifEnabled, ...props}) {
     );
 }
 
-function JobMonitorTable({help_id, ...props}) {
-    const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
+function JobMonitorTable({help_id, sx, ...props}) {
+    const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs);        // undefined until the first loadAllJobs() response arrives
     const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
     const [hlJobId, setHlJobId] = useState();
+    const loading = !jobMap;
 
-    const tbl_id = 'JobHistoryTable';
+    const tbl_id = jobHistoryTblId;
     useEffect(() => {
-        const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id, useLocalTime);
-        if (hlJobId) {
-            const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === hlJobId);
-            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
+        const jobs = getMonitoredJob(jobMap);
+        const jobIds = jobs.map((j) => j.meta?.jobId).filter(Boolean);
+
+        // only the newest job not present in the previous poll counts as "just submitted";
+        // skip detection on the very first (baseline) load so existing jobs aren't treated as new
+        const newJobId = (jobMap && seenJobIds) && jobIds.find((id) => !seenJobIds.has(id));
+        if (jobMap) seenJobIds = new Set(jobIds);
+        if (newJobId) setHlJobId(newJobId);
+
+        const table = convertToTableModel(jobs, tbl_id, useLocalTime);
+        const idToHighlight = newJobId || hlJobId;
+        if (idToHighlight) {
+            const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === idToHighlight);
+            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found (and passes the current filter)
         }
         dispatchTableAddLocal(table, undefined, false);
     }, [jobMap, useLocalTime]); // refreshed only when jobMap changes
@@ -246,15 +261,19 @@ function JobMonitorTable({help_id, ...props}) {
 
     const renderers =  {
         Phase:    {cellRenderer: PhaseRenderer},
-        Control:  {cellRenderer: ControlRenderer},
+        Control:  {cellRenderer: ControlRenderer, headRenderer: ControlHeadRenderer},
     };
 
     return (
-        <Slot component={TablePanel} rowHeight={32} {...{tbl_id, help_id, renderers}}
-                    sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}}}
-                    {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton:false}}
-                    slotProps={{...props}}
-        />
+        <Stack sx={{position: 'relative', height: 1, ...sx}}>
+            <Skeleton loading={loading} sx={sx}>
+                <Slot component={TablePanel} rowHeight={32} {...{tbl_id, help_id, renderers}}
+                            sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}, ...sx}}
+                            {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton:false}}
+                            slotProps={{...props}}
+                />
+            </Skeleton>
+        </Stack>
     );
 }
 
@@ -267,6 +286,15 @@ function PhaseRenderer({cellInfo}) {
                             undefined;
     return (
             <Typography level='body-md' color={color} title={getPhaseTips(value)}>{value}</Typography>
+    );
+}
+
+function ControlHeadRenderer({col}) {
+    return (
+        <Stack alignItems='center' justifyContent='space-between' height={1} mt='1px'>
+            <HeaderText val={col?.label || col?.name} level='title-sm'/>
+            <OptionsFilterStats tbl_id={jobHistoryTblId}  alignSelf='start'/>
+        </Stack>
     );
 }
 
@@ -465,8 +493,8 @@ function convertToTableModel(jobs, tbl_id, useLocalTime) {
     const doFilter = columns[phaseIdx].enumVals?.includes(Phase.ARCHIVED);
 
     const totalRows = data.length;
-    const {origTableModel:prevTable, request:prevReq} = getTblById(tbl_id) || {};
-    const request = (prevTable?.totalRows < totalRows || !prevReq) ? defaultRequest(doFilter) : prevReq;  // if a new job is added or no previous request, use default
+    const {request: prevReq} = getTblById(tbl_id) || {};
+    const request = prevReq ?? defaultRequest(doFilter);      // preserve the user's sort/filter across polls; use default on first load
     let table = { tbl_id, request, totalRows, tableData: { columns, data }};
     if (request.sortInfo || request.filters) {
         table = processRequest(table, request);

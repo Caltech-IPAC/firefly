@@ -142,7 +142,7 @@ TablePanelOptions.propTypes = {
     })
 };
 
-function OptionsFilterStats({tbl_id}) {
+export function OptionsFilterStats({tbl_id, iconButtonSize='34px', ...props}) {
 
     const filterCnt = useStoreConnector(() => getFilterCount(getTblById(tbl_id)));
     const clearFilters = () => dispatchTableFilter({tbl_id, filters: ''});;
@@ -150,8 +150,8 @@ function OptionsFilterStats({tbl_id}) {
     if (filterCnt === 0) return null;
     return (
         // wrapper stack added because ToolbarButton did not expose root
-        <Stack sx = {{[`& .${badgeClasses.root}`]: {margin: '1px 3px 0 0'}}}>
-            <ClearFilterButton iconButtonSize='34px' onClick={clearFilters}
+        <Stack sx={{[`& .${badgeClasses.root}`]: {margin: '1px 3px 0 0'}}} {...props}>
+            <ClearFilterButton iconButtonSize={iconButtonSize} onClick={clearFilters}
                                badgeCount={filterCnt}
                                tip = 'Remove all Column Options filters'
             />

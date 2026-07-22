@@ -94,12 +94,11 @@ export const fetchJobInfo = (jobId) => {
 
 export const loadAllJobs = () => {
     const url = getCmdSrvAsyncURL();
-    jsonFetch(url).then( ({jobs, overflow}) => {
-        if (jobs) {
-            // convert List<JobInfo> to Object<JobId, JobInfo>
-            const jobsMap = Object.fromEntries(jobs.map((j) => [j?.meta?.jobId, j]));
-            dispatchBgLoadJobs({jobs:jobsMap, overflow});
-        }
+    jsonFetch(url).then( ({jobs=[], overflow}) => {
+        // convert List<JobInfo> to Object<JobId, JobInfo>; always dispatch, even when there are zero jobs,
+        // so the store's jobs map goes from undefined ('not loaded yet') to {} ('loaded; none found')
+        const jobsMap = Object.fromEntries(jobs.map((j) => [j?.meta?.jobId, j]));
+        dispatchBgLoadJobs({jobs:jobsMap, overflow});
     });
 };
 
