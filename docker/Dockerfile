@@ -72,6 +72,23 @@ RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly
 RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 
 
+# =====================================
+# Stage: Standalone zip builder
+# =====================================
+FROM builder AS standalone-builder
+ARG env=local
+ARG BranchOverride=''
+RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} standalone:zip
+
+
+# ==============================
+# Stage: Standalone zip artifact: standalone.zip
+# ==============================
+FROM scratch AS standalone-zip
+ARG build_dir=firefly
+COPY --from=standalone-builder /opt/work/${build_dir}/build/dist/standalone.zip /
+
+
 # ==============================
 # Dev environment
 # ==============================

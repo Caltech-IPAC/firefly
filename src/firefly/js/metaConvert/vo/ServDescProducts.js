@@ -68,7 +68,7 @@ export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTa
 
         const t= ensureDropDownText(tName,dropDownText);
         return dpdtAnalyze({
-            name: t.title, dropDownText: t.dropDownText,
+            name: t, dropDownText: t,
             activate, url:request.getURL(), serDef, menuKey, dlData,
             activeMenuLookupKey, request, sRegion, semantics, size, serviceDefRef});
     } else {

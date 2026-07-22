@@ -417,6 +417,7 @@ public class FitsReadUtil {
 
     public static int getBitPix(Header h) {return h.getIntValue("BITPIX"); }
     public static int getNaxis(Header h) { return h.getIntValue("NAXIS", 0); }
+    public static int getZNaxis(Header h) { return h.getIntValue("ZNAXIS", 0); }
     public static int getNaxis1(Header h) { return h.getIntValue("NAXIS1", 0); }
     public static int getNaxis2(Header h) { return h.getIntValue("NAXIS2", 0); }
     public static int getNaxis3(Header h) { return (getNaxis2(h) > 1) ? h.getIntValue("NAXIS3") : 1; }
@@ -424,6 +425,11 @@ public class FitsReadUtil {
     public static int getNaxisLength(Header h, int num) {
         if (num<1) return 0;
         return h.getIntValue("NAXIS"+num,0);
+    }
+
+    public static int getAxisCnt(Header h, boolean compressed) {
+        if (!compressed) getNaxis(h);
+        return getZNaxis(h)==0 ? getNaxis(h) : getZNaxis(h);
     }
 
     public static int getNaxisLength(Header h, int num, boolean compressed) {
