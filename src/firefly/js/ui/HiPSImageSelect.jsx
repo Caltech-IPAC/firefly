@@ -182,8 +182,8 @@ const getTitle= () => getHighlightCell(TITLE_COL) || 'Blank HiPS';// blank hips 
 export const getHipsUrl= () => getHighlightCell(URL_COL) || BLANK_HIPS_URL;// blank hips is empty-space in the table
 
 function SourceSelect({moc=false, extraHiPSListName }) {
-    const mocSource= getAppOptions().hips?.adhocMocSource || 'Featured Sources';
-    const sourceOptions = moc && mocSource ?
+    const mocSource= getAppOptions().hips?.adhocMocSource || {label: 'Featured Sources', sources: []};
+    const sourceOptions = moc ?
             [{label : mocSource.label, value: 'adhoc' }] :
             defHiPSSources()?.map((oneSource) => ({label: oneSource.label, value: oneSource.source}));
     if (extraHiPSListName) {
