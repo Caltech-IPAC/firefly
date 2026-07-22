@@ -21,9 +21,7 @@ public class LsstHiPSListSource implements HiPSMasterListSourceType {
             "lsst.hips.masterUrl",
             "https://irsa.ipac.caltech.edu/data/hips/list");
 
-    private static final String lsstMocListUrl = AppProperties.getProperty(
-            "lsst.moc.masterUrl",
-            null);
+    private static final String lsstMocListUrl = AppProperties.getProperty( "lsst.moc.masterUrl", null);
     static final Logger.LoggerImpl log = Logger.getLogger();
 
 
@@ -38,7 +36,7 @@ public class LsstHiPSListSource implements HiPSMasterListSourceType {
         }
     }
 
-    public List<HiPSMasterListEntry> getAdditionalMOCS_NEW(String source) {
+    public List<HiPSMasterListEntry> getAdditionalMOCS(String source) {
         try {
             if (lsstMocListUrl==null) return null;
             URL url= URLDownload.makeURL(lsstMocListUrl);
@@ -50,7 +48,7 @@ public class LsstHiPSListSource implements HiPSMasterListSourceType {
             var retList = new ArrayList<HiPSMasterListEntry>();
             String baseUrl= null;
             if (url.getQuery()==null) {
-                String s= lsstHipsListUrl.endsWith("/") ? lsstHipsListUrl.substring(0,lsstHipsListUrl.length()-1) : lsstHipsListUrl;
+                String s= lsstMocListUrl.endsWith("/") ? lsstMocListUrl.substring(0,lsstMocListUrl.length()-1) : lsstMocListUrl;
                 var endIdx= s.lastIndexOf("/");
                 baseUrl= endIdx>-1  ? s.substring(0, s.lastIndexOf("/")) : s;
             }
