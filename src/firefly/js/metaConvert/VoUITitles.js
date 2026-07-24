@@ -153,6 +153,9 @@ export function getAnalysisPartTableTitling({title='',part,fileFormat,table,useI
     return {title:retTitle, dropDownText};
 }
 
+export function createObsCoreProductTitle(table, row) {
+    return createObsCoreProductTitleAndSource(table,row).title;
+}
 
 /**
  * Make a title from arow of an obscore table.
@@ -160,11 +163,11 @@ export function getAnalysisPartTableTitling({title='',part,fileFormat,table,useI
  * @param row
  * @return {*|string}
  */
-export function createObsCoreProductTitle(table, row) {
-    if (!hasObsCoreLikeDataProducts(table)) return '';
+export function createObsCoreProductTitleAndSource(table, row) {
+    if (!hasObsCoreLikeDataProducts(table)) return {source:'none', title:''};
     // 1. try a template
     const template = getDataServiceOptionByTable('productTitleTemplate', table);
-    if (template?.trim() === '') return ''; // setting template to empty string disables all title guessing
+    if (template?.trim() === '') return {source:'none', title:''}; // setting template to empty string disables all title guessing
     if (template) {
         const templateColNames = template && getColNameFromTemplate(template);
         const columns = getColumns(table);
@@ -178,19 +181,19 @@ export function createObsCoreProductTitle(table, row) {
             }, {});
             if (Object.keys(colObj).length === templateColNames.length) {
                 const titleStr = tokenSub(colObj, template);
-                if (titleStr) return titleStr;
+                if (titleStr) return {source:'template', title:titleStr};
             }
         }
     }
     // 2. try obs_title
-    if (getObsTitle(table, row)) return getObsTitle(table, row);
+    if (getObsTitle(table, row)) return {source:'obsTitle', title:getObsTitle(table, row)};
 
     // 3. compute a name
     let obsCollect = getCellValue(table, row, 'obs_collection') || '';
     const obsId = getCellValue(table, row, 'obs_id') || '';
     const iName = getCellValue(table, row, 'instrument_name') || '';
     if (obsCollect === iName) obsCollect = '';
-    return `${obsCollect ? obsCollect + ', ' : ''}${iName ? iName + ', ' : ''}${obsId}`;
+    return {source:'computed',title:`${obsCollect ? obsCollect + ', ' : ''}${iName ? iName + ', ' : ''}${obsId}`};
 }
 
 function getColNameFromTemplate(template) {
@@ -224,7 +227,10 @@ export function makeDatalinkTitles({dlData, totals={}, indices={}, sourceTable, 
     }
 
     let baseTitle= undefined;
-    if (isUsableDescription(description)) baseTitle = description;  // most descriptions are not usable, but this will probably change
+    const otSource= createObsCoreProductTitleAndSource(sourceTable,sourceRow).source;
+
+    if (otSource==='obsTitle' || otSource==='template') baseTitle= createObsCoreProductTitle(sourceTable,sourceRow);
+    if (!baseTitle && isUsableDescription(description)) baseTitle = description;  // most descriptions are not usable, but this will probably change
     if (!baseTitle) baseTitle= createObsCoreProductTitle(sourceTable,sourceRow); //  this is the most common case
     if (!baseTitle) baseTitle= getBaseTitleFromId(id); // as very specialized case
     if (!baseTitle && serDef && isUsableDescription(serDef.title)) baseTitle= serDef.title; // a fallback, rarly used
