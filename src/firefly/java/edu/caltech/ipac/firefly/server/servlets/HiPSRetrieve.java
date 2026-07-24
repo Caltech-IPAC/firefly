@@ -16,12 +16,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static edu.caltech.ipac.util.FileUtil.isDirectoryEmpty;
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
@@ -42,7 +44,19 @@ public class HiPSRetrieve {
             if (!dir.exists()) dir.mkdirs();
 
             File targetFile= new File(dir, new File((pathExt == null ? url.getFile() : pathExt)).getName());
+
+            if (targetFile.canRead() && targetFile.isDirectory()) {
+               if (isDirectoryEmpty(targetFile)) {
+                   targetFile.delete();
+               }
+               else {
+                   return new FileInfo(HttpURLConnection.HTTP_FORBIDDEN, "this hips request conflicts with the HiPS protocol, attempt replace a directory with a file");
+               }
+            }
+
             boolean fileExistLocal= targetFile.canRead() && targetFile.length()>400;
+
+
             FileInfo preFetchFileInfo= new FileInfo(targetFile);
             if (alwaysUseCached && fileExistLocal) return preFetchFileInfo;
 

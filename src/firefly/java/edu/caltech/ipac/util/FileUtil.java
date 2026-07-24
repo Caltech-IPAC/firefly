@@ -707,6 +707,10 @@ public class FileUtil
         } );
     }
 
+    public static boolean isDirectoryEmpty(final File dir) {
+        return listFiles(dir).length==0;
+    }
+
 
     public static boolean silentClose(Reader reader) {
         boolean success= true;
