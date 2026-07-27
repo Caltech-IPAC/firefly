@@ -5,7 +5,8 @@ import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
-import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isSpectralOrder, isScatter2d} from '../ChartUtil.js';
+import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isSpectralOrder, isScatter2d,
+    makeShapeHoverTrace} from '../ChartUtil.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {Skeleton, useTheme} from '@mui/joy';
 
@@ -68,10 +69,16 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
             }
         }
     }
+
+    // hoverable shapes (e.g. spectral lines) can't show hovertext directly
+    // so build their companion hover trace(s) plus the axis layout they need
+    const {traces: hoverTraces, layout: hoverLayout} = makeShapeHoverTrace(layout.shapes);
+    pdata = pdata.concat(hoverTraces);
+
     const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
 
     const showlegend = data.length > 1;
-    const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout, theme), {width: chartWidth, height: chartHeight, annotations}));
+    const playout = cloneDeep({showlegend, ...adjustLayout(layout, theme), width: chartWidth, height: chartHeight, annotations, ...hoverLayout});
 
     const style = {float: 'left'};
     if (chartWidth > widthPx || chartHeight > heightPx) {

@@ -1,0 +1,45 @@
+wavelength_um,species,transition,phase,origin,ref
+2.6259,H I,Br beta (6-4),gas,xlsx+calc,Lai+
+2.8730,H I,Pf 11 (11-5),gas,xlsx+calc,Lai+
+2.9600,NH3,N-H stretch (nu2),ice,xlsx,Gibbs
+3.0039,H2,v=1-0 O(4),gas,JWST-SpecTool,MEUDON
+3.0392,H I,Pf epsilon (10-5),gas,JWST-SpecTool,CLOUDY
+3.0500,H2O,O-H stretch,ice,xlsx,Gibbs/Lai+
+3.0984,O I,3P-3Do     1 - 1,gas,JWST-SpecTool,OTHERS
+3.2890,PAH,3.3um C-H aromatic,PAH,JWST-SpecTool/xlsx,Lai+/Tokunaga
+3.2970,H I,Pf delta (9-5),gas,JWST-SpecTool,CLOUDY
+3.4000,PAH,3.4um aliphatic C-H,PAH,JWST-SpecTool/xlsx,Lai+/Tokunaga
+3.4600,PAH,C-H band,PAH,JWST-SpecTool/xlsx,Lai+/Tokunaga
+3.4700,-CH2-/-CH3-,C-H stretch (aliphatic),ice,xlsx,Gibbs
+3.5100,PAH,C-H band,PAH,JWST-SpecTool/xlsx,Lai+/Tokunaga
+3.5300,CH3OH,C-H stretch,ice,xlsx,Gibbs
+3.6146,CH+,v=1-0 R(0),gas,JWST-SpecTool,OTHERS
+3.6876,CH+,v=1-0 P(1),gas,JWST-SpecTool,OTHERS
+3.7035,He I,3Po-3D      2 - 1,gas,JWST-SpecTool,CLOUDY
+3.7406,H I,Pf gamma (8-5),gas,JWST-SpecTool,CLOUDY
+3.8461,H2,v=0-0 S(13),gas,JWST-SpecTool,MEUDON
+3.9500,CH3OH/H2S,C-H / S-H stretch,ice,xlsx,Gibbs
+4.0523,H I,Br alpha (5-4),gas,JWST-SpecTool,CLOUDY
+4.0763,[Fe II],a6D-a4F   7/2 - 5/2,gas,JWST-SpecTool,CLOUDY
+4.0820,[Fe II],a6D-a4F   5/2 - 3/2,gas,JWST-SpecTool,CLOUDY
+4.1150,[Fe II],a6D-a4F   9/2 - 7/2,gas,JWST-SpecTool,CLOUDY
+4.1811,H2,v=0-0 S(11),gas,JWST-SpecTool,MEUDON
+4.2700,CO2,C-O stretch (nu3),ice,xlsx,Gibbs/Lai+
+4.2954,He I,3S-3Po     1 - 0,gas,JWST-SpecTool,CLOUDY
+4.3765,H I,Hu (12-6),gas,JWST-SpecTool,CLOUDY
+4.3800,13CO2,13C-O stretch,ice,xlsx,Gibbs
+4.4098,H2,v=0-0 S(10),gas,JWST-SpecTool,MEUDON
+4.5000,H2O,combination mode,ice,xlsx,Gibbs
+4.6077,[Fe II],a6D-a4F   5/2 - 5/2,gas,JWST-SpecTool,CLOUDY
+4.6200,XCN (OCN-),C=N stretch,ice,xlsx,Gibbs
+4.6493,CO,v=1-0 R(1),gas,JWST-SpecTool,OTHERS
+4.6538,H I,Pf beta (7-5),gas,JWST-SpecTool,CLOUDY
+4.6700,CO,12C-O stretch (solid),ice,xlsx,Gibbs/Lai+
+4.6742,CO,v=1-0 P(1),gas,JWST-SpecTool,OTHERS
+4.6946,H2,v=0-0 S(9),gas,JWST-SpecTool,MEUDON
+4.7200,Dust continuum,cloud-depth indicator,continuum,xlsx,Hora+
+4.7326,CO,v=2-1 P(1),gas,JWST-SpecTool,OTHERS
+4.7800,13CO,13C-O stretch,ice,xlsx,Gibbs
+4.8891,[Fe II],a6D-a4F   7/2 - 7/2,gas,JWST-SpecTool,CLOUDY
+4.9100,OCS,C-S stretch,ice,xlsx,Gibbs
+4.9908,CO,v=1-0 P(32),gas,JWST-SpecTool,OTHERS

@@ -377,6 +377,61 @@ export function flattenAnnotations(annotations) {
     return [];
 }
 
+const SHAPE_HOVER_STEPS = 10; // points per line stacked along the shape's height, for a hover target that tracks the cursor vertically
+
+/**
+ * Builds companion hover trace(s) for Plotly shapes that carry a `hovertext`.
+ *
+ * Shapes themselves can't be hovered (no hovertext/hoverinfo support on shapes as of now unlike annotations; see
+ * plotly.js#4780: https://github.com/plotly/plotly.js/issues/4780), so this fakes it with a real scatter
+ * trace: a fully transparent, null-separated line per shape, on a fixed 'y2' axis (paired with the returned
+ * `layout.yaxis2`) so it stays aligned with the shape's fixed paper-relative span regardless of the real
+ * y-axis' zoom/pan.
+ *
+ * Not specific to any one feature — any shape with `hovertext` set gets a hover target this way. One trace is
+ * built per distinct `legendgroup` found among the hoverable shapes (and sharing that legendgroup + showlegend:false
+ * means toggling a shape's legend entry hides its hover trace along with it).
+ *
+ * NOTE: Only handles vertical, paper-height line shape geometry (`yref:'paper', y0:0, y1:1, x0=x1`);
+ * shapes of other types/positions are ignored.
+ *
+ * @param {Array<object>} shapes - candidate shapes, e.g. from layout.shapes
+ * @returns {{traces: Array<object>, layout: object}} traces to add to `data`, and the `layout` fragment
+ * (the 'y2' axis they're plotted on) to merge in alongside them — empty/{} when there's nothing hoverable
+ */
+export function makeShapeHoverTrace(shapes=[]) {
+    const hoverable = shapes.filter((s) => s?.type === 'line' && s.yref === 'paper' && s.hovertext);
+    if (hoverable.length === 0) return {traces: [], layout: {}};
+
+    const byGroup = new Map();
+    hoverable.forEach((s) => {
+        const group = s.legendgroup;
+        if (!byGroup.has(group)) byGroup.set(group, []);
+        byGroup.get(group).push(s);
+    });
+
+    const traces = Array.from(byGroup.entries()).map(([group, groupShapes]) => {
+        const x = [], y = [], hovertext = [];
+        groupShapes.forEach((s) => {
+            for (let i = 0; i < SHAPE_HOVER_STEPS; i++) {
+                x.push(s.x0);
+                y.push(i / (SHAPE_HOVER_STEPS - 1));
+                hovertext.push(s.hovertext);
+            }
+            x.push(null); y.push(null); hovertext.push(null);
+        });
+        return {
+            x, y, hovertext,
+            yaxis: 'y2',
+            type: 'scatter', mode: 'lines', hoverinfo: 'text',
+            line: {width: 10, color: 'rgba(0,0,0,0)'},
+            legendgroup: group, showlegend: false, name: '',
+        };
+    });
+
+    return {traces, layout: {yaxis2: {overlaying: 'y', range: [0, 1], visible: false, fixedrange: true}}};
+}
+
 export function updateSelection(chartId, selectInfo) {
     const {data, activeTrace=0} = getChartData(chartId);
 

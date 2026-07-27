@@ -6540,10 +6540,10 @@ pkginfo@^0.3.0:
   resolved "https://registry.yarnpkg.com/pkginfo/-/pkginfo-0.3.1.tgz#5b29f6a81f70717142e09e765bbeab97b4f81e21"
   integrity sha512-yO5feByMzAp96LtP58wvPKSbaKAi/1C4kV9XpTctr6EepnP6F33RBNOiVrdz9BrPA98U2BMFsTNHo44TWcbQ2A==
 
-plotly.js-dist-min@~3.1.0:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/plotly.js-dist-min/-/plotly.js-dist-min-3.1.2.tgz#35491ea0d03b8f352968a10ddc07f0600261e1a8"
-  integrity sha512-GlgsV+1IMjPpyJWnWjHfD2SBczqke/JNPElLAZ5cUir3fz5D4WDcYyQFJLU60SjCvJXH+KTPp8SBuVIr084sOA==
+plotly.js-dist-min@~3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/plotly.js-dist-min/-/plotly.js-dist-min-3.6.0.tgz#7f07282d56305f84ce2b55bccc3e2cea8d51ecea"
+  integrity sha512-VR9jO2YdcEwbzVwtRyPE0eAieXFv1x5q6M9nnIgUS8FggahPrjiID6kzpnTYABwLX0gZkgEc0zxS6gQgVmgHzw==
 
 pn@^1.1.0:
   version "1.1.0"

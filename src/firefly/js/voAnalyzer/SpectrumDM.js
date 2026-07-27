@@ -74,6 +74,15 @@ export const REF_POS = {
     CUSTOM: 'CUSTOM'
 };
 
+/**
+ * @param {string} refPos - a spectral frame's reference position (any case)
+ * @returns {boolean} true if refPos is a known REF_POS (TOPOCENTER or CUSTOM) — i.e. there's an interactive
+ * spectral frame/redshift to work with, rather than some other fixed reference position
+ */
+export function isKnownRefPos(refPos) {
+    return Object.values(REF_POS).includes(refPos?.toUpperCase());
+}
+
 
 /**
  *
