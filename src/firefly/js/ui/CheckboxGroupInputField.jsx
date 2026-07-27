@@ -24,10 +24,10 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
                 {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                 {/*following should be nested in a <FormGroup/> once joy-ui exposes it: https://mui.com/material-ui/react-checkbox/#formgroup*/}
                 <Stack className='ff-Checkbox-container' spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
-                    {options.map( ({value,label,tooltip}) => {
+                    {options.map( ({value,label,tooltip,...checkboxProps}) => {
                         const cb= (
                             <Checkbox {...{ className:'ff-Checkbox-item', size:'sm', name:fieldKey, key:value, value,
-                                          checked:isChecked(value,fieldValue), onChange, label, ...slotProps?.input}} />
+                                          checked:isChecked(value,fieldValue), onChange, label, ...checkboxProps, ...slotProps?.input}} />
                         );
                         return (
                             <FormControl key={value}>{
@@ -147,7 +147,8 @@ export const CheckboxGroupInputField = memo( (props) => {
 });
 
 CheckboxGroupInputField.propTypes= {
-    options: arrayOf(shape( { value: string, label: string, tooltip: string} )).isRequired,
+    // any other key (e.g. disabled) is passed through as-is to the underlying Checkbox
+    options: arrayOf(shape( { value: string.isRequired, label: string, tooltip: string} )).isRequired,
     alignment:  string,
     initialState: shape({
         value: string,

@@ -47,6 +47,32 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
 }
 
 /**
+ * Converts a single numeric value from one unit to another, using the same conversion table as {@link getUnitConvExpr}.
+ * Unlike getUnitConvExpr, this returns a number rather than a SQL-like expression string.
+ * @param {number} value    the value to convert
+ * @param {string} from     from unit
+ * @param {string} to       to unit
+ * @returns {number|undefined} the converted value, or undefined if no conversion path exists between the units
+ */
+export function convertUnitValue(value, from, to) {
+    const {unit: fromKey, factor: fromFactor} = normalizeUnit(from);
+    const {unit: toKey, factor: toFactor} = normalizeUnit(to);
+
+    const formula = UnitXref?.[fromKey]?.[toKey]; // SQL-like expression string
+    if (!formula) return undefined;
+
+    // every UnitXref formula is one of: '%s', '%s * n', or '%s / n', apply the operator on number values
+    const [, op, n] = formula.match(/^%s(?:\s*([*/])\s*([\d.eE+-]+))?$/) ?? [];
+    let result = op === '*' ? value * Number(n) : op === '/' ? value / Number(n) : value;
+
+    // handle factors if present in the units
+    if (fromFactor) result *= Number(fromFactor);
+    if (toFactor) result /= Number(toFactor);
+
+    return result;
+}
+
+/**
  * returns an array of options for unit conversion.
  * @param {string} unit         the unit to get the conversion options for
  * @returns {Array<{value: string, label: LatexDelimited}>}
