@@ -6,8 +6,7 @@ import moment from 'moment';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
 import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
-import {OptionsFilterStats} from '../../tables/ui/TablePanelOptions';
-import {HeaderText} from '../../tables/ui/TableRenderer';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
@@ -132,13 +131,15 @@ export function showMultiDownloads(job) {
 
 // ----------------------------------Start of private functions ------------------------------------------//
 
-function TitleSection({summary, notification, ...props}) {
-    const {jobs:jobMap={}, email, notifEnabled, overflow} = useStoreConnector(() => getBackgroundInfo());
-    const jobs = getMonitoredJob(jobMap);
+function TitleSection({notification, ...props}) {
+    const {email, notifEnabled} = useStoreConnector(() => getBackgroundInfo());
+    const {showEmail} = getAppOptions()?.background?.notification || {};
+
+    // mount empty Notification to syncs notifEnabled to the server on mount.
+    if (!showEmail) return <Notification {...{email, notifEnabled}}/>;
 
     return (
         <Stack component={Sheet} variant='soft' borderRadius={4} padding={1} spacing={1} {...props}>
-            <Slot component={JobSummary} jobs={jobs} overflow={overflow} slotProps={summary}/>
             <Slot component={Notification} {...{email, notifEnabled}} slotProps={notification}/>
         </Stack>
     );
@@ -156,7 +157,7 @@ function JobSummary({jobs, overflow, ...props}) {
         </Stack>
     );
     return (
-        <Stack direction='row' gap={5} justifyContent='space-between' {...props}>
+        <Stack direction='row' gap={5} justifyContent='space-between' alignItems='center' flexGrow={1} {...props}>
             <Typography level='title-md' color='primary'>Job Summary</Typography>
             <Stack direction='row' gap={10}>
                 <Entry label='Total' value={total + (overflow ? '(+)' : '')}/>
@@ -223,18 +224,17 @@ function Notification({email='', notifEnabled, ...props}) {
 }
 
 function JobMonitorTable({help_id, sx, ...props}) {
-    const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs);        // undefined until the first loadAllJobs() response arrives
+    const {jobs: jobMap, overflow} = useStoreConnector(() => getBackgroundInfo());        // jobMap undefined until the first loadAllJobs() response arrives
     const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
     const [hlJobId, setHlJobId] = useState();
     const loading = !jobMap;
+    const jobs = getMonitoredJob(jobMap);
 
     const tbl_id = jobHistoryTblId;
     useEffect(() => {
-        const jobs = getMonitoredJob(jobMap);
         const jobIds = jobs.map((j) => j.meta?.jobId).filter(Boolean);
 
-        // only the newest job not present in the previous poll counts as "just submitted";
-        // skip detection on the very first (baseline) load so existing jobs aren't treated as new
+        // detect newJobId used for highlighting
         const newJobId = (jobMap && seenJobIds) && jobIds.find((id) => !seenJobIds.has(id));
         if (jobMap) seenJobIds = new Set(jobIds);
         if (newJobId) setHlJobId(newJobId);
@@ -261,16 +261,31 @@ function JobMonitorTable({help_id, sx, ...props}) {
 
     const renderers =  {
         Phase:    {cellRenderer: PhaseRenderer},
-        Control:  {cellRenderer: ControlRenderer, headRenderer: ControlHeadRenderer},
+        Control:  {cellRenderer: ControlRenderer},
     };
 
     return (
         <Stack sx={{position: 'relative', height: 1, ...sx}}>
             <Skeleton loading={loading} sx={sx}>
-                <Slot component={TablePanel} rowHeight={32} {...{tbl_id, help_id, renderers}}
+                <TablePanel rowHeight={32} tbl_id={tbl_id} help_id={help_id} renderers={renderers}
                             sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}, ...sx}}
-                            {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton:false}}
-                            slotProps={{...props}}
+                            showToolbar={true}
+                            showTitle={false}
+                            leftButtons={[() => <JobSummary jobs={jobs} overflow={overflow}/>]}
+                            rightButtons={[() => <ToolbarHorizontalSeparator/>]}
+                            selectable={false}
+                            showFilters={true}
+                            showOptionButton={false}
+                            showPaging={false}
+                            showSave={false}
+                            showInfoButton={false}
+                            showSearchButton={false}
+                            showToggleTextView={false}
+                            showPropertySheetButton={false}
+                            showTypes={false}
+                            expandable={false}
+                            {...props}
+                            slotProps={{toolbar: {px: 1}}}
                 />
             </Skeleton>
         </Stack>
@@ -286,15 +301,6 @@ function PhaseRenderer({cellInfo}) {
                             undefined;
     return (
             <Typography level='body-md' color={color} title={getPhaseTips(value)}>{value}</Typography>
-    );
-}
-
-function ControlHeadRenderer({col}) {
-    return (
-        <Stack alignItems='center' justifyContent='space-between' height={1} mt='1px'>
-            <HeaderText val={col?.label || col?.name} level='title-sm'/>
-            <OptionsFilterStats tbl_id={jobHistoryTblId}  alignSelf='start'/>
-        </Stack>
     );
 }
 

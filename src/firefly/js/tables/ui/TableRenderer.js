@@ -36,6 +36,29 @@ import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 export const headerStyle = {fontSize:'var(--joy-fontSize-sm)', fontWeight:'var(--joy-fontWeight-md)'};  // maybe faulty becuase it's translated from Typography title-sm, which is dynamic.
 
+/**
+ * Pixel heights of the rows making up a column header.  fixed-data-table needs the header's
+ * total height up front, so these must match what HeaderCell renders.  HeaderText's font size is
+ * pinned to headerFontSize so the text rows stay in sync; headers do not scale with the font .
+ */
+export const headerFontSize = 12.25;                                // Joy's fontSize.sm at firefly's root size
+export const headerLineHeight = Math.ceil(headerFontSize * 1.2);    // HeaderText uses lineHeight 1.2
+
+export const headerRowHeight = {
+    label:  22,
+    units:  headerLineHeight,
+    types:  headerLineHeight,
+    filter: 25,
+};
+
+export function calcHeaderHeight({showHeader=true, showUnits, showTypes, showFilters}={}) {
+    if (!showHeader) return 0;
+    return 2 + headerRowHeight.label
+        + (showUnits   ? headerRowHeight.units  : 0)
+        + (showTypes   ? headerRowHeight.types  : 0)
+        + (showFilters ? headerRowHeight.filter : 0);
+}
+
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
 };
@@ -70,6 +93,18 @@ function SortSymbol({sortDir}) {
     );
 };
 
+
+// one row of the header stack; claims exactly `h` pixels and centers its content within it.
+function HeaderRow({h, sx, children, ...rest}) {
+    return (
+        <Stack {...rest}
+               sx={{flex: `0 0 ${h}px`, minHeight: 0, overflow: 'hidden',
+                    justifyContent: 'center', alignItems: 'center', ...sx}}>
+            {children}
+        </Stack>
+    );
+}
+
 export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, sx={}, tbl_id}) => {
     const {label, name, desc, sortByCols, sortable} = col || {};
     const cdesc = desc || label || name;
@@ -81,26 +116,29 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
     const color = col.DERIVED_FROM ? 'warning' : undefined;
 
     const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
-    const centerIt = {justifyContent:'center', alignItems:'center'};
 
-    sx = {py: '2px', ...sx};
+    sx = {height: 1, display: 'flex', flexDirection: 'column', ...sx};
     return (
         <Sheet variant='plain' sx={sx}>
-            <Stack width={1} height={1} {...centerIt}>
-                <Tooltip title={cdesc} sx={{maxWidth:'20em'}}>
-                    <Stack width={1} height={1} {...centerIt} className={clickable} onClick={onClick}>
-                        <Stack direction='row' {...centerIt}>
+            <Tooltip title={cdesc} sx={{maxWidth:'20em'}}>
+                <Stack className={clickable} onClick={onClick} sx={{flex:'0 0 auto', minHeight:0}}>
+                    <HeaderRow h={headerRowHeight.label}>
+                        <Stack direction='row' maxWidth={1} alignItems='center'>
                             <Stack textOverflow='ellipsis' overflow='hidden'>
                                 <HeaderText val={label || name} level='title-sm' color={color}/>
                             </Stack>
                             <SortSymbol sortDir={sortDir}/>
                         </Stack>
-                        { showUnits && <HeaderText val={unitsVal}/> }
-                        { showTypes && <HeaderText val={typeVal}/> }
-                    </Stack>
-                </Tooltip>
-                {showFilters && (<Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>)}
-            </Stack>
+                    </HeaderRow>
+                    { showUnits && <HeaderRow h={headerRowHeight.units}><HeaderText val={unitsVal}/></HeaderRow> }
+                    { showTypes && <HeaderRow h={headerRowHeight.types}><HeaderText val={typeVal}/></HeaderRow> }
+                </Stack>
+            </Tooltip>
+            {showFilters && (
+                <HeaderRow h={headerRowHeight.filter} sx={{alignItems:'stretch'}}>
+                    <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>
+                </HeaderRow>
+            )}
         </Sheet>
     );
 });
@@ -108,7 +146,8 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 export function HeaderText({val, level='body-sm', sx, ...rest}) {
     return (
         <Typography component='div' level={level} {...rest}
-                    sx={{lineHeight:1.2, height:'1.2em', whiteSpace:'nowrap', ...sx}}>
+                    sx={{fontSize: `${headerFontSize}px`, lineHeight: 1.2, height: `${headerLineHeight}px`,
+                         whiteSpace: 'nowrap', ...sx}}>
             {val || ''}
         </Typography>
     );
@@ -133,7 +172,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const {name, filterable=true, enumVals} = col;
 
-    if (!filterable) return <div style={{height:19}} />;      // column is not filterable
+    if (!filterable) return null;      // column is not filterable
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
 
@@ -219,13 +258,11 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
 export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
                                       onFilterSelected, sx}) {
     return (
-        <Stack alignItems='center' height={1} justifyContent='space-between' py='2px' sx={sx}>
+        <Stack alignItems='center' height={1} justifyContent='space-between' pt='4px' pb='2px' sx={sx}>
             <Checkbox size='sm'
                 tabIndex={-1}
                 checked={checked}
                 onChange={(e) => onSelectAll(e.target.checked)}/>
-            {/*{showUnits && <Box height='1em'/>}*/}
-            {/*{showTypes && <Box height='1em'/>}*/}
             {showFilters && showSelectRowFilter && <FilterButton  iconButtonSize='28px'
                                  onClick={onFilterSelected}
                                  tip='Filter on selected rows'/>}
