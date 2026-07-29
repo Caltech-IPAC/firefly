@@ -376,7 +376,8 @@ const TextView = ({columns, data, width, height}) => {
 
 function correctScrollTopIfNeeded(maxScrollWidth, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
     const rowHpos = hlRowIdx * rowHeight;
-    if (triggeredBy === BY_TABLE) {     // FIREFLY-1729: don't correct scroll on column resize.
+    // don't correct scrollTop until table is rendered (height > 0).
+    if (triggeredBy === BY_TABLE && height > 0) {     // FIREFLY-1729: don't correct scroll on column resize.
         // delta is a workaround for the horizontal scrollbar hiding part of the last row when visible
         const delta = maxScrollWidth > width ? (.5*rowHeight) : 0;
 
