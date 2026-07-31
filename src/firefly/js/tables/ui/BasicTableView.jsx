@@ -17,7 +17,7 @@ import {
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {CellWrapper, FixedCellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
+import {calcHeaderHeight, CellWrapper, FixedCellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -143,7 +143,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = showHeader ? 19 + (showUnits && 15) + (showTypes && 14) + (showFilters && 25) : 0;
+    const headerHeight = calcHeaderHeight({showHeader, showUnits, showTypes, showFilters});
     const maxScrollWidth = tableRef.current?.getApi().getCellGroupWidth() || -1;
 
     const adjScrollTop = correctScrollTopIfNeeded(maxScrollWidth, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);

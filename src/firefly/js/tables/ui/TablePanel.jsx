@@ -322,11 +322,11 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
     return (
         <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row'
-               sx={{justifyContent:'space-between', flexWrap:'wrap', width:1}}
-               {...slotProps?.toolbar}>
+               {...slotProps?.toolbar}
+               sx={{justifyContent:'space-between', flexWrap:'wrap', width:1, ...slotProps?.toolbar?.sx}}>
             <Stack direction='row' sx={{alignItems:'center', flexWrap:'wrap', flex:'1 1 0'}}>
                 <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
-                <Stack direction='row' spacing={1} sx={{flexGrow: 1, justifyContent:'center'}} >
+                <Stack direction='row' spacing={1} sx={{flexGrow: showPaging ? 1 : 0, justifyContent:'center'}} >
                     {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
                     <OverflowMarker tbl_id={tbl_id}/>
                 </Stack>
@@ -345,8 +345,8 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                                onClick={toggleFilter}/>
                 }
                 {showToggleTextView &&
-                    textView ? <TableViewButton onClick={toggleTextView}/>
-                             : <TextViewButton onClick={toggleTextView}/>
+                    (textView ? <TableViewButton onClick={toggleTextView}/>
+                              : <TextViewButton onClick={toggleTextView}/>)
                 }
                 {showSave &&
                 <SaveButton tip={TT_SAVE} onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}/>
@@ -374,7 +374,10 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons=[]}) {
-    const style = {display: 'inline-flex', alignItems: 'center'};
+    // when there's no string title, leftButtons is the only content of this toolbar section -
+    // let it grow to fill the available space instead of shrink-wrapping to its own content.
+    const growLeftButtons = !showTitle && leftButtons?.length > 0;
+    const style = {display: 'inline-flex', alignItems: 'center', ...(growLeftButtons && {flexGrow: 1, width: '100%'})};
     const lbStyle = showTitle ? {...style, paddingLeft:10, alignSelf:'center'} : style;
 
     const doclinkUrl = getMetaEntry(tbl_id, META.doclink.url);
@@ -395,7 +398,7 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons=[]}) {
     }
 
     return (
-        <Stack direction='row' sx={{flexWrap:'wrap'}} >
+        <Stack direction='row' sx={{flexWrap:'wrap', ...(growLeftButtons && {flexGrow: 1})}}>
             { showTitle && <Title {...{title, removable, tbl_id}}/>}
             {leftButtons && <Stack direction='row' spacing={1} style={lbStyle}>{leftButtons}</Stack>}
         </Stack>

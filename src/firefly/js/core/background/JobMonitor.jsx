@@ -1,11 +1,12 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {object, string, shape} from 'prop-types';
-import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
+import {IconButton, Button, Sheet, Skeleton, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
 import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
@@ -16,7 +17,7 @@ import {isDefined, updateSet} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
 import {isJobInfoOpen, showJobInfo} from './JobInfo';
 import {dispatchHideDropDown, dispatchShowDropDown} from '../LayoutCntlr';
-import {getCellValue, getTableUiById, getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
+import {ensureEnumVals, getCellValue, getTableUiById, getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
 import {SORT_DESC, SortInfo} from '../../tables/SortInfo';
 import {workingIndicator} from '../../ui/Menu';
 import {dispatchHideDialog} from '../ComponentCntlr';
@@ -40,7 +41,9 @@ export const jobMonitorPath = '/jobMonitor';
 export const jobMonitorGroupKey = 'jobMonitor';
 export const useLocalTimeKey = 'useLocalTime';
 
-const jobIdColIdx = 7;  // the index of the jobId column in the table
+const jobIdColIdx = 7;   // the index of the jobId column in the table
+const jobHistoryTblId = 'JobHistoryTable';
+let seenJobIds = null;      // map of jobIds seen in the previous poll, used to detect newly submitted jobs
 
 export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const pollInterval = getAppOptions()?.background?.historyPollInterval || 30000;       // every 30 seconds
@@ -60,7 +63,7 @@ export function JobMonitor({initArgs, help_id, slotProps, ...props}) {
     const titleProps = {...slotProps?.title, ...title};
     const tableProps = {...slotProps?.table, ...table};
     const width = useStoreConnector(() => {
-        const {columnWidths=[]} = getTableUiById('JobHistoryTable-ui') || {};
+        const {columnWidths=[]} = getTableUiById(`${jobHistoryTblId}-ui`) || {};
         return columnWidths.reduce((acc, val, idx) => idx < 8 ? acc + val : acc, 3);
 
     });
@@ -128,13 +131,15 @@ export function showMultiDownloads(job) {
 
 // ----------------------------------Start of private functions ------------------------------------------//
 
-function TitleSection({summary, notification, ...props}) {
-    const {jobs:jobMap={}, email, notifEnabled, overflow} = useStoreConnector(() => getBackgroundInfo());
-    const jobs = getMonitoredJob(jobMap);
+function TitleSection({notification, ...props}) {
+    const {email, notifEnabled} = useStoreConnector(() => getBackgroundInfo());
+    const {showEmail} = getAppOptions()?.background?.notification || {};
+
+    // mount empty Notification to syncs notifEnabled to the server on mount.
+    if (!showEmail) return <Notification {...{email, notifEnabled}}/>;
 
     return (
         <Stack component={Sheet} variant='soft' borderRadius={4} padding={1} spacing={1} {...props}>
-            <Slot component={JobSummary} jobs={jobs} overflow={overflow} slotProps={summary}/>
             <Slot component={Notification} {...{email, notifEnabled}} slotProps={notification}/>
         </Stack>
     );
@@ -152,7 +157,7 @@ function JobSummary({jobs, overflow, ...props}) {
         </Stack>
     );
     return (
-        <Stack direction='row' gap={5} justifyContent='space-between' {...props}>
+        <Stack direction='row' gap={5} justifyContent='space-between' alignItems='center' flexGrow={1} {...props}>
             <Typography level='title-md' color='primary'>Job Summary</Typography>
             <Stack direction='row' gap={10}>
                 <Entry label='Total' value={total + (overflow ? '(+)' : '')}/>
@@ -218,17 +223,27 @@ function Notification({email='', notifEnabled, ...props}) {
     );
 }
 
-function JobMonitorTable({help_id, ...props}) {
-    const jobMap = useStoreConnector(() => getBackgroundInfo()?.jobs || {});
+function JobMonitorTable({help_id, sx, ...props}) {
+    const {jobs: jobMap, overflow} = useStoreConnector(() => getBackgroundInfo());        // jobMap undefined until the first loadAllJobs() response arrives
     const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
     const [hlJobId, setHlJobId] = useState();
+    const loading = !jobMap;
+    const jobs = getMonitoredJob(jobMap);
 
-    const tbl_id = 'JobHistoryTable';
+    const tbl_id = jobHistoryTblId;
     useEffect(() => {
-        const table = convertToTableModel(getMonitoredJob(jobMap), tbl_id, useLocalTime);
-        if (hlJobId) {
-            const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === hlJobId);
-            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found
+        const jobIds = jobs.map((j) => j.meta?.jobId).filter(Boolean);
+
+        // detect newJobId used for highlighting
+        const newJobId = (jobMap && seenJobIds) && jobIds.find((id) => !seenJobIds.has(id));
+        if (jobMap) seenJobIds = new Set(jobIds);
+        if (newJobId) setHlJobId(newJobId);
+
+        const table = convertToTableModel(jobs, tbl_id, useLocalTime);
+        const idToHighlight = newJobId || hlJobId;
+        if (idToHighlight) {
+            const highlightedRow = table.tableData.data.findIndex((row) => row[jobIdColIdx] === idToHighlight);
+            if (highlightedRow >= 0) table.highlightedRow = highlightedRow; // set the highlighted row if the job is found (and passes the current filter)
         }
         dispatchTableAddLocal(table, undefined, false);
     }, [jobMap, useLocalTime]); // refreshed only when jobMap changes
@@ -250,11 +265,30 @@ function JobMonitorTable({help_id, ...props}) {
     };
 
     return (
-        <Slot component={TablePanel} rowHeight={32} {...{tbl_id, help_id, renderers}}
-                    sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}}}
-                    {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton:false}}
-                    slotProps={{...props}}
-        />
+        <Stack sx={{position: 'relative', height: 1, ...sx}}>
+            <Skeleton loading={loading} sx={sx}>
+                <TablePanel rowHeight={32} tbl_id={tbl_id} help_id={help_id} renderers={renderers}
+                            sx={{'& .fixedDataTableCellGroupLayout_cellGroup > :last-child': {borderRight: 'none'}, ...sx}}
+                            showToolbar={true}
+                            showTitle={false}
+                            leftButtons={[() => <JobSummary jobs={jobs} overflow={overflow}/>]}
+                            rightButtons={[() => <ToolbarHorizontalSeparator/>]}
+                            selectable={false}
+                            showFilters={true}
+                            showOptionButton={false}
+                            showPaging={false}
+                            showSave={false}
+                            showInfoButton={false}
+                            showSearchButton={false}
+                            showToggleTextView={false}
+                            showPropertySheetButton={false}
+                            showTypes={false}
+                            expandable={false}
+                            {...props}
+                            slotProps={{toolbar: {px: 1}}}
+                />
+            </Skeleton>
+        </Stack>
     );
 }
 
@@ -461,12 +495,14 @@ function convertToTableModel(jobs, tbl_id, useLocalTime) {
             job.meta?.jobId         // remember to adjust jobIdColIdx if columns changed
         ]);
 
+    ensureEnumVals({tableData: {columns, data}});
+
     const phaseIdx = columns.findIndex((c) => c.name === 'Phase');
     const doFilter = columns[phaseIdx].enumVals?.includes(Phase.ARCHIVED);
 
     const totalRows = data.length;
-    const {origTableModel:prevTable, request:prevReq} = getTblById(tbl_id) || {};
-    const request = (prevTable?.totalRows < totalRows || !prevReq) ? defaultRequest(doFilter) : prevReq;  // if a new job is added or no previous request, use default
+    const {request: prevReq} = getTblById(tbl_id) || {};
+    const request = prevReq ?? defaultRequest(doFilter);      // preserve the user's sort/filter across polls; use default on first load
     let table = { tbl_id, request, totalRows, tableData: { columns, data }};
     if (request.sortInfo || request.filters) {
         table = processRequest(table, request);
