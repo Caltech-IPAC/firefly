@@ -17,7 +17,7 @@ import {isDefined, updateSet} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
 import {isJobInfoOpen, showJobInfo} from './JobInfo';
 import {dispatchHideDropDown, dispatchShowDropDown} from '../LayoutCntlr';
-import {getCellValue, getTableUiById, getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
+import {ensureEnumVals, getCellValue, getTableUiById, getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
 import {SORT_DESC, SortInfo} from '../../tables/SortInfo';
 import {workingIndicator} from '../../ui/Menu';
 import {dispatchHideDialog} from '../ComponentCntlr';
@@ -494,6 +494,8 @@ function convertToTableModel(jobs, tbl_id, useLocalTime) {
             job.phase,
             job.meta?.jobId         // remember to adjust jobIdColIdx if columns changed
         ]);
+
+    ensureEnumVals({tableData: {columns, data}});
 
     const phaseIdx = columns.findIndex((c) => c.name === 'Phase');
     const doFilter = columns[phaseIdx].enumVals?.includes(Phase.ARCHIVED);
