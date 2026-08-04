@@ -74,13 +74,13 @@ public abstract class DbFromFileProcessor extends EmbeddedDbProcessor {
         String jobId = req.getJobId();
         if (isEmpty(jobId)) return null;
 
-        // a previously submitted job; try to get from cache
+        // a previously submitted job with local file result
         List<JobInfo.Result> results = ifNotNull(JobManager.getJobInfo(req.getJobId()))
                 .get(JobInfo::getResults);
-        if (results != null && !results.isEmpty()) {
+        if (results != null && results.size() == 1) {
             File rval = ifNotEmpty(results.getFirst().href())
                             .get(ServerContext::convertToFile);
-            if (rval != null && rval.canRead()) {       // if not found in cache, fetch from source
+            if (rval != null && rval.isFile() && rval.canRead()) {       // if not a readable file, then ignore.
                 return rval;
             }
         }
