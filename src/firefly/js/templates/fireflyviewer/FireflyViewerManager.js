@@ -11,30 +11,27 @@ import {getTblById, smartMerge} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
-import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
-import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
+import {DELETE_PLOT_VIEW, PLOT_HIPS, PLOT_IMAGE, PLOT_IMAGE_START, REPLACE_VIEWER_ITEMS} from '../../visualize/VisConst';
 import {MetaConst} from 'firefly/data/MetaConst';
 
 /**
  * this manager manages what main components get display on the screen.
  * These main components are image plots, charts, tables, dropdown panel, etc.
  * This manager implements the default firefly viewer's requirements.
- * Because it may differs between applications, it is okay to have a custom layout manager if needed.
+ * Because it may differ between applications, it is okay to have a custom layout manager if needed.
  * @param {object} p
- * @param {string} [p.title] title to display
  * @param {string} [p.views] defaults to tri-view if not given.
+ * @param {string} [p.apiHandlesExpanded]
  */
-export function* layoutManager({title, views='tables | images | xyplots', apiHandlesExpanded}) {
+export function* layoutManager({views='tables | images | xyplots', apiHandlesExpanded}) {
     views = LO_VIEW.get(views) || LO_VIEW.none;
 
     yield fork(dropDownManager);        // start the dropdown manager
     while (true) {
         const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
-            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
+            PLOT_IMAGE_START, PLOT_IMAGE, PLOT_HIPS, DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
             TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ADDED, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE,
-            CHART_ADD, CHART_REMOVE,
-            SHOW_DROPDOWN, SET_LAYOUT_MODE
+            CHART_ADD, CHART_REMOVE, SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
 
         /**
@@ -90,9 +87,9 @@ function onAnyAction(layoutInfo, action, views, apiHandlesExpanded) {
         case TABLE_REMOVE:
         case TBL_RESULTS_REMOVE:
         case REPLACE_VIEWER_ITEMS:
-        case ImagePlotCntlr.PLOT_IMAGE_START :
-        case ImagePlotCntlr.DELETE_PLOT_VIEW:
-        case ImagePlotCntlr.PLOT_HIPS:
+        case PLOT_IMAGE_START :
+        case DELETE_PLOT_VIEW:
+        case PLOT_HIPS:
         case CHART_ADD:
         case CHART_REMOVE:
         {

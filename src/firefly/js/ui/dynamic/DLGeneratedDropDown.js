@@ -2,7 +2,7 @@ import {Box, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
 import {isArray, isEmpty} from 'lodash';
 import {bool, func, object, shape, string} from 'prop-types';
 import React, {useEffect, useState} from 'react';
-import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
+import {makeWorldPt, pointEquals} from '../../visualize/Point.js';
 import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
@@ -17,11 +17,10 @@ import {makeSearchOnce, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
 import {ensureHiPSInit} from '../../visualize/HiPSListUtil.js';
 import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
-import {dispatchChangeCenterOfProjection, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
-import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
-import {pointEquals} from '../../visualize/Point.js';
+import {dispatchChangeCenterOfProjection, dispatchZoom} from '../../visualize/ImagePlotDispatch';
+import {currentP} from '../../visualize/PlotViewUtil.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
-import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
+import {UserZoomTypes} from '../../visualize/VisConst';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
@@ -387,7 +386,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
  * @param {Array.<FieldDef>} fieldDefAry
  */
 function alignHiPS(currentTblId, qAna, groupKey, fieldDefAry) {
-    const plot= primePlot(visRoot(),HIPS_PLOT_ID);
+    const {plot,pv}= currentP(HIPS_PLOT_ID);
     if (!currentTblId || !isHiPS(plot) || !getCisxUI(qAna).length) return; // probably init is not complete, return
 
     const request= getFieldGroupResults(groupKey); // todo: this might not be right, there might be an array of field groups
@@ -403,7 +402,6 @@ function alignHiPS(currentTblId, qAna, groupKey, fieldDefAry) {
     const centerProjPt= makeWorldPt(raStr, decStr, coordSys);
     if (!centerProjPt) return;
     dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
-    const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
     if (!fov || !pv) return;
     const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
     const level= getHiPSZoomLevelForFOV(pv,Math.max(fov,MIN_FOV_SIZE));

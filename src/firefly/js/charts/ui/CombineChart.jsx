@@ -5,7 +5,8 @@
 import React, {useEffect, useState} from 'react';
 import {cloneDeep, get, pick, set} from 'lodash';
 
-import {getMultiViewRoot, getViewerItemIds, PINNED_CHART_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
+import {PINNED_CHART_VIEWER_ID} from '../../visualize/VisConst';
 import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';

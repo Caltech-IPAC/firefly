@@ -11,8 +11,10 @@ import React from 'react';
 import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
-import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import {dispatchDeleteOverlayPlot, dispatchOverlayPlotChangeAttributes, visRoot} from '../ImagePlotCntlr.js';
+
+import {dispatchDetachLayerFromPlot} from '../DrawLayerDispatch';
+import {dispatchDeleteOverlayPlot, dispatchOverlayPlotChangeAttributes} from '../ImagePlotDispatch';
+import {visRoot} from '../VisStoreRoots';
 import {getAllDrawLayersForPlot, getHDU, getLayerTitle, isDrawLayerVisible, primePlot} from '../PlotViewUtil.js';
 import {
     enableRelatedDataLayer, findUnactivatedRelatedData, operateOnOverlayPlotViewsThatMatch, setMaskVisible

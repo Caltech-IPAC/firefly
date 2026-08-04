@@ -11,10 +11,10 @@ import {ColorChangeType} from '../draw/DrawLayer';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import DrawUtil from '../draw/DrawUtil';
 import {SimpleCanvas} from '../draw/SimpleCanvas';
-import {dispatchChangeDrawingDef, dispatchChangeVisibility, getDlAry, GroupingScope} from '../DrawLayerCntlr';
-import {visRoot} from '../ImagePlotCntlr';
+import {dispatchChangeDrawingDef, dispatchChangeVisibility} from '../DrawLayerDispatch';
+import {getDlAry, visRoot} from '../VisStoreRoots';
+import {DEFAULT_COVERAGE_PLOT_ID, GroupingScope} from '../VisConst';
 import {
-    DEFAULT_COVERAGE_PLOT_ID,
     getDrawLayerById, getDrawLayersByDisplayGroup, getLayerTitle, getPlotViewById, isDrawLayerVisible, primePlot
 } from '../PlotViewUtil';
 

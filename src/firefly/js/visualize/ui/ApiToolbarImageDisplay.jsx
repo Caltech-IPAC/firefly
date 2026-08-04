@@ -7,7 +7,7 @@ import React, {memo} from 'react';
 import {string} from 'prop-types';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {NewPlotMode} from '../MultiViewCntlr.js';
+import {NewPlotMode} from '../VisConst';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 

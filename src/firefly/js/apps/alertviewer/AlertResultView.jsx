@@ -8,7 +8,7 @@ import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import {getTblById, getTblIdsByGroup} from '../../tables/TableUtil.js';
-import {visRoot} from 'firefly/visualize/ImagePlotCntlr';
+import {visRoot} from '../../visualize/VisStoreRoots';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
 
 import {ALERT} from './AlertIDs.js';

@@ -3,9 +3,12 @@
  */
 
 
-import DrawLayerCntlr, {dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
-import {primePlot, isActivePlotView} from '../visualize/PlotViewUtil.js';
+import {dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerDispatch';
+import {
+    ATTACH_LAYER_TO_PLOT, CHANGE_DRAWING_DEF, EXTRACT_POINT, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD, SELECT_POINT
+} from '../visualize/VisConst';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
+import {currentP} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -34,7 +37,7 @@ function dispatchSelectPoint(mouseStatePayload) {
     const {plotId,screenPt,drawLayer,shiftDown}= mouseStatePayload;
     if (shiftDown) return;
     if (drawLayer.drawData.data) {
-        const plot= primePlot(visRoot(),plotId);
+        const {plot}= currentP(plotId);
         const ptAry= plot.attributes[PlotAttribute.PT_ARY] ?? [];
         const cc= CsysConverter.make(plot);
         const newPtAry= ptAry.filter( (pt) => cc.pointInPlot(pt));
@@ -42,7 +45,7 @@ function dispatchSelectPoint(mouseStatePayload) {
         if (newPt) newPtAry.push(newPt);
         dispatchAttributeChange(
             {plotId, changes:{[PlotAttribute.PT_ARY]:newPtAry} });
-        flux.process({type:DrawLayerCntlr.EXTRACT_POINT, payload:mouseStatePayload} );
+        flux.process({type:EXTRACT_POINT, payload:mouseStatePayload} );
         dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, plotId);
     }
 }
@@ -51,7 +54,7 @@ function dispatchSelectPoint(mouseStatePayload) {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry?.forEach( (plotId) => {
-        if (primePlot(visRoot(),plotId)?.attributes[PlotAttribute.PT_ARY]) {
+        if (currentP(plotId).plot?.attributes[PlotAttribute.PT_ARY]) {
             dispatchAttributeChange(
                 { plotId, overlayColorScope:false,
                     changes:{[PlotAttribute.PT_ARY]:undefined,
@@ -70,7 +73,7 @@ function creator(initPayload, presetDefaults) {
     const pairs= {
         [MouseState.UP.key]: dispatchSelectPoint
     };
-    const actionTypes= [DrawLayerCntlr.SELECT_POINT];
+    const actionTypes= [SELECT_POINT];
     const options = {
         isPointData: true,
         hasPerPlotData: true,
@@ -86,7 +89,7 @@ function creator(initPayload, presetDefaults) {
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     if (dataType!==DataTypes.DATA) return undefined;
-    const active= isActivePlotView(visRoot(), plotId);
+    const {active}= currentP(plotId);
     const drawAry= drawPoints(drawLayer,action, active, plotId);
     return drawAry || lastDataRet;
 }
@@ -95,13 +98,13 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+        case CHANGE_DRAWING_DEF:
             return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)};
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             return attach(drawLayer);
-        case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
+        case FORCE_DRAW_LAYER_UPDATE:
             return saveLastData(action.payload.plotIdAry[0]);
     }
 }
@@ -114,7 +117,7 @@ function attach(drawLayer) {
     if (!plotId || !data) return;
     setTimeout( () => {
         drawLayer.plotIdAry.forEach( (pId) => {
-            const p= primePlot(visRoot(),pId);
+            const {plot:p}= currentP(pId);
             if (p && !p.attributes[PlotAttribute.PT_ARY]) {
                 dispatchAttributeChange({plotId:pId, changes:{[PlotAttribute.PT_ARY]:data}, toAllPlotsInPlotView:false});
                 dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, pId);
@@ -124,15 +127,15 @@ function attach(drawLayer) {
 }
 
 function saveLastData(plotId) {
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     return {lastData:plot?.attributes[PlotAttribute.PT_ARY]};
 }
 
 function dealWithMods(drawLayer,action) {
     const {changes,plotIdAry}= action.payload;
     if (Object.keys(changes).includes('activePt')) {
-        let plot= primePlot(visRoot());
-        if (!plotIdAry.includes(plot.plotId)) plot= primePlot(visRoot(),plotIdAry[0]);
+        let {plot}= currentP();
+        if (!plotIdAry.includes(plot.plotId)) plot= currentP(plotIdAry[0]).plot;
         const cc= CsysConverter.make(plot);
         if (!cc) return {};
         // const {activePt}= changes;
@@ -146,7 +149,7 @@ function dealWithMods(drawLayer,action) {
 
 
 function makeSelectedPt(screenPt,plotId) {
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const cc= CsysConverter.make(plot);
     const selPt= cc.getWorldCoords(screenPt); //todo put back
     return (selPt) ? selPt : cc.getImageCoords(screenPt);
@@ -162,7 +165,7 @@ function drawPoints(drawLayer, action, active, plotId) {
         return Object.values(data).every((v) => isEmpty(v));
     };
     // attach drawing layer to the plot which is created after the drawing layer
-    if ( action.type === DrawLayerCntlr.ATTACH_LAYER_TO_PLOT &&
+    if ( action.type === ATTACH_LAYER_TO_PLOT &&
         !isEmptyData() && plotIdAry && plotIdAry.includes(plotId))  {
         if (drawLayer.plotIdAry) {
             let dAry;
@@ -177,7 +180,7 @@ function drawPoints(drawLayer, action, active, plotId) {
     }
 
 
-    const plot= primePlot(visRoot(),plotId||plotIdAry?.[0]);
+    const {plot}= currentP(plotId||plotIdAry?.[0]);
     if (!plot) return [];
     const ptAry= plot.attributes[PlotAttribute.PT_ARY] ?? [];
 

@@ -14,7 +14,8 @@ import {ALERT} from './AlertIDs.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import WebPlotRequest, {TitleOptions} from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
-import {dispatchDeletePlotView, dispatchPlotImage, dispatchWcsMatch, WcsMatchType} from 'firefly/visualize/ImagePlotCntlr';
+import {dispatchDeletePlotView, dispatchPlotImage, dispatchWcsMatch} from '../../visualize/ImagePlotDispatch';
+import {WcsMatchType} from '../../visualize/VisConst';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 import {removeTablesFromGroup} from 'firefly/tables/TableUtil';
 import {dispatchChartRemove} from 'firefly/charts/ChartsCntlr';
@@ -149,7 +150,7 @@ function clearAlertProducts() {
     dispatchChartRemove(ALERT.CHART_1_ID);
 
     [ALERT.IMG_PLOT_1, ALERT.IMG_PLOT_2, ALERT.IMG_PLOT_3].forEach((plotId) =>
-        dispatchDeletePlotView({plotId, holdWcsMatch: true})
+        dispatchDeletePlotView({plotId})
     );
 }
 

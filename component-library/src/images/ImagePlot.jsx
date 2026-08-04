@@ -2,7 +2,7 @@ import React, { useId, useEffect } from 'react';
 import { Box } from '@mui/joy';
 import PropTypes from 'prop-types';
 import { ApiFullImageDisplay } from 'firefly/visualize/ui/ApiFullImageDisplay.jsx';
-import { dispatchPlotImage, dispatchDeletePlotView } from 'firefly/visualize/ImagePlotCntlr.js';
+import {dispatchDeletePlotView, dispatchPlotImage} from 'firefly/visualize/ImagePlotDispatch.js';
 import WebPlotRequest from 'firefly/visualize/WebPlotRequest.js';
 
 /**

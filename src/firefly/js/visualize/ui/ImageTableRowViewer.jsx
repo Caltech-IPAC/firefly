@@ -20,19 +20,20 @@ import {callWhileAwaiting} from '../../util/WebUtil';
 import {ImageViewerPlaceHolder} from '../iv/ImageViewer';
 import {onPlotComplete} from '../PlotCompleteMonitor';
 import {RotateType} from '../PlotState';
-import {UserZoomTypes} from '../ZoomUtil';
+import {visRoot} from '../VisStoreRoots';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {dispatchReplaceViewerItems, getMultiViewRoot, getViewer, IMAGE, NewPlotMode,} from '../MultiViewCntlr.js';
+import {dispatchReplaceViewerItems, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
-    dispatchChangeActivePlotView, dispatchDeletePlotView,
-    dispatchPlotImage, dispatchRecenter, dispatchRotate, dispatchWcsMatch, dispatchZoom, visRoot, WcsMatchType
-} from '../ImagePlotCntlr.js';
+    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotImage, dispatchRecenter, dispatchRotate,
+    dispatchWcsMatch, dispatchZoom
+} from '../ImagePlotDispatch';
 import {SORT_ASC, SortInfo, UNSORTED} from '../../tables/SortInfo.js';
+import {IMAGE, NewPlotMode, UserZoomTypes, WcsMatchType} from '../VisConst';
 import {CloseButton} from 'firefly/ui/CloseButton';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {getActivePlotView, getPlotViewAry, getPlotViewById} from '../PlotViewUtil.js';
+import {currentP, getPlotViewAry, getPlotViewById} from '../PlotViewUtil.js';
 import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
 import {Box, Stack, Typography} from '@mui/joy';
@@ -261,7 +262,7 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
 
     useEffect(()=>{
         if (matchInit.wcsMatchInitDone) return;
-        const pv= getPlotViewById(visRoot(),activePlotId);
+        const {pv}= currentP()
         const plotId= (!pv || pv.plotViewCtx.useForCoverage || !pv.plotViewCtx.useForSearchResults) ? undefined : activePlotId;
         if(plotId && wcsMatchType!==defaultWcsMatchType) {
             //to make sure wcsMatch checkbox is checked on initial render
@@ -378,7 +379,7 @@ const changeHighlightedRow = (table, rowToHighlight, hRowChangedByUI) => {
 
 const changeActivePlot = (viewerId, table, plotIdxToActivate) => {
     const newActivePlotId = makePlotId(viewerId, plotIdxToActivate);
-    if (getActivePlotView(visRoot())?.plotId !== newActivePlotId) {
+    if (currentP().plotId !== newActivePlotId) {
         dispatchChangeActivePlotView(newActivePlotId);
         // if (plotIdxToActivate >= 0 && plotIdxToActivate < table?.totalRows) activePlotChangedByUI.current = false;
     }
@@ -461,7 +462,7 @@ async function doLayoutImages({viewerId, imageCnt, table, makeRequestFromRow,
             .filter(({plotId}) => plotId.startsWith(root))
             .filter(({plotId}) => plotId !== mpwWcsPrimId)
             .filter(({plotId}) => !keepPlotIdAry.includes(plotId))
-            .forEach(({plotId}) => dispatchDeletePlotView({plotId, holdWcsMatch: true}));
+            .forEach(({plotId}) => dispatchDeletePlotView({plotId}));
     }
 }
 

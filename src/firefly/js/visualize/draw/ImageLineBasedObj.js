@@ -9,8 +9,7 @@ import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt, makeAnyPt} from '../
 import {clone} from '../../util/WebUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {DrawSymbol} from './DrawSymbol.js';
-import {primePlot} from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {currentP} from '../PlotViewUtil.js';
 
 const IMGFP_OBJ = 'ImgBasedFPObj';
 export const drawMode = new Enum(['data', 'highlight', 'select']);
@@ -743,7 +742,7 @@ export class ConnectedObj {
         const {lineWidth = 1} = drawingDef;
         const lw = lineWidth+1;
 
-        const plot = primePlot(visRoot(), cc.plotId);
+        const {plot} = currentP(cc.plotId);
         const polyHighlight = polyAry.reduce((prev, onePoly, idx) => {
             const newhObj = DrawOp.makeHighlight(onePoly, plot, drawingDef);
             newhObj.highlight = 1;
@@ -772,7 +771,7 @@ export class ConnectedObj {
         const pointAry = this.basicObjs[POINTOBJS];
         const selDrawDef= Object.assign({}, drawingDef, {selectColor:drawingDef.selectedColor});
 
-        const plot = primePlot(visRoot(), cc.plotId);
+        const {plot} = currentP(cc.plotId);
         const polySels = polyAry && polyAry.reduce((prev, onePoly) => {
                 const newhObj = DrawOp.makeHighlight(onePoly, plot, selDrawDef);
                 newhObj.highlight = 1;

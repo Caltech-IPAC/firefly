@@ -6,11 +6,11 @@ import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import {getExpandedChartProps} from 'firefly/charts/ChartsCntlr.js';
 import {ChartsContainer} from 'firefly/charts/ui/ChartsContainer.jsx';
-import {DEFAULT_PLOT2D_VIEWER_ID} from 'firefly/visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from 'firefly/visualize/iv/ImageExpandedMode.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 
 import FOOTER_BG from 'images/ipac_bar.jpg';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/VisConst';
 
 /**
  * Main panel of the FireflyLayout.  It handles the 3 possible views: drop-down, standard, expanded.

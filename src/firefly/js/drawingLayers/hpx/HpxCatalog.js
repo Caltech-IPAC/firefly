@@ -18,11 +18,16 @@ import DrawOp from '../../visualize/draw/DrawOp';
 import {DrawSymbol} from '../../visualize/draw/DrawSymbol';
 import DrawUtil from '../../visualize/draw/DrawUtil';
 import PointDataObj from '../../visualize/draw/PointDataObj';
-import DrawLayerCntlr, {
-    dispatchForceDrawLayerUpdate, dispatchModifyCustomField, dispatchUpdateDrawLayer, dlRoot, getDlAry, SUBGROUP
-} from '../../visualize/DrawLayerCntlr';
-import ImagePlotCntlr, {dispatchUseTableAutoScroll, visRoot} from '../../visualize/ImagePlotCntlr';
-import {dispatchBottomUIComponent, findViewerWithItemId, getMultiViewRoot, IMAGE} from '../../visualize/MultiViewCntlr';
+import {
+    dispatchForceDrawLayerUpdate, dispatchModifyCustomField, dispatchUpdateDrawLayer
+} from '../../visualize/DrawLayerDispatch';
+import {dlRoot, getDlAry, visRoot} from '../../visualize/VisStoreRoots';
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, CHANGE_DRAWING_DEF, CHANGE_HIPS, ZOOM_IMAGE,
+    DESTROY_DRAWING_LAYER, IMAGE, MODIFY_CUSTOM_FIELD, PROCESS_SCROLL, RECENTER, SUBGROUP, UPDATE_VIEW_SIZE,
+} from '../../visualize/VisConst';
+import {dispatchUseTableAutoScroll} from '../../visualize/ImagePlotDispatch';
+import {dispatchBottomUIComponent, findViewerWithItemId, getMultiViewRoot} from '../../visualize/MultiViewCntlr';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 import {
     getCenterOfProjection, getConnectedPlotsIds, getDrawLayerById, getPlotViewIdListByPositionLock, primePlot
@@ -40,10 +45,7 @@ import {
 } from './HpxCatalogUtil';
 import {createTileDataMaker} from './TileDataMaker';
 
-const getLayerActions= () => [
-    DrawLayerCntlr.ATTACH_LAYER_TO_PLOT, DrawLayerCntlr.DESTROY_DRAWING_LAYER,
-    DrawLayerCntlr.MODIFY_CUSTOM_FIELD, DrawLayerCntlr.CHANGE_DRAWING_DEF
-];
+const getLayerActions= () => [ ATTACH_LAYER_TO_PLOT, DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD, CHANGE_DRAWING_DEF ];
 const getTableActions= () => [ TABLE_HIGHLIGHT,TABLE_UPDATE, TABLE_SELECT ];
 
 
@@ -96,9 +98,7 @@ function creator(initPayload, presetDefaults={}) {
     dispatchAddActionWatcher({
         actions:[
             ...getLayerActions(), ...getTableActions(),
-            ImagePlotCntlr.ANY_REPLOT,
-            ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.RECENTER, ImagePlotCntlr.PROCESS_SCROLL,
-            ImagePlotCntlr.CHANGE_HIPS, ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.UPDATE_VIEW_SIZE,
+            ANY_REPLOT, ZOOM_IMAGE, RECENTER, PROCESS_SCROLL, CHANGE_HIPS, CHANGE_CENTER_OF_PROJECTION, UPDATE_VIEW_SIZE,
         ],
         callback: watchDisplay,
         params: {tbl_id,catalogId}
@@ -267,7 +267,7 @@ function getMaxExpandedTiles(norder,tbl_id,ipixAry) {
 }
 
 function getLayerChanges(drawLayer, action) {
-    if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null;
+    if  (action.type!==MODIFY_CUSTOM_FIELD) return null;
     const {changes}= action.payload;
     return changes;
 }
@@ -276,7 +276,7 @@ function getLayerChanges(drawLayer, action) {
 
 
 
-function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
+function getDrawData(dataType, plotId, drawLayer) {
     switch (dataType) {
         case DataTypes.DATA:
             return drawLayer.drawData?.data?.[plotId];
@@ -317,17 +317,16 @@ function handleLayerActions(action,cancelSelf,params) {
     if (action.payload.drawLayerId !== catalogId) return;
     const dl = getDrawLayerById(getDlAry(), catalogId);
     switch (action.type) {
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             action.payload.plotIdAry.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id));
             break;
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+        case CHANGE_DRAWING_DEF:
             dl?.visiblePlotIdAry?.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id, false));
             break;
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             dl?.visiblePlotIdAry?.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id, false));
             break;
-
-        case DrawLayerCntlr.DESTROY_DRAWING_LAYER:
+        case DESTROY_DRAWING_LAYER:
         case TABLE_REMOVE:
             cancelSelf();
             break;
@@ -363,28 +362,28 @@ function handlePlotActions(action, cancelSelf, params) {
     const plot= plotId && primePlot(visRoot(),plotId);
 
     switch (action.type) {
-        case ImagePlotCntlr.ZOOM_IMAGE:
-        case ImagePlotCntlr.PROCESS_SCROLL:
+        case ZOOM_IMAGE:
+        case PROCESS_SCROLL:
             const plotIdAry= getPlotViewIdListByPositionLock(visRoot(),plotId);
             plotIdAry.forEach(
                 (plotId) => {
                     const plot= primePlot(visRoot(),plotId);
                     if (!isImage(plot) || !connectedIds.includes(plotId)) return;
-                    void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==ImagePlotCntlr.PROCESS_SCROLL);
+                    void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==PROCESS_SCROLL);
                 });
             break;
 
-        case ImagePlotCntlr.UPDATE_VIEW_SIZE:
-        case ImagePlotCntlr.RECENTER:
+        case UPDATE_VIEW_SIZE:
+        case RECENTER:
             if (!connectedIds.includes(plotId)) return;
-            void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION);
+            void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==CHANGE_CENTER_OF_PROJECTION);
             break;
-        case ImagePlotCntlr.ANY_REPLOT:
-        case ImagePlotCntlr.CHANGE_HIPS:
-        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+        case ANY_REPLOT:
+        case CHANGE_HIPS:
+        case CHANGE_CENTER_OF_PROJECTION:
             if (!isHiPS(plot)) return;
             if (!connectedIds.includes(plotId)) return;
-            void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION);
+            void makeTileDataAndUpdate(dl,plotId,tbl_id, action.type!==CHANGE_CENTER_OF_PROJECTION);
             break;
     }
     return params;

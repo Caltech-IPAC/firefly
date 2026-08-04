@@ -6,10 +6,12 @@
 import {Stack, Switch, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
-import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
+import {visRoot} from '../../visualize/VisStoreRoots';
+import {GRID, SINGLE, WcsMatchType} from '../../visualize/VisConst';
+import {dispatchWcsMatch} from '../../visualize/ImagePlotDispatch';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {
-    dispatchChangeViewerLayout, getMultiViewRoot, GRID, SINGLE, getLayoutDetails
+    dispatchChangeViewerLayout, getMultiViewRoot, getLayoutDetails
 } from '../../visualize/MultiViewCntlr.js';
 import {LC, getConverterData} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
@@ -65,7 +67,7 @@ function getSortInfo(tableId) {
     if (sInfo.direction === UNSORTED) return '';
     const orderInfo = {[SORT_ASC]: 'ascending', [SORT_DESC]:'descending'};
     return `Sorted by column: ${sInfo.sortColumns.join(',')} `+ ` ${orderInfo[sInfo.direction]}`;
-};
+}
 
 function changeSize(viewerId, value) {
     const valNum = Number(value);

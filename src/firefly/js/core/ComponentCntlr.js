@@ -5,7 +5,7 @@
 import {flux} from './ReduxFlux';
 import {get, isNil} from 'lodash';
 import update from 'immutability-helper';
-import {REINIT_APP} from './AppDataCntlr.js';
+import {REINIT_APP} from './CoreConst';
 
 export const DIALOG_OR_COMPONENT_KEY = 'dialogOrComponent';
 

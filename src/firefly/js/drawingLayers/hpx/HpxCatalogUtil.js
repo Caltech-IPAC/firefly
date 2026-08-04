@@ -2,7 +2,7 @@ import pointInPolygon from 'point-in-polygon';
 import {dispatchAddWorkingTask} from '../../core/AppDataCntlr';
 import {FilterInfo} from '../../tables/FilterInfo';
 import {
-    DATA_NORDER, ensureDataForSelection, getAllWptsIdxsForTile, getHpxIndexData, getValuesForOrder, HPX_WORKING_KEY,
+    DATA_NORDER, ensureDataForSelection, getAllWptsIdxsForTile, getHpxIndexData, getValuesForOrder,
 } from '../../tables/HpxIndexCntlr';
 import {SelectInfo} from '../../tables/SelectInfo';
 import {dispatchTableFilter, dispatchTableSelect} from '../../tables/TablesCntlr';
@@ -12,10 +12,11 @@ import BrowserInfo from '../../util/BrowserInfo';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import CoordSys from '../../visualize/CoordSys';
 import CysConverter from '../../visualize/CsysConverter';
-import {dlRoot} from '../../visualize/DrawLayerCntlr';
+import {dlRoot} from '../../visualize/VisStoreRoots';
 import {getCatalogNorderlevel, getCornersForCell} from '../../visualize/HiPSUtil';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
-import {DEFAULT_COVERAGE_PLOT_ID, getAllDrawLayersForPlot, primePlot} from '../../visualize/PlotViewUtil';
+import {getAllDrawLayersForPlot, primePlot} from '../../visualize/PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../../visualize/VisConst';
 import {detachSelectArea} from '../../visualize/ui/SelectAreaUIComponents';
 import {contains, containsEllipse} from '../../visualize/VisUtil';
 import SelectArea from '../SelectArea';

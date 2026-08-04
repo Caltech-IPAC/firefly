@@ -9,13 +9,18 @@ import {getStatusFromFetchError} from '../util/WebUtil.js';
 import {isDataProductsTable} from '../voAnalyzer/TableAnalysis.js';
 import {Band} from '../visualize/Band.js';
 import {TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, MOUSE_CLICK_REASON} from '../visualize/ImagePlotCntlr.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {visRoot} from '../visualize/VisStoreRoots';
+import {dispatchDeletePlotView} from '../visualize/ImagePlotDispatch';
+import {
+    ADD_VIEWER, ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_VIEWER_LAYOUT, GRID, GRID_FULL, GRID_RELATED,
+    MOUSE_CLICK_REASON, SINGLE,
+    UPDATE_VIEW_SIZE, UPDATE_VIEWER_CUSTOM_DATA, UserZoomTypes, VIEWER_MOUNTED, VIEWER_UNMOUNTED
+} from '../visualize/VisConst';
+import {REINIT_APP} from '../core/CoreConst';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../tables/TableUtil.js';
 import {isDefaultCoverageActive} from '../visualize/PlotViewUtil.js';
-import MultiViewCntlr, {
-    getViewerItemIds, dispatchChangeViewerLayout,
-    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails, GRID_RELATED
+import {
+    getViewerItemIds, dispatchChangeViewerLayout, getMultiViewRoot, getViewer, getLayoutType, getLayoutDetails
 } from '../visualize/MultiViewCntlr.js';
 import {
     makeDataProductsConverter, getFactoryTemplateOptions
@@ -27,7 +32,6 @@ import {
     dataProductRoot, dispatchUpdateDataProducts, getActivateParams
 } from './DataProductsCntlr.js';
 import {dpdtMessage, dpdtSimpleMsg, DPtypes} from './DataProductsType.js';
-import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from 'firefly/metaConvert/DataProductConst';
 
 const MAX_GRID_SIZE= 50;
@@ -41,12 +45,8 @@ const getDataProductsWatcherDef = () => ({
     allowMultiples: false,
     actions: [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
               TBL_RESULTS_ACTIVE, REINIT_APP,
-              MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
-              MultiViewCntlr.VIEWER_UNMOUNTED,
-              MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
-              ComponentCntlr.COMPONENT_STATE_CHANGE,
-              ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-              ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
+              ADD_VIEWER, VIEWER_MOUNTED, VIEWER_UNMOUNTED, CHANGE_VIEWER_LAYOUT, UPDATE_VIEWER_CUSTOM_DATA,
+              ComponentCntlr.COMPONENT_STATE_CHANGE, CHANGE_ACTIVE_PLOT_VIEW, UPDATE_VIEW_SIZE, ANY_REPLOT]
 });
 
 export function startDataProductsWatcher({dataTypeViewerId= DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, factoryKey, paused=true}) {
@@ -133,8 +133,8 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             zoomOnNextViewSizeChange= false;
             break;
 
-        case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
-        case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
+        case CHANGE_VIEWER_LAYOUT:
+        case UPDATE_VIEWER_CUSTOM_DATA:
             if (!paused && !ignoreCustomDataChange) {
                 abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
                 firstTime= false;
@@ -143,7 +143,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             break;
 
 
-        case MultiViewCntlr.ADD_VIEWER:
+        case ADD_VIEWER:
             if (payload.mounted) {
                 abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
                 firstTime= false;
@@ -152,14 +152,14 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             }
             break;
 
-        case MultiViewCntlr.VIEWER_MOUNTED:
+        case VIEWER_MOUNTED:
             paused= false;
             abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
             firstTime= false;
             zoomOnNextViewSizeChange= false;
             break;
 
-        case MultiViewCntlr.VIEWER_UNMOUNTED:
+        case VIEWER_UNMOUNTED:
             paused= true;
             zoomOnNextViewSizeChange= false;
             break;
@@ -172,13 +172,13 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
             break;
 
-        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+        case CHANGE_ACTIVE_PLOT_VIEW:
             if (!paused && action.payload.reason===MOUSE_CLICK_REASON) {
                 changeTableHighlightToMatchPlotView(action.payload.plotId,tbl_id);
             }
             break;
 
-        case ImagePlotCntlr.ANY_REPLOT:
+        case ANY_REPLOT:
             if (!paused) {
                 const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
                 if (makeActive) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
@@ -186,7 +186,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             zoomOnNextViewSizeChange= false;
             break;
 
-        case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+        case UPDATE_VIEW_SIZE:
             if (!paused && zoomOnNextViewSizeChange) {
                 zoomPlotPerViewSize(payload.plotId, UserZoomTypes.FIT);
             }
@@ -217,8 +217,7 @@ const getKey= (threeOp, band) =>
  */
 function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise=undefined) {
 
-    const layoutChange= action?.type===MultiViewCntlr.CHANGE_VIEWER_LAYOUT ||
-        action?.type===MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA;
+    const layoutChange= action?.type===CHANGE_VIEWER_LAYOUT || action?.type===UPDATE_VIEWER_CUSTOM_DATA;
 
     abortLastPromise && !layoutChange && abortLastPromise();
 

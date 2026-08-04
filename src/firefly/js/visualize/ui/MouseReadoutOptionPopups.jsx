@@ -27,8 +27,7 @@ import {
 	MR_FITS_IP, MR_GALACTIC, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_ZERO_IP,
 } from '../MouseReadoutCntlr';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {currentP} from '../PlotViewUtil.js';
 import {isCelestialImage, isHiPS} from '../WebPlot.js';
 
 //define the labels and values for the radio options
@@ -85,7 +84,7 @@ function getNoncelestialCoordOptions(noncelestialOptionTitle='WCS Coordinates') 
 }
 
 export function showMouseReadoutOptionDialog(fieldKey, radioValue, copyOptionValue, title='Choose Option', noncelestialOptionTitle=undefined) {
-	const plot = primePlot(visRoot());
+	const {plot} = currentP();
 	const popup = (
 		<PopupPanel title={title}  >
 			<MouseReadoutOptionDialog groupKey={groupKeys[fieldKey]} fieldKey={fieldKey}

@@ -2,24 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, map, isUndefined, isEmpty} from 'lodash';
-import {flux} from './ReduxFlux';
-import {dispatchAddActionWatcher} from './MasterSaga';
-import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
-import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName, getProp, getRootURL, isFullURL} from '../util/WebUtil.js';
-import {dispatchRemoteAction} from './JsonUtils.js';
-import {getWsConn} from './messaging/WebSocketClient';
 import {getLayouInfo} from 'firefly/core/LayoutCntlr';
+import {get, isEmpty, isUndefined, map} from 'lodash';
+import {getModuleName, getProp, getRootURL, isFullURL} from '../util/WebUtil.js';
+import Point, {isValidPoint} from '../visualize/Point.js';
+import {alertsReducer, appDataReducer, menuReducer} from './AppDataReducers.js';
 import {makeBackgroundMonitorMenuItem} from './background/JobMonitor';
+import {APP_DATA_PATH} from './CoreConst';
+import {dispatchRemoteAction} from './JsonUtils.js';
+import {dispatchAddActionWatcher} from './MasterSaga';
+import {getWsConn} from './messaging/WebSocketClient';
+import {flux} from './ReduxFlux';
 
-export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
 
 /*---------------------------- ACTIONS -----------------------------*/
 
 export const APP_LOAD = `${APP_DATA_PATH}.appLoad`;
-export const REINIT_APP= `${APP_DATA_PATH}.reinitApp`;
 export const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
 export const ADD_WORKING_TASK = `${APP_DATA_PATH}.addWorkingTask`;
 export const REMOVE_WORKING_TASK = `${APP_DATA_PATH}.removeTaskCount`;

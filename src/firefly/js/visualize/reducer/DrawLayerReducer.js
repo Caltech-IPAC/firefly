@@ -2,15 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-import {get,difference,union} from 'lodash';
-import {clone} from '../../util/WebUtil.js';
+import {difference,union} from 'lodash';
 import {DataTypes} from '../draw/DrawLayer.js';
-import DrawLayerCntlr from '../DrawLayerCntlr.js';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
-
-
-
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, CHANGE_DRAWING_DEF, CHANGE_HIPS, CHANGE_VISIBILITY,
+    DETACH_LAYER_FROM_PLOT, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD
+} from '../VisConst';
 
 export default {makeReducer};
 
@@ -22,38 +19,30 @@ export default {makeReducer};
 function makeReducer(factory) {
     return (drawLayer= {}, action={}) => {
         if (!action.payload || !action.type) return drawLayer;
-
         switch (action.type) {
-            case DrawLayerCntlr.CHANGE_VISIBILITY:
-                return changeVisibility(drawLayer,action,factory);
-            case DrawLayerCntlr.CHANGE_DRAWING_DEF:
-                return changeDrawingDef(drawLayer,action,factory);
-            case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-                return attachLayerToPlot(drawLayer,action,factory);
-            case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
-                return detachLayerFromPlot(drawLayer,action,factory);
+            case CHANGE_VISIBILITY: return changeVisibility(drawLayer,action,factory);
+            case CHANGE_DRAWING_DEF: return changeDrawingDef(drawLayer,action,factory);
+            case ATTACH_LAYER_TO_PLOT: return attachLayerToPlot(drawLayer,action,factory);
+            case DETACH_LAYER_FROM_PLOT: return detachLayerFromPlot(drawLayer,action,factory);
 
-            case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
-            case ImagePlotCntlr.ANY_REPLOT:
-            case ImagePlotCntlr.CHANGE_HIPS:
-            case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-            case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            case FORCE_DRAW_LAYER_UPDATE:
+            case ANY_REPLOT:
+            case CHANGE_HIPS:
+            case CHANGE_CENTER_OF_PROJECTION:
+            case MODIFY_CUSTOM_FIELD:
                 return updateFromLayer(drawLayer,action,factory);
 
-            default:
-                return handleOtherAction(drawLayer,action,factory);
+            default: return handleOtherAction(drawLayer,action,factory);
         }
     };
 }
 
 
 function handleOtherAction(drawLayer,action,factory) {
-
-
     if (!drawLayer.actionTypeAry.includes(action.type)) return drawLayer;
 
     const changes= factory.getLayerChanges(drawLayer,action);
-    const newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawLayer,changes): drawLayer;
+    const newDl= (changes && Object.keys(changes).length) ? {...drawLayer,...changes}: drawLayer;
     let drawData;
 
     if (newDl.hasPerPlotData) {     //todo- perPlotData does not have the same optimization as normal, look into this
@@ -70,9 +59,9 @@ function handleOtherAction(drawLayer,action,factory) {
         return newDl;
     }
     else if (drawData!==newDl.drawData) {
-        return Object.assign({},newDl,{drawData});
+        return {...newDl,...drawData};
     }
-    else {/**/
+    else {
         return drawLayer;
     }
 }
@@ -81,7 +70,7 @@ function updateFromLayer(drawLayer,action,factory) {
     let {plotIdAry}= action.payload;
     if (!plotIdAry) plotIdAry= [action.payload.plotId];
     if (!plotIdAry?.length && drawLayer.hasPerPlotData) plotIdAry= drawLayer.visiblePlotIdAry;
-    drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
+    drawLayer= {...drawLayer, ...factory.getLayerChanges(drawLayer,action)};
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) => {
           if (drawLayer.plotIdAry.includes(id)) {
@@ -91,13 +80,10 @@ function updateFromLayer(drawLayer,action,factory) {
              });
           }
       });
-
-
     }
     else {
         drawLayer.drawData= getDrawData(factory,drawLayer, action);
     }
-
     return drawLayer;
 }
 
@@ -116,11 +102,10 @@ function attachLayerToPlot(drawLayer,action,factory) {
 
     const addAry= visible ? inputPlotIdAry.filter( (plotId) => !visiblePlotIdAry.includes(plotId)) : [];
 
-    drawLayer= clone(drawLayer, {
+    drawLayer= {...drawLayer,
         plotIdAry: union(dlPlotIdAry,inputPlotIdAry),
-        visiblePlotIdAry: [...visiblePlotIdAry,...addAry]
-    });
-
+        visiblePlotIdAry: [...visiblePlotIdAry,...addAry],
+    };
     drawLayer= Object.assign(drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         drawLayer.plotIdAry.forEach( (id) =>
@@ -129,8 +114,6 @@ function attachLayerToPlot(drawLayer,action,factory) {
     else {
         drawLayer.drawData= getDrawData(factory,drawLayer, action);
     }
-
-
     return drawLayer;
 }
 
@@ -141,7 +124,7 @@ function detachLayerFromPlot(drawLayer,action,factory) {
     const plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
     visiblePlotIdAry= visiblePlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
 
-    drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action), {plotIdAry, visiblePlotIdAry});
+    drawLayer= {...drawLayer, ...factory.getLayerChanges(drawLayer,action), plotIdAry, visiblePlotIdAry};
     if (drawLayer.hasPerPlotData) {
         inputPlotIdAry.forEach( (plotId) =>
                       drawLayer.drawData= detachPerPlotData(drawLayer.drawData,plotId));
@@ -182,8 +165,7 @@ function changeVisibility(drawLayer,action,factory) {
 
     if (visible) {
         visiblePlotIdAry= union(drawLayer.visiblePlotIdAry,plotIdAry);
-        drawLayer= Object.assign({}, drawLayer, {visiblePlotIdAry},
-                                         factory.getLayerChanges(drawLayer,action));
+        drawLayer= {...drawLayer, visiblePlotIdAry, ...factory.getLayerChanges(drawLayer,action)};
         if (drawLayer.hasPerPlotData) {
             plotIdAry.forEach( (id) =>
                 drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
@@ -192,7 +174,7 @@ function changeVisibility(drawLayer,action,factory) {
     }
     else {
         visiblePlotIdAry= difference(drawLayer.visiblePlotIdAry,plotIdAry);
-        return Object.assign({}, drawLayer, {visiblePlotIdAry});
+        return {...drawLayer, visiblePlotIdAry};
     }
 }
 
@@ -200,7 +182,7 @@ function changeVisibility(drawLayer,action,factory) {
 
 function changeDrawingDef(drawLayer,action,factory) {
     const {drawingDef} = action.payload;
-    return Object.assign({}, drawLayer, {drawingDef}, factory.getLayerChanges(drawLayer,action));
+    return {...drawLayer, drawingDef, ...factory.getLayerChanges(drawLayer,action)};
 }
 
 const DATA= DataTypes.DATA;
@@ -219,12 +201,12 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     if (!factory.hasGetDrawData(drawLayer)) return drawLayer.drawData;
     const {drawData= {}}= drawLayer;
     const pId= plotId;
-    const newDD= Object.assign({},drawData);
+    const newDD= {...drawData};
 
     if (!newDD.data) newDD.data={};
     
     if (plotId) {
-        newDD.data[plotId]= factory.getDrawData(DATA, pId, drawLayer, action, get(drawData,`data.${plotId}`));
+        newDD.data[plotId]= factory.getDrawData(DATA, pId, drawLayer, action, drawData?.[`data.${plotId}`]);
     }
     else {
         newDD.data= factory.getDrawData(DATA, pId, drawLayer, action, drawData.data);
@@ -235,7 +217,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
         if (!newDD.highlightData) newDD.highlightData={};
         if (plotId) {
             newDD.highlightData[plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
-                                             get(drawData,`highlightData.${plotId}`));
+                                             drawData?.[`highlightData.${plotId}`]);
         }
         else {
             newDD.highlightData= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,drawData.highlightData);
@@ -269,4 +251,3 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
         return drawLayer.drawData;
     }
 }
-

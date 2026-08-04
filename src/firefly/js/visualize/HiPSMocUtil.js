@@ -1,11 +1,12 @@
 import {get, set, isEmpty, flatten, isArray} from 'lodash';
+import {dispatchCreateDrawLayer} from './DrawLayerDispatch';
 import {getDrawLayersByType} from './PlotViewUtil.js';
-import {getDlAry, dispatchCreateDrawLayer} from './DrawLayerCntlr.js';
 import HiPSMOC from '../drawingLayers/HiPSMOC.js';
 import {getHealpixCornerTool} from './HiPSUtil.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getBooleanMetaEntry, getTblById} from '../tables/TableUtil';
 import {MetaConst} from 'firefly/data/MetaConst.js';
+import {getDlAry} from './VisStoreRoots';
 const HEADER_KEY_COL = 1;
 const HEADER_VAL_COL = 2;
 

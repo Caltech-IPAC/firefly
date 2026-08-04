@@ -13,13 +13,12 @@ import {
     MR_BAND_WIDTH, EQ_TYPE, MR_WL_RED, MR_WL_GREEN, MR_WL_BLUE, MR_BAND_WIDTH_GREEN, MR_BAND_WIDTH_RED,
     MR_BAND_WIDTH_BLUE
 } from '../MouseReadoutCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
 import {convertCelestial} from '../VisUtil';
 import {isCelestialImage} from '../WebPlot.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
-import {getFormattedWaveLengthUnits, primePlot} from '../PlotViewUtil';
+import {currentP, getFormattedWaveLengthUnits} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
 import {getBixPix, getBScale, getBZero} from 'firefly/visualize/FitsHeaderUtil';
 
@@ -95,7 +94,7 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
         // outside image use active plot (plotId=undefined)
         const csys = readoutItems.worldPt?.value?.cSys;
         const plotId = csys ? readoutData.plotId : undefined;
-        const isCelestial = isCelestialImage(primePlot(visRoot(), plotId));
+        const isCelestial = isCelestialImage(currentP(plotId).plot);
 
         if (isCelestial) {
             readout1 = {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
@@ -202,7 +201,7 @@ export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
         case MR_ECL1950:
             return makeCoordReturn(wp, CoordinateSys.ECL_B1950, copyPref, false);
         case MR_WCS_COORDS:
-            const plot = primePlot(visRoot(), plotId);
+            const {plot} = currentP(plotId);
             const unit = plot?.projection?.header?.cunit1 || '';
             return {value:makeNoncelestialCoordReturn(wp, unit)};
         case MR_FITS_IP:
@@ -236,7 +235,7 @@ const makeWlEntry= (obj) => obj ? {value:makeWLReturn(obj.value, getFormattedWav
  * @param plotId
  */
 function createWCSCoordsLabel(plotId) {
-    const plot = primePlot(visRoot(), plotId);
+    const {plot} = currentP(plotId);
     const header = plot?.projection?.header;
     if (!header) return undefined;
 

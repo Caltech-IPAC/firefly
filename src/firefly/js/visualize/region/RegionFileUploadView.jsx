@@ -10,7 +10,6 @@ import React, {useState} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {dispatchCreateRegionLayer, dispatchCreateFootprintLayer} from '../DrawLayerCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
@@ -21,6 +20,7 @@ import {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/R
 import {relocatable} from '../../drawingLayers/FootprintLocatable.js';
 import {createNewFootprintLayerId, getFootprintLayerTitle} from '../../drawingLayers/FootprintTool.js';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {dispatchCreateFootprintLayer, dispatchCreateRegionLayer} from '../DrawLayerDispatch';
 
 const popupId = 'RegionFilePopup';
 const rgUploadGroupKey = 'RegionUploadGroup';

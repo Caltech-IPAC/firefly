@@ -28,20 +28,17 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import {CoordinateSys} from '../CoordSys.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer} from '../DrawLayerDispatch';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot, getDlAry
-} from '../DrawLayerCntlr.js';
-import {
-    dispatchChangeActivePlotView, dispatchChangeHiPS, dispatchDeletePlotView, dispatchPlotHiPS, visRoot
-} from '../ImagePlotCntlr.js';
-import {NewPlotMode} from '../MultiViewCntlr.js';
+    dispatchChangeActivePlotView, dispatchChangeHiPS, dispatchDeletePlotView, dispatchPlotHiPS
+} from '../ImagePlotDispatch';
+import {NewPlotMode} from '../VisConst';
 import {PlotAttribute} from '../PlotAttribute';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
-import {
-    getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
-} from '../PlotViewUtil.js';
+import {currentP, getDrawLayersByType, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
+import {dlRoot, getDlAry} from '../VisStoreRoots';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -123,7 +120,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
 
     const viewerId= plotId+'-viewer';
 
-    const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
+    const pv= useStoreConnector(() => currentP(plotId).pv);
     const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
     const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
     const [getPolygon, setPolygon]= useFieldGroupValue(polygonKey, groupKey);
@@ -168,7 +165,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
             updatePlotOverlayFromUserInput({plotId, whichOverlay: getWhichOverlay(), wp: userEnterWorldPt(), 
                 radius: userEnterSearchRadius(), polygonAry: userEnterPolygon(), boxParams: userEnterBoxParams(), forceCenterOn: true});
 
-            if (getActivePlotView(visRoot())?.plotId !== plotId ) dispatchChangeActivePlotView(plotId);
+            if (currentP().plotId !== plotId ) dispatchChangeActivePlotView(plotId);
         }
         return () => {
             if (cleanup) dispatchDeletePlotView({plotId});
@@ -196,7 +193,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
         const whichOverlay= getWhichOverlay();
         const canGenerate= whichOverlay!==lastWhichOverlay.lastValue;
         if (canGenerate && (whichOverlay===CONE_CHOICE_KEY || whichOverlay===BOX_CHOICE_KEY) && !userEnterWorldPt()) {
-             const wp = primePlot(visRoot(), plotId)?.attributes[PlotAttribute.USER_SEARCH_WP];
+             const wp = currentP(plotId).plot?.attributes[PlotAttribute.USER_SEARCH_WP];
              wp && setTargetWp(wp.toString());
          }
         const radius=  usingRadius ? userEnterSearchRadius() : undefined;

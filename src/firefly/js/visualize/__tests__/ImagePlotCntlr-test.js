@@ -1,7 +1,8 @@
 import {flux} from '../../core/ReduxFlux.js';
 import {makePlotView} from '../reducer/PlotView.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr';
+import {EXPANDED_AUTO_PLAY} from '../VisConst';
+import {visRoot} from '../VisStoreRoots';
 
 
 
@@ -41,7 +42,7 @@ describe('Test ImagePlotCntlr', () => {
     test('visroot auto play on', () => {
         const before= visRoot().singleAutoPlay;
         flux.getRedux().dispatch( {
-            type:ImagePlotCntlr.EXPANDED_AUTO_PLAY,
+            type:EXPANDED_AUTO_PLAY,
             payload: {autoPlayOn:true}
         });
         expect(before).toEqual(false);

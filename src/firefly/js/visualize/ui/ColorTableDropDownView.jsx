@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {throttle, isArray, isNumber} from 'lodash';
 import {hideColorPickerDialog, showColorPickerDialog} from '../../ui/ColorPicker';
@@ -10,12 +10,11 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {getBestContrast, toRGBAString} from '../../util/Color';
-import {dispatchColorChange, dispatchOverlayColorLocking} from '../ImagePlotCntlr.js';
+import {dispatchColorChange, dispatchOverlayColorLocking} from '../ImagePlotDispatch';
 import {
-    primePlot, isThreeColor, getActivePlotView, isAllStretchDataLoaded, findPlotGroup,
-    hasOverlayColorLock,
+    primePlot, isThreeColor, isAllStretchDataLoaded, findPlotGroup, hasOverlayColorLock, currentP
 } from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {visRoot} from '../VisStoreRoots';
 import {
     findAContrastColor, getColorModel, baseIdMatchesForOrRev, isReversedColor, makeColorTableImage, NO_COLOR_TABLE,
     reverseId, getCbarNumIds, getCbarTip
@@ -28,7 +27,7 @@ import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
-import {Typography, Box, Stack, Divider, IconButton, Skeleton, Chip} from '@mui/joy';
+import {Typography, Box, Stack, Divider, IconButton, Skeleton} from '@mui/joy';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import ArrowOutwardOutlinedIcon from '@mui/icons-material/ArrowOutwardOutlined';
@@ -153,11 +152,10 @@ function getContrast(plot) {
 
 export function ColorStretchLockButton({allowPopout=false, sx={}}) {
     const overlayColorLocked= useStoreConnector( () => {
-        const vr= visRoot();
-        const pv= getActivePlotView(vr);
-        return pv ? hasOverlayColorLock(pv,findPlotGroup(pv?.plotGroupId,vr.plotGroupAry)) : false;
+        const {pv}= currentP();
+        return pv ? hasOverlayColorLock(pv,findPlotGroup(pv?.plotGroupId,visRoot().plotGroupAry)) : false;
     } );
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     return (
         <ToolbarButton plotView={pv}
                        sx={allowPopout? {mt:-2.5, width:.85, ...sx} : sx}
@@ -345,7 +343,7 @@ let defaultNanColorLocked= false;
 
 
 const AdvancedColorPanel= ({allowPopout}) => {
-    const plot = useStoreConnector( () => primePlot(visRoot()) );
+    const plot = useStoreConnector( () => currentP().plot );
     const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => plot?.rawData.bandData[0].bias);
     const [contrast,setContrast]= useState( () => getContrast(plot));
@@ -541,7 +539,7 @@ export function showColorDialog() {
 
 
 function PopoutColorPanel() {
-    const pv = useStoreConnector( () => getActivePlotView(visRoot()));
+    const pv = useStoreConnector( () => currentP().pv);
     if (!primePlot(pv)) return <div/>;
     return (
         <Stack>

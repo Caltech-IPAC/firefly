@@ -10,8 +10,8 @@ import {showInfoPopup} from '../../ui/PopupUtil';
 import {checkProps} from '../../ui/SimpleComponent';
 import {PlotAttribute} from '../PlotAttribute';
 import {makeMouseStatePayload, fireMouseCtxChange, MouseState} from '../VisMouseSync.js';
-import {dispatchDeletePlotView, visRoot} from '../ImagePlotCntlr.js';
-import {primePlot, pvEqualExScroll} from '../PlotViewUtil.js';
+import {dispatchDeletePlotView} from '../ImagePlotDispatch';
+import {currentP, pvEqualExScroll} from '../PlotViewUtil.js';
 import shallowequal from 'shallowequal';
 import {WarningButton} from './Buttons';
 
@@ -64,7 +64,7 @@ export const PvControlsAndFeedback = memo( (props) => {
 
 
 function getWarningsAry(pv) {
-    const warnings= primePlot(visRoot(),pv.plotId)?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
+    const warnings= currentP(pv.plotId).plot?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
     if (isString(warnings)) {
         return [<Typography>{warnings}</Typography>];
     }
@@ -76,7 +76,7 @@ function getWarningsAry(pv) {
 
 
 function WarningsAlert({pv}) {
-    const warnings= primePlot(visRoot(),pv.plotId)?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
+    const warnings= currentP(pv.plotId).plot?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
     const defaultTip= isString(warnings) ? warnings : 'click for warnings';
     const warnAry= getWarningsAry(pv);
     if (!warnAry?.length) return;

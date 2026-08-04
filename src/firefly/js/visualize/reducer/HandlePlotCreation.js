@@ -3,7 +3,10 @@
  */
 
 import {uniqBy, differenceBy, isEmpty, isNumber, isString, uniq} from 'lodash';
-import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
+import {
+    CROP, CROP_FAIL, CROP_START, DELETE_OVERLAY_PLOT, PLOT_HIPS, PLOT_HIPS_FAIL, PLOT_IMAGE, PLOT_IMAGE_FAIL,
+    PLOT_IMAGE_START, PLOT_MASK, PLOT_MASK_FAIL, PLOT_MASK_START, PLOT_PROXY, REMOVE_PROXY, WcsMatchType
+} from '../VisConst';
 import {getRotationAngle} from '../WebPlotAnalysis';
 import {
     replacePlots, makePlotView, updatePlotViewScrollXY,
@@ -12,7 +15,9 @@ import {
 import {makeOverlayPlotView, initOverlayPlots} from './OverlayPlotView.js';
 import {
     primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListByPositionLock,
-    getCubePlaneCnt, getHDU, getImageCubeIdx, } from '../PlotViewUtil.js'; import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
+    getCubePlaneCnt, getHDU, getImageCubeIdx
+} from '../PlotViewUtil.js';
+import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
 import {updateTransform} from '../PlotTransformUtils.js';
@@ -22,66 +27,39 @@ import {getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
 
 
 export function reducer(state, action) {
-
-    let retState= state;
     switch (action.type) {
-        case Cntlr.PLOT_IMAGE_START  :
-            retState= startPlot(state,action);
-            break;
-        case Cntlr.PLOT_IMAGE_FAIL  :
-            retState= plotFail(state,action);
-            break;
-        case Cntlr.PLOT_IMAGE  :
+        case PLOT_IMAGE_START  :
+            return startPlot(state,action);
+        case PLOT_IMAGE_FAIL  :
+            return plotFail(state,action);
+        case PLOT_IMAGE  :
             const {setNewPlotAsActive=true}= action.payload;
-            retState= addPlot(state,action, action.payload.setNewPlotAsActive, setNewPlotAsActive);
-            break;
-        case Cntlr.PLOT_PROXY:
-            retState= addProxy(state,action);
-            break;
-        case Cntlr.REMOVE_PROXY:
-            retState= removeProxy(state,action);
-            break;
-
-        case Cntlr.PLOT_HIPS  :
-            retState= addHiPS(state,action);
-            break;
-
-        case Cntlr.PLOT_HIPS_FAIL  :
-            retState= hipsFail(state,action);
-            break;
-
-        case Cntlr.PLOT_MASK_START:
-            retState= newOverlayPrep(state,action);
-            break;
-
-        case Cntlr.PLOT_MASK:
-            retState= addOverlay(state,action);
-            break;
-
-        case Cntlr.DELETE_OVERLAY_PLOT:
-            retState= removeOverlay(state,action);
-            break;
-
-
-        case Cntlr.PLOT_MASK_FAIL:
-            retState= plotOverlayFail(state,action);
-            break;
-
-        case Cntlr.CROP_START:
-            retState= workingServerCall(state,action);
-            break;
-        
-        case Cntlr.CROP_FAIL:
-            retState= endServerCallFail(state,action);
-            break;
-
-        case Cntlr.CROP:
-            retState= addPlot(state,action, false, false);
-            break;
+            return addPlot(state,action, action.payload.setNewPlotAsActive, setNewPlotAsActive);
+        case PLOT_PROXY:
+            return addProxy(state,action);
+        case REMOVE_PROXY:
+            return removeProxy(state,action);
+        case PLOT_HIPS  :
+            return addHiPS(state,action);
+        case PLOT_HIPS_FAIL  :
+            return hipsFail(state,action);
+        case PLOT_MASK_START:
+            return newOverlayPrep(state,action);
+        case PLOT_MASK:
+            return addOverlay(state,action);
+        case DELETE_OVERLAY_PLOT:
+            return removeOverlay(state,action);
+        case PLOT_MASK_FAIL:
+            return plotOverlayFail(state,action);
+        case CROP_START:
+            return workingServerCall(state,action);
+        case CROP_FAIL:
+            return endServerCallFail(state,action);
+        case CROP:
+            return addPlot(state,action, false, false);
         default:
-            break;
+            return state;
     }
-    return retState;
 }
 
 

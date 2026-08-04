@@ -3,13 +3,13 @@
  */
 import {isEmpty} from 'lodash';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
-import ImagePlotCntlr, {dispatchChangePrimePlot} from 'firefly/visualize/ImagePlotCntlr.js';
 import {
-    dispatchTableHighlight,
-    TABLE_HIGHLIGHT,
-    TABLE_LOADED,
-    TABLE_REMOVE,
-    TABLE_SELECT,
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField
+} from '../DrawLayerDispatch';
+import {dispatchChangePrimePlot} from '../ImagePlotDispatch';
+import {CHANGE_PRIME_PLOT} from '../VisConst';
+import {
+    dispatchTableHighlight, TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
     TABLE_UPDATE, TBL_RESULTS_ACTIVE
 } from 'firefly/tables/TablesCntlr.js';
 import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from 'firefly/tables/TableUtil.js';
@@ -18,13 +18,9 @@ import {
     convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getImageCubeIdx, isImageCube, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
 import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
-import {
-    dispatchAttachLayerToPlot,
-    dispatchCreateDrawLayer,
-    dispatchDestroyDrawLayer, dispatchModifyCustomField, dlRoot
-} from 'firefly/visualize/DrawLayerCntlr.js';
 import SearchTarget from 'firefly/drawingLayers/SearchTarget.js';
 import {findPlotViewUsingFitsPathMeta} from 'firefly/visualize/saga/CatalogWatcher.js';
+import {dlRoot} from '../VisStoreRoots';
 
 let idCnt=0;
 
@@ -40,7 +36,7 @@ export function addZAxisExtractionWatcher(tbl_id) {
         id: 'plot-zaxis-watcher-${idCnt}--'+tbl_id,
         callback:zAxisExtractionPlotWatcher,
         params:{tbl_id},
-        actions:[ImagePlotCntlr.CHANGE_PRIME_PLOT, TABLE_REMOVE]
+        actions:[CHANGE_PRIME_PLOT, TABLE_REMOVE]
     });
 }
 

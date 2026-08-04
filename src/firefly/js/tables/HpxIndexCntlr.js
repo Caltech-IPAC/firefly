@@ -7,7 +7,7 @@ import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixInd
 import {logger} from '../util/Logger';
 import {blockWhileAsyncIdWaiting, synchronizeAsyncFunctionById} from '../util/SynchronizeAsync';
 import {createBackgroundRunner, isDefined} from '../util/WebUtil';
-import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/VisConst';
 import {makeWorldPt} from '../visualize/Point';
 import {convertCelestial} from '../visualize/VisUtil';
 import {findTableCenterColumns, makeWorldPtUsingCenterColumns} from '../voAnalyzer/TableAnalysis';

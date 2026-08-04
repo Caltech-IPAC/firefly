@@ -16,8 +16,9 @@ import {
     PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
-import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
+import {dispatchStretchChange} from '../ImagePlotDispatch';
+import {currentP, isThreeColor} from '../PlotViewUtil.js';
+import {ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW} from '../VisConst';
 import {makeSerializedRv} from './ColorDialog.jsx';
 import {getFluxUnits} from '../WebPlot';
 import { getColorModel, makeColorHistImage, makeColorTableImage
@@ -52,7 +53,7 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
         dispatchForceFieldGroupReducer(groupKey);
     },[]);
 
-    useWatcher([ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW],
+    useWatcher([ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW],
         (action) => {
             dispatchForceFieldGroupReducer(groupKey, action);
         }
@@ -326,7 +327,7 @@ function getReplotFunc(groupKey, band) {
                 const request = getFieldGroupResults(groupKey);
                 const serRv = makeSerializedRv(request);
                 const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
-                const pv = getActivePlotView(visRoot());
+                const {pv} = currentP();
                 if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
             }
         });

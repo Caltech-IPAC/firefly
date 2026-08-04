@@ -34,11 +34,12 @@ import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx'
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getDlAry} from '../DrawLayerCntlr.js';
 import {
-    dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
-    dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
-} from '../ImagePlotCntlr.js';
+    dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip, dispatchRestoreDefaults,
+    dispatchRotate
+} from '../ImagePlotDispatch';
+import {ExpandType} from '../VisConst';
+import {getDlAry, visRoot} from '../VisStoreRoots';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
     getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasWCSProjection,

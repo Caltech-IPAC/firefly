@@ -5,17 +5,14 @@
 
 
 import {isNumber} from 'lodash';
-import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import {
     clearHpxFilterCatalog, filterHpxCatalog, selectHpxCatalog, unselectHxpCatalog
 } from '../../drawingLayers/hpx/HpxCatalogUtil';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer} from '../DrawLayerDispatch';
 import {
-    getAllDrawLayersForPlot,
-    getDrawLayersByType,
-    getPlotViewById,
-    isDrawLayerAttached,
-    isMultiImageFitsWithSameArea,
-    primePlot
+    currentP,
+    getAllDrawLayersForPlot, getDrawLayersByType, getPlotViewById, isDrawLayerAttached,
+    isMultiImageFitsWithSameArea, primePlot,
 } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import {PlotAttribute} from '../PlotAttribute';
@@ -28,12 +25,8 @@ import Catalog, {
     unselectCatalog
 } from '../../drawingLayers/Catalog';
 import {
-    dispatchChangeCenterOfProjection,
-    dispatchCrop,
-    dispatchProcessScroll,
-    dispatchZoom,
-    visRoot
-} from '../ImagePlotCntlr';
+    dispatchChangeCenterOfProjection, dispatchCrop, dispatchProcessScroll, dispatchZoom
+} from '../ImagePlotDispatch';
 import LSSTFootprint, {
     clearFilterFootprint,
     filterFootprint,
@@ -41,17 +34,17 @@ import LSSTFootprint, {
     unselectFootprint
 } from '../../drawingLayers/ImageLineBasedFootprint';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson';
+import {dlRoot} from '../VisStoreRoots';
 import {showImageAreaStatsPopup} from './ImageStatsPopup';
 import {logger} from '../../util/Logger.js';
 import CoordUtil from '../CoordUtil';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
-import {detachSelectArea, isOutlineImageForSelectArea, SELECT_AREA_TITLE} from './SelectAreaUIComponents';
+import {detachSelectArea} from './SelectAreaUIComponents';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {convertAngle} from '../VisUtil';
 import ShapeDataObj from '../draw/ShapeDataObj';
-import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot} from '../DrawLayerCntlr';
-import {UserZoomTypes} from '../ZoomUtil';
+import {UserZoomTypes} from '../VisConst';
 import {isHiPS, isImage} from '../WebPlot';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
@@ -272,8 +265,7 @@ export function zoomIntoSelection(pv, try2=false) {
 
 
     if (isImage(p)) {
-        pv= getPlotViewById(visRoot(),plotId);
-        p= primePlot(pv);
+        const {pv,plot:p}= currentP(plotId);
         cc= CysConverter.make(p);
         const ip0=  cc.getImageCoords(sel.pt0);
         const ip2=  cc.getImageCoords(sel.pt1);
@@ -286,7 +278,7 @@ export function zoomIntoSelection(pv, try2=false) {
             dispatchChangeCenterOfProjection({plotId,centerProjPt:userSearchWP});
         }
         else {
-            p= primePlot(visRoot(),pv.plotId);
+            p= currentP(pv.plotId).plot;
             dispatchChangeCenterOfProjection({plotId,centerProjPt:sel.pt2});
             cc= CysConverter.make(p);
             const dev0=  cc.getDeviceCoords(sel.pt0);

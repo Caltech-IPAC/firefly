@@ -3,11 +3,15 @@
  */
 
 import {isEmpty} from 'lodash';
-import ImagePlotCntlr, {
-    ActionScope, dispatchAttributeChange, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchFlip,
-    dispatchPositionLocking, dispatchRecenter, dispatchRotate, dispatchUpdateViewSize, dispatchZoom, IMAGE_PLOT_KEY,
-    visRoot, WcsMatchType
-} from '../ImagePlotCntlr.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from '../DrawLayerDispatch';
+import {
+    dispatchAttributeChange, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchFlip, dispatchPositionLocking,
+    dispatchRecenter, dispatchRotate, dispatchUpdateViewSize, dispatchZoom
+} from '../ImagePlotDispatch';
+import {
+    ActionScope, FullType, IMAGE_PLOT_KEY, PLOT_IMAGE, PLOT_IMAGE_FAIL, UserZoomTypes, WCS_MATCH, WcsMatchType
+} from '../VisConst';
+import {dlRoot, visRoot} from '../VisStoreRoots';
 import {isEastLeftOfNorth, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {
     applyToOnePvOrAll, findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType,
@@ -16,14 +20,11 @@ import {
 } from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {
-    FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes
-} from '../ZoomUtil.js';
+import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {makeScreenPt, pointEquals} from '../Point.js';
 import CoordinateSys from '../CoordSys';
-import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 
@@ -32,7 +33,7 @@ function watchForCompletedPlot(action, cancelSelf, params, dispatch, getState) {
 
     const {plotId, masterPlotId, wcsMatchType}= params;
 
-    if (action.type===ImagePlotCntlr.PLOT_IMAGE_FAIL) {
+    if (action.type===PLOT_IMAGE_FAIL) {
         if (action.payload.plotId===plotId) cancelSelf();
         return params;
     }
@@ -66,7 +67,7 @@ export function wcsMatchActionCreator(action) {
 
         if (!plotId && lockMatch) {
             dispatchPositionLocking(undefined, lockMatch); //TODO:
-            if (lockMatch) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:matchType} });
+            if (lockMatch) dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:matchType} });
             return;
         }
         let masterPv= getPlotViewById(visRoot, plotId);
@@ -78,7 +79,7 @@ export function wcsMatchActionCreator(action) {
 
         if (image && lockMatch && (!width  || !height)) {
             dispatcher({
-                type: ImagePlotCntlr.WCS_MATCH,
+                type: WCS_MATCH,
                 payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId, lockMatch}
             });
             applyToOnePvOrAll(true, visRoot.plotViewAry, masterPv.plotId, false,
@@ -87,7 +88,7 @@ export function wcsMatchActionCreator(action) {
                         dispatchAddActionWatcher( {
                             callback: watchForCompletedPlot,
                             params: {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType},
-                            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+                            actions: [PLOT_IMAGE, PLOT_IMAGE_FAIL]
                         } );
                     }
                 }
@@ -101,7 +102,7 @@ export function wcsMatchActionCreator(action) {
         const wcsMatchCenterWP= findWcsMatchPoint(masterPv, plotId, matchType);
 
         dispatcher({
-            type: ImagePlotCntlr.WCS_MATCH,
+            type: WCS_MATCH,
             payload: {wcsMatchCenterWP,wcsMatchType:matchType,mpwWcsPrimId:masterPv.plotId}
         });
 
@@ -160,7 +161,7 @@ export function wcsMatchActionCreator(action) {
         if (!lockMatch) {
             dispatchPositionLocking(masterPv.plotId,false);
             dispatcher({
-                type: ImagePlotCntlr.WCS_MATCH,
+                type: WCS_MATCH,
                 payload: {wcsMatchCenterWP,wcsMatchType:false,mpwWcsPrimId:masterPv.plotId}
             });
         }

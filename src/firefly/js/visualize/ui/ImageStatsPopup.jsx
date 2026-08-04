@@ -7,12 +7,10 @@ import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {getDlAry} from '../DrawLayerCntlr.js';
-import {dispatchCreateDrawLayer,
-        dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot,
-        dispatchModifyCustomField,
-        dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
+    dispatchModifyCustomField
+} from '../DrawLayerDispatch';
 import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
@@ -21,6 +19,7 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import StatsPoint from '../../drawingLayers/StatsPoint.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {getDlAry} from '../VisStoreRoots';
 
 
 const popupId = 'ImageAreaStatsPopup';

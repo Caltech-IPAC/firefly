@@ -10,10 +10,10 @@ import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {CollapsibleItem} from '../../ui/panel/CollapsiblePanel';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import BrowserInfo from '../../util/BrowserInfo';
-import {getDlAry} from '../DrawLayerCntlr';
 import {
     getAllDrawLayersForPlot, getLayerTitle, getPlotViewById, isDrawLayerVisible, primePlot
 } from '../PlotViewUtil';
+import {getDlAry} from '../VisStoreRoots';
 import {isHiPS} from '../WebPlot';
 import {DrawLayerLegendView} from './DrawLayerItemView';
 import {showDrawingLayerPopup} from './DrawLayerPanel';

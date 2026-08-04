@@ -4,11 +4,11 @@
 
 import React, {useLayoutEffect} from 'react';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import {getActivePlotView, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
+import {getAllDrawLayersForPlot, currentP} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {getDlAry} from '../DrawLayerCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+
+import {getDlAry} from '../VisStoreRoots';
 import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
 import {flux} from '../../core/ReduxFlux.js';
 import {lastMouseImageReadout} from '../VisMouseSync';
@@ -33,7 +33,7 @@ function getDialogBuilder() {
 }
 
 function makeState() {
-    const activePv= getActivePlotView(visRoot());
+    const activePv= currentP().pv;
     const dlAry= getDlAry();
     const imageOverlayLength= activePv ? activePv.overlayPlotViews.length : 0;
     const layersLength= activePv ? getAllDrawLayersForPlot(dlAry,activePv.plotId).length : 0;
@@ -63,7 +63,7 @@ function DrawLayerPanel() {
 
 const defaultTitle = 'Layers- ';
 export function DrawLayerPanelTitle({}) {
-    const plotTitle = useStoreConnector(() => primePlot(visRoot())?.title );
+    const plotTitle = useStoreConnector(() => currentP().plot?.title);
     return (plotTitle ? `${defaultTitle}${plotTitle}` : defaultTitle);
 }
 

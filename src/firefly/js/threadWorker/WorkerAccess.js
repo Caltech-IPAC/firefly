@@ -1,4 +1,4 @@
-import {dispatchPlotProgressUpdate} from '../visualize/ImagePlotCntlr';
+import {dispatchPlotProgressUpdate} from '../visualize/ImagePlotDispatch';
 import Worker from './firefly-thread.worker.js';
 import {uniqueId} from 'lodash';
 import {Logger} from '../util/Logger.js';

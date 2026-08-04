@@ -4,6 +4,7 @@
 
 
 import {get, isNil} from 'lodash';
+import {GRID_FULL, GRID_RELATED} from '../../visualize/VisConst';
 import {makeServerRequestBuilder} from '../ImageDataProductsUtil.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../visualize/RangeValues.js';
 import {getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
@@ -11,7 +12,6 @@ import {makeWorldPt} from '../../visualize/Point.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
-import {GRID_FULL, GRID_RELATED} from '../../visualize/MultiViewCntlr.js';
 import {Band} from '../../visualize/Band.js';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];

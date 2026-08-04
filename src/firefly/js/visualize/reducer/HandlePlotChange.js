@@ -4,10 +4,14 @@
 import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
 import {Band} from '../Band.js';
 import {getExtType} from '../FitsHeaderUtil.js';
-import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {
-    getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth
-} from '../WebPlotAnalysis';
+    ExpandType, WcsMatchType, ActionScope, UserZoomTypes, BYTE_DATA_REFRESH, CHANGE_CENTER_OF_PROJECTION,
+    CHANGE_HIPS, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, CHANGE_PLOT_ATTRIBUTE, CHANGE_PRIME_PLOT,
+    CHANGE_SUBHIGHLIGHT_PLOT_VIEW, COLOR_CHANGE, FLIP, MARK_OUT_OF_MEMORY, OVERLAY_COLOR_LOCKING,
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES, PLOT_PROGRESS_UPDATE, POSITION_LOCKING, PROCESS_SCROLL, RECENTER,
+    REQUEST_LOCAL_DATA, ROTATE, STRETCH_CHANGE, UPDATE_VIEW_SIZE, ZOOM_HIPS, ZOOM_IMAGE, ZOOM_LOCKING
+} from '../VisConst';
+import {getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from '../WebPlotAnalysis';
 import {RotateType} from '../PlotState';
 import {
     replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
@@ -15,9 +19,8 @@ import {
     updateScrollToWcsMatch, updatePlotGroupScrollXY, getNextStaticPlotCount
 } from './PlotView.js';
 import {
-    WebPlot, clonePlotWithZoom, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE,
-    changeHiPSProjectionCenterAndType, changeHiPSProjectionCenter
+    WebPlot, clonePlotWithZoom, isHiPS, isImage, replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties,
+    DEFAULT_BLANK_HIPS_TITLE, changeHiPSProjectionCenterAndType, changeHiPSProjectionCenter
 } from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {replaceHiPSProjection} from '../HiPSUtil.js';
@@ -33,7 +36,6 @@ import {
     convertImageIdxToHDU, hasLocalStretchByteData
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
-import {UserZoomTypes} from '../ZoomUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest, WPConst} from '../WebPlotRequest.js';
 
@@ -76,33 +78,32 @@ function replaceAtt(pv,att, toAll) {
 
 
 export function reducer(state, action) {
-
     const retState= state;
     switch (action.type) {
-        case Cntlr.ZOOM_HIPS  : return zoomSetup(state, action);
-        case Cntlr.ZOOM_IMAGE  : return updateDisplayData(zoomSetup(state, action),action);
-        case Cntlr.COLOR_CHANGE  :
-        case Cntlr.STRETCH_CHANGE  : return updateDisplayData(state,action);
-        case Cntlr.UPDATE_VIEW_SIZE : return updateViewSize(state,action);
-        case Cntlr.PROCESS_SCROLL  : return processScroll(state,action);
-        case Cntlr.CHANGE_CENTER_OF_PROJECTION: return processProjectionChange(state,action);
-        case Cntlr.CHANGE_HIPS : return changeHiPS(state,action);
-        case Cntlr.RECENTER: return recenter(state,action);
-        case Cntlr.ROTATE: return updateClientRotation(state,action);
-        case Cntlr.FLIP: return updateClientFlip(state,action);
-        case Cntlr.CHANGE_PLOT_ATTRIBUTE : return changePlotAttribute(state,action);
-        case Cntlr.ZOOM_LOCKING: return changeLocking(state,action);
-        case Cntlr.POSITION_LOCKING: return changePositionLocking(state,action);
-        case Cntlr.OVERLAY_COLOR_LOCKING: return changeOverlayColorLocking(state,action);
-        case Cntlr.PLOT_PROGRESS_UPDATE  : return updatePlotProgress(state,action);
-        case Cntlr.CHANGE_PRIME_PLOT  : return makeNewPrimePlot(state,action);
-        case Cntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES : return changeOverlayPlotAttributes(state,action);
-        case Cntlr.CHANGE_HIPS_IMAGE_CONVERSION : return changeHipsImageConversionSettings(state,action);
-        case Cntlr.BYTE_DATA_REFRESH: return markByteDataRefresh(state,action);
-        case Cntlr.CHANGE_IMAGE_VISIBILITY: return changeVisibility(state,action);
-        case Cntlr.REQUEST_LOCAL_DATA: return requestLocalData(state,action);
-        case Cntlr.CHANGE_SUBHIGHLIGHT_PLOT_VIEW: return changeSubHighPlotView(state,action);
-        case Cntlr.MARK_OUT_OF_MEMORY: return doMarkOutOfMemory(state,action);
+        case ZOOM_HIPS  : return zoomSetup(state, action);
+        case ZOOM_IMAGE  : return updateDisplayData(zoomSetup(state, action),action);
+        case COLOR_CHANGE  :
+        case STRETCH_CHANGE  : return updateDisplayData(state,action);
+        case UPDATE_VIEW_SIZE : return updateViewSize(state,action);
+        case PROCESS_SCROLL  : return processScroll(state,action);
+        case CHANGE_CENTER_OF_PROJECTION: return processProjectionChange(state,action);
+        case CHANGE_HIPS : return changeHiPS(state,action);
+        case RECENTER: return recenter(state,action);
+        case ROTATE: return updateClientRotation(state,action);
+        case FLIP: return updateClientFlip(state,action);
+        case CHANGE_PLOT_ATTRIBUTE : return changePlotAttribute(state,action);
+        case ZOOM_LOCKING: return changeLocking(state,action);
+        case POSITION_LOCKING: return changePositionLocking(state,action);
+        case OVERLAY_COLOR_LOCKING: return changeOverlayColorLocking(state,action);
+        case PLOT_PROGRESS_UPDATE  : return updatePlotProgress(state,action);
+        case CHANGE_PRIME_PLOT  : return makeNewPrimePlot(state,action);
+        case OVERLAY_PLOT_CHANGE_ATTRIBUTES : return changeOverlayPlotAttributes(state,action);
+        case CHANGE_HIPS_IMAGE_CONVERSION : return changeHipsImageConversionSettings(state,action);
+        case BYTE_DATA_REFRESH: return markByteDataRefresh(state,action);
+        case CHANGE_IMAGE_VISIBILITY: return changeVisibility(state,action);
+        case REQUEST_LOCAL_DATA: return requestLocalData(state,action);
+        case CHANGE_SUBHIGHLIGHT_PLOT_VIEW: return changeSubHighPlotView(state,action);
+        case MARK_OUT_OF_MEMORY: return doMarkOutOfMemory(state,action);
     }
     return retState;
 }
@@ -224,10 +225,10 @@ function updateImageDisplayData(state,action) {
     const inPlot= primePlot(inPv);
 
     let pv= {...inPv, serverCall:'success'};
-    const zoomFactor= (action.type===Cntlr.ZOOM_IMAGE) ? newZoomFactor : inPlot.zoomFactor;
+    const zoomFactor= (action.type===ZOOM_IMAGE) ? newZoomFactor : inPlot.zoomFactor;
     pv= replacePrimaryPlot(pv,
         WebPlot.replacePlotValues(inPlot,primaryStateJson,zoomFactor, rawData,colorTableId, bias,contrast,nanPixelColor,useRed,useGreen,useBlue));
-    if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv)) {
+    if (action.type===COLOR_CHANGE && !isThreeColor(pv)) {
         const cId= primePlot(pv).colorTableId;
         pv.plots= pv.plots.map( (p) => {
             const newP={...p,colorTableId:cId};
@@ -263,7 +264,7 @@ function updateImageDisplayData(state,action) {
 
     const plot= primePlot(pv); // get the updated on
     let newPlotGroupAry= plotGroupAry;
-    if (action.type===Cntlr.STRETCH_CHANGE) {
+    if (action.type===STRETCH_CHANGE) {
         pv= updateForStretch(pv,plot);
         const rv= plot.plotState.getRangeValues();
         newPlotGroupAry= plotGroupAry.map( (g) => g.plotGroupId===pv.plotGroupId ? {...g,defaultRangeValues:rv} : g);
@@ -462,7 +463,6 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     pv= {...pv, rotation, plotViewCtx: {...pv.plotViewCtx, rotateNorthLock}};
     return updateTransform(pv);
 }
-
 
 
 /**
@@ -828,9 +828,6 @@ function requestLocalData(state, action) {
         const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,dataRequested}: p);
         updatedPv= {...pv,plots};
     }
-
-
-
     const plotViewAry= replacePlotView(state.plotViewAry,updatedPv);
     return {...state, plotViewAry};
 }
@@ -841,8 +838,6 @@ function updatePlotProgress(state,action) {
     const plot= primePlot(plotView);
 
     // validate the update
-
-
     if (!plotView) return state;
     if (requestKey!==plotView.request.getRequestKey()) return state;
     if (plotView.plottingStatusMsg===plottingStatusMsg) return state;

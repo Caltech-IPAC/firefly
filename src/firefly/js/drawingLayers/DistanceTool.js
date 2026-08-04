@@ -2,19 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isBoolean, isEmpty, isUndefined} from 'lodash';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
+import {isBoolean, isEmpty} from 'lodash';
 import {getPreference} from '../core/AppDataCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
+import {
+    ATTACH_LAYER_TO_PLOT, DRAWING_LAYER_KEY, DT_END, DT_MOVE, DT_START, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD
+} from '../visualize/VisConst';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import { makeOffsetPt, makeWorldPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, currentP} from '../visualize/PlotViewUtil.js';
 import {computeDistance, computeScreenDistance, getPositionAngle} from '../visualize/VisUtil';
 import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -59,10 +61,9 @@ var idCnt=0;
 export function distanceToolEndActionCreator(rawAction) {
     return (dispatcher, getState) => {
         var {drawLayer, plotId}= rawAction.payload;
-        dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
+        dispatcher({type:DT_END, payload:rawAction.payload} );
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
-        const srcPlot= primePlot(visRoot(),plotId);
-        const cc= CsysConverter.make(srcPlot);
+        const cc= CsysConverter.make(currentP(plotId).plot);
         const srcWorld = hasWCSProjection(cc);
 
         var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
@@ -74,7 +75,7 @@ export function distanceToolEndActionCreator(rawAction) {
                 });
             }
             else {
-                const p= primePlot(visRoot(),pId);
+                const {plot:p}= currentP(pId);
                 if (srcWorld && hasWCSProjection(p)) {
                     const targetCC= CsysConverter.make(p);
                     const pt0= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.firstPt));
@@ -103,17 +104,15 @@ function creator() {
 
     const drawingDef= makeDrawingDef('red');
     const pairs= {
-        [MouseState.DRAG.key]: DrawLayerCntlr.DT_MOVE,
-        [MouseState.DOWN.key]: DrawLayerCntlr.DT_START,
-        [MouseState.UP.key]: DrawLayerCntlr.DT_END
+        [MouseState.DRAG.key]: DT_MOVE,
+        [MouseState.DOWN.key]: DT_START,
+        [MouseState.UP.key]: DT_END
     };
 
 
     const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
-    const actionTypes= [DrawLayerCntlr.DT_START,
-                      DrawLayerCntlr.DT_MOVE,
-                      DrawLayerCntlr.DT_END];
+    const actionTypes= [DT_START, DT_MOVE, DT_END];
 
     idCnt++;
     const options= {
@@ -128,7 +127,7 @@ function creator() {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => {
-        const plot= primePlot(visRoot(),plotId);
+        const {plot}= currentP(plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
             dispatchAttributeChange({
                 plotId,overlayColorScope:false,
@@ -154,20 +153,20 @@ function getCursor(plotView, screenPt) {
 function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
-        case DrawLayerCntlr.DT_START:
+        case DT_START:
             return start(drawLayer, action);
-        case DrawLayerCntlr.DT_MOVE:
+        case DT_MOVE:
             return drag(drawLayer,action);
-        case DrawLayerCntlr.DT_END:
+        case DT_END:
             return end(action);
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             if (isEmpty(drawLayer?.drawData?.data)) {
                 return attach();
             }
             break;
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
-        case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
+        case FORCE_DRAW_LAYER_UPDATE:
             return dealWithUnits(drawLayer,action);
 
     }
@@ -196,7 +195,7 @@ function makeBaseReturnObj(plot,firstPt,currPt,drawAry )  {
 
 function dealWithUnits(drawLayer,action) {
     const {plotIdAry}= action.payload;
-    const plot= primePlot(visRoot(),plotIdAry[0]);
+    const {plot}= currentP(plotIdAry[0]);
     const cc= CsysConverter.make(plot);
     if (!cc || !plot) return null;
 
@@ -212,7 +211,7 @@ function dealWithUnits(drawLayer,action) {
 function dealWithMods(drawLayer,action) {
     const {changes,plotIdAry}= action.payload;
     if (isBoolean(changes.offsetCal)) {
-        const plot= primePlot(visRoot(),plotIdAry[0]);
+        const {plot}= currentP(plotIdAry[0]);
         const cc= CsysConverter.make(plot);
         if (!cc) return null;
         const selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
@@ -231,7 +230,7 @@ export function getUnitStyle(cc, world) {
     if (!cc || !world) {
         return UNIT_PIXEL_ONLY;
     } else {
-        return isHiPS(primePlot(visRoot(),cc.plotId)) ? UNIT_NO_PIXEL : UNIT_ALL;
+        return isHiPS(currentP(cc.plotId).plot) ? UNIT_NO_PIXEL : UNIT_ALL;
     }
 }
 
@@ -267,7 +266,7 @@ function getMode(plot) {
 
 function start(drawLayer, action) {
     const {imagePt,plotId,shiftDown}= action.payload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const mode= getMode(plot);
     if (!plot) return;
     let retObj= {};
@@ -304,7 +303,7 @@ function start(drawLayer, action) {
 
 function drag(drawLayer,action) {
     const {imagePt,plotId}= action.payload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const cc= CsysConverter.make(plot);
 
     const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
@@ -316,7 +315,7 @@ function drag(drawLayer,action) {
 
 function end(action) {
     const {plotId}= action.payload;
-    const mode= getMode(primePlot(visRoot(),plotId));
+    const mode= getMode(currentP(plotId).plot);
     const retObj= {};
     if (mode==='select') {
         retObj.helpLine= editHelpText;
@@ -494,7 +493,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
 
         let lon1, lon2;
         let lat1, lat2;
-        const plot= primePlot(visRoot(),cc.plotId);
+        const {plot}= currentP(cc.plotId);
         const aHiPS = isHiPS(plot);
         let  corner_pt;
 

@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchProcessScroll} from './ImagePlotCntlr.js';
-import {getPlotViewById, primePlot} from './PlotViewUtil.js';
+import {dispatchProcessScroll, dispatchZoom} from './ImagePlotDispatch';
+import {IMAGE_PLOT_KEY, UserZoomTypes, ZOOM_IMAGE} from './VisConst';
+import {hasWCSProjection, getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from './WebPlot.js';
-import {hasWCSProjection} from './PlotViewUtil.js';
-import {UserZoomTypes, getZoomLevelForScale} from './ZoomUtil.js';
+import {getZoomLevelForScale} from './ZoomUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
@@ -20,7 +20,6 @@ function matcher(oldP,newP) {
             getPixScaleArcSec(oldP)===getPixScaleArcSec(newP)
     };
 }
-
 
 function getZoomDecision(oldP,newP) {
     const m= matcher(oldP,newP);
@@ -64,7 +63,7 @@ export function changePrime(rawAction, dispatcher, getState) {
 function zoomCompleteWatch(action, cancelSelf, {plotId,scrollToImagePt},dispatch,getState) {
     if (action.payload.plotId===plotId) {
         const visRoot= getState()[IMAGE_PLOT_KEY];
-        (action.type===ImagePlotCntlr.ZOOM_IMAGE) && changeScrollToImagePt(visRoot,plotId,scrollToImagePt);
+        (action.type===ZOOM_IMAGE) && changeScrollToImagePt(visRoot,plotId,scrollToImagePt);
         cancelSelf();
     }
 }
@@ -76,7 +75,7 @@ function changeScrollToImagePt(visRoot, plotId, scrollToImagePt) {
 }
 
 const addWatcher= (plotId,scrollToImagePt) => dispatchAddActionWatcher( {
-    callback:zoomCompleteWatch, params:{plotId,scrollToImagePt}, actions:[ImagePlotCntlr.ZOOM_IMAGE] });
+    callback:zoomCompleteWatch, params:{plotId,scrollToImagePt}, actions:[ZOOM_IMAGE] });
 
 
 function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {

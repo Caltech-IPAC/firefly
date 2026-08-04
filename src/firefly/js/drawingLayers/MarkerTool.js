@@ -2,15 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React from 'react';
-import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
-                        dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from '../visualize/DrawLayerDispatch';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, currentP} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit, isOutlineBoxOriginal,
@@ -19,10 +17,14 @@ import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import ShapeDataObj, {lengthToScreenPixel, lengthToImagePixel} from '../visualize/draw/ShapeDataObj.js';
 import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
 import {clone} from '../util/WebUtil.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, MARKER_CREATE, MARKER_END, MARKER_MOVE, MARKER_START,
+    MODIFY_CUSTOM_FIELD
+} from '../visualize/VisConst';
 import {get, set, has, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
+import {dlRoot, getDlAry} from '../visualize/VisStoreRoots';
 import {MarkerToolUI} from './MarkerToolUI.jsx';
 
 const editHelpText='Click the marker and drag to move, click corner and drag to resize';
@@ -38,10 +40,9 @@ export const markerInterval = 3000; // time interval for showing marker with han
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 export var cancelTimeoutProcess = (toP) => { if (toP) clearTimeout(toP); };
-export const getPlot = (pId) => ( primePlot(visRoot(), pId) );
+export const getPlot = (pId) => ( currentP(pId).plot );
 export var getCC = (plotId) => {
-    var plot = primePlot(visRoot(), plotId);
-    return CsysConverter.make(plot);
+    return CsysConverter.make(currentP(plotId).plot);
 };
 export const isGoodPlot = (pId) => (Boolean(getPlot(pId)));
 
@@ -72,12 +73,12 @@ export function markerToolCreateLayerActionCreator(rawAction) {
 
         // plotId could be an array or single value
         var pId = (!plotId || (isArray(plotId)&&plotId.length === 0)) ?
-                   get(visRoot(), 'activePlotId') : isArray(plotId) ? plotId[0] : plotId;
+                   currentP().plotId : isArray(plotId) ? plotId[0] : plotId;
 
         if (pId) {
             dispatchAttachLayerToPlot(drawLayerId, pId, attachPlotGroup);
 
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_CREATE, pId,
+            showMarkersByTimer(dispatcher, MARKER_CREATE, pId,
                                MarkerStatus.attached, markerInterval,  drawLayerId, {isOutline: true, isResize:true});
         }
     };
@@ -135,7 +136,7 @@ export function markerToolStartActionCreator(rawAction) {
         }
 
         if (nextStatus && cc.isPointViewable(refPt)) {
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, plotId, nextStatus, markerInterval,
+            showMarkersByTimer(dispatcher, MARKER_START, plotId, nextStatus, markerInterval,
                                drawLayerId, {isOutline: true, isResize:true}, wpt, evenSize(currentSize), unitT, refPt, move);
         }
     };
@@ -160,7 +161,7 @@ export function markerToolEndActionCreator(rawAction) {
         if ([MarkerStatus.relocate, MarkerStatus.attached_relocate, MarkerStatus.resize].includes(markerStatus)) {
             var wpt = getWorldOrImage(currentPt, getCC(plotId));
 
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_END, plotId,
+            showMarkersByTimer(dispatcher, MARKER_END, plotId,
                                MarkerStatus.select, markerInterval, drawLayerId, {isOutline, isResize}, wpt, evenSize(currentSize), unitT);
         }
     };
@@ -227,7 +228,7 @@ export function markerToolMoveActionCreator(rawAction) {
 
         // resize (newDize) or relocate (wpt),  status remains the same
         if (!isEmpty(move) && cc.isPointViewable(refPt)) {
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, plotId,
+            showMarkersByTimer(dispatcher, MARKER_MOVE, plotId,
                 markerStatus, 0, drawLayerId, isHandle, wpt, newSize, unitT, refPt, move);
         }
     };
@@ -243,17 +244,14 @@ function creator(initPayload) {
 
     var drawingDef= makeDrawingDef('red');
     var pairs= {
-        [MouseState.DRAG.key]: DrawLayerCntlr.MARKER_MOVE,
-        [MouseState.DOWN.key]: DrawLayerCntlr.MARKER_START,
-        [MouseState.UP.key]: DrawLayerCntlr.MARKER_END
+        [MouseState.DRAG.key]: MARKER_MOVE,
+        [MouseState.DOWN.key]: MARKER_START,
+        [MouseState.UP.key]: MARKER_END
     };
 
     //var actionTypes=[DrawLayerCntlr.MARKER_LOC];
 
-    var actionTypes= [DrawLayerCntlr.MARKER_MOVE,
-                      DrawLayerCntlr.MARKER_START,
-                      DrawLayerCntlr.MARKER_END,
-                      DrawLayerCntlr.MARKER_CREATE];
+    var actionTypes= [MARKER_MOVE, MARKER_START, MARKER_END, MARKER_CREATE];
 
     var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
@@ -284,7 +282,7 @@ function creator(initPayload) {
  */
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId} = action.payload;
-    if (![ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
+    if (![CHANGE_CENTER_OF_PROJECTION, ANY_REPLOT].includes(action.type) &&
         (!drawLayerId || drawLayerId !== drawLayer.drawLayerId))  {
         return null;
     }
@@ -292,11 +290,12 @@ function getLayerChanges(drawLayer, action) {
     const dd = Object.assign({}, drawLayer.drawData);
     const {plotIdAry=[]} = drawLayer;
     var   {wpt, size, unitT} = action.payload;
-    var   retV = drawLayer;
+    let   retV = drawLayer;
+    let wptObj;
 
     switch (action.type) {
-        case DrawLayerCntlr.MARKER_CREATE:
-            const activePId = visRoot().activePlotId;
+        case MARKER_CREATE:
+            const activePId = currentP().plotId;
             const sizePlot = lengthSizeUnit(getCC(activePId), MARKER_SIZE, ShapeDataObj.UnitType.PIXEL, ShapeDataObj.UnitType.PIXEL);
             const cc = getCC(activePId);
 
@@ -317,12 +316,11 @@ function getLayerChanges(drawLayer, action) {
 
             return retV;
 
-        case DrawLayerCntlr.MARKER_START:
-        case DrawLayerCntlr.MARKER_MOVE:
-        case DrawLayerCntlr.MARKER_END:
-            var wptObj;
+        case MARKER_START:
+        case MARKER_MOVE:
+        case MARKER_END:
 
-            if (DrawLayerCntlr.MARKER_MOVE === action.type && action.payload.move.newSize) {
+            if (MARKER_MOVE === action.type && action.payload.move.newSize) {
 
                 const {newSize} = action.payload.move;
                 let   marker = get(dd, [DataTypes.DATA, plotId, 'drawObjAry', '0']);
@@ -379,7 +377,7 @@ function getLayerChanges(drawLayer, action) {
 
             return retV;
 
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             if (!isEmpty(get(drawLayer, ['drawData', 'data']))) {
                  get(action.payload, 'plotIdAry', []).forEach((pId) => {
                      if (isEmpty(get(dd, ['data', pId]))) {
@@ -389,15 +387,15 @@ function getLayerChanges(drawLayer, action) {
             }
             return retV;
 
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const {markerText, markerTextLoc} = action.payload.changes;
             if (plotIdAry) {
                 return updateMarkerText(markerText, markerTextLoc, dd[DataTypes.DATA], plotIdAry);
             }
             return {};
 
-        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-        case ImagePlotCntlr.ANY_REPLOT:
+        case CHANGE_CENTER_OF_PROJECTION:
+        case ANY_REPLOT:
             if (plotIdAry) {
                 plotIdAry.forEach((pId) => {
                     if (isGoodPlot(pId) && !isEmpty(get(dd, ['data', pId]))) {
@@ -524,7 +522,7 @@ export function updateVertexInfo(markObj, plotId, dlObj) {
             exclusiveDef = {exclusiveOnDown: true, type: 'anywhere'};
             vertexDef = {points: {[plotId]: []}, pointDist: {[plotId]: MARKER_DISTANCE}};
         } else {
-            const cc = CsysConverter.make(primePlot(visRoot(), plotId));
+            const cc = CsysConverter.make(currentP(plotId).plot);
             const {dist, centerPt} = getVertexDistance(markObj, cc);
 
             exclusiveDef = {exclusiveOnDown: true, type: 'vertexOnly'};
@@ -564,7 +562,7 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet, unitT) {
         text = get(dl, 'title', '');    // title is the default text by the footprint
     }
 
-    const cc = CsysConverter.make(primePlot(visRoot(), plotId));
+    const cc = CsysConverter.make(currentP(plotId).plot);
     var [markerW, markerH] = isArray(size) && size.length > 1 ?  [size[0], size[1]] : [size, size];
     var markObj;
 
@@ -617,7 +615,7 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet, unitT) {
         }
     }
 
-    if ([ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
+    if ([CHANGE_CENTER_OF_PROJECTION, ANY_REPLOT].includes(action.type) &&
         !markerStatus) {
         markerStatus = get(dl.drawData, [DataTypes.DATA, plotId, 'actionInfo', 'markerStatus'],  MarkerStatus.select);
     }
@@ -755,9 +753,9 @@ function attachToNewPlot(drawLayer, newPlotId) {
                                                     get(drawLayer, ['drawData', 'data', existPlotId]);
     //const newPlotId = plotIdAry.find((pId) => isEmpty(data[pId]));
 
-    const existPlot = primePlot(visRoot(), existPlotId);
+    const {plot:existPlot} = currentP(existPlotId);
     const existCC = CsysConverter.make(existPlot);
-    const plot = primePlot(visRoot(), newPlotId);
+    const {plot} = currentP( newPlotId);
     const cc = CsysConverter.make(plot);
 
     //if (hasNoProjection(cc) !== hasNoProjection(existCC)) {

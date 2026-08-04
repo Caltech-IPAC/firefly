@@ -14,22 +14,18 @@ import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CCUtil, CysConverter} from './CsysConverter.js';
-import {UserZoomTypes} from './ZoomUtil.js';
+import {ActionScope, EXPANDED_MODE_RESERVED, ExpandType, IMAGE, MOUSE_CLICK_REASON, UserZoomTypes} from './VisConst';
+import {visRoot} from './VisStoreRoots';
+import {primePlot, hasLocalStretchByteData, getFoV, currentP} from './PlotViewUtil.js';
 import {
-    primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView, getFoV
-} from './PlotViewUtil.js';
-import {
-    isImageViewerSingleLayout, getMultiViewRoot, findViewerWithItemId, IMAGE, getViewer, getExpandedViewerItemIds,
-    EXPANDED_MODE_RESERVED
+    isImageViewerSingleLayout, getMultiViewRoot, findViewerWithItemId, getViewer, getExpandedViewerItemIds,
 } from './MultiViewCntlr.js';
 import {contains, getBoundingBox, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
-
 import {
-    visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
-    dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
-    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON, ExpandType, dispatchMarkOutOfMemory
-} from './ImagePlotCntlr.js';
+    dispatchChangeActivePlotView, dispatchChangeCenterOfProjection, dispatchMarkOutOfMemory, dispatchPlotProgressUpdate,
+    dispatchProcessScroll, dispatchRecenter, dispatchRequestLocalData, dispatchUpdateViewSize, dispatchZoom
+} from './ImagePlotDispatch';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {plotMove} from './PlotMove';
@@ -100,12 +96,12 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
         else if (isWheel(mouseState)) {
-            if (!isActivePlotView(visRoot(),eventPlotId) && isWheelRequireImageActive(eventPlotId)) return;
+            if (!currentP(eventPlotId).active && isWheelRequireImageActive(eventPlotId)) return;
             handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
             return;
         }
         else if (isPinch(mouseState)) {
-            if (!isActivePlotView(visRoot(),eventPlotId)) return;
+            if (!currentP(eventPlotId).active) return;
             handlePinchEvent(plotView,mouseState,screenPt,nativeEv);
             return;
         }
@@ -180,8 +176,7 @@ function isWheelRequireImageActive(plotId) {
  */
 function updateZoom(plotId, paging) {
     const vr= visRoot();
-    const pv= getPlotViewById(vr, plotId);
-    const plot= primePlot(pv);
+    const {pv,plot}= currentP(plotId);
 
     if (!plot) return;
     if (!pv.plotViewCtx.zoomLockingEnabled) return;
@@ -277,7 +272,7 @@ const ImageViewerContents= memo(({drawLayersAry=[],plotView,eventCallback,cursor
 
 
 function scrollMove(plotDrag, plotId, screenX,screenY) {
-    const pv= getPlotViewById(visRoot(), plotId);
+    const {pv}= currentP(plotId);
     const newScrollPt= plotDrag(screenX,screenY, pv);
     if (isImage(primePlot(pv))) {
         dispatchProcessScroll({plotId,scrollPt:newScrollPt});

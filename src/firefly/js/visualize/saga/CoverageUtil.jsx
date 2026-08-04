@@ -8,9 +8,10 @@ import {getTblById} from '../../tables/TableUtil';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser';
 import {memorizeLastCall} from '../../util/WebUtil';
 import {findTableRegionColumn, isOrbitalPathTable, isTableWithRegion} from '../../voAnalyzer/TableAnalysis';
-import {dispatchAttributeChange, visRoot} from '../ImagePlotCntlr';
+import {dispatchAttributeChange} from '../ImagePlotDispatch';
 import {PlotAttribute} from '../PlotAttribute';
-import {DEFAULT_COVERAGE_PLOT_ID, primePlot} from '../PlotViewUtil';
+import {currentP} from '../PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../VisConst';
 import {DrawLayersButton} from '../ui/Buttons';
 import {showDrawingLayerPopup} from '../ui/DrawLayerPanel';
 
@@ -35,7 +36,7 @@ export function updateWarnings(preparedTables, options) {
         })
         .filter(Boolean);
 
-    const plot = primePlot(visRoot(), DEFAULT_COVERAGE_PLOT_ID);
+    const {plot} = currentP(DEFAULT_COVERAGE_PLOT_ID);
     if (!plot) return;
 
     const warnings = {};

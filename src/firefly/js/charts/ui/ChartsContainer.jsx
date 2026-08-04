@@ -7,9 +7,10 @@ import PropTypes from 'prop-types';
 import {isEqual, isEmpty} from 'lodash';
 
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot, dispatchChangeViewerLayout} from '../../visualize/MultiViewCntlr.js';
+import {dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot, dispatchChangeViewerLayout} from '../../visualize/MultiViewCntlr.js';
 import {monitorChanges, findGroupByTblId, getActiveTableId, isFullyLoaded, } from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ACTIVE, TABLE_LOADED, TABLE_SELECT} from '../../tables/TablesCntlr';
+import {DEFAULT_PLOT2D_VIEWER_ID, PLOT2D} from '../../visualize/VisConst';
 import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup, getChartData, dispatchChartAdd, getExpandedChartProps} from '../ChartsCntlr.js';
 import {getDefaultChartProps, allowPinnedCharts} from '../ChartUtil.js';
 

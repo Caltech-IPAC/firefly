@@ -6,18 +6,18 @@ import {flux} from '../core/ReduxFlux.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {dispatchDeleteRegionLayer, dispatchSelectRegion} from '../visualize/DrawLayerDispatch';
 import {drawRegions} from '../visualize/region/RegionDrawer.js';
 import {getRegionIndex, addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {primePlot, getDrawLayerById,  getDrawLayersByType} from '../visualize/PlotViewUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {currentP, getDrawLayerById, getDrawLayersByType} from '../visualize/PlotViewUtil.js';
+import {
+    DETACH_LAYER_FROM_PLOT, DRAWING_LAYER_KEY, REGION_ADD_ENTRY, REGION_DELETE_LAYER, REGION_REMOVE_ENTRY, REGION_SELECT
+} from '../visualize/VisConst';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY,
-                        dispatchDeleteRegionLayer,
-                        dispatchSelectRegion,
-                        dlRoot, getDlAry} from '../visualize/DrawLayerCntlr.js';
+import {dlRoot, getDlAry} from '../visualize/VisStoreRoots';
 
 const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
@@ -28,12 +28,12 @@ function regionsRemoveWatcher(action, cancelSelf, params, dispatch, getState) {
     const {id, plotId}= params;
     if (action.payload.drawLayerId !== id) return params;
     switch (action.type) {
-        case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
+        case  REGION_REMOVE_ENTRY :
             const dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
             if (dl && isEmpty(dl?.drawObjAry)) dispatchDeleteRegionLayer(id, plotId);
             break;
-        case DrawLayerCntlr.REGION_DELETE_LAYER:
-        case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
+        case REGION_DELETE_LAYER:
+        case DETACH_LAYER_FROM_PLOT:
             cancelSelf();
             break;
     }
@@ -104,9 +104,7 @@ function creator(initPayload) {
         destroyWhenAllDetached: true
     };
 
-    const actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
-                       DrawLayerCntlr.REGION_REMOVE_ENTRY,
-                       DrawLayerCntlr.REGION_SELECT];
+    const actionTypes = [REGION_ADD_ENTRY, REGION_REMOVE_ENTRY, REGION_SELECT];
 
     const title = get(initPayload, 'title');
     const id = initPayload.drawLayerId ?  initPayload.drawLayerId : createNewRegionLayerId();
@@ -121,8 +119,7 @@ function creator(initPayload) {
     dispatchAddActionWatcher({
         callback: regionsRemoveWatcher,
         params: {id, plotId: initPayload?.plotId},
-        actions: [DrawLayerCntlr.REGION_REMOVE_ENTRY,
-            DrawLayerCntlr.REGION_DELETE_LAYER, DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]
+        actions: [REGION_REMOVE_ENTRY, REGION_DELETE_LAYER, DETACH_LAYER_FROM_PLOT]
     });
     return dl;
 }
@@ -139,7 +136,7 @@ function highlightChange(mouseStatePayload) {
     var closestObj = null;
     const maxChunk = 1000;
     const {data} = drawLayer.drawData;
-    const plot = primePlot(visRoot(), plotId);
+    const {plot} = currentP(plotId);
 
 
     function* getDrawObj() {
@@ -222,7 +219,7 @@ function getLayerChanges(drawLayer, action) {
      };
 
     switch (action.type) {
-        case DrawLayerCntlr.REGION_SELECT:
+        case REGION_SELECT:
             const {selectedRegion} = action.payload;
 
             Object.keys(dd[DataTypes.HIGHLIGHT_DATA]).forEach((plotId) => {
@@ -263,7 +260,7 @@ function getLayerChanges(drawLayer, action) {
             return Object.assign({}, {highlightedRegion}, {drawData: dd},
                                      {selectRegionDesc});
 
-        case DrawLayerCntlr.REGION_ADD_ENTRY:
+        case REGION_ADD_ENTRY:
             if (regionChanges) {
                 var {layerTitle} = action.payload;
 
@@ -279,7 +276,7 @@ function getLayerChanges(drawLayer, action) {
             }
             return {drawData: dd};
 
-        case DrawLayerCntlr.REGION_REMOVE_ENTRY:
+        case REGION_REMOVE_ENTRY:
             if (regionChanges) {
                 removeRegionsFromData(drawLayer, regionChanges);
 
@@ -340,7 +337,7 @@ function plotHighlightRegion(highlightedObj, plotId, selectMode) {
     }
 
     if (highlightedObj.region) highlightedObj.region.highlighted = 1;
-    var hObj = [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot(), plotId), selectMode)];
+    var hObj = [DrawOp.makeHighlight(highlightedObj, currentP(plotId).plot, selectMode)];
 
     hObj.forEach((oneObj) => {
         oneObj.highlight = 1;

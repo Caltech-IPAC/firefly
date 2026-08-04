@@ -6,8 +6,7 @@
  */
 
 import Enum from 'enum';
-import {primePlot} from './PlotViewUtil.js';
-import {visRoot} from './ImagePlotCntlr.js';
+import {currentP} from './PlotViewUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {isHiPS} from './WebPlot.js';
 import {getHealpixPixel} from './HiPSUtil';
@@ -115,7 +114,7 @@ export function fireMouseReadoutChange({readoutType= STANDARD_READOUT, plotId, r
 export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,eventType='',
                                {shiftDown,controlDown,metaDown}= {}) {
     const payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown,eventType};
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const cc= CysConverter.make(plot);
     if (!plotId || !plot) return payload;
     payload.plotId= plotId;

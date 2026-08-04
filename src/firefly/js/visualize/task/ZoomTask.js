@@ -2,11 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {updateStretchDataAfterZoom} from '../rawData/RawDataOps.js';
-import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
-    getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
+import {dispatchChangeCenterOfProjection, dispatchRecenter, dispatchUpdateViewSize} from '../ImagePlotDispatch';
+import {
+    ActionScope, ANY_REPLOT, FullType, IMAGE_PLOT_KEY, UserZoomTypes, WcsMatchType, ZOOM_HIPS, ZOOM_IMAGE
+} from '../VisConst';
+import {
+    getArcSecPerPix, getEstimatedFullZoomFactor, getNextZoomLevel, getZoomLevelForScale
+} from '../ZoomUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
-import ImagePlotCntlr, { ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
-    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection } from '../ImagePlotCntlr.js';
 import { getPlotViewById, primePlot, operateOnOthersInPositionGroup, applyToOnePvOrAll} from '../PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
@@ -183,7 +186,7 @@ function doZoom(dispatcher,plot,zoomLevel, zoomLockingEnabled, userZoomType,devi
 
 function processHiPSZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLockingEnabled, devicePt, getState) {
     dispatcher({
-        type: ImagePlotCntlr.ZOOM_HIPS,
+        type: ZOOM_HIPS,
         payload: {plotId:plot.plotId, zoomLevel, zoomLockingEnabled, userZoomType, devicePt}
     });
     const {plotId}= plot;
@@ -196,14 +199,14 @@ function processHiPSZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLockingE
             centerProjPt && dispatchChangeCenterOfProjection({plotId, centerProjPt});
         }
     }
-    dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId}});
+    dispatcher({type: ANY_REPLOT, payload: {plotId}});
 }
 
 function processFitsImageZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLockingEnabled, devicePt) {
     const {plotId}= plot;
     dispatcher( {
-        type: ImagePlotCntlr.ZOOM_IMAGE,
+        type: ZOOM_IMAGE,
         payload: { zoomLevel, zoomLockingEnabled,userZoomType, devicePt, plotId, primaryStateJson:undefined}});
-    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+    dispatcher( { type: ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
     void updateStretchDataAfterZoom(plotId, dispatcher);
 }

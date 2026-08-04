@@ -6,8 +6,8 @@
 import React from 'react';
 import {object} from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
-import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
 
 const options= [
     {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},

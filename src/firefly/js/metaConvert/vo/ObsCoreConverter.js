@@ -41,7 +41,7 @@ export function makeObsCoreConverter(table,converterTemplate,options={}) {
     return {
         ...converterTemplate,
         initialLayout,
-        describeThreeColor: threeColor ? describeObsThreeColor : undefined,
+        describeThreeColor: threeColorConfirmed ? describeObsThreeColor : undefined,
         threeColor:threeColorConfirmed,
         canGrid:canGridConfirmed,
         hasRelatedBands:hasRelatedBandsConfirmed,

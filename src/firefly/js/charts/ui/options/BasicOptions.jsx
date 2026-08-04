@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {get, isArray, isEmpty, isString, isUndefined, memoize, reverse, set} from 'lodash';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/VisConst';
 
 import {dispatchChartAdd, dispatchChartUpdate, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -23,7 +24,6 @@ import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 import {colorsOnTypes, getChartProps, toRGBA, TRACE_COLORS, uniqueChartId, isSpectrum} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/MultiViewCntlr.js';
 
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';

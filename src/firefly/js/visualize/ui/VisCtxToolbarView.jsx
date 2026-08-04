@@ -24,14 +24,13 @@ import Validate from '../../util/Validate.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {getExtName, getExtType, getHeader} from '../FitsHeaderUtil.js';
 import {
-    dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion, dispatchChangePrimePlot,
-    visRoot
-} from '../ImagePlotCntlr.js';
+    dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion, dispatchChangePrimePlot
+} from '../ImagePlotDispatch';
 import {PlotAttribute} from '../PlotAttribute';
 import {
-    canConvertBetweenHipsAndFits, convertHDUIdxToImageIdx, convertImageIdxToHDU, getActivePlotView, getCubePlaneCnt,
-    getFormattedWaveLengthUnits, getHDU, getHDUCount, getHDUIndex, getPlotViewById, getPtWavelength, hasPlaneOnlyWLInfo,
-    isImageCube, isMultiHDUFits, primePlot, pvEqualExScroll,
+    canConvertBetweenHipsAndFits, convertHDUIdxToImageIdx, convertImageIdxToHDU, currentP, getCubePlaneCnt,
+    getFormattedWaveLengthUnits, getHDU, getHDUCount, getHDUIndex, getPtWavelength,
+    hasPlaneOnlyWLInfo, isImageCube, isMultiHDUFits, primePlot, pvEqualExScroll, refreshP,
 } from '../PlotViewUtil.js';
 import {makeWorldPt} from '../Point.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
@@ -56,7 +55,7 @@ function makeExtensionButtons(extensionAry,pv) {
                                tip={ext.toolTip} key={ext.id} shortcutKey={ext.shortcutKey}
                                lastTextItem={idx===(extensionAry.length-1)}
                                onClick={() => {
-                                   if (getActivePlotView(visRoot())?.plotId===pv.plotId) {
+                                   if (currentP().plotId===pv.plotId) {
                                        dispatchExtensionActivate(ext,makePlotSelectionExtActivateData(ext,pv));
                                    }
                                }}/>
@@ -84,7 +83,7 @@ function doHiPSFitsConvert(pv,target) {
 
 function changeAutoConvert(pv, auto) {
     dispatchChangeHipsImageConversion({plotId:pv.plotId, hipsImageConversionChanges:{autoConvertOnZoom:auto}});
-    const nextPv= getPlotViewById(visRoot(), pv.plotId);
+    const nextPv= refreshP(pv);
     if (auto) doHiPSImageConversionIfNecessary(nextPv);
 }
 

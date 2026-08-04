@@ -5,8 +5,8 @@
 import Enum from 'enum';
 import {flattenDeep, isEmpty, isObject, isString, isUndefined, pick, values} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
-import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {REINIT_APP} from '../../core/CoreConst';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -33,19 +33,19 @@ import CoordSys from '../CoordSys';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField, dlRoot,
-    getDlAry
-} from '../DrawLayerCntlr.js';
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField
+} from '../DrawLayerDispatch';
 import {getCornersForCell} from '../HiPSUtil';
-import ImagePlotCntlr, {
-    dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS, visRoot
-} from '../ImagePlotCntlr.js';
-import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import {dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS} from '../ImagePlotDispatch';
+import {
+    ADD_VIEWER, DEFAULT_COVERAGE_PLOT_ID, PLOT_HIPS, PLOT_IMAGE, VIEWER_MOUNTED, VIEWER_UNMOUNTED
+} from '../VisConst';
+import {getMultiViewRoot, getViewer } from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {onPlotComplete} from '../PlotCompleteMonitor';
-import {DEFAULT_COVERAGE_PLOT_ID, getDrawLayersByType, isDrawLayerAttached, isDrawLayerVisible} from '../PlotViewUtil';
-import {getDrawLayerById, primePlot} from '../PlotViewUtil.js';
+import {getDrawLayerById, getDrawLayersByType, isDrawLayerAttached, isDrawLayerVisible, currentP} from '../PlotViewUtil';
 import {makeWorldPt, pointEquals} from '../Point.js';
+import {dlRoot, getDlAry} from '../VisStoreRoots';
 import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {WebPlotRequest} from '../WebPlotRequest.js';
@@ -157,8 +157,7 @@ export const getCoverageWatcherDef = () => ({
     watcher : watchCoverage,
     allowMultiples: false,
     actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
-        ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
-        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, MultiViewCntlr.VIEWER_UNMOUNTED]
+        PLOT_IMAGE, PLOT_HIPS, ADD_VIEWER, VIEWER_MOUNTED, VIEWER_UNMOUNTED]
 });
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
@@ -225,7 +224,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         return;
     }
 
-    if (action.type===MultiViewCntlr.VIEWER_MOUNTED || action.type===MultiViewCntlr.ADD_VIEWER)  {
+    if (action.type===VIEWER_MOUNTED || action.type===ADD_VIEWER)  {
         setPreferredHipsOnSharedData();
         updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
         return {paused:false};
@@ -257,12 +256,12 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             handleSelectOrHighlight(action,tblCatIdMap,tbl_id);
             break;
 
-        case MultiViewCntlr.VIEWER_UNMOUNTED:
+        case VIEWER_UNMOUNTED:
             paused = true;
             break;
 
-        case ImagePlotCntlr.PLOT_IMAGE:
-        case ImagePlotCntlr.PLOT_HIPS:
+        case PLOT_IMAGE:
+        case PLOT_HIPS:
             if (action.payload.plotId===DEFAULT_COVERAGE_PLOT_ID) {
                 setTimeout( () => overlayCoverageDrawing(preparedTables,options, tblCatIdMap, undefined), 5);
             }
@@ -436,7 +435,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, preparedTable,
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
-    const plot= primePlot(visRoot(), DEFAULT_COVERAGE_PLOT_ID);
+    const {plot}= currentP(DEFAULT_COVERAGE_PLOT_ID);
     const oldAtt= plot?.attributes ?? {};
 
     const pickList= (isHiPS(plot)) ? [...baseAttributePickList, ...selAttributePickList] : [...baseAttributePickList];
@@ -582,7 +581,7 @@ function makeOverlayCoverageDrawing() {
      * @param {String} affectedTblId - the table id that is affected
      */
     return (preparedTables, options, tblCatIdMap, affectedTblId) => {
-        const plot=  primePlot(visRoot(),DEFAULT_COVERAGE_PLOT_ID);
+        const {plot}=  currentP(DEFAULT_COVERAGE_PLOT_ID);
         if (!plot && !affectedTblId) return;
         const tblIdAry=  plot ? plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS] : [affectedTblId];
         if (isEmpty(tblIdAry)) return;
@@ -887,7 +886,7 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
         if (covHips) return makeRet(covHips,covHips);
         if (sim) return makeRet(BLANK_HIPS_URL, BLANK_HIPS_URL);
     }
-    const plot= primePlot(visRoot(), DEFAULT_COVERAGE_PLOT_ID);
+    const {plot}= currentP(DEFAULT_COVERAGE_PLOT_ID);
     if (isHiPS(plot)) {
         return makeRet(plot.hipsUrlRoot, plot.hipsUrlRoot);
     }

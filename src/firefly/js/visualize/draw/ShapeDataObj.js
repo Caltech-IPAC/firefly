@@ -15,8 +15,7 @@ import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set, isEmpty} from 'lodash';
-import {getPlotViewById, getCenterOfProjection, getFoV} from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {currentP, getCenterOfProjection, getFoV} from '../PlotViewUtil.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
 import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
@@ -64,7 +63,7 @@ export function makePoint(pt, plot, toType) {
 }
 
 export function flipTextLocAroundY(plot, textLoc) {
-    const pv = getPlotViewById(visRoot(), plot.plotId);
+    const {pv} = currentP(plot.plotId);
 
     if (pv?.flipY) {
         const locSet = [TextLocation.CIRCLE_NE, TextLocation.CIRCLE_NW,
@@ -87,7 +86,7 @@ export function flipTextLocAroundY(plot, textLoc) {
 }
 
 export function getPVRotateAngle(plot, angle) {
-     const pv = getPlotViewById(visRoot(), plot.plotId);
+     const {pv} = currentP(plot.plotId);
 
      let angleInRadian = pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
      if (pv.flipY) {
@@ -873,7 +872,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
  */
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
-    const pv = getPlotViewById(visRoot(), plot.plotId);
+    const {pv} = currentP(plot.plotId);
     if (!pv) return false;
     
     const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top',
@@ -1648,7 +1647,7 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, dra
             let   offset = height * (tIndex + 0.5);
             const r = -1;
 
-            const pv = getPlotViewById(visRoot(), plot.plotId);
+            const {pv} = currentP(plot.plotId);
 
             if ((!pv.flipY && slope >= -Math.PI/2 && slope < Math.PI/2 && !pv.flipY) ||
                 (pv.flipY && (slope < -Math.PI/2 || slope >= Math.PI/2 ))) { // quadrant 1 & 4 for no flipY

@@ -22,6 +22,7 @@ import {
 import {getActiveTableId, getMetaEntry, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
+import {UPDATE_VIEWER_CUSTOM_DATA} from '../visualize/VisConst';
 import {
     getObsCoreAccessURL, getObsCoreSRegion, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
 } from '../voAnalyzer/TableAnalysis';
@@ -485,7 +486,7 @@ export function makeMultiTableActivate(activateObj,activateParams) {
         const watcher= (action) => {
             let idx;
             switch (action.type) {
-                case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
+                case UPDATE_VIEWER_CUSTOM_DATA:
                     const chartId= action.payload.customData.activeItemId;
                     if (!chartList.includes(chartId)) return;
                     idx= chartList.indexOf(chartId);
@@ -506,7 +507,7 @@ export function makeMultiTableActivate(activateObj,activateParams) {
             }
         };
 
-        dispatchAddActionWatcher({id, actions:[MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,TBL_RESULTS_ACTIVE], callback:watcher});
+        dispatchAddActionWatcher({id, actions:[UPDATE_VIEWER_CUSTOM_DATA,TBL_RESULTS_ACTIVE], callback:watcher});
         return () => {
             const tbl_id= getActiveTableId(activateParams.tableGroupViewerId);
             if (tbl_id) {

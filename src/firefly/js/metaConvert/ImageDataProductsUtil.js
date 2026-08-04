@@ -8,19 +8,22 @@ import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {getActiveTableId, getCellValue, getTblById} from '../tables/TableUtil.js';
 import {uniqueID} from '../util/WebUtil';
 import {allBandAry} from '../visualize/Band.js';
-import ImagePlotCntlr, {
-    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotImage, dispatchZoom, visRoot
-} from '../visualize/ImagePlotCntlr.js';
+import {visRoot} from '../visualize/VisStoreRoots';
 import {
-    DEFAULT_FITS_VIEWER_ID, dispatchReplaceViewerItems, getLayoutType, getMultiViewRoot, getViewerItemIds, GRID, IMAGE
+    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotImage, dispatchZoom
+} from '../visualize/ImagePlotDispatch';
+import {
+    CHANGE_ACTIVE_PLOT_VIEW, DEFAULT_FITS_VIEWER_ID, GRID, IMAGE, PLOT_IMAGE, PLOT_IMAGE_FAIL, ZoomType
+} from '../visualize/VisConst';
+import {
+    dispatchReplaceViewerItems, getLayoutType, getMultiViewRoot, getViewerItemIds,
 } from '../visualize/MultiViewCntlr.js';
-import {PlotAttribute as PlotAttribues, PlotAttribute} from '../visualize/PlotAttribute.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getPlotGroupById} from '../visualize/PlotGroup.js';
 import {
-    getActivePlotView, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
+    currentP, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
 } from '../visualize/PlotViewUtil.js';
 import { getDefaultImageColorTable, isImageDataRequestedEqual, WebPlotRequest } from '../visualize/WebPlotRequest.js';
-import {ZoomType} from '../visualize/ZoomType.js';
 
 
 export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, highlightPlotId) {
@@ -114,12 +117,12 @@ export function createSingleImageExtraction(request, sourceObsCoreData, dlData) 
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
     const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : copyRequest(request);
-    const attributes= {[PlotAttribues.USER_PINNED_IMAGE]:true};
+    const attributes= {[PlotAttribute.USER_PINNED_IMAGE]:true};
     if (sourceObsCoreData) attributes.sourceObsCoreData= sourceObsCoreData;
     if (dlData) attributes.dlData= dlData;
     return () => {
         if (isArray(wpRequest)) {
-            const activePlotId= getActivePlotView(visRoot())?.plotId;
+            const activePlotId=currentP().plotId;
             const idx= plotIds.findIndex( (id) => id===activePlotId);
             if (idx<0) return;
             dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID,
@@ -136,7 +139,7 @@ export function createSingleImageExtraction(request, sourceObsCoreData, dlData) 
 function watchForPvChange(action, cancelSelf, params) {
     const {payload,type}= action;
 
-    if (type===ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW) {
+    if (type===CHANGE_ACTIVE_PLOT_VIEW) {
         params?.onActivePvChanged(payload.plotId);
         return;
     }
@@ -149,7 +152,7 @@ export function setupWatchForPvChange(watcherId, onActivePvChanged) {
         callback: watchForPvChange,
         id: watcherId,
         params: {onActivePvChanged},
-        actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW]
+        actions: [CHANGE_ACTIVE_PLOT_VIEW]
     } );
 }
 
@@ -159,12 +162,12 @@ function watchForCompletedPlot(action, cancelSelf, params) {
     const {afterComplete, plotId}= params;
     const {payload,type}= action;
 
-    if (type===ImagePlotCntlr.PLOT_IMAGE_FAIL) {
+    if (type===PLOT_IMAGE_FAIL) {
         if (payload.plotId!==plotId) return;
         cancelSelf();
         return;
     }
-    if (type===ImagePlotCntlr.PLOT_IMAGE) {
+    if (type===PLOT_IMAGE) {
         if (!payload.pvNewPlotInfoAry.some( (n) => n.plotId===plotId)) {
             return;
         }
@@ -187,7 +190,7 @@ export function zoomPlotPerViewSize(plotId, zoomType) {
         dispatchAddActionWatcher( {
             callback: watchForCompletedPlot,
             params: {plotId, afterComplete},
-            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+            actions: [PLOT_IMAGE, PLOT_IMAGE_FAIL]
         } );
     }
     else {
@@ -204,7 +207,7 @@ function onImagePlotComplete(plotId,onComplete) {
         dispatchAddActionWatcher( {
             callback: watchForCompletedPlot,
             params: {plotId, afterComplete},
-            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+            actions: [PLOT_IMAGE, PLOT_IMAGE_FAIL]
         } );
     }
     else {
@@ -308,7 +311,7 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
 
     // clean up unused Ids
     const cleanUpIds= difference(plotIdsInViewer,plottingIds);
-    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId, holdWcsMatch:true}));
+    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
 
 
     // prepare standard plot

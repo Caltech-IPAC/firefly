@@ -3,31 +3,23 @@
  */
 import {difference, has, union, without} from 'lodash';
 import {call, race, take} from 'redux-saga/effects';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+
+import {REINIT_APP} from '../core/CoreConst';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../core/ReduxFlux.js';
-import ImagePlotCntlr, {dispatchRecenter, visRoot} from './ImagePlotCntlr.js';
-import {ExpandType, WcsMatchType, IMAGE, EXPANDED_MODE_RESERVED, NewPlotMode} from './VisConst.js';
-export {IMAGE, EXPANDED_MODE_RESERVED, NewPlotMode} from './VisConst.js';
+
+import {dispatchRecenter} from './ImagePlotDispatch';
 import {PlotAttribute} from './PlotAttribute.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
-
-export const META_VIEWER_ID = 'triViewImageMetaData';
-export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
-export const IMAGE_MULTI_VIEW_PREFIX= 'MultiViewCntlr';
-
-export const ADD_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.AddViewer`;
-export const REMOVE_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.RemoveViewer`;
-export const VIEWER_MOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewMounted`;
-export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
-export const VIEWER_SCROLL= `${IMAGE_MULTI_VIEW_PREFIX}.viewScroll`;
-export const BOTTOM_UI_COMPONENT= `${IMAGE_MULTI_VIEW_PREFIX}.bottomUIComponent`;
-export const ADD_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.addViewerItems`;
-export const REMOVE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.removeViewerItems`;
-export const REPLACE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.replaceViewerItems`;
-export const CHANGE_VIEWER_LAYOUT= `${IMAGE_MULTI_VIEW_PREFIX}.changeViewerLayout`;
-export const UPDATE_VIEWER_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateViewerCustomData`;
-export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
+import {
+    ADD_TO_AUTO_RECEIVER, ADD_VIEWER, ADD_VIEWER_ITEMS, BOTTOM_UI_COMPONENT, CHANGE_ACTIVE_PLOT_VIEW,
+    CHANGE_VIEWER_LAYOUT, DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID, DELETE_PLOT_VIEW, EXPANDED_MODE_RESERVED,
+    ExpandType, GRID, GRID_FULL, IMAGE, IMAGE_MULTI_VIEW_KEY, META_VIEWER_ID, NewPlotMode, PLOT2D, PLOT_HIPS,
+    PLOT_IMAGE, PLOT_IMAGE_START, PLOT_PROXY, REMOVE_PROXY, REMOVE_VIEWER, REMOVE_VIEWER_ITEMS, REPLACE_VIEWER_ITEMS,
+    SINGLE, UPDATE_VIEW_SIZE, UPDATE_VIEWER_CUSTOM_DATA, VIEWER_MOUNTED, VIEWER_SCROLL, VIEWER_UNMOUNTED, WcsMatchType,
+    WRAPPER,
+} from './VisConst.js';
+import {visRoot} from './VisStoreRoots';
 
 
 /**
@@ -36,24 +28,11 @@ export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceive
 export const getMultiViewRoot= () => flux.getState()[IMAGE_MULTI_VIEW_KEY];
 
 export default {
+    reducer,
     reducers: () => ({[IMAGE_MULTI_VIEW_KEY]: reducer}),
     actionCreators: () => ({ [CHANGE_VIEWER_LAYOUT]: changeViewerLayoutActionCreator }),
-    ADD_VIEWER, REMOVE_VIEWER, ADD_VIEWER_ITEMS, REMOVE_VIEWER_ITEMS, REPLACE_VIEWER_ITEMS,
-    VIEWER_MOUNTED, VIEWER_UNMOUNTED, UPDATE_VIEWER_CUSTOM_DATA, CHANGE_VIEWER_LAYOUT,
-    reducer
 };
 
-
-export const SINGLE='single';
-export const GRID='grid';
-// IMAGE and EXPANDED_MODE_RESERVED are defined in VisConst.js and re-exported above.
-export const PLOT2D='plot2d';
-export const WRAPPER='wrapper';
-export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
-export const DEFAULT_PLOT2D_VIEWER_ID= 'DEFAULT_PLOT2D_VIEWER_ID';
-export const PINNED_CHART_VIEWER_ID = 'PINNED_CHART_VIEWER_ID';
-export const GRID_RELATED='gridRelated';
-export const GRID_FULL='gridFull';
 
 // NewPlotMode is defined in VisConst.js and re-exported above.
 
@@ -259,7 +238,7 @@ export function* watchForResizing(options) {
 
     while (waitingForMore) {
         const raceWinner = yield race({
-            action: take([ImagePlotCntlr.UPDATE_VIEW_SIZE]),
+            action: take([UPDATE_VIEW_SIZE]),
             timer: call(delay, 1000)
         });
         const {action}= raceWinner;
@@ -275,7 +254,7 @@ export function* watchForResizing(options) {
 
     const vr= visRoot();
     const pv= getPlotViewById(vr, vr.mpwWcsPrimId);
-    if (pv && primePlot(vr, pv) && vr.wcsMatchType) {
+    if (primePlot(pv) && vr.wcsMatchType) {
         const centerOnImage= (
             vr.wcsMatchType===WcsMatchType.Standard  ||
             vr.wcsMatchType===WcsMatchType.Pixel ||
@@ -382,18 +361,14 @@ export const findViewerWithItemId= (multiViewRoot, itemId, containerType) =>
         entry.containerType===containerType)?.viewerId;
 
 /**
- *
  * @param {MultiViewerRoot} multiViewRoot
  * @param {string} containerType
- * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @return {Viewer}
  */
-export function getAViewFromMultiView(multiViewRoot, containerType, renderTreeId= undefined) {
-    const viewer= multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&
-                                            !entry.customData.independentLayout &&
-                                            entry.containerType===containerType &&
-                                            (entry?.canReceiveNewPlots===NewPlotMode.create_replace.key)));
-    return viewer;
+export function getAViewFromMultiView(multiViewRoot, containerType) {
+    return multiViewRoot.find(
+        (entry) => (!entry.viewerId.includes('RESERVED') && !entry.customData.independentLayout &&
+            entry.containerType===containerType && (entry?.canReceiveNewPlots===NewPlotMode.create_replace.key)));
 }
 
 /**
@@ -452,18 +427,18 @@ function reducer(state=initState(), action={}) {
             return changeBottomUIComponent(state,payload.viewerId,payload.bottomUIComponent);
         case UPDATE_VIEWER_CUSTOM_DATA:
             return updateCustomData(state,action);
-        case ImagePlotCntlr.DELETE_PLOT_VIEW:
-        case ImagePlotCntlr.REMOVE_PROXY:
+        case DELETE_PLOT_VIEW:
+        case REMOVE_PROXY:
             return deleteSingleItem(state,payload.plotId, IMAGE);
-        case ImagePlotCntlr.PLOT_HIPS:
-        case ImagePlotCntlr.PLOT_IMAGE_START:
-        case ImagePlotCntlr.PLOT_PROXY:
+        case PLOT_HIPS:
+        case PLOT_IMAGE_START:
+        case PLOT_PROXY:
             const {viewerId, plotId, renderTreeId, pvOptions:{canBeExpanded= true}={} } = payload;
             if (!imageViewerCanAdd(state,viewerId, plotId)) return state;
             state= addItems(state,payload.viewerId,[payload.plotId], IMAGE, renderTreeId);
             return canBeExpanded ? addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE) : state;
-        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-        case ImagePlotCntlr.PLOT_IMAGE:
+        case CHANGE_ACTIVE_PLOT_VIEW:
+        case PLOT_IMAGE:
             return changeActiveItem(state, payload, IMAGE);
         case REINIT_APP:
             return initState();

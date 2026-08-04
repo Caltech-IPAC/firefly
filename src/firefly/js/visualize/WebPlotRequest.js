@@ -3,7 +3,7 @@ import {get, isString, isFunction, isPlainObject, isArray, join, omit, pick, isO
 import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
-import {ZoomType} from './ZoomType.js';
+import {ZoomType} from './VisConst';
 import {RangeValues} from './RangeValues.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import CoordinateSys from 'firefly/visualize/CoordSys.js';

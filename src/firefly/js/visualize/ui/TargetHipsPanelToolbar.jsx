@@ -4,8 +4,7 @@ import React from 'react';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {visRoot} from '../ImagePlotCntlr.js';
-import {getActivePlotView} from '../PlotViewUtil.js';
+import {currentP} from '../PlotViewUtil.js';
 import {BOX_CHOICE_KEY, CONE_CHOICE_KEY} from './CommonUIKeys.js';
 import {SelectAreaButton} from './SelectAreaUIComponents.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
@@ -24,7 +23,7 @@ export const HelpLines= ({whichOverlay, selectionHelpText, usingRadius}) => {
     const imageStyle={width:16, height:16};
 
     const selectButton= (
-        <SelectAreaButton {...{pv:getActivePlotView(visRoot()),modalEndInfo,setModalEndInfo,
+        <SelectAreaButton {...{pv:currentP().pv,modalEndInfo,setModalEndInfo,
             tip:'Reselect an area for search', imageStyle, style:{paddingTop:3}}}/>
     );
 
@@ -66,10 +65,10 @@ export const HelpLines= ({whichOverlay, selectionHelpText, usingRadius}) => {
 };
 
 
-export function TargetHipsPanelToolbar({visRoot, toolbarStyle={},
+export function TargetHipsPanelToolbar({toolbarStyle={},
                                            whichOverlay= CONE_CHOICE_KEY, viewerId, menuItemKeys,
                                            toolbarHelpId='hips.VisualSelection'}) {
-    const {showImageToolbar=true}= getActivePlotView(visRoot)?.plotViewCtx.menuItemKeys ?? {};
+    const {showImageToolbar=true}= currentP().pv?.plotViewCtx.menuItemKeys ?? {};
     if (!showImageToolbar) return <div/>;
 
     return (
@@ -87,7 +86,6 @@ export function TargetHipsPanelToolbar({visRoot, toolbarStyle={},
 
 TargetHipsPanelToolbar.propTypes= {
     dlAry : PropTypes.arrayOf(PropTypes.object),
-    visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string,
     makeDropDownFunc: PropTypes.func,

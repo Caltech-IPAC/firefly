@@ -3,12 +3,11 @@
  */
 
 
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {MODIFY_CUSTOM_FIELD} from '../visualize/VisConst';
 
 const ID= 'STATS_POINT';
 const TYPE_ID= 'STATS_POINT_TYPE';
@@ -38,7 +37,7 @@ function creator(initPayload) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             let drawData = {};
             const {changes} = action.payload;
 

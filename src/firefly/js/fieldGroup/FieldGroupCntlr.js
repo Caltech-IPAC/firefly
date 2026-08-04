@@ -5,7 +5,7 @@
 import {flux} from '../core/ReduxFlux.js';
 import {isEqual, isUndefined} from 'lodash';
 import {revalidateFields} from './FieldGroupUtils.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {REINIT_APP} from '../core/CoreConst';
 import {isDefined} from 'firefly/util/WebUtil.js';
 
 /**

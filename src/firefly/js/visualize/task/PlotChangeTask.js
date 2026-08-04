@@ -4,19 +4,15 @@
 
 import {isNumber, isArray, set} from 'lodash';
 import {logger} from '../../util/Logger.js';
-import ImagePlotCntlr, {
-    IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot, dispatchMarkOutOfMemory
-} from '../ImagePlotCntlr.js';
+import {dispatchMarkOutOfMemory, dispatchWcsMatch} from '../ImagePlotDispatch';
 import {
-    primePlot,
-    getPlotViewById,
-    operateOnOthersInOverlayColorGroup,
-    getPlotStateAry,
-    isThreeColor,
-    findPlot,
-    getOverlayById
+    primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry,
+    isThreeColor, findPlot, getOverlayById, currentP,
 } from '../PlotViewUtil.js';
 import {callCrop} from '../../rpc/PlotServicesJson.js';
+import {
+    ActionScope, ANY_REPLOT, COLOR_CHANGE, CROP, CROP_FAIL, CROP_START, IMAGE_PLOT_KEY, STRETCH_CHANGE
+} from '../VisConst';
 import {WebPlotResult} from '../WebPlotResult.js';
 import {isHiPS, isImage, WebPlot} from '../WebPlot.js';
 import {locateOtherIfMatched} from './WcsMatchTask';
@@ -37,7 +33,7 @@ import {parseAnyPt} from 'firefly/visualize/Point';
 export function requestLocalDataActionCreator(rawAction) {
     return (dispatcher) => {
         const {plotId, plotImageId, dataRequested= true, imageOverlayId}=rawAction.payload;
-        const pv= getPlotViewById(visRoot(),plotId);
+        const {pv}= currentP(plotId);
         const plot= imageOverlayId ? getOverlayById(pv,imageOverlayId)?.plot : findPlot(pv,plotImageId);
         if (!isImage(plot)) return;
         if (dataRequested===false) {
@@ -105,10 +101,10 @@ function colorChangeImage(store,dispatcher,payload) {
         if (abort) return;
         const {bias, contrast, colorTableId, nanPixelColor, bandUse}= colorChangeResults;
         dispatcher( {
-            type: ImagePlotCntlr.COLOR_CHANGE,
+            type: COLOR_CHANGE,
             payload: { plotId, bias, contrast, colorTableId, nanPixelColor, ...bandUse }
         });
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+        dispatcher( { type: ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
     };
 
 
@@ -150,9 +146,9 @@ function colorChangeHiPS(store, dispatcher, payload) {
 
     const doDispatch= (plotId) => {
         dispatcher( {
-            type:ImagePlotCntlr.COLOR_CHANGE,
+            type:COLOR_CHANGE,
             payload: { plotId, colorTableId: cbarId, bias, contrast}});
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+        dispatcher( { type: ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
     };
 
     doDispatch(plotId,plot.plotState);
@@ -239,15 +235,14 @@ export function cropActionCreator(rawAction) {
 function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll, originalWcsMatchType) {
 
     const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
-        type: ImagePlotCntlr.CROP,
-        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}]}
+        type: CROP, payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}]}
     });
 
-    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.CROP_FAIL,
+    const makeFailAction= (plotId) => ({ type: CROP_FAIL,
         payload: {plotId, message: 'Crop Failed', error: Error('crop: payload failed')}
     });
 
-    dispatcher( { type: ImagePlotCntlr.CROP_START, payload: {plotId:pv.plotId, message:'Cropping...'} } );
+    dispatcher( { type: CROP_START, payload: {plotId:pv.plotId, message:'Cropping...'} } );
     callCrop(getPlotStateAry(pv), imagePt1, imagePt2, cropMultiAll)
         .then( (wpResult) => {
             processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction);
@@ -267,10 +262,10 @@ function doStretchDispatch(dispatcher,getState, store,plotId,stretchData) {
     stretchData.forEach( (sd) =>  plotState.setRangeValues(Band.get(sd.band),RangeValues.parse(sd.rv)));
 
     dispatcher( {
-        type: ImagePlotCntlr.STRETCH_CHANGE,
+        type: STRETCH_CHANGE,
         payload: { plotId, primaryStateJson : PlotState.convertToJSON(plotState) }
     });
-    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+    dispatcher( { type: ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
 
 }
 
@@ -308,7 +303,7 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
             });
 
             dispatcher( makeSuccessAction(pv.plotId, plotAry, overlayPlotViews));
-            dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry: [pv.plotId]}});
+            dispatcher({type: ANY_REPLOT, payload: {plotIdAry: [pv.plotId]}});
             successSent = true;
 
         }

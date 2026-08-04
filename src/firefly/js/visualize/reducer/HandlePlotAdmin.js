@@ -2,33 +2,32 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
+import {ExpandType} from '../VisConst';
+import {
+    API_TOOLS_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_EXPANDED_MODE, CHANGE_MOUSE_READOUT_MODE,
+    CHANGE_POINT_SELECTION, CHANGE_TABLE_AUTO_SCROLL, DELETE_PLOT_VIEW, EXPANDED_AUTO_PLAY, USE_TABLE_AUTO_SCROLL,
+    WCS_MATCH
+} from '../VisConst';
 import {getPlotViewById, isImageExpanded} from '../PlotViewUtil.js';
 
 export function reducer(state, action) {
     switch (action.type) {
-        case Cntlr.API_TOOLS_VIEW:
-            return {...state,apiToolsView:action.payload.apiToolsView};
-        case Cntlr.CHANGE_ACTIVE_PLOT_VIEW:
-            return changeActivePlotView(state,action);
-        case Cntlr.CHANGE_EXPANDED_MODE:
-            return changeExpandedMode(state,action);
-        case Cntlr.CHANGE_MOUSE_READOUT_MODE:
-            return changeMouseReadout(state, action);
-        case Cntlr.CHANGE_POINT_SELECTION:
-            return changePointSelection(state,action);
-        case Cntlr.CHANGE_TABLE_AUTO_SCROLL:
+        case API_TOOLS_VIEW: return {...state,apiToolsView:action.payload.apiToolsView};
+        case CHANGE_ACTIVE_PLOT_VIEW: return changeActivePlotView(state,action);
+        case CHANGE_EXPANDED_MODE: return changeExpandedMode(state,action);
+        case CHANGE_MOUSE_READOUT_MODE: return changeMouseReadout(state, action);
+        case CHANGE_POINT_SELECTION: return changePointSelection(state,action);
+        case CHANGE_TABLE_AUTO_SCROLL:
             if (state.autoScrollToHighlightedTableRow===action.payload.enabled) return state;
             return {...state, autoScrollToHighlightedTableRow:action.payload.enabled};
-        case Cntlr.USE_TABLE_AUTO_SCROLL:
+        case USE_TABLE_AUTO_SCROLL:
             if (state.useAutoScrollToHighlightedTableRow===action.payload.enabled) return state;
             return {...state, useAutoScrollToHighlightedTableRow:action.payload.useAutoScroll};
-        case Cntlr.DELETE_PLOT_VIEW:
-            return deletePlotView(state,action);
-        case Cntlr.WCS_MATCH:
+        case DELETE_PLOT_VIEW: return deletePlotView(state,action);
+        case WCS_MATCH:
             const {wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId}= action.payload;
             return {...state,wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId};
-        case Cntlr.EXPANDED_AUTO_PLAY:
+        case EXPANDED_AUTO_PLAY:
             if (state.singleAutoPlay===action.payload.autoPlayOn) return state;
             return {...state,singleAutoPlay:action.payload.autoPlayOn};
     }

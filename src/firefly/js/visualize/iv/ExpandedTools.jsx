@@ -8,18 +8,16 @@ import PropTypes from 'prop-types';
 import {Button, Checkbox, IconButton, Sheet, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
-import {
-    ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot,
-} from '../ImagePlotCntlr.js';
+import {EXPANDED_MODE_RESERVED, ExpandType} from '../VisConst';
+import {visRoot} from '../VisStoreRoots';
 import {HIDDEN} from '../ImViewFilterDisplay';
-import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
+import {primePlot, currentP} from '../PlotViewUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {DisplayTypeButtonGroup} from '../ui/Buttons.jsx';
 import {ViewOptionsButton} from '../ui/ExpandedOptionsPopup.jsx';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotDispatch';
 import {
-    getMultiViewRoot, getExpandedViewerItemIds, getViewer, EXPANDED_MODE_RESERVED, dispatchViewerScroll,
-    getViewerItemIds,
+    getMultiViewRoot, getExpandedViewerItemIds, getViewer, dispatchViewerScroll, getViewerItemIds,
 } from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
@@ -50,7 +48,7 @@ function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
 
 function getState() {
     const {expandedMode,activePlotId, singleAutoPlay, plotViewAry}= visRoot();
-    return {expandedMode,activePlotId, singleAutoPlay, plotViewAry, pv:getActivePlotView(visRoot())};
+    return {expandedMode,activePlotId, singleAutoPlay, plotViewAry, pv:currentP().pv};
 }
 
 export function ExpandedTools({closeFunc}) {

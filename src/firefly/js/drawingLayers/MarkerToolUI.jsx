@@ -10,7 +10,8 @@ import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
 import {flux} from '../core/ReduxFlux.js';
-import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
+import {DRAWING_LAYER_KEY} from '../visualize/VisConst';
 import {getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {addNewDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';
 

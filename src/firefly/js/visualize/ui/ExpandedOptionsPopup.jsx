@@ -20,7 +20,8 @@ import {
     isPlotFilterOrSortOutOfSync, makeImViewDisplayModel, removeImageViewDisplaySelected, syncSort,
     updateImageViewDisplay, addExpandFilterSyncWatcher
 } from '../ImViewFilterDisplay.js';
-import {dispatchAddViewer, dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
+import {dispatchAddViewer, dispatchAddViewerItems} from '../MultiViewCntlr.js';
+import {EXPANDED_MODE_RESERVED, IMAGE} from '../VisConst';
 import {deleteAllFailedPlots, isPlotViewArysEqual} from '../PlotViewUtil.js';
 import {ListViewButton} from './Buttons.jsx';
 

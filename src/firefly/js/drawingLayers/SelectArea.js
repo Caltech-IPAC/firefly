@@ -3,8 +3,11 @@
  */
 import {get, isEmpty} from 'lodash';
 import Enum from 'enum';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
-import ImagePlotCntlr, {dispatchAttributeChange, visRoot} from '../visualize/ImagePlotCntlr.js';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
+import {
+    ATTACH_LAYER_TO_PLOT, CHANGE_HIPS, DRAWING_LAYER_KEY, SELECT_AREA_END, SELECT_AREA_MOVE, SELECT_AREA_START,
+    SELECT_MOUSE_LOC
+} from '../visualize/VisConst';
 import {makeDrawingDef, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {closeToolbarModalLayers} from '../visualize/ui/ToolbarToolModalEnd';
@@ -17,7 +20,7 @@ import {computeScreenDistance, getBoundingBox} from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
 import FootPrintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {getDrawLayerById, getPlotViewById, hasWCSProjection, primePlot} from '../visualize/PlotViewUtil.js';
+import { currentP, getDrawLayerById, hasWCSProjection, primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {SelectedShape} from './SelectedShape';
 
@@ -47,10 +50,8 @@ export function selectAreaEndActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const {plotId}= rawAction.payload;
         let {drawLayer}= rawAction.payload;
-        const pv= getPlotViewById(visRoot(),plotId);
-        const plot= primePlot(pv);
-        dispatcher({type:DrawLayerCntlr.SELECT_AREA_END, payload:rawAction.payload} );
-
+        const {pv,plot}= currentP(plotId);
+        dispatcher({type:SELECT_AREA_END, payload:rawAction.payload} );
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
 
         if (drawLayer.drawData.data) {
@@ -76,16 +77,13 @@ function creator(initPayload) {
 
     const drawingDef= makeDrawingDef('black');
     const pairs= {
-        [MouseState.MOVE.key]: DrawLayerCntlr.SELECT_MOUSE_LOC,
-        [MouseState.DRAG.key]: DrawLayerCntlr.SELECT_AREA_MOVE,
-        [MouseState.DOWN.key]: DrawLayerCntlr.SELECT_AREA_START,
-        [MouseState.UP.key]: DrawLayerCntlr.SELECT_AREA_END
+        [MouseState.MOVE.key]: SELECT_MOUSE_LOC,
+        [MouseState.DRAG.key]: SELECT_AREA_MOVE,
+        [MouseState.DOWN.key]: SELECT_AREA_START,
+        [MouseState.UP.key]: SELECT_AREA_END
     };
 
-    const actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
-                      DrawLayerCntlr.SELECT_AREA_MOVE,
-                      DrawLayerCntlr.SELECT_AREA_END,
-                      DrawLayerCntlr.SELECT_MOUSE_LOC];
+    const actionTypes= [SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC];
 
     const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
@@ -108,7 +106,7 @@ function creator(initPayload) {
 
 function onDetach(drawLayer,action) {
     action.payload.plotIdAry.forEach( (plotId) => {
-        const plot= primePlot(visRoot(),plotId);
+        const {plot}= currentP(plotId);
         if (plot?.attributes[PlotAttribute.SELECTION]) {
             dispatchAttributeChange({plotId,overlayColorScope:false,
                 changes: {
@@ -146,20 +144,20 @@ function getCursor(plotView, screenPt) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case DrawLayerCntlr.SELECT_AREA_START:
+        case SELECT_AREA_START:
             return start(drawLayer,action);
-        case DrawLayerCntlr.SELECT_AREA_MOVE:
+        case SELECT_AREA_MOVE:
             return drag(drawLayer,action);
-        case DrawLayerCntlr.SELECT_AREA_END:
+        case SELECT_AREA_END:
             return end(drawLayer,action);
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attach();
             }
             break;
-        case DrawLayerCntlr.SELECT_MOUSE_LOC:
+        case SELECT_MOUSE_LOC:
             return moveMouse(drawLayer,action);
-        case ImagePlotCntlr.CHANGE_HIPS:
+        case CHANGE_HIPS:
             if (action.payload.coordSys) {
                 setTimeout(() => closeToolbarModalLayers(),4);
             }
@@ -181,7 +179,7 @@ function attach() {
 
 function moveMouse(drawLayer,action) {
     const {screenPt,plotId}= action.payload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const mode= getMode(plot);
     if (plot && mode==='edit') {
         const cc= CsysConverter.make(plot);
@@ -206,7 +204,7 @@ function moveMouse(drawLayer,action) {
 
 function start(drawLayer,action) {
     const {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const mode= getMode(plot);
     if (!plot) return;
 
@@ -268,8 +266,7 @@ function getPtAryForCorners(plot,pt0,pt1) {
 
 function drag(drawLayer,action) {
     const {imagePt,plotId}= action.payload;
-    const pv= getPlotViewById(visRoot(),plotId);
-    const plot= primePlot(pv);
+    const {pv,plot}= currentP(plotId);
     if (!plot) return;
     const drawSel= makeSelectObj(drawLayer.originalCenterPt, drawLayer.firstPt, imagePt, plot, pv.rotation, plot.title, drawLayer);
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
@@ -281,7 +278,7 @@ function drag(drawLayer,action) {
 }
 
 function end(drawLayer,action) {
-    const mode= getMode(primePlot(visRoot(),action.payload.plotId));
+    const mode= getMode(currentP(action.payload.plotId).plot);
     return  (mode==='select') ? {helpLine: editHelpText} : {};
 }
 

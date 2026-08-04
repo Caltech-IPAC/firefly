@@ -5,51 +5,31 @@
 import {isEmpty, isString} from 'lodash';
 import {getHttpErrorMessage} from '../../util/HttpErrorMessage.js';
 import {CoordinateSys} from '../CoordSys.js';
-import ImagePlotCntlr, {
-    dispatchChangeCenterOfProjection,
-    dispatchPlotHiPS,
-    dispatchChangeHiPS,
-    dispatchAbortHiPS,
-    dispatchPlotImage,
-    dispatchPlotProgressUpdate,
-    dispatchZoom,
-    IMAGE_PLOT_KEY,
-    visRoot,
-    WcsMatchType,
-    makeUniqueRequestKey
-} from '../ImagePlotCntlr.js';
+import {
+    dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer, dispatchDetachLayerFromPlot
+} from '../DrawLayerDispatch';
+import {
+    dispatchAbortHiPS, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchPlotHiPS, dispatchPlotImage,
+    dispatchPlotProgressUpdate, dispatchZoom
+} from '../ImagePlotDispatch';
+import {
+    ANY_REPLOT, CHANGE_HIPS, IMAGE_PLOT_KEY, PLOT_HIPS, PLOT_HIPS_FAIL, PLOT_IMAGE_START,
+    UPDATE_VIEW_SIZE, UserZoomTypes, WcsMatchType, ZoomType
+} from '../VisConst';
+import {dlRoot, getDlAry, visRoot} from '../VisStoreRoots';
 import {makeWorldPt} from '../Point.js';
-import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getStatusFromFetchError} from '../../util/WebUtil.js';
 import {
-    findCurrentCenterPoint,
-    getCenterOfProjection,
-    getCorners,
-    getDrawLayerByType,
-    getDrawLayersByType,
-    getFoV,
-    getPlotViewById,
-    primePlot,
+    findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType, getDrawLayersByType,
+    getFoV, getPlotViewById, primePlot,
 } from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {
-    getHiPSZoomLevelForFOV,
-    getPointMaxSide,
-    getPropertyItem,
-    makeHiPSPropertiesUrl,
-    resolveHiPSConstant
+    getHiPSZoomLevelForFOV, getPointMaxSide, getPropertyItem, makeHiPSPropertiesUrl, resolveHiPSConstant
 } from '../HiPSUtil.js';
-import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
-import {
-    dispatchAttachLayerToPlot, dispatchChangeVisibility,
-    dispatchCreateDrawLayer,
-    dispatchDetachLayerFromPlot,
-    dlRoot,
-    getDlAry
-} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
@@ -67,7 +47,7 @@ import {
     clearActiveRequest, getActiveRequestKey, setActiveRequestKey
 } from 'firefly/visualize/task/ActivePlottingTask.js';
 import {
-    addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion
+    addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion, makeUniqueRequestKey
 } from 'firefly/visualize/task/CreateTaskUtil.js';
 
 const PROXY= true;
@@ -221,7 +201,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
     const requestKey= makeUniqueRequestKey('plotRequestKey');
     setActiveRequestKey(plotId,requestKey);
 
-    const hipsFail= (msg) => dispatcher( { type: ImagePlotCntlr.PLOT_HIPS_FAIL,
+    const hipsFail= (msg) => dispatcher( { type: PLOT_HIPS_FAIL,
             payload:{ description: `HiPS display failed: ${msg}`, plotId, wpRequest } });
 
 
@@ -233,7 +213,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             // console.log('hips plot expired or aborted');
             return;
         }
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
+        dispatcher( { type: PLOT_IMAGE_START,payload:newPayload} );
         if (!resolvedHipsRootUrl) {
             hipsFail('Empty URL');
             return;
@@ -268,12 +248,12 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         await getGpuJs(); // make sure the GPU code is loaded up front
         createHiPSGridLayer();
         dispatchAddActionWatcher({
-            actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
+            actions:[PLOT_HIPS, UPDATE_VIEW_SIZE],
             callback:watchForHiPSViewDim,
             params:{plotId}}
         );
         const pvNewPlotInfoAry= [ {plotId, plotAry: [plot]} ];
-        dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: {...newPayload, plot,pvNewPlotInfoAry }});
+        dispatcher( { type: PLOT_HIPS, payload: {...newPayload, plot,pvNewPlotInfoAry }});
     } catch (error) {
         const status= propertiesUrlForError ? getStatusFromFetchError(error.message) : 0;
         const msg= status ? `status: ${status} (${getHttpErrorMessage(status)}), url: ${propertiesUrlForError}` : error.message;
@@ -359,9 +339,9 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
     if (!hipsUrlRoot) { // only change to some attributes, we are not replacing the HiPS source
         const newPayload= {...payload, blank};
-        dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload:newPayload });
+        dispatcher( { type: CHANGE_HIPS, payload:newPayload });
         locateOtherIfMatched(visRoot(),plotId);
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:newPayload });
+        dispatcher( { type: ANY_REPLOT, payload:newPayload });
         return;
     }
 
@@ -397,12 +377,12 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
         dispatcher(
             {
-                type: ImagePlotCntlr.CHANGE_HIPS,
+                type: CHANGE_HIPS,
                 payload: {...payload, hipsUrlRoot:resolvedHipsRootUrl, hipsProperties, coordSys: coordSys? coordSys : plot.imageCoordSys, blank},
             });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);
-        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload});
+        dispatcher({type: ANY_REPLOT, payload});
     } catch (error) {
         console.log(error);
         hipsChangeFailP(pv, error.message);

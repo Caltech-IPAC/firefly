@@ -12,8 +12,7 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
-import {getActivePlotView} from '../visualize/PlotViewUtil';
-import {visRoot} from '../visualize/ImagePlotCntlr';
+import {currentP} from '../visualize/PlotViewUtil';
 
 import {FixedPtControl} from './FixedPtControl.jsx';
 
@@ -54,7 +53,7 @@ function getTitle(wp) {
     return (
         <Stack {...{direction:'row', alignItems:'center', width: 100}} title={formatWorldPtToString(wp)}>
             {formatWorldPt(wp,5,false)}
-            {<FixedPtControl wp={wp} pv={getActivePlotView(visRoot())} sx={{pl:7}}/>}
+            {<FixedPtControl wp={wp} pv={currentP().pv} sx={{pl:7}}/>}
         </Stack>
     );
 }

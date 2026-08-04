@@ -8,13 +8,13 @@ import {PinnedChartPanel} from '../charts/ui/PinnedChartContainer.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent.jsx';
-import {PINNED_CHART_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {FireflyRoot} from '../ui/FireflyRoot.jsx';
 import {isDefined} from '../util/WebUtil.js';
-import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 import {getExpandedChartProps} from '../charts/ChartsCntlr.js';
+import {dispatchChangeExpandedMode} from '../visualize/ImagePlotDispatch';
+import {ExpandType, PINNED_CHART_VIEWER_ID} from '../visualize/VisConst';
 
 const closeFunc = () => {
     dispatchChangeExpandedMode(ExpandType.COLLAPSE);

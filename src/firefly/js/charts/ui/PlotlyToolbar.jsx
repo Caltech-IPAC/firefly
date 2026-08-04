@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
 import {get, isEmpty} from 'lodash';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {DEFAULT_PLOT2D_VIEWER_ID, PLOT2D} from '../../visualize/VisConst';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -17,9 +18,7 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {TableFilterPopup} from '../../tables/ui/FilterEditor';
 import {getTblIdFromChart, isScatter2d} from '../ChartUtil.js';
-import {
-    DEFAULT_PLOT2D_VIEWER_ID, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D
-} from '../../visualize/MultiViewCntlr.js';
+import {findViewerWithItemId, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
     AddItem, CheckedButton, CheckedClearButton, ClearFilterButton, ExpandButton,

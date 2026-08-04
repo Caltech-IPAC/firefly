@@ -3,10 +3,10 @@
  */
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {visRoot, dispatchChangeExpandedMode, ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {
-    getMultiViewRoot, getViewer, getExpandedViewerItemIds, EXPANDED_MODE_RESERVED, DEFAULT_FITS_VIEWER_ID
-} from '../MultiViewCntlr.js';
+import {dispatchChangeActivePlotView, dispatchChangeExpandedMode} from '../ImagePlotDispatch';
+import { getMultiViewRoot, getViewer, getExpandedViewerItemIds } from '../MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, EXPANDED_MODE_RESERVED, ExpandType} from '../VisConst';
+import {visRoot} from '../VisStoreRoots';
 import {SmallLegend} from '../ui/SmallLegend';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';

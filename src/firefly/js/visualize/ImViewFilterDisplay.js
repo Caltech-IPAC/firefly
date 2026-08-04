@@ -5,9 +5,10 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {dispatchTableAddLocal} from '../tables/TablesCntlr.js';
 import {getTblById, getTblInfoById, processRequest} from '../tables/TableUtil.js';
-import ImagePlotCntlr, { dispatchChangeActivePlotView, dispatchDeletePlotView, visRoot } from './ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView, dispatchDeletePlotView} from './ImagePlotDispatch';
+import {visRoot} from './VisStoreRoots';
+import {CHANGE_EXPANDED_MODE, DEFAULT_FITS_VIEWER_ID, EXPANDED_MODE_RESERVED, IMAGE} from './VisConst';
 import {
-    DEFAULT_FITS_VIEWER_ID, EXPANDED_MODE_RESERVED, IMAGE,
     dispatchAddViewer, dispatchAddViewerItems, dispatchReplaceViewerItems, getMultiViewRoot, getViewerItemIds,
 } from './MultiViewCntlr.js';
 import {PlotAttribute} from './PlotAttribute.js';
@@ -265,7 +266,7 @@ export function addExpandFilterSyncWatcher() {
     if (watcherAdded) return;
     watcherAdded= true;
     let lastState;
-    dispatchAddActionWatcher({ actions:[SET_LAYOUT_MODE, SET_LAYOUT,UPDATE_LAYOUT, ImagePlotCntlr.CHANGE_EXPANDED_MODE],
+    dispatchAddActionWatcher({ actions:[SET_LAYOUT_MODE, SET_LAYOUT,UPDATE_LAYOUT, CHANGE_EXPANDED_MODE],
         callback: () => {
             const expandedMode= getExpandedMode();
             const imageExpanded= isImageExpanded(visRoot().expandedMode);

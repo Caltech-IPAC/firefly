@@ -14,7 +14,7 @@ import ShapeDataObj, {drawText, translateTo, rotateAround, getPVRotateAngle} fro
 import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA, defaultDashline} from './ShapeHighlight.js';
 import { handleTextFromRegion } from './ShapeToRegion.js';
 import {isNil, isEmpty, has, set, get, cloneDeep} from 'lodash';
-import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
+import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../VisConst';
 import {DrawSymbol} from './DrawSymbol.js';
 
 

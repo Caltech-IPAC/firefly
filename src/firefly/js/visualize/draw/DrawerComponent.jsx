@@ -4,9 +4,9 @@
 
 import React, {memo,useState,useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {dlRoot} from '../VisStoreRoots';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import {getDrawLayerById} from '../PlotViewUtil.js';
-import {dlRoot} from '../DrawLayerCntlr.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
 

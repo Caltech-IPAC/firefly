@@ -5,18 +5,17 @@
  */
 
 
-import  {get, isBoolean} from 'lodash';
+import  {isBoolean} from 'lodash';
 import {clone, isDefined} from '../util/WebUtil.js';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+ import {ANY_REPLOT, CHANGE_CENTER_OF_PROJECTION, MODIFY_CUSTOM_FIELD, UPDATE_VIEW_SIZE} from '../visualize/VisConst';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {currentP} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
 import {changeHiPSProjectionCenterAndType, isHiPSAitoff, isImage} from '../visualize/WebPlot.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import CoordinateSys from '../visualize/CoordSys.js';
@@ -66,7 +65,7 @@ function creator(params) {
         destroyWhenAllUserDetached: true,
     };
     
-    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Coordinate Grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
+    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Coordinate Grid', options , drawingDef, [UPDATE_VIEW_SIZE, UPDATE_GRID ]);
 }
 
  /**
@@ -81,10 +80,10 @@ function creator(params) {
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 
-     var plot= primePlot(visRoot(),plotId);
+     let {plot}= currentP(plotId);
      if (!plot)return null;
 
-     const projectionTypeChange= action.type===ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION && isDefined(action.payload.fullSky);
+     const projectionTypeChange= action.type===CHANGE_CENTER_OF_PROJECTION && isDefined(action.payload.fullSky);
      if (projectionTypeChange) {
          let aitoff= isHiPSAitoff(plot);
          aitoff= !aitoff;
@@ -107,7 +106,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
  function getLayerChanges(drawLayer, action) {
      let drawData;
      switch (action.type){
-         case ImagePlotCntlr.ANY_REPLOT:
+         case ANY_REPLOT:
              if (drawLayer.drawData?.data  ) {
                  if (action.payload.plotIdAry){
                     const data= clone(drawLayer.drawData.data);
@@ -120,23 +119,23 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
                  return {drawData};
              }
              break;
-         case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+         case UPDATE_VIEW_SIZE:
              setTimeout(() => {
                  flux.process({ type: UPDATE_GRID, payload: { plotId: action.payload.plotId}});
              });
              break;
          case UPDATE_GRID:
-         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+         case CHANGE_CENTER_OF_PROJECTION:
              if (drawLayer.drawData?.data ) {
                  const data = Object.keys(drawLayer.drawData.data).reduce((d, plotId) => {
-                     d[plotId] = isImage(primePlot(visRoot(), plotId)) ? drawLayer.drawData.data[plotId] : null;
+                     d[plotId] = isImage(currentP(plotId).plot) ? drawLayer.drawData.data[plotId] : null;
                      return d;
                  }, {});
                  drawData= Object.assign({},drawLayer.drawData, {data});
                  return {drawData};
              }
              break;
-         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+         case MODIFY_CUSTOM_FIELD:
              const {coordinate}= action.payload.changes;
              if (coordinate !== drawLayer.coordinate ) {
                  const drawData= Object.assign({},drawLayer.drawData, {data:null});
@@ -171,7 +170,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
  function getCoordinateSystem(csysName) {
 
      for (let i = 0; i < coordinateArray.length; i += 1) {
-         if (get(coordinateArray[i], 'coordName') === csysName) {
+         if (coordinateArray[i]?.coordName === csysName) {
              return coordinateArray[i].csys;
 
          }

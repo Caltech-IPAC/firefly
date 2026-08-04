@@ -8,9 +8,9 @@ import {TablesContainer} from '../../../tables/ui/TablesContainer.jsx';
 import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent';
 import {ToolbarHorizontalSeparator} from '../../../ui/ToolbarButton';
-import {dispatchChangePrimePlot, visRoot} from '../../ImagePlotCntlr';
-import {NewPlotMode} from '../../MultiViewCntlr.js';
-import { convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, hasImageCubes} from '../../PlotViewUtil';
+import {dispatchChangePrimePlot} from '../../ImagePlotDispatch';
+import {NewPlotMode} from '../../VisConst';
+import {convertHDUIdxToImageIdx, currentP, getHDUIndex, hasImageCubes} from '../../PlotViewUtil';
 import {ImageMetaDataToolbar} from '../ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from '../MultiImageViewer.jsx';
 import {SmallLegend} from '../SmallLegend';
@@ -29,7 +29,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
     //handle null dataProductsState for cases where data products workflow is not used
     const {enableCutout, pixelBasedCutout=false, dlData, gridForceRowSize}= dataProductsState ?? {};
     const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState?.dlData ?? {};
-    const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
+    const primeIdx= useStoreConnector(() => currentP().pv?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const stateDef= dlData ? dlData?.dlAnalysis?.isSpectrum ? 'Spectrum' : 'Chart' : lastChartDefault;
     const [chartName, setChartName] = useState(stateDef);
@@ -52,7 +52,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
 
     useEffect(() => {
         if (!imageViewerId) return;
-        const pv= getActivePlotView(visRoot());
+        const {pv}= currentP();
         if (!pv || !hasImageCubes(pv) || cubeIdx<0) return;
         showingStatus.oldWhatToShow= whatToShow;
         showingStatus.cubeSet= false;
@@ -61,7 +61,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
     useEffect(() => {
         if (!imageViewerId || primeIdx===-1 || cubeIdx<0) return;
         if (showingStatus.cubeSet) return;
-        const pv= getActivePlotView(visRoot());
+        const {pv}= currentP();
         if (!pv || !hasImageCubes(pv)) return;
         showingStatus.cubeSet= true;
         const hduIdx= getHDUIndex(pv);

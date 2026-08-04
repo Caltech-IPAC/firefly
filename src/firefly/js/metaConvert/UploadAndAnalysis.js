@@ -8,7 +8,7 @@ import {upload} from '../rpc/CoreServices.js';
 import {getMetaEntry, getTblById, getTblRowAsObj} from '../tables/TableUtil';
 import {hashCode} from '../util/WebUtil';
 import {isDefined} from '../util/WebUtil.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
+import {PLOT_PROGRESS_UPDATE} from '../visualize/VisConst';
 import {getObsTitle} from '../voAnalyzer/TableAnalysis';
 import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
 import {makePdfEntry, makePngEntry, makeTarEntry, makeTextEntry} from './AnalysisUtils';
@@ -120,7 +120,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
 
 
 const startUpdateWatcher= (url,dpId) =>
-    url && dispatchAddActionWatcher({ id: url, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
+    url && dispatchAddActionWatcher({ id: url, actions:[PLOT_PROGRESS_UPDATE],
         callback:watchForUploadUpdate, params:{url,dpId}});
 
 const endUpdateWatcher= (url) => url && dispatchCancelActionWatcher(url);

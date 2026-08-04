@@ -10,9 +10,9 @@ import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js'
 import {MetaConst} from '../data/MetaConst';
 import {FixedPtControl} from '../drawingLayers/FixedPtControl';
 import {getMetaEntry} from '../tables/TableUtil';
-import {dispatchChangePointSelection, visRoot} from '../visualize/ImagePlotCntlr';
+import {dispatchChangePointSelection} from '../visualize/ImagePlotDispatch';
 import {PlotAttribute} from '../visualize/PlotAttribute';
-import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil';
+import {currentP} from '../visualize/PlotViewUtil';
 import {isValidPoint, parseWorldPt} from '../visualize/Point';
 import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
 import {makeFoVString} from '../visualize/ZoomUtil';
@@ -188,7 +188,7 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
 
     const activeWp= useStoreConnector(() => {
         if (overrideCutoutWpt) return overrideCutoutWpt;
-        const plot= primePlot(visRoot());
+        const {plot}= currentP();
         if (!plot) return;
         const {pt}=plot.attributes[PlotAttribute.ACTIVE_POINT] ?? {};
         return pt;
@@ -388,7 +388,7 @@ const OverrideTargetFeedback= ({overrideCutoutWpt, showingCutout}) => (
             <Typography>{`${showingCutout?'Cutouts':'Full images'} include position:`}</Typography>
             {formatWorldPt(overrideCutoutWpt,5,false)}
         </Stack>
-        {<FixedPtControl wp={overrideCutoutWpt} pv={getActivePlotView(visRoot())}/>}
+        {<FixedPtControl wp={overrideCutoutWpt} pv={currentP().pv}/>}
     </Stack>
 );
 

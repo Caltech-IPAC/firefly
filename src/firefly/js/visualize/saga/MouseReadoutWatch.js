@@ -3,7 +3,6 @@
  */
 
 import {race,call} from 'redux-saga/effects';
-import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 import {
     readoutRoot, makeValueReadoutItem, makePointReadoutItem,
@@ -18,9 +17,9 @@ import {getPixScale, getScreenPixScale, getScreenPixScaleArcSec, isImage, isHiPS
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
-    primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx,
+    primePlot, getPlotStateAry, getImageCubeIdx,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits, isThreeColor,
+    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits, isThreeColor, currentP,
 } from '../PlotViewUtil';
 import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
@@ -66,8 +65,7 @@ export function* watchReadout() {
             if (lockByClick && worldPt && !shiftDown && mouseState===MouseState.CLICK) savedWP= worldPt;
         }
 
-        const plotView= getPlotViewById(visRoot(), plotId);
-        const plot= primePlot(plotView);
+        const {plot,pv:plotView}= currentP(plotId);
         const threeColor= plot?.plotState?.threeColor;
 
         if (useEv) {

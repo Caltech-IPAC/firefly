@@ -6,7 +6,7 @@ import {computeScreenDistance, convertAngle} from '../VisUtil.js';
 import ShapeDataObj, {rectOnImage, lengthToImagePixel, widthAfterRotation, heightAfterRotation } from './ShapeDataObj.js';
 import {makeScreenPt, makeImagePt} from '../Point.js';
 import {get, isNil, set, has, cloneDeep} from 'lodash';
-import {defaultRegionSelectColor, defaultRegionSelectStyle, RegionSelColor, RegionSelStyle} from '../DrawLayerCntlr.js';
+import {defaultRegionSelectColor, defaultRegionSelectStyle, RegionSelColor, RegionSelStyle} from '../VisConst';
 import {TextLocation} from './DrawingDef.js';
 import {SimplePt} from '../Point.js';
 

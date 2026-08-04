@@ -3,12 +3,11 @@ import {dispatchHideDropDown, dispatchShowDropDown} from '../../core/LayoutCntlr
 import {ServerParams} from '../../data/ServerParams.js';
 import {makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
-import {toBoolean} from '../../util/WebUtil.js';
+import {DEFAULT_FITS_VIEWER_ID} from '../../visualize/VisConst';
 import WebPlotRequest, {findInvalidWPRKeys, WPConst} from '../../visualize/WebPlotRequest';
 import {isEmpty,isArray,omit} from 'lodash';
-import {dispatchPlotHiPS, dispatchPlotImage} from '../../visualize/ImagePlotCntlr';
+import {dispatchPlotHiPS, dispatchPlotImage} from '../../visualize/ImagePlotDispatch';
 import {RequestType} from '../../visualize/RequestType';
-import {DEFAULT_FITS_VIEWER_ID} from '../../visualize/MultiViewCntlr';
 import {makeExamples, ReservedParams} from '../WebApi';
 
 

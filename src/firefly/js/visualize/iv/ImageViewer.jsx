@@ -9,13 +9,13 @@ import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById, getAllDrawLayersForPlot, getPlotViewProxyById} from '../PlotViewUtil.js';
 import {ImageViewerView, getImageViewerDecorateSx} from './ImageViewerDecorate.jsx';
-import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
+import {ExpandType} from '../VisConst';
+import {dlRoot, visRoot} from '../VisStoreRoots';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState, addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {getPlotUIExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getWorkingTask} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {dlRoot} from '../DrawLayerCntlr';
 import {ImageViewStatusPanel} from './ImageViewerStatus';
 
 

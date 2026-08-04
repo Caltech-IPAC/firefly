@@ -12,10 +12,10 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {
-    dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
-    getMultiViewRoot, getViewer, getLayoutType, PLOT2D, getViewerItemIds, dispatchRemoveViewerItems,
-    dispatchAddViewerItems, NewPlotMode, PINNED_CHART_VIEWER_ID
+    dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom, getMultiViewRoot, getViewer, getLayoutType,
+    getViewerItemIds, dispatchRemoveViewerItems, dispatchAddViewerItems
 } from '../../visualize/MultiViewCntlr.js';
+import {NewPlotMode, PINNED_CHART_VIEWER_ID, PLOT2D} from '../../visualize/VisConst';
 import {
     getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove, CHART_UPDATE
 } from '../ChartsCntlr.js';

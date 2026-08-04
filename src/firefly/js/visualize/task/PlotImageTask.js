@@ -4,10 +4,14 @@
 
 import {flatten, isArray, isEmpty, uniqBy} from 'lodash';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
+import {dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotDispatch';
+import {
+    ANY_REPLOT, EXPANDED_MODE_RESERVED, IMAGE, IMAGE_PLOT_KEY, PLOT_IMAGE, PLOT_IMAGE_FAIL,
+    PLOT_IMAGE_START, WCS_MATCH
+} from '../VisConst';
+import {visRoot} from '../VisStoreRoots';
 import {getCenterPtOfPlot} from '../WebPlotAnalysis';
-import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, makeUniqueRequestKey, visRoot,
-    dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import {WebPlotRequest} from '../WebPlotRequest.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {RDConst, WebPlot} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
@@ -15,7 +19,7 @@ import {PlotState} from '../PlotState.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
-import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
+import {dispatchAddViewerItems } from '../MultiViewCntlr.js';
 import {getPlotViewById, getPlotViewIdListInOverlayGroup, hasWCSProjection} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
@@ -23,7 +27,7 @@ import {callGetWebPlot, callGetWebPlot3Color, callGetWebPlotGroup} from '../../r
 import {onViewDimDefined} from '../PlotCompleteMonitor.js';
 import {getActiveRequestKey} from './ActivePlottingTask.js';
 import {
-    addDrawLayers, makeCubeCtxAry, makeGroupPayload, makeSinglePlotPayload, populateFromHeader
+    addDrawLayers, makeCubeCtxAry, makeGroupPayload, makeSinglePlotPayload, makeUniqueRequestKey, populateFromHeader
 } from './CreateTaskUtil.js';
 import {logger} from '../../util/Logger.js';
 
@@ -45,9 +49,9 @@ export function makePlotImageAction(rawAction) {
 
         vr= getState()[IMAGE_PLOT_KEY];
         if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
-            dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
+            dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
         }
-        const action= { type: ImagePlotCntlr.PLOT_IMAGE_START,payload};
+        const action= { type: PLOT_IMAGE_START,payload};
         dispatcher(action);
         wpRequestAry ? executeGroupSearch(action, dispatcher) : executeSingleSearch(action,dispatcher);
     };
@@ -71,7 +75,7 @@ async function executeSingleSearch(rawAction, dispatcher) {
         const wpResult= threeColor ? await callGetWebPlot3Color(redReq,greenReq,blueReq) : await callGetWebPlot(wpRequest);
         processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult);
     } catch (e) {
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
+        dispatcher( { type: PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
         logger.error(`plot error, ImagePlotter, plotId: ${plotId}`, e);
     }
 }
@@ -89,7 +93,7 @@ async function executeGroupSearch(rawAction, dispatcher) {
         processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult);
     } catch (e) {
         const plotIdAry= wpRequestAry.map( (r) => r.getPlotId()).filter( (id) => id);
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotIdAry, wpRequestAry, error:e} } );
+        dispatcher( { type: PLOT_IMAGE_FAIL, payload: {plotIdAry, wpRequestAry, error:e} } );
         logger.error('plot group error', e);
     }
 }
@@ -208,10 +212,10 @@ function processSuccessResult(dispatcher, payload, successAry) {
         realPlotAry.forEach((p) => p.tileData = undefined );
     });
 
-    dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
+    dispatcher({type: PLOT_IMAGE, payload: resultPayload});
     const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
     const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
-    dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry:filteredPlotIdAry}});
+    dispatcher({type: ANY_REPLOT, payload: {plotIdAry:filteredPlotIdAry}});
 
     matchAndActivateOverlayPlotViewsByGroup(filteredPlotIdAry);
 
@@ -245,7 +249,7 @@ function processFailResult(failAry, originalPayload, dispatcher) {
                 ...originalPayload, plotId, detailFailReason,
                 briefDescription: briefFailReason,
                 description: 'Failed- ' + userFailReason};
-            dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload} );
+            dispatcher( { type: PLOT_IMAGE_FAIL, payload} );
         }
     });
 }

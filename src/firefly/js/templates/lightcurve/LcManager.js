@@ -9,14 +9,15 @@ import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TA
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
-        dispatchChangeActivePlotView,
-        WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
+import {
+    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotImage, dispatchWcsMatch
+} from '../../visualize/ImagePlotDispatch';
+import {visRoot} from '../../visualize/VisStoreRoots';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {
     getMultiViewRoot, dispatchReplaceViewerItems, getViewer, getLayoutDetails
 } from '../../visualize/MultiViewCntlr.js';
-import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
+import {CHANGE_ACTIVE_PLOT_VIEW, CHANGE_VIEWER_LAYOUT, WcsMatchType} from '../../visualize/VisConst';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
@@ -212,7 +213,7 @@ export function* lcManager(params={}) {
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, SHOW_DROPDOWN, SET_LAYOUT_MODE,
-            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, CHART_ADD
+            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, CHANGE_ACTIVE_PLOT_VIEW, CHART_ADD
         ]);
 
         /**
@@ -257,7 +258,7 @@ export function* lcManager(params={}) {
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
                 break;
-            case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+            case CHANGE_ACTIVE_PLOT_VIEW:
                 newLayoutInfo = handlePlotActive(newLayoutInfo, action);
                 break;
             case CHART_ADD:
@@ -727,7 +728,7 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
     }
 
     const viewer = getViewer(getMultiViewRoot(), LC.IMG_VIEWER_ID);
-    const count= getLayoutDetails(getMultiViewRoot(), LC.IMG_VIEWER_ID)?.count ?? converterData.defaultImageCount
+    const count= getLayoutDetails(getMultiViewRoot(), LC.IMG_VIEWER_ID)?.count ?? converterData.defaultImageCount;
 
 
     var vr = visRoot();
@@ -743,7 +744,6 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
     const newPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, count);
     const maxPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, LC.MAX_IMAGE_CNT);
     const cutoutSize = getCutoutSize(layoutInfo);
-    const uploadFilename = getUploadFileName(layoutInfo) || '';
 
     try {
         newPlotIdAry.forEach((plotId) => {
@@ -781,7 +781,7 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
             .filter((pv) => pv.plotId.startsWith(plotIdRoot))
             .filter((pv) => pv.plotId !== vr.mpwWcsPrimId)
             .filter((pv) => !maxPlotIdAry.includes(pv.plotId))
-            .forEach((pv) => dispatchDeletePlotView({plotId: pv.plotId, holdWcsMatch: true}));
+            .forEach((pv) => dispatchDeletePlotView({plotId: pv.plotId}));
 
         // Decide whether or not to show images, mission specific:
         const imagesShown = converterData.shouldImagesBeDisplayed(layoutInfo);

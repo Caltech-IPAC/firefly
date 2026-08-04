@@ -7,15 +7,15 @@ import {bool, number, string, func, elementType} from 'prop-types';
 import {isEmpty} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {
-    NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
-    getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE,
+    dispatchAddViewer, dispatchViewerUnmounted,
+    getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId,
 } from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
-import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
-import {getPlotViewById, getPlotViewProxyById} from '../PlotViewUtil.js';
+import {dispatchChangeActivePlotView} from '../ImagePlotDispatch';
+import {IMAGE, NewPlotMode} from '../VisConst';
+import {getDlAry, visRoot} from '../VisStoreRoots';
+import {currentP, getPlotViewById, getPlotViewProxyById} from '../PlotViewUtil.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
-import {getActivePlotView} from '../PlotViewUtil';
 
 
 const activeViewerMap= new Map();
@@ -60,14 +60,14 @@ export class MultiImageViewer extends PureComponent {//todo: turn this into a fu
             }
 
         }
-        const pv= getActivePlotView(visRoot());
+        const {pv}= currentP();
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
         const {rootWidget}= this;
         if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId) return;
         activeViewerMap.set(this.props.viewerId, Boolean(rootWidget.offsetWidth && rootWidget.offsetHeight));
         if (viewer.lastActiveItemId!==pv.plotId && !viewer.itemIdAry.includes(pv.plotId) && rootWidget.offsetWidth && rootWidget.offsetHeight) {
             setTimeout(() => {
-                if (!viewWithIdMounted(pv.plotId) && !viewer.itemIdAry.includes(getActivePlotView(visRoot())?.plotId)) {
+                if (!viewWithIdMounted(pv.plotId) && !viewer.itemIdAry.includes(currentP().plotId)) {
                     dispatchChangeActivePlotView(viewer.lastActiveItemId);
                 }
             }, 5);

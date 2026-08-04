@@ -6,7 +6,7 @@ import CoordinateSys from '../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import RangeValues from '../visualize/RangeValues.js';
 import {TitleOptions, WebPlotRequest} from '../visualize/WebPlotRequest.js';
-import {ZoomType} from '../visualize/ZoomType.js';
+import {ZoomType} from '../visualize/VisConst';
 
 const FILE = 'FILE';
 

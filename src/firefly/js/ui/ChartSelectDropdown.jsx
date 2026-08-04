@@ -7,9 +7,9 @@ import {string} from 'prop-types';
 import {Stack, Typography} from '@mui/joy';
 
 import {getNumericCols} from '../charts/ChartUtil.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/VisConst';
 import {ChartSelectPanel, CHART_ADDNEW} from './../charts/ui/ChartSelectPanel.jsx';
 import {getActiveViewerItemId} from '../charts/ui/MultiChartViewer.jsx';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 
 import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';

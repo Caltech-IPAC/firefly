@@ -1,7 +1,8 @@
 import {Box, Tooltip, Typography} from '@mui/joy';
 import React from 'react';
 import {get} from 'lodash';
-import {dispatchWcsMatch, WcsMatchType} from '../ImagePlotCntlr.js';
+import {dispatchWcsMatch} from '../ImagePlotDispatch';
+import {WcsMatchType} from '../VisConst';
 import {getPlotViewAry, hasWCSProjection, primePlot} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';

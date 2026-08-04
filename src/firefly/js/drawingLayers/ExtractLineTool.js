@@ -2,22 +2,25 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import DrawLayerCntlr, {DRAWING_LAYER_KEY, getDlAry} from '../visualize/DrawLayerCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeImagePt} from '../visualize/Point';
+import {
+    ATTACH_LAYER_TO_PLOT, DRAWING_LAYER_KEY, ELT_END, ELT_MOVE, ELT_START, MODIFY_CUSTOM_FIELD
+} from '../visualize/VisConst';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, currentP} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 import {DrawingType} from '../visualize/draw/DrawObj';
 import {DrawSymbol} from 'firefly/visualize/draw/DrawSymbol.js';
+import {getDlAry} from '../visualize/VisStoreRoots';
 import {computeScreenDistance} from '../visualize/VisUtil';
 
 
@@ -43,7 +46,7 @@ let idCnt=1;
 export function extractLineToolStartActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const {plotId} = rawAction.payload;
-        dispatcher({type: DrawLayerCntlr.ELT_START, payload: rawAction.payload});
+        dispatcher({type: ELT_START, payload: rawAction.payload});
         dispatchAttributeChange({
             plotId, overlayColorScope: true,
             changes: {[PlotAttribute.SELECT_ACTIVE_CHART_PT]: undefined}
@@ -60,7 +63,7 @@ function addLineDistAttributesToPlotsLater(drawLayerId, plotId, sel) {
 }
 
 export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
-    const srcPlot= primePlot(visRoot(),plotId);
+    const srcPlot= currentP(plotId).plot;
     const cc= CsysConverter.make(srcPlot);
     const srcWorld = hasWCSProjection(cc);
     drawLayer.plotIdAry.forEach(
@@ -71,7 +74,7 @@ export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
                 });
             }
             else {
-                const p= primePlot(visRoot(),pId);
+                const {plot:p}= currentP(pId);
                 if (srcWorld && hasWCSProjection(p)) {
                     const targetCC= CsysConverter.make(p);
                     const pt0= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.firstPt));
@@ -92,7 +95,7 @@ export function extractLineToolEndActionCreator(rawAction) {
     return (dispatcher, getState) => {
         let {drawLayer}= rawAction.payload;
         const {plotId}= rawAction.payload;
-        dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
+        dispatcher({type:ELT_END, payload:rawAction.payload} );
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId); // make sure it is the most recent version
         const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
         if (sel.pt0===sel.pt1) return;
@@ -106,12 +109,12 @@ export function extractLineToolEndActionCreator(rawAction) {
  */
 function creator() {
     const pairs= {
-        [MouseState.DRAG.key]: DrawLayerCntlr.ELT_MOVE,
-        [MouseState.DOWN.key]: DrawLayerCntlr.ELT_START,
-        [MouseState.UP.key]: DrawLayerCntlr.ELT_END
+        [MouseState.DRAG.key]: ELT_MOVE,
+        [MouseState.DOWN.key]: ELT_START,
+        [MouseState.UP.key]: ELT_END
     };
     const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
-    const actionTypes= [DrawLayerCntlr.ELT_START, DrawLayerCntlr.ELT_MOVE, DrawLayerCntlr.ELT_END];
+    const actionTypes= [ELT_START, ELT_MOVE, ELT_END];
 
     const options= {
         canUseMouse:true,
@@ -131,7 +134,7 @@ function creator() {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry?.forEach( (plotId) => {
-        const plot= primePlot(visRoot(),plotId);
+        const {plot}= currentP(plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
             dispatchAttributeChange({
                 plotId,overlayColorScope:false,
@@ -155,16 +158,11 @@ function getCursor(plotView, screenPt) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case DrawLayerCntlr.ELT_START:
-            return start(drawLayer, action);
-        case DrawLayerCntlr.ELT_MOVE:
-            return drag(drawLayer,action);
-        case DrawLayerCntlr.ELT_END:
-            return end(action);
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return attach(drawLayer);
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            return dealWithMods(drawLayer,action);
+        case ELT_START: return start(drawLayer, action);
+        case ELT_MOVE: return drag(drawLayer,action);
+        case ELT_END: return end(action);
+        case ATTACH_LAYER_TO_PLOT: return attach(drawLayer);
+        case MODIFY_CUSTOM_FIELD: return dealWithMods(drawLayer,action);
     }
 }
 
@@ -187,8 +185,8 @@ function makeBaseReturnObj(firstPt,currPt,drawAry )  {
 function dealWithMods(drawLayer,action) {
     const {changes,plotIdAry}= action.payload;
     if (Object.keys(changes).includes('activePt') || Object.keys(changes).includes('selectionType')) {
-        let plot= primePlot(visRoot());
-        if (!plotIdAry.includes(plot.plotId)) plot= primePlot(visRoot(),plotIdAry[0]);
+        let {plot}= currentP();
+        if (!plotIdAry.includes(plot.plotId)) plot= currentP(plotIdAry[0]).plot;
         const cc= CsysConverter.make(plot);
         if (!cc) return null;
         const {activePt=drawLayer.activePoint, selectionType=drawLayer.selectionType}= changes;
@@ -218,7 +216,7 @@ function dealWithMods(drawLayer,action) {
     else if (Object.keys(changes).includes('newFirst') || Object.keys(changes).includes('newCurrent') ){
         const {newFirst,newCurrent, newSelectionType=drawLayer.selectionType}= changes;
         if (!changes.plotId) return;
-        const plot= primePlot(visRoot(),changes.plotId);
+        const {plot}= currentP(changes.plotId);
         const cc= CsysConverter.make(plot);
         if (!newFirst) {
             return makeBaseReturnObj(newFirst, newCurrent,[]);
@@ -250,7 +248,7 @@ function start(drawLayer, action) {
         const newDl= {...drawLayer, ...setupSelect(plotId,imagePt,drawLayer)};
         return drag(newDl, action);
     }
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const mode= getMode(plot);
     if (!plot || shiftDown) return;
     const cc= CsysConverter.make(plot);
@@ -295,7 +293,7 @@ function start(drawLayer, action) {
 
 function drag(drawLayer,action) {
     const {imagePt,plotId, shiftDown}= action.payload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const cc= CsysConverter.make(plot);
     if (!cc || shiftDown) return;
     const {dataWidth,dataHeight}= plot;
@@ -323,7 +321,7 @@ function drag(drawLayer,action) {
 function end(action) {
     const {plotId, shiftDown}= action.payload;
     if (shiftDown) return;
-    const mode= getMode(primePlot(visRoot(),plotId));
+    const mode= getMode(currentP(plotId).plot);
     const retObj= {startSelectCnt:0};
     if (mode==='select') {
         retObj.helpLine= editHelpText;
@@ -401,12 +399,10 @@ function makeSelectObj(firstPt,currentPt, activePt, selectionType, offsetCal, cc
 
 function getPtAry(plot) {
     const sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
-    if (!sel) return null;
+    if (!sel) return;
     const cc = CsysConverter.make(plot);
 
-    const ptAry=[];
-    ptAry[0]= cc.getScreenCoords(sel.pt0);
-    ptAry[1]= cc.getScreenCoords(sel.pt1);
+    const ptAry=[ cc.getScreenCoords(sel.pt0), cc.getScreenCoords(sel.pt1)];
     if (!ptAry[0] || !ptAry[1]) return null;
     return ptAry;
 }

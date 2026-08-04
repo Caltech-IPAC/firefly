@@ -4,15 +4,18 @@
 import {get,  isArray, isUndefined, isEmpty} from 'lodash';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {Style} from '../draw/DrawingDef.js';
-import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
-import {dispatchCreateDrawLayer, getDlAry, dispatchAttachLayerToPlot, dispatchModifyCustomField,
-                        dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField
+} from '../DrawLayerDispatch';
+import {getDrawLayerById, currentP} from '../PlotViewUtil.js';
 import {clone} from '../../util/WebUtil.js';
 import {ImageLineBasedObj} from '../draw/ImageLineBasedObj.js';
-import ImagePlotCntlr, {visRoot, dispatchPlotImage} from '../ImagePlotCntlr.js';
+import {dispatchPlotImage} from '../ImagePlotDispatch';
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
+import {getAViewFromMultiView, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {IMAGE, PLOT_IMAGE} from '../VisConst';
+import {getDlAry} from '../VisStoreRoots';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableRemove, dispatchTableUpdate, TABLE_LOADED, TABLE_SELECT,
         TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE, TABLE_SORT, TABLE_FILTER} from '../../tables/TablesCntlr.js';
@@ -86,12 +89,7 @@ export function imageLineBasedfootprintActionCreator(action) {
         }
 
         if (!imagePlotId) {
-            if (footprintImageFile) {
-                imagePlotId = getFileNameFromPath(footprintImageFile);  // create a new plot
-            } else {
-                const pv = primePlot(visRoot());      // check the active plot
-                imagePlotId = pv ? pv.plotId : null;
-            }
+            imagePlotId = footprintImageFile ? getFileNameFromPath(footprintImageFile) : currentP().plotId;
         }
 
         if (!imagePlotId) {
@@ -125,7 +123,7 @@ export function imageLineBasedfootprintActionCreator(action) {
 
 
         if (footprintImageFile) {
-            dispatchAddActionWatcher({actions: [ImagePlotCntlr.PLOT_IMAGE], callback: footprintImageWatcher});
+            dispatchAddActionWatcher({actions: [PLOT_IMAGE], callback: footprintImageWatcher});
             loadFootprintImage(footprintImageFile, imagePlotId);
         } else if (footprintFile) {
             getFootprintData(footprintFile, imagePlotId, tbl_index);

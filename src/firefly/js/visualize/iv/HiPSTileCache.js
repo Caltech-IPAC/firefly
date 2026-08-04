@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isString} from 'lodash';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {visRoot} from '../VisStoreRoots';
 import {getPlotViewAry, primePlot} from '../PlotViewUtil.js';
 import {NO_COLOR_TABLE} from '../rawData/ColorTable';
 import {isHiPS} from '../WebPlot.js';

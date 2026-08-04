@@ -8,9 +8,9 @@ import {sprintf} from '../externalSource/sprintf';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
-import {dispatchChangeHiPS, dispatchChangeImageVisibility, visRoot} from '../visualize/ImagePlotCntlr';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr';
+import {currentP} from '../visualize/PlotViewUtil';
+import {dispatchChangeHiPS, dispatchChangeImageVisibility} from '../visualize/ImagePlotDispatch';
+import {ATTACH_LAYER_TO_PLOT} from '../visualize/VisConst';
 import {isHiPS, isImage} from '../visualize/WebPlot';
 
 const ID= 'IMAGE_ROOT';
@@ -30,7 +30,7 @@ function onVisibilityChange(drawLayer,action) {
 function creator(initPayload, presetDefaults) {
 
     const {plotId, layersPanelLayoutId}= initPayload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const drawingDef= {
         ...makeDrawingDef(plot?.blankColor??'yellow', {fontWeight:'bolder'} ),
         ...presetDefaults};
@@ -55,8 +55,7 @@ function getLayerChanges(drawLayer, action) {
     const {payload,type}= action;
     const {plotId}= drawLayer;
     if (!plotId) return null;
-    const pv= getPlotViewById(visRoot(),plotId);
-    const plot= primePlot(pv);
+    const {pv,plot}= currentP(plotId);
     if (!pv || !plot) return null;
     const canUserHide= !plot.blank;
     const canUserChangeColor= plot.blank ? ColorChangeType.DYNAMIC : ColorChangeType.DISABLE;
@@ -64,12 +63,11 @@ function getLayerChanges(drawLayer, action) {
         setTimeout(() => dispatchChangeHiPS({plotId,blankColor:payload.drawingDef.color}), 5);
     }
     switch (type) {
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             return { title: getTitle(pv, plot, drawLayer), canUserHide, canUserChangeColor};
         default:
             return { title: getTitle(pv, plot, drawLayer), canUserHide, canUserChangeColor};
     }
-    return undefined;
 }
 
 

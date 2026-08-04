@@ -8,8 +8,8 @@ import {isEastLeftOfNorth} from '../visualize/WebPlotAnalysis';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchRotate} from '../visualize/ImagePlotCntlr.js';
+import {currentP, primePlot} from '../visualize/PlotViewUtil.js';
+import {dispatchRotate} from '../visualize/ImagePlotDispatch';
 import {SimpleLayerOnOffButton} from '../visualize/ui/SimpleLayerOnOffButton';
 import {RotateType} from '../visualize/PlotState.js';
 import {StateInputField} from './StatedInputfield';
@@ -50,7 +50,7 @@ const marks = [ { label: '0', value: 0 }, { label: '45', value: 45 }, { label: '
 ];
 
 function FitsRotationImmediatePanel() {
-    const pv = useStoreConnector(() => getActivePlotView(visRoot()));
+    const pv = useStoreConnector(() => currentP().pv);
 
     useEffect(() => {
         (!pv || !isImage(primePlot(pv))) && dispatchHideDialog(DIALOG_ID);

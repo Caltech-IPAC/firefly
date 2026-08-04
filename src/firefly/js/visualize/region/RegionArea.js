@@ -6,22 +6,15 @@
  * This Object contains the specifications of the DS9 region
  */
 
-import {visRoot} from '../ImagePlotCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {currentP} from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';
 import {RegionType} from './Region.js';
-import {get} from 'lodash';
 
 
 export function getRegionArea(region, cc) {
-    var rCover = null;
-    if (!cc) {
-        var plotId = get(visRoot(), 'activePlotId');
-        var plot = primePlot(visRoot(), plotId);
-        cc = CysConverter.make(plot);
-    }
-
+    let rCover;
+    if (!cc) cc = CysConverter.make(currentP().plot);
     if (region.type === RegionType.polygon) {
         rCover = getRegionLinesArea(region.wpAry, cc);
     }

@@ -11,14 +11,16 @@ import {Logger} from '../util/Logger.js';
 import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
+import {dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
     getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/VisConst';
 import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections,
         clearChartConn, newTraceFrom, setupTableWatcher, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN,
         getSelIndexes, isSpectralOrder, combineAllTraceFrom} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
+import {REINIT_APP} from '../core/CoreConst';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {makeHistogramParams, makeXYPlotParams, getDefaultChartProps} from './ChartUtil.js';
 import {adjustColorbars, hasFireflyColorbar} from './dataTypes/FireflyHeatmap.js';
@@ -442,7 +444,7 @@ function chartFilterSelection(action) {
                 y = `ifnull(${y},${lowerLimit})`;
             }
 
-            const multiArea = get(selection, 'multiArea')
+            const multiArea = get(selection, 'multiArea');
             if (multiArea) {
                 showInfoPopup('Filtering is only supported for one selection area.', 'Warning');
                 return;

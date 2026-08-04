@@ -10,7 +10,7 @@ import {getTblById} from '../../tables/TableUtil';
 import CoordSys from '../../visualize/CoordSys';
 import CysConverter from '../../visualize/CsysConverter';
 import {getAllVisibleHiPSCells, getCatalogNorderlevel, getPointMaxSide} from '../../visualize/HiPSUtil';
-import {visRoot} from '../../visualize/ImagePlotCntlr';
+import {visRoot} from '../../visualize/VisStoreRoots';
 import {getFoV, primePlot} from '../../visualize/PlotViewUtil';
 import {isHiPSAitoff} from '../../visualize/WebPlot';
 import {BOX_GROUP_TYPE, getHeatMapNorder, HEAT_MAP_GROUP_TYPE, HPX_GRID_SIZE_LARGE} from './HpxCatalogUtil';
@@ -25,7 +25,7 @@ const MAX_SYNC_AREA = 1_000_000;
  * @param obj.plotId
  * @param obj.tbl_id
  * @param obj.expanded
- * @return {{abort: function, makeTileData, hasPartialTileUpdate, getSecondaryPartialTileUpdate}
+ * @return {{abort: function, makeTileData, hasPartialTileUpdate, getSecondaryPartialTileUpdate}}
  */
 export function createTileDataMaker({drawLayer, plotId, tbl_id, expanded={}}) {
     let doAbort = false;
@@ -82,7 +82,7 @@ const doMakeTileDataSync = ({cells, ...tileDataParams}) => {
     let plotData = [];
     if (!cells) return plotData;
     for (let index = 0; index < cells.length; index++) {
-        const {drawObjs,missingCells} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
+        const {drawObjs} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
         plotData= addTo(plotData,drawObjs);
     }
     return plotData;
@@ -105,7 +105,7 @@ function doMakeTileDataInterval(isAborted, {resolve, cells, ...tileDataParams}) 
                 return;
             }
             for (; index < length;) {
-                const {drawObjs, missingCells} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
+                const {drawObjs} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
                 plotData= addTo(plotData,drawObjs);
                 index++;
                 if (drawObjs.length > 300) return;
@@ -114,7 +114,7 @@ function doMakeTileDataInterval(isAborted, {resolve, cells, ...tileDataParams}) 
             resolve(plotData);
         }
     );
-};
+}
 
 function setupTileDataParams(drawLayer, table, plot, expanded) {
 
