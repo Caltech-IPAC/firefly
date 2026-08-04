@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.2
-- 2026.2.0 — (July 22, 2026), _Docker tag_: `2026.2.0`, `2026.2`, `latest`
+- 2026.2.1 — (Aug 4, 2026), _Docker tag_: `2026.2.1`, `2026.2`, `latest`
+- 2026.2.0 — (July 22, 2026), _Docker tag_: `2026.2.0`,
 
 This stability release includes numerous bug fixes and introduces the first end-user installable version of Firefly.
 
@@ -34,6 +35,14 @@ This stability release includes numerous bug fixes and introduces the first end-
 - Fixed: WCS Match so east-right images align correctly — Firefly-2055 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1978))
 - Fixed: GPU array overflow and optimized color lookup performance — Firefly-2056 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1979))
 - MultiProductViewer: Multi Bug fixes found in Rubin testing — Firefly-2062 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1983))
+
+### _Patches 2026.2_
+#### 2026.2.1
+- Fixed: Update nom.tam.fits (1.22.2) to fixed a decompression issue — Firefly-2071 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1989))
+- Fixed: Ensure only single local result fire are used — Firefly-2070 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1988))
+- Fixed: table init scrolling half line off — Firefly-2065 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1987))
+- Fixed: product not showing obs_title — ([commit](https://github.com/Caltech-IPAC/firefly/commit/a017d1f5fff41b37d60c19c246700e64db454d2d))
+- Fixed: overwrite an empty directory in the HiPS cache — ([commit](https://github.com/Caltech-IPAC/firefly/commit/6fbb9334fc3fabf8faecaa105a49a23c8b1f963d))
 
 
 ##### _Pull Requests in this Release_
