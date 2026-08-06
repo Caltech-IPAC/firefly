@@ -47,15 +47,21 @@ export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_i
 }
 
 export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
-    const changes = histogramOptionsToChanges(activeTrace, fields, tbl_id);
+    const changes = histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id);
     submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
 
-function histogramOptionsToChanges(activeTrace, fields, tbl_id) {
+function histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id) {
     const changes = {};
     changes[`fireflyData.${activeTrace}.dataType`] = 'fireflyHistogram';
     changes[`fireflyData.${activeTrace}.tbl_id`] = tbl_id;
+
+    //keep the trace and Firefly metadata linked to the same table during overploting
+    changes[`data.${activeTrace}.tbl_id`] = tbl_id;
     fields && Object.entries(fields).forEach( ([k,v]) => {
+        // do not let an empty histogram label erase the shared X-axis label while overplotting
+        if (k === 'layout.xaxis.title.text' && !v &&
+            getChartData(chartId)?.data?.length > 1) return;
         if (['data', 'layout', 'fireflyLayout', 'activeTrace', '_'].find((s) => k.startsWith(s))) {
             changes[k] = v;
         } else {
@@ -90,4 +96,3 @@ function toHistogramOptions(chartId, activeTrace=0) {
     });
     return histogramOptions;
 }
-

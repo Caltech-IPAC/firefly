@@ -1613,7 +1613,7 @@ export function ensureEnumVals(tableModel) {
         if (!col.enumVals && isOfType(col.type, COL_TYPE.ENUM_TYPES)) {
             const vals = data.map((rowData) => rowData[idx]);
             const uniqVals = uniq(vals.filter((d) => d));
-            if (uniqVals.length && uniqVals.length <= 32) {         // 32 is the default(MAX_COL_ENUM_COUNT) for server-backed tables
+            if (uniqVals.length > 1 && uniqVals.length <= 32) {    // 32 is the default(MAX_COL_ENUM_COUNT) for server-backed tables
                 col.enumVals = uniqVals.join(',');
             }
         }

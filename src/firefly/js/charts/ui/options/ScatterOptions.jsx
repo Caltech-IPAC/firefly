@@ -1,18 +1,21 @@
 import React, {useCallback, useEffect} from 'react';
-import {get, isUndefined, omit, range, isString, defaultsDeep, memoize} from 'lodash';
+import {get, has, isUndefined, omit, range, isString, defaultsDeep} from 'lodash';
 import {Stack, Typography} from '@mui/joy';
 
 import {Expression} from '../../../util/expr/Expression.js';
-import {getChartData, hasUpperLimits} from '../../ChartsCntlr.js';
-import {getChartProps, getMinScatterGLRows, isSpectralOrder} from '../../ChartUtil.js';
+import {dispatchChartUpdate, getChartData, hasUpperLimits} from '../../ChartsCntlr.js';
+import {
+    getChartProps, getGroupableColumns, getGroupByColumn, getMinScatterGLRows,
+    isGroupByAllowed, isGroupedChart, makeScatterGroupByChanges
+} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {basicFieldReducer, LayoutOptions, submitChanges, useBasicOptions,} from './BasicOptions.jsx';
+import {basicFieldReducer, evalChangesFromFields, LayoutOptions, submitChanges, useBasicOptions,} from './BasicOptions.jsx';
 import {toBoolean, updateSet} from '../../../util/WebUtil.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
-import {getColValStats} from '../../TableStatsCntlr.js';
+import {getColValStats, useTableColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {
     Error_X, Error_Y, errorFieldKey, errorMinusFieldKey, errorShowFieldKey, errorTypeFieldKey, getDefaultErrorType
@@ -26,9 +29,10 @@ import {
     CollapsibleItem
 } from '../../../ui/panel/CollapsiblePanel.jsx';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
-import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
+import {dispatchComponentStateChange} from '../../../core/ComponentCntlr.js';
 
+const TRACE_OPTIONS_COMPONENT_KEY = 'chart-scatter-options';
 
 
 /**
@@ -58,8 +62,8 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
 
     groupKey = groupKey || `${chartId}-scatter-${activeTrace}`;
     const {tbl_id, tablesource, dataType} = getChartProps(chartId, ptbl_id, activeTrace);
-    const {UseSpectrum, X, Y, Yerrors, Xerrors, Ymax, Ymin} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
-    const showUseSpectrum = !isSpectralOrder(chartId) && dataType === spectrumType;
+    const {UseSpectrum, X, Y, Yerrors, Xerrors, Ymax, Ymin, GroupBy} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const showUseSpectrum = !isGroupedChart(chartId) && dataType === spectrumType;
 
     const reducerFunc = fieldReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
@@ -85,6 +89,7 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
                                 {(yLimitUI() || hasUpperLimits(chartId, activeTrace)) && <Ymin/>}
                                 <Yerrors/>
                             </Stack>
+                            <GroupBy/>
                         </Stack>
                     }
                 </Stack>
@@ -101,19 +106,29 @@ export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, 
 
     const {activeTrace, tbl_id, noColor, multiTrace} = getChartProps(chartId, ptbl_id, pActiveTrace);
     const {Symbol, ColorMap, ColorSize, ColorScale, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {Name, Color} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
-    const colValStats = getColValStats(tbl_id);
-    const isOrder = isSpectralOrder(chartId);
+    const {ChooseTrace, Name, Color} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
+    const colValStats = useTableColValStats(tbl_id);
+    const isGrouped = isGroupedChart(chartId);
+
+    useEffect(() => {
+        dispatchComponentStateChange(TRACE_OPTIONS_COMPONENT_KEY, {isOpen: isGrouped});
+    }, [chartId, isGrouped]);
 
     return (
-        <CollapsibleItem header='Trace Options' componentKey='chart-scatter-options'
+        <CollapsibleItem header='Trace Options' componentKey={TRACE_OPTIONS_COMPONENT_KEY} isOpen={isGrouped}
                                    {...props /* to allow AccordionGroup styling props inserted by joy UI, propagate to Accordion */}>
             <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
+                {isGrouped && (
+                    <Stack spacing={1}>
+                        <Typography level='body-sm'>You can modify the selected trace:</Typography>
+                        <ChooseTrace/>
+                    </Stack>
+                )}
                 {multiTrace && <Name/>}
                 <Mode/>
                 <Symbol/>
                 {!noColor && <Color/>}
-                {colValStats && !isOrder && (
+                {colValStats && !isGrouped && (
                     <Stack spacing={1}>
                         <ColorMap/>
                         <ColorScale/>
@@ -233,6 +248,18 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id, rend
     });
 
     Object.assign(changes, fields);
+
+    const groupByKey = groupByFieldKey(activeTrace);
+    const groupByColumn = fields[groupByKey] || '';
+    const currentGroupBy = getGroupByColumn(chartId) || '';
+    const groupByChanged = groupByColumn !== currentGroupBy;
+    if (chartId && has(fields, groupByKey) && groupByChanged && isGroupByAllowed(chartId, activeTrace)) {
+        const groupedFields = omit(changes, groupByKey);
+        const evalChanges = evalChangesFromFields(chartId, tbl_id, groupedFields);
+        const groupChanges = makeScatterGroupByChanges({chartId, tbl_id, activeTrace, groupByColumn, changes: evalChanges});
+        dispatchChartUpdate({chartId, changes: groupChanges, replaceTableSources: true});
+        return;
+    }
     submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
 
@@ -255,11 +282,12 @@ function getTraceType(chartId, tbl_id, activeTrace) {
 
 /*
  * This function returns a collection of components using `useCallback`, ensuring they are not recreated between re-renders.
- * To modify this behavior, you can set the `deps` parameter accordingly.
+ * To modify this behavior, you can set the `baseDeps` parameter accordingly.
  */
-export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, orientation='horizontal'}, deps=[]) => {
+export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, orientation='horizontal'}, baseDeps=[pActiveTrace]) => {
     const {activeTrace, tbl_id, data, fireflyData, mappings} = getChartProps(chartId, ptbl_id, pActiveTrace);
-    const colValStats = getColValStats(tbl_id);
+    const colValStats = useTableColValStats(tbl_id);
+    const deps = [...baseDeps, colValStats];
     const strOrNull = (v) => isString(v) ? v : undefined;
 
     const withDefaults = (props) => {
@@ -289,6 +317,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                       name='X'
                                       nullAllowed={false}
                                       colValStats={colValStats}
+                                      tbl_id={tbl_id}
                                       groupKey={groupKey} {...withDefaults(props)}/>), deps),
         Y: useCallback((props) => (<ColumnOrExpression fldPath={`_tables.data.${activeTrace}.y`}
                                       initValue={get(mappings, 'y', '')}
@@ -296,7 +325,22 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                       name='Y'
                                       nullAllowed={false}
                                       colValStats={colValStats}
+                                      tbl_id={tbl_id}
                                       groupKey={groupKey} {...withDefaults(props)}/>), deps),
+        GroupBy: useCallback((props) => {
+                                    const groupableCols = chartId && isGroupByAllowed(chartId, activeTrace) ? getGroupableColumns(tbl_id) : [];
+                                    if (groupableCols.length === 0) return null;
+                                    return (
+                                        <ListBoxInputField fieldKey={groupByFieldKey(activeTrace)}
+                                                           label='Group by:'
+                                                           tooltip='Group scatter trace by enum-like column'
+                                                           initialState={{value: getGroupByColumn(chartId) || ''}}
+                                                           options={[
+                                                               {label: 'None', value: ''},
+                                                               ...groupableCols.map(({name, label}) => ({label: label || name, value: name}))
+                                                           ]}
+                                                           {...withDefaults(props)}/>);
+                            }, [chartId, tbl_id, activeTrace, data?.length, ...deps]),
         Xerrors: useCallback((props) => (<Error_X {...{chartId, groupKey, activeTrace, tbl_id, ...withDefaults(props)}}/>), deps),
         Yerrors: useCallback((props) => (<Error_Y {...{chartId, groupKey, activeTrace, tbl_id, ...withDefaults(props)}}/>), deps),
         Xmin: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.fireflyData.${activeTrace}.xMin`}
@@ -305,6 +349,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          name = 'Lower Limit'
                                          nullAllowed = {true}
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         Xmax: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.fireflyData.${activeTrace}.xMax`}
                                          initValue={getFieldVal(groupKey, `_tables.fireflyData.${activeTrace}.xMax`) ?? get(mappings, `fireflyData.${activeTrace}.xMax`, '')}
@@ -312,6 +357,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          name = 'Upper Limit'
                                          nullAllowed={true}
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         Ymin: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.fireflyData.${activeTrace}.yMin`}
                                          initValue={getFieldVal(groupKey, `_tables.fireflyData.${activeTrace}.yMin`) ??  get(mappings, `fireflyData.${activeTrace}.yMin`, '')}
@@ -319,6 +365,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          name = 'Lower Limit'
                                          nullAllowed = {true}
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         Ymax: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.fireflyData.${activeTrace}.yMax`}
                                          initValue={getFieldVal(groupKey, `_tables.fireflyData.${activeTrace}.yMax`) ?? get(mappings, `fireflyData.${activeTrace}.yMax`, '')}
@@ -326,6 +373,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          name = 'Upper Limit'
                                          nullAllowed={true}
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         ColorMap: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.data.${activeTrace}.marker.color`}
                                          initValue={get(mappings, 'marker.color', '')}
@@ -333,6 +381,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          name = 'Color Map'
                                          key='colorMap'
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          nullAllowed={true}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         ColorSize: useCallback((props) => (<ColumnOrExpression fldPath = {`_tables.data.${activeTrace}.marker.size`}
@@ -343,6 +392,7 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          nullAllowed={true}
                                          tooltip='marker size. Please use expression to convert column value to valid pixels'
                                          colValStats={colValStats}
+                                         tbl_id={tbl_id}
                                          groupKey = {groupKey} {...withDefaults(props)}/>), deps),
         ColorScale: useCallback((props) => ( <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
                                          label='Color Scale:'
@@ -360,4 +410,6 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     };
 };
 
-
+function groupByFieldKey(activeTrace) {
+    return `fireflyData.${activeTrace}.groupBy.column`;
+}

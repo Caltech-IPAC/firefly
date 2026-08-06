@@ -109,10 +109,13 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, char
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
+    const heatmapOptions = getChartData(chartId)?.fireflyData?.[activeTrace]?.options ?? {};
 
     const xyProps = (xOrY) => ({fldPath:`_tables.data.${activeTrace}.${xOrY}`, label: `${xOrY.toUpperCase()}:`,
         name: xOrY.toUpperCase(), nullAllowed: false, colValStats, groupKey, slotProps: {control: {orientation}},
-        initValue: tablesource?.mappings?.[xOrY] ?? ''
+        //recover heatmap axes when table-source mappings are unavailable
+        initValue: tablesource?.mappings?.[xOrY] ??
+            heatmapOptions[xOrY === 'x' ? 'xColOrExpr' : 'yColOrExpr'] ?? ''
     });
 
     const {setVal} = useContext(FieldGroupCtx);
@@ -154,14 +157,29 @@ export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id, rend
     const dataType = (!tbl_id) ? 'heatmap' : 'fireflyHeatmap';
     const changes = {
         [`data.${activeTrace}.type`] : 'heatmap',
-        [`fireflyData.${activeTrace}.dataType`] : dataType
+        [`fireflyData.${activeTrace}.dataType`] : dataType,
+        //Keep both trace representations linked to the same table
+        [`data.${activeTrace}.tbl_id`]: tbl_id,
+        [`fireflyData.${activeTrace}.tbl_id`]: tbl_id
     };
 
     Object.assign(changes, fields);
 
+    //store heatmap axes in both formats required by table sources and heatmap fetches
+    ['x', 'y'].forEach((axis) => {
+        const fieldValue = fields?.[`_tables.data.${activeTrace}.${axis}`];
+
+        if (fieldValue) {
+            const expression = String(fieldValue).replace(/^tables::/, '');
+            changes[`data.${activeTrace}.${axis}`] = `tables::${expression}`;
+            changes[`fireflyData.${activeTrace}.options.${axis}ColOrExpr`] = expression;
+        }
+    });
+
     // reversescale is boolean
-    changes[`data.${activeTrace}.reversescale`] = toBoolean(get(fields, `data.${activeTrace}.reversescale`));
+    const reverseScale = fields?.[`data.${activeTrace}.reversescale`] ??
+        fields?.data?.[activeTrace]?.reversescale;
+    changes[`data.${activeTrace}.reversescale`] = toBoolean(reverseScale);
 
     submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
-

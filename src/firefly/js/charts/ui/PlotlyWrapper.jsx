@@ -166,7 +166,9 @@ export class PlotlyWrapper extends Component {
 
         let detectedResize= false;
         const rec= this.div.getBoundingClientRect();
-        if (this.lastWidth!==rec.width || this.lastHeight!==rec.height) {
+        // ignore transient zero-size measurements that can prevent Plotly from rendering
+        const hasValidSize = rec.width > 0 && rec.height > 0;
+        if (hasValidSize && (this.lastWidth!==rec.width || this.lastHeight!==rec.height)) {
             this.lastWidth= rec.width;
             this.lastHeight=rec.height;
             detectedResize= true;
@@ -343,6 +345,9 @@ export class PlotlyWrapper extends Component {
     syncLayout(chartId, changes) {
         const {layout} = getChartData(chartId);
         if (layout && !this.props.thumbnail) {
+            //ignore Plotly's transient selection-box layout edits, e.g. selections[0].yref.
+            //the supported selection state is captured from plotly_selected in PlotlyChartArea
+            if (Object.keys(changes).some((k) => k.startsWith('selections['))) return;
             Object.entries(changes).forEach( ([k, v]) => {
                 if (k === 'xaxis' && Array.isArray(v)) {
                     set(layout, 'xaxis.range', v);

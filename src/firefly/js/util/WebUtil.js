@@ -119,6 +119,7 @@ export function isValidFullUrl(url) {
     }
 }
 
+export const isPromise = (p) => isFunction(p?.then);
 
 export const isDefined= (x) => x!==undefined;
 

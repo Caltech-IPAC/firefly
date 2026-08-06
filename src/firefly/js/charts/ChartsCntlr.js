@@ -2,27 +2,27 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset} from 'lodash';
+import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../core/ReduxFlux.js';
 import {updateSet, updateObject, toBoolean} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
-import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
+import {getTblById, getColumn, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
     getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/VisConst';
 import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections,
-        clearChartConn, newTraceFrom, setupTableWatcher, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN,
-        getSelIndexes, isSpectralOrder, combineAllTraceFrom} from './ChartUtil.js';
+        clearChartConn, newTraceFrom, setupTableWatcher, updateHighlighted, updateSelection, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN,
+        getSelIndexes, getTblIdFromChart, isGroupedChart, combineAllTraceFrom, getResetAxesChanges} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/CoreConst';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
-import {makeHistogramParams, makeXYPlotParams, getDefaultChartProps} from './ChartUtil.js';
+import {makeHistogramParams, makeXYPlotParams, getDefaultChartProps, getChartProps} from './ChartUtil.js';
 import {adjustColorbars, hasFireflyColorbar} from './dataTypes/FireflyHeatmap.js';
 
 export const CHART_SPACE_PATH = 'charts';
@@ -130,13 +130,14 @@ export function dispatchChartTraceRemove(chartId, traceNum, dispatcher= flux.pro
  *  @param {Object} p - dispatch parameetrs
  *  @param {string} p.chartId - chart id
  *  @param {Object} p.changes - object with the path-string keys and values of the changed props
+ *  @param {boolean} [p.replaceTableSources=false] - replace and reload the complete table-source set
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  *  @public
  *  @function dispatchChartUpdate
  *  @memberof firefly.action
  */
-export function dispatchChartUpdate({chartId, changes, dispatcher=flux.process}) {
-    dispatcher({type: CHART_UPDATE, payload: {chartId, changes}});
+export function dispatchChartUpdate({chartId, changes, replaceTableSources=false, dispatcher=flux.process}) {
+    dispatcher({type: CHART_UPDATE, payload: {chartId, changes, replaceTableSources}});
 }
 
 /**
@@ -312,19 +313,52 @@ function chartTraceRemove(action) {
         tablesources.forEach((ts,i) => {
             if (i>=traceNum && ts && ts._cancel) {
                 ts._cancel();
-                if (i !== traceNum) {
-                    const newIdx = i-1;
-                    ts._cancel = setupTableWatcher(chartId, ts, newIdx);
-                }
+                // mark the cancelled watcher as inactive so it is recreated with the
+                // correct trace index after the trace arrays are reduced.
+                ts._cancel = undefined;
             }
         });
         dispatch(action);
+
+        // Reconnect surviving table sources using their new trace indices;
+        // preserve their metadata, and assign new IDs to sources that moved
+        const {tablesources:remainingSources=[], mounted} = getChartData(chartId) || {};
+        if (mounted > 0 && remainingSources.length > 0) {
+            const reconnectedSources = remainingSources.map((tablesource, idx) => {
+                if (!tablesource?.tbl_id) return tablesource;
+                //give moved sources a new ID so requests from their old index are ignored.
+                const reconnectedSource = idx >= traceNum
+                    ? {...tablesource, _sourceId: uniqueId('chart-source-')}
+                    : tablesource;
+                return {...reconnectedSource, _cancel: setupTableWatcher(chartId, reconnectedSource, idx)};
+            });
+            dispatchChartUpdate({chartId, changes: {tablesources: reconnectedSources}});
+
+            const activeSource = reconnectedSources[getChartData(chartId)?.activeTrace];
+            const activeTable = activeSource?.tbl_id && getTblById(activeSource.tbl_id);
+            if (activeSource && activeTable) {
+                const currentChart = getChartData(chartId);
+                const activeTraceNow = currentChart.activeTrace;
+                const axisChanges = {};
+                const xMapping = activeSource.mappings?.x;
+                const currentXTitle = currentChart.layout?.xaxis?.title?.text;
+                //restore the shared X-axis label if trace removal left it empty (historgam removal did this, even on ops)
+                if (xMapping && !currentXTitle) {
+                    const xColumn = getColumn(activeTable, xMapping);
+                    const xUnit = get(xColumn, 'units', '');
+                    axisChanges['layout.xaxis.title.text'] = xMapping + (xUnit ? ` (${xUnit})` : '');
+                }
+                if (!isEmpty(axisChanges)) dispatchChartUpdate({chartId, changes: axisChanges});
+                updateHighlighted(chartId, activeTraceNow, activeTable.highlightedRow);
+                updateSelection(chartId, activeTable.selectInfo || {});
+            }
+        }
     };
 }
 
 function chartUpdate(action) {
     return (dispatch) => {
-        const {chartId, changes} = action.payload;
+        const {chartId, changes, replaceTableSources=false} = action.payload;
         // when selection  is undefined, selections layer must be removed
         if (changes.hasOwnProperty('selection') && !changes.selection) changes['layout.selections'] = [];
         // remove any table's mappings from changes because it will be applied by the connectors.
@@ -339,8 +373,8 @@ function chartUpdate(action) {
 
         // lazy table connection
         const {mounted} = getChartData(chartId);
-        if (mounted > 0) {
-            handleTableSourceConnections({chartId, data, fireflyData});
+        if (mounted > 0 && (!isEmpty(data) || !isEmpty(fireflyData))) {
+            handleTableSourceConnections({chartId, data, fireflyData, replaceTableSources});
         }
     };
 }
@@ -349,7 +383,7 @@ function chartHighlight(action) {
     return (dispatch) => {
         const {chartId, highlighted=0, chartTrigger=false} = action.payload;
         // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
-        const {data, fireflyData, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
+        const {data, fireflyData, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
 
         const {traceNum=activeDataTrace, traceName} = action.payload; // highlighted trace can be selected or highlighted trace of the data trace
 
@@ -359,14 +393,19 @@ function chartHighlight(action) {
 
         const ttype = get(data, [traceNum, 'type'], 'scatter');
 
-        if (!isEmpty(tablesources) && ttype.includes('scatter')) {
+        if (ttype.includes('scatter')) {
             // activeTrace is different from activeDataTrace if a selected point highlighted, for example
-            const {tbl_id} = tablesources[activeDataTrace] || {};
-            if (!tbl_id) return;
+            const tbl_id = getTblIdFromChart(chartId, activeDataTrace);
+            if (!getTblById(tbl_id)) return;
             // avoid updating chart twice
             // update only as a response to table highlight change
             if (!chartTrigger) {
                 const traceAnnotations = get(fireflyData, `${traceNum}.annotations`);
+                const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS, traceAnnotations);
+                dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
+            } else if (data[traceNum]) {
+                //update the visual highlight immediately
+                const traceAnnotations = fireflyData?.[traceNum]?.annotations;
                 const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS, traceAnnotations);
                 dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
             }
@@ -392,7 +431,7 @@ function chartHighlight(action) {
 function chartSelect(action) {
     return (dispatch) => {
         const {chartId, selIndexes=[], chartTrigger=false} = action.payload;
-        const {activeTrace=0, data, fireflyData, tablesources} = getChartData(chartId);
+        const {activeTrace=0, data, fireflyData} = getChartData(chartId);
 
         // when skipping hover, selecting chart points does not work
         // disable chart select in this case
@@ -401,18 +440,21 @@ function chartSelect(action) {
         // avoid updating chart twice
         // don't update before table select
         if (chartTrigger) {
-            if (!isEmpty(tablesources)) {
-                const {tbl_id} = tablesources[activeTrace] || {};
-                const {totalRows} = getTblById(tbl_id);
+            const tbl_id = getTblIdFromChart(chartId, activeTrace);
+            const tableModel =  getTblById(tbl_id);
+            if (tableModel) {
+                const {totalRows} = tableModel;
                 const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
 
                 selIndexes.forEach(([ptIdx, traceIdx]) => selectInfoCls.setRowSelect(getRowIdx(data[traceIdx], ptIdx), true));
                 TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
+                // Keep the chart overlay in sync even while table-source watchers rebuild.
+                dispatchChartSelect({chartId, selIndexes});
             }
         } else {
             let selected = undefined;
             const hasSelected = !isEmpty(selIndexes);
-            if (isSpectralOrder(chartId)) {
+            if (isGroupedChart(chartId)) {
                 selected = combineAllTraceFrom(chartId, selIndexes, SELECTED_PROPS);
                 dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
             } else {
@@ -427,62 +469,74 @@ function chartSelect(action) {
 function chartFilterSelection(action) {
     return (dispatch) => {
         const {chartId} = action.payload;
-        const {activeTrace=0, selection, tablesources} = getChartData(chartId);
-        if (!isEmpty(tablesources)) {
-            const {tbl_id, mappings} = tablesources[activeTrace];
-            const numericCols = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER).map((c) => c.name);
+        const {activeTrace=0, selection, data=[], fireflyData=[]} = getChartData(chartId) || {};
+        const activeTraceType = data?.[activeTrace]?.type;
+        const activeDataType = fireflyData?.[activeTrace]?.dataType;
 
-            let {x,y} = mappings;
-            let upperLimit = get(mappings,  `fireflyData.${activeTrace}.yMax`);
-            let lowerLimit = get(mappings,  `fireflyData.${activeTrace}.yMin`);
-            // use standard form without spaces for filter key
-            // to make sure the key is replaced when setFilter is used
-            [x,y,upperLimit,lowerLimit] = [x, y, upperLimit,lowerLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
-            if (upperLimit) {
-                y = `ifnull(${y},${upperLimit})`;
-            } else if (lowerLimit) {
-                y = `ifnull(${y},${lowerLimit})`;
-            }
+        //Histograms use bins and counts rather than table-backed X/Y points,so chart filtering does not apply
+        //ignore the action even if a transient selection state or toolbar entry is still present while the trace is loading
+        if (activeDataType === 'fireflyHistogram' || activeTraceType === 'bar') return;
 
-            const multiArea = get(selection, 'multiArea');
-            if (multiArea) {
-                showInfoPopup('Filtering is only supported for one selection area.', 'Warning');
-                return;
-            }
-            const [xMin, xMax] = get(selection, 'range.x', []);
-            const [yMin, yMax] = get(selection, 'range.y', []);
-            const {request} = getTblById(tbl_id);
-            const filterInfoCls = FilterInfo.parse(request.filters);
-
-            filterInfoCls.setFilter(x, '> ' + xMin);
-            filterInfoCls.addFilter(x, '< ' + xMax);
-            filterInfoCls.setFilter(y, '> ' + yMin);
-            filterInfoCls.addFilter(y, '< ' + yMax);
-
-
-            // filters are processed by db, column expressions need to use syntax db understands
-            // filters can be set for any column type, numeric or non-numeric
-            const allColumns = getColumns(getTblById(tbl_id)).map((c) => c.name);
-            const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:allColumns});
-
-            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize(formatKey)});
-            TablesCntlr.dispatchTableFilter(newRequest);
-            dispatchChartUpdate({chartId, changes:{selection: undefined}});
+        const tbl_id = getTblIdFromChart(chartId, activeTrace);
+        const tableModel = getTblById(tbl_id);
+        if (!tableModel || !selection) return;
+        const {mappings = {}} = getChartProps(chartId, tbl_id, activeTrace);
+        if (!mappings.x || !mappings.y) return;
+        const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
+        let {x,y} = mappings;
+        let upperLimit = get(mappings,  `fireflyData.${activeTrace}.yMax`);
+        let lowerLimit = get(mappings,  `fireflyData.${activeTrace}.yMin`);
+        // use standard form without spaces for filter key
+        // to make sure the key is replaced when setFilter is used
+        [x,y,upperLimit,lowerLimit] = [x, y, upperLimit,lowerLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
+        if (upperLimit) {
+            y = `ifnull(${y},${upperLimit})`;
+        } else if (lowerLimit) {
+            y = `ifnull(${y},${lowerLimit})`;
         }
+
+        const multiArea = get(selection, 'multiArea');
+        if (multiArea) {
+            showInfoPopup('Filtering is only supported for one selection area.', 'Warning');
+            return;
+        }
+        const [xMin, xMax] = get(selection, 'range.x', []);
+        const [yMin, yMax] = get(selection, 'range.y', []);
+        const {request} = tableModel;
+        const filterInfoCls = FilterInfo.parse(request.filters);
+
+        filterInfoCls.setFilter(x, '> ' + xMin);
+        filterInfoCls.addFilter(x, '< ' + xMax);
+        filterInfoCls.setFilter(y, '> ' + yMin);
+        filterInfoCls.addFilter(y, '< ' + yMax);
+
+
+        // filters are processed by db, column expressions need to use syntax db understands
+        // filters can be set for any column type, numeric or non-numeric
+        const allColumns = getColumns(tableModel).map((c) => c.name);
+        const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:allColumns});
+
+        const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize(formatKey)});
+        TablesCntlr.dispatchTableFilter(newRequest);
+        const {layout} = getChartData(chartId) ?? {};
+        dispatchChartUpdate({chartId, changes:{
+            selection: undefined,
+            ...getResetAxesChanges(layout)
+        }});
     };
 }
 
 function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
-        const {data, fireflyData, tablesources, curveNumberMap} = getChartData(chartId);
-        const changes = getActiveTraceChanges({chartId, activeTrace, data, fireflyData, tablesources, curveNumberMap});
+        const {data, fireflyData, curveNumberMap} = getChartData(chartId);
+        const changes = getActiveTraceChanges({chartId, activeTrace, data, fireflyData, curveNumberMap});
         dispatchChartUpdate({chartId, changes});
     };
 }
 
-function getActiveTraceChanges({chartId, activeTrace, data, fireflyData, tablesources, curveNumberMap}) {
-    const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
+function getActiveTraceChanges({chartId, activeTrace, data, fireflyData, curveNumberMap}) {
+    const tbl_id = getTblIdFromChart(chartId, activeTrace);
     let selected = undefined;
     let highlighted = undefined;
     let curveMap = undefined;
@@ -493,7 +547,7 @@ function getActiveTraceChanges({chartId, activeTrace, data, fireflyData, tableso
             const selectInfoCls = SelectInfo.newInstance(selectInfo);
             const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
             if (selIndexes.length > 0) {
-                if (isSpectralOrder(chartId)) {
+                if (isGroupedChart(chartId)) {
                     selected = combineAllTraceFrom(chartId, selIndexes, SELECTED_PROPS);
                 } else {
                     const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
@@ -865,6 +919,17 @@ function removeTrace({chartId, traceNum}) {
         }
     }
 
+    //Ensure trace-removal state has a valid active trace and curve map when
+    //an overplot was created before its curve map was initialized
+    //(this is a defensive fix for bugs encountred encountered involving partially-created / asynchronously changing overplots)
+    if (!changes.curveNumberMap && changes.data?.length) {
+        const newActiveTrace = Math.min(activeTrace ?? 0, changes.data.length - 1);
+        changes.activeTrace = newActiveTrace;
+        changes.curveNumberMap = range(changes.data.length)
+            .filter((idx) => idx !== newActiveTrace)
+            .concat(newActiveTrace);
+    }
+
     return {changes, moreChanges};
 }
 
@@ -964,4 +1029,3 @@ export function removeChartsInGroup(groupId) {
             .filter( (v) => !groupId || v.groupId === groupId)
             .forEach( (v) => dispatchChartRemove(v.chartId));
 }
-

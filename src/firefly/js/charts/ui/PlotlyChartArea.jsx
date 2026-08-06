@@ -5,7 +5,7 @@ import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
-import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isSpectralOrder, isScatter2d,
+import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isGroupedChart, isScatter2d,
     makeShapeHoverTrace} from '../ChartUtil.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {Skeleton, useTheme} from '@mui/joy';
@@ -22,8 +22,10 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
     const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = useStoreConnector(() => getChartState(chartId), [chartId]);
 
     useEffect(()=> {
-        const {fireflyData} = getChartData(chartId);
-        handleTableSourceConnections({chartId, data, fireflyData});
+        const {fireflyData, mounted=0} = getChartData(chartId);
+        handleTableSourceConnections({
+            chartId, data, fireflyData, syncExistingSources: mounted === 0
+        });
         return () => {
             if (getChartData(chartId)?.mounted === 0) {
                 clearChartConn({chartId});
@@ -77,7 +79,7 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
 
     const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
 
-    const showlegend = data.length > 1;
+    const showlegend = isGroupedChart(chartId) ? true : (layout?.showlegend ?? data.length > 1);
     const playout = cloneDeep({showlegend, ...adjustLayout(layout, theme), width: chartWidth, height: chartHeight, annotations, ...hoverLayout});
 
     const style = {float: 'left'};
@@ -99,7 +101,7 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
                            autoDetectResizing={false}
                            thumbnail={thumbnail}
                            doingResize={doingResize}
-                           key={chartId + thumbnail}/>
+                           key={`${chartId}-${thumbnail}-${data.length}`}/>
         </div>
     );
 }
@@ -250,7 +252,7 @@ function onSelect(chartId) {
                 points = get(evData, 'points', []);
                 points = points.map((o) => [o.pointNumber, curveNumberMap[o.curveNumber]]);
                 let newActiveTrace = activeTrace;
-                if (!isSpectralOrder(chartId)) {
+                if (!isGroupedChart(chartId)) {
                     // selected points must belong to the active trace
                     // if no active trace points are selected,
                     // find the trace with the most points in the selection area and make it active
