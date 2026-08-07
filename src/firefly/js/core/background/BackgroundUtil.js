@@ -17,7 +17,9 @@ import {ServerParams} from '../../data/ServerParams.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {logger} from '../../util/Logger';
 import * as TblUtil from 'firefly/tables/TableUtil';
-import {copyRequestOptions, getRequestFromJob, getTblId, makeFileRequest} from 'firefly/tables/TableRequestUtil';
+import {copyRequestOptions, getRequestFromJob, getTblId, makeFileRequest, makeTblRequest} from 'firefly/tables/TableRequestUtil';
+import {MIXED_FITS_MIME_TYPE, MULTI_SPECTRUM_MIME_TYPE, MULTI_SPECTRUM_PROC_ID} from './BackgroundConst.js';
+import {VO_TABLE_CONTENT_TYPE} from 'firefly/voAnalyzer/VoConst';
 import {dispatchTableRemove, dispatchTableSearch, dispatchTableUpdate} from 'firefly/tables/TablesCntlr';
 import WebPlotRequest, {TitleOptions} from 'firefly/visualize/WebPlotRequest';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
@@ -314,7 +316,7 @@ export function fixTapResults(jobInfo) {
 export function loadJobResult({jobInfo, resultIdx}) {
     const {request, tbl_id, loader, href,  mimeType, id, size} = getMetadata({jobInfo, resultIdx});
     loader?.({jobInfo, request, href, mimeType, id, size});
-    if (loader !== loadTableResult) {
+    if (!loader?.createsTable) {        // this result is not a table, i.e. an image or a chart; drop the table the search created for it.
         dispatchTableRemove(tbl_id, true);
     }
 }
@@ -339,25 +341,32 @@ function parseHrefExtension(href) {
     }
 }
 
+// Returns the loader for the given media type, or undefined when it's not a type we know how to load.
 function  getMimeLoader(mimeType, href) {
     if (!mimeType && href) {
         const {ext} = parseHrefExtension(href) ?? {};
         if (FITS_EXTS.includes(ext)) {
             mimeType = 'application/fits';
         } else if (TABLE_EXTS.includes(ext)) {
-            mimeType = 'application/x-votable+xml';             // just to trigger table loader
+            mimeType = VO_TABLE_CONTENT_TYPE;
         }
     }
 
-    switch (String(mimeType).toLowerCase()) {
-        case 'application/x-fits; content=mixed':           // non-standard used by Firefly to indicate mixed content in a FITS file
+    // normalized mimeType so it matches against the known types
+    const nMimeType = String(mimeType).toLowerCase().replace(/\s+/g, '');
+    switch (nMimeType) {
+        case MIXED_FITS_MIME_TYPE:
             return loadMixedResult;
+        case MULTI_SPECTRUM_MIME_TYPE:
+            return loadMultiSpectrumResult;
         case 'application/fits':
         case 'application/x-fits':
         case 'image/fits':
             return loadImageResult;
+        case VO_TABLE_CONTENT_TYPE:
+            return loadTableResult;
         default:
-            return loadTableResult;         // default to table loader
+            return undefined;
     }
 }
 
@@ -367,29 +376,44 @@ const handleLayoutChanges = (jobInfo) => {
     if (submitTo)  dispatchFormSubmit({submitTo}); // if this is a routed app, submit the form to update the route
 };
 
-export function loadTableResult({jobInfo, request, href}) {
-    const {tbl_id} = getMetadata({jobInfo});
+export function loadTableResult({jobInfo, requestSupplier}) {
+    const {tbl_id, href, request} = getMetadata({jobInfo});
     if (!isURL(href)) {
         dispatchTableUpdate(TblUtil.createErrorTbl(tbl_id, `Invalid result URL: ${href}`));
     }
 
-    const tblRequest= makeFileRequest(null, href, null, {tbl_id});
+    const tblRequest= requestSupplier?.(jobInfo) || makeFileRequest(null, href, null, {tbl_id});
     copyRequestOptions(request, tblRequest);
 
     const {tbl_ui_id} = getTableUiByTblId(tbl_id) || {};        // re-use existing table UI if exists
     dispatchTableSearch(tblRequest, {tbl_ui_id});
     handleLayoutChanges(jobInfo);
 }
+loadTableResult.createsTable = true;
+
+// Load a MultiSpectrum table result, transforming it into an obs_core table with datalinks to each spectrum.
+export function loadMultiSpectrumResult({jobInfo}) {
+
+    loadTableResult({jobInfo, requestSupplier: (ji) => {
+            const {tbl_id, href} = getMetadata({jobInfo: ji});
+            return makeTblRequest(MULTI_SPECTRUM_PROC_ID, null, {source: href}, {tbl_id});
+    }});
+}
+loadMultiSpectrumResult.createsTable = true;
+
 
 export function getMetadata({jobInfo, resultIdx=0}) {
     const request = getRequestFromJob(jobInfo?.meta?.jobId);  // the request is initiated from Firefly
     const tbl_id = getTblId(request);
     const submitTo = request?.META_INFO?.form_submitTo;
     const results = jobInfo?.results || [];
-    const metaMimeType = jobInfo?.meta?.mimeType;
+    const metaMimeType = jobInfo?.meta?.mimeType;       // job-level override;
     const {href, mimeType, id, size} = results[resultIdx];
     const loader = getMimeLoader(metaMimeType || mimeType, href);
-    return {tbl_id, request, submitTo, href, loader, results, mimeType, id, size};
+    if (metaMimeType && !loader) {
+        logger.warn(`No loader for declared result media type: ${metaMimeType}; loading it as a plain table`);
+    }
+    return {tbl_id, request, submitTo, href, loader: loader ?? loadTableResult, results, mimeType, id, size};
 }
 
 export function loadMixedResult({jobInfo, href}) {
