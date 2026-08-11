@@ -1,0 +1,27 @@
+wavelength,label,description
+2.6259,H I,Br beta (6-4); gas
+2.8730,H I,Pf 11 (11-5); gas
+2.9600,NH3,N-H stretch (nu2); ice
+3.0392,H I,Pf epsilon (10-5); gas
+3.0500,H2O,O-H stretch; ice
+3.2890,PAH,3.3um C-H aromatic; PAH
+3.4000,PAH,3.4um aliphatic C-H; PAH
+3.4600,PAH,C-H band; PAH
+3.4700,-CH2-/-CH3-,C-H stretch (aliphatic); ice
+3.5300,CH3OH,C-H stretch; ice
+3.7406,H I,Pf gamma (8-5); gas
+3.9500,CH3OH/H2S,C-H / S-H stretch; ice
+4.0523,H I,Br alpha (5-4); gas
+4.1811,H2,v=0-0 S(11); gas
+4.2700,CO2,C-O stretch (nu3); ice
+4.2954,He I,3S-3Po     1 - 0; gas
+4.3800,13CO2,13C-O stretch; ice
+4.4098,H2,v=0-0 S(10); gas
+4.5000,H2O,combination mode; ice
+4.6200,XCN (OCN-),C=N stretch; ice
+4.6538,H I,Pf beta (7-5); gas
+4.6700,CO,12C-O stretch (solid); ice
+4.6946,H2,v=0-0 S(9); gas
+4.7200,Dust continuum,cloud-depth indicator; continuum
+4.7800,13CO,13C-O stretch; ice
+4.9100,OCS,C-S stretch; ice

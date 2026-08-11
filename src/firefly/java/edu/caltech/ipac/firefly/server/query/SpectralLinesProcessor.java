@@ -11,20 +11,29 @@ import edu.caltech.ipac.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
- * Serves the recommended spectral line list (a fixed resource dataset) as a table.
+ * Serves one of the recommended spectral line lists (fixed resource datasets) as a table,
+ * selected by the request's "listId" param.
  */
 @SearchProcessorImpl(id = "spectralLines")
 public class SpectralLinesProcessor extends EmbeddedDbProcessor {
-    private static final String RESOURCE = "/edu/caltech/ipac/firefly/resources/linelist_combined.csv";
+    private static final Map<String, String> RESOURCES = Map.of(
+            "luisa", "/edu/caltech/ipac/firefly/resources/luisa_linelist.csv",
+            "jwst",  "/edu/caltech/ipac/firefly/resources/jwst_linelist.tbl"
+    );
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-        try (InputStream is = SpectralLinesProcessor.class.getResourceAsStream(RESOURCE)) {
-            if (is == null) throw new IOException("Resource not found: " + RESOURCE);
+        String listId = req.getParam("listId");
+        String resource = RESOURCES.get(listId);
+        if (resource == null) throw new DataAccessException("Unknown or missing spectral lines listId: " + listId);
+
+        try (InputStream is = SpectralLinesProcessor.class.getResourceAsStream(resource)) {
+            if (is == null) throw new IOException("Resource not found: " + resource);
 
             // readAnyFormat needs a File; copy the classpath resource to a temp file first
-            String ext = RESOURCE.substring(RESOURCE.lastIndexOf('.'));
+            String ext = resource.substring(resource.lastIndexOf('.'));
             File tempFile = createTempFile(req, ext);
             FileUtil.writeToFile(is, tempFile, null);
 

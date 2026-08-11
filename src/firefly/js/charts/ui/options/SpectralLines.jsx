@@ -14,23 +14,27 @@ import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 
-// recommended-lines source tables; more than one will be offered eventually (rec-1, rec-2, ...)
-const RECOMMENDED_LINES_TBL_IDS = ['recommended-spectral-lines'];
+// recommended-lines source lists, each independently checkable; listId is sent to the server's
+// "spectralLines" search processor to pick which resource file it serves. Adding a list later is
+// just appending an entry here (plus its listId -> resource mapping server-side).
+const RECOMMENDED_LINE_LISTS = [
+    {listId: 'luisa', listLabel: 'Luisa'},
+    {listId: 'jwst', listLabel: 'JWST'},
+];
+const recLinesTblId = (listId) => `rec-${listId}`;
 
 // the merged, client-side table that's actually displayed/plotted from - single source of truth
 const LINES_TBL_ID = 'spectral-lines';
 const LINES_TBL_UI_ID = `${LINES_TBL_ID}-ui`;
-const WAVELENGTH_COL = 'wavelength_um';
-const LABEL_COL = 'species';
-const TRANSITION_COL = 'transition';
-const PHASE_COL = 'phase';
+const WAVELENGTH_COL = 'wavelength';
+const LABEL_COL = 'label';
+const DESCRIPTION_COL = 'description';
 const GROUP_COL = 'group';
 const WAVELENGTH_COL_UNIT = 'um'; // unit of WAVELENGTH_COL's values; TODO: source it from table metadata if present
 const LINES_TBL_COLUMNS = [
     {name: WAVELENGTH_COL, units: WAVELENGTH_COL_UNIT, type: 'double'},
     {name: LABEL_COL, type: 'char'},
-    {name: TRANSITION_COL, type: 'char'},
-    {name: PHASE_COL, type: 'char'},
+    {name: DESCRIPTION_COL, type: 'char'},
     {name: GROUP_COL, type: 'char'},
 ];
 
@@ -42,7 +46,6 @@ const SPECTRAL_LINES_FG_KEY = 'spectralLinesPanel';
 
 // Field keys and option values ---
 const SOURCE_OPTIONS_KEY = 'spectralLines.sourceOptions'; // comma-separated checked values, e.g. CheckboxGroupInputField's value
-const SOURCE_RECOMMENDED = 'recommended';
 const SOURCE_UPLOAD = 'upload';
 
 /**
@@ -64,10 +67,10 @@ export function makeSpectralLineShapes(xUnit, linesTblId, redshift=0) {
         const lineWvl = row[WAVELENGTH_COL] * (1 + redshift); // redshift the rest-frame wavelength of a spectral line
         const x = convertUnitValue(lineWvl, WAVELENGTH_COL_UNIT, xUnit);
         if (!Number.isFinite(x)) continue; // skip rows with a missing/unparsable wavelength
-        linesToPlot.push({x, label: row[LABEL_COL], transition: row[TRANSITION_COL], phase: row[PHASE_COL]});
+        linesToPlot.push({x, label: row[LABEL_COL], description: row[DESCRIPTION_COL]});
     }
 
-    return linesToPlot.map(({x, label, transition, phase}, i) => ({
+    return linesToPlot.map(({x, label, description}, i) => ({
         type: 'line',
         x0: x, x1: x,
         y0: 0, y1: 1,
@@ -80,8 +83,7 @@ export function makeSpectralLineShapes(xUnit, linesTblId, redshift=0) {
             font: {size: 9.5, color: SPECTRAL_LINE_COLOR, family: SPECTRAL_LINE_FONT_FAMILY},
             padding: 2,
         },
-        hovertext: `<b>${label}</b>  λ ${x} ${xUnit}` +
-            (transition ? `<br>${transition}` : '') + (phase ? `<br>${phase}` : ''),
+        hovertext: `<b>${label}</b>  λ ${x} ${xUnit}` + (description ? `<br>${description}` : ''),
         legendgroup: SPECTRAL_LINES_GROUP,
         showlegend: i === 0, // legend entry goes only on the first shape item
         name: 'Lines',
@@ -157,14 +159,13 @@ export function useSpectralLinesSync(chartId) {
     }, [chartId]);
 }
 
-/* ensures every recommended-lines source table is fetched; a no-op for any already loaded */
-async function ensureRecommendedLines() {
-    await Promise.all(RECOMMENDED_LINES_TBL_IDS.map(async (tbl_id) => {
-        if (getTblById(tbl_id)) return;
-        const request = makeTblRequest('spectralLines', 'Spectral Lines', {}, {tbl_id});
-        dispatchTableFetch(request); // headless: doesn't render in results UI
-        await onTableLoaded(tbl_id);
-    }));
+/* fetches a single recommended-lines source table (by its listId) if not already loaded */
+async function ensureRecommendedList(listId) {
+    const tbl_id = recLinesTblId(listId);
+    if (getTblById(tbl_id)) return;
+    const request = makeTblRequest('spectralLines', 'Spectral Lines', {listId}, {tbl_id});
+    dispatchTableFetch(request); // headless: doesn't render in results UI
+    await onTableLoaded(tbl_id);
 }
 
 /**
@@ -176,18 +177,15 @@ async function ensureRecommendedLines() {
  */
 async function buildMergedLinesTable(sourceOptions) {
     const checked = splitVals(sourceOptions);
-    const groups = [];
-    if (checked.includes(SOURCE_RECOMMENDED)) {
-        await ensureRecommendedLines();
-        RECOMMENDED_LINES_TBL_IDS.forEach((tbl_id) => groups.push({tbl_id, label: 'Recommended'}));
-    }
-    // TODO: once upload + column mapping is implemented, push {tbl_id, label: 'Upload'} groups for checked uploads here
+    const checkedLists = RECOMMENDED_LINE_LISTS.filter(({listId}) => checked.includes(listId));
+    await Promise.all(checkedLists.map(({listId}) => ensureRecommendedList(listId)));
+    // TODO: once upload + column mapping is implemented, include checked upload groups here too
 
-    const data = groups.flatMap(({tbl_id, label}) => {
-        const src = getTblById(tbl_id);
+    const data = checkedLists.flatMap(({listId, listLabel}) => {
+        const src = getTblById(recLinesTblId(listId));
         return Array.from({length: src?.totalRows ?? 0}, (_, rowIdx) => {
             const row = getTblRowAsObj(src, rowIdx);
-            return [row[WAVELENGTH_COL], row[LABEL_COL], row[TRANSITION_COL], row[PHASE_COL], label];
+            return [row[WAVELENGTH_COL], row[LABEL_COL], row[DESCRIPTION_COL], listLabel];
         });
     });
 
@@ -231,7 +229,8 @@ export function SpectralLinesPanel({activeTrace, chartId}) {
                                              label='Lines list:'
                                              initialState={{value: initialSourceOptions}}
                                              options={[
-                                                 {label: 'Recommended', value: SOURCE_RECOMMENDED},
+                                                 ...RECOMMENDED_LINE_LISTS.map(({listId, listLabel}) =>
+                                                     ({label: `${listLabel} (recommended)`, value: listId})),
                                                  {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
                                              ]}/>
                     {/* TODO: "Upload mine" — file upload + column mapper */}

@@ -1,0 +1,42 @@
+\ Curated subset (2.6-5.0 um): gas-phase transitions plus PAH bands.
+\ Wavelengths are exact vacuum values from source; H I labels via Rydberg.
+\ Column wavelength [micron]: rest-frame vacuum wavelength
+\ Column label: species / ion (bracketed = forbidden transition)
+\ Column description: transition identification; phase (gas/PAH)
+\title='JWST-SpecTool derived line list (2.6-5.0 um)'
+\source='Lai JWST-SpecTool line_list_gt3um.csv'
+\wavelength_frame='rest-frame, vacuum'
+\n_lines=29
+|wavelength|  label|             description|
+|    double|   char|                    char|
+|    micron|       |                        |
+|      null|   null|                    null|
+     3.0039      H2          v=1-0 O(4); gas 
+     3.0392     H I   Pf epsilon (10-5); gas 
+     3.0984     O I    3P-3Do     1 - 1; gas 
+     3.2890     PAH  3.3um C-H aromatic; PAH 
+     3.2970     H I      Pf delta (9-5); gas 
+     3.4000     PAH 3.4um aliphatic C-H; PAH 
+     3.4600     PAH            C-H band; PAH 
+     3.5100     PAH            C-H band; PAH 
+     3.6146     CH+          v=1-0 R(0); gas 
+     3.6876     CH+          v=1-0 P(1); gas 
+     3.7035    He I   3Po-3D      2 - 1; gas 
+     3.7406     H I      Pf gamma (8-5); gas 
+     3.8461      H2         v=0-0 S(13); gas 
+     4.0523     H I      Br alpha (5-4); gas 
+     4.0763 [Fe II] a6D-a4F   7/2 - 5/2; gas 
+     4.0820 [Fe II] a6D-a4F   5/2 - 3/2; gas 
+     4.1150 [Fe II] a6D-a4F   9/2 - 7/2; gas 
+     4.1811      H2         v=0-0 S(11); gas 
+     4.2954    He I    3S-3Po     1 - 0; gas 
+     4.3765     H I           Hu (12-6); gas 
+     4.4098      H2         v=0-0 S(10); gas 
+     4.6077 [Fe II] a6D-a4F   5/2 - 5/2; gas 
+     4.6493      CO          v=1-0 R(1); gas 
+     4.6538     H I       Pf beta (7-5); gas 
+     4.6742      CO          v=1-0 P(1); gas 
+     4.6946      H2          v=0-0 S(9); gas 
+     4.7326      CO          v=2-1 P(1); gas 
+     4.8891 [Fe II] a6D-a4F   7/2 - 7/2; gas 
+     4.9908      CO         v=1-0 P(32); gas 
