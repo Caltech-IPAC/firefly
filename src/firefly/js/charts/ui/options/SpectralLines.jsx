@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import {isEqual} from 'lodash';
-import {Button, Stack, Typography} from '@mui/joy';
+import {Button, Divider, Stack, Typography} from '@mui/joy';
+import {Insights} from '@mui/icons-material';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
@@ -24,6 +25,9 @@ const RECOMMENDED_LINE_LISTS = [
     {listId: 'jwst', listLabel: 'JWST'},
 ];
 const recLinesTblId = (listId) => `rec-${listId}`;
+
+// order-insensitive: checking source options checkboxes in a different order shouldn't count as a real difference
+const sameSourceOptions = (a, b) => isEqual(splitVals(a).filter(Boolean).sort(), splitVals(b).filter(Boolean).sort());
 
 // the merged, client-side table that's actually displayed/plotted from - single source of truth
 const LINES_TBL_ID = 'spectral-lines';
@@ -196,7 +200,8 @@ async function buildMergedLinesTable(sourceOptions) {
         });
     });
 
-    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}};
+    // store sourceOptions this table was built from in meta, so the panel can tell when the checked lists have since diverged
+    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}, tableMeta: {sourceOptions}};
     table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
     dispatchTableAddLocal(table, undefined, false);
 }
@@ -221,13 +226,25 @@ export function SpectralLinesPanel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; button click handles later rebuilds
     }, []);
 
-    const {selectedCount, groupsCount, linesCount} = useStoreConnector(() => {
+    const {selectedCount, groupsCount, linesCount, loadedSourceOptions} = useStoreConnector(() => {
         const tbl = getTblById(LINES_TBL_ID);
         const linesCount = tbl?.totalRows ?? 0;
         const groupsCount = linesCount ? new Set(getColumnValues(tbl, GROUP_COL)).size : 0;
         const selectedCount = SelectInfo.newInstance(tbl?.selectInfo).getSelectedCount();
-        return {selectedCount, groupsCount, linesCount};
+        const loadedSourceOptions = tbl?.tableMeta?.sourceOptions ?? '';
+        return {selectedCount, groupsCount, linesCount, loadedSourceOptions};
     }, []);
+
+    // true whenever the checked lists above no longer match what's actually loaded into the table below
+    const hasPendingChanges = !sameSourceOptions(sourceOptions, loadedSourceOptions);
+
+    const plotHelperText = linesCount === 0
+        ? (hasPendingChanges
+            ? 'No lines loaded yet - click "Load Lines" above to reflect the changes in list(s) selection'
+            : 'No lines loaded - select list(s) above and then click "Load Lines"')
+        : (hasPendingChanges
+            ? 'Showing previously loaded lines - click "Load Lines" above to reflect the changes in list(s) selection'
+            : undefined);
 
     const onUpdateLines = () => {
         void buildMergedLinesTable(sourceOptions);
@@ -251,7 +268,7 @@ export function SpectralLinesPanel() {
                                          </Stack>
                                      )}
                                      isOpen={true}>
-                        <Stack spacing={1}>
+                        <Stack spacing={2}>
                             <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
                                                      label='Line Lists:'
                                                      alignment='vertical'
@@ -262,14 +279,21 @@ export function SpectralLinesPanel() {
                                                          {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
                                                      ]}/>
                             {/* TODO: "Upload mine" — file upload + column mapper */}
-                            <Stack direction='row'>
-                                <Button size='sm' onClick={onUpdateLines}>Update Lines</Button>
+                            <Stack direction='row' spacing={1} alignItems='center'>
+                                <Divider/>
+                                <Button size='sm' onClick={onUpdateLines}>Load Lines</Button>
+                                {hasPendingChanges &&
+                                    <Typography level='body-xs' color='warning'>
+                                        changes in list(s) selection not yet loaded in table below
+                                    </Typography>}
                             </Stack>
                         </Stack>
                     </CollapsibleItem>
                 </CollapsibleGroup>
                 <Stack spacing={.5}>
                     <Typography level='title-md'>Select lines to plot:</Typography>
+                    {plotHelperText &&
+                        <Typography level='body-sm' color='neutral'>{plotHelperText}</Typography>}
                     <Stack sx={{height: 240}}>
                         <TablePanel
                             tbl_id={LINES_TBL_ID}
@@ -284,7 +308,14 @@ export function SpectralLinesPanel() {
                             showFilters={true}
                         />
                     </Stack>
-                    <Typography level='body-sm'>{selectedCount} lines selected - plotted live on spectral chart(s)</Typography>
+                    {selectedCount === 0
+                        ? <Typography level='body-md'>0 lines selected - nothing plotted on spectral chart(s)</Typography>
+                        : <Typography level='body-md'
+                                      sx={{pl: 0.5}}
+                                      startDecorator={<Insights color='primary'/>}>
+                              <Typography fontWeight='lg'>{selectedCount} lines</Typography>
+                              &nbsp;selected - plotted live on spectral chart(s) ↘
+                          </Typography>}
                 </Stack>
             </Stack>
         </FieldGroup>
