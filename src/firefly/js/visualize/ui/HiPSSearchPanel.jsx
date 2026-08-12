@@ -20,7 +20,7 @@ export function HiPSSearchPanel({initArgs= {}, name:groupKey = 'HiPSSearchPanel'
     return (
         <FieldGroup groupKey={groupKey} keepState={true} sx={{width: 1, height: 1}}>
             <Box width={1} height={1}>
-                <FormPanel onSuccess={(request) => doSearch(request)} cancelText='' help_id = 'basics.searching.hips'
+                <FormPanel onSuccess={(request) => doSearch(request)} cancelText='' completeText='Load' help_id = 'basics.searching.hips'
                             slotProps={{
                                 completeBtn: {
                                     getDoOnClickFunc: (clickFunc) => (clickFuncRef.clickFunc= clickFunc),
