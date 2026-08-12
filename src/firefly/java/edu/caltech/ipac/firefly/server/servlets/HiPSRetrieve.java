@@ -23,10 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static edu.caltech.ipac.util.FileUtil.K;
 import static edu.caltech.ipac.util.FileUtil.isDirectoryEmpty;
-import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
-import static java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 /**
  * @author Trey Roby
@@ -34,6 +34,7 @@ import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 public class HiPSRetrieve {
 
     private static final List<String> extList= Arrays.asList("jpg", "jpeg", "png", "webp");
+    private static final long minFileLengthOnError = 2*K;
 
     public static FileInfo retrieveHiPSData(String urlStr, String pathExt, boolean alwaysUseCached) {
         try {
@@ -72,11 +73,12 @@ public class HiPSRetrieve {
                 retFile= fetchedFileInfo.getFile();
             }
             catch (FailedRequestException e) {
-                return fileExistLocal ? preFetchFileInfo : new FileInfo(e.getResponseCode());
+                if (fileExistLocal && targetFile.length() > minFileLengthOnError) return preFetchFileInfo; // if the file existed and has content, return it
+                else return new FileInfo(e.getResponseCode());
             }
 
             switch (rCode) {
-                case 200 -> {
+                case HTTP_OK -> {
                     if (isValid(retFile)) return fetchedFileInfo;
                     if (retFile!=null) retFile.delete();
                     return new FileInfo(rCode);
@@ -84,11 +86,8 @@ public class HiPSRetrieve {
                 case HTTP_NOT_MODIFIED -> {
                     return fetchedFileInfo;
                 }
-                case HTTP_GATEWAY_TIMEOUT, HTTP_CLIENT_TIMEOUT -> {
-                    return fileExistLocal ? preFetchFileInfo : new FileInfo(rCode);
-                }
                 default -> {
-                    if (fileExistLocal && targetFile.length() > 400) return preFetchFileInfo; // if the file existed and it still has content, return it
+                    if (fileExistLocal && targetFile.length() > minFileLengthOnError) return preFetchFileInfo; // if the file existed and has content, return it
                     if (retFile != null) retFile.delete();
                     if (rCode == 404 && imageRequest(retFile)) return new FileInfo(204);
                     else return new FileInfo(rCode);

@@ -4,6 +4,7 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -48,6 +49,7 @@ public final class FITSTableReader
     private static final Pattern TDISP = Pattern.compile("(A|I|B|O|Z|F|E|EN|ES|G|D)(\\d+)?(?:\\.(\\d+))?.*");
     private static final Pattern EXPONENTIAL = Pattern.compile("E|EN|ES|D");                                    // Table 20 from https://fits.gsfc.nasa.gov/standard30/fits_standard30aa.pdf
     private static final int MAX_IMAGE_COLS= 30;
+    private static final EvalVal evalValReflexive= (v) -> v;
 
     record FitsTableReadInfo(DataGroup dataGroup, EvalVal[] evaluator) {};
 
@@ -348,13 +350,16 @@ public final class FITSTableReader
             return getClassByTform(colFormat);
         } else {
             Class<?> cls = base.getClass().getComponentType();
-            if (cls != null && Array.getLength(base) == 1) {
-                if (isScaled) {
+            if (cls!=null) {
+                if (Array.getLength(base) == 1) {
+                    if (!isScaled) return cls;
+                    String clsStr= cls.toString();
+                    if (clsStr.contains("long")) return Long.class;
+                    if (clsStr.contains("int") || clsStr.contains("short")) return Integer.class;
                     return Double.class;
+                } else if (cls.isArray()) {
+                    return ArrayFuncs.flatten(base).getClass();
                 }
-                return cls;
-            } else if (cls != null && cls.isArray()) {
-                return ArrayFuncs.flatten(base).getClass();
             }
             return base.getClass();
         }
@@ -471,6 +476,13 @@ public final class FITSTableReader
     }
 
 
+    private static String getColumnMeta(TableHDU<?> hduTable, int icol, String base) {
+        Header header= hduTable.getHeader();
+        var key= base+(icol+1);
+        if (header == null || !header.containsKey(key)) return null;
+        var card= hduTable.getHeader().getCard(key);
+        return card.getValue();
+    }
 
 
     private static FitsTableReadInfo doReadFitsTableHeader(TableHDU<?> hduTable, String title) throws IOException, FitsException {
@@ -486,32 +498,9 @@ public final class FITSTableReader
         try {
             for (int icol = 0; icol < nCol; ++icol) {
                 colNames[icol] = hduTable.getColumnName(icol);
-
-                String tscal = hduTable.getColumnMeta(icol, "TSCAL");
-                String tzero = hduTable.getColumnMeta(icol, "TZERO");
-                double zeroval;
-                double scale=1.0;
-                long blank=0;
-                boolean hasBlank=false;
-                boolean isScaled = false;
-                double zeros= 0;
-                if (tscal != null) {
-                    zeroval = Double.parseDouble(tscal);
-                    scale = zeroval;
-                }
-                if (tzero != null) {
-                    zeroval = Double.parseDouble(tzero);
-                    zeros = zeroval;
-                }
-                if (scale != 1.0 || zeros != 0.0) {
-                    isScaled = true;
-                }
-
-                String blankKey = "TNULL" + (icol + 1);
-                if (hduTable.getHeader().containsKey(blankKey)) {
-                    blank = hduTable.getHeader().getLongValue(blankKey); //hduTable.getBlankValue();
-                    hasBlank= true;
-                }
+                String tscal = getColumnMeta(hduTable, icol, "TSCAL");
+                String tzero = getColumnMeta(hduTable, icol, "TZERO");
+                String blank = getColumnMeta(hduTable, icol, "TNULL");
 
                 Object entry = null;
                 try {
@@ -522,10 +511,11 @@ public final class FITSTableReader
                     throw new IOException("Error reading table entry");
                 }
 
-                bases[icol] =
-                        hduTable.getNRows()==0 ? getClassByTform(hduTable.getColumnFormat(icol)) :
-                                getClassType(entry, isScaled, hduTable.getColumnFormat(icol));
-                evaluator[icol] = new EvalVal(blank, isScaled, hasBlank, scale, zeros);
+                bases[icol] = hduTable.getNRows()==0
+                        ? getClassByTform(hduTable.getColumnFormat(icol))
+                        : getClassType(entry, tscal != null, hduTable.getColumnFormat(icol));
+
+                evaluator[icol]= getEvalVal(bases[icol],blank,tscal,tzero);
             }
         }
         catch (NumberFormatException e) {
@@ -535,8 +525,7 @@ public final class FITSTableReader
         ArrayList<DataType> dataTypes = new ArrayList<>();
 
         for (int colIdx = 0; colIdx < colCount; colIdx++) {
-            DataType dt = convertHDUToDataType(colNames, bases, hduTable, colIdx);
-            dataTypes.add(dt);
+            dataTypes.add(convertHDUToDataType(colNames, bases, hduTable, colIdx));
         }
 
         DataGroup dataGroup = new DataGroup(title, dataTypes);
@@ -546,7 +535,7 @@ public final class FITSTableReader
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
-            String format = hduTable.getColumnMeta(colIdx, "TDISP");
+            String format = getColumnMeta(hduTable, colIdx, "TDISP");
             convertFormat(format, dt);
         }
 
@@ -573,11 +562,50 @@ public final class FITSTableReader
         return   new FitsTableReadInfo(dataGroup,evaluator);
     }
 
-    record EvalVal(long blank, boolean scaled, boolean hasBlank, double scale, double zero) {
+    private static EvalVal getEvalVal(Class<?> classType, String blank, String tscal, String tzero) {
+        boolean hasBlank= blank!=null;
+        String cTypeStr= classType.toString();
+
+        if (!hasBlank && tscal==null && tzero==null) return evalValReflexive;
+
+        long blankVal = hasBlank ? Util.Try.it(() -> Long.parseLong(blank)).getOrElse(0L) : 0L;
+        if (cTypeStr.contains("long")) {
+            long scaleLong = tscal != null ? Util.Try.it(() -> Long.parseLong(tscal)).getOrElse(1L) : 1L;
+            long zerosLong = tzero != null ? Util.Try.it(() -> Long.parseUnsignedLong(tzero)).getOrElse(0L) : 0;
+            return new EvalValScaledLong(blankVal, hasBlank, scaleLong, zerosLong);
+        }
+        else if (cTypeStr.contains("int") || cTypeStr.contains("short")) {
+            long scaleLong = tscal != null ? Util.Try.it(() -> Long.parseLong(tscal)).getOrElse(1L) : 1L;
+            long zerosLong = tzero != null ? Util.Try.it(() -> Long.parseUnsignedLong(tzero)).getOrElse(0L) : 0;
+            return new EvalValScaledInt(blankVal, hasBlank, scaleLong, zerosLong);
+        }
+        else {
+            double scaleDouble = tscal != null ? Util.Try.it(() -> Double.parseDouble(tscal)).getOrElse(1.0) : 1.0;
+            double zerosDouble = tzero != null ? Util.Try.it(() -> Double.parseDouble(tzero)).getOrElse(0.0) : 0.0;
+            return new EvalValScaled(blankVal, hasBlank, scaleDouble, zerosDouble);
+        }
+    }
+
+    interface EvalVal { Number evalValue(Number val); }
+
+    record EvalValScaled(long blank, boolean hasBlank, double scale, double zero) implements EvalVal {
         public Number evalValue(Number val) {
             if (hasBlank && val.doubleValue() == blank) return null;
-            if (!scaled) return val;
             return val.doubleValue() * scale + zero;
+        }
+    }
+
+    record EvalValScaledLong(long blank, boolean hasBlank, long scale, long zero) implements EvalVal {
+        public Number evalValue(Number val) {
+            if (hasBlank && val.longValue() == blank) return null;
+            return val.longValue() * scale + zero;
+        }
+    }
+
+    record EvalValScaledInt(long blank, boolean hasBlank, long scale, long zero) implements EvalVal {
+        public Number evalValue(Number val) {
+            if (hasBlank && val.longValue() == blank) return null;
+            return val.intValue() * (int)scale + (int)zero;
         }
     }
 
@@ -657,27 +685,27 @@ public final class FITSTableReader
     }
 
     private static Class<?> formatClass(Class<?> c) throws FitsException {
-        String cname = c.getName();
+        String cname = c.getName().toLowerCase();
         //check if dimension is 0 then cname is of type "boolean" or "byte", etc.
         //but if dimension is > 0, then cname may be of type "[[[B" or "[S", etc.
-        if (cname.contains("boolean") || (cname.contains("[") && cname.contains("Z"))) {
+        if (cname.contains("boolean") || (cname.contains("[") && cname.contains("z"))) {
             return Boolean.class;
         }
         else if (cname.contains("byte") || cname.contains("short") || cname.contains("int")  ||
-                (cname.contains("[") && (cname.contains("B") || cname.contains("S") || cname.contains("I")))) {
+                (cname.contains("[") && (cname.contains("b") || cname.contains("s") || cname.contains("i")))) {
             return Integer.class;
         }
-        else if (cname.contains("long") || (cname.contains("[") && cname.contains("J"))) {
+        else if (cname.contains("long") || (cname.contains("[") && cname.contains("j"))) {
             return Long.class;
         }
-        else if (cname.contains("float") || (cname.contains("[") && cname.contains("F"))) {
+        else if (cname.contains("float") || (cname.contains("[") && cname.contains("f"))) {
             return Float.class;
         }
-        else if (cname.contains("double") || (cname.contains("[") && cname.contains("D"))) {
+        else if (cname.contains("double") || (cname.contains("[") && cname.contains("d"))) {
             return Double.class;
         }
-        else if (cname.contains("char") || cname.contains("String") ||
-                (cname.contains("[") && cname.contains("C"))) {
+        else if (cname.contains("char") || cname.contains("string") ||
+                (cname.contains("[") && cname.contains("c"))) {
             return String.class;
         }
         else {
@@ -700,21 +728,21 @@ public final class FITSTableReader
             dataType.setArraySize(arraySize); //TDIM
         }
         dataType.setDataType(formatClass(bases[colIdx]));
-        String tunit = hduTable.getColumnMeta(colIdx, "TUNIT");
+        String tunit = getColumnMeta(hduTable, colIdx, "TUNIT");
         if (tunit != null) {
             dataType.setUnits(tunit);
         }
 
-        String tcomm = hduTable.getColumnMeta(colIdx, "TCOMM");
-        String desc = tcomm == null ? hduTable.getColumnMeta(colIdx, "TDOC") : tcomm; // this is for LSST.. not sure it applies to others.
+        String tcomm = getColumnMeta(hduTable, colIdx, "TCOMM");
+        String desc = tcomm == null ? getColumnMeta(hduTable, colIdx, "TDOC") : tcomm; // this is for LSST.. not sure it applies to others.
         dataType.setDesc(desc);
 
-        String tucd = hduTable.getColumnMeta(colIdx, "TUCD");
+        String tucd = getColumnMeta(hduTable, colIdx, "TUCD");
         if (tucd != null) {
             dataType.setUCD(tucd);
         }
 
-        String tutype = hduTable.getColumnMeta(colIdx, "TUTYP");
+        String tutype = getColumnMeta(hduTable, colIdx, "TUTYP");
         if (tutype != null) {
             dataType.setUType(tutype);
         }
@@ -723,7 +751,7 @@ public final class FITSTableReader
     }
 
     private static int[] getShape(TableHDU<?> hduTable, int colIdx) {
-        String tdim = hduTable.getColumnMeta(colIdx, "TDIM");
+        String tdim = getColumnMeta(hduTable, colIdx, "TDIM");
         if (tdim != null) {
             tdim = tdim.trim();
             if (tdim.charAt(0) == '(' && tdim.charAt(tdim.length() - 1) == ')') {
