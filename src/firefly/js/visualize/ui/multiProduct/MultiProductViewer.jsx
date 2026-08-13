@@ -16,10 +16,8 @@ import {ServiceDescriptorPanel} from '../../../ui/dynamic/ServiceDescriptorPanel
 import {RenderTreeIdCtx} from '../../../ui/RenderTreeIdCtx.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {isDefined} from '../../../util/WebUtil';
-import {
-    dispatchAddViewer, dispatchViewerUnmounted, getLayoutDetails, getMultiViewRoot, GRID, IMAGE, NewPlotMode,
-    PLOT2D, SINGLE
-} from '../../MultiViewCntlr.js';
+import {dispatchAddViewer, dispatchViewerUnmounted, getLayoutDetails, getMultiViewRoot} from '../../MultiViewCntlr.js';
+import {GRID, IMAGE, NewPlotMode, PLOT2D, SINGLE} from '../../VisConst';
 import {createMakeDropdownFunc} from './DPDropdown.jsx';
 import {AdvancedMessage, ProductDownload, ProductMessage, TextFileViewer} from './MPMessages.jsx';
 import {MultiProductChoice} from './MultiProductChoice.jsx';

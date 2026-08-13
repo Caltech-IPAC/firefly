@@ -1,59 +1,63 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react';
+import {ApiToolbarImageDisplay} from 'firefly/visualize/ui/ApiToolbarImageDisplay.jsx';
 import {isString} from 'lodash';
-import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
-import {ServerRequest } from '../data/ServerRequest.js';
-import {getJsonData } from '../rpc/SearchServicesJson.js';
+import React from 'react';
+import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 
 // Used for dispatch and action type constants
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
-import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import * as TablesCntlr from '../tables/TablesCntlr.js';
-import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
-import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
-import * as HpxIndexCntlr from '../tables/HpxIndexCntlr.js';
-import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
+import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
+import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
+import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
+import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
-import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import * as ComponentCntlr from '../core/ComponentCntlr.js';
-import {ApiExpandedView} from './ApiExpandedView.jsx';
-import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
-import {dispatchAddSaga, dispatchAddActionWatcher, dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
-import {showWorkspaceDialog, WorkspacePickerPopup} from '../ui/WorkspaceViewer.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
+import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
+import {APP_DATA_PATH} from '../core/CoreConst';
+import {dispatchAddCell, dispatchEnableSpecialViewer, dispatchRemoveCell} from '../core/LayoutCntlr.js';
+import {dispatchAddActionWatcher, dispatchAddSaga, dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
+import {ServerRequest} from '../data/ServerRequest.js';
+import {getJsonData} from '../rpc/SearchServicesJson.js';
+import * as HpxIndexCntlr from '../tables/HpxIndexCntlr.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
+import {TablePanel} from '../tables/ui/TablePanel.jsx';
+import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 
-// Parts of the lowlevel api
-import * as ApiUtil from './ApiUtil.js';
-import  * as ApiUtilChart from './ApiUtilChart.jsx';
-import moreChartApi from './ApiUtilChart.jsx';
-import  * as ApiUtilImage from './ApiUtilImage.jsx';
-import  * as ApiUtilTable from './ApiUtilTable.jsx';
+import {startTTFeatureWatchers} from '../templates/common/ttFeatureWatchers.js';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
+import {showWorkspaceDialog, WorkspacePickerPopup} from '../ui/WorkspaceViewer.jsx';
+import * as DrawLayerDispatch from '../visualize/DrawLayerDispatch';
+import * as ImPlotDispatch from '../visualize/ImagePlotDispatch';
+import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
+import {ImageViewer} from '../visualize/iv/ImageViewer.jsx';
+import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
+import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
+import {getActiveRowToImageDef} from '../visualize/saga/ActiveRowToImageWatcher.js';
+import {getMocWatcherDef} from '../visualize/saga/MOCWatcher.js';
+import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
+import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
+import {ImageMetaDataToolbar} from '../visualize/ui/ImageMetaDataToolbar.jsx';
 
 // UI component
 import {MultiImageViewer} from '../visualize/ui/MultiImageViewer.jsx';
-import {ImageViewer} from '../visualize/iv/ImageViewer.jsx';
-import {ImageMetaDataToolbar} from '../visualize/ui/ImageMetaDataToolbar.jsx';
 import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar.jsx';
-import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
-import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
-import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
-import {ApiToolbarImageDisplay} from 'firefly/visualize/ui/ApiToolbarImageDisplay.jsx';
-import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {TablePanel} from '../tables/ui/TablePanel.jsx';
-import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
-import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
-import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
-import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
+import * as VisConst from '../visualize/VisConst.js';
+import {DRAWLAYER_PREFIX, IMAGE_MULTI_VIEW_PREFIX, PLOTS_PREFIX} from '../visualize/VisConst.js';
+import {ApiExpandedView} from './ApiExpandedView.jsx';
+
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
-import {buildViewerApi} from './ApiViewer.js';
 
-import {startTTFeatureWatchers} from '../templates/common/ttFeatureWatchers.js';
-import {getActiveRowToImageDef} from '../visualize/saga/ActiveRowToImageWatcher.js';
-import {getMocWatcherDef} from '../visualize/saga/MOCWatcher.js';
+
+// Parts of the lowlevel api
+import * as ApiUtil from './ApiUtil.js';
+import * as ApiUtilChart from './ApiUtilChart.jsx';
+import moreChartApi from './ApiUtilChart.jsx';
+import * as ApiUtilImage from './ApiUtilImage.jsx';
+import * as ApiUtilTable from './ApiUtilTable.jsx';
+import {buildViewerApi} from './ApiViewer.js';
 
 
 /**
@@ -172,11 +176,11 @@ export function buildLowlevelAPI() {
         findActionType(TablesCntlr, TablesCntlr.RESULTS_PREFIX),
         findActionType(TablesCntlr, TablesCntlr.UI_PREFIX),
         findActionType(ReadoutCntlr, ReadoutCntlr.READOUT_PREFIX),
-        findActionType(MultiViewCntlr, MultiViewCntlr.IMAGE_MULTI_VIEW_PREFIX),
-        findActionType(ImPlotCntlr.default, ImPlotCntlr.PLOTS_PREFIX),
+        findActionType(VisConst, IMAGE_MULTI_VIEW_PREFIX),
+        findActionType(VisConst, PLOTS_PREFIX),
+        findActionType(VisConst, DRAWLAYER_PREFIX),
         findActionType(HpxIndexCntlr, HpxIndexCntlr.SPACIAL_HPX_INDX_PREFIX),
-        findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH),
-        findActionType(DrawLayerCntlr.default, DrawLayerCntlr.DRAWLAYER_PREFIX)
+        findActionType(AppDataCntlr, APP_DATA_PATH),
     );
 
 
@@ -187,10 +191,10 @@ export function buildLowlevelAPI() {
         findDispatch(TablesCntlr),
         findDispatch(ReadoutCntlr),
         findDispatch(MultiViewCntlr),
-        findDispatch(ImPlotCntlr),
+        findDispatch(ImPlotDispatch),
         findDispatch(HpxIndexCntlr),
         findDispatch(AppDataCntlr),
-        findDispatch(DrawLayerCntlr),
+        findDispatch(DrawLayerDispatch),
         {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer},
         {dispatchAddSaga, dispatchAddActionWatcher, dispatchAddTableTypeWatcherDef}
     );

@@ -7,10 +7,10 @@ import PropTypes, {element} from 'prop-types';
 import {omit} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import shallowequal from 'shallowequal';
+import {SINGLE} from '../VisConst';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {makeDataProductsConverter} from '../../metaConvert/DataProductsFactory.js';
 import {getTblById} from '../../tables/TableUtil.js';
-import {SINGLE} from '../MultiViewCntlr.js';
 
 export class ImageMetaDataToolbar extends Component {
 

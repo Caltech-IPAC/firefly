@@ -1,4 +1,7 @@
 import {isArray, uniqueId} from 'lodash';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot
+} from '../DrawLayerDispatch';
 import {getRotationAngle, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {setActiveRequestKey} from './ActivePlottingTask.js';
 import {
@@ -9,18 +12,14 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {GridOnStatus, WebPlotRequest} from '../WebPlotRequest.js';
 import CsysConverter from '../CsysConverter.js';
 import {Band} from '../Band.js';
-import {makeUniqueRequestKey, visRoot} from '../ImagePlotCntlr.js';
-import { DEFAULT_FITS_VIEWER_ID, findViewerWithItemId, getMultiViewRoot, IMAGE } from '../MultiViewCntlr.js';
+import {findViewerWithItemId, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, IMAGE, ZoomType} from '../VisConst';
+import {dlRoot, getDlAry, visRoot} from '../VisStoreRoots';
 import {isImage, processHeaderData, RDConst} from '../WebPlot.js';
 import {enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {getArcSecPerPix} from '../ZoomUtil.js';
-import {ZoomType} from '../ZoomType.js';
 import {isDefined} from '../../util/WebUtil.js';
 import {HdrConst} from '../FitsHeaderUtil.js';
-import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot, dlRoot,
-    getDlAry
-} from '../DrawLayerCntlr.js';
 import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
@@ -139,6 +138,16 @@ export function makeSinglePlotPayload(vr, rawPayload, requestKey) {
         .forEach((r) => r && setActiveRequestKey(r.getPlotId(), requestKey));
 
     return payload;
+}
+
+const KEY_ROOT = 'progress-';
+let keyCnt = 0;
+
+// todo find the right place for this function when I revamp the plot progress, keep here for now
+export function makeUniqueRequestKey(prefix = KEY_ROOT) {
+    const requestKey = `${prefix}-${keyCnt}-${Date.now()}`;
+    keyCnt++;
+    return requestKey;
 }
 
 export function makeGroupPayload(vr, rawPayload, requestKey) {

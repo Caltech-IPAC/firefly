@@ -4,11 +4,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
+import {currentP, primePlot} from '../PlotViewUtil.js';
 import { RangeValues} from '../RangeValues.js';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import { ToolbarButton, DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
+import {dispatchStretchChange} from '../ImagePlotDispatch';
 import { PERCENTAGE, ZSCALE, SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA, } from '../RangeValues.js';
 import {showColorDialog} from './ColorDialog.jsx';
@@ -74,9 +74,8 @@ function stretchByType(pv,currRV,sType,lowerValue,upperValue,asinhQ) {
 
 
 export function StretchDropDownView({toolbarElement}) {
-    const pv = useStoreConnector(() => getActivePlotView(visRoot()));
+    const {pv,plot} = useStoreConnector(() => currentP());
     const enabled= Boolean(pv);
-    const plot= primePlot(pv);
     if (!plot) return <div/>;
     const rv= plot?.plotState?.getRangeValues();
 

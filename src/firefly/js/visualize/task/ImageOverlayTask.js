@@ -2,22 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {logger} from '../../util/Logger.js';
-import ImagePlotCntlr, {
-    makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMaskLazyLoad, visRoot
-} from '../ImagePlotCntlr.js';
-import { primePlot, getOverlayByPvAndId, getPlotViewById,
-    getOverlayById,
-    convertImageIdxToHDU,
+import {dispatchPlotMaskLazyLoad} from '../ImagePlotDispatch';
+import {
+    primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById, convertImageIdxToHDU, isPlotIdInPvNewPlotInfoAry,
+    currentP,
 } from '../PlotViewUtil.js';
 import {PlotState} from '../PlotState.js';
 import {RequestType} from '../RequestType.js';
-import {ZoomType} from '../ZoomType.js';
+import {
+    IMAGE_PLOT_KEY, OVERLAY_PLOT_CHANGE_ATTRIBUTES, PLOT_IMAGE, PLOT_IMAGE_FAIL, PLOT_MASK, PLOT_MASK_FAIL, PLOT_MASK_START, ZoomType
+} from '../VisConst';
 import {WebPlot} from '../WebPlot.js';
 import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
-import {isPlotIdInPvNewPlotInfoAry} from '../PlotViewUtil';
 import {changeLocalMaskColorOnOverlayPlotView} from 'firefly/visualize/rawData/RawDataOps.js';
-import {makeCubeCtxAry, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
+import {makeCubeCtxAry, makeUniqueRequestKey, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
 
 const colorList= [
     '#FF0000','#00FF00', '#0000FF', '#91D33D',
@@ -29,7 +28,7 @@ const colorList= [
 function watchForCompletedPlot(action, cancelSelf, params) {
     const {pvNewPlotInfoAry, plotId}= action.payload;
 
-    if (action.type===ImagePlotCntlr.PLOT_IMAGE_FAIL) {
+    if (action.type===PLOT_IMAGE_FAIL) {
         if (action.payload.plotId===plotId) cancelSelf();
         return params;
     }
@@ -66,7 +65,7 @@ export function plotImageMaskActionCreator(rawAction) {
                 payload.lazyLoadPayload= {plotId,imageOverlayId};
             }
 
-            dispatcher({type:ImagePlotCntlr.PLOT_MASK_START, payload});
+            dispatcher({type:PLOT_MASK_START, payload});
 
             if (!lazyLoad && !plot) {
                 vr= getStore()[IMAGE_PLOT_KEY];
@@ -75,7 +74,7 @@ export function plotImageMaskActionCreator(rawAction) {
                 dispatchAddActionWatcher( {
                     callback: watchForCompletedPlot,
                     params: {plotId, opv},
-                    actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+                    actions: [PLOT_IMAGE, PLOT_IMAGE_FAIL]
                 } );
             }
 
@@ -89,7 +88,7 @@ export function plotImageMaskActionCreator(rawAction) {
 export function plotImageMaskLazyActionCreator(rawAction) {
     return (dispatcher,getStore) => {
         const {plotId,imageOverlayId }= rawAction.payload;
-        dispatcher( { type: ImagePlotCntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES,
+        dispatcher( { type: OVERLAY_PLOT_CHANGE_ATTRIBUTES,
                       payload: { plotId,imageOverlayId, attributes:{visible:true}} });
         const vr= getStore()[IMAGE_PLOT_KEY];
         const opv= getOverlayById(getPlotViewById(vr, plotId), imageOverlayId);
@@ -196,7 +195,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const request0= plotState.getWebPlotRequest();
 
         const resultPayload= {...payload};
-        const pv= getPlotViewById(visRoot(),payload.plotId);
+        const {pv}= currentP(payload.plotId);
         const cubeIndex= convertImageIdxToHDU(pv,pv.primeIdx).cubeIdx;
         const plots= PlotCreate.map( (pc,idx) => {
             const plot=WebPlot.makeWebPlotData({plotId:imageOverlayId, wpInit:pc, asOverlay:true, cubeCtx:cubeCtx[idx], request0});
@@ -207,7 +206,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         resultPayload.cube=PlotCreate.length>1;
         resultPayload.primeIdx= 0;
         resultPayload.plot=resultPayload.plots[cubeIndex];
-        dispatcher({type: ImagePlotCntlr.PLOT_MASK, payload: resultPayload});
+        dispatcher({type: PLOT_MASK, payload: resultPayload});
     }
     else {
         const resultPayload= Object.assign({},payload);
@@ -215,7 +214,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         resultPayload.briefDescription= result.briefFailReason;
         resultPayload.description= 'Failed- ' + result.userFailReason;
         resultPayload.detailFailReason= result.detailFailReason;
-        dispatcher( { type: ImagePlotCntlr.PLOT_MASK_FAIL, payload:resultPayload} );
+        dispatcher( { type: PLOT_MASK_FAIL, payload:resultPayload} );
     }
 
 }

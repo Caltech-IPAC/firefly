@@ -2,30 +2,33 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import Enum from 'enum';
-import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
-                        dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from '../visualize/DrawLayerDispatch';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById, getDrawLayersByType} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getDrawLayersByType, currentP} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle,
-        updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
+        updateFootprintTranslate, updateFootprintOutline
+} from '../visualize/draw/MarkerFootprintObj.js';
+import {dlRoot, getDlAry} from '../visualize/VisStoreRoots';
 import {
     getCC, cancelTimeoutProcess, initMarkerPos, getPlot, ifUpdateOutline, hasNoProjection,
-    updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot, MarkerStatus
+    updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot,
 } from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {clone} from '../util/WebUtil.js';
+import {clone} from '../util/WebUtil.js'
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
 import {makeImagePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil, isEmpty} from 'lodash';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, FOOTPRINT_CREATE,
+    FOOTPRINT_END, FOOTPRINT_MOVE, FOOTPRINT_START, MODIFY_CUSTOM_FIELD
+} from '../visualize/VisConst';
 import {relocatable} from './FootprintLocatable.js';
 import {MarkerToolUI} from './MarkerToolUI.jsx';
 
@@ -101,8 +104,8 @@ export function footprintCreateLayerActionCreator(rawAction) {
         const isPredefined = (!fromFile&&!fromRegionAry);
         const isInstrument = isPredefined ? (!!instrument) : (relocateBy&&(relocateBy === relocatable.center.key));
         const pId = (!plotId || (isArray(plotId) && plotId.length === 0)) ?
-                              get(visRoot(), 'activePlotId') : isArray(plotId) ? plotId[0] : plotId;
-        const plot = primePlot(visRoot(), pId);
+                              currentP().plotId  : isArray(plotId) ? plotId[0] : plotId;
+        const {plot} = currentP(pId);
         const cc = CsysConverter.make(plot);
 
         const handleRegions = (regionAry) => {
@@ -121,7 +124,7 @@ export function footprintCreateLayerActionCreator(rawAction) {
                     if (plot) {
                         const wpt = initMarkerPos(plot);
 
-                        showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, regions, pId,
+                        showFootprintByTimer(dispatcher, FOOTPRINT_CREATE, regions, pId,
                             FootprintStatus.attached, footprintInterval, drawLayerId,
                             {isOutline: true, isRotate}, fpInfo, wpt);
 
@@ -197,7 +200,7 @@ export function footprintStartActionCreator(rawAction) {
         }
 
         if (nextStatus && cc.isPointViewable(refPt)) {
-            showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_START, regions, plotId,
+            showFootprintByTimer(dispatcher, FOOTPRINT_START, regions, plotId,
                 nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate}, fpInfo, wpt, refPt, move);
         }
     };
@@ -222,7 +225,7 @@ export function footprintEndActionCreator(rawAction) {
         if ([FootprintStatus.relocate, FootprintStatus.attached_relocate, FootprintStatus.rotate].includes(footprintStatus)) {
             const wpt = getWorldOrImage(currentPt, cc);
 
-            showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_END, regions, plotId,
+            showFootprintByTimer(dispatcher, FOOTPRINT_END, regions, plotId,
                             FootprintStatus.select, footprintInterval, drawLayerId,
                             {isOutline: true, isRotate}, fpInfo, wpt);
         }
@@ -301,7 +304,7 @@ export function footprintMoveActionCreator(rawAction) {
         }
 
         if (!isEmpty(move) && cc.isPointViewable(refPt)) {
-            showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_MOVE, regions, plotId,
+            showFootprintByTimer(dispatcher, FOOTPRINT_MOVE, regions, plotId,
                                 footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
         }
     };
@@ -318,15 +321,12 @@ function creator(initPayload) {
     const rColor = get(initPayload, ['regions', '0', 'options', 'color'], 'green');
     const drawingDef= makeDrawingDef(rColor);
     const pairs= {
-        [MouseState.DRAG.key]: DrawLayerCntlr.FOOTPRINT_MOVE,
-        [MouseState.DOWN.key]: DrawLayerCntlr.FOOTPRINT_START,
-        [MouseState.UP.key]: DrawLayerCntlr.FOOTPRINT_END
+        [MouseState.DRAG.key]: FOOTPRINT_MOVE,
+        [MouseState.DOWN.key]: FOOTPRINT_START,
+        [MouseState.UP.key]: FOOTPRINT_END
     };
 
-    const actionTypes= [DrawLayerCntlr.FOOTPRINT_MOVE,
-                      DrawLayerCntlr.FOOTPRINT_START,
-                      DrawLayerCntlr.FOOTPRINT_END,
-                      DrawLayerCntlr.FOOTPRINT_CREATE];
+    const actionTypes= [FOOTPRINT_MOVE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_CREATE];
 
     const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
@@ -359,7 +359,7 @@ function creator(initPayload) {
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId} = action.payload;
 
-    if (![ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
+    if (![CHANGE_CENTER_OF_PROJECTION, ANY_REPLOT].includes(action.type) &&
         (!drawLayerId || drawLayerId !== drawLayer.drawLayerId))  {
         return null;
     }
@@ -371,7 +371,7 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
 
-        case DrawLayerCntlr.FOOTPRINT_CREATE:
+        case FOOTPRINT_CREATE:
             plotIdAry.forEach((pId) => {
                 const plot = getPlot(pId);
                 if (plot && !hasNoProjection(CsysConverter.make(plot))) {
@@ -381,9 +381,9 @@ function getLayerChanges(drawLayer, action) {
 
             return retV;
 
-        case DrawLayerCntlr.FOOTPRINT_START:
-        case DrawLayerCntlr.FOOTPRINT_MOVE:
-        case DrawLayerCntlr.FOOTPRINT_END:
+        case FOOTPRINT_START:
+        case FOOTPRINT_MOVE:
+        case FOOTPRINT_END:
             const {wpt} = action.payload;
 
             plotIdAry.forEach((pId) => {
@@ -394,7 +394,7 @@ function getLayerChanges(drawLayer, action) {
             });
             return retV;
 
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const {fpText, fpTextLoc, angleDeg} = action.payload.changes;
 
             if (plotIdAry) {
@@ -405,7 +405,7 @@ function getLayerChanges(drawLayer, action) {
                 }
             }
             break;
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             // if (drawLayer?.drawData?.data) {
                 action.payload?.plotIdAry?.forEach((pId) => {
                     if (isEmpty(dd?.data?.[pId])) {
@@ -415,8 +415,8 @@ function getLayerChanges(drawLayer, action) {
             // }
             break;
 
-        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-        case ImagePlotCntlr.ANY_REPLOT:
+        case CHANGE_CENTER_OF_PROJECTION:
+        case ANY_REPLOT:
             if (plotIdAry) {
                 plotIdAry.forEach((pId) => {
                     if (isGoodPlot(pId) && !isEmpty(get(dd, ['data', pId]))) {
@@ -593,7 +593,7 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
          updateHandle(isHandle, footprintObj);
      }
 
-     if ([ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) && !footprintStatus) {
+     if ([CHANGE_CENTER_OF_PROJECTION, ANY_REPLOT].includes(action.type) && !footprintStatus) {
          footprintStatus = get(dl.drawData, [DataTypes.DATA, plotId, 'actionInfo', 'footprintStatus'], FootprintStatus.select);
      }
      footprintObj.plotId = plotId;
@@ -682,10 +682,10 @@ function  attachToNewPlot(drawLayer, newPlotId) {
 
     if (!existPlotId && !drawLayer.lastDrawData) return drawLayer;
 
-    const { text, textLoc, renderOptions, actionInfo, translation, angle, angleUnit, regions, isRotatable, pts}
+    const { text, textLoc, renderOptions, actionInfo, translation, angle, angleUnit, regions, isRotatable}
         = drawLayer?.drawData?.data?.[existPlotId] ?? drawLayer.lastDrawData;
 
-    const plot = primePlot(visRoot(), newPlotId);
+    const {plot} = currentP(newPlotId);
     const cc = CsysConverter.make(plot);
     if (hasNoProjection(cc)) {
         return drawLayer;

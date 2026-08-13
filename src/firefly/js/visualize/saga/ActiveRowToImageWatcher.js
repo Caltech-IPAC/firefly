@@ -6,19 +6,19 @@ import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {isDefined} from '../../util/WebUtil';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
-import {visRoot, dispatchRecenter, dispatchChangeSubHighPlotView} from '../ImagePlotCntlr.js';
+import {visRoot} from '../VisStoreRoots';
+import {
+    dispatchChangeSubHighPlotView, dispatchPlotImage, dispatchRecenter, dispatchUseTableAutoScroll
+} from '../ImagePlotDispatch';
 import {
     getTblById, getCellValue, hasSubHighlightRows, isSubHighlightRow, getActiveTableId
 } from '../../tables/TableUtil.js';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr';
 import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
 import {makeAnyPt} from '../Point.js';
-import {
-    DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getActivePlotView, getPlotViewById, hasWCSProjection,
-    primePlot,
-} from '../PlotViewUtil';
+import {currentP, hasWCSProjection, primePlot} from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
-import ImagePlotCntlr, {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
+import {ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW, DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID} from '../VisConst';
 import {isTableUsingRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
@@ -34,7 +34,7 @@ function willFitOnScreenAtCurrentZoom(pv) {
 }
 
 const getTableActions= () =>  [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE];
-const getImageActions= () =>  [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, ImagePlotCntlr.ANY_REPLOT];
+const getImageActions= () =>  [CHANGE_ACTIVE_PLOT_VIEW, ANY_REPLOT];
 
 
 /**
@@ -109,12 +109,12 @@ function shouldCenterOnTableRow(pv, wp, force) {
 }
 
 function recenterImageActiveRow(tbl_id, force=false) {
-    const pv = getActivePlotView(visRoot());
+    const {pv} = currentP();
     if (!pv) return;
     recenterPlotViewActiveRow(pv, tbl_id, force);
     if (pv.plotId!==DEFAULT_COVERAGE_PLOT_ID) {
         const covView=getViewer(getMultiViewRoot(),DEFAULT_COVERAGE_VIEWER_ID);
-        const covPv = getPlotViewById(visRoot(),DEFAULT_COVERAGE_PLOT_ID);
+        const {pv:covPv}= currentP(DEFAULT_COVERAGE_PLOT_ID);
         if (!covPv || !covView.mounted) return;
         recenterPlotViewActiveRow(covPv, tbl_id, force);
 

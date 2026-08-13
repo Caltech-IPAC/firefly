@@ -9,17 +9,14 @@ import {once} from 'lodash';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {checkProps, useStoreConnector} from '../../ui/SimpleComponent';
 import {ToolbarButton, DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerDispatch';
 import {
-    getActivePlotView, getDrawLayerByType, getDrawLayersByType, getPlotViewAry, isDrawLayerAttached
+    currentP, getDrawLayerByType, getDrawLayersByType, getPlotViewAry, isDrawLayerAttached
 } from '../PlotViewUtil.js';
-import {dispatchCreateDrawLayer,
-        getDlAry,
-        dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {getDlAry, visRoot} from '../VisStoreRoots';
 import {onOff, SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 
 import AdsClickIcon from '@mui/icons-material/AdsClick';
@@ -200,7 +197,7 @@ export function SelectAreaForEmbedded(props) {
     checkProps(props, SelectAreaForEmbedded);
     const modalEndInfo = useStoreConnector(() => getModalEndInfo());
     const selectActive= modalEndInfo?.key==='SelectArea';
-    const doSelection= updateSelect(getActivePlotView(visRoot()), shape.key, true, modalEndInfo);
+    const doSelection= updateSelect(currentP().pv, shape.key, true, modalEndInfo);
 
     return (
         <Stack sx={{justifyContent:'center', ...sx}}>
@@ -216,7 +213,7 @@ export function SelectAreaForEmbedded(props) {
                         <ChipDelete {...{
                             size:'sm', title:`Cancel ${selectButtonText}`,
                             onClick:() => {
-                                const pv = getActivePlotView(visRoot());
+                                const {pv} = currentP();
                                 if (pv) dispatchDetachLayerFromPlot(SelectArea.TYPE_ID, pv.plotId, true, true);
                                 clearModalEndInfo();
                             }

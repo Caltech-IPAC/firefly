@@ -1,25 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import Enum from 'enum';
 import {sprintf} from '../externalSource/sprintf';
 import {logger} from '../util/Logger.js';
-import {getPixScaleArcSec, isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import {getFoV, primePlot} from './PlotViewUtil.js';
+import {FullType, UserZoomTypes} from './VisConst';
 import {convertAngle} from './VisUtil.js';
+import {getPixScaleArcSec, isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 
 
-/**
- * @typedef FullType
- * enum can be one of
- * @prop ONLY_WIDTH
- * @prop WIDTH_HEIGHT
- * @prop ONLY_HEIGHT
- * @prop {Function} has
- * @type {Enum}
- */
-export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT']);
 
 /**
  * This is the master list of zoom levels for Firefly image displays.
@@ -61,23 +51,6 @@ export const hipsLevelsReversed= [...hipsLevels].reverse();
 
 const IMAGE_ZOOM_MAX= imageLevels[imageLevels.length-1];
 const HIPS_ZOOM_MAX= hipsLevels[hipsLevels.length-1];
-
-/**
- * @typedef UserZoomTypes
- * can be 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'
- * @prop UP,
- * @prop DOWN,
- * @prop FIT,
- * @prop FILL,
- * @prop ONE,
- * @prop LEVEL,
- * @prop WCS_MATCH_PREV,
- * @type {Enum}
- * @public
- * @global
- */
-/** @type UserZoomTypes */
-export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'], { ignoreCase: true });
 
 /**
  *

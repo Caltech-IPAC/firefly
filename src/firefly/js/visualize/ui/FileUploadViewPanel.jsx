@@ -42,7 +42,7 @@ import {getSizeAsString} from '../../util/WebUtil.js';
 
 import {isAnalysisTableDatalink} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
+import {PLOT_PROGRESS_UPDATE} from '../VisConst';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {getWorkspaceConfig, isAccessWorkspace} from '../WorkspaceCntlr.js';
 
@@ -149,7 +149,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                 const watchForUploadUpdate= ({payload}) => {
                     payload.requestKey===statusKey && setLoadingMsg(payload.message);
                 };
-                dispatchAddActionWatcher({ id: statusKey, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
+                dispatchAddActionWatcher({ id: statusKey, actions:[PLOT_PROGRESS_UPDATE],
                     callback:watchForUploadUpdate, params:{statusKey}});
             }
         }

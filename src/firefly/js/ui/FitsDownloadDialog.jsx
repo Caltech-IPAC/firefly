@@ -15,9 +15,8 @@ import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import { primePlot, getActivePlotView, getAllCanvasLayersForPlot, isThreeColor } from '../visualize/PlotViewUtil.js';
+import {primePlot, getAllCanvasLayersForPlot, isThreeColor, currentP} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
@@ -109,9 +108,8 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
 };
 
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
-    const pv= getActivePlotView(visRoot());
+    const {pv,plot}= currentP();
     const {tableCnt}= getResultCounts();
-    const plot = primePlot(pv);
     const colors = getColors(plot);
     const threeC = isThreeColor(plot);
     const hasOperation = plot?.plotState.hasOperation(Operation.CROP) ?? false;

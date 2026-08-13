@@ -10,7 +10,8 @@ import {PopupPanel} from './PopupPanel.jsx';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import {drawOnCanvas} from '../visualize/ui/DrawLayerUIComponents.jsx';
-import {dispatchChangeDrawingDef, getDlAry} from '../visualize/DrawLayerCntlr.js';
+import {dispatchChangeDrawingDef} from '../visualize/DrawLayerDispatch';
+import {getDlAry} from '../visualize/VisStoreRoots';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
@@ -18,7 +19,7 @@ import {InputFieldView} from './InputFieldView.jsx';
 import {SimpleCanvas} from '../visualize/draw/SimpleCanvas.jsx';
 import {getDrawLayersByDisplayGroup} from '../visualize/PlotViewUtil.js';
 import Color from '../util/Color.js';
-import {HelpIcon} from '../ui/HelpIcon.jsx';
+import {HelpIcon} from './HelpIcon';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 
 

@@ -12,13 +12,11 @@ import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import {getLatDist, getLonDist} from '../VisUtil.js';
 import {findCurrentCenterPoint, getPlotViewById, hasWCSProjection, matchPlotViewByPositionGroup, primePlot} from '../PlotViewUtil.js';
-import {UserZoomTypes} from '../ZoomUtil.js';
-import {ZoomType} from '../ZoomType.js';
 import {PlotPref} from '../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
 import {getDefMenuItemKeys} from '../MenuItemKeys.js';
-import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
+import {ExpandType, UserZoomTypes, WcsMatchType, ZoomType} from '../VisConst';
 import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
 
 // export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });

@@ -15,7 +15,7 @@ import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
 import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {EventLayer} from '../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
-import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
+import {dispatchProcessScroll} from '../ImagePlotDispatch';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';

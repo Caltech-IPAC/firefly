@@ -8,11 +8,11 @@ import {
     HIPS_STANDARD_READOUT, isLockByClick, readoutRoot, STANDARD_READOUT
 } from 'firefly/visualize/MouseReadoutCntlr.js';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
-import {visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
+import {visRoot} from '../VisStoreRoots';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {ThumbnailView} from 'firefly/visualize/ui/ThumbnailView.jsx';
 import {MagnifiedView} from 'firefly/visualize/ui/MagnifiedView.jsx';
-import {getActivePlotView, getPlotViewById, primePlot} from 'firefly/visualize/PlotViewUtil.js';
+import {currentP, getPlotViewById, primePlot} from 'firefly/visualize/PlotViewUtil.js';
 import {getFluxInfo, getFluxRadix, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
 import {isImage} from 'firefly/visualize/WebPlot.js';
@@ -36,7 +36,7 @@ function MousePopup({closeCallback,visible, requestOnTop, dialogId, zIndex, requ
     const {vr,currMouseState, readout, readoutData}= useMouseStoreConnector(makeState);
     return (
         <div>
-            <PopupPanel {...{title:primePlot(visRoot(),currMouseState.plotId)?.title || 'Mouse Readout',
+            <PopupPanel {...{title:currentP(currMouseState.plotId).plot?.title || 'Mouse Readout',
                 closeCallback, layoutPosition:LayoutType.TOP_RIGHT,
                 visible, requestOnTop, dialogId, zIndex, requestToClose} }>
                 <PopoutMouseReadoutContents {...{vr,currMouseState, readout, readoutData}}/>
@@ -47,7 +47,7 @@ function MousePopup({closeCallback,visible, requestOnTop, dialogId, zIndex, requ
 
 function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
     const showHealpixPixel= getAppOptions()?.hips?.readoutShowsPixel ?? false;
-    const pv= getActivePlotView(vr);
+    const {pv}= currentP();
 
     const mousePv= getPlotViewById(vr,currMouseState.plotId);
     const pvForThumbnail= currMouseState.mouseState===MouseState.EXIT ? pv : mousePv;
@@ -81,7 +81,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
-    const {plotState}= primePlot(visRoot(),plotId) ?? {};
+    const {plotState}= currentP(plotId).plot ?? {};
     const redUsed= threeColor && image && plotState.isBandUsed(Band.RED);
     const greenUsed= threeColor && image && plotState.isBandUsed(Band.GREEN);
     const blueUsed= threeColor && image && plotState.isBandUsed(Band.BLUE);

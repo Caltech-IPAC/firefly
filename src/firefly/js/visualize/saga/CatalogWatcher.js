@@ -21,9 +21,10 @@ import {logger} from '../../util/Logger';
 import { findImageCenterColumns, getSearchTarget, isCatalog } from '../../voAnalyzer/TableAnalysis.js';
 import {
     dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchModifyCustomField, dlRoot, SUBGROUP,
-} from '../DrawLayerCntlr.js';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+    dispatchModifyCustomField
+} from '../DrawLayerDispatch';
+import {PLOT_HIPS, PLOT_IMAGE, SUBGROUP} from '../VisConst';
+import {dlRoot, visRoot} from '../VisStoreRoots';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {
     getDrawLayerById, getPlotViewAry, getPlotViewById, isDrawLayerAttached, isDrawLayerVisible,
@@ -41,8 +42,7 @@ export const getCatalogWatcherDef= once(() => (
         watcher : watchCatalogs,
         testTable : (table) => !isLsstFootprintTable(table) && isCatalog(table),
         allowMultiples: false,
-        actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TBL_RESULTS_ACTIVE,
-            TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
+        actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TBL_RESULTS_ACTIVE, TABLE_REMOVE, PLOT_IMAGE, PLOT_HIPS]
     }
 ));
 
@@ -114,8 +114,8 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
             cancelSelf();
             break;
 
-        case ImagePlotCntlr.PLOT_HIPS:
-        case ImagePlotCntlr.PLOT_IMAGE:
+        case PLOT_HIPS:
+        case PLOT_IMAGE:
             attachToCatalog(tbl_id, payload);
             break;
     }

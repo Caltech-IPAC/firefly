@@ -4,9 +4,8 @@
 
 
 import {get, isArray} from 'lodash';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
+import {ATTACH_LAYER_TO_PLOT} from '../visualize/VisConst';
+import {isDrawLayerVisible, currentP} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
@@ -57,9 +56,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case ImagePlotCntlr.ANY_REPLOT:
-            break;
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             const {plotId}= action.payload;
             let {plotIdAry}= action.payload;
             if (!plotIdAry && !plotId) return null;
@@ -74,26 +71,20 @@ function getLayerChanges(drawLayer, action) {
                 plotIdAry.forEach((id) => title[id] = getTitle(id));
             }
             return {title};
-
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            break;
     }
     return null;
 }
 
 
 function getTitle(plotId) {
-    const plot= primePlot(visRoot(),plotId);
-    const lastTitle= plot.attributes[PlotAttribute.OUTLINEIMAGE_TITLE];
+    const lastTitle= currentP(plotId).plot?.attributes[PlotAttribute.OUTLINEIMAGE_TITLE];
     return `${lastTitle?lastTitle:'Image'} outline`;
 }
 
 function computeDrawData(drawLayer, plotId) {
     if (!plotId) return null;
-    const plot= primePlot(visRoot(),plotId);
-    if (!plot) return [];
-
-    return computeDrawobj(drawLayer, plot);
+    const {plot}= currentP(plotId);
+    return plot ? computeDrawobj(drawLayer, plot) : [];
 }
 
 
@@ -134,14 +125,14 @@ function computeDrawobj(dl, plot) {
 
     if (drawObj) {
         if (text && !textLoc) {
-            textLoc = drawObjTextLoc(drawObj);
+            drawObjTextLoc(drawObj);
         }
     } else {  // dynamic get data from attribute
         if (plot.attributes[PlotAttribute.OUTLINEIMAGE_DRAWOBJ]) {
             drawObj = plot.attributes[PlotAttribute.OUTLINEIMAGE_DRAWOBJ];
 
             if (text && !textLoc && drawObj) {
-                textLoc = drawObjTextLoc(drawObj);
+                drawObjTextLoc(drawObj);
             }
 
         } else if (plot.attributes[PlotAttribute.OUTLINEIMAGE_BOUNDS]) {

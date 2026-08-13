@@ -1,5 +1,3 @@
-/*eslint no-empty:0*/
-/*eslint quotes:0*/
 import {sprintf} from '../externalSource/sprintf';
 import {CoordinateSys} from './CoordSys.js';
 import {isDigit} from 'firefly/util/MathUtil.js';
@@ -7,7 +5,7 @@ import {isDigit} from 'firefly/util/MathUtil.js';
 /**
  *  This class provides conversion of user's
  *  coordinate string to a double
- *  Translated to javascript from java from Rick Ebert's coord.c
+ *  Translated to JavaScript from java from Rick Ebert's coord.c
  *
  *  April 10, 2001
  *  Copied from the original Coord.java, modified to provide the convenient
@@ -118,13 +116,13 @@ const sex2dd = function (coordstr, islat, isequ) {
     const sepJoin= sep.join(''); // join all the separators for easier testing
     if (part.length===3) {
         if (sepJoin==='hms' || sepJoin==='hm ') degrees = 0;
-        else if (sepJoin==='dms' || sepJoin==='dm ' || sepJoin===`d'"` || sepJoin===`d' `) degrees = 1;
+        else if (sepJoin==='dms' || sepJoin==='dm ' || sepJoin===`d'"` || sepJoin===`d' `) degrees = 1;// eslint-disable-line @stylistic/js/quotes
         else if (sepJoin===':: ' || sepJoin==='   ') degrees = -1;
         else throw INVALID_SEPARATOR;
     }
     else if (part.length===2) {
         if (sepJoin==='hm' || sepJoin==='h ') degrees = 0;
-        else if (sepJoin==='dm' || sepJoin==='d ' || sepJoin===`d'` ||  sepJoin===`'"` || sepJoin===`' `) degrees = 1;
+        else if (sepJoin==='dm' || sepJoin==='d ' || sepJoin===`d'` ||  sepJoin===`'"` || sepJoin===`' `) degrees = 1;// eslint-disable-line @stylistic/js/quotes
         else if (sepJoin==='ms' || sepJoin==='m ' || sepJoin===': ' || sepJoin==='  ') degrees = -1;
         else throw INVALID_SEPARATOR;
     }
@@ -139,7 +137,7 @@ const sex2dd = function (coordstr, islat, isequ) {
             isdec= !(isequ && !islat);
         } else if (sep[0] ==='m' || sep[0] ==='s') {
             degrees = -1;
-        } else if (sep[0] ===`'` || sep[0] ==='"') {
+        } else if (sep[0] ===`'` || sep[0] ==='"') {// eslint-disable-line @stylistic/js/quotes
             degrees = 1;
         } else {
             throw INVALID_SEPARATOR;
@@ -319,7 +317,8 @@ export function parseDBIdToCoord(s) {
     try {
         return {lon:convertStringToLon(lon, cSys),lat:convertStringToLat(lat, cSys),cSys};
     }
-    catch (e) {
+
+    catch (e) { // eslint-disable-line no-unused-vars
         return false;
     }
 }
@@ -334,7 +333,7 @@ const validLon = (hms, coordSystem) => {
     try {
         convertStringToLon(hms, coordSystem);
         return true;
-    } catch (e) {
+    } catch (e) { // eslint-disable-line no-unused-vars
         return false;
     }
 };

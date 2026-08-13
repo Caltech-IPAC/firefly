@@ -4,12 +4,12 @@ import BrowserInfo from '../../util/BrowserInfo';
 import {Band} from '../Band.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {
-    findPlot, getOverlayById, getPlotViewById, hasLocalStretchByteData, isThreeColor, primePlot
+    currentP, findPlot, getOverlayById, getPlotViewById, hasLocalStretchByteData, isThreeColor, primePlot
 } from '../PlotViewUtil.js';
 import {MEG} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {
-    dispatchAttributeChange, dispatchMarkOutOfMemory, dispatchRequestLocalData, visRoot
-} from '../ImagePlotCntlr.js';
+import {BYTE_DATA_REFRESH, PLOT_IMAGE_FAIL} from '../VisConst';
+import {dispatchAttributeChange, dispatchMarkOutOfMemory, dispatchRequestLocalData} from '../ImagePlotDispatch';
+import {visRoot} from '../VisStoreRoots';
 import {PlotState} from '../PlotState.js';
 import {getNextWorkerKey, isWorkerOutOfMemory, postToWorker} from '../../threadWorker/WorkerAccess.js';
 import {
@@ -110,7 +110,7 @@ export function queueChangeLocalRawDataColor(params) {
     }
     else {
        p.then( () => {
-           if (nextColorChangeParams.has(plotImageId) && getPlotViewById(visRoot(),plotId)) {
+           if (nextColorChangeParams.has(plotImageId) && currentP(plotId).pv) {
                const {onComplete, ...nextChangeParams}= nextColorChangeParams.get(plotImageId);
                nextColorChangeParams.delete(plotImageId);
                changeLocalRawDataColor(nextChangeParams)
@@ -338,18 +338,18 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
 
     if (plotInvalid()) return;
     if (success) {
-        dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
+        dispatcher({ type: BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
     }
     else {
         if (fatal && !silentAbort) {
             Logger('RawDataOps').warn(`dispatch to the plot failed on BYTE_DATA_REFRESH: ${dataCompress}, status: ${status}`);
             if (status===404) {
                 Logger('RawDataOps').warn('it appears that the getTile called failed, this might be the server calls are not sticky, or server is out of memory');
-                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                dispatcher({ type: PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: server configuration error' }});
             }
             else {
-                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                dispatcher({ type: PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: Could not retrieve image render data' }});
             }
         }
@@ -357,7 +357,7 @@ export async function loadInitialStretchData(pv, plot, dispatcher) {
         else {
             Logger('RawDataOps').warn(`non fatal, dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (!silentAbort) {
-                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                dispatcher({ type: PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: Could not retrieve image render data' }});
             }
         }
@@ -395,7 +395,7 @@ export async function updateStretchDataAfterZoom(plotId,dispatcher) {
     if (currentRunningZoomImageId.get(plotImageId).reqId!==reqId) return; //if superseding call came in then return
     const {success,fatal}= await loadStandardStretchData(workerKey, plot, { dataCompress:nextDataCompress, backgroundUpdate: true, checkForPlotUpdate: true});
     if (success) {
-        dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
+        dispatcher({ type: BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
     }
     else {
         handleAfterZoomFail(dispatcher,plotId,fatal,nextDataCompress);
@@ -407,7 +407,7 @@ function handleAfterZoomFail(dispatcher, plotId, fatal,nextDataCompress) {
     let msg;
     if (fatal) {
         msg= `requestDataAfterZoom: dispatch the the plot failed on BYTE_DATA_REFRESH: ${nextDataCompress}`;
-        dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+        dispatcher({ type: PLOT_IMAGE_FAIL,
             payload:{plotId, description:'Failed: Could not retrieve image render data (requestDataAfterZoom)' }});
     }
     else {

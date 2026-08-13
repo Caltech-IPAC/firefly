@@ -6,11 +6,10 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, ExpandType, NewPlotMode} from '../VisConst';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
-import {getPlotViewById} from './../PlotViewUtil.js';
+import {dispatchChangeExpandedMode} from '../ImagePlotDispatch';
+import {currentP} from '../PlotViewUtil';
 
 /**
  * A wrapper component for a group grid view that supported expanded mode
@@ -25,8 +24,7 @@ export class GroupedImageViewerContainer extends PureComponent {
 
     layoutGrid(plotIdAry) {
         const {gridDefs, size= 200}= this.props;
-        const vr= visRoot();
-        const pvAry= plotIdAry.map( (plotId) => getPlotViewById(vr, plotId));
+        const pvAry= plotIdAry.map( (plotId) => currentP(plotId).pv);
 
         return gridDefs
             .map( (r) => {

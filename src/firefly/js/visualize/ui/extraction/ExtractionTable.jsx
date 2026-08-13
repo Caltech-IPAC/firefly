@@ -13,7 +13,7 @@ import {useFieldGroupValue} from '../../../ui/SimpleComponent';
 import {advancedTrim} from '../../../util/WebUtil';
 import {CCUtil, CysConverter} from '../../CsysConverter';
 import {getExtName} from '../../FitsHeaderUtil';
-import {visRoot} from '../../ImagePlotCntlr';
+import {visRoot} from '../../VisStoreRoots';
 import {
     getAllWaveLengthsForCube, getHDU, getHduPlotStartIndexes, getImageCubeIdx, getPlotViewAry,
     getPtWavelength, getWaveLengthUnits,

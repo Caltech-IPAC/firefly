@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {ZoomType} from 'firefly/visualize/ZoomType.js';
+import {ZoomType} from './VisConst';
 import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {allBandAry, Band} from './Band';

@@ -5,8 +5,7 @@ import React, {memo, useRef, useEffect} from 'react';
 import {func,string,object} from 'prop-types';
 import {checkProps} from '../../ui/SimpleComponent';
 import {CCUtil} from '../CsysConverter';
-import {visRoot} from '../ImagePlotCntlr';
-import {primePlot} from '../PlotViewUtil';
+import {currentP} from '../PlotViewUtil';
 import {makeScreenPt} from '../Point.js';
 import {MouseState}  from '../VisMouseSync.js';
 import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
@@ -37,7 +36,7 @@ function firePinchEvent(inEvent, transform, plotId, originalCenterPt, mouseState
     const ev= inEvent.nativeEvent ?? inEvent;
     ev.preventDefault();
     ev.stopPropagation();
-    const plot= primePlot(visRoot(), plotId);
+    const {plot}= currentP(plotId);
     const spt= CCUtil.getScreenCoords(plot,originalCenterPt);
     eventCallback(plotId,mouseState,spt,spt.x,spt.y,ev);
 }
@@ -89,7 +88,7 @@ function makeTouchCenterPt(ev,transform,plotId) {
     const offsetX= x - rect.left;
     const offsetY= y - rect.top;
     const spt= createScreenPt(transform,offsetX,offsetY);
-    const plot= primePlot(visRoot(), plotId);
+    const {plot}= currentP(plotId);
     return {touchPt0, touchPt1,
         centerPt: isHiPS(plot) ? CCUtil.getWorldCoords(plot,spt) : CCUtil.getImageCoords(plot,spt)
     };

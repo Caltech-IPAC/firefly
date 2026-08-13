@@ -8,7 +8,8 @@ import {getMetaEntry, getObjectMetaEntry} from '../tables/TableUtil';
 import {getDataServiceOptionByTable} from '../ui/tap/DataServicesOptions';
 import {toBoolean} from '../util/WebUtil';
 import {Band} from '../visualize/Band';
-import {SINGLE} from '../visualize/MultiViewCntlr';
+
+import {SINGLE} from '../visualize/VisConst';
 import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
 import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './AnalysisUtils.js';

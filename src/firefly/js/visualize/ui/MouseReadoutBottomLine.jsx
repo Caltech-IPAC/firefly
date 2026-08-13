@@ -7,7 +7,7 @@ import React, {memo, useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
-import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
+import {dispatchChangePointSelection} from '../ImagePlotDispatch';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {CopyToClipboard} from './MouseReadout.jsx';

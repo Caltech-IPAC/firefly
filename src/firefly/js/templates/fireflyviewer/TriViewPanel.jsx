@@ -18,10 +18,10 @@ import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Tab, TabPanel} from '../../ui/panel/TabPanel.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {DEFAULT_PLOT2D_VIEWER_ID, PINNED_CHART_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {
     makeCoverageTab, makeFitsPinnedTab, makeMultiProductViewerTab, TriViewImageSection
 } from '../../visualize/ui/TriViewImageSection.jsx';
+import {DEFAULT_PLOT2D_VIEWER_ID, PINNED_CHART_VIEWER_ID} from '../../visualize/VisConst';
 import {ResultsPanel} from './ResultsPanel.jsx';
 
 const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide', 'initLoadCompleted'];

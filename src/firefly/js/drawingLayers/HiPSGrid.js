@@ -3,8 +3,10 @@
  */
 
 
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, CHANGE_VISIBILITY, MODIFY_CUSTOM_FIELD
+} from '../visualize/VisConst';
+import {visRoot} from '../visualize/VisStoreRoots';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {
     getHiPSNorderlevel, getVisibleHiPSCells,
@@ -54,10 +56,10 @@ function creator(initPayload, presetDefaults) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-        case ImagePlotCntlr.ANY_REPLOT:
+        case CHANGE_CENTER_OF_PROJECTION:
+        case ANY_REPLOT:
             return {drawData:computeDrawData(drawLayer,action, drawLayer.gridType,drawLayer.gridLockLevel)};
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             const {plotId} = action.payload;
             let {plotIdAry}= action.payload;
 
@@ -69,9 +71,9 @@ function getLayerChanges(drawLayer, action) {
 
             return {title,
                 drawData:computeDrawData(drawLayer,action,drawLayer.gridType,drawLayer.gridLockLevel) };
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
-        case DrawLayerCntlr.CHANGE_VISIBILITY:
+        case CHANGE_VISIBILITY:
             if (action.payload.visible) {
                 return {drawData:computeDrawData(drawLayer,action, drawLayer.gridType,drawLayer.gridLockLevel, true)};
             }

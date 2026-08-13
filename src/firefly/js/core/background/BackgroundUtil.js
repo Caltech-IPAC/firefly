@@ -22,8 +22,9 @@ import {MIXED_FITS_MIME_TYPE, MULTI_SPECTRUM_MIME_TYPE, MULTI_SPECTRUM_PROC_ID} 
 import {VO_TABLE_CONTENT_TYPE} from 'firefly/voAnalyzer/VoConst';
 import {dispatchTableRemove, dispatchTableSearch, dispatchTableUpdate} from 'firefly/tables/TablesCntlr';
 import WebPlotRequest, {TitleOptions} from 'firefly/visualize/WebPlotRequest';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
-import {dispatchPlotImage} from 'firefly/visualize/ImagePlotCntlr';
+import {getAViewFromMultiView, getMultiViewRoot} from 'firefly/visualize/MultiViewCntlr';
+import {dispatchPlotImage} from '../../visualize/ImagePlotDispatch';
+import {IMAGE} from '../../visualize/VisConst';
 import {dispatchFormSubmit} from 'firefly/core/AppDataCntlr';
 import {showJobMonitor, showMultiMultiResults} from 'firefly/core/background/JobMonitor';
 import {getTableUiByTblId} from 'firefly/tables/TableUtil';

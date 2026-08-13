@@ -12,7 +12,8 @@ import Enum from 'enum';
 import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
-import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID, PINNED_CHART_VIEWER_ID} from '../visualize/VisConst';
+import {dispatchPlotHiPS, dispatchPlotImage} from '../visualize/ImagePlotDispatch';
 import {RequestType}  from '../visualize/RequestType.js';
 import {hashCode, getRootURL, modifyURLToFull}  from '../util/WebUtil.js';
 import {Logger}  from '../util/Logger.js';
@@ -21,10 +22,12 @@ import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
 import {makeFileRequest}  from '../tables/TableRequestUtil.js';
 import {uniqueChartId} from '../charts/ChartUtil.js';
-import {getWsChannel, getWsConnId, getConnectionCount, makeViewerChannel,
-    REINIT_APP, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS, NOTIFY_REMOTE_APP_READY} from '../core/AppDataCntlr.js';
+import {REINIT_APP} from '../core/CoreConst';
+import {
+    getWsChannel, getWsConnId, getConnectionCount, makeViewerChannel,
+    WS_CONN_UPDATED, GRAB_WINDOW_FOCUS, NOTIFY_REMOTE_APP_READY
+} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
-import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID, PINNED_CHART_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {WEB_API_CMD} from './WebApi.js';
 

@@ -1,9 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import DrawLayerCntlr, {dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
-import {primePlot, isActivePlotView, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
+
+import {dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerDispatch';
+import {CHANGE_DRAWING_DEF, MODIFY_CUSTOM_FIELD, SELECT_POINT} from '../visualize/VisConst';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
+import {getCenterOfProjection, currentP} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -24,8 +26,6 @@ const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,onDetach,null);
 
 const RADIUS= 'RADIUS';
-const DIAMETER= 'DIAMETER'; // todo - no yet implemented
-const AREA= 'AREA'; // todo - no yet implemented
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -36,7 +36,7 @@ function dispatchSelectPoint(mouseStatePayload) {
     const {plotId,screenPt,drawLayer,shiftDown}= mouseStatePayload;
     if (!drawLayer.isInteractive) return;
     if (shiftDown || !drawLayer.drawData.data) return;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     const cc= CsysConverter.make(plot);
     if (!plot) return;
     const wp= cc.getWorldCoords(screenPt);
@@ -90,13 +90,13 @@ function dispatchSelectPoint(mouseStatePayload) {
 
 function saveLastDown(mouseStatePayload) {
     const {plotId}= mouseStatePayload;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     lastProjectionCenter= {center:getCenterOfProjection(plot), plotId};
 }
 
 function onDetach(drawLayer,action) {
     action.payload.plotIdAry?.forEach( (plotId) => {
-        if (primePlot(visRoot(),plotId)?.attributes[PlotAttribute.USER_SEARCH_WP]) return;
+        if (currentP(plotId).plot?.attributes[PlotAttribute.USER_SEARCH_WP]) return;
         dispatchAttributeChange({plotId, overlayColorScope:false, changes:{[PlotAttribute.USER_SEARCH_WP]:undefined}});
     });
 }
@@ -109,7 +109,7 @@ function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefau
         [MouseState.DOWN.key]: saveLastDown
         // TODO: add events and listeners for interaction with rotation and resize handles
     };
-    const actionTypes= [DrawLayerCntlr.SELECT_POINT];
+    const actionTypes= [SELECT_POINT];
     const options = {
         isPointData: false,
         hasPerPlotData: true,
@@ -126,23 +126,23 @@ function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefau
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     if (dataType!==DataTypes.DATA) return undefined;
-    const active= isActivePlotView(visRoot(), plotId);
+    const {active}= currentP(plotId);
     const drawAry= drawSearchSelection(drawLayer,action, active, plotId);
     return drawAry || lastDataRet;
 }
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+        case CHANGE_DRAWING_DEF:
             return {drawingDef: {...drawLayer.drawingDef,...action.payload.drawingDef}};
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             return {...action.payload.changes};
     }
 }
 
 function drawSearchSelection(drawLayer, action, active, plotId) {
     const {plotIdAry}= action.payload;
-    const plot= primePlot(visRoot(),plotId||plotIdAry?.[0]);
+    const {plot}= currentP(plotId||plotIdAry?.[0]);
     if (!plot) return [];
     if (plot.attributes[PlotAttribute.USE_POLYGON]) return drawSearchSelectionPolygon(plot, drawLayer);
     if (plot.attributes[PlotAttribute.USE_BOX]) return drawSearchSelectionTransformBox(plot, drawLayer);
@@ -182,7 +182,7 @@ function drawSearchSelectionPolygon(plot, drawLayer) {
         {...ShapeDataObj.makePolygon(wpAry), lineWidth:1,  renderOptions:{lineDash:[5,5]}}]; // locked layer
 }
 
-function drawSearchSelectionTransformBox(plot, drawLayer) {
+function drawSearchSelectionTransformBox(plot) {
     const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
     // const box = plot.attributes[PlotAttribute.USER_SEARCH_BOX];
     const wpAry = plot?.attributes[PlotAttribute.POLYGON_ARY];

@@ -146,9 +146,13 @@ public class IbeImageGetter {
           }
 
       } catch (IOException me){
+          if (me.getCause() instanceof FailedRequestException fre) {
+              if (fre.getFileInfo() != null && !fre.getFileInfo().isSuccess()) {
+                  throw new FailedRequestException(fre.getFileInfo().getResponseCodeMsg(), me);
+              }
+          }
           throw new FailedRequestException( "Could not parse results", "Details in exception", me );
       }
-
     }
 
 }

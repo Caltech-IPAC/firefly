@@ -6,7 +6,7 @@ import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
-import {primePlot, getPlotViewById, isImageCube, getCubePlaneCnt} from '../PlotViewUtil.js';
+import {primePlot, isImageCube, getCubePlaneCnt, currentP} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -17,11 +17,11 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {getPixScaleArcSec} from '../WebPlot.js';
 import {Band} from '../Band.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+import {CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, DELETE_PLOT_VIEW, PLOT_IMAGE} from '../VisConst';
 import {getTblById} from '../../tables/TableUtil.js';
 import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getHDU, isThreeColor} from '../PlotViewUtil';
-import { getAllValuesOfHeader, } from '../FitsHeaderUtil.js';
+import {getAllValuesOfHeader} from '../FitsHeaderUtil.js';
 
 const popupPanelResizableSx = {
     width: 550, minWidth: 448, height: 400, minHeight: 300, resize: 'both', overflow: 'hidden', position: 'relative'};
@@ -55,7 +55,7 @@ function popupForm(plot, fitsHeaderInfo, popupId) {
 function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, onMove) {
 
     const getTitle =  (p) => {
-         const pv = getPlotViewById(visRoot(), p.plotId);
+         const {pv} = currentP(p.plotId);
          let   title;
          if (pv.plots.length === 1) {
              title = p.title;
@@ -89,7 +89,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, o
         if (!isDialogVisible(FITS_HEADER_POPUP_ID)) {
             cancelSelf();
         } else {
-            const crtPlot = primePlot(visRoot());
+            const crtPlot = currentP().plot;
             const newTableInfo = createFitsHeaderTable(null, crtPlot);
             if (!newTableInfo) return {displayedPlotId, displayedHdu};
 
@@ -98,7 +98,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, o
                 return prev;
             }, false);
 
-            if (action.type===ImagePlotCntlr.PLOT_IMAGE || isThreeColor(plot) || displayedPlotId!==crtPlot.plotId || displayedHdu!==getHDU(crtPlot) ) {
+            if (action.type===PLOT_IMAGE || isThreeColor(plot) || displayedPlotId!==crtPlot.plotId || displayedHdu!==getHDU(crtPlot) ) {
                 updatePopup(crtPlot, newTableInfo);
             }
             displayedPlotId= crtPlot.plotId;
@@ -135,10 +135,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, o
 
 
     if (!isDialogVisible(FITS_HEADER_POPUP_ID)) {
-        dispatchAddActionWatcher({actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-                                            ImagePlotCntlr.CHANGE_PRIME_PLOT,
-                                            ImagePlotCntlr.PLOT_IMAGE,
-                                            ImagePlotCntlr.DELETE_PLOT_VIEW],
+        dispatchAddActionWatcher({actions: [CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, PLOT_IMAGE, DELETE_PLOT_VIEW],
                                   callback:  watchActivePlotChange,
                                   id: 'fits-header-view-watch-active-plot-change'
         });
@@ -243,7 +240,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
        );
    }
    else {
-       return overview
+       return overview;
    }
 }
 

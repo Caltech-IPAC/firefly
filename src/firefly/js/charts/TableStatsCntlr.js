@@ -4,7 +4,7 @@ import {get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {REINIT_APP} from '../core/CoreConst';
 
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 import {getTblById, doFetchTable, getColumns, COL_TYPE} from '../tables/TableUtil.js';

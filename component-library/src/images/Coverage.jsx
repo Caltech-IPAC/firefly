@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/joy';
 import PropTypes from 'prop-types';
 import { CoverageViewer } from 'firefly/visualize/ui/CoveraeViewer.jsx';
-import { DEFAULT_COVERAGE_VIEWER_ID } from 'firefly/visualize/PlotViewUtil.js';
+import {DEFAULT_COVERAGE_VIEWER_ID} from 'firefly/visualize/VisConst.js';
 
 /**
  * Displays table coverage/footprint overlaid on a sky image as markers.

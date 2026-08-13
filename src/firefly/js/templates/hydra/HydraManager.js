@@ -4,19 +4,17 @@
 import {take, fork} from 'redux-saga/effects';
 
 import {
-    SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-    dispatchSetLayoutInfo, dropDownManager, getResultCounts
+    SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchSetLayoutInfo, dropDownManager, getResultCounts
 } from '../../core/LayoutCntlr.js';
 import {removeChartsInGroup} from '../../charts/ChartsCntlr.js';
-import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE
-} from '../../tables/TablesCntlr.js';
-import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js';
+import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
+import {dispatchDestroyDrawLayer} from '../../visualize/DrawLayerDispatch';
+import {getDlAry, visRoot} from '../../visualize/VisStoreRoots';
+import {dispatchDeletePlotView} from '../../visualize/ImagePlotDispatch';
 import {removeTablesFromGroup, getAllTableGroupIds, smartMerge} from '../../tables/TableUtil.js';
 import {getSearchByName, getSearchInfo, getSelectedMenuItem} from '../../core/AppDataCntlr.js';
-import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
+import {DELETE_PLOT_VIEW, PLOT_IMAGE, PLOT_IMAGE_START, REPLACE_VIEWER_ITEMS} from '../../visualize/VisConst';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
-import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
-import {deleteAllDrawLayers} from '../../visualize/DrawLayerCntlr';
 
 /**
  * Configurable part of this template
@@ -41,7 +39,7 @@ export function* hydraManager() {
         const action = yield take([
             SHOW_DROPDOWN, SET_LAYOUT_MODE, CHART_ADD,
             TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE,
-            ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS
+            PLOT_IMAGE, PLOT_IMAGE_START, DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS
         ]);
 
         /**
@@ -124,6 +122,6 @@ export function cleanup() {
     // remove all plots
     visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
     // remove all drawing layers
-    deleteAllDrawLayers();
+    getDlAry().forEach(({drawLayerId}) => drawLayerId && dispatchDestroyDrawLayer(drawLayerId));
 
 }

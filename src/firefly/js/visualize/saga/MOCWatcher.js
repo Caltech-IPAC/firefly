@@ -3,14 +3,15 @@
  */
 
 import {once} from 'lodash';
-import {dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {dispatchAttachLayerToPlot} from '../DrawLayerDispatch';
+import {visRoot} from '../VisStoreRoots';
 import {getTblById} from '../../tables/TableUtil.js';
 import {addNewMocLayer, getAppHiPSForMoc, isTableMOC} from '../HiPSMocUtil.js';
-import {getActivePlotView, getNextHiPSPlotId, getPlotViewAry, primePlot} from '../PlotViewUtil.js';
+import {currentP, getNextHiPSPlotId, getPlotViewAry, primePlot} from '../PlotViewUtil.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
-import {dispatchPlotHiPS} from '../ImagePlotCntlr';
+import {IMAGE} from '../VisConst';
+import {getAViewFromMultiView, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {dispatchPlotHiPS} from '../ImagePlotDispatch';
 import {MetaConst} from '../../data/MetaConst.js';
 import {isHiPS} from '../WebPlot.js';
 import {RequestType} from '../RequestType';
@@ -101,7 +102,7 @@ function findHiPSWithSource(url) {
  * @return {String} plotId
  */
 function findAnyHiPS() {
-    const activePV= getActivePlotView(visRoot());
+    const {pv:activePV}= currentP();
     if (isHiPSDeferred(activePV)) return activePV.plotId;
     const foundPv= getPlotViewAry(visRoot()).find( (pv) => isHiPSDeferred(pv));
     return foundPv && foundPv.plotId;

@@ -165,7 +165,11 @@ public class IBE {
             HttpServiceInput addtlInfo = new HttpServiceInput(url.toString());
             addtlInfo.setHeader("Accept", "text/plain");
 
-            URLDownload.getDataToFile(url, results, addtlInfo.getCookies(), addtlInfo.getHeaders());
+            FileInfo fi= URLDownload.getDataToFile(url, results, addtlInfo.getCookies(), addtlInfo.getHeaders());
+            if (!fi.isSuccess()) {
+                throw new IOException(fi.getResponseCodeMsg(),
+                        new FailedRequestException(fi.getResponseCodeMsg(),"network fail", fi.getResponseCode(), fi));
+            }
         } catch (FailedRequestException e) {
             throw new IOException(e.getUserMessage(), e);
         }

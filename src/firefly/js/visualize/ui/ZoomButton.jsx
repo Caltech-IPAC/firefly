@@ -4,8 +4,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {dispatchZoom} from '../ImagePlotCntlr.js';
-import {getZoomMax, getNextZoomLevel, UserZoomTypes, getZoomDesc} from '../ZoomUtil.js';
+import {dispatchZoom} from '../ImagePlotDispatch';
+import {UserZoomTypes} from '../VisConst';
+import {getZoomMax, getNextZoomLevel, getZoomDesc} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';

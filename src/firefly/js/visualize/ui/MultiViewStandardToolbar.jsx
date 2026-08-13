@@ -9,10 +9,9 @@ import {Sheet, Stack} from '@mui/joy';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {HIDDEN} from '../ImViewFilterDisplay';
 import {ViewerScroll} from '../iv/ExpandedTools.jsx';
-import {
-    dispatchChangeViewerLayout, EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, getViewerItemIds
-} from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {EXPANDED_MODE_RESERVED} from '../VisConst';
+import {dispatchChangeViewerLayout, getMultiViewRoot, getViewer, getViewerItemIds} from '../MultiViewCntlr.js';
+import {dispatchChangeActivePlotView} from '../ImagePlotDispatch';
 import {BeforeButton, DisplayTypeButtonGroup, NextButton } from './Buttons.jsx';
 import {ViewOptionsButton} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';

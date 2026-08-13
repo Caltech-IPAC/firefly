@@ -2,7 +2,7 @@ import {IconButton, Stack, Tooltip} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React from 'react';
 import CoordinateSys from '../visualize/CoordSys.js';
-import {dispatchRecenter} from '../visualize/ImagePlotCntlr.js';
+import {dispatchRecenter} from '../visualize/ImagePlotDispatch';
 import Point from '../visualize/Point.js';
 import {CopyToClipboard} from '../visualize/ui/MouseReadout.jsx';
 import {formatLonLatToString} from '../visualize/ui/WorldPtFormat.jsx';

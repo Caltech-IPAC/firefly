@@ -2,21 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, get, flatten, values, uniq} from 'lodash';
+import {isEmpty, get, flatten, uniq} from 'lodash';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from './DrawLayerDispatch';
 import { primePlot, getPlotViewIdListInOverlayGroup, getPlotViewById, operateOnOthersInOverlayColorGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
-import {
-    visRoot, dispatchPlotMask, dispatchPlotMaskLazyLoad, dispatchChangeImageVisibility
-} from './ImagePlotCntlr.js';
-import {dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
+import {dispatchChangeImageVisibility, dispatchPlotMask, dispatchPlotMaskLazyLoad} from './ImagePlotDispatch';
+import {visRoot} from './VisStoreRoots';
 import Artifact from '../drawingLayers/Artifact.js';
-
-
-
-
-
-
 
 
 //--------------------------------------------------------------

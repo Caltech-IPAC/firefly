@@ -7,15 +7,15 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../core/ReduxFlux.js';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
+import {DRAWING_LAYER_KEY} from '../visualize/VisConst';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
-import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {addFootprintDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';
 import {ANGLE_UNIT} from '../visualize/draw/MarkerFootprintObj.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {currentP, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {InputFieldView} from '../ui/InputFieldView.jsx';
 import {isNil} from 'lodash';
 import {sprintf} from '../externalSource/sprintf';
@@ -35,7 +35,7 @@ class FootprintToolUI extends PureComponent {
         const angleDeg = `${formatAngle(convertAngle(angleUnit.key, 'deg', angle))}`;
         const {fpInfo} = this.props.drawLayer;
         const {currentPt} = fpObj?.actionInfo ?? {};
-        const plot= primePlot(visRoot(),this.props.pv.plotId);
+        const {plot}= currentP(this.props.pv.plotId);
 
         this.csys = CsysConverter.make(plot);
         this.state = {fpText: text,  fpTextLoc: textLoc.key, angleDeg, fpInfo,

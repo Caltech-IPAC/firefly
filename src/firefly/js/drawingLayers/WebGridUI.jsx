@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import {object} from 'prop-types';
-import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
 import {dispatchAddPreference,getPreference} from '../core/AppDataCntlr.js';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {COORDINATE_PREFERENCE} from './WebGrid.js';

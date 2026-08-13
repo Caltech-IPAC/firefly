@@ -4,18 +4,21 @@
 
 
 import {get, isEmpty} from 'lodash';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
+import {dlRoot} from '../visualize/VisStoreRoots';
 import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
-import {isPlotIdInPvNewPlotInfoAry,
-         isDrawLayerVisible, getDrawLayerById, getPlotViewById} from '../visualize/PlotViewUtil.js';
+import { isPlotIdInPvNewPlotInfoAry, isDrawLayerVisible, getDrawLayerById, currentP} from '../visualize/PlotViewUtil.js';
 import {getRelatedDataById} from '../visualize/RelatedDataUtil.js';
 import {clone} from '../util/WebUtil.js';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {
+    ATTACH_LAYER_TO_PLOT, CHANGE_VISIBILITY, DELETE_PLOT_VIEW, DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD, PLOT_IMAGE,
+    PLOT_IMAGE_FAIL
+} from '../visualize/VisConst';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {dlRoot, dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import {makeWorldPt} from '../visualize/Point.js';
 import {doFetchTable} from '../tables/TableUtil.js';
 import {getUIComponent} from './CatalogUI.jsx';
@@ -44,18 +47,18 @@ function watchReplot(action, cancelSelf, params) {
     const {payload}= action;
     const {plotId, drawLayerId}= params;
     switch (action.type) {
-        case ImagePlotCntlr.PLOT_IMAGE:
+        case PLOT_IMAGE:
             if (isPlotIdInPvNewPlotInfoAry(payload.pvNewPlotInfoAry, plotId)) {
                 updateArtifactTable(plotId, drawLayerId);
             }
             break;
-        case ImagePlotCntlr.PLOT_IMAGE_FAIL:
+        case PLOT_IMAGE_FAIL:
             payload.plotId===plotId && dispatchModifyCustomField(drawLayerId, {tableModel:null});
             break;
-        case ImagePlotCntlr.DELETE_PLOT_VIEW:
+        case DELETE_PLOT_VIEW:
             payload.plotId===plotId && cancelSelf();
             break;
-        case DrawLayerCntlr.DESTROY_DRAWING_LAYER:
+        case DESTROY_DRAWING_LAYER:
             payload.drawLayerId===drawLayerId && cancelSelf();
             break;
     }
@@ -67,7 +70,7 @@ function watchReplot(action, cancelSelf, params) {
 
 function updateArtifactTable(plotId, drawLayerId) {
     const dl= getDrawLayerById(dlRoot(), drawLayerId);
-    const pv= getPlotViewById(visRoot(), plotId);
+    const {pv}= currentP(plotId);
     if (!dl || !pv) return;
     if (isDrawLayerVisible(dl,plotId)) {
         retrieveArtifactsTable(dl);
@@ -80,7 +83,7 @@ function updateArtifactTable(plotId, drawLayerId) {
 
 
 function retrieveArtifactsTable(drawLayer) {
-    const pv= getPlotViewById(visRoot(), drawLayer.plotId);
+    const {pv}= currentP(drawLayer.plotId);
     const rd= getRelatedDataById(pv, drawLayer.relatedDataId);
 
     if (!rd) return;
@@ -113,7 +116,7 @@ function retrieveArtifactsTable(drawLayer) {
 function creator(initPayload, presetDefaults) {
     const {title, color, angleInRadian=false, relatedDataId, plotId, symbol, size, layersPanelLayoutId}= initPayload;
 
-    const pv= getPlotViewById(visRoot(), plotId);
+    const {pv}= currentP(plotId);
     const rd= getRelatedDataById(pv, relatedDataId);
 
     const dataKey=  get(rd, 'dataKey');
@@ -148,8 +151,7 @@ function creator(initPayload, presetDefaults) {
     dispatchAddActionWatcher({
         callback:watchReplot,
         params:{drawLayerId:dl.drawLayerId, plotId},
-        actions:[ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL,
-            ImagePlotCntlr.DELETE_PLOT_VIEW, DrawLayerCntlr.DESTROY_DRAWING_LAYER]
+        actions:[PLOT_IMAGE, PLOT_IMAGE_FAIL, DELETE_PLOT_VIEW, DESTROY_DRAWING_LAYER]
     });
 
     return dl;
@@ -159,14 +161,14 @@ function creator(initPayload, presetDefaults) {
 function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const {tableModel}= action.payload.changes;
             return tableModel ? Object.assign({tableModel}, createDrawData(drawLayer, tableModel)) :
                                 {tableModel:null, drawData: null};
             break;
 
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-        case DrawLayerCntlr.CHANGE_VISIBILITY:
+        case ATTACH_LAYER_TO_PLOT:
+        case CHANGE_VISIBILITY:
             if (action.payload.visible && !drawLayer.tableModel) {
                 retrieveArtifactsTable(drawLayer); //start the server retrieve call
             }

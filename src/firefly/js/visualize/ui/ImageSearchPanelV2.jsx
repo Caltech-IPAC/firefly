@@ -33,14 +33,13 @@ import {isDefined} from '../../util/WebUtil';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import CoordinateSys from '../CoordSys';
 import {useForImageSearch} from '../HiPSListUtil.js';
-import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
-import {
-    DEFAULT_FITS_VIEWER_ID, findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
-} from '../MultiViewCntlr.js';
+import {dispatchPlotHiPS, dispatchPlotImage} from '../ImagePlotDispatch';
+import {findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {
-    DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getNextHiPSPlotId, getPlotViewById
-} from '../PlotViewUtil.js';
+    DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, DEFAULT_FITS_VIEWER_ID, IMAGE, NewPlotMode
+} from '../VisConst';
+import {currentP, getNextHiPSPlotId} from '../PlotViewUtil.js';
 import {parseWorldPt} from '../Point.js';
 import {convertCelestial} from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
@@ -68,7 +67,7 @@ const scrollDivId = 'ImageSearchScroll';
  */
 function getContexInfo(renderTreeId, presetViewerId) {
     const mvroot = getMultiViewRoot();
-    let plotId = visRoot()?.activePlotId;
+    let plotId = currentP().plotId;
     let viewerId= presetViewerId ? presetViewerId : (plotId && findViewerWithItemId(mvroot, plotId, IMAGE));
     let viewer = getViewer(mvroot, viewerId);
 
@@ -629,7 +628,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
     const pvOptions= {};
     if (plotId) {
         viewerId = findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
-        const pv = getPlotViewById(visRoot(), plotId);
+        const {pv} = currentP(plotId);
         if (pv) {
             plotGroupId = pv.plotGroupId;
             pvOptions.displayFixedTarget= pv.plotViewCtx.displayFixedTarget;
@@ -641,7 +640,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         //If the group id exists, add the image into the same group
         const viewer = getViewer(getMultiViewRoot(), viewerId);
         if (viewer && viewer.itemIdAry[0]) {
-            const pv = getPlotViewById(visRoot(), viewer.itemIdAry[0]);
+            const {pv} = currentP(viewer.itemIdAry[0]);
             if (pv) {
                 plotGroupId = pv.plotGroupId;
             }

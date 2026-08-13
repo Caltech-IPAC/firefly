@@ -3,14 +3,13 @@
  */
 
 import {getDS9Region} from '../../rpc/PlotServicesJson.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
-import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
-        dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerDispatch';
+import {currentP, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
 import RegionPlot, {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {REGION_ADD_ENTRY} from '../VisConst';
+import {getDlAry, visRoot} from '../VisStoreRoots';
 import {logger} from '../../util/Logger.js';
-import {has, isArray, isEmpty, get, isNil} from 'lodash';
+import {has, isArray, isEmpty, isNil} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
 
@@ -23,7 +22,7 @@ var [RegionIdErr, RegionErr, NoRegionErr, JSONErr] = [
 export const getPlotId = (plotId) => {
     //return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
     if (!plotId || (isArray(plotId)&&plotId.length === 0)) {
-        const pid = get(visRoot(), 'activePlotId');
+        const pid = currentP().plotId;
         return getPlotViewIdListInOverlayGroup(visRoot(), pid);
     } else {
         return plotId;
@@ -142,7 +141,7 @@ export function regionUpdateEntryActionCreator(rawAction) {
         const dl = drawLayerId ? getDrawLayerById(getDlAry(), drawLayerId) : null;
 
         // if drawlayer doesn't exist, create a new one
-        if (!dl && rawAction.type === DrawLayerCntrl.REGION_ADD_ENTRY) {
+        if (!dl && rawAction.type === REGION_ADD_ENTRY) {
             const title = getRegionLayerTitle(layerTitle);
 
             createRegionLayer(changes, title, drawLayerId, plotId, selectMode);

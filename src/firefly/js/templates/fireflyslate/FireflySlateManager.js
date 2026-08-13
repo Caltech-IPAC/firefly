@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {filter, isEmpty, isArray, uniq, once} from 'lodash';
+import {filter, isEmpty, isArray, uniq} from 'lodash';
 
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
 
@@ -16,16 +16,15 @@ import {dispatchLoadTblStats} from '../../charts/TableStatsCntlr';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 
-import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
-import {REPLACE_VIEWER_ITEMS, IMAGE, getViewerItemIds, getMultiViewRoot, getViewer, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
+import {DELETE_PLOT_VIEW, IMAGE, PLOT_IMAGE, PLOT_IMAGE_START, REPLACE_VIEWER_ITEMS} from '../../visualize/VisConst';
+import {getViewerItemIds, getMultiViewRoot, getViewer, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 
 
 export function startLayoutManager(id, params) {
 
     const actions = [
-        ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
-        ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
+        PLOT_IMAGE_START, PLOT_IMAGE, DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
         TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ADDED, TBL_RESULTS_ACTIVE,
         CHART_ADD, CHART_REMOVE,
         SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER
@@ -55,13 +54,13 @@ function layoutManager(action, cancelSelf, params) {
     let newLayoutInfo = layoutInfo;
 
     switch (action.type) {
-        case ImagePlotCntlr.PLOT_IMAGE_START:
-        case ImagePlotCntlr.PLOT_IMAGE :
+        case PLOT_IMAGE_START:
+        case PLOT_IMAGE :
         case REPLACE_VIEWER_ITEMS:
 
             newLayoutInfo = handleNewImage(newLayoutInfo, action, renderTreeId);
             break;
-        case ImagePlotCntlr.DELETE_PLOT_VIEW:
+        case DELETE_PLOT_VIEW:
             newLayoutInfo = handlePlotDelete(newLayoutInfo, action, renderTreeId);
             break;
         case TBL_RESULTS_ADDED:

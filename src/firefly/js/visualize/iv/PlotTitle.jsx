@@ -8,12 +8,11 @@ import PropTypes from 'prop-types';
 import {hasWorkingTask} from '../../core/AppDataCntlr';
 import {sprintf} from '../../externalSource/sprintf';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {visRoot} from '../ImagePlotCntlr';
 import {HALF, QUARTER} from '../rawData/RawDataCommon.js';
 import {getDataCompress} from '../rawData/RawDataOps.js';
 import {ctxToolbarBG} from '../ui/VisCtxToolbarView.jsx';
 import {getZoomDesc} from '../ZoomUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {currentP, primePlot} from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
@@ -21,7 +20,7 @@ export const PlotTitle= memo(({plotView:pv, brief}) => {
         const {dataCompress,working}= useStoreConnector(() => (
             {
                 working: hasWorkingTask(pv?.plotId),
-                dataCompress: getDataCompress(primePlot(visRoot(), pv.plotId)?.plotImageId)
+                dataCompress: getDataCompress(currentP(pv.plotId).plot?.plotImageId)
             }
         ));
         const plot= primePlot(pv);

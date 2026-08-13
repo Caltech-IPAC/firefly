@@ -1,7 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {dispatchDeletePlotView, ExpandType, visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
+import {flux} from '../core/ReduxFlux';
+import {visRoot} from './VisStoreRoots';
+import {
+    CANVAS_DL_ID_START, CANVAS_IMAGE_ID_START, DEFAULT_COVERAGE_PLOT_ID,
+    DEFAULT_COVERAGE_VIEWER_ID, DELETE_PLOT_VIEW, ExpandType
+} from './VisConst';
 import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {memorizeLastCall} from '../util/WebUtil';
@@ -22,11 +27,6 @@ import {computeDistance, WAVELENGTH_UNITS} from './VisUtil';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 
 
-export const CANVAS_IMAGE_ID_START= 'image-';
-export const CANVAS_DL_ID_START= 'dl-';
-export const DEFAULT_COVERAGE_PLOT_ID = 'CoveragePlot';
-export const DEFAULT_COVERAGE_VIEWER_ID = 'CoverageImages';
-
 /**
  * 
  * @param {VisRoot | PlotView[]| undefined} ref
@@ -42,7 +42,7 @@ export function getPlotViewAry(ref, plotGroupId= undefined) {
     else if (isArray(ref) && ref.length>0 && ref[0].plotId)  { // passed a plotViewAry
         pvAry= ref;
     }
-    if (!plotGroupId) return pvAry;
+    if (!plotGroupId) return pvAry ?? [];
     return pvAry.filter( (pv) => pv.plotGroupId===plotGroupId);
 }
 
@@ -67,7 +67,7 @@ export const primePlot= memorizeLastCall( (ref,plotId) => {
     else if (plotId && isArray(ref) && ref.length>0 && ref[0].plotId) { //i was passed a plotViewAry
         pv= ref.find( (pv) => pv.plotId===plotId);
     }
-    else if (ref.plotId && ref.plots) { // i was passed a plotView
+    else if (isPlotView(ref)) { // i was passed a plotView
         pv= ref;
     }
     return (pv && pv.primeIdx>=0) ? pv.plots[pv.primeIdx] : undefined;
@@ -95,23 +95,29 @@ export const getPlotViewById= memorizeLastCall( (ref,plotId) =>{
 
 /**
  * get the newest version of a plot or a plotview from the store
+ * important - do not call from a reducer
  * @param {WebPlot|PlotView|undefined} plotOrPv
  * @return {WebPlot|PlotView|undefined} the new version
  */
 export function refreshP(plotOrPv) {
     if (!plotOrPv?.plotId) return;
-    if (plotOrPv.plots && plotOrPv.primeIdx>=0) return getPlotViewById(visRoot(), plotOrPv.plotId);
+    if (isPlotView(plotOrPv)) return getPlotViewById(visRoot(), plotOrPv.plotId);
     if (plotOrPv.plotImageId) return primePlot(visRoot(), plotOrPv.plotId);
 }
 
-
-export function refreshPlotView(pv) {
-    return getPlotViewById(visRoot(), pv?.plotId);
+/**
+ * return a object with PlotView, prime WebPlot for the PlotView, the plotId, and is active3
+ * !!! important - do not call from a reducer
+ * @param {String} [plotId] - if defined return the PlotView and prime WebPlot for that plotId, if undefined return the active.
+ * @return {{pv:PlotView, plot:WebPlot, plotId:String, active:boolean}}
+ */
+export function currentP(plotId) {
+    const vr= visRoot();
+    const pv= plotId ? getPlotViewById(vr, plotId) : getActivePlotView(vr);
+    const currentPlotId= plotId ?? pv?.plotId;
+    return {pv, plot:primePlot(pv), plotId: currentPlotId , active:isActivePlotView(vr, currentPlotId)};
 }
 
-export function refreshPlot(plot) {
-    return primePlot(visRoot(), plot?.plotId);
-}
 
 export const getPlotViewIdxById= (ref,plotId) =>
                     plotId && getPlotViewAry(ref)?.findIndex( (pv) => pv.plotId===plotId);
@@ -137,7 +143,7 @@ export function hasWCSProjection(ref, includeNoncelestial=false) {
     if (!ref) return false;
     const projection= ref.projection ?? primePlot(ref)?.projection;
     const hasProjection = Boolean(projection?.isSpecified() && projection?.isImplemented());
-    return hasProjection && projection?.coordSys?.isCelestial() || includeNoncelestial;
+    return includeNoncelestial ? hasProjection : hasProjection && projection?.coordSys?.isCelestial();
 }
 
 /**
@@ -173,7 +179,7 @@ export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId) {
 
 /**
  * return an array of plotIds that are all under visRoot and based on the overlay/color lock of the group associated
- * width the pvOrId parameter
+ * with the pvOrId parameter
  * @param visRoot
  * @param pvOrId
  * @param hasPlots
@@ -229,7 +235,7 @@ export function isThreeColor(plotOrPv) {
  * @param obj
  * @return boolean
  */
-export const isPlotView= (obj) =>
+const isPlotView= (obj) =>
            isObject(obj) && Boolean(obj.plots && obj.plotId && obj.viewDim && obj.overlayPlotViews && obj.plotViewCtx);
 
 
@@ -712,13 +718,13 @@ export function getAllCanvasLayersForPlot(plotId) {
         .sort( (c1,c2) => {
             const n1= getCanvasIdx(c1,CANVAS_IMAGE_ID_START,plotId);
             const n2= getCanvasIdx(c2,CANVAS_IMAGE_ID_START,plotId);
-            return n1<n2;
+            return n1-n2;
         });
     const dlLayers= layers.filter( (canvas) => canvas.id.startsWith(CANVAS_DL_ID_START))
         .sort( (c1,c2) => {
             const n1= getCanvasIdx(c1,CANVAS_DL_ID_START,plotId);
             const n2= getCanvasIdx(c2,CANVAS_DL_ID_START,plotId);
-            return n1<n2;
+            return n1-n2;
         });
     return [...imageLayers,...dlLayers];
 }
@@ -793,7 +799,7 @@ export const getHduPlotStartIndexes= (pv) => pv?.plotViewCtx.hduPlotStartIndexes
  * @param {PlotView} pv
  * @return {Number}
  */
-export const getHDUCount= (pv) => getHduPlotStartIndexes(pv).length;
+export const getHDUCount= (pv) => getHduPlotStartIndexes?.(pv).length ?? 0;
 
 
 /**
@@ -849,6 +855,7 @@ export function getHDUIndex(pv, plot= undefined) {
     const p= plot ||  primePlot(pv);
     const plotIdx= pv.plots.findIndex( (testP) => testP===p);
     const startIndexes= getHduPlotStartIndexes(pv);
+    if (!startIndexes) return 0;
     const hduIdx= startIndexes.findIndex( (value,arrayIdx) => value<=plotIdx && (arrayIdx===startIndexes.length-1 || startIndexes[arrayIdx+1]>plotIdx ));
     return hduIdx;
 }
@@ -1045,7 +1052,7 @@ export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
     if (Boolean(p1)!==Boolean(p2)) return false;
 
     if (p1 && p2) {
-        if (isImage(p1) !== isImage(p1)) return false;
+        if (isImage(p1) !== isImage(p2)) return false;
         if (isEmpty(plotKeys)) {
             if (p1 !== p2) return false;
         } else {
@@ -1057,8 +1064,8 @@ export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
 }
 
 export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
-    if (isEmpty(pvAry1) && isEmpty(pvAry1)) return true;
-    if (isEmpty(pvAry1)!==isEmpty(pvAry1)) return false;
+    if (isEmpty(pvAry1) && isEmpty(pvAry2)) return true;
+    if (isEmpty(pvAry1)!==isEmpty(pvAry2)) return false;
     if (pvAry1.length!==pvAry2.length) return false;
     return pvAry1.every( (pv,idx) => isPlotViewsEqual(pv,pvAry2[idx], pvKeys, plotKeys));
 }
@@ -1162,7 +1169,7 @@ export function isAllStretchDataLoaded(vr) {
  * @returns {boolean}
  */
 export function isDefaultCoverageActive(vr, mvr) {
-    if (getActivePlotView(vr)?.plotId!==DEFAULT_COVERAGE_PLOT_ID) return false;
+    if (currentP().plotId!==DEFAULT_COVERAGE_PLOT_ID) return false;
     return Boolean(getViewer(mvr,DEFAULT_COVERAGE_VIEWER_ID)?.mounted);
 }
 
@@ -1176,9 +1183,9 @@ export const isImageExpanded = (expandedMode) => expandedMode === true ||
  * @param {VisRoot} [vr]
  */
 export const deleteAllFailedPlots = (vr= visRoot()) =>
-    getPlotViewAry(vr)
+    getPlotViewAry(vr)   // don't use dispatchDeletePlotView to save circular dependency
         .filter((pv) => pv.serverCall === 'fail')
-        .forEach(({plotId}) => dispatchDeletePlotView({plotId})); // set 20 as the maximum plot
+        .forEach(({plotId}) => flux.process({ type: DELETE_PLOT_VIEW, payload: {plotId} }) );
 
 
 

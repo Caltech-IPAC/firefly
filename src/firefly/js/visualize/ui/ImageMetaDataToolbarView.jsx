@@ -13,8 +13,9 @@ import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
-    GRID_FULL, GRID_RELATED, SINGLE, GRID, getLayoutDetails
+    getLayoutDetails
 } from '../MultiViewCntlr.js';
+import {GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../VisConst';
 import {DisplayTypeButtonGroup, ThreeColor} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';

@@ -11,14 +11,13 @@ import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {getNextColor, makeDrawingDef, releaseColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {getActivePlotView, getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr';
+import {currentP} from '../visualize/PlotViewUtil';
+import {CHANGE_DRAWING_DEF, MODIFY_CUSTOM_FIELD, RECENTER} from '../visualize/VisConst';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 import {flux} from 'firefly/core/ReduxFlux.js';
 import Point from 'firefly/visualize/Point.js';
 import CsysConverter from 'firefly/visualize/CsysConverter.js';
-import DrawLayerCntlr from 'firefly/visualize/DrawLayerCntlr.js';
 import {FixedPtControl} from './FixedPtControl.jsx';
 
 const ID= 'SEARCH_TARGET';
@@ -55,7 +54,7 @@ function creator(initPayload, presetDefaults) {
         canUserDelete,
         allocatedColor: !Boolean(color),
     };
-    return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef, [ImagePlotCntlr.RECENTER, UPDATE_SEARCH_TARGET]);
+    return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef, [RECENTER, UPDATE_SEARCH_TARGET]);
 }
 
 function layerRemoved(drawLayer,action) {
@@ -64,30 +63,25 @@ function layerRemoved(drawLayer,action) {
 
 function getLayerChanges(drawLayer, action) {
     const {plotId}= drawLayer;
-    let pv;
-    let plot;
-    if (plotId) {
-        pv= getPlotViewById(visRoot(),plotId);
-        plot= primePlot(pv);
-    }
+    const {pv, plot}= currentP(plotId);
     let drawData= drawLayer.drawData;
     let drawingDef= drawLayer.drawingDef;
     switch (action.type) {
-        case ImagePlotCntlr.RECENTER :
+        case RECENTER :
             setTimeout(() => flux.process({ type: UPDATE_SEARCH_TARGET, payload: {plotId}}), 1);
             drawData= drawLayer.drawData;
             break;
-        case ImagePlotCntlr.UPDATE_SEARCH_TARGET:
+        case UPDATE_SEARCH_TARGET:
             drawData= undefined;
             break;
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const {changes}= action.payload;
             drawData= undefined;
             if (changes.color) {
                 drawingDef= {...drawingDef,color:changes.color};
             }
             break;
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+        case CHANGE_DRAWING_DEF:
             drawingDef= action.payload.drawingDef;
             drawingDef.preferedColor= drawingDef.color;
             drawData= computeDrawData({...drawLayer,drawingDef});
@@ -105,7 +99,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 function getTitle(pv, plot, dl) {
     const pt= dl.searchTargetPoint || plot?.attributes?.[PlotAttribute.FIXED_TARGET];
     if (!pt) return null;
-    if (!pv) pv= getActivePlotView(visRoot());
+    if (!pv) pv= currentP().pv;
 
     let ptDiv;
     let minWidth;
@@ -146,7 +140,7 @@ function getTitle(pv, plot, dl) {
 
 function computeDrawData(drawLayer) {
     const {plotId}= drawLayer;
-    const plot= primePlot(visRoot(),plotId);
+    const {plot}= currentP(plotId);
     let wp= drawLayer.searchTargetPoint;
     if (!wp && plot) {
         if (!plot) return [];

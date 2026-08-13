@@ -2,8 +2,7 @@ import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil';
 import {doFetchTable, getCellValue, getColumnByRef, getMetaEntry} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {logger} from '../../util/Logger';
-import {visRoot} from '../../visualize/ImagePlotCntlr';
-import {primePlot} from '../../visualize/PlotViewUtil';
+import {currentP} from '../../visualize/PlotViewUtil';
 import {getObsCoreAccessURL} from '../../voAnalyzer/TableAnalysis';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
@@ -213,7 +212,7 @@ function getOnActivePvChanged(dlTableUrl, dataLinkGrid, activateParams, options)
     if (!menuKeyAry?.length) return;
     return (plotId) => {
         const activeMenuLookupKey= dlTableUrl;
-        const menuKey= findMenuKeyWithName(menuKeyAry,primePlot(visRoot(),plotId)?.title);
+        const menuKey= findMenuKeyWithName(menuKeyAry,currentP(plotId).plot?.title);
         if (!menuKey) return;
         dispatchUpdateActiveKey({dpId: activateParams.dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menuKey}});
     };

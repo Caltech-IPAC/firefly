@@ -2,16 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {visRoot} from '../ImagePlotCntlr.js';
-import {getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
+import {currentP, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {DataTypes} from '../draw/DrawLayer.js';
 import DrawOp from '../draw/DrawOp.js';
 import Point from '../Point.js';
+import {getDlAry} from '../VisStoreRoots';
 import {RegionType, regionPropsList, getRegionDefault, RegionValue, RegionValueUnit} from './Region.js';
 import {get, has, isNil, isEmpty} from 'lodash';
 import {MARKER_DATA_OBJ, markerToRegion} from '../draw/MarkerFootprintObj.js';
-import CysConverter from '../CsysConverter.js';
 
 
 const RegionPropertyName = {
@@ -59,10 +57,10 @@ var fontObjToStr = (v) => (`"${v.name} ${v.point} ${v.weight} ${v.slant}"` );
  */
 export function makeRegionsFromPlot(plot, bSeperateText = false)
 {
-    var plotId = plot? plot.plotId : get(visRoot(), 'avtivePlotId');
-    var dlAry = getAllDrawLayersForPlot(getDlAry(), plotId, true );
+    const plotId = plot? plot.plotId : currentP().plotId;
+    const dlAry = getAllDrawLayersForPlot(getDlAry(), plotId, true );
     var oneRegionDes;
-    var rgDesAry = [];
+    const rgDesAry = [];
     /*
     const DS9Ver = '# Region file format: DS9 version 4.1';
     var DS9Global = 'global';

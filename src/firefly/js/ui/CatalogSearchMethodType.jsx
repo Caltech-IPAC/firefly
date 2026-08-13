@@ -24,9 +24,8 @@ import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
 import {useFieldGroupValue, useFieldGroupWatch} from './SimpleComponent';
 
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
+import {primePlot, getFoV, currentP} from '../visualize/PlotViewUtil.js';
 import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt, parseWorldPt} from '../visualize/Point.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
@@ -61,8 +60,7 @@ export function CatalogSearchMethodTypeImpl({polygonDefWhenPlot, withPos=true, s
         if (getFld('conesize')?.max!==max) setFld('conesize', {min:1/3600,max});
     }, [coneSize,spatial]);
 
-    const plot = primePlot(visRoot());
-    const polyIsDef= polygonDefWhenPlot && plot;
+    const polyIsDef= polygonDefWhenPlot && currentP().plot;
     const searchType = withPos ? spatial : SpatialMethod['All Sky'].value;
 
     return (
@@ -230,8 +228,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
     const {setVal,getVal} = useContext(FieldGroupCtx);
 
     const onChangeToPolygonMethod = () => {
-        const pv = getActivePlotView(visRoot());
-        const plot = primePlot(pv);
+        const {plot,pv}= currentP();
         if (!plot) return;
         const cornerCalcV = getVal('imageCornerCalc');
         if ((!cornerCalcV || cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
@@ -318,8 +315,7 @@ export function PolygonDataArea({imageCornerCalc, initValue='',
             {label: 'Custom', value: 'user'}
         ];
 
-    const pv= getActivePlotView(visRoot());
-    var plot = primePlot(pv);
+    const {plot,pv}= currentP();
     if(isHiPS(plot)){
         cornerTypeOps =
             [

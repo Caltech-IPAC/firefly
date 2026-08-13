@@ -1,5 +1,5 @@
 import {get, isArray, isObject} from 'lodash';
-import {REINIT_APP} from '../core/AppDataCntlr';
+import {REINIT_APP} from '../core/CoreConst';
 import {flux} from '../core/ReduxFlux';
 import {download} from '../util/fetch';
 import {encodeUrl, getRootURL} from '../util/WebUtil';

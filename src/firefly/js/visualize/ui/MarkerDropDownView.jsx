@@ -7,12 +7,12 @@ import PropTypes from 'prop-types';
 import {SingleColumnMenu, DropDownSubMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import { dispatchCreateMarkerLayer, dispatchCreateFootprintLayer } from '../DrawLayerCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {dispatchCreateFootprintLayer, dispatchCreateMarkerLayer} from '../DrawLayerDispatch';
+import {currentP} from '../PlotViewUtil';
 import {FootprintFactory, FootprintList,  SOFIA_INSTRUMENTS} from '../draw/FootprintFactory.js';
 import { createNewFootprintLayerId, getFootprintLayerTitle} from '../../drawingLayers/FootprintTool.js';
 import {relocatable} from '../../drawingLayers/FootprintLocatable.js';
-import {has, get} from 'lodash';
+import {has} from 'lodash';
 let idCntM = 0;
 let idCntF = 0;
 
@@ -27,7 +27,7 @@ function displayItemText(itemName) {
     }
 }
 
-const getPlotId = (pv) => ( pv ?  pv.plotId : get(visRoot(), 'activePlotId'));
+const getPlotId = (pv) => ( pv ?  pv.plotId : currentP().plotId);
 
 export function addNewDrawLayer(pv, itemName) {
     if (!has(markerItem, itemName)) return;

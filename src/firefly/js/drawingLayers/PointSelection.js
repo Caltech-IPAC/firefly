@@ -3,9 +3,8 @@
  */
 
 
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
-import {primePlot, isActivePlotView} from '../visualize/PlotViewUtil.js';
+import {dispatchAttributeChange} from '../visualize/ImagePlotDispatch';
+import {currentP} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -13,6 +12,7 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
+import {ATTACH_LAYER_TO_PLOT, CHANGE_DRAWING_DEF, SELECT_POINT} from '../visualize/VisConst';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {flux} from '../core/ReduxFlux.js';
 import {clone} from '../util/WebUtil.js';
@@ -34,7 +34,7 @@ function dispatchSelectPoint(mouseStatePayload) {
     const {plotId,screenPt,drawLayer}= mouseStatePayload;
     if (mouseStatePayload.shiftDown) return;
     if (drawLayer.drawData.data) {
-        flux.process({type:DrawLayerCntlr.SELECT_POINT, payload:mouseStatePayload} );
+        flux.process({type:SELECT_POINT, payload:mouseStatePayload} );
         dispatchAttributeChange(
             {plotId,
             attKey:PlotAttribute.ACTIVE_POINT,attValue:{pt:makeSelectedPt(screenPt,plotId)}
@@ -46,7 +46,7 @@ function dispatchSelectPoint(mouseStatePayload) {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry?.forEach( (plotId) => {
-        const plot= primePlot(visRoot(),plotId);
+        const {plot}= currentP(plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_POINT]) {
             dispatchAttributeChange(
                 { plotId ,overlayColorScope:false,attKey:PlotAttribute.ACTIVE_POINT,attValue:null }
@@ -67,7 +67,7 @@ function creator(initPayload, presetDefaults) {
     const pairs= {
         [MouseState.UP.key]: dispatchSelectPoint
     };
-    const actionTypes= [DrawLayerCntlr.SELECT_POINT];
+    const actionTypes= [SELECT_POINT];
     const options = {
         isPointData: true,
         hasPerPlotData: true,
@@ -83,26 +83,23 @@ function creator(initPayload, presetDefaults) {
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     if (dataType!==DataTypes.DATA) return null;
-    var active= isActivePlotView(visRoot(), plotId);
-    var drawAry= selectAPoint(drawLayer,action, active, plotId);
+    const active= currentP(plotId).active;
+    const drawAry= selectAPoint(drawLayer,action, active, plotId);
     return drawAry || lastDataRet;
 }
 
 
 
 function getLayerChanges(drawLayer, action) {
-    if  (action.type===DrawLayerCntlr.CHANGE_DRAWING_DEF) {
+    if  (action.type===CHANGE_DRAWING_DEF) {
         return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)};
     }
 }
 
 function makeSelectedPt(screenPt,plotId) {
-    var plot= primePlot(visRoot(),plotId);
-    var cc= CsysConverter.make(plot);
-    var selPt= cc.getWorldCoords(screenPt); //todo put back
-
-    if (!selPt) selPt= cc.getImageCoords(screenPt);
-    return selPt;
+    const cc= CsysConverter.make(currentP(plotId).plot);
+    const selPt= cc.getWorldCoords(screenPt); //todo put back
+    return selPt ?? cc.getImageCoords(screenPt);
 }
 
 
@@ -119,7 +116,7 @@ function selectAPoint(drawLayer, action, active, pId) {
     };
     // attach drawing layer to the plot which is created after the drawing layer
     if (!screenPt &&
-        action.type === DrawLayerCntlr.ATTACH_LAYER_TO_PLOT &&
+        action.type === ATTACH_LAYER_TO_PLOT &&
         !isEmptyData() && plotIdAry && plotIdAry.includes(pId))  {
         if (drawLayer.plotIdAry) {
             let dAry;

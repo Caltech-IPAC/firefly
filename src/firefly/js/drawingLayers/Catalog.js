@@ -6,16 +6,17 @@
 import {isEmpty,isArray} from 'lodash';
 import Enum from 'enum';
 import {makeTableColorTitle} from '../visualize/ui/DrawLayerUIComponents';
+import {MODIFY_CUSTOM_FIELD, SUBGROUP} from '../visualize/VisConst';
 import {getSelectedPts} from '../visualize/WebPlotAnalysis';
-import {primePlot, getAllDrawLayersForPlot, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
+import {primePlot, getAllDrawLayersForPlot, getCenterOfProjection, currentP} from '../visualize/PlotViewUtil.js';
+import {dispatchUseTableAutoScroll} from '../visualize/ImagePlotDispatch';
+import {dlRoot, visRoot} from '../visualize/VisStoreRoots';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {dlRoot, SUBGROUP} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeImagePt, makeWorldPt, pointEquals} from '../visualize/Point.js';
@@ -151,13 +152,11 @@ function creator(initPayload, presetDefaults={}) {
 }
 
 // eslint-disable-next-line no-unused-vars
-function layerRemoved(drawLayer,action) {
-}
+function layerRemoved(drawLayer,action) { }
 
 function saveLastDown(mouseStatePayload) {
     const {plotId}= mouseStatePayload;
-    const plot= primePlot(visRoot(),plotId);
-    lastProjectionCenter= {center:getCenterOfProjection(plot), plotId};
+    lastProjectionCenter= {center:getCenterOfProjection(currentP(plotId).plot), plotId};
 }
 
 /**
@@ -167,8 +166,7 @@ function saveLastDown(mouseStatePayload) {
 function highlightChange(mouseStatePayload) {
     const {drawLayer,plotId,screenPt,shiftDown}= mouseStatePayload;
     if (shiftDown) return;
-    const plot= primePlot(visRoot(),plotId);
-    const center= getCenterOfProjection(plot);
+    const center= getCenterOfProjection(currentP(plotId).plot);
     if (lastProjectionCenter && (!pointEquals(center, lastProjectionCenter?.center) || lastProjectionCenter.plotId!==plotId)) return;
     lastProjectionCenter= undefined;
     makeHighlightDeferred(drawLayer,plotId,screenPt);
@@ -191,7 +189,6 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     let {data} = drawLayer.drawData;
     const {tableRequest} = drawLayer;
     let closestIdx = -1;
-    const plot = primePlot(visRoot(), plotId);
 
     if (drawLayer.catalogType===CatalogType.ORBITAL_PATH) {
         if (tableRequest.sortInfo || getNumFilters(tableRequest)) return () => undefined;
@@ -223,7 +220,7 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
 
         let dist;
 
-        const cc= CysConverter.make(plot);
+        const cc= CysConverter.make(currentP(plotId).plot);
         for(let i=0;(idx<data.length && i<maxChunk ); i++) {
             const obj= data[idx];
             if (obj) {
@@ -245,7 +242,7 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
 
 
 function getLayerChanges(drawLayer, action) {
-    if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null;
+    if  (action.type!==MODIFY_CUSTOM_FIELD) return null;
 
     const dd= Object.assign({},drawLayer.drawData);
     const {changes}= action.payload;
@@ -572,7 +569,7 @@ export function selectCatalog(pv, dlAry= dlRoot().drawLayerAry) {
     if (catDlAry.length) {
         const tooBig= catDlAry.some( (dl) => dl.canSelect && dl.dataTooBigForSelection);
         if (tooBig) {
-            showInfoPopup('Your data set is too large to select. You must filter it down first.', `Can't Select`);
+            showInfoPopup('Your data set is too large to select. You must filter it down first.', `Can't Select`); // eslint-disable-line @stylistic/js/quotes
         }
         else {
             catDlAry.forEach( (dl) => {

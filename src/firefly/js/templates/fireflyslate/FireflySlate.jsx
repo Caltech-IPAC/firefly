@@ -15,8 +15,9 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
-import {visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {PLOT2D} from '../../visualize/VisConst';
+import {visRoot} from '../../visualize/VisStoreRoots';
+import {getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
@@ -124,6 +125,9 @@ const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)
  * @param props
  * @param props.expanded
  * @param props.gridView
+ * @param props.gridColumns
+ * @param props.initLoadingMessage
+ * @param props.initLoadCompleted
  * @return {*}
  */
 function mainView({expanded,gridView, gridColumns, initLoadingMessage, initLoadCompleted}) {

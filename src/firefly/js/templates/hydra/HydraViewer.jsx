@@ -15,6 +15,7 @@ import {
     getSearchInfo,
 } from '../../core/AppDataCntlr.js';
 import {getLayouInfo, LO_VIEW} from '../../core/LayoutCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/VisConst';
 import {hydraManager} from './HydraManager';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
@@ -24,7 +25,6 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import App from 'firefly/ui/App.jsx';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {makeMenuItems, SearchPanel} from 'firefly/ui/SearchPanel.jsx';

@@ -4,10 +4,8 @@
 
 import Validate from '../../util/Validate.js';
 import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER} from '../../fieldGroup/FieldGroupCntlr.js';
-import {Band} from '../Band';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import {visRoot} from '../ImagePlotCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW} from '../VisConst';
+import {currentP} from '../PlotViewUtil.js';
 import RangeValues, {STRETCH_LINEAR, STRETCH_ASINH, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
 
 
@@ -30,7 +28,7 @@ export const NO_BAND_PANEL= 'nobandPanel';
 export function colorPanelChange(band) {
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getFieldInit();
-        const plot= primePlot(visRoot());
+        const {plot}= currentP();
         if (!plot || !plot.plotState.isBandUsed(band)) return fields;
 
         const plottedRV= plot.plotState.getRangeValues(band);
@@ -61,9 +59,9 @@ function computeColorPanelState(fields, plottedRV, band, action) {
             if (!valid) return fields;
             return syncFields(fields,makeRangeValuesFromFields(fields));
 
-        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+        case CHANGE_ACTIVE_PLOT_VIEW:
         case FORCE_FIELD_GROUP_REDUCER:
-        case ImagePlotCntlr.ANY_REPLOT:
+        case ANY_REPLOT:
             if (!plottedRV) return fields;
             // no update if hue-preserving
             if ((plottedRV?.rgbPreserveHue ?? 0) > 0) return fields;
@@ -376,7 +374,7 @@ export function rgbHuePreserveChange(bands) {
 
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getHuePreserveFieldInit();
-        const plot= primePlot(visRoot());
+        const {plot}= currentP();
         if (!plot || bands.some((b) => !plot.plotState.isBandUsed(b))) return fields;
 
         const plottedRVAry= bands.map((b)=>plot.plotState.getRangeValues(b));
@@ -406,8 +404,8 @@ export function computeHuePreservePanelState(fields, plottedRVAry, bands, action
             return syncFieldsHuePreserve(fields,makeHuePreserveRangeValuesFromFields(fields));
 
         case FORCE_FIELD_GROUP_REDUCER:
-        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-        case ImagePlotCntlr.ANY_REPLOT:
+        case CHANGE_ACTIVE_PLOT_VIEW:
+        case ANY_REPLOT:
             if (plottedRVAry.some((rv)=>!rv)) return fields;
             const newFields = updateHuePreserveFieldsFromRangeValues(fields,plottedRVAry);
             return syncFieldsHuePreserve(newFields,plottedRVAry);

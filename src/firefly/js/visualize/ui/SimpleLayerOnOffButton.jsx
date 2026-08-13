@@ -5,13 +5,11 @@
 // import FlipOutlinedIcon from '@mui/icons-material/FlipOutlined.js';
 import React from 'react';
 import PropTypes, {bool, element, object, oneOfType, string} from 'prop-types';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerDispatch';
 import {getDrawLayerByType, isDrawLayerAttached, primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
-import {dispatchCreateDrawLayer,
-        getDlAry,
-        dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+import {getDlAry} from '../VisStoreRoots';
 import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 

@@ -6,7 +6,7 @@ import {Box, Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
-import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
+import {dispatchChangePointSelection} from '../ImagePlotDispatch';
 import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
 import {copyToClipboard} from '../../util/WebUtil';
 import {ToolbarButton} from '../../ui/ToolbarButton';

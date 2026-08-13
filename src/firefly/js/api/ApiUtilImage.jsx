@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {visRoot} from '../visualize/VisStoreRoots';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {getBootstrapRegistry} from '../core/BootstrapRegistry';
 import {RangeValues} from '../visualize/RangeValues.js';
@@ -26,7 +25,8 @@ import {RangeValues} from '../visualize/RangeValues.js';
 export {RangeValues} from '../visualize/RangeValues.js';
 export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '../visualize/WebPlotRequest.js';
 export {RequestType} from '../visualize/RequestType';
-export {ExpandType, visRoot} from '../visualize/ImagePlotCntlr.js';
+export {visRoot} from '../visualize/VisStoreRoots.js';
+export {ExpandType} from '../visualize/VisConst.js';
 
 export {CysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
@@ -37,7 +37,7 @@ export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 export {makeWorldPt, makeScreenPt, makeImagePt, parsePt, parseAnyPt, parseWorldPt } from '../visualize/Point.js';
 export {CoordinateSys} from '../visualize/CoordSys.js';
 
-export {IMAGE, NewPlotMode} from '../visualize/MultiViewCntlr';
+export {IMAGE, NewPlotMode} from '../visualize/VisConst.js';
 
 
 /**
@@ -77,15 +77,6 @@ export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
     getBootstrapRegistry().setDrawLayerDefaults(drawLayerTypeId, defaults);
 }
 
-/**
- * @summary  initialize the auto readout. Must be call once at the begging to get the popup readout running.
- * @param {object} ReadoutComponent - either a PopupMouseReadoutMinimal or PopupMouseReadoutFull
- * @param {object} props - a list of the properties
- * @public
- * @deprecated
- * @function initAutoReadout
- * @memberof firefly.util.image
- */
 export function initAutoReadout() {}
 
 

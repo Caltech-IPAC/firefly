@@ -6,7 +6,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Drawer} from './Drawer.js';
 import {makeDrawingDef} from './DrawingDef.js';
-import {CANVAS_DL_ID_START} from '../PlotViewUtil.js';
+import {CANVAS_DL_ID_START} from '../VisConst';
 
 
 function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {

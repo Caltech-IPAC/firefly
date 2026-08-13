@@ -12,7 +12,7 @@ import {
 } from '../visualize/HiPSListUtil.js';
 import {ValidationField} from './ValidationField.jsx';
 import {getCellValue, getColumnValues, getTblById, onTableLoaded} from '../tables/TableUtil.js';
-import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID} from '../visualize/VisConst';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {parseWorldPt} from '../visualize/Point.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../tables/TablesCntlr.js';
@@ -21,13 +21,13 @@ import {showInfoPopup} from './PopupUtil.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchChangeHiPS, visRoot} from '../visualize/ImagePlotCntlr.js';
+import {dispatchChangeHiPS} from '../visualize/ImagePlotDispatch';
 import {PopupPanel} from './PopupPanel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {primePlot, currentP} from '../visualize/PlotViewUtil.js';
 import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
 import {createHiPSMocLayer} from 'firefly/visualize/task/PlotHipsTask.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
@@ -110,22 +110,15 @@ export function showHiPSSurveysPopup(pv, moc= false) {
             if (resultSuccess(request)) dispatchHideDialog(DIALOG_ID);
         }
         else {
-            const rootUrl = getHipsUrl();
-            if (rootUrl) {
-                const plot = pv ? primePlot(pv) : primePlot(visRoot());
-                // update the table highlight of the other one which is not shown in table panel
-                moc ? createHiPSMocLayer({
-                        ivoid: getIvoaId(),
-                        title: getTitle(),
-                        hipsUrl: rootUrl,
-                        mocFile: rootUrl.toLowerCase().endsWith('fits') ? '' : undefined,
-                        plot: primePlot(pv),
-                        visible: true
-                    } ) :
-                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl}
-                    );
-                dispatchHideDialog(DIALOG_ID);
-            }
+            const hipsUrl = getHipsUrl();
+            if (hipsUrl) return;
+            const plot = pv ? primePlot(pv) : currentP().plot;
+            moc
+                ? createHiPSMocLayer({
+                    ivoid: getIvoaId(), title: getTitle(), hipsUrl, plot, visible: true,
+                    mocFile: hipsUrl.toLowerCase().endsWith('fits') ? '' : undefined})
+                : dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl} );
+            dispatchHideDialog(DIALOG_ID);
         }
     };
 

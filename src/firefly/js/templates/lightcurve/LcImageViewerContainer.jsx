@@ -5,9 +5,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
-import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../../visualize/MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, ExpandType, NewPlotMode} from '../../visualize/VisConst';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, ExpandType} from '../../visualize/ImagePlotCntlr.js';
+import {dispatchChangeExpandedMode} from '../../visualize/ImagePlotDispatch';
 import {LcImageToolbarView} from './LcImageToolbarView.jsx';
 
 /**

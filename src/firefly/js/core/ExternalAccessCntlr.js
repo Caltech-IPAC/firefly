@@ -4,7 +4,7 @@
 import {flux} from './ReduxFlux';
 import {doExtensionActivate} from './ExternalAccessUtils.js';
 import {POINT} from './ExternalAccessUtils.js';
-import {dispatchChangePointSelection} from '../visualize/ImagePlotCntlr.js';
+import {dispatchChangePointSelection} from '../visualize/ImagePlotDispatch';
 
 const EXTENSION_ADD= 'ExternalAccessCntlr/extensionAdd';
 const EXTENSION_REMOVE= 'ExternalAccessCntlr/extensionRemove';

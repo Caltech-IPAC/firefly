@@ -14,12 +14,12 @@ import {
     TABLES, UWS
 } from 'firefly/ui/FileUploadUtil';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
-import {
-    dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry
-} from 'firefly/visualize/DrawLayerCntlr';
 import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
-import {dispatchPlotImage, visRoot} from 'firefly/visualize/ImagePlotCntlr';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
+import {getAViewFromMultiView, getMultiViewRoot} from 'firefly/visualize/MultiViewCntlr';
+import {dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer} from '../visualize/DrawLayerDispatch';
+import {dispatchPlotImage} from '../visualize/ImagePlotDispatch';
+import {IMAGE} from '../visualize/VisConst';
+import {getDlAry, visRoot} from '../visualize/VisStoreRoots';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
 import {getDrawLayersByType, getPlotViewAry, primePlot} from 'firefly/visualize/PlotViewUtil';
 import RangeValues from 'firefly/visualize/RangeValues';
@@ -31,7 +31,6 @@ import {dispatchHideDropDown, dispatchShowDropDown} from '../core/LayoutCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {getIntHeaderFromAnalysis, getTableHeaderFromAnalysis} from '../metaConvert/PartAnalyzer.js';
 import {upload} from '../rpc/CoreServices';
-import {getAllSelectedIndexes} from '../tables/HpxIndexCntlr';
 import {getHttpErrorMessage} from '../util/HttpErrorMessage';
 import {getStatusFromFetchError} from '../util/WebUtil';
 
@@ -290,6 +289,7 @@ export function determineValidity(acceptList, uniqueTypes, summaryModel, summary
 
     const unsupportedIndexes= allIdxs.filter( (i) => report.parts[i].unsupported);
     if (allIdxs.length &&  unsupportedIndexes.length === allIdxs.length) {
+        const unsupportedSingleErr= {errorMsg: 'unsupported image type'};
         if (allIdxs.length === 1) {
             const reason= report.parts[allIdxs[0]]?.unsupportedReason;
             const errorMsg= reason ? errorObj.unsupportedSingleErr.errorMsg + ': ' + reason : unsupportedSingleErr.errorMsg;

@@ -11,6 +11,7 @@ import edu.caltech.ipac.util.download.ResponseMessage;
 
 import java.io.File;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -129,6 +130,7 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
     public boolean isOK() { return getResponseCode()==200; }
+    public boolean isSuccess() { return getResponseCode()==200 ||  getResponseCode()==HttpURLConnection.HTTP_NOT_MODIFIED; }
     public String getResponseCodeMsg() { return attributes.get(RESPONSE_CODE_MSG); }
 
 

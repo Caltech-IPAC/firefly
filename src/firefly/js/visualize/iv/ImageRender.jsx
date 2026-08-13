@@ -8,7 +8,7 @@ import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {initImageDrawer}  from './ImageTileDrawer.js';
 import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
-import {CANVAS_IMAGE_ID_START} from '../PlotViewUtil.js';
+import {CANVAS_IMAGE_ID_START} from '../VisConst';
 import {primePlot} from '../PlotViewUtil';
 
 const BG_IMAGE= 'image-working-background-24x24.png';

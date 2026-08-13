@@ -7,17 +7,20 @@ import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup, getFoV} from '../visualize/PlotViewUtil.js';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer, dlRoot} from '../visualize/DrawLayerCntlr.js';
+import {dispatchModifyCustomField, dispatchUpdateDrawLayer} from '../visualize/DrawLayerDispatch';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {
+    ANY_REPLOT, ATTACH_LAYER_TO_PLOT, CHANGE_CENTER_OF_PROJECTION, CHANGE_DRAWING_DEF, CHANGE_VISIBILITY,
+    DRAWING_LAYER_KEY, MODIFY_CUSTOM_FIELD, REGION_SELECT
+} from '../visualize/VisConst';
 import {getMetaEntry, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {MAX_ROW} from '../tables/TableRequestUtil.js';
+import {MAX_ROW} from '../tables/TableConst';
 import { dispatchAddWorkingTask, getAppOptions} from '../core/AppDataCntlr.js';
 import {doFetchTable} from '../tables/TableUtil';
 import {logger} from '../util/Logger.js';
-import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
+import {dlRoot, getDlAry, visRoot} from '../visualize/VisStoreRoots';
 import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {MetaConst} from '../data/MetaConst';
@@ -99,7 +102,7 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
                         dispatchModifyCustomField(tbl_id, {mocTable:tableModel,autoUsesOnlyOutline});
                         const visiblePlotIdAry =getVisiblePlotIdsByDrawlayerId(id, getState);
                         visiblePlotIdAry.forEach((pId) => {
-                            dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
+                            dispatch({type: ANY_REPLOT, payload: {plotId: pId}});
                         });
                     }
                 }
@@ -112,7 +115,7 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
         } else {
             const vPlotIds =getVisiblePlotIdsByDrawlayerId(id, getState);
             vPlotIds.forEach((pId) => {
-                dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
+                dispatch({type: ANY_REPLOT, payload: {plotId: pId}});
             });
         }
     }
@@ -140,7 +143,7 @@ function creator(initPayload) {
     };
 
     // const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
-    const actionTypes = [DrawLayerCntlr.REGION_SELECT];
+    const actionTypes = [REGION_SELECT];
     const {mocFitsInfo={},color= getNextColor(), mocGroupDefColorId}= initPayload || {};
     const {tbl_id, tablePreloaded} = mocFitsInfo;
     const id =  tbl_id || (initPayload?.drawLayerId ?? `${ID}-${idCnt}`);
@@ -188,7 +191,7 @@ function creator(initPayload) {
     dispatchAddActionWatcher({
         callback:loadMocFitsWatcher,
         params: {id: dl.drawLayerId, mocFitsInfo},
-        actions:[DrawLayerCntlr.CHANGE_VISIBILITY, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]
+        actions:[CHANGE_VISIBILITY, ATTACH_LAYER_TO_PLOT]
     });
 
     return dl;
@@ -249,11 +252,6 @@ function getTitle(dl, pIdAry, isLoading=false) {
 }
 
 
-function showMessage(text, bShow = false) {
-    if (bShow) {
-        console.log(text);
-    }
-}
 /**
  * state update on the drawlayer change
  * @param drawLayer
@@ -267,7 +265,7 @@ function getLayerChanges(drawLayer, action) {
     if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
 
     switch (action.type) {
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             if (!plotIdAry && !plotId) return null;
 
             const {visible} = action.payload;
@@ -282,7 +280,7 @@ function getLayerChanges(drawLayer, action) {
 
             return {title: tObj, updateStatusAry};
 
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const {fillStyle, targetPlotId, mocTable} = action.payload.changes;
 
             if (fillStyle && targetPlotId) {
@@ -322,14 +320,14 @@ function getLayerChanges(drawLayer, action) {
             }
             break;
 
-        case DrawLayerCntlr.CHANGE_VISIBILITY:
+        case CHANGE_VISIBILITY:
             if (action.payload.visible) {
                 const pIdAry = plotIdAry ? plotIdAry :[plotId];
                 return Object.assign({}, {title: getTitle(drawLayer, pIdAry, action.payload.visible && !drawLayer.mocTable)});
             }
             break;
 
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:   // from color change
+        case CHANGE_DRAWING_DEF:   // from color change
             const {color} = action.payload.drawingDef || {};
             const newMocObj = createMocObj(drawLayer, undefined, undefined);
             const [r,g,b,savedAlpha]= toRGBA(color);
@@ -378,7 +376,7 @@ function changeMocDrawingColor(dl, pId) {
 
     const dObjs = get(dl.drawData, [DataTypes.DATA, pId],[]);
     return dObjs.map((oneObj) => {
-        if (oneObj.fillColor && oneObj.fillColor != fillColor) {
+        if (oneObj.fillColor && oneObj.fillColor !== fillColor) {
             return {...oneObj, fillColor};
         } else {
             return oneObj;
@@ -535,12 +533,11 @@ function abortLastAsyncUpdateIfRunning(updateStatusAry, pId) {
  * @param action
  */
 function asyncComputeDrawData(drawLayer, action) {
-    const forAction = [ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT,
-                       DrawLayerCntlr.MODIFY_CUSTOM_FIELD, DrawLayerCntlr.CHANGE_DRAWING_DEF];
+    const forAction = [CHANGE_CENTER_OF_PROJECTION, ANY_REPLOT, MODIFY_CUSTOM_FIELD, CHANGE_DRAWING_DEF];
     if (!forAction.includes(action.type) || !drawLayer.mocObj) return;
 
     const {mocStyle={}} = drawLayer;
-    if (action.type === DrawLayerCntlr.MODIFY_CUSTOM_FIELD) {
+    if (action.type === MODIFY_CUSTOM_FIELD) {
         const {fillStyle, targetPlotId} = action.payload.changes;
         if (!fillStyle || !targetPlotId) return;
 
@@ -549,9 +546,9 @@ function asyncComputeDrawData(drawLayer, action) {
                                     targetPlotId),
             drawLayer, targetPlotId);
         mocRedraw(newDl,action);
-    } else if (action.type === ImagePlotCntlr.ANY_REPLOT) {
+    } else if (action.type === ANY_REPLOT) {
         mocRedraw(drawLayer,action);
-    } else if (action.type === DrawLayerCntlr.CHANGE_DRAWING_DEF) {
+    } else if (action.type === CHANGE_DRAWING_DEF) {
         const {plotIdAry} = drawLayer;
         const dd = {...drawLayer.drawData};
 
@@ -571,7 +568,7 @@ function mocRedraw(drawLayer,action) {
     const {plotId, plotIdAry} = action.payload;
     const {visiblePlotIdAry, updateStatusAry={}} = drawLayer;
 
-    const pIdAry= plotIdAry ?? action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION
+    const pIdAry= plotIdAry ?? action.type === CHANGE_CENTER_OF_PROJECTION
         ? getPlotViewIdListInOverlayGroup(visRoot(), plotId)
         : plotId ? [plotId] : [];
 

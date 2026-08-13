@@ -8,6 +8,10 @@ import {isUndefined} from 'lodash';
 import React, {useEffect, useState} from 'react';
 import {getAppOptions} from '../../../api/ApiUtil.js';
 import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../../ui/ResizeMonitor';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
+    dispatchModifyCustomField
+} from '../../DrawLayerDispatch';
 import {makeImagePt} from '../../Point';
 import {allowPinnedCharts} from '../../../charts/ChartUtil';
 import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
@@ -31,19 +35,15 @@ import {useFieldGroupValue, useStoreConnector} from '../../../ui/SimpleComponent
 import {ValidationField} from '../../../ui/ValidationField';
 import {intValidator} from '../../../util/Validate';
 import {CCUtil, CysConverter} from '../../CsysConverter.js';
-import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
-    dispatchModifyCustomField, getDlAry
-} from '../../DrawLayerCntlr.js';
 import {getExtName, hasFloatingData} from '../../FitsHeaderUtil.js';
-import ImagePlotCntlr, {
-    dispatchAttributeChange, dispatchChangePointSelection, dispatchChangePrimePlot, visRoot
-} from '../../ImagePlotCntlr.js';
+import {dispatchAttributeChange, dispatchChangePointSelection, dispatchChangePrimePlot} from '../../ImagePlotDispatch';
+import {PLOT_IMAGE} from '../../VisConst';
+import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {PlotAttribute} from '../../PlotAttribute.js';
 import {
-    convertHDUIdxToImageIdx, getActivePlotView, getCubePlaneFromWavelength, getDrawLayerByType, getHDU, getHDUIndex,
-    getImageCubeIdx, getPlotViewAry, getPlotViewById, hasWCSProjection, hasWLInfo, isDrawLayerAttached, isImageCube,
-    isMultiHDUFits, primePlot
+    convertHDUIdxToImageIdx, currentP, getCubePlaneFromWavelength, getDrawLayerByType, getHDU, getHDUIndex,
+    getImageCubeIdx, getPlotViewAry, hasWCSProjection, hasWLInfo, isDrawLayerAttached,
+    isImageCube, isMultiHDUFits, primePlot
 } from '../../PlotViewUtil.js';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
 import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart.jsx';
@@ -82,7 +82,7 @@ const exTypeCntl= {
 
 
 function enableDrawLayer(typeId) {
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     const dl= getDrawLayerByType(getDlAry(), typeId);
     !dl && dispatchCreateDrawLayer(typeId);
     !isDrawLayerAttached(dl,pv.plotId) && dispatchAttachLayerToPlot(typeId,pv.plotId,true,true, true);
@@ -101,7 +101,7 @@ export function showExtractionDialog(element,extractionType,wasCanceled) {
     dispatchAddActionWatcher( {
         id: EXTRACT_END_ID,
         callback: (action) => exTypeCntl[extractionType].start(),
-        actions:[ImagePlotCntlr.PLOT_IMAGE]
+        actions:[PLOT_IMAGE]
     });
 }
 
@@ -138,9 +138,12 @@ function ExtractDialog({extractionType,wasCanceled}) {
 
 function getStoreState(prevResult) {
     const vr= visRoot();
-    const activePv= getActivePlotView(vr);
-    const pv= primePlot(activePv) ? activePv :
-        primePlot(vr, vr.prevActivePlotId) ? getPlotViewById(vr,vr.prevActivePlotId) : activePv;
+    const {pv:activePv}= currentP();
+    const pv= primePlot(activePv)
+        ? activePv
+        : currentP(vr.prevActivePlotId).plot
+            ? currentP(vr.prevActivePlotId).pv
+            : activePv;
     const pvAry= pv ? getPlotViewAry(visRoot(), pv.plotGroupId) : [];
     if (prevResult && prevResult.pv===pv && prevResult.pvCnt===pvAry.length && primePlot(pv)===primePlot(prevResult.pv)) return prevResult;
     return {pv,pvCnt:pvAry.length};
@@ -696,7 +699,7 @@ function cancelZaxisExtraction() {
 }
 
 function cancelLineExtraction() {
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     if (pv) {
         dispatchDetachLayerFromPlot(ExtractLineTool.TYPE_ID,pv.plotId,true);
         dispatchAttributeChange({plotId:pv.plotId,overlayColorScope:true,
@@ -707,7 +710,7 @@ function cancelLineExtraction() {
 }
 
 function cancelPointExtraction() {
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     if (pv) {
         dispatchDetachLayerFromPlot(ExtractPointsTool.TYPE_ID,pv.plotId,true);
         dispatchDestroyDrawLayer(ExtractPointsTool.TYPE_ID);

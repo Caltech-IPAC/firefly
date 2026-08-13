@@ -6,9 +6,10 @@ import React, {useEffect} from 'react';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {getActivePlotView, getFoV, primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchZoom} from '../visualize/ImagePlotCntlr.js';
-import {imageLevels, UserZoomTypes, makeFoVString} from '../visualize/ZoomUtil';
+import {getFoV, primePlot, currentP} from '../visualize/PlotViewUtil.js';
+import {dispatchZoom} from '../visualize/ImagePlotDispatch';
+import {UserZoomTypes} from '../visualize/VisConst';
+import {imageLevels, makeFoVString} from '../visualize/ZoomUtil';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
@@ -19,9 +20,9 @@ export function showZoomOptionsPopup() {
 }
 
 const ZoomOptionsPopup = () => {
-    const pv= useStoreConnector( () => getActivePlotView(visRoot()));
-    useEffect(() => void (!primePlot(pv) && dispatchHideDialog('zoomOptionsDialog')), [pv]);
-    return primePlot(pv) ? <ZoomOptionsPopupForm pv={pv}/> : <div/>;
+    const {pv,plot}= useStoreConnector( () => currentP());
+    useEffect(() => void (!plot && dispatchHideDialog('zoomOptionsDialog')), [pv]);
+    return plot ? <ZoomOptionsPopupForm pv={pv}/> : <div/>;
 };
 
 const ZoomOptionsPopupForm= ({pv}) => (

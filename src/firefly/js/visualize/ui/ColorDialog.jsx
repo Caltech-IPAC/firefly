@@ -14,8 +14,9 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ColorBandPanel} from './ColorBandPanel.jsx';
 import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
-import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {primePlot, getActivePlotView, isThreeColor, getPlotViewAry} from '../PlotViewUtil.js';
+import {dispatchStretchChange} from '../ImagePlotDispatch';
+import {visRoot} from '../VisStoreRoots';
+import {primePlot, isThreeColor, getPlotViewAry, currentP} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -46,7 +47,7 @@ export function showColorDialog(element) {
 
 
 function getStoreUpdate(oldS) {
-    const plot= primePlot(visRoot());
+    const {plot}= currentP();
     const fields= FieldGroupUtils.getGroupFields(NO_BAND_PANEL);
     const rFields= FieldGroupUtils.getGroupFields(RED_PANEL);
     const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
@@ -230,7 +231,7 @@ function replotStandard(request) {
     // console.log(request);
     const serRv=  makeSerializedRv(request);
     const stretchData= [{ band: Band.NO_BAND.key, rv:  serRv, bandVisible: true }];
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 
@@ -252,7 +253,7 @@ export function replot3ColorHuePreserving(request) {
         });
         return {band, rv, bandVisible: true};
     });
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 
@@ -287,7 +288,7 @@ function replot3Color(redReq,greenReq,blueReq,activeTab, usedBands) {
         }
     }
 
-    const pv= getActivePlotView(visRoot());
+    const {pv}= currentP();
     if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 

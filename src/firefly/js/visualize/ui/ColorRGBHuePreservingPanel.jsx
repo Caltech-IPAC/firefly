@@ -1,12 +1,11 @@
 import {Stack, Typography} from '@mui/joy';
 import React, {useEffect} from 'react';
-import {debounce} from 'lodash';
 import {getTypeMinField, renderAsinH, ZscaleCheckbox} from './ColorBandPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {useWatcher} from 'firefly/ui/SimpleComponent.jsx';
-import ImagePlotCntlr from 'firefly/visualize/ImagePlotCntlr.js';
+import {ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW} from '../VisConst';
 import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 
 const isDebug = () => window.firefly?.debugStretch ?? false;
@@ -17,14 +16,14 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
         dispatchForceFieldGroupReducer(groupKey);
     },[]);
 
-    useWatcher([ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW],
+    useWatcher([ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW],
         (action) => {
             dispatchForceFieldGroupReducer(groupKey, action);
         }
     );
     if (!rgbFields) return <div/>;
     const {zscale} = rgbFields;
-    const zscaleValue = zscale?.value;
+    const zscaleValue = zscale?.value
     const renderRange = (isZscale) => {
         if (isZscale) {
             return null;

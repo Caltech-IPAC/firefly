@@ -16,9 +16,9 @@ import {useFieldGroupValue, useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {SizeInputFields} from '../ui/SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../ui/TargetPanel.jsx';
 import {ToolbarButton} from '../ui/ToolbarButton.jsx';
-import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
-import {visRoot} from './ImagePlotCntlr.js';
-import {getDrawLayerByType, getPlotViewById, primePlot} from './PlotViewUtil.js';
+
+import {dispatchDestroyDrawLayer} from './DrawLayerDispatch';
+import {getDrawLayerByType, primePlot, currentP} from './PlotViewUtil.js';
 import {parseWorldPt} from './Point.js';
 import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './ui/CommonUIKeys.js';
 import {SelectAreaButton} from './ui/SelectAreaUIComponents.jsx';
@@ -27,6 +27,7 @@ import {
     convertStrToWpAry, convertWpAryToStr, initSearchSelectTool, markOutline, SEARCH_REFINEMENT_DIALOG_ID,
     updateModalEndInfo, updatePlotOverlayFromUserInput, updateUIFromPlot
 } from './ui/VisualSearchUtils.js';
+import {getDlAry} from './VisStoreRoots';
 
 export const POLY_CONE= 'POLY_CONE';
 const SIZE_KEY= 'SIZE';
@@ -44,7 +45,7 @@ export function showSearchRefinementTool({popupClosing, element, plotId, cone,
         popupClosing?.();
         const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
         if (dl?.isInteractive) {
-            dispatchDestroyDrawLayer(dl.drawLayerId)
+            dispatchDestroyDrawLayer(dl.drawLayerId);
             closeToolbarModalLayers();
         }
     };
@@ -84,7 +85,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
 
     const modalEndInfo = useStoreConnector(() => getModalEndInfo());
 
-    const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
+    const pv= useStoreConnector(() => currentP(plotId).pv);
     const [getConeAreaOp,setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY, GROUP_KEY);
     const [getWP,setWP] = useFieldGroupValue(DEF_TARGET_PANEL_KEY, GROUP_KEY);
     const [getPoly,setPoly] = useFieldGroupValue(POLYGON_KEY, GROUP_KEY);
@@ -97,13 +98,15 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     const whichOverlay= searchTypes===POLY_CONE ? getConeAreaOp() :
                               searchTypes===CONE_CHOICE_KEY ? CONE_CHOICE_KEY : POLY_CHOICE_KEY;
 
-    const getWhichOverlay= () => searchTypes===POLY_CONE ? getConeAreaOp() :
-                                  searchTypes===CONE_CHOICE_KEY ? CONE_CHOICE_KEY : POLY_CHOICE_KEY
+    const getWhichOverlay= () =>
+        searchTypes===POLY_CONE
+            ? getConeAreaOp()
+            : searchTypes===CONE_CHOICE_KEY
+                ? CONE_CHOICE_KEY
+                : POLY_CHOICE_KEY;
     const setWhichOverlay= (op) => {
         (searchTypes===POLY_CONE)  && setConeAreaOp(op);
     };
-    const whichOveraly= getWhichOverlay();
-
 
     useEffect(() => {
         initSearchSelectTool(plotId);
@@ -228,7 +231,7 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
                                        visible={sa.supported()}
                                        onClick={() => {
                                            markOutline(sa,
-                                               primePlot(visRoot())?.plotId,{
+                                               currentP()?.plotId,{
                                                    wp:cenWpt,
                                                    radius:Number(getValidSize(sa,size)),
                                                    polyStr});

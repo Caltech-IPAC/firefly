@@ -5,15 +5,18 @@ import {get, set, has, isEmpty, isString,  isUndefined, pickBy} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {dispatchSelectRegion} from '../visualize/DrawLayerDispatch';
+import {
+    ATTACH_LAYER_TO_PLOT, CHANGE_DRAWING_DEF, MODIFY_CUSTOM_FIELD, REGION_SELECT, RegionSelStyle
+} from '../visualize/VisConst';
+import {dlRoot} from '../visualize/VisStoreRoots';
 import {getSelectedPts} from '../visualize/WebPlotAnalysis';
-import {primePlot, getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
-import DrawLayerCntlr, {RegionSelStyle, dlRoot, dispatchSelectRegion} from '../visualize/DrawLayerCntlr.js';
+import {primePlot, getAllDrawLayersForPlot, currentP} from '../visualize/PlotViewUtil.js';
 import {clone} from '../util/WebUtil.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {convertConnectedObjsToDrawObjs, getImageCoordsOnFootprint, drawHighlightFootprintObj} from '../visualize/draw/ImageLineBasedObj.js';
 import {getUIComponent} from './ImageLineFootPrintUI.jsx';
 import {rateOpacity} from '../util/Color.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {dispatchTableHighlight,  dispatchTableSelect, dispatchTableFilter} from '../tables/TablesCntlr.js';
@@ -72,7 +75,7 @@ function creator(initPayload) {
         isPointData:true
     };
 
-    const actionTypes = [DrawLayerCntlr.REGION_SELECT, DrawLayerCntlr.CHANGE_DRAWING_DEF];
+    const actionTypes = [REGION_SELECT, CHANGE_DRAWING_DEF];
 
     const id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Lsst footprint '+id),
@@ -98,7 +101,7 @@ function highlightChange(mouseStatePayload) {
     let  index = 0;
 
     const {connectedObjs, pixelSys} = get(drawLayer, 'imageLineBasedFP') || {};
-    const plot = primePlot(visRoot(), plotId);
+    const {plot} = currentP(plotId);
     const cc = CsysConverter.make(plot);
     const tPt = getImageCoordsOnFootprint(screenPt, cc, pixelSys);
     const {tableRequest} = drawLayer;
@@ -175,7 +178,7 @@ function getLayerChanges(drawLayer, action) {
     const dd = Object.assign({}, drawLayer.drawData);
 
     switch (action.type) {
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case ATTACH_LAYER_TO_PLOT:
             if (!plotIdAry && !plotId) return null;
 
             const pIdAry = plotIdAry ? plotIdAry :[plotId];
@@ -183,7 +186,7 @@ function getLayerChanges(drawLayer, action) {
 
             return {title: tObj};
 
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+        case MODIFY_CUSTOM_FIELD:
             const pId = plotId ? plotId : (plotIdAry ? plotIdAry[0]: null);
             if (!pId) return null;
 
@@ -225,7 +228,7 @@ function getLayerChanges(drawLayer, action) {
 
             return Object.assign({}, changesUpdate, {drawingDef: drawingDefChanges}, {drawData: dd});
 
-        case DrawLayerCntlr.REGION_SELECT:
+        case REGION_SELECT:
             const {selectedRegion} = action.payload;
             let   hideFPId = '';
 
@@ -246,7 +249,7 @@ function getLayerChanges(drawLayer, action) {
 
             return Object.assign({}, {highlightedFootprint: selectedRegion, drawData: dd, hideFPId});
 
-        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+        case CHANGE_DRAWING_DEF:
             const ptId = plotId ? plotId : (plotIdAry ? plotIdAry[0]: null);
             if (!ptId) return null;
 
@@ -336,7 +339,7 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
         return [];
     }
 
-    return drawHighlightFootprintObj(highlightedFootprint, primePlot(visRoot(), plotId), drawingDef);
+    return drawHighlightFootprintObj(highlightedFootprint, currentP(plotId).plot, drawingDef);
 }
 
 

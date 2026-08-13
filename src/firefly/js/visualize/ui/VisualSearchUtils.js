@@ -9,27 +9,21 @@ import {splitByWhiteSpace} from '../../util/WebUtil.js';
 import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {
     dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
-} from '../DrawLayerCntlr.js';
-import {dispatchAttributeChange, dispatchChangeCenterOfProjection, visRoot} from '../ImagePlotCntlr.js';
+    dispatchForceDrawLayerUpdate,
+    dispatchModifyCustomField
+} from '../DrawLayerDispatch';
+import {dispatchAttributeChange, dispatchChangeCenterOfProjection} from '../ImagePlotDispatch';
+import {getDlAry, visRoot} from '../VisStoreRoots';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {
-    calculatePosition,
-    calculatePositionFromLocalOffsets,
-    computeCentralPointAndRadius,
-    computeDistance,
-    convertCelestial,
-    getPointOnEllipse,
-    getPositionAngle,
-    normalizeRotation,
+    calculatePosition, calculatePositionFromLocalOffsets, computeCentralPointAndRadius, computeDistance,
+    convertCelestial, getPointOnEllipse, getPositionAngle, normalizeRotation,
 } from '../VisUtil.js';
 import {changeHiPSProjectionCenter, getDevPixScaleDeg, isImage} from '../WebPlot.js';
 import {BOX_CHOICE_KEY, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
-import {
-    clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
-} from './ToolbarToolModalEnd.js';
+import {clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 import {clampInRange} from 'firefly/util/MathUtil';
 

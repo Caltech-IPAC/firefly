@@ -3,7 +3,7 @@
  */
 
 import {makeDrawingDef} from './DrawingDef.js';
-import {GroupingScope} from '../DrawLayerCntlr.js';
+import {GroupingScope} from '../VisConst';
 
 export default {makeDrawLayer};
 

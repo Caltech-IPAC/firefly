@@ -1,13 +1,15 @@
 import {Stack} from '@mui/joy';
 import React, {useState} from 'react';
 import {get} from 'lodash';
-import {primePlot} from '../PlotViewUtil.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from '../DrawLayerDispatch';
+import {currentP} from '../PlotViewUtil.js';
+import {getDlAry} from '../VisStoreRoots';
 import {isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {getActivePlotView, getDrawLayersByType} from '../PlotViewUtil';
-import {dispatchChangeTableAutoScroll, dispatchRecenter} from '../ImagePlotCntlr';
+import {getDrawLayersByType} from '../PlotViewUtil';
+import {dispatchChangeTableAutoScroll, dispatchRecenter} from '../ImagePlotDispatch';
 import {getTableGroup} from '../../tables/TableUtil';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -16,7 +18,6 @@ import {parseWorldPt, pointEquals} from '../Point';
 import {dispatchAddPreference, getPreference} from '../../core/AppDataCntlr';
 import {DropDownSubMenu} from '../../ui/DropDownMenu';
 import FixedMarker from '../../drawingLayers/FixedMarker';
-import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, getDlAry} from '../DrawLayerCntlr';
 import {CenterDropdown} from './Buttons.jsx';
 import {formatWorldPt, formatWorldPtToString, formatWorldPtToStringSimple} from './WorldPtFormat';
 
@@ -56,8 +57,7 @@ function  hasTablesWithCoordinates(pv) {
 
 export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
 
-    const pv= getActivePlotView(vr);
-    const plot= primePlot(pv);
+    const {pv,plot}= currentP();
     const coordTables= hasTablesWithCoordinates(pv);
     const hasSearchTarget= Boolean(
         (get(plot, ['attributes',PlotAttribute.FIXED_TARGET]) && pv.plotViewCtx.displayFixedTarget) ||
@@ -79,7 +79,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
     const createMarkerAndMoveToTarget= (fields) => {
         const wp=  parseWorldPt(get(fields,'UserTargetWorldPt'));
         if (!wp) return;
-        const pv= getActivePlotView(vr);
+        const {pv}= currentP();
         if (!pv) return;
         moveToTarget(fields);
 

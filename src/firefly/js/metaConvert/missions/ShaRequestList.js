@@ -5,9 +5,9 @@ import {getCellValue} from '../../tables/TableUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
+import {GRID_FULL, SINGLE} from '../../visualize/VisConst';
 import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
 import {addCommonReqParams} from '../../templates/lightcurve/LcConverterFactory.js';
-import {GRID_FULL, SINGLE} from '../../visualize/MultiViewCntlr';
 import {getRootURL} from '../../util/WebUtil.js';
 
 /**

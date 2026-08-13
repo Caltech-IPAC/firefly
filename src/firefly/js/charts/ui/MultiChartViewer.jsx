@@ -9,10 +9,11 @@ import {isEmpty, isUndefined} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
+import {PLOT2D} from '../../visualize/VisConst';
 import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
-        getMultiViewRoot, getViewer, getLayoutType, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+        getMultiViewRoot, getViewer, getLayoutType} from '../../visualize/MultiViewCntlr.js';
 import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 

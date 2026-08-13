@@ -10,17 +10,17 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import Validate from '../../util/Validate.js';
-import {dispatchPlotMask, visRoot} from '../ImagePlotCntlr.js';
+import {dispatchPlotMask} from '../ImagePlotDispatch';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {getActivePlotView} from '../PlotViewUtil.js';
+import {currentP} from '../PlotViewUtil.js';
 
 
 
 export function showMaskDialog() {
     const content= (
         <PopupPanel title={'Mask'} >
-            <MaskAddPanel visRoot={visRoot()} />
+            <MaskAddPanel/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('MaskChooseDialog', content);
@@ -29,7 +29,7 @@ export function showMaskDialog() {
 
 
 
-export function MaskAddPanel({vr}) {
+export function MaskAddPanel({}) {
 
 
     return (
@@ -64,7 +64,7 @@ export function MaskAddPanel({vr}) {
                                       }} />
 
             <CompleteButton style={{paddingTop: 10}}
-                            onSuccess={(r) => resultsSuccess(r,visRoot())}
+                            onSuccess={(r) => resultsSuccess(r)}
                             dialogId='MaskChooseDialog'
             />
 
@@ -79,9 +79,9 @@ export function MaskAddPanel({vr}) {
 const maskIdRoot= 'USER_LOADED_MASK_';
 var maskCnt= 0;
 
-function resultsSuccess(request,vr) {
+function resultsSuccess(request) {
 
-    const pv= getActivePlotView(vr);
+    const {pv}= currentP();
     const maskV= Number(request.maskIdx);
     const hdu= Number(request.hduIdx);
     const fileKey= request.maskFile;

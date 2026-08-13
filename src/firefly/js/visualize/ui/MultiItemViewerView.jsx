@@ -7,8 +7,8 @@ import {debounce} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
 import {bool, number, string, object, func, oneOf, arrayOf, any} from 'prop-types';
 import {checkProps} from '../../ui/SimpleComponent';
-import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {Divider, Stack} from '@mui/joy';
+import {GRID, SINGLE} from '../VisConst';
 
 const flexContainerStyle= {
     display:'flex',

@@ -3,23 +3,24 @@
  */
 
 import {get} from 'lodash';
-import ImagePlotCntlr, {dispatchChangeActivePlotView, dispatchPlotHiPS,
-    visRoot, IMAGE_PLOT_KEY, dispatchRotate, dispatchFlip, dispatchPlotImage,
-    ActionScope, dispatchWcsMatch } from '../ImagePlotCntlr.js';
-import {getExpandedViewerItemIds, findViewerWithItemId,
-    getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
-import PointSelection from '../../drawingLayers/PointSelection.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchDetachLayerFromPlot, DRAWING_LAYER_KEY
-} from '../DrawLayerCntlr.js';
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot
+} from '../DrawLayerDispatch';
+import {
+    dispatchChangeActivePlotView, dispatchFlip, dispatchPlotHiPS, dispatchPlotImage, dispatchRotate, dispatchWcsMatch
+} from '../ImagePlotDispatch';
+import {getExpandedViewerItemIds, findViewerWithItemId, getMultiViewRoot} from '../MultiViewCntlr.js';
+import PointSelection from '../../drawingLayers/PointSelection.js';
 import { getPlotViewById, applyToOnePvOrAll, isDrawLayerAttached,
     primePlot, getDrawLayerByType, removeRawDataByPlotView } from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaUIComponents.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr';
-import {WcsMatchType} from '../ImagePlotCntlr';
+import {
+    ActionScope, DELETE_PLOT_VIEW, DRAWING_LAYER_KEY, IMAGE, IMAGE_PLOT_KEY, WCS_MATCH, WcsMatchType
+} from '../VisConst';
+import {visRoot} from '../VisStoreRoots';
 import {hasOverlayColorLock, findPlotGroup } from '../PlotViewUtil';
 import {onPlotComplete} from '../PlotCompleteMonitor';
 
@@ -173,8 +174,8 @@ export function deletePlotViewActionCreator(rawAction) {
         removeRawDataByPlotView(getPlotViewById(vr,plotId));
 
         if (vr.wcsMatchType && !payload.holdWcsMatch) {
-            dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
+            dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
         }
-        dispatcher({type:ImagePlotCntlr.DELETE_PLOT_VIEW, payload: {...payload, viewerId}});
+        dispatcher({type:DELETE_PLOT_VIEW, payload: {...payload, viewerId}});
     };
 }

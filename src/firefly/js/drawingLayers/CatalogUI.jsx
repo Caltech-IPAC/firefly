@@ -19,12 +19,13 @@ import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
-import {dispatchChangeVisibility, dispatchModifyCustomField, GroupingScope} from '../visualize/DrawLayerCntlr.js';
+import {dispatchChangeVisibility, dispatchModifyCustomField} from '../visualize/DrawLayerDispatch';
 import {dispatchBottomUIComponent} from '../visualize/MultiViewCntlr';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {InfoButton} from '../visualize/ui/Buttons.jsx';
 
 import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
+import {GroupingScope} from '../visualize/VisConst';
 import {
     BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_GRID_SIZE_LARGE,
     HPX_GRID_SIZE_PREF, HPX_GRID_SIZE_SMALL, HPX_GROUP_TYPE_PREF, HPX_HEATMAP_LABEL_PREF, HPX_HEATMAP_STRETCH_PREF,

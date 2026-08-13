@@ -6,8 +6,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
-import {dispatchChangeDrawingDef} from '../visualize/DrawLayerCntlr.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
+import {dispatchChangeDrawingDef} from '../visualize/DrawLayerDispatch';
 
 const options= [ {label: 'outline', value: 'outline'},
                  {label: 'outline/text', value: 'outline_text'},

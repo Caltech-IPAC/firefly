@@ -14,7 +14,7 @@ import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardTool
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
-import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
+import {NewPlotMode} from '../../visualize/VisConst';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {getActiveTableId} from '../../tables/TableUtil.js';
 

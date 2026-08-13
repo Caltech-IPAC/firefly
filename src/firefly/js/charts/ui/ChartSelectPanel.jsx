@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/VisConst';
 
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
@@ -16,7 +17,6 @@ import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {SpectrumOptions} from './options/SpectrumOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {Box, Divider, Stack, Typography} from '@mui/joy';
