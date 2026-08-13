@@ -432,8 +432,8 @@ public class SerializerTest {
                 );
 
         assertNotNull(normalDecoded);
+        assertEquals(normal.getKey(), normalDecoded.getKey());
         assertEquals(normal.getId(), normalDecoded.getId());
-        assertEquals(normal.getPlotId(), normalDecoded.getPlotId());
         assertEquals(normal.getMessage(), normalDecoded.getMessage());
         assertEquals(ProgressStat.PType.DOWNLOADING, normalDecoded.getType());
         assertFalse(normalDecoded.isGroup());
@@ -443,7 +443,7 @@ public class SerializerTest {
         // group progress
         // ============================================================
         List<String> members = List.of("id-1", "id-2", "id-3");
-        ProgressStat group = new ProgressStat(members, "group-999");
+        ProgressStat group = new ProgressStat("group-999", members);
 
         ProgressStat groupDecoded =
                 Serializer.fromMessagePack(
@@ -452,12 +452,12 @@ public class SerializerTest {
                 );
 
         assertNotNull(groupDecoded);
-        assertEquals(group.getId(), groupDecoded.getId());
+        assertEquals(group.getKey(), groupDecoded.getKey());
         assertEquals(ProgressStat.PType.GROUP, groupDecoded.getType());
         assertTrue(groupDecoded.isGroup());
         assertEquals(members, groupDecoded.getMemberIDList());
         assertNull(groupDecoded.getMessage());
-        assertNull(groupDecoded.getPlotId());
+        assertNull(groupDecoded.getId());
         assertFalse(groupDecoded.isDone());
 
         // ============================================================

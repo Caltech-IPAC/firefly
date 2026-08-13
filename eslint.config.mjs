@@ -103,7 +103,7 @@ export default [
             'react-hooks/component-hook-factories': 'warn',
             'react-hooks/gating': 'warn',
             'react-hooks/preserve-manual-memoization': 'warn',
-            'react-hooks/set-state-in-effect': 'warn',
+            // 'react-hooks/set-state-in-effect': 'warn',
             'react-hooks/static-components': 'warn',
             'react-hooks/unsupported-syntax': 'warn',
             'react-hooks/use-memo': 'warn',

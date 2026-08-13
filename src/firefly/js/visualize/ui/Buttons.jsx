@@ -66,6 +66,7 @@ import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import ReverseIcon from '@mui/icons-material/FlipCameraAndroidOutlined';
+import ExtrqctTileIcon from '@mui/icons-material/FlipToBack';
 
 import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 
@@ -168,6 +169,8 @@ export const ExtractPoints= (props) => (<TB {...{ icon: <GrainIcon/>, ...props, 
 export const ExtractLine= (props) => (
     <TB {...{ icon: <HorizontalRuleRoundedIcon className='extractLine'/>,
         sx:{'& .extractLine': {transform: 'rotate(142deg)'}}, ...props,  }}/>);
+
+export const ExtractTile= (props) => (<TB {...{ icon: <ExtrqctTileIcon/>, ...props,  }}/>);
 
 export const SearchDetailButton= (props) => (
     <DropDownToolbarButton {...{ icon: <BiotechOutlinedIcon/>, iconButtonSize:'44px', useDropDownIndicator: true,

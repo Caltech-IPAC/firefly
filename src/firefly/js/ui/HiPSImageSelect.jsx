@@ -111,7 +111,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
         }
         else {
             const hipsUrl = getHipsUrl();
-            if (hipsUrl) return;
+            if (!hipsUrl) return;
             const plot = pv ? primePlot(pv) : currentP().plot;
             moc
                 ? createHiPSMocLayer({

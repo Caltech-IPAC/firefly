@@ -67,19 +67,30 @@ export const callGetAreaStatistics= (state, ipt1, ipt2, ipt3, ipt4, areaShape = 
 
 
 export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
-    const params= makeParamsWithStateAry(stateAry,false, [
-        {name:ServerParams.PT1, value: corner1ImagePt.toString()},
-        {name:ServerParams.PT2, value: corner2ImagePt.toString()},
-        {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
-    ]);
+    const params= makeParamsWithStateAry(stateAry, {
+        [ServerParams.PT1]: corner1ImagePt.toString(),
+        [ServerParams.PT2]: corner2ImagePt.toString(),
+        [ServerParams.CRO_MULTI_ALL]: cropMultiAll +''
+    });
     return doJsonRequest(ServerParams.CROP, params, true);
 }
 
-export function callGetFileFlux(stateAry, pt) {
-    const params =  makeParamsWithStateAry(stateAry,true,
-        [ {name: [ServerParams.PT], value: pt.toString()}]);
+export function callGetFileFlux(stateAry, pt, wpt,isHips, hipsTileUrl, hipsPlane=0) {
+
+    const obj= {
+        [ServerParams.PT]: pt.toString(),
+    };
+    if (isHips) {
+        obj[ServerParams.WPT]= wpt.toString();
+        obj[ServerParams.IS_HIPS_TILE]= true+'';
+        obj[ServerParams.URL]= hipsTileUrl;
+        obj[ServerParams.PLANE]= hipsPlane;
+    }
+
+    const params=  makeParamsWithStateAry(stateAry,obj );
     return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
+
 
 async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION) {
     const use64Bit= getBixPix(plot)===-64;
@@ -163,24 +174,16 @@ export const saveDS9RegionFile= (regionData) =>
 
 /**
  * @param stateAry
- * @param includeDirectAccessData
  * @param otherParams
  * @return {Promise}
  */
-function makeParamsWithStateAry(stateAry, includeDirectAccessData, otherParams=[]) {
-    return [
-        ...makeStateParamAry(stateAry,includeDirectAccessData),
-        ...otherParams,
-    ];
+function makeParamsWithStateAry(stateAry, otherParams={}) {
+    const stateObj= stateAry.reduce( (obj, s,idx) => {
+        obj['state'+idx]= s.toJson();
+        return obj;
+    },{} );
+    return { ...stateObj, ...otherParams,
+    };
 }
 
-/**
- * @param {Array} startAry
- * @param {boolean} includeDirectAccessData
- * @return {Array}
- */
-function makeStateParamAry(startAry, includeDirectAccessData= true) {
-    return startAry.map( (s,idx) => {
-        return {name:'state'+idx, value: s.toJson(includeDirectAccessData) };
-    } );
-}
+

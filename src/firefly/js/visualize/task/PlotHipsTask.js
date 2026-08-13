@@ -20,7 +20,7 @@ import {dlRoot, getDlAry, visRoot} from '../VisStoreRoots';
 import {makeWorldPt} from '../Point.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {getStatusFromFetchError} from '../../util/WebUtil.js';
+import {getStatusFromFetchError, isDefined} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType, getDrawLayersByType,
     getFoV, getPlotViewById, primePlot,
@@ -38,7 +38,7 @@ import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, U
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {getRowCenterWorldPt} from '../saga/ActiveRowToImageWatcher';
 import {getActiveTableId, getTblById} from '../../tables/TableUtil';
-import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
+import {locateOtherIfMatched, matchCubePlanes, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';
 import {fetchUrl} from '../../util/fetch';
 import {getGpuJs} from '../rawData/GpuJsConfig.js';
@@ -246,7 +246,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             return;
         }
         await getGpuJs(); // make sure the GPU code is loaded up front
-        createHiPSGridLayer();
+        createHiPSGridLayers();
         dispatchAddActionWatcher({
             actions:[PLOT_HIPS, UPDATE_VIEW_SIZE],
             callback:watchForHiPSViewDim,
@@ -310,17 +310,14 @@ export async function createHiPSMocLayer({ivoid, title, hipsUrl, plot, visible=f
         }
     }
     catch (e) {
-        showInfoPopup('Could not find the MOC for: '+ title,
-            'Moc Not Found'); // eslint-disable-line quotes
+        showInfoPopup('Could not find the MOC for: '+ title, 'Moc Not Found');
         console.log(`MOC not found at URL (this is not uncommon): ${e}`) ;
     }
 }
 
-function createHiPSGridLayer() {
-    const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
-    if (!dl) {
-        dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
-    }
+function createHiPSGridLayers() {
+    const gridDl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
+    if (!gridDl) dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
 }
 
 
@@ -342,6 +339,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         const newPayload= {...payload, blank};
         dispatcher( { type: CHANGE_HIPS, payload:newPayload });
         locateOtherIfMatched(visRoot(),plotId);
+        if (isDefined(payload.cubeIdx)) matchCubePlanes(plotId);
         dispatcher( { type: ANY_REPLOT, payload:newPayload });
         return;
     }
@@ -383,6 +381,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
             });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);
+        if (isDefined(payload.cubeIdx)) matchCubePlanes(plotId);
         dispatcher({type: ANY_REPLOT, payload});
     } catch (error) {
         console.log(error);

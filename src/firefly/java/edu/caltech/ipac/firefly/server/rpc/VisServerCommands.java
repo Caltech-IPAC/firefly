@@ -4,13 +4,13 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.firefly.core.Util;
-import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
+import edu.caltech.ipac.firefly.server.visualize.FluxValueUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData;
@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +34,9 @@ import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.FormatUtil.Format.JSON;
+import static edu.caltech.ipac.util.FormatUtil.Format.OCTET_STREAM;
+
 /**
  * @author Trey Roby
  * Date: 2/8/12
@@ -44,9 +46,20 @@ public class VisServerCommands {
 
     public static class FileFluxCmdJson extends ServCommand {
         public String doCommand(SrvParam sp) throws IllegalArgumentException {
-            PlotState[] stateAry= sp.getStateAry();
-            List<PixelValue.Result> res= VisServerOps.getFlux(stateAry,sp.getRequiredImagePt("pt"));
-            return VisJsonSerializer.createPixelResultJson(res,stateAry[0].getBands(),stateAry.length);
+            var isHips= sp.getOptionalBoolean(ServerParams.IS_HIPS_TILE, false);
+            if (isHips) {
+                var res= FluxValueUtil.getFluxHiPS(
+                        sp.getRequired(ServerParams.URL),
+                        sp.getRequiredImagePt("pt"),
+                        sp.getRequiredWorldPt("wpt"),
+                        sp.getRequiredInt(ServerParams.PLANE));
+                return VisJsonSerializer.createPixelResultJson(res,new Band[] {Band.NO_BAND},1);
+            }
+            else {
+                var stateAry= sp.getStateAry();
+                var res= FluxValueUtil.getFlux(sp.getStateAry(),sp.getRequiredImagePt("pt"));
+                return VisJsonSerializer.createPixelResultJson(res,stateAry[0].getBands(),stateAry.length);
+            }
         }
 
     }
