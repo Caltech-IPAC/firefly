@@ -264,6 +264,7 @@ public class JobUtil {
         applyIfNotEmpty(meta.getAppUrl(), v -> jsonMeta.put(APP_URL, v));
         applyIfNotEmpty(meta.getRunHost(), v -> jsonMeta.put(RUN_HOST, v));
         applyIfNotEmpty(meta.getSendNotif(), v -> jsonMeta.put(SEND_NOTIF, v));
+        applyIfNotEmpty(meta.getMimeType(), v -> jsonMeta.put(MIME_TYPE, v));
 
         if (!meta.getParameters().isEmpty()) jsonMeta.put(PARAMETERS, meta.getParameters());
 
@@ -307,6 +308,7 @@ public class JobUtil {
                 ifNotNull(ji.get(APP_URL)).apply(s -> rval.getMeta().setAppUrl(s.toString()));
                 ifNotNull(ji.get(RUN_HOST)).apply(s -> rval.getMeta().setRunHost(s.toString()));
                 ifNotNull(ji.get(SEND_NOTIF)).apply(o -> rval.getMeta().setSendNotif((Boolean) o));
+                ifNotNull(ji.get(MIME_TYPE)).apply(s -> rval.getMeta().setMimeType(s.toString()));
 
                 ifNotNull(toParameters(ji.get(PARAMETERS))).apply(p -> rval.getMeta().setParameters(p));
             }

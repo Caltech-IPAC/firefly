@@ -57,6 +57,9 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     public static final String MULTI_SPECTRUM_SERVICE_UTYPE = MULTI_SPECTRUM_UTYPE + "-service";
     public static final String SPECTRUM_DATA_UTYPE = SPECTRADM_UTYPE + ".Data";   // utype for the spectrum data table
 
+    // Firefly-specific media type. The client maps it to a loader that reads the results through this processor
+    public static final String MULTI_SPECTRUM_MIME_TYPE = "application/x-votable+xml;content=multispectrum";
+
     public enum Mode { fetch,          // retrieve the MultiSpectrum table, return data product table
                         links,          // return links table to the spectrums
                         extract         // extract the spectrum from array data, then return a SpectralDM table.
@@ -238,26 +241,32 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         return isEmpty(s) ? "" : "\"" + s.replace("\"", "\\\"") + "\"";
     }
 
-    private String createLinksUrl(TableServerRequest treq, int rowIdx) {
-
+    /**
+     * Create a callback URL to this processor with the given request.
+     * @param request a request with the parameters to be passed to this processor.
+     * @return a URL string that can be used to call this processor with the given request.
+     */
+    private String createCallbackUrl(TableServerRequest request) {
         String baseUrl = ServerContext.getRequestOwner().getBaseUrl() + "CmdSrv/sync?cmd=tableSearch&FORMAT=votable&request=";
-        TableServerRequest request = (TableServerRequest) treq.cloneRequest();
         request.keepBaseParamOnly();
-        request.setParam(MODE, Mode.links.name());
-        request.setParam(SEL_ROW_IDX, rowIdx+"");
-
+        if (request.getMeta() != null) request.getMeta().clear();
         return baseUrl + QueryUtil.encode(JsonTableUtil.toJsonTableRequest(request).toJSONString());
     }
 
-    private String createSpectrumUrl(TableServerRequest treq, int selRow, int spectrIdx) {
-        String baseUrl = ServerContext.getRequestOwner().getBaseUrl() + "CmdSrv/sync?cmd=tableSearch&FORMAT=votable&request=";
+    private String createLinksUrl(TableServerRequest treq, int rowIdx) {
+
         TableServerRequest request = (TableServerRequest) treq.cloneRequest();
-        request.keepBaseParamOnly();
+        request.setParam(MODE, Mode.links.name());
+        request.setParam(SEL_ROW_IDX, rowIdx+"");
+        return createCallbackUrl(request);
+    }
+
+    private String createSpectrumUrl(TableServerRequest treq, int selRow, int spectrIdx) {
+        TableServerRequest request = (TableServerRequest) treq.cloneRequest();
         request.setParam(MODE, Mode.extract.name());
         request.setParam(SEL_ROW_IDX, selRow+"");
         request.setParam(SPECTR_IDX, spectrIdx+"");
-
-        return baseUrl + QueryUtil.encode(JsonTableUtil.toJsonTableRequest(request).toJSONString());
+        return createCallbackUrl(request);
     }
 
     private List<GroupInfo.RefInfo> getAllColRef(GroupInfo root) {

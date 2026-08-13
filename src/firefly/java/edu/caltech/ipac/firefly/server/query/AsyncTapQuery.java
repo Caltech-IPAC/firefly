@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -59,6 +60,11 @@ public class AsyncTapQuery extends UwsJobProcessor {
     public Job.Type getType() {
         return Job.Type.TAP;
     }
+
+    /**
+     * Skip sniffing to avoid unnecessary network calls.  Should display the returned table as-is.
+     */
+    protected void detectCustomMimeType(List<JobInfo.Result> results) {}
 
     public HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
         var serviceUrl = request.getParam(SVC_URL);

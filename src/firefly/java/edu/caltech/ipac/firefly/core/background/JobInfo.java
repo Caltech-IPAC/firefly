@@ -72,6 +72,7 @@ public class JobInfo implements Serializable {
     public static final String USER_NAME = "userName";
     public static final String USER_EMAIL = "userEmail";
     public static final String SEND_NOTIF = "sendNotif";
+    public static final String MIME_TYPE = "mimeType";
 
     private String jobId;
     private String runId;
@@ -252,6 +253,7 @@ public class JobInfo implements Serializable {
         String runHost;     // the host where the job is running on
         String appUrl;      // the URL of the app that created this job
         boolean sendNotif;
+        String mimeType;    // overrides Result.mimeType.  the client maps this to a loader.
 
         // these are not sent to client
         String eventConnId;
@@ -288,6 +290,9 @@ public class JobInfo implements Serializable {
 
         public boolean getSendNotif() { return sendNotif; }
         public void setSendNotif(boolean flg) { this.sendNotif = flg; }
+
+        public String getMimeType() { return mimeType; }
+        public void setMimeType(String mimeType) { this.mimeType = mimeType; }
     }
 
     /**
