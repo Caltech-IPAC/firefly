@@ -98,8 +98,7 @@ function getLayerChanges(drawLayer, action) {
 
 function makeSelectedPt(screenPt,plotId) {
     const cc= CsysConverter.make(currentP(plotId).plot);
-    const selPt= cc.getWorldCoords(screenPt); //todo put back
-    return selPt ?? cc.getImageCoords(screenPt);
+    return cc.getWorldCoords(screenPt) ?? cc.getImageCoords(screenPt);
 }
 
 

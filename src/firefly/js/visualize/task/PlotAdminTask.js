@@ -172,10 +172,6 @@ export function deletePlotViewActionCreator(rawAction) {
         const {plotId}= payload;
         const viewerId= findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
         removeRawDataByPlotView(getPlotViewById(vr,plotId));
-
-        if (vr.wcsMatchType && !payload.holdWcsMatch) {
-            dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
-        }
         dispatcher({type:DELETE_PLOT_VIEW, payload: {...payload, viewerId}});
     };
 }

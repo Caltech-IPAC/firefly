@@ -34,20 +34,18 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 var idCnt=0;
 
 function dispatchSelectPoint(mouseStatePayload) {
-    const {plotId,screenPt,drawLayer,shiftDown}= mouseStatePayload;
-    if (shiftDown) return;
-    if (drawLayer.drawData.data) {
-        const {plot}= currentP(plotId);
-        const ptAry= plot.attributes[PlotAttribute.PT_ARY] ?? [];
-        const cc= CsysConverter.make(plot);
-        const newPtAry= ptAry.filter( (pt) => cc.pointInPlot(pt));
-        const newPt= makeSelectedPt(screenPt,plotId);
-        if (newPt) newPtAry.push(newPt);
-        dispatchAttributeChange(
-            {plotId, changes:{[PlotAttribute.PT_ARY]:newPtAry} });
-        flux.process({type:EXTRACT_POINT, payload:mouseStatePayload} );
-        dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, plotId);
-    }
+    const {plotId, screenPt, drawLayer, shiftDown} = mouseStatePayload;
+    if (shiftDown || !drawLayer.drawData.data) return;
+    const {plot} = currentP(plotId);
+    const ptAry= plot.attributes[PlotAttribute.PT_ARY] ?? [];
+    const cc= CsysConverter.make(plot);
+    const newPtAry= ptAry.filter( (pt) => cc.pointInPlot(pt));
+    const newPt= makeSelectedPt(screenPt,plotId);
+    if (newPt) newPtAry.push(newPt);
+    dispatchAttributeChange(
+        {plotId, changes:{[PlotAttribute.PT_ARY]:newPtAry}});
+    flux.process({type: EXTRACT_POINT, payload: mouseStatePayload});
+    dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, plotId);
 }
 
 

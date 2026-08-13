@@ -99,6 +99,9 @@ public record Downloader(DataInputStream in, long contentLength,
                 throw new IOException("No data was downloaded", e);
             }
         }
+        finally {
+            if (downloadListener!=null) downloadListener.downloadDone();
+        }
     }
 
     private void checkSize(long totalRead) throws FailedRequestException {

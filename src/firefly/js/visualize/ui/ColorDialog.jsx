@@ -66,7 +66,7 @@ function getStoreUpdate(oldS) {
 
 export const ColorDialog= memo(() => {
     const {plot,fields,rFields,gFields,bFields,rgbFields} = useStoreConnector(getStoreUpdate);
-    const [huePreserving, setHuePreserving]= useState(plot?.plotState.getRangeValues().rgbPreserveHue);
+    const [huePreserving, setHuePreserving]= useState(plot?.plotState?.getRangeValues()?.rgbPreserveHue ?? 0);
     if (!plot) return false;
 
     if (isImage(plot)) {

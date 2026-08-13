@@ -34,7 +34,7 @@ public class SloanDssImageParams extends ImageServiceParams {
     }
 
     public SloanDssImageParams makeQueryKey() {
-        SloanDssImageParams newParam= new SloanDssImageParams(this.getStatusKey(),this.getPlotId());
+        SloanDssImageParams newParam= new SloanDssImageParams(this.getStatusKey(),this.getId());
         newParam._queryKey= true;
         newParam.setSizeInDeg(_sizeInDeg);
         newParam.setBand(_band);

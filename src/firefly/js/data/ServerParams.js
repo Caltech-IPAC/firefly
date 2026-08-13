@@ -90,6 +90,7 @@ export const ServerParams = {
         LSST : 'lsst',
         ALL : 'all',
         CDS : 'cds',
+        IS_HIPS_TILE : 'isHipsTile',
         HIPS_SOURCES : 'hipsSources',
         HIPS_LIST_SOURCE: 'hipsListSource',
         HIPS_LIST_SOURCE_NAME: 'hipsListSourceName',

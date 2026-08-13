@@ -106,6 +106,11 @@ export const PlotAttribute= {
      */
     ACTIVE_POINT: 'ACTIVE_POINT',
 
+    /** * The active hips tile last clicked on */
+    ACTIVE_HIPS_CELL: 'ACTIVE_HIPS_CELL',
+
+    /** * The plot norder of the hips tile clicked on */
+    ACTIVE_HIPS_NORDER: 'ACTIVE_HIPS_NORDER',
 
     /**
      * if set, must be one of the string values defined by the enum ZoomUtil.FullType

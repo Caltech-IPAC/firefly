@@ -39,13 +39,13 @@ public class PlotServUtils {
     public static final String STARTING_READ_MSG = "Retrieving Data";
     public static final String READ_PERCENT_MSG = "Retrieving ";
     public static final String ENDING_READ_MSG = "Loading Data";
-    public static final String CREATING_MSG =  "Creating Images";
+//    public static final String CREATING_MSG =  "Creating Images";
     public static final String PROCESSING_MSG =  "Processing Images";
     public static final String PROCESSING_COMPLETED_MSG =  "Processing Images Completed";
 
     public static void updateProgress(ProgressStat pStat) {
         Cache cache= CacheManager.getUserCache();
-        CacheKey key= new StringKey(pStat.getId());
+        CacheKey key= new StringKey(pStat.getKey());
         ProgressStat lastPstat= (ProgressStat) cache.get(key);
         boolean fireAction= true;
         if (lastPstat!=null) {
@@ -54,17 +54,17 @@ public class PlotServUtils {
             }
 
         }
-        if (pStat.getId()!=null) cache.put(key, pStat);
+        if (pStat.getKey()!=null) cache.put(key, pStat);
 
 
         if (fireAction)  {
             ProgressMessage progMsg= getPlotProgressMessage(pStat);
             FluxAction a= new FluxAction("ImagePlotCntlr.PlotProgressUpdate");
             a.setValue(progMsg.message,"message");
-            a.setValue(pStat.getId(),"requestKey");
+            a.setValue(pStat.getKey(),"requestKey");
             a.setValue(pStat.getType()==ProgressStat.PType.GROUP,"group");
             a.setValue(progMsg.done,"done");
-            a.setValue( pStat.getPlotId(),"plotId");
+            a.setValue( pStat.getId(),"plotId");
             ServerEventManager.fireAction(a);
         }
     }
@@ -281,7 +281,7 @@ public class PlotServUtils {
             if (stat.isGroup()) {
                 List<String> keyList = stat.getMemberIDList();
                 progMessage = (keyList.size() == 1) ?
-                        getSingleStatusMessage(keyList.get(0)) :
+                        getSingleStatusMessage(keyList.getFirst()) :
                         getMultiStatMessage(stat);
             } else {
                 progMessage = new ProgressMessage(stat.getMessage(), stat.isDone());

@@ -246,7 +246,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         } else if (fromUrl != null) { // from a URL... get it
             String fname;
             if (hipsCache) {
-                statusFileInfo= HiPSRetrieve.retrieveHiPSData(fromUrl,null,false);
+                statusFileInfo= HiPSRetrieve.retrieveHiPSData(fromUrl,false);
                 fname= (statusFileInfo.getFile()!=null) ? statusFileInfo.getFile().getName() : null;
             }
             else {
