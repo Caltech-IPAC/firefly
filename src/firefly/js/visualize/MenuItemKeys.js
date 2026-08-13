@@ -39,6 +39,7 @@ export function getDefMenuItemKeys() {
         extractZAxis: true,
         extractLine: true,
         extractPoint: true,
+        extractHiPSTile: true,
         extract: true,
         showImageToolbar: true,
         hipsSurveyPopup: true,

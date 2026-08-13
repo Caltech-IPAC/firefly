@@ -28,6 +28,7 @@ export const STRETCH_POWERLAW_GAMMA   = 51;
 const LINEAR_STR= 'linear';
 
 const alStrToConst = {
+    linear: STRETCH_LINEAR,
     log : STRETCH_LOG,
     loglog : STRETCH_LOGLOG,
     equal : STRETCH_EQUAL,
@@ -268,6 +269,10 @@ export class RangeValues {
             rv.rgbPreserveHue+','+
             rv.asinhStretch+','+
             rv.scalingK;
+    }
+
+    static isAlgorithmSupported(a) {
+        return Boolean(alStrToConst[a]);
     }
     
 }

@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.server.visualize.ProgressStat.PType;
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 import static java.util.Collections.emptyMap;
 
@@ -37,8 +36,6 @@ public class ImagePlotCreator {
         var len= readAry.length;
         var piAry= new PlotInfo[len];
         for(int i= 0; (i<readAry.length); i++)  {
-            var notify= len<5 || i % ((len/10)+1)==0;
-            if (notify) doNotify(stateAry[i].getWebPlotRequest(),i,len);
             piAry[i]= makeNoBand(stateAry[i],readAry[i]);
         }
         return piAry;
@@ -62,15 +59,6 @@ public class ImagePlotCreator {
          confirmRVinState(state);
          WebFitsData wfData= makeWebFitsData(frGroup, readInfo.band(),readInfo.originalFile());
          return PlotInfo.makeStandard(state,readInfo, frGroup, wfData);
-     }
-
-     private static void doNotify(WebPlotRequest req, int cnt, int totLength) {
-         if (totLength > 3) {
-             PlotServUtils.updateProgress(req, PType.CREATING,
-                     PlotServUtils.CREATING_MSG + ": " + (cnt + 1) + " of " + totLength);
-         } else {
-             PlotServUtils.updateProgress(req, PType.CREATING, PlotServUtils.CREATING_MSG);
-         }
      }
 
     static PlotInfo makeOneImagePerBand3Color(PlotState state,
@@ -130,13 +118,13 @@ public class ImagePlotCreator {
                                                                 throws FitsException, IOException, GeomException {
         ModFileWriter retval= null;
         Band band= readInfo.band();
-        FitsCacher.clearCachedHDU(readInfo.originalFile());
+        FitsCacher.clearLargeMemCachedHDU(readInfo.originalFile());
         frGroup.setThreeColorBandIn(readInfo.fitsRead(),band);
         FitsRead tmpFR= frGroup.getFitsRead(band);
         if (tmpFR!=readInfo.fitsRead() && readInfo.workingFile()!=null) { // testing to see it the fits read got geomed when the band was added
             state.setImageIdx(0, band);
             retval = new ModFileWriter(readInfo.workingFile(),0,tmpFR,readInfo.band());
-            FitsCacher.addFitsReadToCache(retval.getTargetFile(), tmpFR);
+            FitsCacher.addFitsReadToLargeMemCache(retval.getTargetFile(), tmpFR);
         }
 
         return retval;

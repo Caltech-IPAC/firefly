@@ -23,8 +23,15 @@ public class UriRefParams extends BaseNetParams {
     private HttpServiceInput addtlInfo;
     private boolean expectStaticFile= false;
 
+    public UriRefParams(String urlStr) {
+        this(Collections.singletonList(UriRef.make(urlStr)),null,null);
+        setStatusKey(urlStr);
+    }
 
-    public UriRefParams(URL url) { this(Collections.singletonList(UriRef.make(url)),null,null); }
+    public UriRefParams(URL url) {
+        this(Collections.singletonList(UriRef.make(url)),null,null);
+        setStatusKey(url.toString());
+    }
 
     public UriRefParams(UriRef ref, File downloadDir) {
         this(Collections.singletonList(ref),null,null);

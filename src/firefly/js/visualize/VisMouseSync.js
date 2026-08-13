@@ -125,8 +125,7 @@ export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY
     if (isHiPS(plot) && worldPt) {
         const result= getHealpixPixel(plot,worldPt);
         if (result) {
-            payload.healpixPixel= result.pixel;
-            payload.norder= result.norder;
+            payload.hipsLocation= result;
         }
     }
     return payload;

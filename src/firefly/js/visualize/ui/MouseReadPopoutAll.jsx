@@ -15,7 +15,7 @@ import {MagnifiedView} from 'firefly/visualize/ui/MagnifiedView.jsx';
 import {currentP, getPlotViewById, primePlot} from 'firefly/visualize/PlotViewUtil.js';
 import {getFluxInfo, getFluxRadix, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
-import {isImage} from 'firefly/visualize/WebPlot.js';
+import {isHiPS, isImage} from 'firefly/visualize/WebPlot.js';
 import {Band} from '../Band';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 
@@ -81,7 +81,8 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
-    const {plotState}= currentP(plotId).plot ?? {};
+    const {plot}= currentP(plotId);
+    const {plotState}= plot ?? {};
     const redUsed= threeColor && image && plotState.isBandUsed(Band.RED);
     const greenUsed= threeColor && image && plotState.isBandUsed(Band.GREEN);
     const blueUsed= threeColor && image && plotState.isBandUsed(Band.BLUE);
@@ -101,9 +102,9 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
             columnGap: .5,
             rowGap: .75,
             gridTemplateColumns: '6em 14px auto',
-            gridTemplateRows: `2em 1.4em 1.4em 1.4em 1.4em${threeColor ? ' 1.4em 1.4em' : ''}`,
+            gridTemplateRows: `2em 1.4em 1.4em 1.4em 1.4em${(threeColor||plot.hasFits) ? ' 1.4em 1.4em' : ''}`,
             alignItems: 'center',
-            gridTemplateAreas: getGridTemplate(threeColor,isHiPS,waveLength,bandWidth,
+            gridTemplateAreas: getGridTemplate(threeColor,plot,waveLength,bandWidth,
                 waveLengthRED,waveLengthGREEN,waveLengthBLUE),
             ...rS
         }}>
@@ -121,6 +122,8 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
                                            label={healpixPixelReadout.label} value={healpixPixelReadout.value}/> }
             {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'greenLabel'}} valueStyle={{gridArea:'greenValue'}}
                                            label={healpixNorderReadout.label} value={healpixNorderReadout.value}/> }
+            {hipsPixel && plot.hasFits && <DataReadoutItem labelStyle={{gridArea:'blueLabel'}} valueStyle={{gridArea:'blueValue'}}
+                                           label={'Value:'} value={fluxArray[0].value}/> }
             {image && !threeColor && <DataReadoutItem lArea='redLabel' vArea='redValue'
                                          monoFont={radix===16}
                                          prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
@@ -192,7 +195,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     );
 }
 
-function getGridTemplate(threeColor,isHiPS, waveLength, bandWidth, waveLengthRED, waveLengthGREEN, waveLengthBLUE) {
+function getGridTemplate(threeColor,plot, waveLength, bandWidth, waveLengthRED, waveLengthGREEN, waveLengthBLUE) {
     const resultAry= ['". . lock"',
         '"pixSizeLabel . pixSizeValue"',
         '"pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"',
@@ -215,8 +218,9 @@ function getGridTemplate(threeColor,isHiPS, waveLength, bandWidth, waveLengthRED
         '"bwBlueLabel . bwBlueValue"',
     ];
 
-    if (isHiPS) {
+    if (isHiPS(plot)) {
         resultAry.push(...green);
+        if (plot.hasFits) resultAry.push(...blue);
     }
     else if (threeColor) {
         if (waveLengthRED) resultAry.push(...wlRed);

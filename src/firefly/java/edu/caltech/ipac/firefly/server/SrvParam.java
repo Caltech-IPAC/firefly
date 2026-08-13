@@ -286,6 +286,16 @@ public class SrvParam {
         }
     }
 
+    public WorldPt getRequiredWorldPt(String key) {
+        String v= getRequired(key);
+        try {
+            return WorldPt.parse(v);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "parameter could not be parsed as WorldPt: parameter: "+ key + ", value: "+v, e);
+        }
+    }
+
     public ImagePt[] getRequiredImagePtAry(String key) {
         String v= getRequired(key);
         try {

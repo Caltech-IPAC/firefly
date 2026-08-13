@@ -11,7 +11,7 @@ import {
     MR_GALACTIC, MR_HEALPIX_NORDER, MR_HEALPIX_PIXEL, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_WCS_COORDS,
     STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT,
     MR_BAND_WIDTH, EQ_TYPE, MR_WL_RED, MR_WL_GREEN, MR_WL_BLUE, MR_BAND_WIDTH_GREEN, MR_BAND_WIDTH_RED,
-    MR_BAND_WIDTH_BLUE
+    MR_BAND_WIDTH_BLUE, STATUS_RETRIEVING
 } from '../MouseReadoutCntlr.js';
 import {convertCelestial} from '../VisUtil';
 import {isCelestialImage} from '../WebPlot.js';
@@ -159,7 +159,7 @@ export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= fals
 
     const retList={};
     keysToUse.forEach( (key) =>  {
-        retList[key]=getReadoutElement(readoutItems, readoutPref[key], plotId, copyPref);
+        retList[key]=getReadoutElement(readoutItems, readoutPref[key], plotId, copyPref, isHiPS);
     });
 
     return retList;
@@ -173,9 +173,10 @@ export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= fals
  * @param readoutKey Readout preference value
  * @param plotId
  * @param copyPref Readout Copy preference value
+ * @param isHiPS
  * @returns {*}
  */
-export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
+export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref, isHiPS= false) {
     if (!readoutItems) return {value:''};
 
     const wp= readoutItems?.worldPt?.value;
@@ -273,6 +274,7 @@ function makeFluxEntry(obj,radix=10) {
     const is16= radix===16;
     switch (status) {
         case STATUS_UNAVAILABLE: return {value: 'unavailable', label, unit:''};
+        case STATUS_RETRIEVING: return {value: 'retrieving value', label, unit:''};
         case STATUS_NAN: return is16 ? {value: `${valueBase16} (NaN)`, label, unit:''}  : {value: 'NaN', label, unit:''};
         case STATUS_UNDEFINED: return is16 ? {value: `${valueBase16} (undefined)`, label, unit:''} : {value: 'undefined', label, unit:''};
         case STATUS_VALUE:

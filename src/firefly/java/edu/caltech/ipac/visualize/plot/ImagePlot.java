@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
+
 /**
  * This class is now only used for creating PNG file, not for interactive visualization
  * @author Trey Roby
@@ -65,7 +67,6 @@ public class ImagePlot implements Serializable {
         configureImage();
     }
 
-
     /** 07/20/15 LZ
      * Create a ImagePlot with given IndexColorModel
      */
@@ -80,6 +81,12 @@ public class ImagePlot implements Serializable {
         imageDataHeight = fr.getImageDataHeight();
         imageData = new ImageDataGroup(imageDataWidth, imageDataHeight, iMasks,FitsRead.getDefaultFutureStretch(),SQUARE);
         configureImage();
+    }
+
+    public static ImagePlot makeImagePlot(FitsRead fr) {
+        var frGroup= new ActiveFitsReadGroup();
+        frGroup.setFitsRead(NO_BAND,fr);
+        return new ImagePlot(frGroup, false);
     }
 
     public boolean isUseForMask() { return useForMask; }
@@ -262,6 +269,11 @@ public class ImagePlot implements Serializable {
         }
     }
 
+    public static ImagePt getImageCoords(FitsRead fr, WorldPt wpt) throws ProjectionException {
+        var imWp= ImagePlot.makeImagePlot(fr).getImageCoords(wpt);
+        return new ImagePt(imWp.getX(),imWp.getY());
+    }
+
     public ImageWorkSpacePt getImageWorkSpaceCoords(Point2D pt)
                                   throws NoninvertibleTransformException {
         AffineTransform inverse= plotGroup.getInverseTransform();
@@ -336,7 +348,7 @@ public class ImagePlot implements Serializable {
     }
 
 
-    /** 
+    /**
      * Return a point the represents the passed point with a distance in
      * World coordinates added to it.
      * @param pt the x and y coordinate
@@ -405,6 +417,17 @@ public class ImagePlot implements Serializable {
         }
         return wpt;
    }
+
+
+    public WorldPt getWorldCoords(FitsRead fr, ImagePt ipt, CoordinateSys outputCoordSys) {
+        var plot= ImagePlot.makeImagePlot(fr);
+        try {
+            return plot.getWorldCoords(new ImageWorkSpacePt(ipt.getX(), ipt.getY()));
+        } catch (ProjectionException ignore) {
+            return null;
+        }
+    }
+
 
     /**
      * get the scale (usually in arcseconds) that on image pixel of data

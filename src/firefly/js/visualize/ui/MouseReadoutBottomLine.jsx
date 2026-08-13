@@ -8,6 +8,8 @@ import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
 import {dispatchChangePointSelection} from '../ImagePlotDispatch';
+import {currentP} from '../PlotViewUtil';
+import {isHiPS} from '../WebPlot';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {CopyToClipboard} from './MouseReadout.jsx';
@@ -20,6 +22,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     const {current:divref}= useRef({element:undefined});
     const [haveDivRef,setHaveDivRef]= useState(false);
+    const {plot}= currentP(readoutData.plotId);
 
     useEffect( () => {
         setHaveDivRef(Boolean(divref.element));
@@ -30,8 +33,8 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const {readoutType}= readoutData;
     if (!readoutData.readoutItems) return (<div style={{height: showOnInactive?20:0, width:showOnInactive?1:0}}/>);
 
-    const isHiPS= readoutType===HIPS_STANDARD_READOUT;
-    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, isHiPS);
+    const hips= isHiPS(plot);
+    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, hips);
     const {readout1, showReadout1PrefChange, waveLength, bandWidth}= displayEle;
     const r1Value= readout1?.value ??'';
     const wlValue= waveLength?.value ??'';
@@ -63,10 +66,10 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const {threeColor= false}= readoutData;
     const monoFont= radix===16;
 
-    const doWL= ((r1Value && fullSize) || !r1Value) && waveLength && !isHiPS;
-    const doFlux= fullSize && !isHiPS;
+    const doWL= ((r1Value && fullSize) || !r1Value) && waveLength && !hips;
+    const doFlux= fullSize && (!hips || (hips && plot.hasFits));
 
-    const lockByClickLabelWidth= isHiPS ? 450 : threeColor ?  750 : 600;
+    const lockByClickLabelWidth= hips ? 450 : threeColor ?  750 : 600;
     const checkboxText= width>lockByClickLabelWidth ? lockByClick ? 'Click Lock: on': 'Click Lock: off' : '';
 
     const label3C= threeColor && doFlux ? get3CLabel(fluxArray) : '';

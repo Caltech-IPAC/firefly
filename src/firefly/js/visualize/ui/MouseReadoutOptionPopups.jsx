@@ -53,6 +53,7 @@ const hipsCoordOptions= [
 	{label: 'Super Galactic', value: MR_SUPER_GALACTIC},
 	{label: 'Ecliptic J2000', value: MR_ECLJ2000},
 	{label: 'Ecliptic B1950', value: MR_ECL1950},
+	{label: 'FITS Image Pixel', value: MR_FITS_IP},
 ];
 
 

@@ -21,6 +21,7 @@ import {StateInputField} from '../../ui/StatedInputfield.jsx';
 import {DropDownVerticalSeparator, ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Validate from '../../util/Validate.js';
+import {splitByWhiteSpace} from '../../util/WebUtil';
 import {CoordinateSys} from '../CoordSys.js';
 import {getExtName, getExtType, getHeader} from '../FitsHeaderUtil.js';
 import {
@@ -28,9 +29,10 @@ import {
 } from '../ImagePlotDispatch';
 import {PlotAttribute} from '../PlotAttribute';
 import {
-    canConvertBetweenHipsAndFits, convertHDUIdxToImageIdx, convertImageIdxToHDU, currentP, getCubePlaneCnt,
+    canConvertBetweenHipsAndFits, convertHDUIdxToImageIdx, convertImageIdxToHDU, currentP, getCubeLength,
     getFormattedWaveLengthUnits, getHDU, getHDUCount, getHDUIndex, getPtWavelength,
-    hasPlaneOnlyWLInfo, isImageCube, isMultiHDUFits, primePlot, pvEqualExScroll, refreshP,
+    getWaveLengthUnitsPrecision,
+    hasPlaneOnlyWLInfo, isCube, isMultiHDUFits, primePlot, pvEqualExScroll, refreshP,
 } from '../PlotViewUtil.js';
 import {makeWorldPt} from '../Point.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
@@ -393,7 +395,7 @@ export function MultiImageControllerView({plotView:pv}) {
     let length;
     let wlStr= '';
     let startStr;
-    const  cube= isImageCube(plot) || !image;
+    const  cube= isCube(plot) || !image;
     const multiHdu= isMultiHDUFits(pv);
     let hduDesc= '';
     let tooltip;
@@ -419,10 +421,11 @@ export function MultiImageControllerView({plotView:pv}) {
             tooltip+= `${reqHduInfo}HDU: ${hduNum} ${nameOrType?', '+hduDesc:''}`;
         }
         if (plot.cubeIdx>-1) {
-            tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(plot)}`;
+            tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubeLength(plot)}`;
 
             if (hasPlaneOnlyWLInfo(plot)) {
-                const wl= doFormat(getPtWavelength(plot,undefined, plot.cubeIdx),4);
+                const precision= getWaveLengthUnitsPrecision(plot);
+                const wl= doFormat(getPtWavelength(plot,undefined, plot.cubeIdx),precision);
                 const unitStr= getFormattedWaveLengthUnits(plot);
                 wlStr= wl ? `${wl} ${unitStr}` : '';
             }
@@ -475,20 +478,26 @@ const doFormat= (v,precision) => isNaN(v)
 function getHipsCubeDesc(plot) {
     if (!isHiPS(plot)) return '';
     const {hipsProperties}= plot;
-    const {data_cube_crpix3, data_cube_crval3, data_cube_cdelt3, data_cube_bunit3=''}= hipsProperties;
-    if (!data_cube_crpix3 || !data_cube_crval3 || !data_cube_cdelt3) return '';
-    const crpix3= Number(data_cube_crpix3);
-    const crval3= Number(data_cube_crval3);
-    const cdelt3= Number(data_cube_cdelt3);
-    const dp= Math.abs(cdelt3)>10 ? 0 :  1- Math.trunc(Math.log10(Math.abs(cdelt3))); // number of decimal points suggestion of gpdf
-    if (isNaN(crpix3) || isNaN(crval3) || isNaN(cdelt3)) return '';
-    const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
-    const bunit3= (data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
-                               data_cube_bunit3 : '';
-    return `${doFormat(value,dp)} ${getFormattedWaveLengthUnits(bunit3)}`;
+    const {data_cube_crpix3, data_cube_crval3, data_cube_cdelt3, data_cube_crval3_arr, data_cube_bunit3=''}= hipsProperties;
+    const cubePlanePropValue= data_cube_crval3_arr && splitByWhiteSpace(data_cube_crval3_arr)?.[plot.cubeIdx];
+
+    const bunit3= (data_cube_bunit3 && data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
+        data_cube_bunit3 : '';
+
+    if (cubePlanePropValue) {
+        return `${cubePlanePropValue} ${getFormattedWaveLengthUnits(bunit3)}`;
+    }
+    else {
+        if (!data_cube_crpix3 || !data_cube_crval3 || !data_cube_cdelt3 || !cubePlanePropValue) return '';
+        const crpix3= Number(data_cube_crpix3);
+        const crval3= Number(data_cube_crval3);
+        const cdelt3= Number(data_cube_cdelt3);
+        const dp= Math.abs(cdelt3)>10 ? 0 :  1- Math.trunc(Math.log10(Math.abs(cdelt3))); // number of decimal points suggestion of gpdf
+        if (isNaN(crpix3) || isNaN(crval3) || isNaN(cdelt3)) return '';
+        const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
+        return `${doFormat(value,dp)} ${getFormattedWaveLengthUnits(bunit3)}`;
+    }
 }
-
-
 
 function getEmLength(len) {
    const size= Math.trunc(Math.log10(len)) + 1;
@@ -505,7 +514,7 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType}) {
             getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv,idx, 'follow'),
         },
         cube: {
-            getLen: getCubePlaneCnt,
+            getLen: getCubeLength,
             getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).cubeIdx,
             getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv, getHDUIndex(pv, primePlot(pv)), idx)
         },

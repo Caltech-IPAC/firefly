@@ -25,6 +25,7 @@ export const HdrConst= {
     BSCALE   : 'BSCALE',
     BUNIT   : 'BUNIT',
     BZERO    : 'BZERO',
+    BLANK    : 'BLANK',
     CRPIX1   : 'CRPIX1',
     CRPIX2   : 'CRPIX2',
     CRVAL1   : 'CRVAL1',

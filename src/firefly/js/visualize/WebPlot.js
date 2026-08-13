@@ -1,19 +1,19 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {getNumberHeader, HdrConst} from './FitsHeaderUtil';
 import {ZoomType} from './VisConst';
 import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
-import {isDefined, memorizeLastCall} from '../util/WebUtil';
+import {isDefined, memorizeLastCall, splitByWhiteSpace} from '../util/WebUtil';
 import {allBandAry, Band} from './Band';
 import CoordinateSys from './CoordSys.js';
 import {CysConverter} from './CsysConverter.js';
 import PlotState, {makePlotStateShimForHiPS} from './PlotState';
-import {makeImagePt} from './Point';
-import {makeDevicePt, makeScreenPt, makeWorldPt} from './Point.js';
+import {makeImagePt, makeDevicePt, makeScreenPt, makeWorldPt} from './Point.js';
 import {
     HIPS_AITOFF, HIPS_DATA_HEIGHT, HIPS_DATA_WIDTH, makeHiPSProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED
 } from './projection/Projection.js';
-import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
+import {parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
 import {findAContrastColor, NO_COLOR_TABLE} from './rawData/ColorTable';
 import {convertCelestial} from './VisUtil';
@@ -63,6 +63,7 @@ export const RDConst= {
  * @prop {String} title - the title
  * @prop {number} colorTableId
  * @prop {Object} header
+ * @prop {RelatedData} relatedData
  * @prop {number} totalImageHdusInFile
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
  * @prop {number} cubeIdx
@@ -87,7 +88,6 @@ export const RDConst= {
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Array.<Object>}
  * @prop {Object} attributes
- * directFileAccessDataAry - object of parameters to get flux from the FITS file
  *
  * @see PlotView
  */
@@ -500,16 +500,12 @@ export const WebPlot= {
         allWCSMap['']= projection;
 
 
-        // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
-        // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
-        // when a new one is generated
+        // that bandState does not come with the hduNumber initialized
         for(let i= 0; (i<3); i++) {
-            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?.cubePlane ?? -1);
+            if (headerAry[i]) plotState.get(i).hduNumber= getNumberHeader(headerAry[i],HdrConst.SPOT_EXT,0);
         }
-        const directFileAccessDataAry= plotState.bandStateAry.map( (bs) => bs.directFileAccessData);
-
         const imageCoordSys= cubeCtx ? cubeCtx.imageCoordSys : wpInit.imageCoordSys;
-        let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
+        const plotTemplate= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
         const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
         const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
         const zf= getInitZoomLevel(viewDim, request0, dataWidth, dataHeight, projection.getPixelScaleDegree());
@@ -517,8 +513,6 @@ export const WebPlot= {
         // noinspection JSUnresolvedVariable
         /** @type WebPlot */
         const imagePlot= {
-            tileData    : undefined,
-            relatedData     : null,
             colorTableId,
             totalImageHdusInFile: wpInit.totalImageHdusInFile ?? 1,
             header,
@@ -534,7 +528,6 @@ export const WebPlot= {
             allWlMap,
             dataWidth,
             dataHeight,
-            title : '',
             plotDesc        : cubeCtx ? cubeCtx.desc : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
             webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData :  wpInit.fitsData ? [wpInit.fitsData] : [{}],
@@ -544,7 +537,6 @@ export const WebPlot= {
             attributes,
             rawData,
             lastByteRefreshData:Date.now(),
-            directFileAccessDataAry,
             dataRequested: false,
             cubeIdx: cubeCtx?.cubePlane ?? -1,
             //=== End Mutable =====================
@@ -557,7 +549,8 @@ export const WebPlot= {
                     return newWfd;
                 });
         }
-        plot= {...plot, ...imagePlot};
+        /** @type WebPlot */
+        const plot= {...plotTemplate, ...imagePlot};
         if (relatedData) {
             plot.relatedData= relatedData.map( (d) =>
                 ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey+'-'+d.band+'-'+dataWidth+'-'+dataHeight}));
@@ -580,7 +573,7 @@ export const WebPlot= {
      * @param {boolean} proxyHips - if true use the proxy (firefly server) to get the hips tailes
      * @return {WebPlot} the new WebPlot object for HiPS
      */
-    makeWebPlotDataHIPS(plotId, hipsUrlRoot, wpRequest, hipsProperties, attributes= {}, proxyHips) {
+    makeWebPlotDataHIPS(plotId, hipsUrlRoot, wpRequest, hipsProperties={}, attributes= {}, proxyHips) {
 
         const blank= isBlankHiPSURL(wpRequest.getHipsRootUrl());
         const hipsCoordSys= makeHiPSCoordSys(hipsProperties);
@@ -588,6 +581,12 @@ export const WebPlot= {
         const lat= blank ? 0 : Number(hipsProperties.hips_initial_dec) || 0;
         const projection= makeHiPSProjection(hipsCoordSys, lon,lat, false);
         const plot= makePlotTemplate(plotId,'hips',false, hipsCoordSys);
+
+        const formatAry= splitByWhiteSpace(hipsProperties.hips_tile_format);
+        const hasFitsCube= splitByWhiteSpace(hipsProperties.custom_tile_format).includes('fits-cube');
+        const hasFits= formatAry.includes('fits') || hasFitsCube;
+        const cubeDepth= Number(hipsProperties?.hips_cube_depth) || 1;
+
         const zoomFactor= .0001;
 
         const hipsPlot= {
@@ -597,6 +596,8 @@ export const WebPlot= {
             hipsUrlRoot,
             dataCoordSys : hipsCoordSys,
             hipsProperties,
+            hasFits,
+            hasFitsCube,
             proxyHips,
 
             /// other
@@ -611,7 +612,7 @@ export const WebPlot= {
             dataDesc        : hipsProperties.label || 'HiPS',
             blank,
             blankColor: 'rgba(55,55,55,1)',
-            cubeDepth: Number(hipsProperties?.hips_cube_depth) || 1,
+            cubeDepth,
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
             cubeIdx: Number(hipsProperties?.hips_cube_firstframe) || 0,
@@ -649,12 +650,6 @@ export const WebPlot= {
 
         //keep the plotState populated with the fitsHeader information, this is only used with get flux calls
         //todo: i think is could be cached on the server side so we don't need to be send it back and forth
-        const {bandStateAry}= plotState;
-        for(let i=0; (i<bandStateAry.length);i++) {
-            if (bandStateAry[i] && isEmpty(bandStateAry[i].directFileAccessData)) {
-                bandStateAry[i].directFileAccessData= plot.directFileAccessDataAry[i];
-            }
-        }
 
         plot= {...plot,...{plotState, zoomFactor,screenSize}};
         plot.tileData= undefined;
@@ -936,3 +931,5 @@ export function processHeaderData(wpInit, plotState) {
 
     return headerInfo;
 }
+
+

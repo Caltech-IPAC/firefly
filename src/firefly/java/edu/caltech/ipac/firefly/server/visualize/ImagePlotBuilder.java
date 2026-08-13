@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.server.visualize.ProgressStat.PType;
+import static edu.caltech.ipac.firefly.server.visualize.WebPlotFactory.makePlottingException;
 import static edu.caltech.ipac.firefly.visualize.Band.BLUE;
 import static edu.caltech.ipac.firefly.visualize.Band.GREEN;
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
@@ -73,7 +74,7 @@ public class ImagePlotBuilder {
             if (piAry!=null && piAry.length>0)  retval= piAry[0];
             return retval;
         } catch (Exception e) {
-            throw makeException(e);
+            throw makePlottingException(e);
         }
     }
 
@@ -88,22 +89,10 @@ public class ImagePlotBuilder {
             Collections.addAll(retList, allPlots.plotInfoAry());
             return retList;
         } catch (Exception e) {
-            throw makeException(e);
+            throw makePlottingException(e);
         }
     }
 
-    private static FailedRequestException makeException(Exception e) {
-        if (e instanceof FailedRequestException) {
-            return new FailedRequestException("Could not create plot. " + e.getMessage(),
-                    ((FailedRequestException)e).getDetailMessage());
-        }
-        else if (e instanceof FitsException) {
-            return new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
-        }
-        else {
-            return new FailedRequestException("Could not create plot.", e.getMessage(), e);
-        }
-    }
 
     static Results build(Map<Band, WebPlotRequest> requestMap,
                          MultiImageAction multiAction,
@@ -119,7 +108,6 @@ public class ImagePlotBuilder {
         long readStart = System.currentTimeMillis();
         WebPlotRequest firstR = requestMap.values().iterator().next();
         var readInfoMap = WebPlotReader.readFiles(fileDataMap, firstR);
-        PlotServUtils.updateProgress( firstR, PType.CREATING, PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
 
@@ -162,7 +150,13 @@ public class ImagePlotBuilder {
             WebPlotRequest request = entry.getValue();
             FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
             if (retrieve != null) {
-                fitsFiles.put(band, retrieve.getFile(request));
+                FileInfo fi= retrieve.getFile(request);
+                if (fi.isSuccess()) {
+                    fitsFiles.put(band, retrieve.getFile(request));
+                }
+                else {
+                    throw new FailedRequestException(fi.getResponseCodeMsg(),"",fi.getResponseCode(), fi);
+                }
             } else {
                 _log.error("failed to find FileRetriever should only be FILE, URL, ALL_SKY, or SERVICE, for band " + band.toString());
             }

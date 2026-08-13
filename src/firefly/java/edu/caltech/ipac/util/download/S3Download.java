@@ -143,6 +143,9 @@ public class S3Download {
             logFail(e, outfile, ref, code, seconds);
             throw new FailedRequestException(e.getMessage(),e);
         }
+        finally {
+            if (options.dl()!=null) options.dl().downloadDone();
+        }
     }
 
 
@@ -174,6 +177,7 @@ public class S3Download {
     }
 
     private static void callListener(DownloadListener dl, long transferredBytes, long length, boolean complete ) {
+        if (dl==null) return;
         String msg;
         if (length==0) {
             msg= FileUtil.getSizeAsString(transferredBytes);
