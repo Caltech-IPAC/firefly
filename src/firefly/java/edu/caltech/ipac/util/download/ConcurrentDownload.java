@@ -131,6 +131,7 @@ public class ConcurrentDownload {
                 throw new FailedRequestException("cannot write to file: " + outfile.toPath());
             }
             finally {
+                if (ops.dl()!=null) ops.dl().downloadDone();
                 clearIdleExecutors();
             }
 
@@ -187,6 +188,7 @@ public class ConcurrentDownload {
     }
 
     private static void callListener(DownloadListener dl, long transferredBytes, long length) {
+        if (dl==null) return;
         String msg;
         if (length==0) {
             msg= FileUtil.getSizeAsString(transferredBytes);

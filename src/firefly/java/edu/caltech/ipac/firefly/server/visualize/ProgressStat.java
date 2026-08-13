@@ -19,26 +19,26 @@ public class ProgressStat implements Serializable {
     public enum PType { DOWNLOADING, READING, CREATING, OTHER, GROUP, SUCCESS, FAIL }
 
     private final PType type;
-    private final String id;
+    private final String key;
     private final String message;
-    private final String plotId;
+    private final String id;
     private final List<String> memberIDList;
 
     protected ProgressStat() {this(null, null, null, null);}
 
-    public ProgressStat(String id, String plotId, PType type, String message) {
+    public ProgressStat(String key, String id, PType type, String message) {
+        this.key = key;
         this.id = id;
-        this.plotId = plotId;
         this.message = message;
         this.memberIDList= null;
         this.type= type;
     }
 
-    public ProgressStat(List<String> memberIDList, String id) {
+    public ProgressStat(String key, List<String> memberIDList) {
+        this.key = key;
         this.memberIDList = memberIDList;
-        this.id = id;
         this.message= "";
-        this.plotId= "";
+        this.id = "";
         this.type= PType.GROUP;
     }
 
@@ -48,9 +48,9 @@ public class ProgressStat implements Serializable {
 
     public String getMessage() { return message; }
 
-    public String getId() { return id; }
+    public String getKey() { return key; }
 
-    public String getPlotId() { return plotId; }
+    public String getId() { return id; }
 
     public List<String> getMemberIDList() { return memberIDList; }
 

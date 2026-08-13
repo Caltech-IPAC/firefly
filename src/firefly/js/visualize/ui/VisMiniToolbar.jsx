@@ -22,16 +22,18 @@ import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUplo
 import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
-import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from './extraction/ExtractionDialog.jsx';
+import {showExtractionDialog} from './extraction/ExtractionDialog.jsx';
 import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
 import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
 import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';
 import {MatchLockDropDown} from 'firefly/visualize/ui/MatchLockDropDown.jsx';
 import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
+import {endExtraction, HIPS_TILE, LINE, POINTS, Z_AXIS} from './extraction/ExtractionUIUtil';
+import {showHiPSTileExtractionDialog} from './extraction/HiPSTileExtractionDialog';
 import {SelectAreaButton} from './SelectAreaUIComponents.jsx';
 import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
-import {isHiPS} from 'firefly/visualize/WebPlot.js';
+import {isHiPS, isImage} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {
@@ -43,10 +45,11 @@ import {getDlAry, visRoot} from '../VisStoreRoots';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
     getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasWCSProjection,
-    isImageCube, isThreeColor, primePlot, pvEqualExScroll
+    isCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {
     ColorButtonIcon, ColorDropDownButton, DistanceButton, DrawLayersButton, ExpandButton, ExtractLine, ExtractPoints,
+    ExtractTile,
     FlipYButton, InfoButton, RestoreButton, RotateButton, SaveButton, ToolsDropDown
 } from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
@@ -294,7 +297,9 @@ const ColorButton= ({colorDrops,enabled,pv}) => (
 
 function ToolsDrop({pv,mi, enabled, image, hips, modalEndInfo, showRotateLocked}) {
 
-    const showExtract= Boolean(image) && mi.extract;
+    const plot= primePlot(pv);
+    const hipsWithFits= isHiPS(plot) && plot.hasFits;
+    const showExtract= (isImage(plot) || hipsWithFits)  && mi.extract;
     return (
         <DropDownMenu>
             <Stack>
@@ -350,38 +355,46 @@ const RotateFlipRow= ({image,mi,showRotateLocked,pv,enabled}) => (
 function startExtraction(element,type,modalEndInfo) {
     modalEndInfo?.closeLayer?.('Extraction');
     let ended= false;
-    showExtractionDialog(element, type, () => {
-        if (!ended) setModalEndInfo({});
-    });
-    setModalEndInfo({
-        closeText: 'End Extraction',
-        key: 'Extraction',
-        closeLayer: () => {
+    const wasCanceled= () => !ended && setModalEndInfo({});
+    const closeLayer= () => {
             ended= true;
             endExtraction();
             clearModalEndInfo();
-        },
-        offOnNewPlot: false
-    });
+        };
 
+    type===HIPS_TILE
+        ? showHiPSTileExtractionDialog(element, wasCanceled)
+        : showExtractionDialog(element, type, wasCanceled);
+
+    setModalEndInfo({ closeText: 'End Extraction', key: 'Extraction', offOnNewPlot: false, closeLayer });
 }
 
 const ExtractRow= ({pv,enabled,modalEndInfo,mi}) => {
-    const standIm= !isThreeColor(pv);
+    const plot= primePlot(pv);
+    const standIm= isImage(plot) && !isThreeColor(pv);
+    const hipsWithFits= isHiPS(plot) && plot.hasFits;
+    const cube= standIm && isCube(primePlot(pv));
     return (
         <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
             <Typography level='body-md' width='10em'>Extract:</Typography>
-            <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
+            <ToolbarButton icon={DRILL_DOWN}
+                           tip={`Extract Z-axis from cube${cube?'':' - disabled: only available for FITS cubes'}`}
+                           enabled={standIm&&cube&&enabled}
                            onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
                            visible={mi.extractZAxis}/>
-            <ExtractLine tip='Extract line from image' enabled={standIm&&enabled}
+            <ExtractLine tip={`Extract line from image${standIm?'':' - disabled: only available for images'}`}
+                         enabled={standIm&&enabled}
                            onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
                            visible={mi.extractLine}/>
-            <ExtractPoints tip='Extract points from image' enabled={standIm&&enabled}
+            <ExtractPoints tip={`Extract points from image${standIm?'':' - disabled: only available for images'}`}
+                           enabled={standIm&&enabled}
                            onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
+            {isHiPS(plot) && <ExtractTile tip='Extract FITS tile from HiPS' enabled={hipsWithFits&&enabled}
+                           onClick={(element) => startExtraction(element,HIPS_TILE,modalEndInfo)}
+                           visible={mi.extractPoint}/> }
         </Stack>
-        );
+    );
 };
 
 const LayersRow= ({style,image, pv,mi,enabled, modalEndInfo}) => (

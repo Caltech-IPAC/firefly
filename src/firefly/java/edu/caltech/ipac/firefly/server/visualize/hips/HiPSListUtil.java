@@ -3,12 +3,17 @@ package edu.caltech.ipac.firefly.server.visualize.hips;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.servlets.HiPSRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +26,7 @@ import java.util.Properties;
 public class HiPSListUtil {
     static final Logger.LoggerImpl _log = Logger.getLogger();
     private final static String PROP = HiPSMasterListEntry.PARAMS.PROPERTIES.getKey().toLowerCase();
+    static final Logger.LoggerImpl log = Logger.getLogger();
 
     private final static Map<String, String> defParamMap = new HashMap<>();
 
@@ -68,8 +74,10 @@ public class HiPSListUtil {
             _log.debug("executing " + source + " url query: " + url);
 
             long cTime = System.currentTimeMillis();
+            String hipsListName= "hips-list.properties";
+            String fileName= childExt!=null? childExt+"-"+hipsListName : hipsListName;
 
-            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url, childExt, false);
+            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url, fileName, false);
             File listFile= listFileInfo.getFile();
             if (listFile==null) throw new IOException("Could not retrieve file: "+ listFileInfo.getResponseCode());
 
@@ -181,7 +189,7 @@ public class HiPSListUtil {
         if (propUrl == null) return;
 
         try {
-            FileInfo propFileInfo = HiPSRetrieve.retrieveHiPSData(propUrl, null, false);
+            FileInfo propFileInfo = HiPSRetrieve.retrieveHiPSData(propUrl, false);
             File propFile= propFileInfo.getFile();
             if (propFile==null) throw new IOException("Could not retrieve file: "+ propFileInfo.getResponseCode());
 
@@ -211,5 +219,58 @@ public class HiPSListUtil {
     }
 
     public static void warn(String s) { _log.warn(s); }
+
+
+    public static List<HiPSMasterListEntry> getAdditionalMOCS(String urlStr, String source) {
+        try {
+            if (urlStr==null) return null;
+            URL url= URLDownload.makeURL(urlStr);
+            if  (url == null) return null;
+            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url.toString(), source+"-moc-table.dat", false);
+            if (listFileInfo.getResponseCode()!=200 && listFileInfo.getResponseCode()!=304) return null;
+            DataGroup dg= TableUtil.readAnyFormat(listFileInfo.getFile());
+            if (dg == null || dg.isEmpty()) return null;
+            var retList = new ArrayList<HiPSMasterListEntry>();
+            String baseUrl= null;
+            if (url.getQuery()==null) {
+                String s= urlStr.endsWith("/") ? urlStr.substring(0,urlStr.length()-1) : urlStr;
+                var endIdx= s.lastIndexOf("/");
+                baseUrl= endIdx>-1  ? s.substring(0, s.lastIndexOf("/")) : s;
+            }
+
+            for(var i=0; i<dg.size();i++) {
+                DataObject row= dg.get(i);
+                HiPSMasterListEntry entry = new HiPSMasterListEntry();
+                setV(entry,row, HiPSMasterListEntry.PARAMS.FRACTION, "coverage");
+                setV(entry,row, HiPSMasterListEntry.PARAMS.WAVELENGTH, "waveband");
+                setV(entry,row, HiPSMasterListEntry.PARAMS.TITLE, "title");
+                setV(entry,row, HiPSMasterListEntry.PARAMS.ORDER, "order");
+                setV(entry,row, HiPSMasterListEntry.PARAMS.RELEASEDATE, "release");
+                setV(entry,row, HiPSMasterListEntry.PARAMS.PROPERTIES, "info_url");
+                entry.set(HiPSMasterListEntry.PARAMS.SOURCE.getKey(),source);
+
+                var mocUrlStrPath= (String)row.getDataElement("moc_url");
+                if (mocUrlStrPath!=null) {
+                    var mocUrlStr= (mocUrlStrPath.toLowerCase().startsWith("http") || baseUrl==null)
+                            ? mocUrlStrPath
+                            : baseUrl+"/"+mocUrlStrPath;
+                    entry.set(HiPSMasterListEntry.PARAMS.URL.getKey(), mocUrlStr);
+                    entry.set(HiPSMasterListEntry.PARAMS.IVOID.getKey(), mocUrlStr);
+                }
+
+                retList.add(entry);
+            }
+            return retList;
+        } catch (Exception e) {
+            log.error(e, "cannot find additional MOCS for " + source);
+            return null;
+        }
+    }
+
+    public static void setV(HiPSMasterListEntry entry, DataObject row, HiPSMasterListEntry.PARAMS key, String col) {
+        Object obj= row.getDataElement(col);
+        if (obj!=null) entry.set(key.getKey(), obj.toString());
+    }
+
 }
 

@@ -155,15 +155,12 @@ public class URLDownload {
         return foundKey!=null ? getFirstVal(params, foundKey) : null;
     }
 
-
-
-
     private static int codeFromException(Exception e) {
         return switch (e) {
             case SSLException ignored -> 495;
-            case SocketTimeoutException ignored -> 408;
-            case UnknownHostException ignored -> 404;
-            default -> 500;
+            case SocketTimeoutException ignored -> HttpURLConnection.HTTP_CLIENT_TIMEOUT;
+            case UnknownHostException ignored -> HttpURLConnection.HTTP_BAD_GATEWAY;
+            default -> HttpURLConnection.HTTP_INTERNAL_ERROR;
         };
     }
 

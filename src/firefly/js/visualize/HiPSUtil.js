@@ -20,11 +20,16 @@ import {getFireflySessionId} from '../Firefly';
 import {encodeServerUrl, getRootURL, loadImage} from '../util/WebUtil.js';
 import {CoordinateSys} from './CoordSys.js';
 import {CysConverter} from './CsysConverter.js';
-import {getFoV, primePlot} from './PlotViewUtil.js';
-import {makeDevicePt, makeWorldPt} from './Point.js';
+import {dispatchPlotImage} from './ImagePlotDispatch';
+import {findViewerWithItemId, getMultiViewRoot} from './MultiViewCntlr';
+import {currentP, getFoV, primePlot} from './PlotViewUtil.js';
+import {makeDevicePt, makeImagePt, makeWorldPt} from './Point.js';
 import {makeHiPSProjection} from './projection/Projection';
+import RangeValues, {ABSOLUTE_STR, PERCENTAGE_STR, STRETCH_ASINH, ZSCALE} from './RangeValues';
+import {IMAGE} from './VisConst';
 import {computeDistance, convertCelestial, toDegrees, toRadians} from './VisUtil.js';
-import {changeHiPSProjectionCenter, getScreenPixScaleArcSec, isHiPSAitoff} from './WebPlot.js';
+import {changeHiPSProjectionCenter, getScreenPixScaleArcSec, isHiPS, isHiPSAitoff} from './WebPlot.js';
+import WebPlotRequest, {TitleOptions} from './WebPlotRequest';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-2;
@@ -97,7 +102,7 @@ export function getTilePixelAngSize(nOrder) {
 
 /**
  *
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param {boolean} [limitToImageDepth] When true, do not return a number that is greater than what this HiPS map
  * can display.  Use hipsProperties.hips_order to determine.
  * @return {{useAllSky:boolean, norder:number, desiredNorder:number, isMaxOrder:boolean}} norder is the result, useAllSky true when the norder is 2 or 3 but
@@ -184,14 +189,43 @@ function getCatalogNOrderForPixArcSecSize(sizeInArcSec) {
     return norder;
 }
 
+/**
+ * @param plot
+ * @param nOrder
+ * @param tileNumber
+ * @return {string|null}
+ */
 export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     if (!plot) return null;
+    return makeHipsUrl(makeHipsTilePath(plot,nOrder,tileNumber),
+        plot.proxyHips, plot.hipsFromHipsList);
+}
+
+/**
+ * @param plot
+ * @param nOrder
+ * @param tileNumber
+ * @param [ext]
+ * @return {string|null}
+ */
+function makeHipsTilePath(plot,nOrder,tileNumber,ext) {
     const dir= Math.floor(tileNumber/10000)*10000;
-    const exts= plot.hipsProperties?.hips_tile_format ?? 'jpg';
+    const exts= ext ?? getHiPSTileExt(plot.hipsProperties?.hips_tile_format ?? 'jpg');
     const cubeExt= plot.cubeDepth>1 && plot.cubeIdx>0 ? '_'+plot.cubeIdx : '';
     const root= plot.hipsUrlRoot.endsWith('/') ? plot.hipsUrlRoot : plot.hipsUrlRoot+'/';
-    return makeHipsUrl(`${root}Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${getHiPSTileExt(exts)}`,
-        plot.proxyHips, plot.hipsFromHipsList);
+    return `${root}Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${exts}`;
+}
+
+export function makeHipsFitsTilePath(plot,nOrder,tileNumber) {
+    let tileUrl;
+    if (plot.hasFitsCube && plot.cubeDepth>1) {
+        tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
+        tileUrl= tileUrl.replace(/_\d*.fits/,'_cube.fits');
+    }
+    else {
+        tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
+    }
+    return tileUrl;
 }
 
 /**
@@ -384,17 +418,46 @@ export function getHealpixCornerTool() {
  *
  * @param {WebPlot} plot
  * @param {WorldPt} wp
- * @return {{norder:number, pixel:number}} the pixel if we can go that deep, undefined otherwise
+ * @return {{norder:number, pixel:number, tilePixel:number, tileCoords:Point, tileImagePt:ImagePt}} the pixel if we can go that deep, undefined otherwise
  */
 export function getHealpixPixel(plot, wp) {
-    const {norder}= getHiPSNorderlevel(plot, true);
-    if (norder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
-    const polar = radecToPolar(wp.x,wp.y);
-    const tilePixel= ang2pixNest(polar.theta, polar.phi,2**(norder));
-    const pixel= ang2pixNest(polar.theta, polar.phi,2**(norder+9));
-    const tileCoords= healpixPixelTo512TileXY(pixel);
-    return { norder:norder+9, tileNorder: norder, pixel, tilePixel, tileCoords };
+    return getHealpixPixelAtNorder(getHiPSNorderlevel(plot, true).norder,wp);
 }
+
+/**
+ * @param {number} tileNorder
+ * @param {WorldPt} wp
+ * @return {{norder:number, pixel:number, tilePixel:number, tileCoords:Point, tileImagePt:ImagePt}} the pixel if we can go that deep, undefined otherwise
+ */
+export function getHealpixPixelAtNorder(tileNorder, wp) {
+    if (tileNorder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
+    const polar = radecToPolar(wp.x,wp.y);
+    const tilePixel= ang2pixNest(polar.theta, polar.phi,2**(tileNorder));
+    const pixel= ang2pixNest(polar.theta, polar.phi,2**(tileNorder+9));
+    const tileCoords= healpixPixelTo512TileXY(pixel);
+    // const tileImagePt= makeImagePt(tileCoords.x,512-tileCoords.y-1);
+    const tileImagePt= makeImagePt(tileCoords.x,512-tileCoords.y-1);
+    return { norder:tileNorder+9, tileNorder, pixel, tilePixel, tileCoords, tileImagePt};
+}
+
+
+/**
+ *
+ * @param norder
+ * @param wp
+ * @param {CoordinateSys} dataCoordSys
+ * @return {Number}
+ * @return {{ipix:number, wpCorners:Array.<WorldPt>, norder:number}} contains the healpix pixel number and a worldPt array of corners
+ */
+export function getHealpixCellAtNorder(norder, wp, dataCoordSys) {
+    const dataWp= convertCelestial(wp, dataCoordSys);
+    const polar = radecToPolar(dataWp.x,dataWp.y);
+    const ipix= ang2pixNest(polar.theta, polar.phi,2**(norder));
+    const nside= 2**norder;
+    return {...healpixCache.makeCornersForPix(ipix, nside, dataCoordSys),norder};
+}
+
+
 
 
 const twoPos= [256,128,64,32,16,8,4,2,1];
@@ -679,4 +742,63 @@ export async function loadImageMultiCall(url) {
     });
 }
 
+let keyCnt= 0;
 
+export function extractFitsFromHiPS(plot,nOrder,tileNumber) {
+    if (!plot.hasFits) return;
+
+    const {min,max}= getHipsDataRange(plot);
+    const rv= getHipsPixelCutRangeValues(plot);
+
+    const {pv} = currentP(plot.plotId);
+    const tileUrl= makeHipsFitsTilePath(plot,nOrder,tileNumber);
+    const wpRequest= WebPlotRequest.makeURIPlotRequest(tileUrl);
+    const plotId= `hipsExtract-${nOrder}-${tileNumber}-${keyCnt}`;
+    keyCnt++;
+    wpRequest.setTitle(`Tile: ${nOrder} / ${tileNumber}`);
+    wpRequest.setTitleOptions(TitleOptions.NONE);
+    wpRequest.setPlotId(plotId);
+    wpRequest.setInitialRangeValues(rv);
+    wpRequest.setInitialColorTable('0');
+    const pvOptions= {};
+    pvOptions.userCanDeletePlots= true;
+    wpRequest.setPlotGroupId(pv.plotGroupId);
+
+    const {viewerId}= findViewerWithItemId(getMultiViewRoot(),plot.plotId, IMAGE) ?? {};
+    dispatchPlotImage({ plotId, wpRequest, viewerId, pvOptions, });
+}
+
+function getHipsDataRange(plot) {
+    if (!isHiPS(plot) || !plot.hipsProperties?.hips_data_range) return {min:0,max:0};
+    const mmStrAry= plot.hipsProperties.hips_data_range.split(' ');
+    if (mmStrAry.length===2) {
+        const min= Number(mmStrAry[0]);
+        const max= Number(mmStrAry[1]);
+        if (!isNaN(min) && !isNaN(max) && min < max) {
+            return {min,max};
+        }
+    }
+    return {min:0,max:0};
+}
+
+
+function getHipsPixelCutRangeValues(plot) {
+    const {hips_pixel_cut:pixelCut}=  plot.hipsProperties ?? {};
+    const defaultRv= RangeValues.makeRV({which:ZSCALE, asinhQValue:4.0, algorithm:STRETCH_ASINH});
+    if (!pixelCut) return defaultRv;
+
+    const stretchValues= pixelCut.split(' ');
+    if (stretchValues.length>=2) {
+        const min= Number(stretchValues[0]);
+        const max= Number(stretchValues[1]);
+        if (!isNaN(min) && !isNaN(max) && min < max) {
+            const algorithm= (stretchValues.length>2  && RangeValues.isAlgorithmSupported(stretchValues[2]))
+                ? stretchValues[2]
+                : 'log';
+            const rv=  RangeValues.makeSimple(ABSOLUTE_STR,min,max,algorithm);
+            if (algorithm==='asinh') rv.asinhQValue= 1;
+            return rv;
+        }
+    }
+    return defaultRv;
+}

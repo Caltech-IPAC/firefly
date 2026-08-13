@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
-import edu.caltech.ipac.firefly.visualize.DirectFitsAccessData;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
@@ -31,7 +30,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +63,7 @@ public class VisJsonSerializer {
         putStrNotNull(jsonPixelResult,"type",r.type());
         putStrNotNull(jsonPixelResult,"valueBase10",r.valueBase10());
         putStrNotNull(jsonPixelResult,"valueBase16",r.valueBase16());
+        putStrNotNull(jsonPixelResult,"unit",r.unit());
         return jsonPixelResult;
     }
 
@@ -462,7 +461,7 @@ public class VisJsonSerializer {
             b.setOriginalImageIdx(getInt(map,"originalImageIdx",0));
             b.setWebPlotRequest(WebPlotRequest.parse(getStr(map, "plotRequestSerialize")));
             b.setRangeValues(RangeValues.parse(getStr(map,"rangeValuesSerialize")));
-            b.setDirectFileAccessData(deserializeDirectFileAccess((JSONObject)map.get("directFileAccessData")));
+            b.setHduNumber(getInt(map, "hduNumber", 0));
             b.setMultiImageFile(getBoolean(map,"multiImageFile"));
             b.setCubeCnt(getInt(map,"cubeCnt",0));
             b.setCubePlaneNumber(getInt(map, "cubePlaneNumber",0));
@@ -472,14 +471,6 @@ public class VisJsonSerializer {
             return null;
         }
     }
-
-    static DirectFitsAccessData deserializeDirectFileAccess(JSONObject map) {
-        if (map==null) return null;
-        Map<String,String> tMap= new HashMap<>(30);
-        for(Object key : map.keySet()) tMap.put((String)key, map.get(key)+"");
-        return new DirectFitsAccessData(tMap);
-    }
-
     private static String getStr(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {
         return getStr(j,key,false);
     }
@@ -500,6 +491,30 @@ public class VisJsonSerializer {
             if (o instanceof Number num) return num.intValue();
             if (!(o instanceof String s)) return defValue;
             return Integer.parseInt(s);
+        } catch (Exception e) {
+            return defValue;
+        }
+    }
+
+    private static long getLong(JSONObject j, String key, long defValue) {
+        try {
+            Object o= j.get(key);
+            if (o==null) return defValue;
+            if (o instanceof Number num) return num.longValue();
+            if (!(o instanceof String s)) return defValue;
+            return Long.parseLong(s);
+        } catch (Exception e) {
+            return defValue;
+        }
+    }
+
+    private static double getDouble(JSONObject j, String key, double defValue) {
+        try {
+            Object o= j.get(key);
+            if (o==null) return defValue;
+            if (o instanceof Number num) return num.doubleValue();
+            if (!(o instanceof String s)) return defValue;
+            return Double.parseDouble(s);
         } catch (Exception e) {
             return defValue;
         }

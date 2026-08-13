@@ -34,7 +34,7 @@ import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.HeaderOnly;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.Image;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.Table;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getAxisCnt;
-import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getNaxisLength;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getNaxisN;
 
 
 /**
@@ -99,11 +99,11 @@ public class FitsHDUUtil {
 
                     int axisCnt= (workingAxis != 4)
                             ? workingAxis
-                            : getNaxisLength(header, 4, isCompressed)==1 ? 3 :workingAxis;
+                            : getNaxisN(header, 4, isCompressed)==1 ? 3 :workingAxis;
                     desc.append((axisCnt <= 2) ? " (" : axisCnt == 3 ? " (cube " : " (" + axisCnt + "d ");
                     if (axisCnt>1) {
                         for(int d=1;(d<=axisCnt);d++) {
-                            desc.append(String.format("%d", getNaxisLength(header,d,isCompressed)));
+                            desc.append(String.format("%d", getNaxisN(header,d,isCompressed)));
                             desc.append(d < axisCnt ? " x " : ")");
                         }
                         if (axisCnt>=4) {
@@ -113,7 +113,7 @@ public class FitsHDUUtil {
                         }
                     }
                     else {
-                        desc.append(String.format("%d x 1)", getNaxisLength(header, 1, isCompressed)));
+                        desc.append(String.format("%d x 1)", getNaxisN(header, 1, isCompressed)));
                     }
 
                     part.setDesc(desc.toString());

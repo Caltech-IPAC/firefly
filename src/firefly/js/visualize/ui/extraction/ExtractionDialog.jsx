@@ -7,18 +7,12 @@ import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import {isUndefined} from 'lodash';
 import React, {useEffect, useState} from 'react';
 import {getAppOptions} from '../../../api/ApiUtil.js';
-import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../../ui/ResizeMonitor';
-import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
-    dispatchModifyCustomField
-} from '../../DrawLayerDispatch';
-import {makeImagePt} from '../../Point';
 import {allowPinnedCharts} from '../../../charts/ChartUtil';
 import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
 import {pinChart} from '../../../charts/ui/PinnedChartContainer.jsx';
 import {downloadChart, PlotlyWrapper} from '../../../charts/ui/PlotlyWrapper.jsx';
-import {dispatchHideDialog, dispatchShowDialog} from '../../../core/ComponentCntlr.js';
-import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../../core/MasterSaga.js';
+import {dispatchShowDialog} from '../../../core/ComponentCntlr.js';
+import {dispatchAddActionWatcher} from '../../../core/MasterSaga.js';
 import ExtractLineTool, {
     addLineDistAttributesToPlots, COLUMN_SELECTION, FREE_SELECTION, LINE_SELECTION
 } from '../../../drawingLayers/ExtractLineTool.js';
@@ -31,38 +25,38 @@ import {FieldGroup} from '../../../ui/FieldGroup';
 import HelpIcon from '../../../ui/HelpIcon.jsx';
 import {ListBoxInputField, ListBoxInputFieldView} from '../../../ui/ListBoxInputField.jsx';
 import {PopupPanel} from '../../../ui/PopupPanel.jsx';
+import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../../ui/ResizeMonitor';
 import {useFieldGroupValue, useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {ValidationField} from '../../../ui/ValidationField';
 import {intValidator} from '../../../util/Validate';
 import {CCUtil, CysConverter} from '../../CsysConverter.js';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchModifyCustomField} from '../../DrawLayerDispatch';
 import {getExtName, hasFloatingData} from '../../FitsHeaderUtil.js';
 import {dispatchAttributeChange, dispatchChangePointSelection, dispatchChangePrimePlot} from '../../ImagePlotDispatch';
-import {PLOT_IMAGE} from '../../VisConst';
-import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {PlotAttribute} from '../../PlotAttribute.js';
 import {
     convertHDUIdxToImageIdx, currentP, getCubePlaneFromWavelength, getDrawLayerByType, getHDU, getHDUIndex,
-    getImageCubeIdx, getPlotViewAry, hasWCSProjection, hasWLInfo, isDrawLayerAttached,
-    isImageCube, isMultiHDUFits, primePlot
+    getCubePlaneIdx, getPlotViewAry, hasWCSProjection, hasWLInfo, isDrawLayerAttached, isCube, isMultiHDUFits,
+    primePlot
 } from '../../PlotViewUtil.js';
+import {makeImagePt} from '../../Point';
+import {PLOT_IMAGE} from '../../VisConst';
+import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
 import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart.jsx';
 import {keepDataExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
+import {
+    cancelLineExtraction, EXTRACT_DIALOG_ID, endExtraction, EXTRACT_END_ID, ZAXIS_POINT_SELECTION_ID
+} from './ExtractionUIUtil';
 
 const CUBE_WARNING=`
 Values are taken directly from cube plane pixels without spatial interpolation, background subtraction, or PSF corrections. 
 This is a quick-look tool for exploration, not a research-ready product.
 `;
 
-const DIALOG_ID= 'extractionDialog';
 const CHART_ID= 'extractionChart';
-const ZAXIS_POINT_SELECTION_ID= 'z-axisExtraction';
 
 const SELECT_TYPE_TIP= 'Choose mouse selection type: mouse line lock, mouse column lock or free selection';
-
-export const Z_AXIS= 'Z_AXIS';
-export const LINE= 'LINE';
-export const POINTS= 'POINTS';
 
 const exTypeCntl= {
     Z_AXIS: {
@@ -88,14 +82,12 @@ function enableDrawLayer(typeId) {
     !isDrawLayerAttached(dl,pv.plotId) && dispatchAttachLayerToPlot(typeId,pv.plotId,true,true, true);
 }
 
-const EXTRACT_END_ID= 'extractEndId';
-
 
 export function showExtractionDialog(element,extractionType,wasCanceled) {
     endExtraction();
     exTypeCntl[extractionType].start();
-    DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/>, element );
-    dispatchShowDialog(DIALOG_ID);
+    DialogRootContainer.defineDialog(EXTRACT_DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/>, element );
+    dispatchShowDialog(EXTRACT_DIALOG_ID);
 
 
     dispatchAddActionWatcher( {
@@ -105,13 +97,6 @@ export function showExtractionDialog(element,extractionType,wasCanceled) {
     });
 }
 
-
-export function endExtraction() {
-    cancelPointExtraction();
-    cancelZaxisExtraction();
-    cancelLineExtraction();
-    dispatchCancelActionWatcher(EXTRACT_END_ID);
-}
 
 function ExtractDialog({extractionType,wasCanceled}) {
     const {pv, pvCnt} = useStoreConnector( getStoreState);
@@ -232,8 +217,8 @@ function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
         const extName= getExtName(plot);
         hduInfo= (extName || ` HDU #${getHDU(plot)}`)  + ' - ';
     }
-    if (getImageCubeIdx(plot)>-1) {
-        cubeInfo= `Plane #${getImageCubeIdx(plot)+1} - `;
+    if (getCubePlaneIdx(plot)>-1) {
+        cubeInfo= `Plane #${getCubePlaneIdx(plot)+1} - `;
     }
     return  `Line Extract Preview - ${hduInfo}${cubeInfo}(${x1},${y1}) to (${x2},${y2})`;
 }
@@ -255,7 +240,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
     const {plotId,plotImageId}= plot ?? {};
     const hduNum= getHDU(plot);
-    const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
+    const plane= getCubePlaneIdx(plot)>-1 ? getCubePlaneIdx(plot) : 0;
     const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
     useEffect(() => {
@@ -319,7 +304,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const y2= Math.trunc(ipt2?.y ?? 0);
     const {plotId,plotImageId}= plot ?? {};
     const hduNum= getHDU(plot);
-    const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
+    const plane= getCubePlaneIdx(plot)>-1 ? getCubePlaneIdx(plot) : 0;
     const {x:chartX,y:chartY}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
 
@@ -378,13 +363,13 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 const CubeStartUpHelp= ({plot}) => (
     <Stack spacing={3}>
         <Typography >
-            {isImageCube(plot) ?
+            {isCube(plot) ?
                 'Click on a pixel to extract data from all planes of the cube' :
                 'Please choose a cube to extract z-axis data'}
         </Typography>
         <Stack spacing={1}>
             <Divider orientation='horizontal'/>
-            {isImageCube(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
+            {isCube(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
                 {CUBE_WARNING}
             </Typography>}
         </Stack>
@@ -581,12 +566,12 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     useEffect(() => {
         const updateChart= async () => {
             if (ipt && plot) {
-                if (!isImageCube(plot)) {
+                if (!isCube(plot)) {
                     setChartParams({});
                     return;
                 }
                 const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, combineOp, allRelatedHDUS);
-                const plane=getImageCubeIdx(plot);
+                const plane=getCubePlaneIdx(plot);
                 const chartTitle= `Z Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
                 setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, combineOp, chartTitle));
             }
@@ -693,27 +678,3 @@ async function keepExtractionAndPin(callKeepExtraction,allowpinChart=false) {
     }
 }
 
-function cancelZaxisExtraction() {
-    dispatchChangePointSelection(ZAXIS_POINT_SELECTION_ID, false);
-    dispatchHideDialog(DIALOG_ID);
-}
-
-function cancelLineExtraction() {
-    const {pv}= currentP();
-    if (pv) {
-        dispatchDetachLayerFromPlot(ExtractLineTool.TYPE_ID,pv.plotId,true);
-        dispatchAttributeChange({plotId:pv.plotId,overlayColorScope:true,
-            changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: undefined }});
-        dispatchDestroyDrawLayer(ExtractLineTool.TYPE_ID);
-    }
-    dispatchHideDialog(DIALOG_ID);
-}
-
-function cancelPointExtraction() {
-    const {pv}= currentP();
-    if (pv) {
-        dispatchDetachLayerFromPlot(ExtractPointsTool.TYPE_ID,pv.plotId,true);
-        dispatchDestroyDrawLayer(ExtractPointsTool.TYPE_ID);
-    }
-    dispatchHideDialog(DIALOG_ID);
-}
