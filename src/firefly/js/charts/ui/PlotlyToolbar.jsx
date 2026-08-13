@@ -17,7 +17,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {TableFilterPopup} from '../../tables/ui/FilterEditor';
-import {getTblIdFromChart, isScatter2d, isSpectrum} from '../ChartUtil.js';
+import {getTblIdFromChart, isScatter2d} from '../ChartUtil.js';
 import {SpectralLinesPanel} from './options/SpectralLines.jsx';
 import {findViewerWithItemId, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
@@ -83,7 +83,6 @@ function ScatterToolbar({chartId, expandable}) {
             <SaveBtn {...{chartId}} />
             <RestoreBtn {...{chartId}} />
             {tbl_id && <FiltersBtn {...{chartId}} />}
-            {isSpectrum(chartId) && <SpectralLinesBtn/>}
             <OptionsBtn {...{chartId}} />
             {expandable && <ExpandBtn {...{chartId}} />}
             { help_id && <Stack p={1/4}> <HelpIcon helpId={help_id} /> </Stack>}
@@ -317,7 +316,7 @@ function OptionsBtn({chartId}) {
     );
 }
 
-function SpectralLinesBtn() {
+export function SpectralLinesBtn() {
     return (
         <SpectralLinesButton onClick={() => showSpectralLinesDialog()}/>
     );
