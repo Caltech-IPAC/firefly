@@ -121,7 +121,7 @@ function HipsOptionsDropdown({pv}) {
                                    hasCheckBox={true}
                                    checkBoxOn={plot.imageCoordSys===CoordinateSys.EQ_J2000}
                                    onClick={()=>dispatchChangeHiPS( {plotId,  coordSys: CoordinateSys.EQ_J2000})}/>
-                    <ToolbarButton text='Ecliptic J2000' tip='Use Ecliptic J2000 coordinate system' key={'eqj'}
+                    <ToolbarButton text='Ecliptic J2000' tip='Use Ecliptic J2000 coordinate system' key={'ecliptic'}
                                    hasCheckBox={true}
                                    checkBoxOn={plot.imageCoordSys===CoordinateSys.ECL_J2000}
                                    onClick={()=>dispatchChangeHiPS( {plotId,  coordSys: CoordinateSys.ECL_J2000})}/>

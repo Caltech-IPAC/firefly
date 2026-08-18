@@ -256,7 +256,9 @@ public class AnyFileUpload extends BaseHttpServlet {
                 File dir= getSessUploadDir(sp.convertToServerRequest());
                 statusFileInfo = LockingRetrieve.downloadWithCacheMsg(fromUrl, dir);
             }
-            if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo));
+            if (isUrlFail(statusFileInfo))  {
+                return new Result(statusFileInfo,null);
+            }
             uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);
 
         } else if (fromWPR!= null) {
