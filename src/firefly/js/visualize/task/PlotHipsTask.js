@@ -263,12 +263,13 @@ async function makeHiPSPlot(rawAction, dispatcher) {
 
 
 
-export function createHiPSMocLayerFromPreloadedTable({tbl_id,title, shortTitle, fitsPath, mocUrl, plotId, visible=false,
-                                                         maxFetchDepth, color, mocGroupDefColorId, attachAllPlot=false} ) {
+export function createHiPSMocLayerFromPreloadedTable({tbl_id,title, mocStyle, shortTitle, fitsPath, mocUrl,
+                                                         plotId, visible=false, maxFetchDepth, color,
+                                                         mocGroupDefColorId, attachAllPlot=false} ) {
     const table= getTblById(tbl_id);
     if (!table || table.isFetching) return;
     const uniqColName= table.tableData.columns[0].name;
-    const dl = addNewMocLayer({ tbl_id, title, shortTitle, fitsPath, mocUrl, uniqColName,
+    const dl = addNewMocLayer({ tbl_id, title, shortTitle, mocStyle, fitsPath, mocUrl, uniqColName,
         color, tablePreloaded:true,  maxFetchDepth, mocGroupDefColorId });
     if (dl && plotId) {
         dispatchAttachLayerToPlot(dl.drawLayerId, plotId, attachAllPlot, visible, true);

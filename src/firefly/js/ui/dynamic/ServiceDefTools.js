@@ -1,21 +1,14 @@
 import {isArray, isNumber, isString} from 'lodash';
 import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
-import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
-import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
-import {isValidFullUrl, splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
-import CoordinateSys from '../../visualize/CoordSys.js';
+import {splitByWhiteSpace} from '../../util/WebUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
+import {isSIAStandardID} from '../../voAnalyzer/VoCoreUtils';
 import {
     AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef,
-    makeObsCoreOps,
-    makePointDef, makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, makeWavelengthDef,
-    POINT, POLYGON, POSITION, RANGE, UNKNOWN
+    makeObsCoreOps, makePointDef, makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, makeWavelengthDef, POINT,
+    POLYGON, POSITION, RANGE, UNKNOWN
 } from './DynamicDef.js';
-import {getServiceDescriptors, isDataLinkServiceDesc} from 'firefly/voAnalyzer/VoDataLinkServDef';
-
-
 
 /**
  * @param {Array.<FieldDef>} fieldDefAry
@@ -35,21 +28,6 @@ export const hasAnySpacial= (fieldDefAry) =>
     hasType(fieldDefAry,POLYGON) || hasType(fieldDefAry,CIRCLE) ||
     hasType(fieldDefAry,POSITION) || hasType(fieldDefAry,POINT) ||
     hasType(fieldDefAry,AREA);
-
-export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
-export const isSSAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.ssa);
-export const isSODAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.soda);
-export const isTAPStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.tap);
-
-export function getStandardIdType(standardID) {
-    if (isSIAStandardID(standardID))  return standardIDs.sia;
-    if (isSSAStandardID(standardID))  return standardIDs.ssa;
-    if (isSODAStandardID(standardID)) return standardIDs.soda;
-    if (isTAPStandardID(standardID)) return standardIDs.tap;
-}
-
-export const isCisxTapStandardID = (standardID, utype) =>
-    standardID.toLowerCase().startsWith(standardIDs.tap) && utype.toLowerCase() === cisxAdhocServiceUtype;
 
 
 const isCircleField = ({type, arraySize, xtype = '', units = ''}) =>
@@ -116,6 +94,12 @@ const isNumberField = ({type, minValue, maxValue, value}) =>
     (value || minValue || maxValue) &&
     (!isNaN(Number(value)) || !isNaN(Number(minValue)) || !isNaN(Number(maxValue)));
 
+/**
+ *
+ * @param {Array.<ServiceDescriptorInputParam>} serDefParams
+ * @param {SearchAreaInfo} searchAreaInfo
+ * @return {Object}
+ */
 function prefilterRADec(serDefParams, searchAreaInfo = {}) {
     const foundRa= findParamByUCDOrName(serDefParams,'pos.eq.ra', 'ra');
     const foundDec= findParamByUCDOrName(serDefParams,'pos.eq.dec', 'dec');
@@ -129,7 +113,7 @@ function prefilterRADec(serDefParams, searchAreaInfo = {}) {
         raKey: foundRa.name,
         decKey: foundDec.name,
         hipsFOVInDeg: searchAreaInfo.hips_initial_fov,
-        mocList: getMOCList(searchAreaInfo),
+        mocList: searchAreaInfo.mocList,
         hipsUrl: searchAreaInfo.HiPS,
         coordinateSys: searchAreaInfo.coordinateSys,
         targetPanelExampleRow1: searchAreaInfo.examples ? searchAreaInfo.examples.split('|') : undefined
@@ -138,7 +122,6 @@ function prefilterRADec(serDefParams, searchAreaInfo = {}) {
 }
 
 function prefilterWavelength(serDefParams, standardID) {
-    // const foundWlMin =  findParamByUCDAndName(serDefParams,'em.wl;stat.min','em_min');
     const foundWlBand =  findParamByUCDAndName(serDefParams,'em.wl','BAND');
     if (!isSIAStandardID(standardID) || !foundWlBand?.name) {
         return {filteredParams: serDefParams, wlDef: undefined};
@@ -181,29 +164,28 @@ function prefilterObsCoreOps(serDefParams, standardID) {
     return {filteredParams, obsDef};
 }
 
+/**
+ *
+ * @param {Array.<ServiceDescriptorInputParam>} serDefParams
+ * @param {String} UCD
+ * @param {String} name
+ * @return {ServiceDescriptorInputParam}
+ */
 function findParamByUCDOrName(serDefParams, UCD, name){
     const p= serDefParams.find((aParam) => aParam.UCD === UCD);
     if (p) return p;
     return serDefParams.find((aParam) => aParam.name === name);
 }
 
+/**
+ *
+ * @param {Array.<ServiceDescriptorInputParam>} serDefParams
+ * @param {String} UCD
+ * @param {String} name
+ * @return {ServiceDescriptorInputParam}
+ */
 function findParamByUCDAndName(serDefParams, UCD, name){
     return serDefParams.find((aParam) => aParam.UCD === UCD && aParam.name === name);
-}
-
-function makeExamples(inExample) {
-    if (!inExample) return {targetPanelExampleRow1:undefined, targetPanelExampleRow2:undefined};
-    const examples = inExample.split('|');
-    if (examples?.length>1) {
-        const cnt= examples.length;
-        return {
-            targetPanelExampleRow1: examples.slice(0,Math.trunc(cnt/2)),
-            targetPanelExampleRow2: examples.slice(Math.trunc(cnt/2))
-        };
-    }
-    else {
-        return { targetPanelExampleRow1: [inExample], targetPanelExampleRow2: [] };
-    }
 }
 
 /**
@@ -277,26 +259,6 @@ function makeFieldDef({serDefParam, sRegion, searchAreaInfo, hidePredefinedStrin
         }
 }
 
-/**
- *
- * @param {SearchAreaInfo} searchAreaInfo
- * @return {Array.<{mocUrl: String, mocColor: String, title:String}>|undefined}
- */
-function getMOCList(searchAreaInfo) {
-    const mocAry= Object.keys(searchAreaInfo)
-        .filter( (k) => k.toLowerCase()==='moc' || k.match(/moc\d+$/i) )
-        .map( (k) => {
-            const cnt= k.substring(3,k.length);
-            return {
-                mocUrl : searchAreaInfo[k],
-                title : searchAreaInfo['mocDesc'+cnt] ?? 'MOC'+cnt,
-                mocColor: searchAreaInfo['mocColor'+cnt],
-                maxFetchDepth: searchAreaInfo['maxFetchDepth'+cnt]
-            };
-        })
-        .filter((entry) => isValidFullUrl(entry.mocUrl) );
-    return mocAry.length ? mocAry : undefined;
-}
 
 function doMakeUnknownDef(serDefParam, hidePredefinedStringFields) {
     const {value='', name, desc: tooltip, units = ''} = serDefParam;
@@ -322,14 +284,12 @@ function doMakeEnumDef(serDefParam) {
 
 function doMakePolygonField(serDefParam, sRegion, searchAreaInfo) {
     const {name, desc: tooltip, units = ''} = serDefParam;
-    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.polygon_examples);
     const {value} = getPolygonInfo(serDefParam);
     return makePolygonDef({key: name, desc: name, tooltip, units, initValue: value, sRegion,
-        targetPanelExampleRow1,targetPanelExampleRow2});
+        ...searchAreaInfo?.polygon_examples});
 }
 
 function doMakeCircleDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize) {
-    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
     const {name, desc: tooltip, units = ''} = serDefParam;
     const {wpt: centerPt, radius, minValue, maxValue} = getCircleInfo(serDefParam);
     const hipsFOVInDeg= searchAreaInfo?.hips_initial_fov ?? fovSize ?? radius * 2 + radius * .2;
@@ -342,14 +302,12 @@ function doMakeCircleDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize)
         hipsFOVInDeg,
         coordinateSys: searchAreaInfo?.coordinateSys,
         sRegion,
-        mocList: getMOCList(searchAreaInfo),
-        targetPanelExampleRow1,
-        targetPanelExampleRow2
+        mocList: searchAreaInfo.mocList,
+        ...searchAreaInfo.examples,
     });
 }
 
 function doMakePointDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize) {
-    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
     const {name, desc: tooltip, units = ''} = serDefParam;
     return makePointDef({
         key:name, desc: name, tooltip, units,
@@ -358,8 +316,8 @@ function doMakePointDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize) 
         centerPt: getPointInfo(serDefParam),
         hipsFOVInDeg: searchAreaInfo?.hips_initial_fov ?? fovSize ?? 2,
         coordinateSys: searchAreaInfo?.coordinateSys,
-        mocList: getMOCList(searchAreaInfo),
-        sRegion, targetPanelExampleRow1, targetPanelExampleRow2
+        mocList: searchAreaInfo.mocList,
+        sRegion, ...searchAreaInfo.examples,
     });
 }
 
@@ -411,130 +369,6 @@ function doMakeNumberDef(serDefParam, hidePredefinedStringFields) {
             hide: Boolean(value && hidePredefinedStringFields), nullAllowed:true});
     }
 
-}
-
-
-/**
- *
- * @param {Object} cisxUI
- * @param {number} defaultMaxMOCFetchDepth
- * @return {SearchAreaInfo}
- */
-export function makeSearchAreaInfo(cisxUI, defaultMaxMOCFetchDepth) {
-    if (!cisxUI) return;
-    const tmpObj = cisxUI.reduce((obj, {name, value, UCD}) => {
-        switch (name) {
-            case 'hips_initial_fov':
-                obj[name] = Number(value);
-                break;
-            case 'hips_initial_dec':
-            case 'hips_initial_ra':
-                obj[name] = Number(value);
-                obj.ptIsGalactic= UCD?.includes('galactic');
-                break;
-            default:
-                if (!name?.startsWith('moc')) obj[name] = value;
-                break;
-        }
-        return obj;
-    }, {});
-
-    const mocsObj= findMocs(cisxUI);
-    const {hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic} = tmpObj;
-    const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic' ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
-    const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
-    const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
-    return {...tmpObj, ...mocsObj, centerWp,
-        coordinateSys: hipsProjCsys.toString(), maxFetchDepth:defaultMaxMOCFetchDepth};
-}
-
-
-function findMocs(cisxUI) {
-    const mocColor= cisxUI.filter( (obj) => obj?.name?.toLowerCase().startsWith('moc_color'));
-    const moc=  cisxUI.filter( (obj) => obj?.name?.toLowerCase()==='moc' || obj?.name?.match(/moc\d+$/i) );
-    const combinedObj= [...mocColor,...moc].reduce( (obj, {name, value, desc}) => {
-        if (name.startsWith('moc_color')) {
-            obj['mocColor'+ name.substring(9,name.length)]= value;
-        }
-        else {
-            obj[name]= value;
-            obj['mocDesc'+ name.substring(3,name.length)] = desc;
-        }
-        return obj;
-    },{});
-    return combinedObj;
-}
-
-
-
-
-let tblCnt=1;
-
-export function makeServiceDescriptorSearchRequest(request, siaConstraints=[],serviceDescriptor, extraMeta={}) {
-    const {standardID = '', accessURL, utype, serDefParams, title, cisxUI=[]} = serviceDescriptor;
-    const hiddenColumns= cisxUI.find( (e) => e.name==='hidden_columns')?.value;
-    const tblSortOrder= cisxUI.find( (e) => e.name==='table_sort_order')?.value;
-    const MAXREC = 50000;
-    const tblTitle= `${title} - ${tblCnt++}`;
-
-    const hideObj= hiddenColumns ?
-        Object.fromEntries(hiddenColumns.split(',').map((c) => [ `col.${c}.visibility`, 'hide'] )) : {};
-
-    const sAry= tblSortOrder?.match(/([^,]+),(.+)/);
-    let sortObj= {};
-    if (sAry) {
-        const [,dir,sortBy] = sAry;
-        sortObj= {sortInfo: sortInfoString(sortBy, dir?.toUpperCase()==='ASC')};
-    }
-
-    const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};
-    const requestAsArray= Object.entries(request).reduce( (ary, [k,v]) => {
-        isArray(v)
-            ? v.forEach( (vEntry) => ary.push([k,vEntry]))
-            : ary.push([k,v]) ;
-        return ary;
-    }, []);
-
-    if (isSIAStandardID(standardID)) {
-        const reqParams= new URLSearchParams(requestAsArray);
-        const siaParams= new URLSearchParams();
-        siaConstraints.forEach( (s) => {
-            const [k,v]= s.split('=');
-            if (k && v) siaParams.append(k,v);
-        });
-        const params= new URLSearchParams([...reqParams, ...siaParams]);
-        const url= params.size ? accessURL+'?'+params.toString() : accessURL;
-        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
-    }
-    else if (isSSAStandardID(standardID)) {
-        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
-        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
-    }
-    else if (isCisxTapStandardID(standardID, utype)) {
-        const doAsync = standardID.toLowerCase().includes('async');
-        const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
-        const finalQuery = tokenSub(request, query);
-        let serviceUrl = accessURL;
-        if (accessURL.endsWith('/sync')) serviceUrl = accessURL.substring(0, accessURL.length - 5);
-        if (accessURL.endsWith('/async')) serviceUrl = accessURL.substring(0, accessURL.length - 6);
-
-        if (!query) return;
-        if (doAsync) {
-            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC}, options);
-            setNoCache(asyncReq);
-            return asyncReq;
-        } else {
-            const serParam = new URLSearchParams({QUERY: finalQuery, REQUEST: 'doQuery', LANG: 'ADQL', MAXREC});
-            const completeUrl = serviceUrl + '/sync?' + serParam.toString();
-            return makeFileRequest(title, completeUrl,undefined, options);   //todo- figure out title
-        }
-
-    }
-    else {
-        //todo: we should to call file analysis first
-        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
-        return makeFileRequest(tblTitle, url, undefined,options);   //todo- figure out title
-    }
 }
 
 
@@ -605,32 +439,3 @@ export function ingestInitArgs(fdAry, args) {
     });
 }
 
-//check for and return a datalink service descriptor url and input params, if one is found
-export function checkForDatalinkServDesc(tblModel) {
-    const serviceDescriptors = getServiceDescriptors(tblModel);
-    if (!serviceDescriptors) return null;
-
-    for (const sd of serviceDescriptors) {
-        //serviceDescriptors.forEach((sd) => {
-        const isDatalinkSerDesc = isDataLinkServiceDesc(sd);
-        if (isDatalinkSerDesc) {
-            const productUrl = {
-                accessURL: sd?.accessURL || '',
-                inputParams: {}
-            };
-
-            if (sd?.serDefParams) {
-                for (const param of sd.serDefParams) {
-                    productUrl.inputParams[param?.name] = {value: param.value, ref: param.ref};
-                }
-            }
-
-            //return only when valid datalink access url is found
-            if (productUrl.accessURL || Object.keys(productUrl.inputParams).length > 0) {
-                return productUrl;
-            }
-
-        }
-    }
-    return null; //no valid datalink service descriptor found
-}

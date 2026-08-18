@@ -16,13 +16,13 @@ import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent'
 import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,} from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
 import {fetchSemanticList} from 'firefly/metaConvert/vo/DatalinkFetch';
-import {checkForDatalinkServDesc} from 'firefly/ui/dynamic/ServiceDefTools';
 import {CheckboxGroupInputField, SelectAllCheckbox} from 'firefly/ui/CheckboxGroupInputField';
 import {FormControl, FormLabel, Stack, Typography} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
 import {makeFoVString} from 'firefly/visualize/ZoomUtil';
+import {checkForDatalinkServDesc} from '../../voAnalyzer/VoDataLinkServDef';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
