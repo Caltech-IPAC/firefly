@@ -149,7 +149,7 @@ function contextToolbar(plotView,dlAry,extensionList, width, makeToolbar) {
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length && !showMultiImageController && !hipsFits) return;
+        if (!ptAry.length && !showMultiImageController && !hipsFits && isImage(plot)) return;
         return (
                 <VisCtxToolbarView {...{plotView, extensionAry:isEmpty(ptAry)?EMPTY_ARRAY:ptAry, width,
                     showMultiImageController, makeToolbar}}/>
