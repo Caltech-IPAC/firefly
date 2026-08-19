@@ -20,7 +20,7 @@ const STORE_OMIT_LIST= ['fieldKey', 'groupKey', 'initialState', 'fireReducer',
     'confirmValue', 'confirmValueOnInit', 'forceReinit', 'mounted'];
 
 function buildViewProps(fieldState,props,fieldKey,groupKey,value='') {
-    const {message= '', valid= true, visible= true, value:ignoreValue, displayValue= '',
+    const {message= '', valid= true, visible= true, displayValue= '',
         tooltip= '', validator= defValidatorFunc, ...rest}= fieldState;
     const propsClean= Object.keys(props).reduce( (obj,k)=> {
         if (isDefined(props[k]) && k!=='value') obj[k]=props[k];
@@ -57,12 +57,22 @@ function hasNewKeys(infoRef,fieldKey,groupKey) {
     return isInit(infoRef,fieldKey,groupKey) && prevFieldKey && prevGroupKey;
 }
 
+/**
+ * @param {String} groupKey
+ * @param {Object} initialState
+ * @param {Object} props
+ * @param {ConfirmValueFunc} confirmValueOnInit
+ * @return {Object}
+ */
 function doGetInitialState(groupKey, initialState,  props, confirmValueOnInit= defaultConfirmValue) {
     const {fieldKey}= props;
     const {keepState=false}= getFieldGroupState(groupKey) ?? {};
-    const storeField= get(FieldGroupUtils.getGroupFields(groupKey), [fieldKey]);
-    const initS= !keepState ? (initialState ||  storeField || {}) : (storeField || initialState || {});
-    return {...initS, value: confirmValueOnInit(initS.value,props,initialState,initS)};
+    const storeField= FieldGroupUtils.getGroupFields(groupKey)[fieldKey] ?? {};
+    const computedState= keepState
+        ?  {...initialState, ...storeField}
+        : (initialState ?? storeField);
+    const value= confirmValueOnInit(computedState.value,props,initialState,computedState);
+    return {...computedState, value};
 }
 
 
@@ -102,13 +112,6 @@ export const fgConnectPropsTypes= {
     confirmValue: PropTypes.func
 };
 
-/**
- * Minimal set of properties ot use for useFieldGroupConnector
- */
-export const fgMinPropTypes= {
-    fieldKey: PropTypes.string.isRequired,
-    groupKey: PropTypes.string,  // normally passed in context
-};
 
 /**
  * @name ConfirmValueFunc
@@ -118,6 +121,7 @@ export const fgMinPropTypes= {
  * @param {*} value
  * @param {Object} props
  * @param {Object} state
+ * @param {Object|undefined} computedState
  * @returns *
  */
 
@@ -160,15 +164,12 @@ export const useFieldGroupConnector= (props) => {
         }
     }
 
-    const getInitialState= () => doGetInitialState(groupKey, initialState,  props, (confirmValueOnInit||confirmValue));
+    const getInitialState= () => doGetInitialState(groupKey, initialState,  props, (confirmValueOnInit ?? confirmValue));
 
     const [fieldState, setFieldState] = useState(() => getInitialState());
 
     const fireValueChange= (payload) => dispatchValueChange({...payload, fieldKey,groupKey});
     const value= confirmValue ? confirmValue(fieldState.value,props,fieldState) : fieldState.value;
-
-    const effectChangeAry= [fieldKey, groupKey, fieldState];
-    if (confirmValue) effectChangeAry.push(value); // only need to watch value in this case
 
 
     useEffect(() => {
@@ -205,11 +206,11 @@ export const useFieldGroupConnector= (props) => {
             if (!gState || !gState.mounted || !get(gState,['fields',fieldKey])) return;
             if (fieldState !== gState.fields[fieldKey]) setFieldState(gState.fields[fieldKey]);
         });
-    }, effectChangeAry);
+    }, [fieldKey, groupKey, fieldState,confirmValue]);
 
     useEffect(() => {  // only run on dismount
         return () => dispatchMountComponent( groupKey, fieldKey, false);
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (doingInit || isUndefined(forceValid)) return;
@@ -221,7 +222,7 @@ export const useFieldGroupConnector= (props) => {
             f.validator= f.validator ?? props.validator;
             if (canValidate(f)) fireValueChange({...callValidator(f)});
         }
-    }, [forceValid]);
+    }, [forceValid]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return {
         fireValueChange, viewProps: buildViewProps(fieldState,props,fieldKey,groupKey, value), fieldKey, groupKey

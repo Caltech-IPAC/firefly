@@ -17,7 +17,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -78,15 +81,17 @@ public class VosiCapabilityRetrieve {
         private boolean canUseCoord2= false;
         private boolean canUseCoordSys= false;
         private boolean canUseDistance= false;
+        private final List<String> outputFormats = new ArrayList<>();
         boolean foundTAP= false;
         boolean foundFeatures= false;
+        boolean foundOutputFormat= false;
         boolean geoFeaturesProcess = false;
 
         CapabilityHandle() { }
 
         public TapCapability getTapCapability() {
             if (geoFeaturesProcess) {
-                return new TapCapability( canUpload, true,
+                return new TapCapability(outputFormats, canUpload, true,
                         canUsePoint, canUseCircle, canUseBox,
                         canUsePolygon, canUseRegion, canUseContains,
                         canUseIntersects, canUseArea, canUseCentroid,
@@ -110,6 +115,9 @@ public class VosiCapabilityRetrieve {
                 if (qName.equals("uploadMethod") && confirmAttribute(att,"ivo-id", uploadHttp)) {
                     canUpload= true;
                 }
+                if (qName.equals("outputFormat")) {
+                    foundOutputFormat= true;
+                }
             }
             currValue.setLength(0);
             currElement.push(qName);
@@ -119,8 +127,7 @@ public class VosiCapabilityRetrieve {
         public void endElement(String uri, String localName, String qName) {
             if (foundTAP && qName.equals("capability")) foundTAP= false;
             if (foundFeatures && qName.equals("languageFeatures")) foundFeatures= false;
-
-
+            if (foundOutputFormat && qName.equals("outputFormat")) foundOutputFormat= false;
 
 
             String value= currValue.toString();
@@ -141,6 +148,9 @@ public class VosiCapabilityRetrieve {
                     case "DISTANCE" -> canUseDistance = true;
                 }
                 geoFeaturesProcess = true;
+            }
+            if (foundTAP && foundOutputFormat && qName.equals("mime")) {
+                outputFormats.add(value);
             }
             if (!currElement.empty()) currElement.pop();
         }
@@ -165,15 +175,19 @@ public class VosiCapabilityRetrieve {
 
     public record Capabilities( TapCapability tapCapability) {}
 
-    public record TapCapability( boolean canUpload, boolean foundGeoLanguageFeatures,
-                                 boolean canUsePoint, boolean canUseCircle, boolean canUseBox,
-                                 boolean canUsePolygon, boolean canUseRegion, boolean canUseContains,
-                                 boolean canUseIntersects, boolean canUseArea, boolean canUseCentroid,
-                                 boolean canUseCoord1, boolean canUseCoord2, boolean canUseCoordSys,
-                                 boolean canUseDistance) {}
+    public record TapCapability(
+            List<String> outputFormats,
+            boolean canUpload, boolean foundGeoLanguageFeatures,
+            boolean canUsePoint, boolean canUseCircle, boolean canUseBox,
+            boolean canUsePolygon, boolean canUseRegion, boolean canUseContains,
+            boolean canUseIntersects, boolean canUseArea, boolean canUseCentroid,
+            boolean canUseCoord1, boolean canUseCoord2, boolean canUseCoordSys,
+            boolean canUseDistance) {}
 
     private static TapCapability makeDefaultTapCapability(boolean canUpload) {
-        return new TapCapability(canUpload, false,
+        return new TapCapability(
+                Collections.emptyList(),
+                canUpload, false,
                 true,true,false,
                 true,false,true,
                 false,false,false,
