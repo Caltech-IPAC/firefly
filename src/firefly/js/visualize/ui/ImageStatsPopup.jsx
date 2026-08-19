@@ -7,11 +7,12 @@ import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
     dispatchModifyCustomField
 } from '../DrawLayerDispatch';
-import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
+import {currentP, getDrawLayerByType, isDrawLayerAttached, isThreeColor} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
 
@@ -50,11 +51,23 @@ function destroyDrawLayer(plotId)
  */
 
 export function showImageAreaStatsPopup(popTitle, statsResult, plotId) {
-    var popupStats = statsResult.hasOwnProperty(noBand) ?
-                    <ImageStats statsResult={statsResult[noBand]} plotId={plotId}/> :
-                    <ImageStatsTab statsResult={statsResult} plotId={plotId}/>;
 
-    var popup = (<PopupPanel title={popTitle}
+    if (Object.values(statsResult).some( (t) => !t)) {
+        const msg= isThreeColor(currentP(plotId).pv)
+            ? 'Could not compute statistics: most likely selected area of one or more bands have no valid (non-NaN) pixels'
+            : 'Could not compute statistics, most likely selected area has no valid (non-NaN) pixels';
+            showInfoPopup(
+                <Typography sx={{whiteSpace: 'nowrap'}}> {msg} </Typography>,
+                popTitle, { '.FF-Popup-Content': {maxWidth:'50em'} }
+            );
+        return;
+    }
+
+    const popupStats = statsResult[noBand]
+        ? <ImageStats statsResult={statsResult[noBand]} plotId={plotId}/>
+        : <ImageStatsTab statsResult={statsResult} plotId={plotId}/>;
+
+    const popup = (<PopupPanel title={popTitle}
                              closeCallback={() => destroyDrawLayer(plotId)}>
                     {popupStats}
                  </PopupPanel>);
