@@ -583,7 +583,7 @@ function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, useSIA
     }, []);
 
     if (newCorners?.length < 3 || newCorners?.length > 15) {
-        errList.addError('too few or too many corner specified');
+        errList.addError('too few or too many corners specified');
         valid= false;
     }
 
