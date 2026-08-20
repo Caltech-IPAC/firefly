@@ -3,19 +3,18 @@
  */
 import {isArray} from 'lodash';
 import {MetaConst} from '../data/MetaConst';
-import {isDefined} from '../util/WebUtil';
-import {makeWorldPt, parseWorldPt} from '../visualize/Point';
-import {
-    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion,
-    isDatalinkTable, isObsCoreLike,
-} from './TableAnalysis';
-import {
-    adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
-    DATALINK_COL_NAMES, RA_UCDs, DEC_UCDs, CLOUD_ACCESS, ipacMultiSpectrum,
-} from './VoConst.js';
 import {
     columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
 } from '../tables/TableUtil.js';
+import {isDefined} from '../util/WebUtil';
+import {makeWorldPt, parseWorldPt} from '../visualize/Point';
+import {
+    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, isDatalinkTable, isObsCoreLike,
+} from './TableAnalysis';
+import {
+    adhocServiceUtype, cisxAdhocServiceUtype, CLOUD_ACCESS, DATALINK_COL_NAMES, DEC_UCDs, RA_UCDs, standardIDs,
+    VO_TABLE_CONTENT_TYPE,
+} from './VoConst.js';
 import {getTableModel} from './VoCoreUtils.js';
 
 
@@ -326,3 +325,33 @@ export function findWorldPtInServiceDef(serDef,sourceRow) {
  */
 export const getStandardId= (serviceDef) => (serviceDef.standardID??'').toLowerCase();
 export const getUtype= (serviceDef) => (serviceDef?.utype??'').toLowerCase();
+
+//check for and return a datalink service descriptor url and input params, if one is found
+export function checkForDatalinkServDesc(tblModel) {
+    const serviceDescriptors = getServiceDescriptors(tblModel);
+    if (!serviceDescriptors) return null;
+
+    for (const sd of serviceDescriptors) {
+        //serviceDescriptors.forEach((sd) => {
+        const isDatalinkSerDesc = isDataLinkServiceDesc(sd);
+        if (isDatalinkSerDesc) {
+            const productUrl = {
+                accessURL: sd?.accessURL || '',
+                inputParams: {}
+            };
+
+            if (sd?.serDefParams) {
+                for (const param of sd.serDefParams) {
+                    const {name,value,ref}= param ?? {};
+                    if (name) productUrl.inputParams[name] = {value, ref};
+                }
+            }
+
+            //return only when valid datalink access url is found
+            if (productUrl.accessURL || Object.keys(productUrl.inputParams).length > 0) {
+                return productUrl;
+            }
+        }
+    }
+    return null; //no valid datalink service descriptor found
+}

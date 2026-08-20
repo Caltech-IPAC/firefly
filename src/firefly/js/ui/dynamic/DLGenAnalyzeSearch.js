@@ -1,18 +1,20 @@
-import {isEmpty} from 'lodash';
+import {isArray, isEmpty} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
-import {makeTblRequest} from '../../tables/TableRequestUtil';
+import {sortInfoString} from '../../tables/SortInfo';
+import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {getMetaEntry} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
+import {tokenSub} from '../../util/WebUtil';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {isCisxTapStandardID, isSIAStandardID, isSSAStandardID} from '../../voAnalyzer/VoCoreUtils';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
+import {getCisxUIValue} from './CisxSerDescUtil';
 import {CIRCLE, POINT, POLYGON} from './DynamicDef.js';
 import {
     convertCircleToPointArea, convertPointAreaToCircle, isCircleSearch, isPointAreaSearch, isPolySearch
 } from './DynamicUISearchPanel.jsx';
-import {
-    findFieldDefType, isSIAStandardID, makeServiceDescriptorSearchRequest, sdToFieldDefAry
-} from './ServiceDefTools.js';
+import {findFieldDefType, sdToFieldDefAry} from './ServiceDefTools.js';
 
 
 /**
@@ -47,7 +49,77 @@ export function analyzeQueries(tbl_id) {
 
 let upTblCnt=1;
 
-export function makeAllSearchRequest(request, siaConstraints, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta, uploadSiaExtParams) {
+let tblCnt = 1;
+
+function makeServiceDescriptorSearchRequest(request, siaConstraints = [], serviceDescriptor, extraMeta = {}) {
+    const {standardID = '', accessURL, utype, serDefParams, title, cisxUI = []} = serviceDescriptor;
+    const hiddenColumns = cisxUI.find((e) => e.name === 'hidden_columns')?.value;
+    const tblSortOrder = cisxUI.find((e) => e.name === 'table_sort_order')?.value;
+    const MAXREC = 50000;
+    const tblTitle = `${title} - ${tblCnt++}`;
+
+    const hideObj = hiddenColumns ?
+        Object.fromEntries(hiddenColumns.split(',').map((c) => [`col.${c}.visibility`, 'hide'])) : {};
+
+    const sAry = tblSortOrder?.match(/([^,]+),(.+)/);
+    let sortObj = {};
+    if (sAry) {
+        const [, dir, sortBy] = sAry;
+        sortObj = {sortInfo: sortInfoString(sortBy, dir?.toUpperCase() === 'ASC')};
+    }
+
+    const options = {...sortObj, META_INFO: {...hideObj, ...extraMeta}};
+    const requestAsArray = Object.entries(request).reduce((ary, [k, v]) => {
+        isArray(v)
+            ? v.forEach((vEntry) => ary.push([k, vEntry]))
+            : ary.push([k, v]);
+        return ary;
+    }, []);
+
+    if (isSIAStandardID(standardID)) {
+        const reqParams = new URLSearchParams(requestAsArray);
+        const siaParams = new URLSearchParams();
+        siaConstraints.forEach((s) => {
+            const [k, v] = s.split('=');
+            if (k && v) siaParams.append(k, v);
+        });
+        const params = new URLSearchParams([...reqParams, ...siaParams]);
+        const url = params.size ? accessURL + '?' + params.toString() : accessURL;
+        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
+    } else if (isSSAStandardID(standardID)) {
+        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
+        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
+    } else if (isCisxTapStandardID(standardID, utype)) {
+        const doAsync = standardID.toLowerCase().includes('async');
+        const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
+        const finalQuery = tokenSub(request, query);
+        let serviceUrl = accessURL;
+        if (accessURL.endsWith('/sync')) serviceUrl = accessURL.substring(0, accessURL.length - 5);
+        if (accessURL.endsWith('/async')) serviceUrl = accessURL.substring(0, accessURL.length - 6);
+
+        if (!query) return;
+        if (doAsync) {
+            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {
+                serviceUrl,
+                QUERY: finalQuery,
+                MAXREC
+            }, options);
+            setNoCache(asyncReq);
+            return asyncReq;
+        } else {
+            const serParam = new URLSearchParams({QUERY: finalQuery, REQUEST: 'doQuery', LANG: 'ADQL', MAXREC});
+            const completeUrl = serviceUrl + '/sync?' + serParam.toString();
+            return makeFileRequest(title, completeUrl, undefined, options);   //todo- figure out title
+        }
+
+    } else {
+        //todo: we should to call file analysis first
+        const url = accessURL + '?' + new URLSearchParams(requestAsArray).toString();
+        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
+    }
+}
+
+function makeAllSearchRequest(request, siaConstraints, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta, uploadSiaExtParams) {
     if (uploadSiaExtParams) {
         const {title,accessURL} = primeSd;
         const tblTitle= `${title} - upload ${upTblCnt++}`;
@@ -146,29 +218,6 @@ export function isSpatialTypeSupported(serviceDef, spacialType) {
  * @prop {Array.<SearchDefinition>} concurrentSearchDef - these search could happen along with the main search
  * @prop {Array.<SearchDefinition>} urlRows - should be not service def just a simple URL to call
  */
-
-
-/**
- * @param {QueryAnalysis|ServiceDescriptorDef} qAnaOrSd - accept a QueryAnalysis or a ServiceDescriptorDef
- * @return {CISXui|Array} ui parameters or an empty array
- */
-export function getCisxUI(qAnaOrSd) {
-    if (!qAnaOrSd) return [];
-    if (qAnaOrSd.primarySearchDef) { // is QueryAnalysis
-        return qAnaOrSd.primarySearchDef[0]?.serviceDef?.cisxUI ?? [];
-    } else if (qAnaOrSd.accessURL) { // is ServiceDescriptorDef
-        return qAnaOrSd.cisxUI ?? [];
-    }
-    return [];
-}
-
-export function getCisxUIValue(qAnaOrSd, name) {
-    return getCisxUI(qAnaOrSd).find((e) => e.name === name)?.value;
-}
-
-export function getCisxUIUCD(qAnaOrSd, name) {
-    return getCisxUI(qAnaOrSd).find((e) => e.name === name)?.UCD;
-}
 
 
 export function supportsUpload(qAna, standardID, useConcurrent= false) {

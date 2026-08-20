@@ -8,12 +8,13 @@ import React, {memo, useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {computeCentralPtRadiusAverage} from '../../visualize/VisUtil.js';
+import {getStandardIdType, isSIAStandardID} from '../../voAnalyzer/VoCoreUtils';
 import {FieldGroup, FieldGroupCtx} from '../FieldGroup.jsx';
 import {getServiceMetaOptions, loadSiaV2Meta, makeObsCoreMetadataModel} from '../tap/SiaUtil';
 import {CONTEXT_PARAMS_STR, convertRequest, DEFER_TO_CONTEXT, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {isSimpleTargetPanel} from './DynComponents';
-import {getStandardIdType, hasAnySpacial, isSIAStandardID, sdToFieldDefAry} from './ServiceDefTools.js';
+import {hasAnySpacial, sdToFieldDefAry} from './ServiceDefTools.js';
 import {ConstraintContext} from '../tap/Constraints';
 import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
 
@@ -26,8 +27,14 @@ import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
  * @prop {number} maxFetchDepth
  * @prop {String} HiPS
  * @prop {String} hips_initial_fov
- * @prop {String} standardID
+ * @prop {String} hips_initial_dec
+ * @prop {String} hips_initial_dec
+ * @prop {boolean} ptIsGalactic
  * @prop {WorldPt} centerWp
+ * @prop {String} standardID
+ * @prop {Object} polygon_examples
+ * @prop {Object} examples
+ * @prop {Array.<Object>} mocList
  * @prop {CoordinateSys} coordinateSys
  */
 

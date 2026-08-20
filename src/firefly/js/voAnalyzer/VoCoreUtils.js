@@ -4,7 +4,22 @@
 
 import {isObject, isString} from 'lodash';
 import {getCellValue, getColumnByRef, getTblById} from '../tables/TableUtil.js';
-import {ColNameIdx, OBSTAPCOLUMNS, UCDSyntax, UtypeColIdx} from './VoConst.js';
+import {cisxAdhocServiceUtype, ColNameIdx, OBSTAPCOLUMNS, standardIDs, UCDSyntax, UtypeColIdx} from './VoConst.js';
+
+
+export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
+export const isSSAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.ssa);
+export const isSODAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.soda);
+export const isTAPStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.tap);
+export const isCisxTapStandardID = (standardID, utype) =>
+    standardID.toLowerCase().startsWith(standardIDs.tap) && utype.toLowerCase() === cisxAdhocServiceUtype;
+
+export function getStandardIdType(standardID) {
+    if (isSIAStandardID(standardID)) return standardIDs.sia;
+    if (isSSAStandardID(standardID)) return standardIDs.ssa;
+    if (isSODAStandardID(standardID)) return standardIDs.soda;
+    if (isTAPStandardID(standardID)) return standardIDs.tap;
+}
 
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
@@ -93,7 +108,3 @@ export function getServiceSelfDescription(tableOrId) {
     return table.resources
         ?.filter( (r) => r.type==='meta' && (r.utype==='adhoc:this'||r.utype==='adhoc:service'))?.[0];
 }
-
-
-
-

@@ -1,4 +1,5 @@
 import {get, set, isEmpty, flatten, isArray} from 'lodash';
+import {Style} from './draw/DrawingDef';
 import {dispatchCreateDrawLayer} from './DrawLayerDispatch';
 import {getDrawLayersByType} from './PlotViewUtil.js';
 import HiPSMOC from '../drawingLayers/HiPSMOC.js';
@@ -16,6 +17,19 @@ let   mocCnt = 0;
 export const MOCInfo = 'mocInfo';
 export const UNIQCOL = 'uniqColName';
 export const MOCOrder = 'mocOrder';
+
+
+export const mocUIDisplayOptions= [
+    {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},
+    {label: 'Fill', value: Style.FILL.key},
+    {label: 'Auto', value: Style.AUTO.key},
+    {label: 'MOC Tile Outline', value: Style.STANDARD.key},
+];
+
+export function convertMocLabelToDisplayStyle(label) {
+    mocUIDisplayOptions.find( (op) => op.label.toLowerCase() === label?.toLowerCase())?.value;
+}
+
 
 export function getAppHiPSForMoc() {
     return get(getAppOptions(), ['hips', 'hipsForMoc'], 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color');
@@ -205,6 +219,7 @@ export function getMocOrderIndex(Nuniq) {
  * @param {Object} params moc table id
  * @param {string} params.tbl_id moc table id
  * @param {string} [params.title] optional shorter title
+ * @param {string} [params.mocStyle] The defualt display style of the MOC
  * @param {string} [params.shortTitle] optional title
  * @param {string} params.fitsPath moc fits path at the server after upload
  * @param {string} params.mocUrl  moc fits url
@@ -215,8 +230,8 @@ export function getMocOrderIndex(Nuniq) {
  * @param {string} [params.mocGroupDefColorId ] - group color id
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer({tbl_id, title, shortTitle, fitsPath, mocUrl, uniqColName = 'NUNIQ', maxFetchDepth,
-                                   tablePreloaded=false, color, mocGroupDefColorId }) {
+export function addNewMocLayer({tbl_id, title, mocStyle, shortTitle, fitsPath, mocUrl, uniqColName = 'NUNIQ',
+                                   maxFetchDepth, tablePreloaded=false, color, mocGroupDefColorId }) {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
 
@@ -225,7 +240,8 @@ export function addNewMocLayer({tbl_id, title, shortTitle, fitsPath, mocUrl, uni
         if (title) title= 'MOC - ' + title;
         const mocFitsInfo = {fitsPath, mocUrl, uniqColName, tbl_id, tablePreloaded};
         dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID,
-            {mocFitsInfo,title,shortTitle,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId,maxFetchDepth});
+            {mocFitsInfo,title,mocStyle,shortTitle,layersPanelLayoutId:'mocUIGroup',
+                color, mocGroupDefColorId,maxFetchDepth});
     }
     return dl;
 }

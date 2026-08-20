@@ -2,18 +2,18 @@ import {Box, Link, Stack, Typography} from '@mui/joy';
 import {array, arrayOf, bool, func, node, object, oneOfType, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {isSIAStandardID} from '../../voAnalyzer/VoCoreUtils';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx} from '../FieldGroup';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {getServiceMetaOptions, loadSiaV2Meta, makeObsCoreMetadataModel} from '../tap/SiaUtil';
-import {getCisxUIValue, hasSpatialTypes, isSpatialTypeSupported, supportsUpload} from './DLGenAnalyzeSearch.js';
+import {hasSpatialTypes, isSpatialTypeSupported, supportsUpload} from './DLGenAnalyzeSearch.js';
 import {DLSearchTitle} from './DLuiDecoration';
 import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DynLayoutPanelTypes} from './DynamicUISearchPanel';
 import {ConstraintContext} from '../tap/Constraints';
-import {isSIAStandardID} from './ServiceDefTools';
 
 
 const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';

@@ -473,7 +473,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
 
         try {
             for(let i=0; (i<mocAddList.length); i++) {
-                const {mocUrl,title,mocColor,maxFetchDepth,shortTitle}= mocAddList[i];
+                const {mocUrl,title,mocColor,maxFetchDepth,mocStyle,shortTitle}= mocAddList[i];
 
                 const tbl_id= 'MOC---'+mocUrl;
                 let add= true;
@@ -503,6 +503,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                         plotId,
                         tbl_id,
                         maxFetchDepth,
+                        mocStyle,
                         visible: true,
                         fitsPath: mocUrl,
                         title,

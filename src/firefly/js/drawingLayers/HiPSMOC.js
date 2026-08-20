@@ -156,7 +156,9 @@ function creator(initPayload) {
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
     drawingDef.color = preloadedTbl?.tableMeta?.[MetaConst.DEFAULT_COLOR] ?? defColors[mocGroupDefColorId] ?? color;
     const defStyle= getAppOptions().hips.mocDefaultStyle ?? 'AUTO';
-    const inStyleStr= getMetaEntry(preloadedTbl, MetaConst.MOC_DEFAULT_STYLE, defStyle).toLowerCase();
+    const inStyleStr=
+        initPayload.mocStyle?.toLowerCase() ??
+        getMetaEntry(preloadedTbl, MetaConst.MOC_DEFAULT_STYLE, defStyle).toLowerCase();
     switch (inStyleStr) {
         case 'moc tile outline':
         case 'tile outline':

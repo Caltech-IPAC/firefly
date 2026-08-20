@@ -25,7 +25,7 @@ import {FieldGroup} from '../FieldGroup.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 import {
-    analyzeQueries, getCisxUI, getCisxUIUCD, getCisxUIValue, handleSearch, supportsUpload
+    analyzeQueries, handleSearch, supportsUpload
 } from './DLGenAnalyzeSearch.js';
 import {SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
 import {DLuiServDescPanel, DLuiTabView} from './DLuiServDescPanel.jsx';
@@ -34,7 +34,9 @@ import {AREA, CIRCLE, CONE_AREA_KEY, POINT, POSITION, RANGE} from './DynamicDef.
 import {convertRequest, DEFER_TO_CONTEXT, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
-import { getStandardIdType, ingestInitArgs, makeSearchAreaInfo, sdToFieldDefAry } from './ServiceDefTools.js';
+import {getStandardIdType} from '../../voAnalyzer/VoCoreUtils';
+import {getCisxUI, getCisxUIUCD, getCisxUIValue, makeSearchAreaInfo} from './CisxSerDescUtil';
+import {ingestInitArgs, sdToFieldDefAry} from './ServiceDefTools.js';
 
 
 export const DL_UI_LIST= 'DL_UI_LIST';
@@ -342,7 +344,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
         alignHiPS(currentTblId,qAna,groupKey, fds);
     }, [currentTblId, groupKey, qAna, searchObjFds, tabsKey]);
 
-    const isAllSky= toBoolean(getCisxUI(qAna)?.find( (e) => e.name==='data_covers_allsky')?.value);
+    const isAllSky= toBoolean(getCisxUIValue(qAna,'data_covers_allsky'));
     const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
 
     const submitSearch= (request,siaCtx) =>

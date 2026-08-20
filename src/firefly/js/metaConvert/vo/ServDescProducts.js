@@ -2,11 +2,12 @@ import {isEmpty, isNumber, isUndefined} from 'lodash';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue} from '../../tables/TableUtil.js';
 import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
-import {hasAnySpacial, isSIAStandardID, sdToFieldDefAry} from '../../ui/dynamic/ServiceDefTools';
+import {hasAnySpacial, sdToFieldDefAry} from '../../ui/dynamic/ServiceDefTools';
 import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize} from '../../ui/tap/Cutout';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 import {isCatalog, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
+import {isSIAStandardID} from '../../voAnalyzer/VoCoreUtils';
 
 import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isDefined} from '../../util/WebUtil.js';
