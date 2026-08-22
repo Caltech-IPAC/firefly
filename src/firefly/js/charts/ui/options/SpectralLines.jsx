@@ -17,6 +17,7 @@ import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 
+// TODO: move it to server side entirely
 // recommended-lines source lists, each independently checkable; listId is sent to the server's
 // "spectralLines" search processor to pick which resource file it serves. Adding a list later is
 // just appending an entry here (plus its listId -> resource mapping server-side).
@@ -35,7 +36,7 @@ const LINES_TBL_UI_ID = `${LINES_TBL_ID}-ui`;
 const WAVELENGTH_COL = 'wavelength';
 const LABEL_COL = 'label';
 const DESCRIPTION_COL = 'description';
-const GROUP_COL = 'group';
+const GROUP_COL = 'list';
 const WAVELENGTH_COL_UNIT = 'um'; // unit of WAVELENGTH_COL's values; TODO: source it from table metadata if present
 const LINES_TBL_COLUMNS = [
     {name: WAVELENGTH_COL, units: WAVELENGTH_COL_UNIT, type: 'double'},
@@ -175,6 +176,7 @@ async function ensureRecommendedList(listId) {
     const tbl_id = recLinesTblId(listId);
     if (getTblById(tbl_id)) return;
     const request = makeTblRequest('spectralLines', 'Spectral Lines', {listId}, {tbl_id});
+    // TODO: first get the list IDs via request.action = props or something and then a particular list
     dispatchTableFetch(request); // headless: doesn't render in results UI
     await onTableLoaded(tbl_id);
 }
@@ -275,7 +277,7 @@ export function SpectralLinesPanel() {
                                                      initialState={{value: initialSourceOptions}}
                                                      options={[
                                                          ...RECOMMENDED_LINE_LISTS.map(({listId, listLabel}) =>
-                                                             ({label: `${listLabel} (recommended)`, value: listId})),
+                                                             ({label: listLabel, value: listId})),
                                                          {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
                                                      ]}/>
                             {/* TODO: "Upload mine" — file upload + column mapper */}
@@ -309,8 +311,8 @@ export function SpectralLinesPanel() {
                         />
                     </Stack>
                     {selectedCount === 0
-                        ? <Typography level='body-md'>0 lines selected - nothing plotted on spectral chart(s)</Typography>
-                        : <Typography level='body-md'
+                        ? <Typography level='body-sm'>0 lines selected - nothing plotted on spectral chart(s)</Typography>
+                        : <Typography level='body-sm'
                                       sx={{pl: 0.5}}
                                       startDecorator={<Insights color='primary'/>}>
                               <Typography fontWeight='lg'>{selectedCount} lines</Typography>
