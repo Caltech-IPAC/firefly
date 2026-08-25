@@ -13,6 +13,7 @@ import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {AutoCompleteInput} from 'firefly/ui/AutoCompleteInput.jsx';
+import {getColumns, getTblById} from '../../tables/TableUtil.js';
 
 
 export const EXPRESSION_TTIPS = `
@@ -58,12 +59,29 @@ function getOptions(cols, canBeExpression=true) {
 }
 
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,
+/**
+ * Column list for ColumnFld: colValStats if loaded, else the table's own columns (avoids
+ * waiting on the stats fetch).
+ * @param {Array} [colValStats]
+ * @param {string} [tbl_id]
+ * @returns {Array|undefined}
+ */
+function getColsFromStatsOrTable(colValStats, tbl_id) {
+    if (colValStats) {
+        return colValStats.map((c) => ({name: c.name, units: c.unit, type: c.type, desc: c.descr}));
+    }
+    const tableModel = tbl_id && getTblById(tbl_id);
+    if (!tableModel) return undefined;
+    return getColumns(tableModel).map(({name, units, type, desc}) => ({name, units, type, desc}));
+}
+
+export function ColumnOrExpression({colValStats,tbl_id,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,
                                        nullAllowed,readOnly,initValue, slotProps, sx}) {
-    if (!colValStats) return <div/>;
+    const cols = getColsFromStatsOrTable(colValStats, tbl_id);
+    if (!cols) return <div/>;
     return (
         <ColumnFld
-            cols={colValStats.map((c)=>{return {name: c.name, units: c.unit, type: c.type, desc: c.descr};})}
+            cols={cols}
             fieldKey={fldPath}
             initValue={initValue || params?.[fldPath]}
             canBeExpression={true}
@@ -74,6 +92,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 
 ColumnOrExpression.propTypes = {
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)),
+    tbl_id: PropTypes.string,
     params: PropTypes.object,
     groupKey: PropTypes.string.isRequired,
     fldPath: PropTypes.string.isRequired,

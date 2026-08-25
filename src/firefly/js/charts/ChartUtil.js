@@ -16,18 +16,14 @@ import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {
-    COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
-    stripColumnNameQuotes, SYS_COLUMNS, watchTableChanges
+    COL_TYPE, ensureEnumVals, getColumn, getColumnIdx, getColumns, getColumnType, getMetaEntry, getTblById, isColumnType,
+    isFullyLoaded, isTableLoaded, splitVals, stripColumnNameQuotes, SYS_COLUMNS, watchTableChanges
 } from '../tables/TableUtil.js';
-import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
+import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {getSpectrumDM} from '../voAnalyzer/SpectrumDM.js';
 import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
-import {
-    dispatchChartHighlighted,
-    dispatchChartSelect,
-    dispatchChartUpdate,
-    dispatchSetActiveTrace,
+import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace,
     getChartData
 } from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
@@ -37,7 +33,8 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
-import {getTraceTSEntries as spectrumTSGetter, spectrumPlot, spectrumType} from './dataTypes/FireflySpectrum.js';
+import {getTraceTSEntries as spectrumTSGetter, spectrumPlot, spectrumType
+} from './dataTypes/FireflySpectrum.js';
 import {toRGBA as colorToRGBA} from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
@@ -68,6 +65,57 @@ export const HIGHLIGHTED_PROPS = {
 const FSIZE = 12;
 
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
+
+/**
+ * Extract table mappings from flattened chart data.
+ * @param {Object} flattenData flattened trace data
+ * @returns {Object} mappings keyed by trace data paths
+ */
+export function getTableSourceMappings(flattenData={}) {
+    return Object.entries(flattenData)
+        .filter(([, value]) => typeof value === 'string' && value.startsWith('tables::'))
+        .reduce((mappings, [key, value]) => {
+            const [, colExp] = value.match(TBL_SRC_PATTERN) || [];
+            if (colExp) mappings[key] = colExp;
+            return mappings;
+        }, {});
+}
+
+export function getFilterResetAutorange(axisLayout) {
+    const {autorange, range=[]} = axisLayout || {};
+    return autorange === 'reversed' || range[1] < range[0] ? 'reversed' : true;
+}
+
+export function getResetAxesChanges(layout) {
+    return {
+        'layout.xaxis.autorange': getFilterResetAutorange(layout?.xaxis),
+        'layout.xaxis.range': undefined,
+        'layout.yaxis.autorange': getFilterResetAutorange(layout?.yaxis),
+        'layout.yaxis.range': undefined
+    };
+}
+
+export function getOriginalRowIndexes(tableModel) {
+    const origIdx = getColumnIdx(tableModel, 'ORIG_IDX');
+    return origIdx >= 0 ? tableModel?.tableData?.data?.map((row) => row[origIdx]) : undefined;
+}
+
+/**
+ * Check whether an async result belongs to the source currently installed
+ * for a chart trace. Cancelled requests may still finish, so stale results
+ * must be ignored after a source is removed or replaced.
+ *
+ * @param {string} chartId chart identifier
+ * @param {number} traceNum trace index
+ * @param {Object} tablesource source captured by the request
+ * @returns {boolean} true when the source is still current
+ */
+export function isCurrentTableSource(chartId, traceNum, tablesource) {
+    const chartData = getChartData(chartId);
+    const currentSource = chartData?.tablesources?.[traceNum];
+    return Boolean(chartData?.mounted && currentSource?._sourceId && tablesource?._sourceId &&
+        currentSource._sourceId === tablesource._sourceId);
+}
 
 /**
  * Does the application only support single trace
@@ -287,7 +335,8 @@ export function combineAllTraceFrom(chartId, selIndexes, newTraceProps) {
     const combine = (flatTarget, source) => {
         Object.entries(flatTarget).forEach( ([key, value]) => {
             if (Array.isArray(value)) {
-                value.push(...get(source, key));
+                const sourceValue = get(source, key);
+                if (Array.isArray(sourceValue)) value.push(...sourceValue);
             }
         });
         return flatTarget;
@@ -320,6 +369,220 @@ export function combineAllTraceFrom(chartId, selIndexes, newTraceProps) {
             return p;
         }, {});
     }
+}
+
+//Chart "Group By" logic helpers below
+export function getGroupByColumn(chartId) {
+    const {fireflyData=[]} = getChartData(chartId) || {};
+    return fireflyData.find((fd) => fd?.groupBy?.column)?.groupBy.column || '';
+}
+
+export function isGroupedChart(chartId) {
+    return Boolean(getGroupByColumn(chartId));
+}
+
+export function isGroupByAllowed(chartId, activeTrace) {
+    const {data=[]} = getChartData(chartId) || {};
+    if (!isUndefined(activeTrace) && activeTrace >= data.length) return false;
+    return Boolean(chartId) && (data.length <= 1 || isGroupedChart(chartId));
+}
+
+export function getGroupableColumns(tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel?.tableData?.columns) return [];
+
+    const tableCopy = simpleCloneDeep(tableModel);
+    ensureEnumVals(tableCopy); //cloning table model to get list of enum-like columns in tableCopy
+
+    return getColumns(tableCopy)
+        .filter(({name, enumVals, visibility}) => enumVals && !SYS_COLUMNS.includes(name) && visibility !== 'hidden')
+        .map((c) => ({...c}));
+}
+
+export function makeScatterGroupByChanges({chartId, tbl_id, activeTrace=0, groupByColumn='', changes={}}) {
+    const chartData = simpleCloneDeep(getChartData(chartId, {}));
+    Object.entries(changes).forEach(([key, value]) => set(chartData, key, value));
+
+    const data = chartData.data || [];
+    const fireflyData = chartData.fireflyData || [];
+    const baseData = simpleCloneDeep(data[activeTrace] || {});
+    const baseFirefly = simpleCloneDeep(fireflyData[activeTrace] || {});
+    const activeTablesource = chartData.tablesources?.[activeTrace] || {};
+    const baseState = baseFirefly?.groupBy?.baseState
+        ? simpleCloneDeep(baseFirefly.groupBy.baseState)
+        : makeGroupByBaseState(baseData, baseFirefly, activeTablesource, activeTrace, tbl_id);
+    restoreTableSourceMappings({
+        trace: baseData,
+        fireflyTrace: baseFirefly,
+        tablesource: activeTablesource,
+        traceNum: activeTrace,
+        tbl_id
+    });
+    restoreGroupByBaseStyle(baseData, baseFirefly);
+
+    const commonChanges = {
+        showOptions: false,
+        highlighted: undefined,
+        selected: undefined,
+        selection: undefined,
+        hasSelected: false
+    };
+
+    if (!groupByColumn) {
+        const ungroupedData = simpleCloneDeep(baseState.data);
+        const ungroupedFirefly = simpleCloneDeep(baseState.fireflyData);
+        clearGroupBy(ungroupedData, ungroupedFirefly);
+        restoreTableSourceMappings({
+            trace: ungroupedData,
+            fireflyTrace: ungroupedFirefly,
+            tablesource: {tbl_id: baseState.tbl_id, mappings: baseState.mappings},
+            traceNum: baseState.traceNum,
+            tbl_id
+        });
+        return {
+            ...commonChanges,
+            data: [ungroupedData],
+            fireflyData: [ungroupedFirefly],
+            activeTrace: 0,
+            curveNumberMap: makeCurveNumberMap(1, 0),
+            'layout.showlegend': false,
+            'layout.legend.title.text': undefined
+        };
+    }
+
+    const groupCol = getGroupableColumns(tbl_id).find((c) => c.name === groupByColumn) || getColumn(getTblById(tbl_id), groupByColumn);
+    const groupValues = splitVals(groupCol?.enumVals)
+        .map((v) => String(v ?? '').trim().replace(/^'(.*)'$/, '$1'))
+        .filter((v) => v !== '');
+    if (!groupCol || groupValues.length === 0) {
+        const ungroupedData = simpleCloneDeep(baseState.data);
+        const ungroupedFirefly = simpleCloneDeep(baseState.fireflyData);
+        clearGroupBy(ungroupedData, ungroupedFirefly);
+        restoreTableSourceMappings({
+            trace: ungroupedData,
+            fireflyTrace: ungroupedFirefly,
+            tablesource: {tbl_id: baseState.tbl_id, mappings: baseState.mappings},
+            traceNum: baseState.traceNum,
+            tbl_id
+        });
+        return {
+            ...commonChanges,
+            data: [ungroupedData],
+            fireflyData: [ungroupedFirefly],
+            activeTrace: 0,
+            curveNumberMap: makeCurveNumberMap(1, 0),
+            'layout.showlegend': false,
+            'layout.legend.title.text': undefined
+        };
+    }
+
+    const groupData = [];
+    const groupFireflyData = [];
+    groupValues.forEach((value, idx) => {
+        const trace = simpleCloneDeep(baseData);
+        const fd = simpleCloneDeep(baseFirefly);
+        const color = toRGBA(TRACE_COLORS[idx % TRACE_COLORS.length]);
+
+        set(trace, 'name', value);
+        set(trace, 'showlegend', true);
+        set(trace, 'marker.color', color);
+        set(trace, 'line.color', color);
+        set(trace, 'error_x.color', color);
+        set(trace, 'error_y.color', color);
+        set(trace, 'legendgroup', uniqueId('grp'));
+
+        fd.groupBy = {
+            column: groupCol.name,
+            value,
+            baseTraceStyle: getGroupByBaseStyle(baseData),
+            baseState: simpleCloneDeep(baseState)
+        };
+        fd.filters = makeGroupFilter(groupCol.name, value);
+
+        groupData.push(trace);
+        groupFireflyData.push(fd);
+    });
+
+    const newActiveTrace = Math.min(activeTrace, groupData.length - 1);
+    return {
+        ...commonChanges,
+        data: groupData,
+        fireflyData: groupFireflyData,
+        activeTrace: newActiveTrace,
+        curveNumberMap: makeCurveNumberMap(groupData.length, newActiveTrace),
+        'layout.showlegend': true,
+        'layout.legend.title.text': groupCol.label || groupCol.name
+    };
+}
+
+function makeGroupByBaseState(trace, fireflyTrace, tablesource, traceNum, tbl_id) {
+    const data = simpleCloneDeep(trace);
+    const fd = simpleCloneDeep(fireflyTrace);
+
+    // Older automatically-grouped spectra do not yet carry an ungrouped snapshot.
+    if (fd?.groupBy) {
+        clearGroupBy(data, fd);
+        if (data.firefly) delete data.firefly.rowIdx;
+    }
+    return {
+        data,
+        fireflyData: fd,
+        tbl_id: tablesource?.tbl_id || data.tbl_id || fd.tbl_id || tbl_id,
+        mappings: simpleCloneDeep(tablesource?.mappings || {}),
+        traceNum
+    };
+}
+
+function makeCurveNumberMap(traceCount, activeTrace) {
+    return [...range(traceCount).filter((idx) => idx !== activeTrace), activeTrace];
+}
+
+function makeGroupFilter(columnName, value) {
+    const escapedColumn = columnName.replace(/"/g, '""');
+    const escapedValue = String(value).replace(/'/g, "''");
+    return `"${escapedColumn}" = '${escapedValue}'`;
+}
+
+function clearGroupBy(trace, fireflyTrace) {
+    restoreGroupByBaseStyle(trace, fireflyTrace);
+    if (fireflyTrace?.groupBy) {
+        delete trace.name;
+        delete trace.legendgroup;
+        delete trace.showlegend;
+    }
+    if (fireflyTrace) {
+        delete fireflyTrace.groupBy;
+        delete fireflyTrace.filters;
+    }
+}
+
+function getGroupByBaseStyle(trace) {
+    return ['marker.color', 'line.color', 'error_x.color', 'error_y.color']
+        .reduce((style, path) => {
+            if (has(trace, path)) set(style, path, get(trace, path));
+            return style;
+        }, {});
+}
+
+function restoreGroupByBaseStyle(trace, fireflyTrace) {
+    const baseTraceStyle = fireflyTrace?.groupBy?.baseTraceStyle;
+    if (!baseTraceStyle) return;
+    Object.entries(flattenObject(baseTraceStyle)).forEach(([path, value]) => set(trace, path, value));
+}
+
+function restoreTableSourceMappings({trace={}, fireflyTrace={}, tablesource={}, traceNum=0, tbl_id}) {
+    if (tablesource.tbl_id && !trace.tbl_id) trace.tbl_id = tablesource.tbl_id;
+    if (!trace.tbl_id && tbl_id) trace.tbl_id = tbl_id;
+
+    Object.entries(tablesource.mappings || {}).forEach(([key, value]) => {
+        if (value === undefined || value === '') return;
+        const fireflyPrefix = `fireflyData.${traceNum}.`;
+        if (key.startsWith(fireflyPrefix)) {
+            set(fireflyTrace, key.slice(fireflyPrefix.length), `tables::${value}`);
+        } else {
+            set(trace, key, `tables::${value}`);
+        }
+    });
 }
 
 export function newTraceFrom(data, selIndexes, newTraceProps, traceAnnotations) {
@@ -512,15 +775,35 @@ export function handleBigInt(v) {
  * @param {string} p.chartId
  * @param {object[]} p.data
  * @param {object[]} p.fireflyData
+ * @param {boolean} [p.replaceTableSources=false] replace and reload the complete table-source set
+ * @param {boolean} [p.syncExistingSources=false] reconnect and refresh retained table sources
  */
-export function handleTableSourceConnections({chartId, data, fireflyData}) {
+export function handleTableSourceConnections({chartId, data, fireflyData, replaceTableSources=false, syncExistingSources=false}) {
     const tablesources = makeTableSources(chartId, data, fireflyData);
     const {tablesources:oldTablesources=[], activeTrace, curveNumberMap=[]} = getChartData(chartId);
 
-    const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
-    if (!hasTablesources) return;
+    // Some chart updates only modify Plotly trace/layout state, not the table source
+    // Preserve existing table watchers unless makeTableSources found a real source update
+    const hasTableSourceUpdates = Array.isArray(tablesources) && tablesources.some((ts) =>
+        ts?.tbl_id && (!isEmpty(ts.mappings) || typeof ts.fetchData === 'function'));
+    if (!hasTableSourceUpdates) {
+        oldTablesources.forEach((traceTS, idx) => {
+            if (!traceTS?.tbl_id) return;
+            if (!traceTS._sourceId) traceTS._sourceId = uniqueId('chart-source-');
+            if (!traceTS._cancel) traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
+            if (syncExistingSources) updateChartData(chartId, idx, traceTS);
+        });
+        return;
+    }
 
-    const numTraces = Math.max(tablesources.length, oldTablesources.length);
+    const numTraces = replaceTableSources
+        ? tablesources.length
+        : Math.max(tablesources.length, oldTablesources.length);
+
+    if (replaceTableSources) {
+        oldTablesources.slice(numTraces).forEach((traceTS) => traceTS?._cancel?.());
+    }
+
     range(numTraces).forEach( (idx) => {  // range instead of for-loop is to avoid the idx+1 JS's closure problem
         let traceTS = tablesources[idx];
         const oldTraceTS = oldTablesources[idx] || {};
@@ -538,7 +821,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
             }
         }
 
-        if (!tablesourcesEqual(traceTS, oldTraceTS)) {
+        if (replaceTableSources || !tablesourcesEqual(traceTS, oldTraceTS)) {
             if (oldTraceTS && oldTraceTS._cancel) {
                 oldTraceTS._cancel(); // cancel the previous watcher if exists
                 oldTraceTS._cancel = undefined;
@@ -553,9 +836,13 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
         if (!isEmpty(traceTS)) {
             //creates a new one.. and save the cancel handle
             if (doUpdate) {
+                //assign a unique id to this table source so queued watcher events from a
+                //replaced source can be ignored before they update the chart (this led to filtering/pinning related bugs after introducing chart grouping)
+                traceTS._sourceId = uniqueId('chart-source-');
                 // fetch data syncs highlighted and selected with the table
                 updateChartData(chartId, idx, traceTS);
             } else {
+                if (!traceTS._sourceId) traceTS._sourceId = uniqueId('chart-source-');
                 if (idx === activeTrace && isFullyLoaded(traceTS.tbl_id)) {
                     // update highlighted and selected
                     const tableModel = getTblById(traceTS.tbl_id);
@@ -617,6 +904,18 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
     // make sure the chart is not yet removed
     if (isEmpty(chartData) || !chartData?.mounted) { return; }
 
+    // Ignore queued watcher events from an older table-source generation
+    // Table filters are global, so handle them with the current source,
+    // otherwise a stale source may point to an old grouped trace or old mappings
+    const currentSource = chartData.tablesources?.[traceNum];
+    const sourceIsCurrent = isCurrentTableSource(chartId, traceNum, tablesource);
+    const sourceWasReplaced = action.type && !sourceIsCurrent;
+    const isFilterEvent = action.type === TABLE_LOADED && action.payload.invokedBy === TABLE_FILTER;
+    if (sourceWasReplaced) {
+        if (!isFilterEvent || !currentSource) return;
+        tablesource = currentSource;
+    }
+
     // Only Scatter Plot does update on a table sort event.
     if (action.type === TABLE_LOADED && action.payload.invokedBy === TABLE_SORT) {
         const traceType = get(chartData, ['data', traceNum, 'type'], 'scatter');
@@ -627,7 +926,7 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
     if (action.type === TABLE_HIGHLIGHT) {
         // ignore if traceNum is not active
         const {activeTrace=0} = getChartData(chartId);
-        if (traceNum !== activeTrace && !isSpectralOrder(chartId)) return;
+        if (traceNum !== activeTrace && !isGroupedChart(chartId)) return;
         const {highlightedRow} = action.payload;
         updateHighlighted(chartId, traceNum, highlightedRow);
     } else if (action.type === TABLE_SELECT) {
@@ -642,7 +941,12 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         // may not need to call it as often.  if this becomes a performance issue, then optimize.
         dispatchLoadTblStats(tableModel.request);
 
-        const changes = getDataChangesForMappings({mappings, traceNum});
+        let changes = getDataChangesForMappings({mappings, traceNum});
+        // Filtering reloads table-backed traces. Clear fixed ranges so the chart
+        // rescales to filtered rows, but keep reversed-axis autorange intact
+        if (isFilterEvent) {
+            changes = {...changes, ...getResetAxesChanges(chartData.layout)};
+        }
 
         // save original table file path
         const resultSetIDNow = get(tableModel, 'tableMeta.resultSetID');
@@ -655,14 +959,12 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
 
         // fetch data for both Firefly recognized or unrecognized plotly chart types
         if (tablesource.fetchData) {
-            tablesource.fetchData(chartId, traceNum, tablesource);
+            const fetchSource = isFilterEvent
+                ? {...tablesource, resetAxes: true}
+                : tablesource;
+            tablesource.fetchData(chartId, traceNum, fetchSource);
         }
     }
-}
-
-export function isSpectralOrder(chartId) {
-    const {activeTrace=0, fireflyData} = getChartData(chartId) || {};
-    return fireflyData?.[activeTrace]?.spectralOrder;
 }
 
 export function isSpectrum(chartId) {
@@ -673,24 +975,11 @@ export function isSpectrum(chartId) {
 
 function makeTableSources(chartId, data=[], fireflyData=[]) {
 
-    const convertToDS = (flattenData) =>
-                        Object.entries(flattenData)
-                                .filter(([,v]) => typeof v === 'string' && v.startsWith('tables::'))
-                                .reduce( (p, [k,v]) => {
-                                    const [,colExp] = v.match(TBL_SRC_PATTERN) || [];
-                                    if (colExp) set(p, ['mappings',k], colExp);
-                                    return p;
-                                }, {});
-
-
     // for some firefly specific chart types the data are
     const currentData = (data.length < fireflyData.length) ? fireflyData : data;
 
     return currentData.map((d, traceNum) => {
-        const fireflyDataFlatten = flattenObject(fireflyData[traceNum] || {}, `fireflyData.${traceNum}`);
-        // fireflyData mappings have full path
-        const flattenData = assign(flattenObject(data[traceNum] || {}), fireflyDataFlatten);
-        const ds = data[traceNum] ? convertToDS(flattenData) : {}; //avoid flattening arrays
+        const ds = data[traceNum] ? {mappings: getTraceTableSourceMappings(data[traceNum], fireflyData[traceNum], traceNum)} : {}; //avoid flattening arrays
         // table id can be a part of fireflyData too
         const tbl_id = get(data, `${traceNum}.tbl_id`) || get(fireflyData, `${traceNum}.tbl_id`);
 
@@ -704,10 +993,80 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
         // set up table server request parameters (options) for firefly specific charts
         const chartDataType = get(fireflyData[traceNum], 'dataType');
         if (!isEmpty(ds)) {
-            Object.assign(ds, getTraceTSEntries({chartDataType, traceTS: ds, chartId, traceNum}));
+            const traceOptions = get(fireflyData, [traceNum, 'options']);
+            Object.assign(ds, getTraceTSEntries({chartDataType,
+                traceTS: {...ds, options: traceOptions}, chartId, traceNum}));
         }
         return ds;
     });
+}
+
+function getTraceTableSourceMappings(dataTrace, fireflyTrace, traceNum) {
+    const fireflyDataFlatten = flattenObject(fireflyTrace || {}, `fireflyData.${traceNum}`);
+    // fireflyData mappings have full path
+    const flattenData = assign(flattenObject(dataTrace || {}), fireflyDataFlatten);
+    return getTableSourceMappings(flattenData);
+}
+
+function getGenericTableSourceMappings({data, fireflyData, tablesources, activeTrace, tbl_id}) {
+    const activeMappings = tablesources?.[activeTrace]?.mappings;
+    if (!isEmpty(activeMappings)) return activeMappings;
+
+    const sameTableSource = tablesources?.find((ts) =>
+        ts?.tbl_id && ts.tbl_id === tbl_id && !isEmpty(ts.mappings));
+    if (sameTableSource) return sameTableSource.mappings;
+
+    return getTraceTableSourceMappings(data?.[activeTrace], fireflyData?.[activeTrace], activeTrace);
+}
+
+function getGroupedTableSourceMappings({fireflyData, activeTrace, tbl_id}) {
+    const baseState = fireflyData?.[activeTrace]?.groupBy?.baseState;
+    if (!isEmpty(baseState?.mappings)) return baseState.mappings;
+
+    const sameTableBaseState = fireflyData?.find((fd) => {
+        const baseState = fd?.groupBy?.baseState;
+        return !isEmpty(baseState?.mappings) && (!tbl_id || baseState.tbl_id === tbl_id);
+    })?.groupBy?.baseState;
+    if (sameTableBaseState) return sameTableBaseState.mappings;
+
+    return {};
+}
+
+function getTypeSpecificTableSourceMappings({fireflyData, activeTrace}) {
+    const dataType = fireflyData?.[activeTrace]?.dataType;
+    const options = fireflyData?.[activeTrace]?.options;
+
+    if (dataType === 'fireflyHeatmap' && options) {
+        return {
+            x: options.xColOrExpr,
+            y: options.yColOrExpr
+        };
+    }
+
+    return {};
+}
+
+/**
+ * Resolve table mappings in priority order:
+ * 1. Current generic source mappings.
+ * 2. Grouped-chart base mappings.
+ * 3. Type-specific mappings, currently heatmap X/Y options.
+ *
+ * Grouped charts and heatmaps store mappings outside the normal source
+ * structure, so they require explicit fallbacks.
+ *
+ * @returns {Object} resolved table-column mappings
+ */
+function getResolvedTableSourceMappings({data, fireflyData, tablesources, activeTrace, tbl_id}) {
+    const genericMappings = getGenericTableSourceMappings({
+        data, fireflyData, tablesources, activeTrace, tbl_id
+    });
+    if (!isEmpty(genericMappings)) return genericMappings;
+
+    const groupedMappings = getGroupedTableSourceMappings({fireflyData, activeTrace, tbl_id});
+    if (!isEmpty(groupedMappings)) return groupedMappings;
+
+    return getTypeSpecificTableSourceMappings({fireflyData, activeTrace});
 }
 
 function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
@@ -1145,16 +1504,17 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
 
 export function getSelIndexes(data, selectInfoCls, traceIdx) {
     return Array.from(selectInfoCls.getSelected()).map((rowIdx) => {
-        let ptIdx = getPointIdx(data[traceIdx], rowIdx);
+        let rowTraceIdx = traceIdx;
+        let ptIdx = getPointIdx(data[rowTraceIdx], rowIdx);
         if (ptIdx < 0) {
             data.some((t, idx) => {
                 ptIdx = getPointIdx(t, rowIdx);
-                traceIdx = idx;
+                rowTraceIdx = idx;
                 return ptIdx > -1;
             });
         }
-        return [ptIdx, traceIdx];
-    });
+        return [ptIdx, rowTraceIdx];
+    }).filter(([ptIdx]) => ptIdx >= 0);
 }
 
 
@@ -1202,13 +1562,15 @@ function hasNoXY(type, tablesource) {
 export function getChartProps(chartId, tbl_id, activeTrace) {
     const {data, layout, fireflyLayout, tablesources, fireflyData, ...rest} = getChartData(chartId) || {};
     activeTrace = activeTrace ?? rest.activeTrace ?? 0;
-    const tablesource = get(tablesources, [activeTrace], tbl_id && {tbl_id});
-    tbl_id = tbl_id || tablesource?.tbl_id;
-
-    const mappings = tablesource?.mappings;
+    const activeTablesource = get(tablesources, [activeTrace]);
+    tbl_id = tbl_id || activeTablesource?.tbl_id || data?.[activeTrace]?.tbl_id || fireflyData?.[activeTrace]?.tbl_id;
+    const dataType = fireflyData?.[activeTrace]?.dataType;
+    const mappings = getResolvedTableSourceMappings({data, fireflyData, tablesources, activeTrace, tbl_id});
+    const tablesource = (activeTablesource || tbl_id)
+        ? {...(activeTablesource || {}), tbl_id, mappings}
+        : undefined;
     const multiTrace = activeTrace > 0 || data?.length > 1;
     const type = get(data, `${activeTrace}.type`, 'scatter');
-    const dataType = fireflyData?.[activeTrace]?.dataType;
     const noColor = !hasMarkerColor(type);
     const noXY = hasNoXY(type, tablesource);
     const isXNotNumeric = noXY ? undefined : isNonNumColumn(tbl_id, mappings?.x);
@@ -1226,9 +1588,9 @@ export function getChartProps(chartId, tbl_id, activeTrace) {
 
 
 export function getTblIdFromChart(chartId, traceNum) {
-    const {data, fireflyData, activeTrace} = getChartData(chartId) || {};
+    const {data, fireflyData, tablesources, activeTrace} = getChartData(chartId) || {};
     traceNum = traceNum ?? activeTrace;
-    return data?.[traceNum]?.tbl_id || fireflyData?.[traceNum]?.tbl_id;
+    return tablesources?.[traceNum]?.tbl_id || data?.[traceNum]?.tbl_id || fireflyData?.[traceNum]?.tbl_id;
 }
 
 export function hasTracesFromSameTable(chartId) {
@@ -1250,7 +1612,7 @@ function simpleCloneDeep(obj) {
 
     const copy = {};
     for (const key of Object.keys(obj)) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
             copy[key] = simpleCloneDeep(obj[key]);
         }
     }

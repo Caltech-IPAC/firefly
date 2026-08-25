@@ -180,8 +180,12 @@ export function ChartBadgeLabel({labelStr}) {
 
 function doPinChart({chartId, autoLayout=true, displayPinMessage=true }) {
 
-    const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
-    chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
+    const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted', 'selection']));
+    if (chartData?.layout) Reflect.deleteProperty(chartData.layout, 'selections');
+    chartData?.tablesources?.forEach((ts) => {
+        Reflect.deleteProperty(ts, '_cancel');
+        Reflect.deleteProperty(ts, '_sourceId');
+    });
 
     const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.length ?? 0;
     if (pinnedCnt >= PINNED_MAX) {

@@ -4,7 +4,7 @@ import {Stack} from '@mui/joy';
 import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
-import {useStoreConnector, useFieldValueOnly} from 'firefly/ui/SimpleComponent';
+import {useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {getChartData} from '../../ChartsCntlr.js';
 import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
 import {canUnitConv, convertUnitValue} from '../../dataTypes/SpectrumUnitConversion.js';
@@ -126,8 +126,11 @@ export function SpectralLinesOptions({activeTrace, chartId}) {
     const hasSpectralFrame = useStoreConnector(() =>
         isKnownRefPos(getChartData(chartId)?.fireflyData?.[activeTrace]?.spectralFrame?.refPos),
         [chartId, activeTrace]);
-    const isEnabledField = useFieldValueOnly(ENABLED_KEY, false);
-    const isEnabled = hasSpectralFrame && isEnabledField;
+
+    // The field can be undefined for one render while the dialog mounts
+    // Use live form state when present, otherwise fall back to chart state
+    const isEnabledField = useFieldValueOnly(ENABLED_KEY);
+    const isEnabled = hasSpectralFrame && (isEnabledField ?? initialEnabled);
 
     // TODO: combine different source tables to a client-side table
     const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions);

@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import {flux} from '../core/ReduxFlux.js';
 
 import {get, has, omit} from 'lodash';
@@ -8,6 +9,7 @@ import {REINIT_APP} from '../core/CoreConst';
 
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 import {getTblById, doFetchTable, getColumns, COL_TYPE} from '../tables/TableUtil.js';
+import {useStoreConnector} from '../ui/SimpleComponent.jsx';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
@@ -26,6 +28,9 @@ export const TBLSTATS_DATA_KEY = 'tblstats';
 
 export const LOAD_TBL_STATS = `${TBLSTATS_DATA_KEY}/LOAD_TBL_STATS`;
 export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
+
+//Avoid duplicate column-stat requests while the first request for a table is still pending
+const pendingStatsTblIds = new Set();
 
 
 export default {actionCreators, reducers};
@@ -58,6 +63,8 @@ export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
 
     if (resultSetID !== resultSetIDNow
         || curNumericColCnt !== numericColCnt) {  // also reload stats if the number of numeric columns changes.
+        if (pendingStatsTblIds.has(tbl_id)) return;
+        pendingStatsTblIds.add(tbl_id);
         dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
     }
 }
@@ -196,7 +203,14 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                     colStats: undefined
                 }));
         }
-    );
+    ).finally(() => {
+        pendingStatsTblIds.delete(tbl_id);
+        const currentRequest = getTblById(tbl_id)?.request;
+        const currentResultSetID = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+        if (currentRequest && currentResultSetID !== resultSetIDOnSubmit) {
+            dispatchLoadTblStats(currentRequest);
+        }
+    });
 }
 
 export function getColValStats(tblId) {
@@ -205,4 +219,24 @@ export function getColValStats(tblId) {
     if (get(tblStatsData,'isColStatsReady')) {
         return tblStatsData.colStats;
     }
+}
+
+/**
+ * Subscribe to column statistics for a table
+ * ColumnOrExpression uses these statistics when they are available and
+ * re-renders when the statistics finish loading
+ *
+ * @param {string} tbl_id table identifier used to load and retrieve column statistics
+ * @returns {Array | undefined} column statistics
+ */
+export function useTableColValStats(tbl_id) {
+    const colValStats = useStoreConnector(() => getColValStats(tbl_id), [tbl_id]);
+
+    useEffect(() => {
+        if (!tbl_id) return;
+        const request = getTblById(tbl_id)?.request;
+        if (request) dispatchLoadTblStats(request);
+    }, [tbl_id]);
+
+    return colValStats;
 }

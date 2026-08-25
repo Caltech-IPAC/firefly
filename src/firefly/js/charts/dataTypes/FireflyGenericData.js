@@ -1,11 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, isUndefined, uniqueId, isNil} from 'lodash';
+import {get, isArray, isEmpty, isUndefined, uniqueId, isNil} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeSubQueryRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {getFiltersAsSql} from '../../tables/FilterInfo.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelection, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, getResetAxesChanges, getOriginalRowIndexes, isCurrentTableSource, updateHighlighted, updateSelection, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
 import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
 import {errorTypeFieldKey} from '../ui/options/Errors.jsx';
 
@@ -24,7 +25,7 @@ const numberOrArrayProps = ['marker.size'];
 export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const {mappings} = traceTS || {};
 
-    if (mappings) {
+    if (!isEmpty(mappings)) {
         const options = Object.assign({}, mappings);
 
         if (hasUpperLimits(chartId, traceNum) || hasLowerLimits(chartId, traceNum)) {
@@ -47,7 +48,7 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
 
 async function fetchData(chartId, traceNum, tablesource) {
 
-    const {tbl_id, mappings} = tablesource;
+    const {tbl_id, mappings, resetAxes} = tablesource;
     if (!mappings) {
         return;
     }
@@ -74,18 +75,27 @@ async function fetchData(chartId, traceNum, tablesource) {
     const sreq = createChartTblRequest(chartId, traceNum, tablesource);
 
     const tableModel = await doFetchTable(sreq).catch((reason) => {
-        dispatchError(chartId, traceNum, reason);
+        if (isCurrentTableSource(chartId, traceNum, tablesource)) dispatchError(chartId, traceNum, reason);
     });
 
-    if (tableModel.error) {
+    //ignore stale results from an older table source if this trace was reconnected while fetching
+    if (!isCurrentTableSource(chartId, traceNum, tablesource)) return;
+    if (tableModel?.error) {
         return dispatchError(chartId, traceNum, tableModel.error);
     }
 
     if (tableModel.tableData && tableModel.tableData.data) {
-        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+        let changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 
         // extra changes based on trace type
         addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
+
+        if (resetAxes) {
+            changes = {...changes, ...getResetAxesChanges(getChartData(chartId)?.layout)};
+        }
+
+        const rowIdx = getOriginalRowIndexes(tableModel);
+        if (rowIdx) changes[`data.${traceNum}.firefly.rowIdx`] = rowIdx;
 
         dispatchChartUpdate({chartId, changes});
         const {activeTrace} = getChartData(chartId);
@@ -120,9 +130,13 @@ export function createChartTblRequest(chartId, traceNum, tablesource) {
         }).filter((c, i, a) => a.indexOf(c) === i).// remove duplicates
         join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     }, true);
-    if (fireflyData?.[traceNum]?.filters) {
+    const groupFilter = fireflyData?.[traceNum]?.filters;
+    if (groupFilter) {
         const inclCols = (sreq.inclCols ? sreq.inclCols + ',' : '') + '"ROW_NUM" as "ORIG_IDX"';
-        sreq = makeSubQueryRequest(request, sreq.title, sreq.params,{filters: fireflyData?.[traceNum].filters, inclCols, pageSize: MAX_ROW});
+        const tableFilter = getFiltersAsSql(tbl_id);
+        //apply the table filter and this trace's group filter together
+        const filters = tableFilter ? `(${tableFilter}) AND (${groupFilter})` : groupFilter;
+        sreq = makeSubQueryRequest(request, sreq.title, sreq.params,{filters, inclCols, pageSize: MAX_ROW});
     }
     return sreq;
 }
@@ -210,9 +224,9 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     const {mappings} = tablesource;
     const {layout, data, fireflyData} = getChartData(chartId) || {};
 
-    const colors = get(changes, [`data.${traceNum}.marker.color`]);
-    let cTipLabel = isArray(colors) ? get(mappings, 'marker.color') : '';
-    if (cTipLabel.length > 20) {
+    const colors = changes?.[`data.${traceNum}.marker.color`];
+    let cTipLabel = isArray(colors) ? mappings?.['marker.color'] : '';
+    if (cTipLabel?.length > 20) {
         cTipLabel = 'c';
     }
 

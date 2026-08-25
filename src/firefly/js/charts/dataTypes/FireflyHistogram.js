@@ -6,7 +6,7 @@ import {logger} from '../../util/Logger.js';
 import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {formatColExpr, handleBigInt} from '../ChartUtil.js';
+import {formatColExpr, handleBigInt, isCurrentTableSource} from '../ChartUtil.js';
 
 
 import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
@@ -22,15 +22,20 @@ import Color from '../../util/Color.js';
  * @param p.traceNum
  * @returns {{options: {}, fetchData: fetchData}}
  */
-export function getTraceTSEntries({chartId, traceNum}) {
+export function getTraceTSEntries({chartId, traceNum, traceTS={}}) {
 
     const options = {};
 
     // server call parameters
     const {fireflyData, layout} = getChartData(chartId) || {};
-    const histogramParams = get(fireflyData, `${traceNum}.options`);
+    //preserve histogram options when chart state updates are partial
+    const histogramParams = {
+        ...traceTS.options,
+        ...fireflyData?.[traceNum]?.options
+    };
+    if (!histogramParams.columnOrExpr) return {};
     options.columnExpression = histogramParams.columnOrExpr;
-    if (get(layout, 'xaxis.type') === 'log') {
+    if (layout?.xaxis?.type === 'log') {
         options.columnExpression = 'lg('+histogramParams.columnOrExpr+')';
     }
     if (histogramParams.fixedBinSizeSelection) { // fixed size bins
@@ -58,15 +63,28 @@ function fetchData(chartId, traceNum, tablesource) {
     const {tbl_id, options} = tablesource;
 
     const tableModel = getTblById(tbl_id);
+    if (!tableModel?.request || !options?.columnExpression) {
+        if (isCurrentTableSource(chartId, traceNum, tablesource)) {
+            dispatchError(chartId, traceNum, 'Histogram table source is incomplete');
+        }
+        return;
+    }
     const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
 
     const {request} = tableModel;
     const valueColName = 'columnExpression';
+    const formattedColumnExpression = formatColExpr({
+        colOrExpr: options.columnExpression,
+        quoted: true,
+        colNames: numericCols
+    });
     const sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: `${formatColExpr({colOrExpr:options.columnExpression, quoted: true, colNames: numericCols})} as "${valueColName}"`,
-        sortInfo: `ASC,"${valueColName}"`
+        inclCols: `${formattedColumnExpression} as "${valueColName}"`,
+        //HistogramProcessor expects the selected value as "columnExpression",
+        //but the source query must sort by the original expression
+        sortInfo: `ASC,${formattedColumnExpression}`
     });
     const sreqTblId = uniqueId(request.tbl_id);
     sreq.META_INFO.tbl_id = sreqTblId;
@@ -79,6 +97,8 @@ function fetchData(chartId, traceNum, tablesource) {
 
     doFetchTable(req).then(
         (tableModel) => {
+
+            if (!isCurrentTableSource(chartId, traceNum, tablesource)) return;
 
             if (tableModel.error) {
                 dispatchError(chartId, traceNum, tableModel.error);
@@ -147,7 +167,9 @@ function fetchData(chartId, traceNum, tablesource) {
         }
     ).catch(
         (reason) => {
-            dispatchError(chartId, traceNum, reason);
+            if (isCurrentTableSource(chartId, traceNum, tablesource)) {
+                dispatchError(chartId, traceNum, reason);
+            }
         }
     );
 }

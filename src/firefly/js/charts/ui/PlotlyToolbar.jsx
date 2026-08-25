@@ -100,11 +100,21 @@ function isSelectable(tbl_id, chartId, type) {
     const checkY = typeWithY.includes(type);
     if (!checkX&&!checkY) return false;     // chart type has no selection box in tool bar
 
-    const {tablesources} = getChartData(chartId);
+    const {tablesources, fireflyData} = getChartData(chartId);
     const strCol = ['str', 's', 'char', 'c'];
     const tableModel = getTblById(tbl_id);
     const noSelectionTraceIdx = tablesources?.findIndex((tablesource) =>  {
-          const {x, y} = get(tablesource, 'mappings') || {};
+          const traceNum = tablesources.indexOf(tablesource);
+          const mappings = tablesource?.mappings || {};
+          const traceOptions = fireflyData?.[traceNum]?.options || {};
+          //Heatmap axis expressions live in fireflyData.options rather than
+          //in the table-source mappings used by ordinary traces.
+          const x = mappings.x || (fireflyData?.[traceNum]?.dataType === 'fireflyHeatmap'
+              ? traceOptions.xColOrExpr
+              : undefined);
+          const y = mappings.y || (fireflyData?.[traceNum]?.dataType === 'fireflyHeatmap'
+              ? traceOptions.yColOrExpr
+              : undefined);
           const dataExp = [x, y];
 
           const noSelectionIdx = [checkX, checkY].findIndex((checkItem, idx) => {

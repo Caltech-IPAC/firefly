@@ -9,7 +9,7 @@ import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr
 import {PINNED_CHART_VIEWER_ID} from '../../visualize/VisConst';
 import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
-import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
+import {getNewTraceDefaults, getTblIdFromChart, isGroupedChart, uniqueChartId} from '../ChartUtil.js';
 import {PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -37,6 +37,7 @@ import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 import PropTypes from 'prop-types';
 import {GridMask} from 'firefly/ui/panel/MaskPanel';
 import WarningIcon from '@mui/icons-material/WarningRounded';
+import {isPromise} from 'firefly/util/WebUtil';
 
 const POPUP_ID = 'CombineChart-popup';
 
@@ -74,7 +75,11 @@ export const CombineChart = ({chartIds, selectedChartId, showChartSelectionTable
         onCombineComplete?.(); // post-combination callback
     };
 
-    return (chartIds?.length > 1)
+    const unresolvedChartIds = isPromise(chartIds?.[0]);
+    const hasChartsToCombine = chartIds?.length > 1 &&
+        (!showChartSelectionTable || unresolvedChartIds || hasCompatibleCharts(chartIds, selectedChartId));
+
+    return hasChartsToCombine
         ? <CombineChartButton onClick={doCombine} tip={'Combine charts (that are pinned)'} {...slotProps?.button}/>
         : null;
 };
@@ -111,8 +116,10 @@ CombineChart.propTypes = {
 export const CombinePinnedCharts = ({viewerId, slotProps}) => {
     if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
 
-    const chartIds = getViewerItemIds(getMultiViewRoot(), viewerId);
-    const selectedChartId = getActiveViewerItemId(viewerId, true);
+    const {chartIds, selectedChartId} = useStoreConnector(() => ({
+        chartIds: getViewerItemIds(getMultiViewRoot(), viewerId),
+        selectedChartId: getActiveViewerItemId(viewerId, true)
+    }), [viewerId]);
     return <CombineChart {...{chartIds, selectedChartId, slotProps}} />;
 };
 
@@ -183,6 +190,12 @@ function createTableModel(chartIds, selectedChartId, showAll, tbl_id) {
     return table;
 }
 
+export function hasCompatibleCharts(chartIds=[], selectedChartId) {
+    selectedChartId = selectedChartId ?? chartIds[0];
+    if (!selectedChartId) return false;
+    return chartIds.some((id) => id !== selectedChartId && canCombine(id, selectedChartId));
+}
+
 const activeChartTypography = {color:'warning'};
 
 const ChartSelectionTable = ({tbl_id, chartIds, selectedChartId}) => {
@@ -230,7 +243,7 @@ const CombineChartDialog = ({onComplete, chartIds, selectedChartId, showChartSel
         getColumnValues(getSelectedDataSync(tbl_id), 'ChartId'));
 
     useEffect(() => {
-        if (chartIds[0] instanceof Promise) {
+        if (isPromise(chartIds[0])) {
             // store fulfilled values and rejected reasons in the state when available
             Promise.allSettled(chartIds).then((results) => {
                 setResolvedChartIds(results.filter(({status})=> status==='fulfilled')
@@ -341,7 +354,7 @@ const SelChartOpt = ({chartId, groupKey, header, traceTitles, idx}) => {
         const {Name} = useBasicOptions({activeTrace: traceNum, groupKey});
         return <Name initialState={{value: traceTitle?.initValue}} label={traceTitle?.label}/>;
     };
-    const isOpen = !isSpectralOrder(chartId);
+    const isOpen = !isGroupedChart(chartId);
     return (
         <CollapsibleItem componentKey={key} header={header} isOpen={isOpen}>
             <Stack spacing={1}>
@@ -547,7 +560,7 @@ function applyCascadingAlgo(chartId, chartData, idx, padding) {
 function canCombine(chartId, selectedChartId) {
 
     const activeTrace = 0;          // hard-code to only use the first trace from each chart
-    const {xUnit, yUnit} = getChartData(selectedChartId)?.fireflyData?.[activeTrace];
+    const {xUnit, yUnit} = getChartData(selectedChartId)?.fireflyData?.[activeTrace] || {};
     if (!xUnit || !yUnit) return false;
 
     const chartData = cloneDeep(getChartData(chartId));

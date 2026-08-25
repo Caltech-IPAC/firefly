@@ -331,7 +331,7 @@ public class EmbeddedDbUtil {
             List<String> qualified = counts.entrySet().stream()
                     .filter(e -> {
                         long count = ((Number) e.getValue()).longValue();
-                        return count > 0 && count <= MAX_COL_ENUM_COUNT;
+                        return count > 1 && count <= MAX_COL_ENUM_COUNT;
                     })
                     .map(Map.Entry::getKey)
                     .toList();
@@ -348,7 +348,7 @@ public class EmbeddedDbUtil {
                 for (String cname : qualified) {
                     Object[] vals = (Object[]) ((java.sql.Array) valsRow.get(cname)).getArray();
                     DataType col = findColByName(inclCols, cname);
-                    if (col != null && vals.length <= MAX_COL_ENUM_COUNT) {
+                    if (col != null && vals.length > 1 && vals.length <= MAX_COL_ENUM_COUNT) {
                         String enumVals = Arrays.stream(vals)
                                 .map(v -> v == null ? NULL_TOKEN : v.toString())         // convert to list of value as string
                                 .map(v -> v.contains(",") ? "'" + v + "'" : v)            // if there's comma in the column name, enclose it with single quotes

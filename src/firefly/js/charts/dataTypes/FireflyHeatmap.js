@@ -5,7 +5,7 @@ import {get, isArray} from 'lodash';
 import {getTblById, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {isScatter2d, getMaxScatterRows, singleTraceUI, handleBigInt} from '../ChartUtil.js';
+import {isCurrentTableSource, isScatter2d, getMaxScatterRows, singleTraceUI, handleBigInt} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 import {formatColExpr} from '../ChartUtil.js';
@@ -26,9 +26,13 @@ const DEFBINS = 100;
  * @param p.traceNum
  */
 export function getTraceTSEntries({traceTS, chartId, traceNum}) {
-    const {mappings} = traceTS;
+    const {mappings={}, options:traceOptions={}} = traceTS;
 
-    if (!mappings) return {};
+    //During partial chart updates, trace removal, pinning, filtering, or fullscreen transitions,
+    //the table source could temporarily contain empty mappings, which is why we need this fallback to traceOptions
+    const xColOrExpr = mappings.x || traceOptions.xColOrExpr;
+    const yColOrExpr = mappings.y || traceOptions.yColOrExpr;
+    if (!xColOrExpr || !yColOrExpr) return {};
 
     const {fireflyData, fireflyLayout} = getChartData(chartId) || {};
     // server call parameters
@@ -47,9 +51,7 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const ymax = get(fireflyLayout, 'yaxis.max');
 
     const options = {
-        xColOrExpr: get(mappings, 'x'),
-        yColOrExpr: get(mappings, 'y'),
-        maxbins, xyratio, xmin, xmax, ymin, ymax
+        xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax
     };
 
     return {options, fetchData};
@@ -75,7 +77,9 @@ function fetchData(chartId, traceNum, tablesource) {
     const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
     const {request} = tableModel;
 
-    const {xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax} = options;
+    const {xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax} = options || {};
+    //A stale/reindexed source can briefly lack axis expressions, do not attempt to fetch in that case
+    if (!xColOrExpr || !yColOrExpr) return;
 
     const xColName = numericCols.includes(xColOrExpr) ? xColOrExpr : 'xColumnExpression';
     const asX = (xColName === xColOrExpr) ? '' : ` as "${xColName}"`;
@@ -94,6 +98,9 @@ function fetchData(chartId, traceNum, tablesource) {
         {decimate: serializeDecimateInfo(xColName, yColName, maxbins, xyratio, xmin, xmax, ymin, ymax, 0), pageSize: MAX_ROW});
 
     doFetchTable(req).then((tableModel) => {
+        if (!isCurrentTableSource(chartId, traceNum, tablesource)) {
+            return;
+        }
         if (tableModel.error) {
             dispatchError(chartId, traceNum, tableModel.error);
             return;
@@ -111,7 +118,7 @@ function fetchData(chartId, traceNum, tablesource) {
         }
     }).catch(
         (reason) => {
-            dispatchError(chartId, traceNum, reason);
+            if (isCurrentTableSource(chartId, traceNum, tablesource)) dispatchError(chartId, traceNum, reason);
         }
     );
 }
@@ -127,9 +134,9 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
         return {};
     }
 
-    // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
-    const yLabel = stripColumnNameQuotes(get(mappings, 'y'));
+    //prevent missing source mappings from breaking tooltip and axis-label formatting.
+    const xLabel = stripColumnNameQuotes(mappings?.x || 'x');
+    const yLabel = stripColumnNameQuotes(mappings?.y || 'y');
     const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
     const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
 
@@ -243,7 +250,11 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
             if (singleTraceUI() || (data?.length===1)) {
                 changes[`data.${traceNum}.colorbar.title.text`] = 'pts';
             } else {
-                changes[`data.${traceNum}.colorbar.title.text`] = get(data, `${traceNum}.name`, 'pts');
+                const traceName = get(data, `${traceNum}.name`);
+                //automatically generated names (for example, "trace 1") are
+                //implementation details and are not useful colorbar titles
+                changes[`data.${traceNum}.colorbar.title.text`] =
+                    traceName && !/^trace\s+\d+$/i.test(traceName) ? traceName : 'pts';
             }
         }
 
@@ -304,6 +315,14 @@ export function adjustColorbars({data, fireflyData, layout}) {
     if (data) {
         const changes = {};
         const nbars = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length;
+        const fireflyColorbarCount = data.filter((d, i) =>
+            get(fireflyData, `${i}.fireflyColorbar`) && get(d, 'colorbar') && get(d, 'showscale', true)).length;
+        if (fireflyColorbarCount === 0 && nbars === 0 && layout?.legend?.orientation === 'h') {
+            //firefly colorbars use a horizontal legend while present. Clear
+            //that temporary override after the last colorbar is removed so
+            //plotly can restore its normal right-side legend placement
+            changes['layout.legend.orientation'] = undefined;
+        }
         const yside = get(layout, 'yaxis.side');
         const yOpposite = (yside === 'right');
         let cnt = 1;

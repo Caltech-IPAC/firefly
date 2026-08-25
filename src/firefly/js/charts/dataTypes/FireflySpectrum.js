@@ -1,12 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty, pickBy, cloneDeep, set} from 'lodash';
+import {isEmpty, pickBy, cloneDeep, set, uniqueId} from 'lodash';
 
 import {getTblById, getColumn, doFetchTable, getColumnIdx} from '../../tables/TableUtil.js';
 import {getSpectrumDM, REF_POS} from '../../voAnalyzer/SpectrumDM.js';
-import {dispatchChartUpdate, dispatchError} from '../ChartsCntlr.js';
-import {getDataChangesForMappings, updateHighlighted, updateSelection, getMinScatterGLRows, isSpectralOrder} from '../ChartUtil.js';
+import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
+import {getDataChangesForMappings, getResetAxesChanges, getOriginalRowIndexes, isCurrentTableSource, updateHighlighted, updateSelection, getMinScatterGLRows, isGroupedChart} from '../ChartUtil.js';
 import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
@@ -27,7 +27,7 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const traceEntry = genericTSGetter({traceTS, chartId, traceNum});
     if (isEmpty(traceEntry)) return {};
 
-    if (!isSpectralOrder(chartId)) {
+    if (!isGroupedChart(chartId)) {
         return {options: traceEntry.options, fetchData:traceEntry.fetchData};
     }
     return {options: traceEntry.options, fetchData};
@@ -36,7 +36,7 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
 
 async function fetchData(chartId, traceNum, tablesource) {
 
-    const {tbl_id, mappings} = tablesource;
+    const {tbl_id, mappings, resetAxes} = tablesource;
     if (!mappings) {
         return;
     }
@@ -48,23 +48,28 @@ async function fetchData(chartId, traceNum, tablesource) {
     // set(sreq, 'inclCols', (sreq.inclCols + ', "ROW_IDX"');
 
     const tableModel = await doFetchTable(sreq).catch((reason) => {
-        dispatchError(chartId, traceNum, reason);
+        if (isCurrentTableSource(chartId, traceNum, tablesource)) dispatchError(chartId, traceNum, reason);
     });
 
-    if (tableModel.error) {
+    //ignore stale results from an older table source if this trace was reconnected while fetching
+    if (!isCurrentTableSource(chartId, traceNum, tablesource)) return;
+    if (tableModel?.error) {
         return dispatchError(chartId, traceNum, tableModel.error);
     }
 
     if (tableModel?.tableData?.data) {
-        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+        let changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 
         // extra changes based on trace type
         addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
 
+        if (resetAxes) {
+            changes = {...changes, ...getResetAxesChanges(getChartData(chartId)?.layout)};
+        }
+
         // add row_idx to pointIdx mappings
-        const origIdx = getColumnIdx(tableModel, 'ORIG_IDX');
-        const rowIdx = tableModel.tableData.data.map((row) => row[origIdx]);
-        set(changes, [`data.${traceNum}.firefly.rowIdx`], rowIdx);
+        const rowIdx = getOriginalRowIndexes(tableModel);
+        if (rowIdx) set(changes, [`data.${traceNum}.firefly.rowIdx`], rowIdx);
 
         dispatchChartUpdate({chartId, changes});
         updateHighlighted(chartId, traceNum, highlightedRow);
@@ -110,7 +115,8 @@ export function spectrumPlot({tbl_id, spectrumDM}) {
             const order = cloneDeep(orig);
             set(order, 'name', v);
             set(order, 'mode', 'lines+markers');
-            set(order, 'firefly.spectralOrder', spectralAxis.order);
+            set(order, 'legendgroup', uniqueId('grp'));
+            set(order, 'firefly.groupBy', {column: spectralAxis.order, value: v});
             set(order, 'firefly.filters', `"${orderCol.name}" = '${v}'`);
             data.push(order);
         });
@@ -156,7 +162,7 @@ export function getSpectrumProps(tbl_id, spectrumDM) {
 
     // get default spectral frame and labels, needed to initialize spectrum
     // (in future, move redshift processing functions & defaults from SpectrumOptions to a separate file where they can be exported to avoid redundancy)
-    const refPos = spectralFrame.refPos.toUpperCase();
+    const refPos = spectralFrame?.refPos?.toUpperCase?.() || REF_POS.TOPOCENTER; //add a fallback to TOPOCENTER if refPos is undefined
     const sfLabel = refPos===REF_POS.TOPOCENTER ? 'Observed Frame'
         : refPos===REF_POS.CUSTOM ? 'Rest Frame' : `${refPos} Spectral Frame`;
     const redshiftLabel = refPos===REF_POS.CUSTOM ? `Custom Redshift = ${spectralFrame.redshift}` : '';

@@ -10,7 +10,7 @@ import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {getChartData, dispatchChartTraceRemove, dispatchChartUpdate} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 import {PopupPanel} from './../../ui/PopupPanel.jsx';
-import {isSpectralOrder, isScatter2d, getTblIdFromChart} from '../ChartUtil.js';
+import {isGroupedChart, isScatter2d, getTblIdFromChart} from '../ChartUtil.js';
 import {BasicOptions, useBasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
@@ -34,13 +34,13 @@ function getChartActions({chartId, tbl_id}) {
         if (data.length > 0) {
             // can modify active trace
             chartActions.push(CHART_TRACE_MODIFY);
-            if (data.length > 1 && !isSpectralOrder(chartId)) {
+            if (data.length > 1 && !isGroupedChart(chartId)) {
                 // can remove active trace
                 chartActions.push(CHART_TRACE_REMOVE);
             }
         }
         if (tbl_id) {
-            if (!isSpectralOrder(chartId)) {
+            if (!isGroupedChart(chartId)) {
                 // can add trace
                 chartActions.push(CHART_TRACE_ADDNEW);
             }
@@ -88,26 +88,32 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId})
     };
 }
 
-function getGroupKey(chartId, chartAction) {
+function getGroupKey(chartId, chartAction, activeTrace) {
     if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
         const type = getNewTraceType();
         const  cid = (chartAction === CHART_ADDNEW) ? 'newchart' : chartId;
         return `${cid}-newtrace-${type}`;
     } else {
-        const {activeTrace} = getChartData(chartId);
-        return `${chartId}-${activeTrace}`;
+        const trace = activeTrace ?? getChartData(chartId)?.activeTrace ?? 0;
+        return `${chartId}-${trace}`;
     }
 }
 
 export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, hideDialog, sx={}}) {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const showActionOptions= chartAction!==CHART_ADDNEW;
+    const isGrouped = useStoreConnector(() => isGroupedChart(chartId), [chartId]);
+    const activeTrace = useStoreConnector(() => getChartData(chartId)?.activeTrace ?? 0, [chartId]);
 
-    const chartActions =  showActionOptions ?  getChartActions({chartId, tbl_id}) : [CHART_ADDNEW];
+    const chartActions = useStoreConnector(() => showActionOptions ? getChartActions({chartId, tbl_id}) : [CHART_ADDNEW],
+        [chartId, tbl_id, showActionOptions]);
     const [chartActionState, setChartActionState] = useState(
         (chartActions.includes(chartAction)) ? chartAction : chartActions[0]);
+    useEffect(() => {
+        setChartActionState((current) => chartActions.includes(current) ? current : chartActions[0]);
+    }, [chartActions]);
 
-    const groupKey = getGroupKey(chartId, chartActionState);
+    const groupKey = getGroupKey(chartId, chartActionState, activeTrace);
 
     const chartActionChanged = (chartAction) => setChartActionState(chartAction);
 
@@ -126,9 +132,9 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
             }}>
 
             <Stack spacing={2}>
-                {showActionOptions  &&
+                {showActionOptions && !isGrouped &&
                     <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>}
-                {showActionOptions && <Divider/>}
+                {showActionOptions && !isGrouped && <Divider/>}
                 <Box py={1} overflow={'auto'} maxHeight={'60vh'} minWidth={'30rem'}>
                     <ChartActionOptions {...{chartAction: chartActionState, tbl_id, chartId, groupKey, hideDialog}}/>
                 </Box>
@@ -187,7 +193,7 @@ function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
                     value={chartAction}
                     onChange={onChartActionChange}
                 />
-                <ChooseTrace/>
+                {!isGroupedChart(chartId) && <ChooseTrace/>}
             </Stack>
         );
     }
@@ -210,7 +216,7 @@ function ChartActionOptions(props) {
         return (<NewTracePanel key={chartAction} {...{groupKey, tbl_id, chartId, hideDialog}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
-        return (<SyncedOptionsUI {...{chartId, groupKey}}/>);
+        return (<SyncedOptionsUI {...{chartId, tbl_id, groupKey}}/>);
     } else if (chartAction === CHART_TRACE_REMOVE) {
         const {data=[], activeTrace} = getChartData(chartId);
         const traceName = get(data, `${activeTrace}.name`) || `trace ${activeTrace}`;
@@ -279,16 +285,19 @@ function SyncedOptionsUI (props) {
 
 SyncedOptionsUI.propTypes = {
     chartId: PropTypes.string,
+    tbl_id: PropTypes.string,
     groupKey: PropTypes.string
 };
 
 /**
  * Creates and shows the modal dialog with chart options.
  * @param {string} chartId
+ * @param {string} chartAction
+ * @param {string} tbl_id
  */
 export function showChartsDialog(chartId,chartAction, tbl_id) {
-    const {data, fireflyData, activeTrace} = getChartData(chartId);
-    const workingTblId = tbl_id ?? (get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`));
+    const {data, fireflyData, activeTrace, groupId} = getChartData(chartId);
+    const workingTblId = tbl_id ?? (data?.[activeTrace]?.tbl_id || fireflyData?.[activeTrace]?.tbl_id || groupId);
 
     const popupId ='chartOptionsDialog';
     const dialogContent= (
@@ -304,5 +313,3 @@ export function showChartsDialog(chartId,chartAction, tbl_id) {
     DialogRootContainer.defineDialog(popupId, dialogContent);
     dispatchShowDialog(popupId);
 }
-
-

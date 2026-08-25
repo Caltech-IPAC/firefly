@@ -106,6 +106,12 @@ export function BasicOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId,
     );
 }
 
+function isCurrentAxisMapping({chartId, activeTrace, axis, value}) {
+    if (isUndefined(value)) return false;
+    const {mappings={}} = getChartProps(chartId, undefined, activeTrace);
+    return String(value).trim() === String(mappings?.[axis] ?? '').trim();
+}
+
 export function basicFieldReducer({chartId, activeTrace}) {
 
     return (inFields, action) => {
@@ -118,17 +124,19 @@ export function basicFieldReducer({chartId, activeTrace}) {
                 fieldKey = get(action.payload, 'fieldKey');
                 ['x','y'].forEach((a) => {
                     if (fieldKey === `_tables.data.${activeTrace}.${a}`) { // column name or expression changed
-                        // unset the axis title so that the chart generates a title based on the changed column name
-                        // but not in spectrum because spectrumReducer changes axes labels itself which need to be persisted
-                        if (!isSpectrum(chartId)) inFields = updateSet(inFields, [`layout.${a}axis.title.text`, 'value'], undefined);
+                        if (!isCurrentAxisMapping({chartId, activeTrace, axis: a, value: get(action.payload, 'value')})) {
+                            // unset the axis title so that the chart generates a title based on the changed column name
+                            // but not in spectrum because spectrumReducer changes axes labels itself which need to be persisted
+                            if (!isSpectrum(chartId)) inFields = updateSet(inFields, [`layout.${a}axis.title.text`, 'value'], undefined);
 
-                        inFields = updateSet(inFields, [`fireflyLayout.${a}axis.min`, 'value'], undefined);
-                        inFields = updateSet(inFields, [`fireflyLayout.${a}axis.max`, 'value'], undefined);
-                        inFields = updateSet(inFields, [`__${a}reset`, 'value'], 'true');
-                        const optFldName = `__${a}options`;
-                        const currOptions = get(inFields, [optFldName, 'value']);
-                        // do not reset grid selection
-                        inFields = updateSet(inFields, [optFldName, 'value'], filterOptions(currOptions, ['grid', 'opposite']));
+                            inFields = updateSet(inFields, [`fireflyLayout.${a}axis.min`, 'value'], undefined);
+                            inFields = updateSet(inFields, [`fireflyLayout.${a}axis.max`, 'value'], undefined);
+                            inFields = updateSet(inFields, [`__${a}reset`, 'value'], 'true');
+                            const optFldName = `__${a}options`;
+                            const currOptions = get(inFields, [optFldName, 'value']);
+                            // do not reset grid selection
+                            inFields = updateSet(inFields, [optFldName, 'value'], filterOptions(currOptions, ['grid', 'opposite']));
+                        }
                     }
                 });
             }
@@ -300,7 +308,7 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
-            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [];
+            const [,activeTrace] = /^_tables\.data\.(\d+)\./.exec(k) || [];
             if (!isUndefined(activeTrace)) {
                 // table id must be set for a data change
                 changes[`data.${activeTrace}.tbl_id`] = data[activeTrace]?.tbl_id || tbl_id;
@@ -474,7 +482,7 @@ function filterOptions(options, opts) {
  */
 export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, groupKey, isXNotNumeric,
                                   isYNotNumeric, xNoLog, yNoLog, orientation='horizontal'}, deps=[pActiveTrace]) => {
-    const {activeTrace, data, layout, fireflyLayout, color, ...rest} = getChartProps(chartId, tbl_id, pActiveTrace);
+    const {activeTrace, data, fireflyData, layout, fireflyLayout, color, ...rest} = getChartProps(chartId, tbl_id, pActiveTrace);
     xNoLog = xNoLog ?? rest.xNoLog;
     yNoLog = yNoLog ?? rest.yNoLog;
     isXNotNumeric = isXNotNumeric ?? rest.isXNotNumeric;
@@ -555,10 +563,10 @@ export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, grou
                                     options={[ {label: 'height', value: 'fit'}, {label: 'width', value: 'fill'}]}
                                     orientation={orientation} {...props}/>), deps),
         Name:  useCallback((props) => (<ValidationField fieldKey={`data.${activeTrace}.name`}
-                                     initialState= {{value: get(data, `${activeTrace}.name`, '')}}
+                                     initialState= {{value: get(data, `${activeTrace}.name`) || get(fireflyData, `${activeTrace}.groupBy.value`) || ''}}
                                      tooltip='The name of this new series'
                                      label='Name:'
-                                     orientation={orientation} {...props}/>), deps),
+                                     orientation={orientation} {...props}/>), [...deps, activeTrace, data?.length, fireflyData]),
         Color:  useCallback((props) => {
             const colorPicker = (
                 <div style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
@@ -602,6 +610,6 @@ export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, grou
                     <ActiveTraceSelect chartId={chartId} activeTrace={activeTrace} {...props}/>
                 </FormControl>
             );
-        }, deps),
+        }, [...deps, activeTrace, data?.length]),
     };
 };
