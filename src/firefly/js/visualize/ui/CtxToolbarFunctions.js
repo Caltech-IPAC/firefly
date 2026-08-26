@@ -121,6 +121,7 @@ function tabulateStatics(wpResult, cc) {
     const bandData = {};
 
     function getOneStatSet(b) {
+        if (!b.MEAN || !b.STDEV || !b.INTEGRATED_FLUX) return;
 
         const tblData = {};
 
@@ -163,7 +164,7 @@ function tabulateStatics(wpResult, cc) {
         return tblData;
     }
 
-    if (bands.hasOwnProperty(noBand)) {
+    if (bands[noBand]) {
         bandData[noBand] = getOneStatSet(bands[noBand]);
     } else {
         const bandName = ['Blue', 'Red', 'Green'];
