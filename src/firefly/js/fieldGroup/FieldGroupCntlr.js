@@ -121,8 +121,8 @@ export function dispatchMountComponent(groupKey,fieldKey,mounted,value,initField
  * @param {Object} payload
  * @param {String} payload.fieldKey the field Key
  * @param {String} payload.groupKey group key
- * @param {String} payload.value value can be anything including a promise or function
- * @param {boolean} payload.valid - true if valid, default to true
+ * @param {String} [payload.value] value can be anything including a promise or function
+ * @param {boolean} [payload.valid] - true if valid, default to true
  */
 export function dispatchValueChange(payload) {
     flux.process({type: VALUE_CHANGE, payload});

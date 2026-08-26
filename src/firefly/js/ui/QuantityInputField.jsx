@@ -211,10 +211,7 @@ export const QuantityInputField = memo((props) => {
     });
 
     useEffect(() => {
-        if (!viewProps?.unit && initUnit) {
-            // if unit is missing from store, set it from initialState
-            fireValueChange({unit: initUnit});
-        } else if ((viewProps?.value || viewProps?.value===0) && viewProps?.unit && !viewProps?.displayValue) {
+        if ((viewProps?.value || viewProps?.value===0) && viewProps?.unit && !viewProps?.displayValue) {
             // if value changed in the store (for e.g. by a setFieldValue()) and there's no displayValue, set it
             const newDisplayValue = convertQuantityUnits(viewProps.value, quantityBaseUnit, viewProps.unit);
             fireValueChange({displayValue: newDisplayValue});
