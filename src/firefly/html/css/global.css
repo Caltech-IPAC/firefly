@@ -22,6 +22,14 @@
 @def toolbarGroupColor    rgba(0,0,0,.51);
 */
 
+/*
+ * Disable contextual ligatures. The form controls are listed to account for the browser's font shorthand reset.
+ */
+:root,
+button, input, select, textarea, optgroup {
+    font-variant-ligatures: no-contextual;
+}
+
 .rootStyle {
     /*background-color: #e3e3e3;*/
     padding: 0 1px 0 1px;
