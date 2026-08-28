@@ -28,7 +28,7 @@ import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, disp
 } from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {quoteNonAlphanumeric} from '../util/expr/Variable.js';
-import {flattenObject} from '../util/WebUtil.js';
+import {flattenObject, sortByConfig} from '../util/WebUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
@@ -39,6 +39,7 @@ import {toRGBA as colorToRGBA} from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {getColValidator} from './ui/ColumnOrExpression.jsx';
+import {getEnumConfigForColumn} from '../ui/tap/DataServicesOptions.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -476,12 +477,15 @@ export function makeScatterGroupByChanges({chartId, tbl_id, activeTrace=0, group
         };
     }
 
+    const enumConfig = getEnumConfigForColumn(tbl_id, groupCol.name);
+    const orderedValues = enumConfig?.order ? sortByConfig(groupValues, enumConfig.order) : groupValues;
+
     const groupData = [];
     const groupFireflyData = [];
-    groupValues.forEach((value, idx) => {
+    orderedValues.forEach((value, idx) => {
         const trace = simpleCloneDeep(baseData);
         const fd = simpleCloneDeep(baseFirefly);
-        const color = toRGBA(TRACE_COLORS[idx % TRACE_COLORS.length]);
+        const color = toRGBA(enumConfig?.palette?.[value] ?? TRACE_COLORS[idx % TRACE_COLORS.length]);
 
         set(trace, 'name', value);
         set(trace, 'showlegend', true);
@@ -1147,7 +1151,9 @@ export function applyDefaults(chartData={}, resetColor = true) {
             getNextTraceColorscale(true);
         }
 
-        type && Object.entries(getDefaultColorAttributes(d, type, idx)).forEach(([k, v]) => set(chartData, k, v));
+        const groupBy = chartData?.fireflyData?.[idx]?.groupBy || d?.firefly?.groupBy;
+        const traceTblId = d.tbl_id || d?.firefly?.tbl_id || chartData?.fireflyData?.[idx]?.tbl_id;
+        type && Object.entries(getDefaultColorAttributes(d, type, idx, groupBy, traceTblId)).forEach(([k, v]) => set(chartData, k, v));
 
         // default dragmode is select if box selection is supported
         type && !chartData.layout.dragmode && (chartData.layout.dragmode = isBoxSelectionSupported(type) ? 'select' : 'zoom');
@@ -1347,19 +1353,28 @@ export const colorsOnTypes = {
     others: [['marker.color']]
 };
 
+function getPreassignedGroupColor(tbl_id, groupBy) {
+    if (!groupBy?.column) return undefined;
+    const hex = getEnumConfigForColumn(tbl_id, groupBy.column)?.palette?.[groupBy.value];
+    return hex && toRGBA(hex);
+}
+
 /**
  * This function is used to apply color attributes to a new chart
  * @param traceData
  * @param type
  * @param idx
+ * @param groupBy - optional object containing column and value that this trace is grouped by,
+ *                  e.g. from FireflySpectrum's order-based auto-grouping or the manual scatter Group By feature
+ * @param tbl_id - table this trace's data comes from, used to look up a preassigned group color
  * @returns {{}} an object with color attributes
  */
-function getDefaultColorAttributes(traceData, type, idx) {
+function getDefaultColorAttributes(traceData, type, idx, groupBy, tbl_id) {
     if (!type) return {};
     const colorSettingObj = {};
 
     const colorAttributes = Object.keys(colorsOnTypes).includes(type) ? colorsOnTypes[type] : colorsOnTypes.others;
-    const color = getNextTraceColor();
+    const color = getPreassignedGroupColor(tbl_id, groupBy) ?? getNextTraceColor();
     colorAttributes[0].filter((att) => att.endsWith('color')).forEach((att) => {
         if (!get(traceData, att)) {
             colorSettingObj[`data.${idx}.${att}`] = color;

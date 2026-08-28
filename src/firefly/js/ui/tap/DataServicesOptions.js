@@ -2,7 +2,6 @@ import {isObject} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {MetaConst} from '../../data/MetaConst';
 import {getMetaEntry, getObjectMetaEntry} from '../../tables/TableUtil';
-import {getServiceMetaOptions} from './SiaUtil';
 
 const dsOps= () => getAppOptions().dataServiceOptions ?? {};
 
@@ -35,6 +34,18 @@ export function getDataServiceOptionByTable(key, tableOrId, defVal=undefined) {
     const entry= getObjectMetaEntry(tableOrId, MetaConst.DATA_SERVICE_OPTIONS)?.[key];
     if (entry) return entry;
     return getDataServiceOption(key, getMetaEntry(tableOrId,MetaConst.DATA_SERVICE_ID), defVal);
+}
+
+/**
+ * Get the `enumConfig` (preassigned order/color palette for an enum-like column, e.g. a photometric
+ * band) for a table, if one is configured via dataServiceOptions and applies to the given column.
+ * @param {TableModel|String} tableOrId - the table model or table id
+ * @param {String} columnName - the column being grouped/enumerated
+ * @return {{columnNames: String[], order: String[], palette: Object}|undefined}
+ */
+export function getEnumConfigForColumn(tableOrId, columnName) {
+    const enumConfig = getDataServiceOptionByTable('enumConfig', tableOrId);
+    return enumConfig?.columnNames?.includes(columnName) ? enumConfig : undefined;
 }
 
 export function getDataServiceOptionsFallback(dataServiceId, hostname) {

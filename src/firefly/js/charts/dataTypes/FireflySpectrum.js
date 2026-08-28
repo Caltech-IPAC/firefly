@@ -10,7 +10,9 @@ import {getDataChangesForMappings, getResetAxesChanges, getOriginalRowIndexes, i
 import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
+import {sortByConfig} from '../../util/WebUtil.js';
 import {getXLabel, getYLabel} from './SpectrumUnitConversion.js';
+import {getEnumConfigForColumn} from '../../ui/tap/DataServicesOptions.js';
 
 export const spectrumType = 'spectrum';
 
@@ -111,7 +113,10 @@ export function spectrumPlot({tbl_id, spectrumDM}) {
     if (spectralAxis.order) {
         const orderCol = getColumn(tableModel, spectralAxis.order);
         const orig = data.pop();
-        orderCol?.enumVals?.split(',').forEach((v) => {
+        const enumConfig = getEnumConfigForColumn(tbl_id, spectralAxis.order);
+        const orderValues = orderCol?.enumVals?.split(',') ?? [];
+        const orderedValues = enumConfig?.order ? sortByConfig(orderValues, enumConfig.order) : orderValues;
+        orderedValues.forEach((v) => {
             const order = cloneDeep(orig);
             set(order, 'name', v);
             set(order, 'mode', 'lines+markers');
