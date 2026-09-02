@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import React, {use, useCallback, useContext, useEffect, useState, useTransition} from 'react';
-import {isEmpty, isUndefined, uniqueId} from 'lodash';
+import React, {use, useCallback, useContext, useEffect, useRef, useState, useTransition} from 'react';
+import {isArray, isEmpty, isUndefined, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {
@@ -10,6 +10,7 @@ import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/cor
 import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 import {smartMerge} from 'firefly/tables/TableUtil.js';
+import {logger} from '../util/Logger.js';
 
 /**
  * @typedef InitArgs
@@ -286,6 +287,60 @@ export function useDebugCycle({id, render=true, mount=true}) {
     useEffect(() => {
         render && console.log(id, 'rendering');
     });
+}
+
+
+/**
+ * Coalesce rapid changes: returns value only after it has stayed unchanged for `wait` ms.
+ * @param {*} value - the value to debounce
+ * @param {number} wait - quiet period in ms
+ * @returns {*} the latest value that has been stable for `wait` ms
+ */
+export function useDebounced(value, wait) {
+    const [debounced, setDebounced]= useState(value);
+    useEffect(() => {
+        const id= setTimeout(() => setDebounced(value), wait);
+        return () => clearTimeout(id);
+    }, [value, wait]);
+    return debounced;
+}
+
+
+/**
+ * Resolve a list of options that the caller may produce either synchronously or asynchronously.
+ * Options from a superseded request are dropped; side effects inside getOptions are not.
+ * @param {function} getOptions - (value) => Array|Promise<Array>, called whenever value changes
+ * @param {string} value - the current input value to look options up for
+ * @returns {{options:Array, loading:boolean}}
+ */
+export function useAsyncOptions(getOptions, value) {
+    const [result, setResult]= useState({options:[], loading:false});
+    const getOptionsRef= useRef(getOptions);
+    const latestRef= useRef(undefined);
+
+    useEffect(() => { getOptionsRef.current= getOptions; }); // keep the callback fresh without re-querying
+
+    useEffect(() => {
+        const arrayOrPromise= getOptionsRef.current?.(value);
+        latestRef.current= arrayOrPromise;
+        if (!arrayOrPromise || isArray(arrayOrPromise)) {
+            setResult({options: arrayOrPromise || [], loading:false});
+            return;
+        }
+        setResult((r) => ({options:r.options, loading:true})); // keep showing the old list until the new one lands
+        Promise.resolve(arrayOrPromise)
+            .then((options) => {
+                if (arrayOrPromise!==latestRef.current) return; // a newer request was made, this one is stale
+                setResult({options: isArray(options) ? options : [], loading:false});
+            })
+            .catch((err) => {
+                if (arrayOrPromise!==latestRef.current) return;
+                logger.error(err);
+                setResult({options:[], loading:false});
+            });
+    }, [value]);
+
+    return result;
 }
 
 /*
