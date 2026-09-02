@@ -12,7 +12,7 @@ import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx,
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {copyToClipboard, encodeUrlString, toBoolean} from '../../util/WebUtil.js';
+import {copyToClipboard, encodeUrlString, sortByConfig, toBoolean} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
@@ -24,6 +24,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {applyLinkSub, applyTokenSub} from '../../voAnalyzer/VoCoreUtils.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {getEnumConfigForColumn} from '../../ui/tap/DataServicesOptions.js';
 import {dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -206,7 +207,9 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     const {name, enumVals} = col || {};
     const groupKey = 'TableRenderer_enum';
     const fieldKey = tbl_id + '-' + name;
-    const options = splitVals(enumVals)                             // split by comma(,) ignoring those in single-quotes
+    const enumConfig = getEnumConfigForColumn(tbl_id, name);
+    const rawValues = splitVals(enumVals);                          // split by comma(,) ignoring those in single-quotes
+    const options = (enumConfig?.order ? sortByConfig(rawValues, enumConfig.order) : rawValues)
         .map( (s) => {
             const value = s === '' ? '%EMPTY' : s;                  // because CheckboxGroupInputField does not support '' as an option, use '%EMPTY' as substitute
             let label = value;

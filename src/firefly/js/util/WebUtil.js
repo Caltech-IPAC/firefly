@@ -1060,3 +1060,18 @@ export function createBackgroundRunner({
 }
 
 export const varStr = (str) => '${' + str + '}';
+
+/**
+ * Sort a list of enum-like values according to a preassigned display order (e.g. from an `enumConfig`),
+ * pushing any values not found in `order` to the end.
+ * @param {String[]} values - the values to sort, e.g. the distinct values present in a table's column
+ * @param {String[]} order - the desired order of those values
+ * @return {String[]}
+ */
+export function sortByConfig(values, order) {
+    const rank = (v) => {
+        const i = order.indexOf(v);
+        return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return [...values].sort((a, b) => rank(a) - rank(b));
+}
