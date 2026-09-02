@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {get, isEmpty, set, pick, cloneDeep, defer} from 'lodash';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
+import {AutoCompleteInput} from '../../../ui/AutoCompleteInput.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {smartMerge} from '../../../tables/TableUtil.js';
@@ -42,15 +42,8 @@ export class LsstSdssSettingBox extends PureComponent {
         const validFluxVals = get(missionEntries, LC.META_FLUX_NAMES, []);
         const validTimeVals = get(missionEntries, LC.META_TIME_NAMES, []);
 
-        const suggestInput = (key, sugAry) => {
-            return (<SuggestBoxInputField key={key}
-                                          fieldKey={key} wrapperStyle={wrapperStyle}
-                                          getSuggestions={(val) => {
-                    const suggestions =  sugAry && sugAry.filter((el) => {return el.startsWith(val);});
-                    return suggestions.length > 0 ? suggestions : sugAry;
-                }}
-            />);
-        };
+        const suggestInput = (key, sugAry) =>
+            <AutoCompleteInput key={key} fieldKey={key} options={sugAry}/>;
         var leftEntries = [
             <RadioGroupInputField key='band' fieldKey='band' wrapperStyle={wrapperStyle}
                 alignment='horizontal'

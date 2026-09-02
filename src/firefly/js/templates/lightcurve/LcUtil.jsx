@@ -7,7 +7,7 @@ import {getConverter} from './LcConverterFactory.js';
 import {getCellValue, getTblById, findIndex, getColsByType, getColumnIdx, COL_TYPE} from '../../tables/TableUtil.js';
 import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
+import {AutoCompleteInput} from '../../ui/AutoCompleteInput.jsx';
 import {getMissionName} from './LcConverterFactory.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {getViewerGroupKey, onTimeColumnChange} from './LcManager.js';
@@ -173,13 +173,11 @@ export function getInitialDefaultValues(labelWidth, missionName) {
  * @returns {Array}
  */
 export function getMissionInput (numColumns){
-    const topZ = 3;
     return (
         <Stack {...{direction:'row', spacing:1/2, sx:{'& .ff-Input': {width:'8rem'}} }}>
             {
                 [LC.META_TIME_CNAME, LC.META_FLUX_CNAME].map((key) =>
-                    <SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
-                                          getSuggestions={(val) => getSuggestedList(val,numColumns)}  />)
+                    <AutoCompleteInput key={key} fieldKey={key} options={numColumns}/>)
             }
         </Stack>
 

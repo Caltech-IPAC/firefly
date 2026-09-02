@@ -4,15 +4,18 @@ import PropTypes from 'prop-types';
 import {get, isEmpty} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
+import {AutoCompleteInput} from '../../../ui/AutoCompleteInput.jsx';
 import {smartMerge} from '../../../tables/TableUtil.js';
 import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
-import {ReadOnlyText,getSuggestedList,getInitialDefaultValues,getMissionInput,validate,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
+import {ReadOnlyText,getInitialDefaultValues,getMissionInput,validate,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey} from '../LcManager.js';
 import {getMissionName, coordSysOptions} from '../LcConverterFactory.js';
 import {SettingBox} from '../SettingBox.jsx';
 
 const labelWidth = 90;
+
+// the coord system list is short and fixed - getSuggestions used to ignore the typed value and return all of it
+const showAllOptions = (options) => options;
 
 export class DefaultSettingBox extends SettingBox {
     constructor(props) {
@@ -30,12 +33,10 @@ export class DefaultSettingBox extends SettingBox {
 
         const missionUrl = [LC.META_URL_CNAME];
         const missionOtherKeys = [ LC.META_ERR_CNAME];
-        const topZ = 3;
 
         const  missionInputs=getMissionInput (numColumns, wrapperStyle);
         const missionData = missionUrl.map((key) =>
-            (<SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
-                                  getSuggestions={(val) => getSuggestedList(val, charColumns)} />)
+            (<AutoCompleteInput key={key} fieldKey={key} options={charColumns}/>)
         );
 
         const missionOthers = missionOtherKeys.map((key) =>
@@ -46,12 +47,12 @@ export class DefaultSettingBox extends SettingBox {
             const sKey = LC.META_COORD_SYS;
 
             const sysCol = (
-                <SuggestBoxInputField key={sKey} fieldKey={sKey}
-                                      getSuggestions={() =>get(missionEntries, coordSysOptions, [])} />
+                <AutoCompleteInput key={sKey} fieldKey={sKey}
+                                   options={get(missionEntries, coordSysOptions, [])}
+                                   filterOptions={showAllOptions} />
             );
             const xyCols = [LC.META_COORD_XNAME, LC.META_COORD_YNAME].map((key) =>
-                (<SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
-                                      getSuggestions={(val) => getSuggestedList(val,  charColumns)} />)
+                (<AutoCompleteInput key={key} fieldKey={key} options={charColumns}/>)
             );
 
             return [sysCol, xyCols];
