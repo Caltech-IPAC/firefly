@@ -86,7 +86,6 @@ export function AutoCompleteInputView({slotProps, orientation='horizontal', labe
             <FormControl className='ff-Input' orientation={orientation} error={!valid} required={required} {...controlSlot}>
                 {label && <FormLabel {...labelSlot}>{label}</FormLabel>}
                 <Autocomplete autoComplete={true}
-                              autoSelect={true}
                               multiple={multiple}
                               freeSolo={allowFreeSolo}
                               isOptionEqualToValue={isOptionEqualToValue}

@@ -177,7 +177,7 @@ export function getMissionInput (numColumns){
         <Stack {...{direction:'row', spacing:1/2, sx:{'& .ff-Input': {width:'8rem'}} }}>
             {
                 [LC.META_TIME_CNAME, LC.META_FLUX_CNAME].map((key) =>
-                    <AutoCompleteInput key={key} fieldKey={key} options={numColumns}/>)
+                    <AutoCompleteInput key={key} fieldKey={key} options={numColumns} orientation='vertical'/>)
             }
         </Stack>
 

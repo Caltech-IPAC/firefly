@@ -43,7 +43,7 @@ export class LsstSdssSettingBox extends PureComponent {
         const validTimeVals = get(missionEntries, LC.META_TIME_NAMES, []);
 
         const suggestInput = (key, sugAry) =>
-            <AutoCompleteInput key={key} fieldKey={key} options={sugAry}/>;
+            <AutoCompleteInput key={key} fieldKey={key} options={sugAry} orientation='vertical'/>;
         var leftEntries = [
             <RadioGroupInputField key='band' fieldKey='band' wrapperStyle={wrapperStyle}
                 alignment='horizontal'

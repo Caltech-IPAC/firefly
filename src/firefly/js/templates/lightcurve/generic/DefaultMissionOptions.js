@@ -36,7 +36,7 @@ export class DefaultSettingBox extends SettingBox {
 
         const  missionInputs=getMissionInput (numColumns, wrapperStyle);
         const missionData = missionUrl.map((key) =>
-            (<AutoCompleteInput key={key} fieldKey={key} options={charColumns}/>)
+            (<AutoCompleteInput key={key} fieldKey={key} options={charColumns} orientation='vertical'/>)
         );
 
         const missionOthers = missionOtherKeys.map((key) =>
@@ -49,10 +49,10 @@ export class DefaultSettingBox extends SettingBox {
             const sysCol = (
                 <AutoCompleteInput key={sKey} fieldKey={sKey}
                                    options={get(missionEntries, coordSysOptions, [])}
-                                   filterOptions={showAllOptions} />
+                                   filterOptions={showAllOptions} orientation='vertical' />
             );
             const xyCols = [LC.META_COORD_XNAME, LC.META_COORD_YNAME].map((key) =>
-                (<AutoCompleteInput key={key} fieldKey={key} options={charColumns}/>)
+                (<AutoCompleteInput key={key} fieldKey={key} options={charColumns} orientation='vertical'/>)
             );
 
             return [sysCol, xyCols];
