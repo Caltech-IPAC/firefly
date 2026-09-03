@@ -87,21 +87,6 @@ export function keepHighlightedRowSynced(tbl_id, highlightedRow=0) {
             });
     }
 }
-/**
- * @desc This method returns a suggested list of the column names based on the val entered and the defaultVal if provided.
- * @param {string} val - the input in the text field
- * @param {array} columnNames - the array of string
- * @param {string} defaultVal - the default value, it can be null.
- * @returns {*}
- */
-export function getSuggestedList (val, columnNames, defaultVal) {
-    return columnNames.reduce((prev, name) => {
-        if (  name.startsWith(val) || (defaultVal && val===defaultVal)) {
-            prev.push(name);
-        }
-        return prev;
-    }, []);
-}
 
 export function getInitialDefaultValues(labelWidth, missionName) {
     const commonDefault = {

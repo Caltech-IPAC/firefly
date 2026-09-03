@@ -344,16 +344,12 @@ const Samples = () => {
     );
 };
 
-/*
- * UCD1+ is a ';'-delimited string, so this stays one text field rather than joy's `multiple` chips
- * (which hardcode ',' and would drop any atom missing from the UCDList snapshot).
- * The matching below is the pre-joy behavior, warts included: it matches against *every* ';' token
- * rather than only the last, and it lowercases the input but not UCDList (so `EM.IR` misses `em.IR.J`).
- */
+// a UCD1+ value is a ';'-delimited list, so this stays one text field rather than joy's `multiple`
+// chips, which split on ',' and would drop any atom not in UCDList. Matching is unchanged from the
+// pre-joy version: it tests every ';' token, not just the last one being typed.
 function ucdFilterOptions(options, {inputValue}) {
-    // joy hands us an empty inputValue on the render that opens the popup (useAutocomplete's
-    // `inputPristine`), even though the user has typed. Returning [] there would blank the listbox
-    // on the first keystroke; dev called this with the typed text and never hit the empty case.
+    // joy passes an empty inputValue on the render that opens the popup, so returning [] here would
+    // blank the listbox on the first keystroke
     if (!inputValue) return options;
     const cvals = inputValue.toLowerCase().split(';').map((v) => v.trim());
     return options.filter(({value}) => cvals.some((v) => value.includes(v)));
@@ -374,10 +370,9 @@ function valueOnSuggestion(cval='', suggestion) {
     return suggestion;
 }
 
-// the 16px icon is wider than its box on purpose - the width keeps the decorator from stretching the
-// field. It lives here rather than in the panel's sx because joy names the slot .MuiInput-endDecorator
-// on an Input but .MuiAutocomplete-endDecorator on an Autocomplete (and AutoCompleteInput wraps
-// decorators one level deeper), so no single container selector reaches both the Units and UCD icons.
+// width:12 is carried over from the panel's sx rule '.MuiInput-endDecorator > a', which no longer
+// reaches this icon: on an Autocomplete joy names the slot .MuiAutocomplete-endDecorator, and
+// AutoCompleteInput wraps decorators in a Stack. Setting it here covers both the Units and UCD icons.
 function Info({url, target='info'}) {
     return (
         <Link href={url} target={target} tabIndex={-1} sx={{width: 12}}
