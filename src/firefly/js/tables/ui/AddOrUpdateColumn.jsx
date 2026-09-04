@@ -25,7 +25,7 @@ import {dispatchTableFetch, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {textValidator} from '../../util/Validate.js';
 import {formatColExpr} from '../../charts/ChartUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
+import {AutoCompleteInput} from '../../ui/AutoCompleteInput.jsx';
 
 import MAGNIFYING_GLASS from 'images/icons-2014/magnifyingGlass.png';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -99,7 +99,6 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
         <Stack p={1} width={500} spacing={1} position='relative'
             sx={{
                 '.ff-Input':{mb:1},
-                '.MuiInput-endDecorator > a':{width:12},
                 label:{width:80},
                 input:{width:265}
             }}>
@@ -278,15 +277,16 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
                              initialState={{value: col.units}}
                              tooltip='Units of measurement, IVOA VOUnits preferred'
             />
-            <SuggestBoxInputField fieldKey='ucd' label='UCD:'
+            <AutoCompleteInput fieldKey='ucd' label='UCD:'
                               slotProps={{
                                   control:{orientation:'horizontal'},
                                   tooltip: {placement: 'bottom'},
-                                  input:{endDecorator: <Info url='https://ivoa.net/documents/UCD1+'/>}
                               }}
+                              endDecorator={<Info url='https://ivoa.net/documents/UCD1+'/>}
                               initialState={{value: col.UCD}}
                               tooltip='IVOA Unified Content Descriptor, UCD1+ style'
-                              getSuggestions={getSuggestions} valueOnSuggestion={valueOnSuggestion}
+                              options={UCDList}
+                              filterOptions={ucdFilterOptions} onChange={onUcdSelect}
             />
             <DescField desc={desc}/>
         </>
@@ -344,10 +344,22 @@ const Samples = () => {
     );
 };
 
-function getSuggestions(val) {
-    if (!val) return [];
-    const cvals = val.toLowerCase().split(';').map((v) => v.trim());
-    return UCDList.filter((ucd) => cvals.some((v) => ucd.includes(v)));
+// a UCD1+ value is a ';'-delimited list, so this stays one text field rather than joy's `multiple`
+// chips, which split on ',' and would drop any atom not in UCDList. Matching is unchanged from the
+// pre-joy version: it tests every ';' token, not just the last one being typed.
+function ucdFilterOptions(options, {inputValue}) {
+    // joy passes an empty inputValue on the render that opens the popup, so returning [] here would
+    // blank the listbox on the first keystroke
+    if (!inputValue) return options;
+    const cvals = inputValue.toLowerCase().split(';').map((v) => v.trim());
+    return options.filter(({value}) => cvals.some((v) => value.includes(v)));
+}
+
+// picking a suggestion replaces only the last ';'-segment; free-typed text is taken as-is
+function onUcdSelect(ev, selected, reason, {value:cval, fireValueChange}) {
+    if (!selected) return fireValueChange({value: ''});
+    if (typeof selected === 'string') return fireValueChange({value: selected});
+    fireValueChange({value: valueOnSuggestion(cval, selected.value)});
 }
 
 function valueOnSuggestion(cval='', suggestion) {
@@ -358,6 +370,12 @@ function valueOnSuggestion(cval='', suggestion) {
     return suggestion;
 }
 
+// width:12 is carried over from the panel's sx rule '.MuiInput-endDecorator > a', which no longer
+// reaches this icon: on an Autocomplete joy names the slot .MuiAutocomplete-endDecorator, and
+// AutoCompleteInput wraps decorators in a Stack. Setting it here covers both the Units and UCD icons.
 function Info({url, target='info'}) {
-    return <Link href={url} target={target} tabIndex={-1} startDecorator={<InfoOutlinedIcon  sx={{height: 16}}/>}/>;
+    return (
+        <Link href={url} target={target} tabIndex={-1} sx={{width: 12}}
+              startDecorator={<InfoOutlinedIcon  sx={{height: 16}}/>}/>
+    );
 }
