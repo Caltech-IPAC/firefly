@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {isEqual} from 'lodash';
 import {Button, Divider, Stack, Typography} from '@mui/joy';
 import {Insights} from '@mui/icons-material';
@@ -11,20 +11,12 @@ import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
 import {canUnitConv, convertUnitValue} from '../../dataTypes/SpectrumUnitConversion.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil';
 import {dispatchTableFetch, dispatchTableUiUpdate, dispatchTableAddLocal, TABLE_SELECT, TABLE_LOADED} from 'firefly/tables/TablesCntlr';
-import {onTableLoaded, getTblById, getSelectedDataSync, getTblRowAsObj, getColumnValues, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
+import {onTableLoaded, doFetchTable, getTblById, getSelectedDataSync, getTblRowAsObj, getColumnValues, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 
-// TODO: move it to server side entirely
-// recommended-lines source lists, each independently checkable; listId is sent to the server's
-// "spectralLines" search processor to pick which resource file it serves. Adding a list later is
-// just appending an entry here (plus its listId -> resource mapping server-side).
-const RECOMMENDED_LINE_LISTS = [
-    {listId: 'luisa', listLabel: 'Luisa'},
-    {listId: 'jwst', listLabel: 'JWST'},
-];
 const recLinesTblId = (listId) => `rec-${listId}`;
 
 // order-insensitive: checking source options checkboxes in a different order shouldn't count as a real difference
@@ -171,12 +163,26 @@ export function useSpectralLinesSync(chartId) {
     }, [chartId]);
 }
 
+let lineListsPromise = null; // cache populated by fetchLineLists()
+
+/**
+ * Fetches the server's info on available recommended line lists ({listId, listLabel} pairs), once per
+ * session (cached in lineListsPromise) - the server is the single source of truth for which lists exist.
+ * @returns {Promise<Array<{listId: string, listLabel: string}>>}
+ */
+function fetchLineLists() {
+    if (!lineListsPromise) {
+        const request = makeTblRequest('spectralLines', 'Spectral Line Lists', {metaOnly: true});
+        lineListsPromise = doFetchTable(request).then((tbl) => JSON.parse(tbl.tableMeta?.lineLists ?? '[]'));
+    }
+    return lineListsPromise;
+}
+
 /* fetches a single recommended-lines source table (by its listId) if not already loaded */
 async function ensureRecommendedList(listId) {
     const tbl_id = recLinesTblId(listId);
     if (getTblById(tbl_id)) return;
     const request = makeTblRequest('spectralLines', 'Spectral Lines', {listId}, {tbl_id});
-    // TODO: first get the list IDs via request.action = props or something and then a particular list
     dispatchTableFetch(request); // headless: doesn't render in results UI
     await onTableLoaded(tbl_id);
 }
@@ -187,10 +193,11 @@ async function ensureRecommendedList(listId) {
  * LINES_TBL_ID's content changes - called once on panel mount and again on the "Update Lines" button click,
  * never automatically on checkbox change, so checking a box doesn't plot anything until applied.
  * @param {string} sourceOptions - comma-separated checked values from SOURCE_OPTIONS_KEY
+ * @param {Array<{listId: string, listLabel: string}>} lineLists - the fetched info on available lists
  */
-async function buildMergedLinesTable(sourceOptions) {
+async function buildMergedLinesTable(sourceOptions, lineLists) {
     const checked = splitVals(sourceOptions);
-    const checkedLists = RECOMMENDED_LINE_LISTS.filter(({listId}) => checked.includes(listId));
+    const checkedLists = lineLists.filter(({listId}) => checked.includes(listId));
     await Promise.all(checkedLists.map(({listId}) => ensureRecommendedList(listId)));
     // TODO: once upload + column mapping is implemented, include checked upload groups here too
 
@@ -219,12 +226,17 @@ export function SpectralLinesPanel() {
     const initialSourceOptions = ''; // nothing checked by default - lines table starts empty until applied
     const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions, SPECTRAL_LINES_FG_KEY);
 
+    const [lineLists, setLineLists] = useState([]);
+
     useEffect(() => {
         // pre-register tbl_ui_id so columns/columnWidths get populated once loaded (TablePanel mounts later, too late)
         dispatchTableUiUpdate({tbl_ui_id: LINES_TBL_UI_ID, tbl_id: LINES_TBL_ID});
-        // build only if it doesn't exist yet - once built, row selection is user-owned and must survive
-        // the dialog being closed/reopened; only the "Update Lines" button rebuilds after this point
-        if (!getTblById(LINES_TBL_ID)) void buildMergedLinesTable(sourceOptions);
+        void fetchLineLists().then((lists) => {
+            setLineLists(lists);
+            // build only if it doesn't exist yet - once built, row selection is user-owned and must survive
+            // the dialog being closed/reopened; only the "Update Lines" button rebuilds after this point
+            if (!getTblById(LINES_TBL_ID)) void buildMergedLinesTable(sourceOptions, lists);
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; button click handles later rebuilds
     }, []);
 
@@ -249,7 +261,7 @@ export function SpectralLinesPanel() {
             : undefined);
 
     const onUpdateLines = () => {
-        void buildMergedLinesTable(sourceOptions);
+        void buildMergedLinesTable(sourceOptions, lineLists);
         dispatchComponentStateChange(SOURCES_COLLAPSIBLE_KEY, {isOpen: false}); // collapse to reveal the table below
     };
 
@@ -276,7 +288,7 @@ export function SpectralLinesPanel() {
                                                      alignment='vertical'
                                                      initialState={{value: initialSourceOptions}}
                                                      options={[
-                                                         ...RECOMMENDED_LINE_LISTS.map(({listId, listLabel}) =>
+                                                         ...lineLists.map(({listId, listLabel}) =>
                                                              ({label: listLabel, value: listId})),
                                                          {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
                                                      ]}/>
