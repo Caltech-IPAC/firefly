@@ -21,7 +21,7 @@ const noClientFilter= (options) => options;
 
 const SUGGEST_DEBOUNCE_MS= 200;
 
-// coalesce kesystrokes
+// coalesce keystrokes
 function useDebounced(value, wait=SUGGEST_DEBOUNCE_MS) {
     const [debounced, setDebounced]= useState(value);
     useEffect(() => {
