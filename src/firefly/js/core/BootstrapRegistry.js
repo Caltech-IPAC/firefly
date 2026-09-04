@@ -35,6 +35,7 @@ import ExtractLineTool from '../drawingLayers/ExtractLineTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
 import ExtractPoints from '../drawingLayers/ExtractPointsTool.js';
 import SearchSelectTool from '../drawingLayers/SearchSelectTool.js';
+import ExtractHiPSTileTool from '../drawingLayers/ExtractHiPSTileTool';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
 import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import ImageRoot from '../drawingLayers/ImageRoot.js';
@@ -113,7 +114,7 @@ export const getBootstrapRegistry= once(() => {
     };
 
     const drawLayerFactory= DrawLayerFactory.makeFactory(
-        FixedMarker, SelectArea,DistanceTool, ExtractLineTool, ExtractPoints,
+        FixedMarker, SelectArea,DistanceTool, ExtractLineTool, ExtractPoints, ExtractHiPSTileTool,
         PointSelection, StatsPoint, NorthUpCompass, ImageRoot, SearchTarget, Catalog, HpxCatalog, Artifact, WebGrid,
         RegionPlot, MarkerTool, FootprintTool, SearchSelectTool,
         HiPSGrid, HiPSMOC, ImageOutline, ImageLineBasedFootprint);

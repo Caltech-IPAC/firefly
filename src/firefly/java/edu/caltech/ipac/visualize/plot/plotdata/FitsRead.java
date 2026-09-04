@@ -99,7 +99,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     public int getNaxis() { return FitsReadUtil.getNaxis(header); }
     public int getNaxis1() { return FitsReadUtil.getNaxis1(header); }
     public int getNaxis2() { return FitsReadUtil.getNaxis2(header); }
-    public int getNaxisLength(int axis) { return FitsReadUtil.getNaxisLength(header, axis); }
+    public int getNaxisLength(int axis) { return FitsReadUtil.getNaxisN(header, axis); }
     public String getBUnit() { return this.bunit;}
     public double getBscale() { return FitsReadUtil.getBscale(header); }
     public double getBzero() { return FitsReadUtil.getBzero(header); }
@@ -120,6 +120,10 @@ public class FitsRead implements Serializable, HasSizeOf {
         if (float1d!=null) return float1d;
         float1d= FitsReadUtil.dataArrayFromHDUAndPlaneAsFloat(this.file,this.hduNumber, planeNumber);
         return float1d;
+    }
+
+    public boolean isDataLoaded() {
+       return float1d!=null && long1d!=null;
     }
 
     public long[] getRawLongAry() {

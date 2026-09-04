@@ -22,6 +22,7 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.fits.UndefinedData;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.fits.header.Bitpix;
+import nom.tam.fits.header.Standard;
 import nom.tam.image.StandardImageTiler;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
@@ -45,9 +46,8 @@ public class FitsReadUtil {
     public static final String SPOT_EXT = "SPOT_EXT"; // HDU Number
     public static final String SPOT_OFF = "SPOT_OFF";
     public static final String SPOT_BP = "SPOT_BP"; // original bitpix
-    public static final String SPOT_PL = "SPOT_PL"; // cube plane number, only used with cubes, deprecated
-    public static final String EXTNAME= "EXTNAME";
-    public static final String EXTTYPE= "EXTTYPE";
+    public static final String SPOT_PL = "SPOT_PL"; // cube plane number, only used with cubes,
+    private static final String EXTTYPE= "EXTTYPE";
     private static final String RESTORE_COMMENT= "restored after uncompression by Firefly";
 
     public static ImageData getImageData(BasicHDU<?> refHdu, float[] float1d) {
@@ -107,7 +107,7 @@ public class FitsReadUtil {
                 String extType=  getExtType(header,null);
                 ImageHDU iHDU= cHDU.asImageHDU();
                 var h= iHDU.getHeader();
-                if (getExtName(h)==null && extName!=null) h.addValue(EXTNAME,extName, RESTORE_COMMENT);
+                if (getExtName(h)==null && extName!=null) h.addValue(Standard.EXTNAME.key(),extName, RESTORE_COMMENT);
                 if (getExtType(h,null)==null && extType!=null) h.addValue(EXTTYPE,extType, RESTORE_COMMENT);
                 fits.addHDU(iHDU);
             }
@@ -415,38 +415,36 @@ public class FitsReadUtil {
         outputFits.write(outfile);
     }
 
-    public static int getBitPix(Header h) {return h.getIntValue("BITPIX"); }
-    public static int getNaxis(Header h) { return h.getIntValue("NAXIS", 0); }
+    public static int getBitPix(Header h) {return h.getIntValue(Standard.BITPIX); }
+    public static int getNaxis(Header h) { return h.getIntValue(Standard.NAXIS, 0); }
     public static int getZNaxis(Header h) { return h.getIntValue("ZNAXIS", 0); }
-    public static int getNaxis1(Header h) { return h.getIntValue("NAXIS1", 0); }
-    public static int getNaxis2(Header h) { return h.getIntValue("NAXIS2", 0); }
-    public static int getNaxis3(Header h) { return (getNaxis2(h) > 1) ? h.getIntValue("NAXIS3") : 1; }
-
-    public static int getNaxisLength(Header h, int num) {
-        if (num<1) return 0;
-        return h.getIntValue("NAXIS"+num,0);
-    }
+    public static int getNaxis1(Header h) { return getNaxisN(h,1); }
+    public static int getNaxis2(Header h) { return getNaxisN(h,2); }
+    public static int getNaxis3(Header h) { return (getNaxis2(h) > 1) ? getNaxisN(h,3)  : 1; }
+    public static int getNaxisN(Header h, int num) { return num>0 ? h.getIntValue(Standard.NAXISn.n(num),0) : 0; }
+    public static double getCdelt2(Header h) { return h.getDoubleValue("CDELT2",0);}
 
     public static int getAxisCnt(Header h, boolean compressed) {
         if (!compressed) getNaxis(h);
         return getZNaxis(h)==0 ? getNaxis(h) : getZNaxis(h);
     }
 
-    public static int getNaxisLength(Header h, int num, boolean compressed) {
-        if (!compressed) return getNaxisLength(h, num);
-        return getZNaxisLength(h,num) > -1 ? getZNaxisLength(h,num) : getNaxisLength(h,num);
+    public static int getNaxisN(Header h, int num, boolean compressed) {
+        if (!compressed) return getNaxisN(h, num);
+        return getZNaxisN(h,num) > -1 ? getZNaxisN(h,num) : getNaxisN(h,num);
     }
 
-    public static int getZNaxisLength(Header h, int axis) { return h.getIntValue("ZNAXIS"+axis,-1); }
-    public static double getBscale(Header h) { return h.getDoubleValue("BSCALE", 1.0); }
-    public static double getBzero(Header h) { return h.getDoubleValue("BZERO", 0.0); }
+    public static int getZNaxisN(Header h, int axis) { return h.getIntValue("ZNAXIS"+axis,-1); }
+    public static double getBscale(Header h) { return h.getDoubleValue(Standard.BSCALE, 1.0); }
+    public static double getBzero(Header h) { return h.getDoubleValue(Standard.BZERO, 0.0); }
     public static double getBlankValue(Header h) {
         // blank value is only applicable to integer values (BITPIX > 0)
-        return getBitPix(h) > 0 ? h.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
+        return getBitPix(h) > 0 ? h.getDoubleValue(Standard.BLANK, Double.NaN) : Double.NaN;
     }
 
-    public static String getBUnit(Header h) { return h.getStringValue("BUNIT", ""); }
-    public static String getExtName(Header h) { return h.getStringValue(EXTNAME); }
+    public static String getBUnit(Header h) { return getBUnit(h,""); }
+    public static String getBUnit(Header h, String def) { return h.getStringValue(Standard.BUNIT, def); }
+    public static String getExtName(Header h) { return h.getStringValue(Standard.EXTNAME); }
     public static String getExtType(Header h, String defVal) { return h.getStringValue(EXTTYPE,defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
     public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h,null);}
@@ -496,7 +494,7 @@ public class FitsReadUtil {
     public static Object dataArrayFromFitsFile(ImageHDU hdu, int x, int y, int width, int height, int plane, Class<?> arrayType) throws IOException {
         Header header= hdu.getHeader();
         int naxis= getNaxis(header);
-        if (naxis==4 && getNaxisLength(header,4)!=1) throw new IllegalArgumentException("naxis 4 must be only 1 dimension");
+        if (naxis==4 && getNaxisN(header,4)!=1) throw new IllegalArgumentException("naxis 4 must be only 1 dimension");
         else if (naxis!=2 && naxis!=3 && naxis!=4) throw new IllegalArgumentException("only naxis 2 or 3 or 4 is supported");
         int[] loc= null;
         int[] tileSize= null;

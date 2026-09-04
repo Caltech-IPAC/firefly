@@ -61,6 +61,7 @@ public class FormatUtil {
         REGION       ("reg",                    ".reg",  "application/region-file"),
         PNG          ("png",                    ".png",  "image/png"),
         JPEG         ("jpeg",                   ".jpg",  "image/jpeg"),
+        WEBP         ("webp",                   ".webp",  "image/webp"),
         UWS          ("uws",                    ".xml",  "application/xml+uws"),
         PARQUET      (DuckDbReadable.Parquet.NAME, "."+DuckDbReadable.Parquet.NAME, "application/vnd.apache.parquet"),
         ZIP          ("zip",                    ".zip",  "application/zip"),
@@ -99,6 +100,8 @@ public class FormatUtil {
                 case "application/csv"              -> CSV;
                 case "application/tsv"              -> TSV;
                 case "image/jpg"                    -> JPEG;
+                case "image/png"                    -> PNG;
+                case "image/webp"                   -> WEBP;
                 case "application/x-zip-compressed" -> ZIP;
                 case "application/x-gzip"           -> GZIP;
                 case "application/tar"              -> TAR;
@@ -134,6 +137,9 @@ public class FormatUtil {
             // JPEG: FF D8 FF
             if (magic(hdr, 0, 0xFF,0xD8,0xFF))
                 return new MimeDesc(JPEG.mime(), "JPEG image");
+            // WEBP RIFF, 32 bit int with file size, WEBP
+            if (magic(hdr, 0, 'R','I','F','F') && magic(hdr, 8, 'W','E','B','P'))
+                return new MimeDesc(WEBP.mime(), "WEBP image");
             // PDF: %PDF
             if (magic(hdr, 0, '%','P','D','F'))
                 return new MimeDesc(PDF.mime(), "PDF document");

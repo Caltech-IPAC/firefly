@@ -21,6 +21,7 @@ export const DESC_VAL= 'desc';
 
 
 export const STATUS_UNAVAILABLE= 'UNAVAILABLE';
+export const STATUS_RETRIEVING= 'RETRIEVING';
 export const STATUS_NAN= 'NaN';
 export const STATUS_UNDEFINED= 'UNDEFINED';
 export const STATUS_VALUE= 'VALUE';

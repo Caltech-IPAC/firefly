@@ -20,7 +20,7 @@ import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems } from '../MultiViewCntlr.js';
-import {getPlotViewById, getPlotViewIdListInOverlayGroup, hasWCSProjection} from '../PlotViewUtil.js';
+import {currentP, getPlotViewById, getPlotViewIdListInOverlayGroup, hasWCSProjection} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
 import {callGetWebPlot, callGetWebPlot3Color, callGetWebPlotGroup} from '../../rpc/PlotServicesJson.js';
@@ -235,7 +235,7 @@ function processSuccessResult(dispatcher, payload, successAry) {
 
     const vr= visRoot();
     if (vr.wcsMatchType && vr.positionLock) {
-        const matchId= getPlotViewById(vr,vr.mpwWcsPrimId)?.plotId ?? vr.activePlotId;
+        const matchId= currentP(vr.mpwWcsPrimId).plotId ?? vr.activePlotId;
         dispatchWcsMatch( {plotId:matchId, matchType:vr.wcsMatchType, lockMatch:true});
     }
 }

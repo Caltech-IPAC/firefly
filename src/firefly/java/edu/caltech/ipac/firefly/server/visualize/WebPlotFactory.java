@@ -103,13 +103,18 @@ public class WebPlotFactory {
             return new WebPlotFactoryRet(wpInit,wpHeader);
         } catch (Exception e) {
             PlotServUtils.updateProgress(saveRequest, PType.FAIL, "Failed");
-            throw makeException(e);
+            throw makePlottingException(e);
         }
     }
 
-    private static FailedRequestException makeException(Exception e) {
-        if (e instanceof FailedRequestException) return (FailedRequestException)e;
-        else if (e instanceof FitsException) return new FailedRequestException(e.getMessage(), e.getMessage(), e);
+    public static FailedRequestException makePlottingException(Exception e) {
+        if (e instanceof FailedRequestException fe) {
+            var msg= fe.getResponseCode()>0
+                    ? String.format("Could not create plot. %s (%d)", fe.getMessage(), fe.getResponseCode())
+                    : String.format("Could not create plot. %s", fe.getMessage());
+            return new FailedRequestException(msg, fe.getDetailMessage(),fe);
+        }
+        else if (e instanceof FitsException) return new FailedRequestException("Could not create plot. FITS reading Failed: "+e.getMessage(), e.getMessage(), e);
         else return new FailedRequestException("Could not create plot.", e.getMessage(), e);
     }
 
@@ -137,7 +142,7 @@ public class WebPlotFactory {
                 if (state.getWorkingFitsFileStr(b)!=null) cleanList.add(PlotStateUtil.getWorkingFitsFile(state,b));
             }
         }
-        cleanList.stream().distinct().forEach(FitsCacher::clearCachedHDU);
+        cleanList.stream().distinct().forEach(FitsCacher::clearLargeMemCachedHDU);
     }
 
     private static WebPlotHeaderInitializer makeWpHeaderInit(ImagePlotCreator.PlotInfo pInfo) {

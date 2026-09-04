@@ -11,15 +11,18 @@ import {
 } from '../MouseReadoutCntlr.js';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {allBandAry, Band} from '../Band.js';
+import {makeImagePt} from '../Point';
 import {MouseState} from '../VisMouseSync.js';
 import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {getPixScale, getScreenPixScale, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
-import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
+import {
+    getHealpixCellAtNorder, getHealpixPixelAtNorder, getPlotTilePixelAngSize, makeHipsFitsTilePath
+} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
-    primePlot, getPlotStateAry, getImageCubeIdx,
+    primePlot, getPlotStateAry, getCubePlaneIdx,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits, isThreeColor, currentP,
+    isCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits, isThreeColor, currentP,
 } from '../PlotViewUtil';
 import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
@@ -30,7 +33,7 @@ const igoreEvTypes= ['touchend'];
 
 
 /**
- * Readout watcher defined the algorythm to drive the mouse readout. It does the following:
+ * Readout watcher defined the algorithm to drive the mouse readout. It does the following:
  *   - waits for a promise of a mouse event
  *   - Has two modes lockByClick, on or off
  *   - lockByClick off:
@@ -57,7 +60,7 @@ export function* watchReadout() {
         let getNextWithWithAsync= false;
         const lockByClick= isLockByClick(readoutRoot());
         let {worldPt,screenPt,imagePt}= mouseCtx;
-        const {plotId,mouseState, healpixPixel, norder, shiftDown,eventType}= mouseCtx;
+        const {plotId,mouseState, shiftDown,eventType, hipsLocation}= mouseCtx;
         const useEv= !igoreEvTypes.includes(eventType);
 
         if (!useEv) {
@@ -79,7 +82,7 @@ export function* watchReadout() {
 
             if (isPayloadNeeded(mouseState,lockByClick)) {
                 if (plot) {
-                    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+                    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, hipsLocation );
                     fireMouseReadoutChange({plotId, readoutItems, threeColor, readoutType:getReadoutKey(plot)});
                     getNextWithWithAsync= hasAsyncReadout(plot);
                 }
@@ -91,8 +94,8 @@ export function* watchReadout() {
 
         if (useEv && getNextWithWithAsync) { // get the next mouse event or the flux
             mouseCtx= lockByClick || eventType=== 'touchstart' ?
-                yield call(processAsyncDataImmediate,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) :
-                yield call(processAsyncDataDelayed,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+                yield call(processAsyncDataImmediate,plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation) :
+                yield call(processAsyncDataDelayed,plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation);
         }
         else { // get the next mouse event
             mouseCtx = yield call(mouseUpdatePromise);
@@ -101,9 +104,9 @@ export function* watchReadout() {
     }
 }
 
-function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation) {
     try {
-        const readoutItems= yield call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+        const readoutItems= yield call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation);
         if (readoutItems) {
             const plot= primePlot(plotView);
             // dispatchReadoutData({plotId:plotView.plotId,readoutItems, threeColor, readoutKey:getReadoutKey(plot)});
@@ -120,7 +123,7 @@ function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeC
 }
 
 
-function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation) {
     const plot= primePlot(plotView);
     const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, PAUSE_DELAY) });
 
@@ -129,7 +132,7 @@ function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeCol
     try {
         const mouseMoveRaceWinner = yield race({
                 mouseCtx: call(mouseUpdatePromise),
-                readoutItems: call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder)
+                readoutItems: call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation)
             });
         if (mouseMoveRaceWinner.mouseCtx) return mouseMoveRaceWinner.mouseCtx;
 
@@ -165,14 +168,14 @@ function isPayloadNeeded(mouseState, lockByClick) {
 
 const getReadoutType= (plot) => readoutTypes.find( (r) => r.matches(plot));
 
-function makeImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, healpixPixel, norder) {
+function makeImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, hipsLocation) {
     const rt= getReadoutType(plot);
-    return rt && rt.createImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, healpixPixel, norder);
+    return rt && rt.createImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, hipsLocation);
 }
 
-function makeAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor) {
+function makeAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor, hipsLocation) {
     const rt= getReadoutType(primePlot(plotView));
-    return Promise.resolve(rt && rt.createAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor));
+    return Promise.resolve(rt && rt.createAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor, hipsLocation));
 }
 
 function hasAsyncReadout(plot) {
@@ -236,8 +239,8 @@ const readoutTypes= [
         readoutKey: HIPS_STANDARD_READOUT,
         matches: (plot) => isHiPS(plot),
         createImmediateReadout: makeHiPSReadout,
-        createAsyncReadout: () => {throw Error('HiPS should not do async');},
-        hasAsyncReadout: (plot) => false,
+        createAsyncReadout: makeHiPSPlotAsyncReadout,
+        hasAsyncReadout: (plot) => plot.hasFits,
 
     },
 ];
@@ -253,15 +256,31 @@ function makeImagePlotImmediateReadout(plot, worldPt, screenPt, imagePt, threeCo
     return makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, 10, threeColor);
 }
 
-function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation) {
 
     const plot= primePlot(plotView);
-    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, hipsLocation);
     const {readoutPref}= readoutRoot();
     const radix= getFluxRadix(readoutPref, plot);
     return doFluxCall(plotView,imagePt).then( (fluxResult) => {
         return makeReadoutWithFlux(readoutItems,primePlot(plotView), fluxResult, radix, threeColor);
     });
+}
+
+function makeHiPSPlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeColor, hipsLocation) {
+    const plot = primePlot(plotView);
+    const readoutItems = makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, hipsLocation);
+    const radix = 10;
+    const norderForFitsReadout= plot.hasFitsCube ? Number(plot.hipsProperties?.hips_order) : hipsLocation.tileNorder;
+
+    const cell = getHealpixCellAtNorder(norderForFitsReadout, worldPt, plot.dataCoordSys);
+    if (!cell || norderForFitsReadout<1) return;
+    const hipsTileUrl= makeHipsFitsTilePath(plot,norderForFitsReadout,cell.ipix);
+    const {tileImagePt}= getHealpixPixelAtNorder(norderForFitsReadout,worldPt);
+    return doFluxCall(plotView, makeImagePt(tileImagePt.x+.5, tileImagePt.y+.5), worldPt, hipsTileUrl, plot.cubeIdx)
+        .then((fluxResult) => {
+            return makeReadoutWithFlux(readoutItems, primePlot(plotView), fluxResult, radix, false);
+        });
 }
 
 /**
@@ -298,13 +317,22 @@ function makeReadoutWithFlux(readout, plot, fluxResult, radix, threeColor) {
 
 }
 
-function doFluxCall(plotView,iPt) {
+/**
+ *
+ * @param plotView
+ * @param iPt
+ * @param [wpt]
+ * @param [hipsTileUrl]
+ * @param [hipsPlane]
+ * @return {Promise<unknown | [{},{},{}]>|Promise<void>|Promise<Awaited<unknown>>}
+ */
+function doFluxCall(plotView,iPt, wpt, hipsTileUrl=undefined, hipsPlane=0) {
     const plot= primePlot(plotView);
     if (CysConverter.make(plot).pointInPlot(iPt)) {
         const plotStateAry= getPlotStateAry(plotView);
         const passAry=[plotStateAry[0]];
         if (plotStateAry[1]) passAry.push(plotStateAry[1]);
-        return callGetFileFlux(passAry, iPt)
+        return callGetFileFlux(passAry, iPt, wpt,isHiPS(plot), hipsTileUrl, hipsPlane)
             .then((result) => {
                 return result;
             })
@@ -321,7 +349,8 @@ function doFluxCall(plotView,iPt) {
 function getFlux(result, plot) {
     const fluxArray = [];
     if (result.NO_BAND) {
-        fluxArray[0]= {...result.NO_BAND, unit: getFluxUnits(plot)};
+        const unit= isHiPS(plot) ? result.NO_BAND.unit : getFluxUnits(plot);
+        fluxArray[0]= {...result.NO_BAND, unit};
     }
     else {
         const bands = plot.plotState.getBands();
@@ -402,10 +431,10 @@ function showSingleBandFluxLabel(plot, band) {
  * @return {Object}
  */
 function makeWLResult(plot,imagePt= undefined) {
-    if ((hasPixelLevelWLInfo(plot) || (hasPlaneOnlyWLInfo(plot) && !isImageCube(plot)))) {
+    if ((hasPixelLevelWLInfo(plot) || (hasPlaneOnlyWLInfo(plot) && !isCube(plot)))) {
         if (wavelengthInfoParsedSuccessfully(plot)) {
             if (!imagePt) return {};
-            const cubeIdx= (isImageCube(plot) && getImageCubeIdx(plot)) || 0;
+            const cubeIdx= (isCube(plot) && getCubePlaneIdx(plot)) || 0;
             const specCoords= getPtSpectralCoords(plot, imagePt, cubeIdx);
             const result= {
                 wl: makeValueReadoutItem('Wavelength', specCoords[0] ?? 0, getWaveLengthUnits(plot), 4),
@@ -496,24 +525,23 @@ function makeHiPSPixelReadoutItem(plot) {
  * @param {ScreenPt} screenPt
  * @param {ImagePt} imagePt
  * @param {boolean} threeColor
- * @param {number} [healpixPixel] the healpix pixel for the current tile, only passed with HiPS
- * @param {number} [norder] the healpix pixel norder
+ * @param {Object} [hipsLocation]
  * @return {Object}
  */
-function makeHiPSReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+function makeHiPSReadout(plot, worldPt, screenPt, imagePt, threeColor, hipsLocation={}) {
     const csys= CysConverter.make(plot);
     if (csys.pointInView(imagePt)) {
             return {
                 worldPt: makePointReadoutItem('World Point', worldPt),
                 screenPt: makePointReadoutItem('Screen Point', screenPt),
-                imagePt: makePointReadoutItem('Image Point', imagePt),
+                imagePt: makePointReadoutItem('Image Point', hipsLocation.tileImagePt),
                 devPt: makePointReadoutItem('Dev Point', csys.getDeviceCoords(screenPt)),
-                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
+                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', hipsLocation.tileImagePt),
                 title: makeDescriptionItem(plot.title),
                 pixel: makeHiPSPixelReadoutItem(plot),
                 screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
-                healpixPixel:makeValueReadoutItem('Healpix Pixel', healpixPixel, 'pixel', 0),
-                healpixNorder:makeValueReadoutItem('Healpix norder', norder,'norder', 0),
+                healpixPixel:makeValueReadoutItem('Healpix Pixel', hipsLocation.pixel, 'pixel', 0),
+                healpixNorder:makeValueReadoutItem('Healpix norder', hipsLocation.norder,'norder', 0),
             };
     }
     else {

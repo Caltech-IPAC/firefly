@@ -186,8 +186,8 @@ export class PlotState {
         return this.bandStateAry[idx];
     }
 
-    toJson(includeDirectAccessData= true) {
-        return JSON.stringify(PlotState.convertToJSON(this, includeDirectAccessData));
+    toJson() {
+        return JSON.stringify(PlotState.convertToJSON(this));
     }
 
     copy() {
@@ -235,9 +235,8 @@ export class PlotState {
     /**
      * @summary convert his PlotState to something can be used with JSON.stringify
      * @param {PlotState} s
-     * @param {boolean} includeDirectAccessData include the includeDirectAccessData object
      */
-    static convertToJSON(s, includeDirectAccessData= true) {
+    static convertToJSON(s) {
         if (!s) return undefined;
         const json= {};
         json.ctxStr=s.ctxStr;
@@ -247,7 +246,7 @@ export class PlotState {
         if (s.threeColor) json.threeColor= true;
 
 
-        json.bandStateAry= s.bandStateAry.map( (bJ) => convertBandStateToJSON(bJ,includeDirectAccessData));
+        json.bandStateAry= s.bandStateAry.map( (bJ) => convertBandStateToJSON(bJ));
         return json;
     }
 

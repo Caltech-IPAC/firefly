@@ -60,7 +60,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             if (url==null) throw new MalformedURLException("Invalid URL");
 
             UriRefParams params = new UriRefParams(url);
-            params.setPlotId(plotId);
+            params.setId(plotId);
             params.setStatusKey(progressKey);
             params.setDownloadDir(dir);
 

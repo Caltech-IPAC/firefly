@@ -97,7 +97,7 @@ const initState= () => {
 
         //-- wcs match parameters
         positionLock: false, // images are locked together
-        wcsMatchCenterWP: null, // the point to match to
+        wcsMatchCenterWP: undefined, // the point to match to
         wcsMatchType: false,  // one of 'Standard', 'Target', 'Pixel', 'PixelCenter', or false
         mpwWcsPrimId: null,   // the plotId others are match to
     };
@@ -176,6 +176,11 @@ export default { reducers, actionCreators};
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
+
+const changeHipsActionCreator= (rawAction) =>
+    (dispatcher, getState) => {
+
+    };
 
 
 /**

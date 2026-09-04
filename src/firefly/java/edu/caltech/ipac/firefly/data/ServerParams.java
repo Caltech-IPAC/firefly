@@ -99,6 +99,7 @@ public class ServerParams {
     public static final String LSST = "lsst";
     public static final String ALL = "all";
     public static final String CDS = "cds";
+    public static final String IS_HIPS_TILE = "isHipsTile";
     public static final String HIPS_SOURCES = "hipsSources";
     public static final String HIPS_LIST_SOURCE= "hipsListSource";
     public static final String HIPS_LIST_SOURCE_NAME= "hipsListSourceName";
