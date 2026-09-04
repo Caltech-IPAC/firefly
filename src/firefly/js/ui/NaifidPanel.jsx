@@ -21,7 +21,7 @@ const noClientFilter= (options) => options;
 
 const SUGGEST_DEBOUNCE_MS= 200;
 
-// nothing downstream coalesces the naif lookup, so without this every keystroke is a server request
+// coalesce kesystrokes
 function useDebounced(value, wait=SUGGEST_DEBOUNCE_MS) {
     const [debounced, setDebounced]= useState(value);
     useEffect(() => {
