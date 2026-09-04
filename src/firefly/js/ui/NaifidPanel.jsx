@@ -46,7 +46,7 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, f
                              label= LABEL_DEFAULT, fireValueChange, naifNameRef,
                              naifIdFormat=DEFAULT_FORMAT}){
     // the name just picked, so the value change it causes does not trigger an unnecessary lookup
-    const selectedNameRef= useRef(undefined);
+    const selectedNameRef= useRef(value);
 
     const getSuggestions = (val= '') => {
         if (!val) return [];
