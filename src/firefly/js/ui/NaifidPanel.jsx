@@ -21,15 +21,7 @@ const noClientFilter= (options) => options;
 
 const SUGGEST_DEBOUNCE_MS= 200;
 
-/**
- * Trailing-edge debounce of a value. The naif lookup is one server round trip per distinct value,
- * and nothing downstream coalesces: NaifidPanelWorker's 200ms is a per-invocation setTimeout, not a
- * debounce, and the aborter it builds is dropped by resolveObject (TargetPanelWorker keeps its and
- * cancels the superseded request; this one never has). So without this, every keystroke is a fetch.
- * @param {*} value
- * @param {number} [wait] - milliseconds of quiet before the value is passed along
- * @returns {*} the value as of `wait` ms ago
- */
+// nothing downstream coalesces the naif lookup, so without this every keystroke is a server request
 function useDebounced(value, wait=SUGGEST_DEBOUNCE_MS) {
     const [debounced, setDebounced]= useState(value);
     useEffect(() => {
@@ -53,29 +45,28 @@ function renderNaifOption(optProps, suggestion) {
 function NaifidPanelView({showHelp, valid, message, examples, feedback, value, feedbackStyle, popStyle,
                              label= LABEL_DEFAULT, fireValueChange, naifNameRef,
                              naifIdFormat=DEFAULT_FORMAT}){
-    // the name the value came from, if the value was set by picking an option; any typing clears it.
-    // separate from naifNameRef, which must keep the last resolved name for the validity check.
+    // the name just picked, so the value change it causes does not trigger an unnecessary lookup
     const selectedNameRef= useRef(undefined);
 
     const getSuggestions = (val= '') => {
         if (!val) return [];
-        if (val===selectedNameRef.current) return []; // just selected, the lookup would be redundant
+        if (val===selectedNameRef.current) return []; // just picked, already resolved
         if (naifIdFormat && !searchHistory[naifIdFormat]) searchHistory[naifIdFormat] = [];
 
         const getResSuggestionsList = (suggestionsList) => {
             const resSuggestionsList = Object.values(suggestionsList).map((v) => ({name: v.naifName, naifid: v.naifId}));
-            // the option's value/label is the name; the naifid rides along for onChange and renderOption
+            // joy uses value/label; naifid rides along for renderOption and onChange
             return sortBy(resSuggestionsList, 'naifid').reverse()
                 .map((s) => ({...s, value: s.name, label: s.name}));
         };
 
-        //if value has been searched previously, no need to request from server
+        // if value has been searched previously, no need to request from server
         if (searchHistory[naifIdFormat].length > 0){
             const cachedSuggList = Object.values(searchHistory[naifIdFormat]).find((v) => (v.searchVal === val));
             if (cachedSuggList?.searchRes) return getResSuggestionsList(cachedSuggList.searchRes);
         }
 
-        //else request naif IDs from the server
+        // else request naif IDs from the server
         const rval = resolveNaifidObj(val, naifIdFormat);
         if (!rval.p) return [];
         return rval.p.then((response)=>{
@@ -85,7 +76,7 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, f
                 return getResSuggestionsList(suggestionsList);
 
             } else {
-                //console.error(response);
+                // console.error(response);
                 fireValueChange({valid: false, message: response.feedback});
             }
         });
@@ -96,7 +87,7 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, f
     // only called on an actual pick from the list; free typing goes through fireValueChange below
     const onOptionSelect = (ev, selectedSugg) => {
         if (!selectedSugg || typeof selectedSugg === 'string') return; // cleared, or free-solo text
-        naifNameRef.current = selectedSugg.name;
+        naifNameRef.current = selectedSugg.name; // NaifidPanel treats text matching this as valid
         selectedNameRef.current = selectedSugg.name;
         fireValueChange({
             feedback: `Object Name: <b>${selectedSugg.name}</b>, NAIF ID: <b>${selectedSugg.naifid}</b>`,

@@ -14,7 +14,6 @@ import {SettingBox} from '../SettingBox.jsx';
 
 const labelWidth = 90;
 
-// the coord system list is short and fixed - getSuggestions used to ignore the typed value and return all of it
 const showAllOptions = (options) => options;
 
 export class DefaultSettingBox extends SettingBox {
