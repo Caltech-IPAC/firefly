@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useEffect, useRef, useState} from 'react';
+import React, {memo, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {sortBy} from 'lodash';
 import {AutocompleteOption} from '@mui/joy';
 import {resolveNaifidObj} from  './NaifidPanelWorker.js';
-import {AutoCompleteInputView, useAsyncOptions} from './AutoCompleteInput.jsx';
+import {AutoCompleteInputView, useAsyncOptions, useDebounced} from './AutoCompleteInput.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {TargetFeedback} from './TargetFeedback';
 
@@ -20,16 +20,6 @@ const searchHistory = {[DEFAULT_FORMAT]: []}; // defining as global to persist i
 const noClientFilter= (options) => options;
 
 const SUGGEST_DEBOUNCE_MS= 200;
-
-// coalesce keystrokes
-function useDebounced(value, wait=SUGGEST_DEBOUNCE_MS) {
-    const [debounced, setDebounced]= useState(value);
-    useEffect(() => {
-        const id= setTimeout(() => setDebounced(value), wait);
-        return () => clearTimeout(id);
-    }, [value, wait]);
-    return debounced;
-}
 
 
 function renderNaifOption(optProps, suggestion) {
@@ -82,7 +72,7 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, f
         });
     };
 
-    const {options, loading}= useAsyncOptions(getSuggestions, useDebounced(value));
+    const {options, loading}= useAsyncOptions(getSuggestions, useDebounced(value, SUGGEST_DEBOUNCE_MS));
 
     // only called on an actual pick from the list; free typing goes through fireValueChange below
     const onOptionSelect = (ev, selectedSugg) => {

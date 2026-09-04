@@ -27,7 +27,7 @@ function makeSearchPromise(objName, naifIdFormat) {
             }
 
             fetchUrl(url, fetchOptions).then( (response) => {
-                response.json().then((value) => {
+                return response.json().then((value) => {
                     resolve(value);
                 });
             }).catch( (error) => {
@@ -54,8 +54,6 @@ function resolveObject(objName, naifIdFormat) {
         };
     }
 
-    // the keystroke debounce lives in NaifidPanel (SUGGEST_DEBOUNCE_MS) and useAsyncOptions drops
-    // superseded results, so the lookup starts as soon as it is asked for
     let p= makeSearchPromise(objName, naifIdFormat);
     p= p.then( (results) =>
         {

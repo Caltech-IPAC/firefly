@@ -180,9 +180,24 @@ const confirmListedValue= (v,props) => {
 
 
 /**
+ * Coalesce rapid changes: returns value only after it has stayed unchanged for `wait` ms.
+ * @param {*} value - the value to debounce
+ * @param {number} wait - quiet period in ms
+ * @returns {*} the latest value that has been stable for `wait` ms
+ */
+export function useDebounced(value, wait) {
+    const [debounced, setDebounced]= useState(value);
+    useEffect(() => {
+        const id= setTimeout(() => setDebounced(value), wait);
+        return () => clearTimeout(id);
+    }, [value, wait]);
+    return debounced;
+}
+
+
+/**
  * Resolve a list of options that the caller may produce either synchronously or asynchronously.
  * Options from a superseded request are dropped; side effects inside getOptions are not.
- * Note: no debounce is added here - if the source needs one it should own it.
  * @param {function} getOptions - (value) => Array|Promise<Array>, called whenever value changes
  * @param {string} value - the current input value to look options up for
  * @returns {{options:Array, loading:boolean}}
