@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {get, omit, range, isEqual} from 'lodash';
+import {get, range, isEqual} from 'lodash';
 import {getSpectrumDM, REF_POS, isKnownRefPos} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
@@ -32,7 +32,6 @@ import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 import {MathJax} from 'better-react-mathjax';
-import {SpectralLinesOptions, SPECTRAL_LINES_GROUP, makeSpectralLineShapes, sourceOptionToTblId} from './SpectralLines.jsx';
 
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -44,7 +43,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {tbl_id} = getChartProps(chartId, ptbl_id, activeTrace);
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin, xUnit, yUnit} = getSpectrumProps(tbl_id);
 
-    const {Xunit, Yunit, SpectralFrame, SpectralLines} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, GroupBy} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
@@ -83,7 +82,6 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                         {xMin && <Xmin/>}
                         <Xunit/>
                         <SpectralFrame labelWidth={labelWidth}/>
-                        <SpectralLines/>
                     </GroupedStack>
                     <GroupedStack groupTitle='Y-axis'>
                         <Y label={axisColumnFieldLabel('Flux', yUnit)}/>
@@ -340,34 +338,6 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
         });
     }
 
-    //preserve chart state while spectral-line fields might be temporarily unmounted while switching traces
-    const currentSpectralLines = getChartData(chartId)?.fireflyLayout?.spectralLines ?? {};
-    const spectralLinesEnabled = fields['spectralLines.enabled'] === undefined
-        ? toBoolean(currentSpectralLines.enabled)
-        : toBoolean(fields['spectralLines.enabled']);
-    const spectralLinesTblId = fields['spectralLines.sourceOptions'] === undefined
-        ? currentSpectralLines.source
-        : sourceOptionToTblId(fields['spectralLines.sourceOptions']);
-    fields = omit(fields, ['spectralLines.enabled', 'spectralLines.sourceOptions']);
-
-    // persisted only so UI controls can seed their initial state from the chart data next time this dialog opens
-    fields = updateSet(fields, ['fireflyLayout.spectralLines.enabled'], spectralLinesEnabled);
-    fields = updateSet(fields, ['fireflyLayout.spectralLines.source'], spectralLinesTblId);
-
-    // replace only this feature's shapes, preserve others
-    const otherShapes = getChartData(chartId)?.layout?.shapes?.filter((s) => s.legendgroup !== SPECTRAL_LINES_GROUP) ?? [];
-    // lines are rest-frame (lab) wavelengths; when the spectrum itself is shown in observed frame (i.e. not
-    // already rest-frame corrected), shift the lines by the same redshift to match - no shift needed in rest frame
-    const {sfOption, redshift} = getRedshiftInfo(fields, (p) => [p], fireflyData, activeTrace);
-    const spectralLinesRedshift = sfOption === 'observed' ? (Number(redshift) || 0) : 0;
-    const spectralLineShapes = spectralLinesEnabled ? makeSpectralLineShapes(xUnit, spectralLinesTblId, spectralLinesRedshift) : [];
-    fields = updateSet(fields, ['layout.shapes'], [...otherShapes, ...spectralLineShapes]);
-
-    // always persist the full, correct value — don't rely on the key being absent, since a stale value from any
-    // earlier Apply would never get cleared otherwise
-    fields = updateSet(fields, ['layout.showlegend'], data.length > 1 || spectralLinesEnabled);
-    // -----
-
     // propagate all of the above field changes to change the state (i.e. chart data in store)
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});
 }
@@ -427,8 +397,6 @@ export const useSpectrumInputs = ({activeTrace:pActiveTrace, chartId, groupKey})
                 ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
                 : <ReadOnlyField value={sfRefPos} {...allProps}/>;
         }, [activeTrace, fireflyData, groupKey]),
-        SpectralLines: useCallback((props={}) =>
-            <SpectralLinesOptions activeTrace={activeTrace} chartId={chartId} {...props}/>, [activeTrace, chartId]),
     };
 };
 

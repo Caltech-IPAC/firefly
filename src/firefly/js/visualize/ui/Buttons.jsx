@@ -40,6 +40,7 @@ import TextViewIco from '@mui/icons-material/TextFieldsOutlined';
 import TableViewIco from '@mui/icons-material/TableChartOutlined';
 import SettingsIco from '@mui/icons-material/SettingsOutlined';
 import PropertySheetIco from '@mui/icons-material/ReadMoreOutlined';
+import SpectralLinesIco from '@mui/icons-material/EditRoadOutlined';
 import ResetIco from '@mui/icons-material/RestartAltOutlined';
 import PanIco from '@mui/icons-material/OpenWithOutlined';
 import PinChartIco from '@mui/icons-material/PushPin';
@@ -214,6 +215,10 @@ export const AddColumnButton = (props) => {
 
 export const SettingsButton = (props) => (
     <ToolbarButton {...{icon: <SettingsIco/>, tip: 'Chart options and tools', iconButtonSize:'38px', ...props}}/>
+);
+
+export const SpectralLinesButton = (props) => (
+    <ToolbarButton {...{icon: <SpectralLinesIco/>, tip: 'Spectral lines', iconButtonSize:'38px', ...props}}/>
 );
 
 export const PropertySheetButton = (props) => (

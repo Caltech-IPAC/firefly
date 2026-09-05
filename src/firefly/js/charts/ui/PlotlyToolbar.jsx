@@ -17,12 +17,13 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {TableFilterPopup} from '../../tables/ui/FilterEditor';
-import {getTblIdFromChart, isScatter2d} from '../ChartUtil.js';
+import {getTblIdFromChart, isScatter2d, isSpectrum} from '../ChartUtil.js';
+import {SpectralLinesPanel} from './options/SpectralLines.jsx';
 import {findViewerWithItemId, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
     AddItem, CheckedButton, CheckedClearButton, ClearFilterButton, ExpandButton,
-    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, Zoom1XIcon, ZoomUpIcon,
+    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, SpectralLinesButton, Zoom1XIcon, ZoomUpIcon,
 } from '../../visualize/ui/Buttons.jsx';
 
 import SelectIco from 'html/images/icons-2014/select.png';
@@ -82,6 +83,7 @@ function ScatterToolbar({chartId, expandable}) {
             <SaveBtn {...{chartId}} />
             <RestoreBtn {...{chartId}} />
             {tbl_id && <FiltersBtn {...{chartId}} />}
+            {isSpectrum(chartId) && <SpectralLinesBtn {...{chartId, activeTrace}} />}
             <OptionsBtn {...{chartId}} />
             {expandable && <ExpandBtn {...{chartId}} />}
             { help_id && <Stack p={1/4}> <HelpIcon helpId={help_id} /> </Stack>}
@@ -315,6 +317,12 @@ function OptionsBtn({chartId}) {
     );
 }
 
+function SpectralLinesBtn({chartId, activeTrace}) {
+    return (
+        <SpectralLinesButton onClick={() => showSpectralLinesDialog({chartId, activeTrace})}/>
+    );
+}
+
 export function AddBtn() {
     return (
         <AddItem
@@ -393,5 +401,14 @@ function showFilterDialog(tbl_id, tbl_ui_id) {
     showOptionsPopup({
         content: <TableFilterPopup tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/>,
         title: 'Filters', modal: true, show: true
+    });
+}
+
+
+function showSpectralLinesDialog({chartId, activeTrace}) {
+    showOptionsPopup({
+        title: 'Spectral Lines Options',
+        modal: false,
+        content: <SpectralLinesPanel {...{chartId, activeTrace}}/>
     });
 }
