@@ -83,7 +83,7 @@ function ScatterToolbar({chartId, expandable}) {
             <SaveBtn {...{chartId}} />
             <RestoreBtn {...{chartId}} />
             {tbl_id && <FiltersBtn {...{chartId}} />}
-            {isSpectrum(chartId) && <SpectralLinesBtn {...{chartId, activeTrace}} />}
+            {isSpectrum(chartId) && <SpectralLinesBtn/>}
             <OptionsBtn {...{chartId}} />
             {expandable && <ExpandBtn {...{chartId}} />}
             { help_id && <Stack p={1/4}> <HelpIcon helpId={help_id} /> </Stack>}
@@ -317,9 +317,9 @@ function OptionsBtn({chartId}) {
     );
 }
 
-function SpectralLinesBtn({chartId, activeTrace}) {
+function SpectralLinesBtn() {
     return (
-        <SpectralLinesButton onClick={() => showSpectralLinesDialog({chartId, activeTrace})}/>
+        <SpectralLinesButton onClick={() => showSpectralLinesDialog()}/>
     );
 }
 
@@ -405,10 +405,10 @@ function showFilterDialog(tbl_id, tbl_ui_id) {
 }
 
 
-function showSpectralLinesDialog({chartId, activeTrace}) {
+function showSpectralLinesDialog() {
     showOptionsPopup({
         title: 'Spectral Lines Options',
         modal: false,
-        content: <SpectralLinesPanel {...{chartId, activeTrace}}/>
+        content: <SpectralLinesPanel/>
     });
 }

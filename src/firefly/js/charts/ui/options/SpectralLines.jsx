@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import {isEqual} from 'lodash';
-import {Button, Stack} from '@mui/joy';
+import {Button, Stack, Typography} from '@mui/joy';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
+import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {getChartData, dispatchChartUpdate, CHART_UPDATE} from '../../ChartsCntlr.js';
 import {isSpectrum} from '../../ChartUtil.js';
@@ -9,10 +10,11 @@ import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
 import {canUnitConv, convertUnitValue} from '../../dataTypes/SpectrumUnitConversion.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil';
 import {dispatchTableFetch, dispatchTableUiUpdate, dispatchTableAddLocal, TABLE_SELECT, TABLE_LOADED} from 'firefly/tables/TablesCntlr';
-import {onTableLoaded, getTblById, getSelectedDataSync, getTblRowAsObj, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
+import {onTableLoaded, getTblById, getSelectedDataSync, getTblRowAsObj, getColumnValues, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
+import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 
 // recommended-lines source lists, each independently checkable; listId is sent to the server's
 // "spectralLines" search processor to pick which resource file it serves. Adding a list later is
@@ -43,6 +45,7 @@ const SPECTRAL_LINE_FONT_FAMILY = "'SF Mono', ui-monospace, monospace";
 export const SPECTRAL_LINES_GROUP = 'lines';
 
 const SPECTRAL_LINES_FG_KEY = 'spectralLinesPanel';
+const SOURCES_COLLAPSIBLE_KEY = 'spectralLinesSources'; // panel is shared app-wide, not chart-specific - one fixed key
 
 // Field keys and option values ---
 const SOURCE_OPTIONS_KEY = 'spectralLines.sourceOptions'; // comma-separated checked values, e.g. CheckboxGroupInputField's value
@@ -96,9 +99,13 @@ export function makeSpectralLineShapes(xUnit, linesTblId, redshift=0) {
  * rest-frame corrected), lines must be shifted by the same redshift to match - no shift needed in rest frame.
  * @param {Array<object>} fireflyData
  * @param {number} activeTrace
- * @returns {number}
+ * @returns {number|undefined} undefined if this trace has no known spectral frame at all (lines aren't
+ * applicable to it), as opposed to a known rest frame (0) or a known observed-frame redshift.
  */
 function resolveSpectralLinesRedshift(fireflyData, activeTrace) {
+    // a redshift is only resolvable when Spectral Frame options are shown (as opposed to a read-only value)
+    if (!isKnownRefPos(fireflyData?.[activeTrace]?.spectralFrame?.refPos)) return undefined;
+
     // TODO: spectralFrameOption is undefined until Modify Trace is applied at least once, so this
     // assumes rest-frame (0) until then even if the real default would be observed with a redshift
     const {value: sfOption, redshift: redshiftOption, userSpecified} = fireflyData?.[activeTrace]?.spectralFrameOption ?? {};
@@ -109,7 +116,7 @@ function resolveSpectralLinesRedshift(fireflyData, activeTrace) {
 
 /**
  * Rebuilds a chart's spectral-line shapes from the merged lines table's current row selection, and dispatches
- * only if the result actually differs from what's already on the chart. No group selected -> table has no
+ * only if the result actually differs from what's already on the chart. When lines table has no
  * selected rows -> makeSpectralLineShapes naturally returns no shapes -> achieves spectral lines disabled behavior.
  * @param {string} chartId
  */
@@ -119,7 +126,7 @@ function resyncChartLines(chartId) {
     const redshift = resolveSpectralLinesRedshift(fireflyData, activeTrace);
 
     const otherShapes = (layout?.shapes ?? []).filter((s) => s.legendgroup !== SPECTRAL_LINES_GROUP);
-    const spectralLineShapes = makeSpectralLineShapes(xUnit, LINES_TBL_ID, redshift);
+    const spectralLineShapes = redshift === undefined ? [] : makeSpectralLineShapes(xUnit, LINES_TBL_ID, redshift);
     const changes = {
         'layout.shapes': [...otherShapes, ...spectralLineShapes],
         'layout.showlegend': data.length > 1 || spectralLineShapes.length > 0,
@@ -195,13 +202,11 @@ async function buildMergedLinesTable(sourceOptions) {
 }
 
 /**
- * Standalone Spectral Lines dialog content. keepState=true on the FieldGroup so selections survive the
- * dialog being closed/reopened (e.g. from a different chart) - every use input is live (see useSpectralLinesSync)
- * @param {object} props
- * @param {string} props.chartId
- * @param {number} props.activeTrace
+ * Standalone Spectral Lines dialog content - not specific to the chart it was opened from; the lines table
+ * it manages is shared app-wide across all spectrum charts (see `useSpectralLinesSync`). keepState=true on the
+ * FieldGroup so selections survive the dialog being closed/reopened.
  */
-export function SpectralLinesPanel({activeTrace, chartId}) {
+export function SpectralLinesPanel() {
     // FieldGroup has keepState=true, so this fixed default only matters the very first time this
     // session the dialog is opened - after that, the group's own last-seen value takes over
     const initialSourceOptions = ''; // nothing checked by default - lines table starts empty until applied
@@ -216,27 +221,55 @@ export function SpectralLinesPanel({activeTrace, chartId}) {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; button click handles later rebuilds
     }, []);
 
-    // spectral lines need a redshift to correct against, which only exists when Spectral Frame options are shown (as opposed to read-only value)
-    const hasSpectralFrame = useStoreConnector(() =>
-        isKnownRefPos(getChartData(chartId)?.fireflyData?.[activeTrace]?.spectralFrame?.refPos),
-        [chartId, activeTrace]);
+    const {selectedCount, groupsCount, linesCount} = useStoreConnector(() => {
+        const tbl = getTblById(LINES_TBL_ID);
+        const linesCount = tbl?.totalRows ?? 0;
+        const groupsCount = linesCount ? new Set(getColumnValues(tbl, GROUP_COL)).size : 0;
+        const selectedCount = SelectInfo.newInstance(tbl?.selectInfo).getSelectedCount();
+        return {selectedCount, groupsCount, linesCount};
+    }, []);
+
+    const onUpdateLines = () => {
+        void buildMergedLinesTable(sourceOptions);
+        dispatchComponentStateChange(SOURCES_COLLAPSIBLE_KEY, {isOpen: false}); // collapse to reveal the table below
+    };
 
     return (
         <FieldGroup groupKey={SPECTRAL_LINES_FG_KEY} keepState={true}>
-            {hasSpectralFrame && (
-                <Stack spacing={1} sx={{pr: 1, minWidth: '35rem'}}>
-                    <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
-                                             label='Lines list:'
-                                             initialState={{value: initialSourceOptions}}
-                                             options={[
-                                                 ...RECOMMENDED_LINE_LISTS.map(({listId, listLabel}) =>
-                                                     ({label: `${listLabel} (recommended)`, value: listId})),
-                                                 {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
-                                             ]}/>
-                    {/* TODO: "Upload mine" — file upload + column mapper */}
-                    <Stack direction='row'>
-                        <Button size='sm' onClick={() => buildMergedLinesTable(sourceOptions)}>Update Lines</Button>
-                    </Stack>
+            <Stack spacing={2} sx={{p: 1, pr: 2, minWidth: '36rem'}}>
+                <CollapsibleGroup>
+                    <CollapsibleItem componentKey={SOURCES_COLLAPSIBLE_KEY}
+                                     header={(isOpen) => (
+                                         <Stack>
+                                             <Typography level='title-md'>Select line lists to load</Typography>
+                                             {!isOpen &&
+                                                 <Typography level='body-sm'>
+                                                     {linesCount === 0
+                                                         ? 'No lines loaded'
+                                                         : `${groupsCount} group${groupsCount === 1 ? '' : 's'}, ${linesCount} line${linesCount === 1 ? '' : 's'} loaded`}
+                                                 </Typography>}
+                                         </Stack>
+                                     )}
+                                     isOpen={true}>
+                        <Stack spacing={1}>
+                            <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
+                                                     label='Line Lists:'
+                                                     alignment='vertical'
+                                                     initialState={{value: initialSourceOptions}}
+                                                     options={[
+                                                         ...RECOMMENDED_LINE_LISTS.map(({listId, listLabel}) =>
+                                                             ({label: `${listLabel} (recommended)`, value: listId})),
+                                                         {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
+                                                     ]}/>
+                            {/* TODO: "Upload mine" — file upload + column mapper */}
+                            <Stack direction='row'>
+                                <Button size='sm' onClick={onUpdateLines}>Update Lines</Button>
+                            </Stack>
+                        </Stack>
+                    </CollapsibleItem>
+                </CollapsibleGroup>
+                <Stack spacing={.5}>
+                    <Typography level='title-md'>Select lines to plot:</Typography>
                     <Stack sx={{height: 240}}>
                         <TablePanel
                             tbl_id={LINES_TBL_ID}
@@ -251,8 +284,9 @@ export function SpectralLinesPanel({activeTrace, chartId}) {
                             showFilters={true}
                         />
                     </Stack>
+                    <Typography level='body-sm'>{selectedCount} lines selected - plotted live on spectral chart(s)</Typography>
                 </Stack>
-            )}
+            </Stack>
         </FieldGroup>
     );
 }
