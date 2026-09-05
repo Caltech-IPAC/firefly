@@ -1,30 +1,38 @@
 import React, {useEffect} from 'react';
 import {isEqual} from 'lodash';
-import {Stack} from '@mui/joy';
-import {SwitchInputField} from 'firefly/ui/SwitchInputField';
+import {Button, Stack} from '@mui/joy';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
-import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {getChartData, dispatchChartUpdate, CHART_UPDATE} from '../../ChartsCntlr.js';
 import {isSpectrum} from '../../ChartUtil.js';
 import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
 import {canUnitConv, convertUnitValue} from '../../dataTypes/SpectrumUnitConversion.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil';
-import {dispatchTableFetch, dispatchTableUiUpdate, dispatchTableSelect, TABLE_SELECT, TABLE_LOADED} from 'firefly/tables/TablesCntlr';
+import {dispatchTableFetch, dispatchTableUiUpdate, dispatchTableAddLocal, TABLE_SELECT, TABLE_LOADED} from 'firefly/tables/TablesCntlr';
 import {onTableLoaded, getTblById, getSelectedDataSync, getTblRowAsObj, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
+import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
-import {toBoolean} from 'firefly/util/WebUtil';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
-import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
-import {VALUE_CHANGE, MULTI_VALUE_CHANGE} from 'firefly/fieldGroup/FieldGroupCntlr';
 
-const RECOMMENDED_LINES_TBL_ID = 'recommended-spectral-lines';
-const RECOMMENDED_LINES_TBL_UI_ID = `${RECOMMENDED_LINES_TBL_ID}-ui`;
+// recommended-lines source tables; more than one will be offered eventually (rec-1, rec-2, ...)
+const RECOMMENDED_LINES_TBL_IDS = ['recommended-spectral-lines'];
+
+// the merged, client-side table that's actually displayed/plotted from - single source of truth
+const LINES_TBL_ID = 'spectral-lines';
+const LINES_TBL_UI_ID = `${LINES_TBL_ID}-ui`;
 const WAVELENGTH_COL = 'wavelength_um';
 const LABEL_COL = 'species';
 const TRANSITION_COL = 'transition';
 const PHASE_COL = 'phase';
+const GROUP_COL = 'group';
 const WAVELENGTH_COL_UNIT = 'um'; // unit of WAVELENGTH_COL's values; TODO: source it from table metadata if present
+const LINES_TBL_COLUMNS = [
+    {name: WAVELENGTH_COL, units: WAVELENGTH_COL_UNIT, type: 'double'},
+    {name: LABEL_COL, type: 'char'},
+    {name: TRANSITION_COL, type: 'char'},
+    {name: PHASE_COL, type: 'char'},
+    {name: GROUP_COL, type: 'char'},
+];
 
 const SPECTRAL_LINE_COLOR = 'gray';
 const SPECTRAL_LINE_FONT_FAMILY = "'SF Mono', ui-monospace, monospace";
@@ -33,46 +41,23 @@ export const SPECTRAL_LINES_GROUP = 'lines';
 const SPECTRAL_LINES_FG_KEY = 'spectralLinesPanel';
 
 // Field keys and option values ---
-const ENABLED_KEY = 'spectralLines.enabled';
 const SOURCE_OPTIONS_KEY = 'spectralLines.sourceOptions'; // comma-separated checked values, e.g. CheckboxGroupInputField's value
 const SOURCE_RECOMMENDED = 'recommended';
 const SOURCE_UPLOAD = 'upload';
 
 /**
- * Resolves the checked source options to the concrete tbl_id to read lines from.
- * Note: only one table can be active for now — combining multiple checked sources (e.g. recommended + uploaded)
- * into a single client-side tableModel is deferred to a later pass, once upload is implemented.
- * @param {string} sourceOptions - comma-separated checked values from SOURCE_OPTIONS_KEY
- * @returns {string|undefined} tbl_id
- */
-export function sourceOptionToTblId(sourceOptions) {
-    return splitVals(sourceOptions).includes(SOURCE_RECOMMENDED) ? RECOMMENDED_LINES_TBL_ID : undefined;
-}
-
-/**
- * Resolves a concrete lines-table tbl_id back to the checked source options it corresponds to.
- * @param {string} linesTblId
- * @returns {string} SOURCE_RECOMMENDED, or '' if none
- */
-function tblIdToSourceOption(linesTblId) {
-    return linesTblId === RECOMMENDED_LINES_TBL_ID ? SOURCE_RECOMMENDED : '';
-}
-
-/**
  * Builds Plotly vertical-line shapes for the currently selected (checked) rows of a given spectral lines table.
  * @param {string} xUnit - unit of the chart's x-axis; wavelengths from the spectral lines table are converted to this
- * @param {string} linesTblId - tbl_id of the spectral lines table; only selected rows are used
+ * @param {string} linesTblId - tbl_id of the spectral lines table to read selected rows from; pass LINES_TBL_ID
+ * for the UI-managed merged table, or any other tbl_id (e.g. from a JS API caller supplying their own table).
  * @param {number} [redshift] - redshift of the spectrum in observed frame; 0 (default) for a
  * spectrum already shown in rest frame.
  * @returns {Array<object>} Plotly shape objects, one per selected row with a valid wavelength
  */
 export function makeSpectralLineShapes(xUnit, linesTblId, redshift=0) {
-    // TODO: build shapes from an uploaded lines table once file upload + column mapping is implemented
-    if (linesTblId !== RECOMMENDED_LINES_TBL_ID) return [];
-
     if (!canUnitConv({from: WAVELENGTH_COL_UNIT, to: xUnit})) return [];
 
-    const selectedLines = getSelectedDataSync(RECOMMENDED_LINES_TBL_ID);
+    const selectedLines = getSelectedDataSync(linesTblId);
     const linesToPlot = [];
     for (let rowIdx = 0; rowIdx < selectedLines.totalRows; rowIdx++) {
         const row = getTblRowAsObj(selectedLines, rowIdx);
@@ -121,22 +106,21 @@ function resolveSpectralLinesRedshift(fireflyData, activeTrace) {
 }
 
 /**
- * Rebuilds a chart's spectral-line shapes from the current Spectral Lines FieldGroup + lines table
- * selection, and dispatches only if the result actually differs from what's already on the chart.
+ * Rebuilds a chart's spectral-line shapes from the merged lines table's current row selection, and dispatches
+ * only if the result actually differs from what's already on the chart. No group selected -> table has no
+ * selected rows -> makeSpectralLineShapes naturally returns no shapes -> achieves spectral lines disabled behavior.
  * @param {string} chartId
  */
 function resyncChartLines(chartId) {
     const {activeTrace=0, fireflyData=[], data=[], layout} = getChartData(chartId);
-    const enabled = toBoolean(getFieldVal(SPECTRAL_LINES_FG_KEY, ENABLED_KEY, false));
-    const tblId = sourceOptionToTblId(getFieldVal(SPECTRAL_LINES_FG_KEY, SOURCE_OPTIONS_KEY));
     const xUnit = fireflyData[activeTrace]?.xUnit;
     const redshift = resolveSpectralLinesRedshift(fireflyData, activeTrace);
 
     const otherShapes = (layout?.shapes ?? []).filter((s) => s.legendgroup !== SPECTRAL_LINES_GROUP);
-    const spectralLineShapes = enabled ? makeSpectralLineShapes(xUnit, tblId, redshift) : [];
+    const spectralLineShapes = makeSpectralLineShapes(xUnit, LINES_TBL_ID, redshift);
     const changes = {
         'layout.shapes': [...otherShapes, ...spectralLineShapes],
-        'layout.showlegend': data.length > 1 || enabled,
+        'layout.showlegend': data.length > 1 || spectralLineShapes.length > 0,
     };
 
     // don't update chart unless the changes are really new
@@ -145,11 +129,10 @@ function resyncChartLines(chartId) {
 }
 
 /**
- * Keeps one chart's plotted spectral-line shapes in sync with the (app-wide) Spectral Lines FieldGroup
- * and the active lines table's row-selection - no chart ever stores spectral-lines settings itself, this
- * just consults the current fields + makeSpectralLineShapes every time something relevant changes.
- * Uses explicit action watchers (like ChartUtil.js's setupTableWatcher) rather than a generic store
- * subscription, so each relevant change is reacted to individually and repeatedly, not just the first.
+ * Keeps one chart's plotted spectral-line shapes in sync with the merged lines table's row-selection - no chart
+ * ever stores spectral-lines settings itself, this just consults makeSpectralLineShapes every time something
+ * relevant changes. Uses explicit action watchers (like ChartUtil.js's setupTableWatcher) rather than a generic
+ * store subscription, so each relevant change is reacted to individually and repeatedly, not just the first.
  * No JSX output - call directly from a component body (e.g. ChartPanel.jsx), not rendered as an element.
  * @param {string} chartId
  */
@@ -161,12 +144,8 @@ export function useSpectralLinesSync(chartId) {
 
         const resync = () => resyncChartLines(chartId);
         const cancels = [
-            // the enable switch and source checkboxes
-            monitorChanges([VALUE_CHANGE, MULTI_VALUE_CHANGE],
-                (a) => a.payload.groupKey === SPECTRAL_LINES_FG_KEY,
-                resync, `sl-fg-${chartId}`),
-            // row (de)selection / (re)load of the lines table itself
-            watchTableChanges(RECOMMENDED_LINES_TBL_ID, [TABLE_SELECT, TABLE_LOADED], resync, `sl-tbl-${chartId}`),
+            // row (de)selection / (re)build of the merged lines table itself
+            watchTableChanges(LINES_TBL_ID, [TABLE_SELECT, TABLE_LOADED], resync, `sl-tbl-${chartId}`),
             // this chart's own xUnit/spectral-frame change (Modify Trace) under the 'fireflyData.' path
             // note: resyncChartLines's own writes only ever touch 'layout.shapes|showlegend' in chart update so it
             // avoids a self-triggering feedback loop
@@ -178,19 +157,43 @@ export function useSpectralLinesSync(chartId) {
     }, [chartId]);
 }
 
-/* fetches the recommended spectral lines table if not already loaded, then selects all its rows by default */
+/* ensures every recommended-lines source table is fetched; a no-op for any already loaded */
 async function ensureRecommendedLines() {
-    if (getTblById(RECOMMENDED_LINES_TBL_ID)) return;
+    await Promise.all(RECOMMENDED_LINES_TBL_IDS.map(async (tbl_id) => {
+        if (getTblById(tbl_id)) return;
+        const request = makeTblRequest('spectralLines', 'Spectral Lines', {}, {tbl_id});
+        dispatchTableFetch(request); // headless: doesn't render in results UI
+        await onTableLoaded(tbl_id);
+    }));
+}
 
-    const request = makeTblRequest(
-        'spectralLines', 'Spectral Lines', {},
-        {tbl_id: RECOMMENDED_LINES_TBL_ID}
-    );
-    dispatchTableFetch(request); // headless: doesn't render in results UI
+/**
+ * Rebuilds the merged, client-side lines table (LINES_TBL_ID) from the checked source options: one row per
+ * line, tagged with its source under GROUP_COL, with every row selected by default. This is the only place
+ * LINES_TBL_ID's content changes - called once on panel mount and again on the "Update Lines" button click,
+ * never automatically on checkbox change, so checking a box doesn't plot anything until applied.
+ * @param {string} sourceOptions - comma-separated checked values from SOURCE_OPTIONS_KEY
+ */
+async function buildMergedLinesTable(sourceOptions) {
+    const checked = splitVals(sourceOptions);
+    const groups = [];
+    if (checked.includes(SOURCE_RECOMMENDED)) {
+        await ensureRecommendedLines();
+        RECOMMENDED_LINES_TBL_IDS.forEach((tbl_id) => groups.push({tbl_id, label: 'Recommended'}));
+    }
+    // TODO: once upload + column mapping is implemented, push {tbl_id, label: 'Upload'} groups for checked uploads here
 
-    // all lines are checked by default; set post-load since request.META_INFO.selectInfo can silently get lost in transit
-    const tableModel = await onTableLoaded(RECOMMENDED_LINES_TBL_ID);
-    dispatchTableSelect(RECOMMENDED_LINES_TBL_ID, {selectAll: true, exceptions: new Set(), rowCount: tableModel.totalRows});
+    const data = groups.flatMap(({tbl_id, label}) => {
+        const src = getTblById(tbl_id);
+        return Array.from({length: src?.totalRows ?? 0}, (_, rowIdx) => {
+            const row = getTblRowAsObj(src, rowIdx);
+            return [row[WAVELENGTH_COL], row[LABEL_COL], row[TRANSITION_COL], row[PHASE_COL], label];
+        });
+    });
+
+    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}};
+    table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
+    dispatchTableAddLocal(table, undefined, false);
 }
 
 /**
@@ -201,71 +204,54 @@ async function ensureRecommendedLines() {
  * @param {number} props.activeTrace
  */
 export function SpectralLinesPanel({activeTrace, chartId}) {
+    // FieldGroup has keepState=true, so this fixed default only matters the very first time this
+    // session the dialog is opened - after that, the group's own last-seen value takes over
+    const initialSourceOptions = ''; // nothing checked by default - lines table starts empty until applied
+    const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions, SPECTRAL_LINES_FG_KEY);
+
     useEffect(() => {
         // pre-register tbl_ui_id so columns/columnWidths get populated once loaded (TablePanel mounts later, too late)
-        dispatchTableUiUpdate({tbl_ui_id: RECOMMENDED_LINES_TBL_UI_ID, tbl_id: RECOMMENDED_LINES_TBL_ID});
-        void ensureRecommendedLines();
+        dispatchTableUiUpdate({tbl_ui_id: LINES_TBL_UI_ID, tbl_id: LINES_TBL_ID});
+        // build only if it doesn't exist yet - once built, row selection is user-owned and must survive
+        // the dialog being closed/reopened; only the "Update Lines" button rebuilds after this point
+        if (!getTblById(LINES_TBL_ID)) void buildMergedLinesTable(sourceOptions);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; button click handles later rebuilds
     }, []);
-
-    // FieldGroup has keepState=true, so these fixed defaults only matter the very first time this
-    // session the dialog is opened - after that, the group's own last-seen values take over
-    const initialEnabled = false;
-    const initialSourceOptions = tblIdToSourceOption(RECOMMENDED_LINES_TBL_ID);
 
     // spectral lines need a redshift to correct against, which only exists when Spectral Frame options are shown (as opposed to read-only value)
     const hasSpectralFrame = useStoreConnector(() =>
         isKnownRefPos(getChartData(chartId)?.fireflyData?.[activeTrace]?.spectralFrame?.refPos),
         [chartId, activeTrace]);
-    const isEnabledField = useFieldValueOnly(ENABLED_KEY, false, SPECTRAL_LINES_FG_KEY);
-    const isEnabled = hasSpectralFrame && isEnabledField;
-
-    // TODO: combine different source tables to a client-side table
-    const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions, SPECTRAL_LINES_FG_KEY);
-    const activeTblId = sourceOptionToTblId(sourceOptions);
-    const activeTblUiId = activeTblId && `${activeTblId}-ui`;
 
     return (
         <FieldGroup groupKey={SPECTRAL_LINES_FG_KEY} keepState={true}>
             {hasSpectralFrame && (
                 <Stack spacing={1} sx={{pr: 1, minWidth: '35rem'}}>
-                    <Stack direction='row' spacing={1.5} alignItems='baseline'>
-                        <SwitchInputField fieldKey={ENABLED_KEY}
-                                          label='Spectral lines:'
-                                          initialState={{value: initialEnabled}}/>
+                    <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
+                                             label='Lines list:'
+                                             initialState={{value: initialSourceOptions}}
+                                             options={[
+                                                 {label: 'Recommended', value: SOURCE_RECOMMENDED},
+                                                 {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
+                                             ]}/>
+                    {/* TODO: "Upload mine" — file upload + column mapper */}
+                    <Stack direction='row'>
+                        <Button size='sm' onClick={() => buildMergedLinesTable(sourceOptions)}>Update Lines</Button>
                     </Stack>
-                    {isEnabled && (
-                        <Stack spacing={1}>
-                            <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
-                                                     label='Lines list:'
-                                                     initialState={{value: initialSourceOptions}}
-                                                     options={[
-                                                         {label: 'Recommended', value: SOURCE_RECOMMENDED},
-                                                         {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
-                                                     ]}/>
-                            {/* TODO: "Upload mine" — file upload + column mapper */}
-                            {activeTblId && (
-                                <CollapsibleGroup>
-                                    <CollapsibleItem componentKey={`${chartId}-spectralLines`} header='View/Edit Lines' isOpen={true}
-                                                     slotProps={{header: {sx: {fontSize: 'sm'}}}}>
-                                        <Stack sx={{height: 240}}>
-                                            <TablePanel
-                                                tbl_id={activeTblId}
-                                                tbl_ui_id={activeTblUiId}
-                                                border={false}
-                                                showToolbar={false}
-                                                showOptionButton={false}
-                                                showTypes={false}
-                                                showUnits={true}
-                                                selectable={true}
-                                                showSelectRowFilter={false}
-                                            />
-                                        </Stack>
-                                        {/* TODO: add "Add row" button with comma-delimited input to append custom lines */}
-                                    </CollapsibleItem>
-                                </CollapsibleGroup>
-                            )}
-                        </Stack>
-                    )}
+                    <Stack sx={{height: 240}}>
+                        <TablePanel
+                            tbl_id={LINES_TBL_ID}
+                            tbl_ui_id={LINES_TBL_UI_ID}
+                            border={false}
+                            showToolbar={false}
+                            showOptionButton={false}
+                            showTypes={false}
+                            showUnits={true}
+                            selectable={true}
+                            showSelectRowFilter={false}
+                            showFilters={true}
+                        />
+                    </Stack>
                 </Stack>
             )}
         </FieldGroup>
