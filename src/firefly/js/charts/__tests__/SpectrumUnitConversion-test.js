@@ -39,6 +39,8 @@ describe('SpectrumUnitConversion', () => {
         expect(canUnitConv({from: 'erg/s/cm^2/Hz', to: 'W/m^2/Hz'})).toBe(true);
         expect(canUnitConv({from: 'erg/s/cm^2/Hz', to: 'Jy'})).toBe(true);
         expect(canUnitConv({from: 'erg.s**-1.cm**-2.Hz**-1', to: 'Jy'})).toBe(true); // multiplication expression, same as above
+        expect(canUnitConv({from: 'Jy', to: 'uJy'})).toBe(true);
+        expect(canUnitConv({from: 'uJy', to: 'erg/s/cm^2/Hz'})).toBe(true);
 
         // F
         expect(canUnitConv({from: 'erg/s/cm^2', to: 'W/m^2'})).toBe(true);
@@ -125,6 +127,12 @@ describe('SpectrumUnitConversion', () => {
         expect(
             getUnitConvExpr({cname: 'SIGNAL', from: 'erg.s**-1.cm**-2.Hz**-1', to: 'Jy'})
         ).toBe('"SIGNAL" * 1.0E+23'); // multiplication expression, same as above
+        expect(
+            getUnitConvExpr({cname: 'SIGNAL', from: 'Jy', to: 'uJy'})
+        ).toBe('"SIGNAL" * 1.0E+6');
+        expect(
+            getUnitConvExpr({cname: 'SIGNAL', from: 'uJy', to: 'erg/s/cm^2/Hz'})
+        ).toBe('"SIGNAL" / 1.0E+29');
 
         // F ---
         expect(
@@ -211,7 +219,8 @@ describe('SpectrumUnitConversion', () => {
                 expect(getUnitOptions(unit)).toEqual([
                     { value: 'W/m^2/Hz', label: '$\\mathrm{W/m^{2}/Hz}$' },
                     { value: 'erg/s/cm^2/Hz', label: '$\\mathrm{erg/s/cm^{2}/Hz}$' },
-                    { value: 'Jy', label: '$\\mathrm{Jy}$' }
+                    { value: 'Jy', label: '$\\mathrm{Jy}$' },
+                    { value: 'uJy', label: '$\\mathrm{\\mu Jy}$' }
                 ]);
             });
 
@@ -296,6 +305,8 @@ describe('SpectrumUnitConversion', () => {
         });
         // F_NU in Jy
         expect(getYLabel('Jy', 'signal')).toBe('$F_{\\nu}\\ [\\mathrm{Jy}]$');
+        // F_NU in uJy
+        expect(getYLabel('uJy', 'signal')).toBe('$F_{\\nu}\\ [\\mathrm{\\mu Jy}]$');
         // F in CGS units
         expect(getYLabel('erg/s/cm^2', 'signal')).toBe('$\\nu \\cdot F_{\\nu}\\ [\\mathrm{erg/s/cm^{2}}]$');
     });
@@ -308,6 +319,7 @@ describe('SpectrumUnitConversion', () => {
         expect(getMeasurementLabel('m')).toBe('$\\lambda$');
         expect(getMeasurementLabel('erg/s/cm^2/Hz')).toBe('$F_{\\nu}$');
         expect(getMeasurementLabel('Jy')).toBe('$F_{\\nu}$');
+        expect(getMeasurementLabel('uJy')).toBe('$F_{\\nu}$');
         expect(getMeasurementLabel('erg/s/cm^2/A')).toBe('$F_{\\lambda}$');
         expect(getMeasurementLabel('erg/s/cm^2')).toBe('$\\nu \\cdot F_{\\nu}$');
     });

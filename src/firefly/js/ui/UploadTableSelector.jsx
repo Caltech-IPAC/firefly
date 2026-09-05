@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Box, Chip, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Chip, FormHelperText, Stack, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {defaultsDeep, omit} from 'lodash';
 
@@ -38,12 +38,16 @@ const TAB_COLUMNS_EMPTY_MSG = 'Unable to identify coordinate columns for spatial
  * @param props.allowUploadColumnsSelection {boolean} - if true, show a button to select columns to upload
  * (note: this is different from columns mapping; selected upload columns can be more than the mapped columns)
  * @param props.defaultUploadColumnsSelection {DefaultColsEnabled} - default selection of columns to upload
+ * @param [props.allowClear] {boolean} - if true, show a chip button next to the uploaded table's name to clear it
+ * (resets uploadInfo and all mapped column field values, going back to the no-table-selected state)
+ * @param [props.uploadTblOptions] {TblOptions} - options for the uploaded table (see dispatchTableSearch());
+ * e.g. {tbl_group} to add it somewhere other than 'main' (the Results view)
  * @param props.slotProps {Object} - slotProps for the component
  * @returns {Element}
  */
 export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[], columnMappingPanelKey,
                                         allowUploadColumnsSelection=true, defaultUploadColumnsSelection,
-                                        slotProps}) {
+                                        allowClear=false, uploadTblOptions, slotProps}) {
     const {getVal, setVal, register, unregister}= useContext(FieldGroupCtx);
     const columnFieldValues = useStoreConnector(() => columnFields.map(({fieldKey}) => getVal(fieldKey)));
 
@@ -130,17 +134,25 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
 
     const haveTable= Boolean(fileName && columns);
 
+    const onClear = () => {
+        setUploadInfo(undefined);
+        columnFields.forEach(({fieldKey}) => setVal(fieldKey, ''));
+    };
+
     return (
         <Stack spacing={.5}>
             <Stack {...{direction:'row', spacing: 1.5, alignItems:'center'}}>
                 <TextButton text={(fileName&&haveTable) ? 'Replace Uploaded Table' : 'Upload Table'}
                             onClick={() => showUploadTableChooser(preSetUploadInfo, undefined,
-                                defaultUploadColumnsSelection)} />
+                                defaultUploadColumnsSelection, uploadTblOptions)} />
                 {haveTable &&
                     <Typography level='title-lg' sx={{maxWidth: '15rem', overflow:'hidden', whiteSpace:'nowrap',
                         textOverflow:'ellipsis'}}>
                         {fileName}
                     </Typography>
+                }
+                {haveTable && allowClear &&
+                    <Chip onClick={onClear}>Clear</Chip>
                 }
             </Stack>
             {haveTable &&
@@ -173,12 +185,14 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
  * @prop {string} fieldKey
  * @prop {string} name
  * @prop {function(columns):string} guessValue
+ * @prop {function(value, columns):Node} [getFeedback] - feedback text to render as help below ColumnFld
  * @prop {*} [additionalProps] - Any additional key that can be passed to ColumnFld as prop.
  */
 
 const columnFieldsType = PropTypes.arrayOf(PropTypes.shape({
     ...omit({...ColumnFld.propTypes}, ['cols']), //because cols come from uploadInfo
-    guessValue: PropTypes.func //(columns) => string
+    guessValue: PropTypes.func, //(columns) => string
+    getFeedback: PropTypes.func //(value, columns) => node
 }));
 
 UploadTableSelector.propTypes = {
@@ -191,6 +205,8 @@ UploadTableSelector.propTypes = {
         colTypes: PropTypes.arrayOf(PropTypes.string),
         colCount: PropTypes.number
     }),
+    allowClear: PropTypes.bool,
+    uploadTblOptions: PropTypes.object,
     slotProps: PropTypes.shape({
         fileInfo: PropTypes.object,
         columnMappingPanel: PropTypes.shape({
@@ -254,11 +270,15 @@ export function ColumnMappingPanel({cols, columnFieldValues, columnFields, panel
                 }
                 {!children && (
                     <Stack {...{spacing: 1, ...slotProps?.columnFieldsRoot}}>
-                        {columnFields.map((columnField) => (
-                            <Box key={columnField.fieldKey} display='inline-flex'>
-                                <MappedColumnFld cols={cols} {...columnField}/>
-                            </Box>
-                        ))}
+                        {columnFields.map((columnField, i) => {
+                            const feedback = columnField.getFeedback?.(columnFieldValues[i], cols);
+                            return (
+                                <Box key={columnField.fieldKey} display='inline-flex' flexDirection='column' alignItems='flex-start'>
+                                    <MappedColumnFld cols={cols} {...columnField}/>
+                                    {feedback && <FormHelperText>{feedback}</FormHelperText>}
+                                </Box>
+                            );
+                        })}
                     </Stack>
                 )}
                 {children}

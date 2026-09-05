@@ -18,11 +18,12 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {TableFilterPopup} from '../../tables/ui/FilterEditor';
 import {getTblIdFromChart, isScatter2d} from '../ChartUtil.js';
+import {SpectralLinesPanel} from './options/SpectralLines.jsx';
 import {findViewerWithItemId, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
     AddItem, CheckedButton, CheckedClearButton, ClearFilterButton, ExpandButton,
-    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, Zoom1XIcon, ZoomUpIcon,
+    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, SpectralLinesButton, Zoom1XIcon, ZoomUpIcon,
 } from '../../visualize/ui/Buttons.jsx';
 
 import SelectIco from 'html/images/icons-2014/select.png';
@@ -315,6 +316,12 @@ function OptionsBtn({chartId}) {
     );
 }
 
+export function SpectralLinesBtn() {
+    return (
+        <SpectralLinesButton onClick={() => showSpectralLinesDialog()}/>
+    );
+}
+
 export function AddBtn() {
     return (
         <AddItem
@@ -393,5 +400,14 @@ function showFilterDialog(tbl_id, tbl_ui_id) {
     showOptionsPopup({
         content: <TableFilterPopup tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/>,
         title: 'Filters', modal: true, show: true
+    });
+}
+
+
+function showSpectralLinesDialog() {
+    showOptionsPopup({
+        title: 'Spectral Lines Options',
+        modal: false,
+        content: <SpectralLinesPanel/>
     });
 }
