@@ -338,7 +338,7 @@ function updateFullRawTable(callback) {
                 {fieldKey: 'flux', value: get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME])},
                 {fieldKey: 'periodMin', value: `${min}`},
                 {fieldKey: 'periodMax', value: `${max}`},
-                {fieldKey: 'period', value: `${period}`},
+                {fieldKey: LC.PERIOD_FKEY, value: `${period}`},
                 {fieldKey: 'tzero', value: `${tzero}`},
                 {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
 
