@@ -34,6 +34,8 @@ task buildLib(dependsOn: [loadConfig, installDeps]) {
     description = 'Build the component library (Vite).'
     group = 'build'
     inputs.dir  'src'
+    inputs.dir  "${rootDir}/src/firefly/js"
+    inputs.dir  "${rootDir}/src/firefly/html"
     inputs.file 'vite.config.js'
     inputs.file 'package.json'
     outputs.dir libDistDir
@@ -68,6 +70,8 @@ task buildStories(dependsOn: [loadConfig, installDeps]) {
     description = 'Build the Storybook static site.'
     group = 'build'
     inputs.dir  'src'
+    inputs.dir  "${rootDir}/src/firefly/js"
+    inputs.dir  "${rootDir}/src/firefly/html"
     inputs.dir  'stories'
     inputs.dir  '.storybook'
     inputs.file 'vite.config.js'
