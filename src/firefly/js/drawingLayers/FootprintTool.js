@@ -395,13 +395,20 @@ function getLayerChanges(drawLayer, action) {
             return retV;
 
         case MODIFY_CUSTOM_FIELD:
-            const {fpText, fpTextLoc, angleDeg} = action.payload.changes;
+            const {fpText, fpTextLoc, angleDeg, activePlotId} = action.payload.changes;
 
             if (plotIdAry) {
                 if (!isNil(angleDeg)) {
                     return updateFootprintAngle(angleDeg, dd[DataTypes.DATA], plotIdAry);
                 } else {
-                    return updateMarkerText(fpText, fpTextLoc, dd[DataTypes.DATA], plotIdAry);
+                    // updateMarkerText skips plots with no footprint drawobj - only track the title when
+                    // the label was applied to the plot the edit came from, so a no-op update can't reset it
+                    const textApplied = isGoodPlot(activePlotId) &&
+                        !isEmpty(get(dd, [DataTypes.DATA, activePlotId]));
+
+                    // the layer title tracks the label; an empty label falls back to the title it was created with
+                    return {...updateMarkerText(fpText, fpTextLoc, dd[DataTypes.DATA], plotIdAry),
+                            ...(textApplied && {title: fpText || drawLayer.defaultTitle})};
                 }
             }
             break;
