@@ -395,13 +395,19 @@ function getLayerChanges(drawLayer, action) {
             return retV;
 
         case MODIFY_CUSTOM_FIELD:
-            const {fpText, fpTextLoc, angleDeg} = action.payload.changes;
+            const {fpText, fpTextLoc, angleDeg, activePlotId} = action.payload.changes;
 
             if (plotIdAry) {
                 if (!isNil(angleDeg)) {
                     return updateFootprintAngle(angleDeg, dd[DataTypes.DATA], plotIdAry);
                 } else {
-                    return updateMarkerText(fpText, fpTextLoc, dd[DataTypes.DATA], plotIdAry);
+                    // only update the layer title if there is a footprint in the active plot
+                    const textApplied = isGoodPlot(activePlotId) &&
+                        !isEmpty(get(dd, [DataTypes.DATA, activePlotId]));
+
+                    // the layer title tracks the label; an empty label falls back to the title with which it was created
+                    return {...updateMarkerText(fpText, fpTextLoc, dd[DataTypes.DATA], plotIdAry),
+                            ...(textApplied && {title: fpText || drawLayer.defaultTitle})};
                 }
             }
             break;
