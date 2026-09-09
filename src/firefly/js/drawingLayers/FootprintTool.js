@@ -401,12 +401,11 @@ function getLayerChanges(drawLayer, action) {
                 if (!isNil(angleDeg)) {
                     return updateFootprintAngle(angleDeg, dd[DataTypes.DATA], plotIdAry);
                 } else {
-                    // updateMarkerText skips plots with no footprint drawobj - only track the title when
-                    // the label was applied to the plot the edit came from, so a no-op update can't reset it
+                    // only update the layer title if there is a footprint in the active plot
                     const textApplied = isGoodPlot(activePlotId) &&
                         !isEmpty(get(dd, [DataTypes.DATA, activePlotId]));
 
-                    // the layer title tracks the label; an empty label falls back to the title it was created with
+                    // the layer title tracks the label; an empty label falls back to the title with which it was created
                     return {...updateMarkerText(fpText, fpTextLoc, dd[DataTypes.DATA], plotIdAry),
                             ...(textApplied && {title: fpText || drawLayer.defaultTitle})};
                 }
