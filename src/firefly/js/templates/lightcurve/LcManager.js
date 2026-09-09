@@ -41,6 +41,7 @@ export const LC = {
     POWER_CNAME: 'Power',            // power column
     PEAK_CNAME: 'Peak',              // peak column
     PHASE_CNAME: 'phase',
+    PERIOD_FKEY: 'period',           // fieldKey for period in the FG_PERIOD_FINDER field group
 
     IMG_VIEWER_ID: 'lc_image_viewer',
     MAX_IMAGE_CNT: 7,
@@ -574,6 +575,8 @@ function handleTableLoad(layoutInfo, action) {
 
             layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
+        // populate the period field from the default-highlighted row as soon as the periodogram/peak table first loads
+        updatePeriodFieldFromTable(tbl_id);
     }
     if([LC.RAW_TABLE, LC.PHASE_FOLDED].includes(tbl_id)) {
         const {highlightedRow} = getTblById(tbl_id) || {};
@@ -645,22 +648,31 @@ function handleTableHighlight(layoutInfo, action) {
     }
 
     // update period field when it's selected from a table with period.
-    if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
-        const per = getPeriodFromTable(tbl_id);
-        if (per) {
-            dispatchValueChange({
-                fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
-                groupKey: LC.FG_PERIOD_FINDER,
-                value: `${parseFloat(per)}`
-            });
-        }
-    }
+    updatePeriodFieldFromTable(tbl_id);
 
     // ensure the highlighted row of the raw and phase-folded tables are in sync.
     keepHighlightedRowSynced(tbl_id, highlightedRow);
 
     return layoutInfo;
     //return Object.assign({}, layoutInfo);
+}
+
+/**
+ * @summary update the period field from the periodogram/peak table's currently highlighted row.
+ * Shared by the initial table load (default-highlighted row) and by explicit row-highlight changes,
+ * so the period field stays in sync whether the user clicks a row or when the table first loads.
+ * @param {string} tbl_id
+ */
+function updatePeriodFieldFromTable(tbl_id) {
+    if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) return;
+    const per = getPeriodFromTable(tbl_id);
+    if (per) {
+        dispatchValueChange({
+            fieldKey: LC.PERIOD_FKEY,
+            groupKey: LC.FG_PERIOD_FINDER,
+            value: `${parseFloat(per)}`
+        });
+    }
 }
 
 /**

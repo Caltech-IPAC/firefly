@@ -205,11 +205,7 @@ export const UploadPanel = ({initArgs,name= 'LCUpload'}) =>{
                        completeText='Upload'>
                 <FileDropZone {...{
                     dropEvent, setDropEvent,
-                    setLoadingOp: () => {
-                        setUploadContainer('isLocal');
-                        const newEv = {type: 'drop', dataTransfer: {files: Array.from(dropEvent.dataTransfer.files)}};
-                        setDropEvent(newEv);
-                    },
+                    setLoadingOp: () => setUploadContainer('isLocal'),
                 }}>
                     <Stack {...{width:1, alignItems:'center'}}>
                         <Stack {...{ml:0, mt:4, spacing:3}}>

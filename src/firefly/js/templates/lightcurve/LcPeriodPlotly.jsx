@@ -58,7 +58,7 @@ const fKeyDef = {
     min: {fkey: 'periodMin', label: 'Period Min (day)'},
     max: {fkey: 'periodMax', label: 'Period Max (day)'},
     tz: {fkey: 'tzero', label: 'Zero Point Time'},
-    period: {fkey: 'period', label: 'Period (day)'},
+    period: {fkey: LC.PERIOD_FKEY, label: 'Period (day)'},
     tzmax: {fkey: 'tzeroMax', label: ''},
     uploadedfile: {fkey: 'uploadedFile', label: ''},
 };
@@ -92,7 +92,7 @@ const defValues= {
     [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'minimum period in days', 0),
         {validator: null}),
     [fKeyDef.period.fkey]: Object.assign(getTypeData(fKeyDef.period.fkey, '', '', `${fKeyDef.period.label}:`, labelWidth-10),
-        {validator: null}),
+        {validator: null, nullAllowed: false}),
     [fKeyDef.uploadedfile.fkey]: Object.assign(getTypeData(fKeyDef.uploadedfile.fkey, '', 'Uploaded Filename', 0))
 };
 
@@ -734,6 +734,10 @@ const LcPFReducer= (initState) => {
                 switch (action.type) {
                     case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                         initPeriodValues(inFields);
+                        // enforce nullAllowed for period field to be false, so that user must enter a value for period
+                        if (inFields[fKeyDef.period.fkey]?.nullAllowed !== false) {
+                            inFields = updateSet(inFields, [fKeyDef.period.fkey, 'nullAllowed'], false);
+                        }
                         break;
                     case FieldGroupCntlr.VALUE_CHANGE:
                         let period = getValidValueFrom(inFields, fKeyDef.period.fkey);
@@ -961,7 +965,7 @@ function setPFTableSuccess() {
  */
 function setPFTableFail() {
     return () => {
-        return showInfoPopup('Phase folding parameter setting error');
+        return showInfoPopup('Period value is required, enter one manually or use the slider or periodogram table to populate the input field.', 'Error');
     };
 }
 
