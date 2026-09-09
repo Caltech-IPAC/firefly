@@ -60,19 +60,23 @@ export function FootprintToolUI({drawLayer, pv}) {
     const isValidAngle = !isNaN(parseFloat(angleDeg));
 
     if (hasData) {
+        // update the displayed center as the footprint moves. compare positions as strings.
+        // an empty key means there was no plot or stored center - in that case keep showing
+        // the last position instead of blanking the readout.
         if (derivedCenterKey && derivedCenterKey !== lastCenterKey) {
             setLastCenterKey(derivedCenterKey);
             setCenterPt(derivedCenterPt);
         }
 
-        // these are local so an in-progress edit survives, but follow the store when it disagrees.
-        // a local edit dispatches synchronously, so it already matches
+        // keep local state and take the store's value when it differs.
+        // the dispatch preserves in-progress edits.
         if (text !== fpText) setFpText(text);
 
         if (textLoc !== fpTextLoc) setFpTextLoc(textLoc);
 
-        // storeFpKey changes when the footprint itself moves (drag or rotate) - on those, an uncommitted
-        // (invalid) angle entry is discarded, since only a valid entry ever reached the store
+        // refresh the angle box when the stored angle or position changes (drag or rotation), but not
+        // while angleFromUI is set: that flag stays set after an edit rotates the footprint, so the
+        // field isn't rewritten between keystrokes. an entry that isn't a number is dropped.
         if (storeFpKey !== lastStoreFpKey) {
             setLastStoreFpKey(storeFpKey);
             if (!angleFromUI || !isValidAngle) {
