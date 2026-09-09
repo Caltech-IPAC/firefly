@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # ----------------
 # control the firefly server environment
 # script will start, stop, show logs, uninstall, etc
@@ -12,7 +11,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 testFile="$SCRIPT_DIR/../application/current/startFireflyServer.sh"
 fireflyDir="${HOME}/.firefly"
 logsDir="${fireflyDir}/server/logs"
-pidFile="$fireflyDir/pid.txt"
 space="  "
 
 if [ -x "$testFile" ]; then
@@ -21,28 +19,7 @@ else
    INSTALL_DIR=$(cat "$fireflyDir/applicationPath.txt")
 fi
 
-binDir="${INSTALL_DIR}/bin"
-applicationDir="${INSTALL_DIR}/application/current"
-
-isTrue() {
-     v=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-     if [[ "$v" == "true" || "$v" == "t" ]]; then return 0; else return 1; fi
-}
-
-
-stop() {
-  if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "stop the firefly server"
-  else
-   if [[ -f "$pidFile" && -s "$pidFile" && -r "$pidFile" ]]; then
-        pid=$(cat "$pidFile");
-        kill "$pid"
-        echo "Stopping firefly at process id $pid"
-   else
-        echo "Filefly is not running or pid file was lost"
-   fi
-  fi
-}
+source "${INSTALL_DIR}/application/current/common.sh"
 
 uninstall() {
   if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
@@ -54,8 +31,11 @@ uninstall() {
     echo
     doUninstallLower=$(echo "$doUninstall" | tr '[:upper:]' '[:lower:]')
     if [ "$doUninstallLower" = "y" ]; then
-      echo removing "$fireflyDir"
+      # shellcheck disable=SC2154
+      "$applicationDir/stopFireflyServer.sh"
+      echo "removing $fireflyDir and ~/.local/bin/ff"
       /bin/rm -rf "$fireflyDir"
+      /bin/rm -f ~/.local/bin/ff
       echo removing "$INSTALL_DIR"
       exec /bin/rm -rf "$INSTALL_DIR"
     fi
@@ -82,21 +62,13 @@ logs() {
   fi
 }
 
-stat() {
+clean() {
   if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "show if the firefly server is running and healthy"
+    echo "remove all of firefly temporary files"
   else
-    up=$(curl -sD - -o /dev/null http://localhost:8888/firefly/healthz | head -1)
-    if [[ "$up" == *200* ]]; then
-        echo "The Firefly server is running and healthy"
-    elif [[ "$up" == "" ]]; then
-        echo "The Firefly server is not running"
-    else
-        echo "The Firefly server is return an error: $up"
-    fi
+    exec "$applicationDir/startFireflyServer.sh" --cleanAndExit
   fi
 }
-
 
 help() {
   echo
@@ -107,31 +79,41 @@ help() {
   echo "$space stop:   stop the firefly server"
   echo "$space logs:   show the log files"
   echo "$space status: show the server status"
+  echo "$space clean:  clean up firefly temporary files"
   echo "$space uninstall: uninstall the firstly server"
   echo "$space help:   show this message"
   echo "you may follow a command with -h to get help on that command"
-  echo "example- ${binDir#$PWD/}/ff start -h"
-  echo "example- ${binDir#$PWD/}/ff logs -f"
+  # shellcheck disable=SC2154
+  echo "example- ${binDir#"$PWD"/}/ff start -h"
+  echo "example- ${binDir#"$PWD"/}/ff logs -f"
 }
 
 cmd=$1
 shift;
-if [[ "$cmd" == "start" || "$cmd" == "s" ]]; then
-  exec "$applicationDir/startFireflyServer.sh" "$@"
-elif [ "$cmd" == "stop" ]; then
-  stop "$@"
-elif [[ "$cmd" == "logs" || "$cmd" == "log" || "$cmd" == "l" ]]; then
-  logs "$@"
-elif [ "$cmd" == "status" ]; then
-  stat "$@"
-elif [ "$cmd" == "uninstall" ]; then
-  uninstall "$@"
-elif [[ "$cmd" == "help" || "$cmd" == "-h" || "$cmd" == "--help" ]]; then
-  help
-elif [[ "$cmd" == "" ]]; then
-  help
-else
-  echo "invalid command: $cmd"
-  help
-fi
-
+case "$cmd" in
+  start|s)
+    exec "$applicationDir/startFireflyServer.sh" "$@"
+    ;;
+  stop)
+    exec "$applicationDir/stopFireflyServer.sh" "$@"
+    ;;
+  logs|log|l)
+    logs "$@"
+    ;;
+  status|stat|sta)
+    exec "$applicationDir/statusFireflyServer.sh" "$@"
+    ;;
+  clean)
+    clean "$@"
+    ;;
+  uninstall)
+    uninstall "$@"
+    ;;
+  help|-h|--help|"")
+    help
+    ;;
+  *)
+    echo "invalid command: $cmd"
+    help
+    ;;
+esac
