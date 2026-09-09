@@ -4,7 +4,7 @@ import {Button, Divider, Stack, Typography} from '@mui/joy';
 import {Insights} from '@mui/icons-material';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
-import {useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
+import {useFieldGroupValue, useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {getChartData, dispatchChartUpdate, CHART_UPDATE} from '../../ChartsCntlr.js';
 import {isSpectrum} from '../../ChartUtil.js';
 import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
@@ -16,6 +16,7 @@ import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
+import {MISSING_COLS_HEADER_MSG, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 
 const recLinesTblId = (listId) => `rec-${listId}`;
 
@@ -43,10 +44,17 @@ export const SPECTRAL_LINES_GROUP = 'lines';
 
 const SPECTRAL_LINES_FG_KEY = 'spectralLinesPanel';
 const SOURCES_COLLAPSIBLE_KEY = 'spectralLinesSources'; // panel is shared app-wide, not chart-specific - one fixed key
-
-// Field keys and option values ---
 const SOURCE_OPTIONS_KEY = 'spectralLines.sourceOptions'; // comma-separated checked values, e.g. CheckboxGroupInputField's value
-const SOURCE_UPLOAD = 'upload';
+const UPLOAD_INFO_KEY = 'spectralLines.upload.info';
+const UPLOAD_WAVELENGTH_COL_KEY = 'spectralLines.upload.wavelengthCol';
+const UPLOAD_LABEL_COL_KEY = 'spectralLines.upload.labelCol';
+const UPLOAD_DESCRIPTION_COL_KEY = 'spectralLines.upload.descriptionCol';
+const UPLOAD_MAPPING_PANEL_KEY = 'spectralLinesUploadMapping';
+const UPLOAD_TBL_OPTIONS = {
+    // keeps the uploaded line list table from appearing in the Results view (as tbl_group defaults to 'main')
+    tbl_group: 'spectralLinesUpload'
+};
+
 
 /**
  * Builds Plotly vertical-line shapes for the currently selected (checked) rows of a given spectral lines table.
@@ -215,6 +223,36 @@ async function buildMergedLinesTable(sourceOptions, lineLists) {
     dispatchTableAddLocal(table, undefined, false);
 }
 
+const uploadColumnFields = () => [
+    {fieldKey: UPLOAD_WAVELENGTH_COL_KEY, name: 'Wavelength',
+        guessValue: (columns) => columns?.find(({name}) => ['wavelength', 'lambda'].includes(name.toLowerCase()))?.name ?? ''},
+    {fieldKey: UPLOAD_LABEL_COL_KEY, name: 'Species Label'},
+    {fieldKey: UPLOAD_DESCRIPTION_COL_KEY, name: 'Description (optional)'},
+];
+
+// Wavelength/Label are required for the upload to be included in the merged table; Description stays optional,
+// so (unlike UploadTableSelector's default header) it shouldn't trip the "Unspecified Column(s)" warning on its own
+const uploadColumnMappingHeader = ([wavelengthCol, labelCol, descriptionCol]) =>
+    (!wavelengthCol || !labelCol)
+        ? <Typography color='warning'>{MISSING_COLS_HEADER_MSG}</Typography>
+        : `${wavelengthCol}, ${labelCol}` + (descriptionCol ? `, ${descriptionCol}` : '');
+
+/* wraps the generic UploadTableSelector with the wavelength/label/description mapping for a spectral line list */
+function UploadTableSelectorSpectralLines({uploadInfo, setUploadInfo}) {
+    return (
+        <UploadTableSelector uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}
+                             columnFields={uploadColumnFields()}
+                             columnMappingPanelKey={UPLOAD_MAPPING_PANEL_KEY}
+                             allowUploadColumnsSelection={false}
+                             allowClear={true}
+                             uploadTblOptions={UPLOAD_TBL_OPTIONS}
+                             slotProps={{columnMappingPanel: {
+                                 headerTitle: 'Uploaded Line List Columns:',
+                                 getHeaderColumnMapping: uploadColumnMappingHeader,
+                             }}}/>
+    );
+}
+
 /**
  * Standalone Spectral Lines dialog content - not specific to the chart it was opened from; the lines table
  * it manages is shared app-wide across all spectrum charts (see `useSpectralLinesSync`). keepState=true on the
@@ -225,6 +263,9 @@ export function SpectralLinesPanel() {
     // session the dialog is opened - after that, the group's own last-seen value takes over
     const initialSourceOptions = ''; // nothing checked by default - lines table starts empty until applied
     const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions, SPECTRAL_LINES_FG_KEY);
+
+    const [getUploadInfo, setUploadInfo] = useFieldGroupValue(UPLOAD_INFO_KEY, SPECTRAL_LINES_FG_KEY);
+    const uploadInfo = getUploadInfo() || undefined;
 
     const [lineLists, setLineLists] = useState([]);
 
@@ -287,15 +328,15 @@ export function SpectralLinesPanel() {
                                                      label='Line Lists:'
                                                      alignment='vertical'
                                                      initialState={{value: initialSourceOptions}}
-                                                     options={[
-                                                         ...lineLists.map(({listId, listLabel}) =>
-                                                             ({label: listLabel, value: listId})),
-                                                         {label: 'Upload mine', value: SOURCE_UPLOAD, disabled: true}
-                                                     ]}/>
-                            {/* TODO: "Upload mine" — file upload + column mapper */}
+                                                     options={lineLists.map(({listId, listLabel}) =>
+                                                         ({label: listLabel, value: listId}))}/>
+                            <Stack spacing={1}>
+                                <Typography level='body-sm' fontWeight='lg'>Upload your own line list:</Typography>
+                                <UploadTableSelectorSpectralLines uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}/>
+                            </Stack>
+                            <Divider/>
                             <Stack direction='row' spacing={1} alignItems='center'>
-                                <Divider/>
-                                <Button size='sm' onClick={onUpdateLines}>Load Lines</Button>
+                                <Button size='md' variant='solid' onClick={onUpdateLines}>Load Lines</Button>
                                 {hasPendingChanges &&
                                     <Typography level='body-xs' color='warning'>
                                         changes in list(s) selection not yet loaded in table below
