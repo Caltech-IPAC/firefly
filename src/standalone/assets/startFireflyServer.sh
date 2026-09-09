@@ -18,6 +18,7 @@ ADMIN_USER="admin"
 ADMIN_PASSWORD="admin"
 MIN_JVM_SIZE=1G
 MAX_JVM_SIZE=10G
+STARTUP_TIMEOUT_SECONDS=45
 binDir="${INSTALL_DIR}/bin"
 JQ=$(which jq || echo "$binDir/jq")
 
@@ -91,6 +92,8 @@ while [ $# -gt 0 ]; do
        doExit="TRUE"
   elif [[ "$arg" == "-f" || "$arg" == "--foreground" ]]; then
        inBackground="FALSE"
+  elif [[ "$arg" == "-b" || "$arg" == "--background" ]]; then
+       inBackground="TRUE"
   elif [[ "$arg" == "--port"  ]]; then
     shift
      overridePort=$1
@@ -119,6 +122,7 @@ if isTrue $doHelp; then
   echo "$space --clean:              clean work area before startup"
   echo "$space --cleanAndExit:       clean work only and exit"
   echo "$space -f, --foreground:     start in foreground (server starts in background by default)"
+  echo "$space -b, --background:     start in background (this is the default)"
   echo "$space --port:               a port number to override the default firefly port, it can also be set in ~/.firefly/config.json"
   echo "$space --help, -h:           this message and exit"
   exit 0;
@@ -311,7 +315,8 @@ readyFile="$fireflyDir/ready-${fireflyPort}.txt"
 } >> "$appLog"
 
 if isTrue $inBackground; then
-  (cd "$applicationDir" && ${JAVA} ${splash} "${nameParam}" ${PROPS} edu.caltech.ipac.app.FireflyApplication &> "${fireflyServer}/logs/backgroundStart.log" &)
+  (cd "$applicationDir" && exec ${JAVA} ${splash} "${nameParam}" ${PROPS} edu.caltech.ipac.app.FireflyApplication) &> "${fireflyServer}/logs/backgroundStart.log" &
+  javaPid=$!
   if isTrue $alreadyRunning; then
       echo "Firefly is already running on port"
   else
@@ -325,9 +330,21 @@ if isTrue $inBackground; then
 
   if ! isTrue $alreadyRunning; then
       echo -n "Firefly server waiting for init to complete..."
+      waitedHalfSeconds=0
       ready=$(cat "$readyFile" 2> /dev/null)
       while ! isTrue $ready; do
+         if ! kill -0 "$javaPid" 2> /dev/null; then
+            echo
+            echo "Firefly failed to start, see ${fireflyServer}/logs/backgroundStart.log and ${appLog}"
+            exit 1
+         fi
+         if [ $waitedHalfSeconds -ge $((STARTUP_TIMEOUT_SECONDS * 2)) ]; then
+            echo
+            echo "Timed out after ${STARTUP_TIMEOUT_SECONDS}s waiting for Firefly to become ready, see ${fireflyServer}/logs/backgroundStart.log and ${appLog}"
+            exit 1
+         fi
          sleep .5
+         waitedHalfSeconds=$((waitedHalfSeconds + 1))
          ready=$(cat "$readyFile" 2> /dev/null)
       done
       echo "Ready"

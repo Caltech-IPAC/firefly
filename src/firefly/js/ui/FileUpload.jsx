@@ -51,7 +51,11 @@ const ChooseUploadFile= ({onChange, value, fileName, canDragDrop}) => (
     <Stack {...{className:'ff-FileUpload-upload', maxWidth: '50rem', direction:'row', alignItems:'center', spacing:2}}>
         <Tooltip title={`Click to choose a file${canDragDrop ?' or just drag and drop a file':''}`}>
             <label htmlFor='upload-file'>
-                <Input id='upload-file' type='file' onChange={onChange} sx={{display:'none'}}/>
+                <Input id='upload-file' type='file' onChange={onChange} sx={{display:'none'}}
+                       // -- demonstrates how we could support upload directories
+                       // slotProps={{ input: { webkitdirectory:'', directory:'', multiple:true } }}
+                       // todo think about how to use this with standalone firefly
+                       />
                 <Button color='warning' variant={fileName?'soft':'solid'} aria-label='upload file' component='span'>
                     {fileName?'Replace File':'Choose File'}
                 </Button>

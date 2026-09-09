@@ -85,11 +85,51 @@ if [ -f "$JAVA" ]; then
 fi
 
 # --------------------------
+# an override that isn't a real file, or no download url resolved for this platform
+# --------------------------
+
+if [[ $javaOverride != 'auto' && $javaOverride != "" && $javaOverride == *java ]]; then
+  echo "The java path configured in $configJsonFile does not exist: $javaOverride" >&2
+  exit 1
+fi
+
+if [[ "$jreKey" == "unknown" || -z "$jreUrl" || "$jreUrl" == "null" ]]; then
+  echo "Unable to determine a Java runtime download for this platform ($(uname) $(uname -m))." >&2
+  echo "Set a path to an existing Java installation in $configJsonFile instead of \"auto\"." >&2
+  exit 1
+fi
+
+# --------------------------
 # do the java install installation and return the java command
 # --------------------------
 
-mkdir "$javaInstallation"
-curl -L "$jreUrl" > "$javaInstallation/jre.tar.gz"
-(cd "$javaInstallation" &&  tar -xzvf jre.tar.gz &> $javaInstallation/jre_tar_expand.log)
+# get the JRE and and verify
+mkdir -p "$javaInstallation"
+curl -fL "$jreUrl" -o "$javaInstallation/jre.tar.gz"
+curlStatus=$?
+if [ $curlStatus -ne 0 ] || [[ ! -s "$javaInstallation/jre.tar.gz" ]]; then
+  echo "Failed to download the Java runtime from $jreUrl" >&2
+  exit 1
+fi
+# expand the JRE and and verify
+(cd "$javaInstallation" && tar -xzf jre.tar.gz) &> "$javaInstallation/jre_tar_expand.log"
+if [ $? -ne 0 ]; then
+  echo "Failed to expand the Java runtime, see $javaInstallation/jre_tar_expand.log" >&2
+  exit 1
+fi
+
+if [ ! -f "$JAVA" ]; then
+  echo "Java executable not found at $JAVA after installing the runtime, see $javaInstallation/jre_tar_expand.log" >&2
+  exit 1
+fi
+
+# --------------------------
+# remove JDK directories from previous versions now that the new one is confirmed working,
+# so javaInstallation doesn't accumulate a stale JRE from before an app update bumped it.
+# --------------------------
+
+newJdkDir="${javaPath%%/*}"
+find "$javaInstallation" -mindepth 1 -maxdepth 1 -type d -name 'jdk-*' ! -name "$newJdkDir" -exec rm -rf {} +
+
 echo $JAVA
 
