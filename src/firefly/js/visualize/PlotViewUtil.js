@@ -114,7 +114,7 @@ export function refreshP(plotOrPv) {
 export function currentP(plotId) {
     const vr= visRoot();
     const pv= plotId ? getPlotViewById(vr, plotId) : getActivePlotView(vr);
-    const currentPlotId= plotId ?? pv?.plotId;
+    const currentPlotId= pv?.plotId;
     return {pv, plot:primePlot(pv), plotId: currentPlotId , active:isActivePlotView(vr, currentPlotId)};
 }
 
@@ -813,14 +813,20 @@ export function getNumberOfCubesInPV(pv) {
 }
 
 /**
- * Get the total number of planes in the cube of the plot
+ * Get the total number of planes in the cube of the plot either image or hips
  * @param {PlotView|WebPlot} plotOrPv
  * @return {number} the number of cube planes, 0 if this is not a cube
  */
-export const getCubePlaneCnt= (plotOrPv) => {
+export const getCubeLength= (plotOrPv) => {
     const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
-    if (!isImageCube(plot)) return 0;
-    return plot.cubeCtx.cubeLength;
+    if (!plot) return 0;
+    if (isImage(plot)) {
+        if (!isCube(plot)) return 0;
+        return plot.cubeCtx.cubeLength;
+    }
+    else {
+        return (plot.cubeDepth>1) ? plot.cubeDepth : 0;
+    }
 };
 
 
@@ -868,19 +874,27 @@ export function getHDUIndex(pv, plot= undefined) {
 export const hasImageCubes = (pv) => getNumberOfCubesInPV(pv)>0;
 
 /**
- * get the plane index of this plot in cube
+ * get the plane index of this plot in a cube either hips or image
  * @param {WebPlot|undefined} plot
  * @return {number} the plane index, -1 if not in a cube
  */
-export const getImageCubeIdx = (plot) => plot?.cubeCtx?.cubePlane ?? -1;
+export function getCubePlaneIdx(plot) {
+    if (!plot) return -1;
+    return isImage(plot)
+        ? (plot.cubeCtx?.cubePlane ?? -1)
+        : plot.cubeIdx;
+}
 
 
 /**
- * plot is plane in a image cube
+ * plot is plane in a cube either hips or image
  * @param {WebPlot|undefined} plot
  * @return {boolean} true if plot is a plane in a cube, otherwise false
  */
-export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
+export function isCube(plot) {
+    if (!plot) return false;
+    return isImage(plot) ? Boolean(plot.cubeCtx) : plot.cubeDepth>1;
+}
 
 /**
  * Given a HDU index and optionally a cube index, return the image idx
@@ -893,29 +907,29 @@ export function convertHDUIdxToImageIdx(pv, hduIdx, cubeIdx=0) {
     if (!pv || !isPlotView(pv)) return undefined;
    if (!isMultiImageFits(pv)) return 0;
     const plot= primePlot(pv);
-    if (cubeIdx==='follow' && isImageCube(plot)) {
+    if (cubeIdx==='follow' && isCube(plot)) {
         const idx= pv.plots.findIndex((p)=> p===plot);
         cubeIdx= convertImageIdxToHDU(pv,idx).cubeIdx;
     }
     const startIndexes= getHduPlotStartIndexes(pv);
     if (hduIdx>startIndexes.length-1)return 0;
-    const cnt= getCubePlaneCnt(pv.plots[startIndexes[hduIdx]]);
-    return (isImageCube(pv.plots[startIndexes[hduIdx]]) && cubeIdx<cnt) ? startIndexes[hduIdx]+cubeIdx : startIndexes[hduIdx];
+    const cnt= getCubeLength(pv.plots[startIndexes[hduIdx]]);
+    return (isCube(pv.plots[startIndexes[hduIdx]]) && cubeIdx<cnt) ? startIndexes[hduIdx]+cubeIdx : startIndexes[hduIdx];
 }
 
 /**
  * Give a image index return the hduIndx and optionally the cubeIdx
  * @param {PlotView} pv
  * @param {number} imageIdx
- * return {{hduIdx:number, cubeIdx:number, isCube:boolean}}
+ * return {{hduIdx:number, cubeIdx:number, cube:boolean}}
  */
 export function convertImageIdxToHDU(pv, imageIdx) {
     if (!pv || !isPlotView(pv)) return {hduIdx:undefined, cubeIdx:undefined, isCube:false};
     if (!isMultiImageFits(pv) || imageIdx>pv.plots.length-1) return {hduIdx:0, cubeIdx:undefined, isCube:false};
-    const isCube=  isImageCube(pv.plots[imageIdx]);
+    const isPlotCube=  isCube(pv.plots[imageIdx]);
     const startIndexes= getHduPlotStartIndexes(pv);
     const hduIdx=getHDUIndex(pv,pv.plots[imageIdx]);
-    return {hduIdx, cubeIdx:isCube && imageIdx-startIndexes[hduIdx], isCube};
+    return {hduIdx, cubeIdx:isPlotCube && imageIdx-startIndexes[hduIdx], cube:isPlotCube};
 }
 
 
@@ -955,8 +969,8 @@ export const hasPlaneOnlyWLInfo= (plot) => Boolean(plot?.wlData?.hasPlainOnlyCoo
  */
 export function getAllWaveLengthsForCube(pv,imPt) {
     const plot= primePlot(pv);
-    if (!plot || !isImageCube(plot) || !hasWLInfo(plot)) return;
-    const len= getCubePlaneCnt(pv);
+    if (!plot || !isCube(plot) || !hasWLInfo(plot)) return;
+    const len= getCubeLength(pv);
     if (!len) return;
     return Array(len).fill('').map( (v,i) => getPtWavelength(plot, imPt, i));
 }
@@ -988,6 +1002,8 @@ const getWlUnitValue= (plot, idx, band= Band.NO_BAND) =>
     hasWLInfo(plot) ? plot.wlDataAry[band.value]?.spectralCoords?.[idx]?.units : '';
 
 
+const micronRe= new RegExp('microns|micron|um|micrometers','gi');
+
 /**
  *
  * @param {WebPlot|String} plotOrStr - pass a WebPlot to get the units from and the format or a string that will be formatted
@@ -998,7 +1014,7 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
     const MICRON_SYMBOL= WAVELENGTH_UNITS.um.symbol;
     const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
     if (anyPartOfStr) {
-        return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
+        return uStr.replace(micronRe, MICRON_SYMBOL);
     }
     else {
         const u= uStr.toLowerCase();
@@ -1006,6 +1022,13 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
     }
 }
 
+export function getWaveLengthUnitsPrecision(plotOrStr) {
+    if (!plotOrStr) return 4;
+    const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
+    if (!uStr) return 4;
+    if (uStr.match(micronRe)?.[0]) return 3;
+    return 4;
+}
 
 /**
  *

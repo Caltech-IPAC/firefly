@@ -6,7 +6,7 @@ import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
-import {primePlot, isImageCube, getCubePlaneCnt, currentP} from '../PlotViewUtil.js';
+import {primePlot, isCube, getCubeLength, currentP} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -215,7 +215,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     const  fileSizeStr = getSizeAsString(tableModel?.tableMeta?.fileSize) ?? '';
 
     let dimStr= `${plot.dataWidth} x ${plot.dataHeight}`;
-    if (isImageCube(plot)) dimStr+= ` x ${getCubePlaneCnt(plot)}`;
+    if (isCube(plot)) dimStr+= ` x ${getCubeLength(plot)}`;
 
    const overview= (
         <Stack direction='row' spacing={1} pt={1}>

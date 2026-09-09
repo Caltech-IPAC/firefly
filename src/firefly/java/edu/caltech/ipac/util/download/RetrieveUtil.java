@@ -39,11 +39,11 @@ public class RetrieveUtil {
      * @throws FailedRequestException when request fails
      */
     public static FileInfo downloadCaching(UriRefParams params, DownloadListener dl) throws FailedRequestException {
-        if (params==null) throw new FailedRequestException("downloadCaching: params is null");
+        if (params==null || params.getUriRef()==null) {
+            throw new FailedRequestException("downloadCaching: params or uri is null");
+        }
         FileInfo fileInfo= FileCacheHelper.getFileInfo(params);
         if (fileInfo!=null && !params.getCheckForNewer()) return fileInfo;
-
-
         try {
             File fileName= (fileInfo==null) ? FileCacheHelper.makeFile(params.getDownloadDir(), params.getUniqueString()) : fileInfo.getFile();
             var ops= URLDownload.Options.def();

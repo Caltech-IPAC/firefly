@@ -15,9 +15,9 @@ import {CCUtil, CysConverter} from '../../CsysConverter';
 import {getExtName} from '../../FitsHeaderUtil';
 import {visRoot} from '../../VisStoreRoots';
 import {
-    getAllWaveLengthsForCube, getHDU, getHduPlotStartIndexes, getImageCubeIdx, getPlotViewAry,
+    getAllWaveLengthsForCube, getHDU, getHduPlotStartIndexes, getCubePlaneIdx, getPlotViewAry,
     getPtWavelength, getWaveLengthUnits,
-    hasPixelLevelWLInfo, hasWCSProjection, hasWLInfo, isImageCube, isMultiHDUFits, primePlot,
+    hasPixelLevelWLInfo, hasWCSProjection, hasWLInfo, isCube, isMultiHDUFits, primePlot,
 } from '../../PlotViewUtil';
 import {makeImagePt} from '../../Point';
 import {getFluxUnits, isImage} from '../../WebPlot';
@@ -334,7 +334,7 @@ export function makeDataExtractionTable({baseImPtAry, pv, pvAry, extractionSizeX
             obj['wlUnit'+idx]= getWaveLengthUnits(workingPlot);
             obj['filename'+idx]= workingPlot.plotState.getWorkingFitsFileStr();
             obj['refHDUNum'+idx]= getHDU(workingPlot);
-            obj['plane'+idx]= getImageCubeIdx(workingPlot)>-1 ? getImageCubeIdx(workingPlot) : 0;
+            obj['plane'+idx]= getCubePlaneIdx(workingPlot)>-1 ? getCubePlaneIdx(workingPlot) : 0;
             return obj;
         },epBase);
     if (exclusiveToPlot) {
@@ -393,7 +393,7 @@ function makePlaneTitle(rootStr, pv, plot, cnt) {
         if (getExtName(plot)) hduStr = `- ${getExtName(plot)}`;
         else hduStr = `- HDU#${getHDU(plot)} `;
     }
-    if (isImageCube(plot)) cubeStr = `- Plane: ${getImageCubeIdx(plot) + 1}`;
+    if (isCube(plot)) cubeStr = `- Plane: ${getCubePlaneIdx(plot) + 1}`;
     return `${rootStr} ${cnt}${hduStr}${cubeStr}`;
 }
 

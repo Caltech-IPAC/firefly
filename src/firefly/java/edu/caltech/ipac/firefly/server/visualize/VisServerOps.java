@@ -32,7 +32,6 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
@@ -97,7 +96,7 @@ public class VisServerOps {
     public static List<WebPlotResult> createPlotGroup(List<WebPlotRequest> rList, String progressKey) {
 
         List<String> keyList= rList.stream().map(WebPlotRequest::getProgressKey).filter(Objects::nonNull).toList();
-        PlotServUtils.updateProgress(new ProgressStat(keyList, progressKey));
+        PlotServUtils.updateProgress(new ProgressStat(progressKey, keyList));
 
         ExecutorService executor = Executors.newFixedThreadPool(rList.size());
         boolean allCompleted = false;
@@ -163,35 +162,6 @@ public class VisServerOps {
                 (f) -> FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, ptSizeX, ptSizeY, ct));
     }
 
-    public static List<PixelValue.Result> getFlux(PlotState[] stateAry, ImagePt ipt) {
-        PlotState primState= stateAry[0];
-
-        // 1. handle primary plot
-        var faHList = Arrays.stream(primState.getBands()).map(primState::getFileAndHeaderInfo).toList();
-
-        try {
-            CtxControl.confirmFiles(stateAry[0]);
-        } catch (FailedRequestException e) {
-            return faHList.stream().map( f -> PixelValue.Result.makeUnavailable()).toList();
-        }
-
-        var baseList= getFileFlux(faHList, ipt);
-        if (stateAry.length==1) return baseList;
-
-        // 2. if there are overlays - handle them
-        List<PixelValue.Result> fluxList= new ArrayList<>(baseList);
-        for(int i=1; (i<stateAry.length);i++) {
-            var faHOverlayList= Collections.singletonList(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND));
-            fluxList.add(getFileFlux(faHOverlayList, ipt).getFirst());
-        }
-        return fluxList;
-    }
-
-    private static List<PixelValue.Result> getFileFlux(List<BandState.FileAndHeaderInfo> fileAndHeader, ImagePt ipt) {
-        return fileAndHeader.stream()
-                .map (fap -> PixelValue.getPixelValue(ServerContext.convertToFile(fap.fileName()), ipt, fap.header()))
-                .toList();
-    }
 
     private static Semaphore getUserSemaphore() {
         Cache<Semaphore> cache= CacheManager.getSessionCache();

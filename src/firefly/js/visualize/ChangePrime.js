@@ -2,10 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {dispatchProcessScroll, dispatchZoom} from './ImagePlotDispatch';
+import {dispatchChangeHiPS, dispatchChangePrimePlot, dispatchProcessScroll, dispatchZoom} from './ImagePlotDispatch';
+import {matchCubePlanes} from './task/WcsMatchTask';
 import {IMAGE_PLOT_KEY, UserZoomTypes, ZOOM_IMAGE} from './VisConst';
-import {hasWCSProjection, getPlotViewById, primePlot} from './PlotViewUtil.js';
-import {getPixScaleArcSec, getScreenPixScaleArcSec} from './WebPlot.js';
+import {
+    hasWCSProjection, getPlotViewById, primePlot, getCubeLength, operateOnOthersInPositionGroup, isCube,
+    getCubePlaneIdx
+} from './PlotViewUtil.js';
+import {visRoot} from './VisStoreRoots';
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isHiPS, isImage} from './WebPlot.js';
 import {getZoomLevelForScale} from './ZoomUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
@@ -46,8 +51,8 @@ function getZoomDecision(oldP,newP) {
 
 export function changePrime(rawAction, dispatcher, getState) {
     const {plotId,primeIdx:newPrimeIdx}= rawAction.payload;
-    const visRoot= getState()[IMAGE_PLOT_KEY];
-    const pv= getPlotViewById(visRoot, plotId);
+    let visRoot= getState()[IMAGE_PLOT_KEY];
+    let pv= getPlotViewById(visRoot, plotId);
     const {plots,primeIdx}= pv;
     const oldP= plots[primeIdx];
     const newP= plots[newPrimeIdx];
@@ -57,6 +62,13 @@ export function changePrime(rawAction, dispatcher, getState) {
     const scrollToImagePt= cc.getImageCoords(makeScreenPt(pv.scrollX,pv.scrollY));
     dispatcher(rawAction);
     checkZoom(plotId,oldP, newP, scrollToImagePt,visRoot);
+
+    visRoot= getState()[IMAGE_PLOT_KEY];
+    pv= getPlotViewById(visRoot, plotId);
+    const plot= primePlot(pv);
+
+    if (isCube(plot) && visRoot.positionLock) matchCubePlanes(plotId);
+
 }
 
 /** @type actionWatcherCallback */
@@ -71,7 +83,7 @@ function zoomCompleteWatch(action, cancelSelf, {plotId,scrollToImagePt},dispatch
 function changeScrollToImagePt(visRoot, plotId, scrollToImagePt) {
     const pv= getPlotViewById(visRoot,plotId);
     const cc= CysConverter.make(primePlot(pv));
-    dispatchProcessScroll({plotId, scrollPt:cc.getScreenCoords(scrollToImagePt)});
+    dispatchProcessScroll({plotId, scrollPt:cc.getScreenCoords(scrollToImagePt), updateWcsPrimId:false});
 }
 
 const addWatcher= (plotId,scrollToImagePt) => dispatchAddActionWatcher( {

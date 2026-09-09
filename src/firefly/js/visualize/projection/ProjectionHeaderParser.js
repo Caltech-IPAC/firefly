@@ -4,12 +4,11 @@
 
 import {isUndefined} from 'lodash';
 import {DtoR, RtoD, computeDistance} from '../VisUtil.js';
-import { GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
+import {makeProjectionNew, GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
     ARC, SFL, CEA, TPV, STG, HPX, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
 import {findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
     ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J, NONCELESTIAL} from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
-import {makeProjectionNew} from './Projection.js';
 import {getHeader, makeHeaderParse, HdrConst, EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil.js';
 
 const CD1_1_HEADERS= ['CD1_1','CD001001'];
@@ -72,12 +71,14 @@ function getBasicHeaderValues(parse) {
     const bitpix = parse.getIntValue('BITPIX');
 
     return {
-        naxis1: parse.getIntValue('NAXIS1'),
-        naxis2: parse.getIntValue('NAXIS2'),
-        cdelt2: parse.getDoubleValue('CDELT2', 0),
-        bscale: parse.getDoubleValue('BSCALE', 1.0),
-        bzero: parse.getDoubleValue('BZERO', 0.0),
-        blank_value: bitpix > 0 ? parse.getValue('BLANK','NaN') : NaN, // blank value is only applicable to integer values (BITPIX > 0)
+        naxis1: parse.getIntValue(HdrConst.NAXIS1),
+        naxis2: parse.getIntValue(HdrConst.NAXIS2),
+        naxis3: parse.getIntValue(HdrConst.NAXIS3,-1),
+        cdelt2: parse.getDoubleValue(HdrConst.CDELT2, 0),
+        bscale: parse.getDoubleValue(HdrConst.BSCALE, 1.0),
+        bzero: parse.getDoubleValue(HdrConst.BZERO, 0.0),
+        bunit: parse.getValue(HdrConst.BUNIT, '---'),
+        blank_value: bitpix > 0 ? parse.getValue(HdrConst.BLANK,'') : '', // blank value is only applicable to integer values (BITPIX > 0)
         bitpix,
     };
 }
@@ -402,7 +403,6 @@ function getFluxUnits(parse, zeroHeader) {
 
 function getCoordSys(params) {
     const {ctype1} = params;
-
     if (!ctype1) return -1;
 
     /**
@@ -430,53 +430,25 @@ function getCoordSys(params) {
     }
 }
 
-
-
 function getJsys(params) {
-    let jsys;
     const {radecsys, file_equinox } = params;
 
     switch (getCoordSys(params)) {
         case EQ:
-            if (radecsys.startsWith('FK4')) jsys = EQUATORIAL_B;
-            else if (radecsys.startsWith('FK5') || radecsys.startsWith('ICRS')) jsys = EQUATORIAL_J;
-            else if (file_equinox < 2000.0) jsys = EQUATORIAL_B;
-            else jsys = EQUATORIAL_J;
-            break;
+            if (radecsys.startsWith('FK4')) return EQUATORIAL_B;
+            else if (radecsys.startsWith('FK5') || radecsys.startsWith('ICRS')) return EQUATORIAL_J;
+            else if (file_equinox < 2000.0) return EQUATORIAL_B;
+            else return EQUATORIAL_J;
         case EC:
-            if (radecsys.startsWith('FK4')) jsys = ECLIPTIC_B;
-            else if (radecsys.startsWith('FK5')) jsys = ECLIPTIC_J;
-            else if (file_equinox < 2000.0) jsys = ECLIPTIC_B;
-            else jsys = ECLIPTIC_J;
-            break;
+            if (radecsys.startsWith('FK4')) return ECLIPTIC_B;
+            else if (radecsys.startsWith('FK5')) return ECLIPTIC_J;
+            else if (file_equinox < 2000.0) return ECLIPTIC_B;
+            else return ECLIPTIC_J;
         case GA:
-            jsys = GALACTIC_JSYS;
-            break;
+            return GALACTIC_JSYS;
         case SGAL:
-            jsys = SUPERGALACTIC_JSYS;
-            break;
+            return SUPERGALACTIC_JSYS;
         default:
-            jsys = NONCELESTIAL;
+            return NONCELESTIAL;
     }
-    return jsys;
-}
-
-
-
-
-export function makeDirectFileAccessData(header,cubePlane) {
-
-    const parse= makeHeaderParse(header);
-    const dataOffset = parse.getIntValue(HdrConst.SPOT_OFF,0)+ parse.getIntValue(HdrConst.SPOT_HS,0);
-    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber:cubePlane>-1?cubePlane:0};
-    miniHeader.bitpix= parse.getValue(HdrConst.SPOT_BP);
-
-    if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
-        miniHeader[ORIGIN]= header[ORIGIN];
-        miniHeader[EXPTIME]= header[EXPTIME];
-        miniHeader[IMAGEZPT]= header[IMAGEZPT];
-        miniHeader[AIRMASS]= header[AIRMASS];
-        miniHeader[EXTINCT]= header[EXTINCT];
-    }
-    return miniHeader;
 }

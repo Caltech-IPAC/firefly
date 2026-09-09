@@ -26,11 +26,11 @@ public class BandState implements Serializable {
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
-    private DirectFitsAccessData directFileAccessData;
     private boolean multiImageFile = false;
     private boolean tileCompress = false;
     private int     cubeCnt = 0;
     private int     cubePlaneNumber = 0;
+    private int     hduNumber = 0;
 
     private transient WebPlotRequest plotRequestTmp = null;
     private transient RangeValues rangeValues = null;
@@ -53,6 +53,9 @@ public class BandState implements Serializable {
 
     public int getCubePlaneNumber() { return cubePlaneNumber; }
     public void setCubePlaneNumber(int cubePlaneNumber) { this.cubePlaneNumber = cubePlaneNumber; }
+
+    public int getHduNumber() { return hduNumber; }
+    public void setHduNumber(int hduNumber) { this.hduNumber = hduNumber; }
 
     public int getCubeCnt() { return cubeCnt; }
     public void setCubeCnt(int cubeCnt) { this.cubeCnt = cubeCnt; }
@@ -102,17 +105,6 @@ public class BandState implements Serializable {
         return rangeValuesSerialize;
     }
 
-    /**
-     * this method will make a copy of DirectFitsAccessData. Any changes to the DirectFitsAccessData object
-     * after the set will not be
-     * reflected here.
-     * @param header client fits header object
-     */
-    public void setDirectFileAccessData(DirectFitsAccessData header) { directFileAccessData = header; }
-
-    public FileAndHeaderInfo getFileAndHeaderInfo() {
-        return new FileAndHeaderInfo(workingFitsFileStr, directFileAccessData);
-    }
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
     public void setWorkingFitsFileStr(String fileStr) { workingFitsFileStr = fileStr; }
@@ -130,14 +122,13 @@ public class BandState implements Serializable {
         b.uploadFileNameStr = this.uploadFileNameStr;
         b.imageIdx = this.imageIdx;
         b.originalImageIdx = this.originalImageIdx;
-
         b.plotRequestSerialize = this.plotRequestSerialize;
         b.rangeValuesSerialize = this.rangeValuesSerialize;
-        b.directFileAccessData = this.directFileAccessData;
         b.multiImageFile = this.multiImageFile;
         b.tileCompress = this.tileCompress;
         b.cubeCnt = this.cubeCnt;
         b.cubePlaneNumber = this.cubePlaneNumber;
+        b.hduNumber = this.hduNumber;
         b.fileType = this.fileType;
         return b;
     }
@@ -152,11 +143,11 @@ public class BandState implements Serializable {
                 originalImageIdx +"",
                 plotRequestSerialize,
                 rangeValuesSerialize,
-                directFileAccessData +"",
                 multiImageFile+"",
                 tileCompress+"",
                 fileType+"",
                 cubeCnt+"",
+                hduNumber+"",
                 cubePlaneNumber+"");
     }
 
@@ -168,11 +159,8 @@ public class BandState implements Serializable {
                 ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
                 ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
                 ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
-                ComparisonUtil.equals(directFileAccessData, bs.directFileAccessData) &&
                 ComparisonUtil.equals(fileType, bs.fileType) &&
                 imageIdx ==bs.imageIdx &&
                 originalImageIdx ==bs.originalImageIdx);
     }
-
-    public record FileAndHeaderInfo(String fileName, DirectFitsAccessData header) { }
 }

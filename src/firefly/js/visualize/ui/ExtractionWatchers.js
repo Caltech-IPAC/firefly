@@ -15,7 +15,7 @@ import {
 import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from 'firefly/tables/TableUtil.js';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {
-    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getImageCubeIdx, isImageCube, primePlot
+    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getCubePlaneIdx, isCube, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
 import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
 import SearchTarget from 'firefly/drawingLayers/SearchTarget.js';
@@ -48,7 +48,7 @@ function zAxisExtractionPlotWatcher(action,cancelSelf,{tbl_id}) {
     }
     if (!isTargetCube(tbl_id)) return {tbl_id};
     const {table,plot}= getInfo(tbl_id);
-    const cubeIdx= getImageCubeIdx(plot);
+    const cubeIdx= getCubePlaneIdx(plot);
     if (cubeIdx!==table.highlightedRow) dispatchTableHighlight(tbl_id,cubeIdx,table.request);
     return {tbl_id};
 }
@@ -70,7 +70,7 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
     if ((type===TABLE_UPDATE || type===TABLE_LOADED) && !firstLoadComplete) {
         firstLoadComplete= true;
         const {table,plot}= getInfo(tbl_id);
-        const cubeIdx= getImageCubeIdx(plot);
+        const cubeIdx= getCubePlaneIdx(plot);
         dispatchTableHighlight(tbl_id,cubeIdx,table.request);
         return retData();
     }
@@ -119,7 +119,7 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
 function isTargetCube(tbl_id) {
     const {table,pv,plot,extractionType,hdus,hduNum}= getInfo(tbl_id);
     if (!pv || !plot|| !table || extractionType!=='z-axis') return;
-    if (!isImageCube(plot)) return false;
+    if (!isCube(plot)) return false;
     const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
     if (isEmpty(hdus) || !imPt || !Object.keys(hdus).includes(hduNum+'')) return false;
     if (getColumnIdx(table, 'plane') <0)  return false;

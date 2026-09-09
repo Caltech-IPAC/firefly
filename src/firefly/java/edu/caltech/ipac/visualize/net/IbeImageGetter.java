@@ -133,7 +133,7 @@ public class IbeImageGetter {
               IbeDataParam dataParam= ibeSource.makeDataParam(dataMap);
               Map<String,String> sourceParams= new HashMap<>();
               sourceParams.put("ProgressKey", params.getStatusKey());
-              sourceParams.put("plotId", params.getPlotId());
+              sourceParams.put("plotId", params.getId());
 
               if (!StringUtils.isEmpty(sizeStr) && !sizeStr.equalsIgnoreCase(NULL) && !sizeStr.equalsIgnoreCase(NaN)) {
                   dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
