@@ -196,29 +196,87 @@ async function ensureRecommendedList(listId) {
 }
 
 /**
- * Rebuilds the merged, client-side lines table (LINES_TBL_ID) from the checked source options: one row per
- * line, tagged with its source under GROUP_COL, with every row selected by default. This is the only place
- * LINES_TBL_ID's content changes - called once on panel mount and again on the "Update Lines" button click,
- * never automatically on checkbox change, so checking a box doesn't plot anything until applied.
+ * Builds the merged table's rows for the uploaded line list, per the user's column mapping. Wavelength and Label
+ * are required for the upload to contribute rows at all; Description is optional.
+ * @param {object} [uploadInfo] - uploadInfo from UploadTableSelector, or undefined if nothing's uploaded
+ * @param {string} wavelengthCol - name of the uploaded table's column mapped to wavelength
+ * @param {string} labelCol - name of the uploaded table's column mapped to label
+ * @param {string} descriptionCol - name of the uploaded table's column mapped to description, if any
+ * @returns {Promise<Array<Array>>}
+ */
+async function uploadedLinesRows(uploadInfo, wavelengthCol, labelCol, descriptionCol) {
+    if (!uploadInfo?.tbl_id || !wavelengthCol || !labelCol) return [];
+
+    await onTableLoaded(uploadInfo.tbl_id);
+    const src = getTblById(uploadInfo.tbl_id);
+    const rows = [];
+    for (let rowIdx = 0; rowIdx < (src?.totalRows ?? 0); rowIdx++) {
+        const row = getTblRowAsObj(src, rowIdx);
+        // TODO: do unit parsing and ensure wavelength is in microns in merged table
+        const wavelength = Number(row[wavelengthCol]);
+        if (!Number.isFinite(wavelength)) continue; // skip rows with a missing/unparsable wavelength
+        rows.push([wavelength, row[labelCol], descriptionCol ? row[descriptionCol] : '', uploadInfo.fileName]);
+    }
+    return rows;
+}
+
+/**
+ * Builds the merged table's rows for the checked recommended line lists, fetching any not already loaded.
  * @param {string} sourceOptions - comma-separated checked values from SOURCE_OPTIONS_KEY
  * @param {Array<{listId: string, listLabel: string}>} lineLists - the fetched info on available lists
+ * @returns {Promise<Array<Array>>}
  */
-async function buildMergedLinesTable(sourceOptions, lineLists) {
+async function recommendedLinesRows(sourceOptions, lineLists) {
     const checked = splitVals(sourceOptions);
     const checkedLists = lineLists.filter(({listId}) => checked.includes(listId));
     await Promise.all(checkedLists.map(({listId}) => ensureRecommendedList(listId)));
-    // TODO: once upload + column mapping is implemented, include checked upload groups here too
 
-    const data = checkedLists.flatMap(({listId, listLabel}) => {
+    return checkedLists.flatMap(({listId, listLabel}) => {
         const src = getTblById(recLinesTblId(listId));
         return Array.from({length: src?.totalRows ?? 0}, (_, rowIdx) => {
             const row = getTblRowAsObj(src, rowIdx);
             return [row[WAVELENGTH_COL], row[LABEL_COL], row[DESCRIPTION_COL], listLabel];
         });
     });
+}
 
-    // store sourceOptions this table was built from in meta, so the panel can tell when the checked lists have since diverged
-    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}, tableMeta: {sourceOptions}};
+/**
+ * Identity of "what would be merged from the upload right now", to detect when the upload/mapping has changed
+ * since the merged table was last built (see hasPendingChanges in SpectralLinesPanel). '' when the upload
+ * doesn't (yet) have a usable mapping, i.e. when it wouldn't contribute any rows - see uploadedLinesRows.
+ * @param {object} [uploadInfo] - see uploadedLinesRows
+ * @param {string} wavelengthCol - see uploadedLinesRows
+ * @param {string} labelCol - see uploadedLinesRows
+ * @param {string} descriptionCol - see uploadedLinesRows
+ * @returns {string}
+ */
+const uploadSignature = (uploadInfo, wavelengthCol, labelCol, descriptionCol) =>
+    (uploadInfo?.tbl_id && wavelengthCol && labelCol)
+        ? [uploadInfo.tbl_id, wavelengthCol, labelCol, descriptionCol].join(';')
+        : '';
+
+/**
+ * Rebuilds the merged, client-side lines table (LINES_TBL_ID) from recommendedLinesRows + uploadedLinesRows: one
+ * row per line, tagged with its source under GROUP_COL, every row selected by default. This is the only place
+ * LINES_TBL_ID's content changes - called once on panel mount and again on the "Update Lines" button click,
+ * never automatically on checkbox/mapping change, so those don't plot anything until applied.
+ * @param {string} sourceOptions - see recommendedLinesRows
+ * @param {Array<{listId: string, listLabel: string}>} lineLists - see recommendedLinesRows
+ * @param {object} [uploadInfo] - see uploadedLinesRows
+ * @param {string} wavelengthCol - see uploadedLinesRows
+ * @param {string} labelCol - see uploadedLinesRows
+ * @param {string} descriptionCol - see uploadedLinesRows
+ */
+async function buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, wavelengthCol, labelCol, descriptionCol) {
+    const [recRows, uploadRows] = await Promise.all([
+        recommendedLinesRows(sourceOptions, lineLists),
+        uploadedLinesRows(uploadInfo, wavelengthCol, labelCol, descriptionCol),
+    ]);
+    const data = [...recRows, ...uploadRows];
+
+    // store what this table was built from in meta, so the panel can tell when the checked lists/upload have since diverged
+    const tableMeta = {sourceOptions, uploadSignature: uploadSignature(uploadInfo, wavelengthCol, labelCol, descriptionCol)};
+    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}, tableMeta};
     table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
     dispatchTableAddLocal(table, undefined, false);
 }
@@ -266,6 +324,9 @@ export function SpectralLinesPanel() {
 
     const [getUploadInfo, setUploadInfo] = useFieldGroupValue(UPLOAD_INFO_KEY, SPECTRAL_LINES_FG_KEY);
     const uploadInfo = getUploadInfo() || undefined;
+    const uploadWavelengthCol = useFieldValueOnly(UPLOAD_WAVELENGTH_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
+    const uploadLabelCol = useFieldValueOnly(UPLOAD_LABEL_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
+    const uploadDescriptionCol = useFieldValueOnly(UPLOAD_DESCRIPTION_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
 
     const [lineLists, setLineLists] = useState([]);
 
@@ -276,22 +337,26 @@ export function SpectralLinesPanel() {
             setLineLists(lists);
             // build only if it doesn't exist yet - once built, row selection is user-owned and must survive
             // the dialog being closed/reopened; only the "Update Lines" button rebuilds after this point
-            if (!getTblById(LINES_TBL_ID)) void buildMergedLinesTable(sourceOptions, lists);
+            if (!getTblById(LINES_TBL_ID)) {
+                void buildMergedLinesTable(sourceOptions, lists, uploadInfo, uploadWavelengthCol, uploadLabelCol, uploadDescriptionCol);
+            }
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; button click handles later rebuilds
     }, []);
 
-    const {selectedCount, groupsCount, linesCount, loadedSourceOptions} = useStoreConnector(() => {
+    const {selectedCount, groupsCount, linesCount, loadedSourceOptions, loadedUploadSignature} = useStoreConnector(() => {
         const tbl = getTblById(LINES_TBL_ID);
         const linesCount = tbl?.totalRows ?? 0;
         const groupsCount = linesCount ? new Set(getColumnValues(tbl, GROUP_COL)).size : 0;
         const selectedCount = SelectInfo.newInstance(tbl?.selectInfo).getSelectedCount();
         const loadedSourceOptions = tbl?.tableMeta?.sourceOptions ?? '';
-        return {selectedCount, groupsCount, linesCount, loadedSourceOptions};
+        const loadedUploadSignature = tbl?.tableMeta?.uploadSignature ?? '';
+        return {selectedCount, groupsCount, linesCount, loadedSourceOptions, loadedUploadSignature};
     }, []);
 
-    // true whenever the checked lists above no longer match what's actually loaded into the table below
-    const hasPendingChanges = !sameSourceOptions(sourceOptions, loadedSourceOptions);
+    // true whenever the checked lists/upload mapping above no longer match what's actually loaded into the table below
+    const hasPendingChanges = !sameSourceOptions(sourceOptions, loadedSourceOptions) ||
+        uploadSignature(uploadInfo, uploadWavelengthCol, uploadLabelCol, uploadDescriptionCol) !== loadedUploadSignature;
 
     const plotHelperText = linesCount === 0
         ? (hasPendingChanges
@@ -302,7 +367,7 @@ export function SpectralLinesPanel() {
             : undefined);
 
     const onUpdateLines = () => {
-        void buildMergedLinesTable(sourceOptions, lineLists);
+        void buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, uploadWavelengthCol, uploadLabelCol, uploadDescriptionCol);
         dispatchComponentStateChange(SOURCES_COLLAPSIBLE_KEY, {isOpen: false}); // collapse to reveal the table below
     };
 
@@ -325,7 +390,7 @@ export function SpectralLinesPanel() {
                                      isOpen={true}>
                         <Stack spacing={2}>
                             <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
-                                                     label='Line Lists:'
+                                                     label='Available line lists:'
                                                      alignment='vertical'
                                                      initialState={{value: initialSourceOptions}}
                                                      options={lineLists.map(({listId, listLabel}) =>
@@ -339,7 +404,7 @@ export function SpectralLinesPanel() {
                                 <Button size='md' variant='solid' onClick={onUpdateLines}>Load Lines</Button>
                                 {hasPendingChanges &&
                                     <Typography level='body-xs' color='warning'>
-                                        changes in list(s) selection not yet loaded in table below
+                                        changes above not yet loaded in table below
                                     </Typography>}
                             </Stack>
                         </Stack>
