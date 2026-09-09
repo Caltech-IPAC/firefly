@@ -43,7 +43,7 @@ Input components (ValidationField, TargetPanel, etc.) stay in the core package b
 
 Every app using the library must call `initFirefly()` once before rendering any store-connected component. It sets the Firefly server URL and bootstraps the Redux store. In Storybook it is called in `beforeAll` inside `.storybook/preview.jsx`.
 
-Store-connected components (`ValidationField`, `TargetPanel`, `ListBoxInputField`, `SuggestBoxInputField`, etc.) use `useFieldGroupConnector` and require both `initFirefly()` to have run and a parent `FieldGroup` component to provide the group context.
+Store-connected components (`ValidationField`, `TargetPanel`, `ListBoxInputField`, `AutoCompleteInput`, etc.) use `useFieldGroupConnector` and require both `initFirefly()` to have run and a parent `FieldGroup` component to provide the group context.
 
 ---
 
