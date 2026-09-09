@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       git_tag:
-        description: "Git tag to use(e.g. 'release-xxxx.x.x' or a full git tag)"
+        description: "Git tag or branch to use (e.g. 'release-xxxx.x.x' or a full git tag)"
         required: true
         type: string
       img_tag:
-        description: "Optional: Docker image tag(e.g. 'xxxx.x.x'); If omitted, `git_tag` will be used."
+        description: "Optional: Docker image tag (e.g. 'xxxx.x.x'); If omitted, `git_tag` will be used."
         required: false
         type: string
       push_image:
@@ -20,6 +20,11 @@ on:
         description: "Optional: Firefly release tag for standalone.zip artifact (e.g. release-xxxx.x.x)"
         required: false
         type: string
+      standalone_only:
+        description: "standalone.zip only (no docker push, no GitHub release)"
+        required: false
+        default: false
+        type: boolean
   release:
     types: [published]
 
@@ -90,7 +95,7 @@ jobs:
       # Login to GHCR (only if pushing)
       # ------------------------------------------------------------
       - name: Login to GHCR
-        if: github.event_name == 'release' || inputs.push_image
+        if: (github.event_name == 'release' || inputs.push_image) && !inputs.standalone_only
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -106,7 +111,7 @@ jobs:
           context: .
           file: firefly/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'release' || inputs.push_image }}
+          push: ${{ (github.event_name == 'release' || inputs.push_image) && !inputs.standalone_only}}
           # docker buildx does not allow uppercase letters in tags, so we convert to lowercase here
           tags: ghcr.io/caltech-ipac/firefly:${{ steps.resolve_tags.outputs.tag }}
           build-args: |
@@ -120,7 +125,7 @@ jobs:
       # `standalone-builder` layer (gradle standalone:zip) runs.
       # ------------------------------------------------------------
       - name: Build and export standalone.zip
-        if: github.event_name == 'release' || inputs.release_tag != ''
+        if: github.event_name == 'release' || inputs.release_tag != '' || inputs.standalone_only
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -140,12 +145,30 @@ jobs:
       # using `gh release upload` requires setting `contents: write`
       # ------------------------------------------------------------
       - name: Add standalone.zip to release artifacts
-        if: github.event_name == 'release' || inputs.release_tag != ''
+        if: (github.event_name == 'release' || inputs.release_tag != '') && !inputs.standalone_only
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}"
           gh release upload "$TAG" --repo "${{ github.repository }}"  ./dist-zip/standalone.zip --clobber
+
+      # ------------------------------------------------------------
+      # standalone_only: publish standalone.zip as a workflow
+      # artifact instead of a release asset. Ephemeral, private to the run.
+      # ------------------------------------------------------------
+      - name: Upload standalone.zip as workflow artifact
+        id: upload_standalone_artifact
+        if: inputs.standalone_only
+        uses: actions/upload-artifact@v4
+        with:
+          name: standalone-zip
+          path: ./dist-zip/standalone.zip
+
+      - name: Print artifact URL
+        if: inputs.standalone_only
+        run: |
+          echo "Artifact URL: ${{ steps.upload_standalone_artifact.outputs.artifact-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "nightly.link (no login required): https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/standalone-zip.zip" >> $GITHUB_STEP_SUMMARY
 
       # ------------------------------------------------------------
       # Package and push Helm chart to GHCR
@@ -154,7 +177,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Publish Helm chart
-        if: github.event_name == 'release' || inputs.push_image
+        if: (github.event_name == 'release' || inputs.push_image) && !inputs.standalone_only
         run: |
           if [[ ! -f firefly/helm/Chart.yaml ]]; then
             echo "No Helm chart found, skipping."
