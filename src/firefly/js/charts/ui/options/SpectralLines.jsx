@@ -11,7 +11,8 @@ import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
 import {canUnitConv, convertUnitValue} from '../../dataTypes/SpectrumUnitConversion.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil';
 import {dispatchTableFetch, dispatchTableUiUpdate, dispatchTableAddLocal, TABLE_SELECT, TABLE_LOADED} from 'firefly/tables/TablesCntlr';
-import {onTableLoaded, doFetchTable, getTblById, getSelectedDataSync, getTblRowAsObj, getColumnValues, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
+import {onTableLoaded, doFetchTable, getColumn, isColumnType, COL_TYPE, getTblById, getSelectedDataSync,
+    getTblRowAsObj, getColumnValues, splitVals, monitorChanges, watchTableChanges} from 'firefly/tables/TableUtil';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
@@ -30,7 +31,7 @@ const WAVELENGTH_COL = 'wavelength';
 const LABEL_COL = 'label';
 const DESCRIPTION_COL = 'description';
 const GROUP_COL = 'list';
-const WAVELENGTH_COL_UNIT = 'um'; // unit of WAVELENGTH_COL's values; TODO: source it from table metadata if present
+const WAVELENGTH_COL_UNIT = 'um'; // canonical unit of WAVELENGTH_COL's values
 const LINES_TBL_COLUMNS = [
     {name: WAVELENGTH_COL, units: WAVELENGTH_COL_UNIT, type: 'double'},
     {name: LABEL_COL, type: 'char'},
@@ -196,6 +197,31 @@ async function ensureRecommendedList(listId) {
 }
 
 /**
+ * Builds rows for the merged-table from a source table: converts each row's wavelength to the merged table's
+ * canonical unit (WAVELENGTH_COL_UNIT) and tags every row with the given list group label.
+ * @param {TableModel} src
+ * @param {string} wavelengthCol - name of src's wavelength column
+ * @param {string} labelCol - name of src's label column
+ * @param {string} descriptionCol - name of src's description column; if none, description row values are set to ''
+ * @param {string} group - value for GROUP_COL, tagging where these rows came from
+ * @returns {Array<Array>} [] if src's wavelength unit isn't convertible to WAVELENGTH_COL_UNIT at all; rows with
+ * a missing/unparsable wavelength are skipped individually
+ */
+function makeLinesRows(src, wavelengthCol, labelCol, descriptionCol, group) {
+    const wavelengthUnit = getColumn(src, wavelengthCol)?.units || WAVELENGTH_COL_UNIT;
+    if (!canUnitConv({from: wavelengthUnit, to: WAVELENGTH_COL_UNIT})) return [];
+
+    const rows = [];
+    for (let rowIdx = 0; rowIdx < (src?.totalRows ?? 0); rowIdx++) {
+        const row = getTblRowAsObj(src, rowIdx);
+        const wavelength = convertUnitValue(Number(row[wavelengthCol]), wavelengthUnit, WAVELENGTH_COL_UNIT);
+        if (!Number.isFinite(wavelength)) continue; // skip rows with a missing/unparsable wavelength
+        rows.push([wavelength, row[labelCol], descriptionCol ? row[descriptionCol] : '', group]);
+    }
+    return rows;
+}
+
+/**
  * Builds the merged table's rows for the uploaded line list, per the user's column mapping. Wavelength and Label
  * are required for the upload to contribute rows at all; Description is optional.
  * @param {object} [uploadInfo] - uploadInfo from UploadTableSelector, or undefined if nothing's uploaded
@@ -208,16 +234,7 @@ async function uploadedLinesRows(uploadInfo, wavelengthCol, labelCol, descriptio
     if (!uploadInfo?.tbl_id || !wavelengthCol || !labelCol) return [];
 
     await onTableLoaded(uploadInfo.tbl_id);
-    const src = getTblById(uploadInfo.tbl_id);
-    const rows = [];
-    for (let rowIdx = 0; rowIdx < (src?.totalRows ?? 0); rowIdx++) {
-        const row = getTblRowAsObj(src, rowIdx);
-        // TODO: do unit parsing and ensure wavelength is in microns in merged table
-        const wavelength = Number(row[wavelengthCol]);
-        if (!Number.isFinite(wavelength)) continue; // skip rows with a missing/unparsable wavelength
-        rows.push([wavelength, row[labelCol], descriptionCol ? row[descriptionCol] : '', uploadInfo.fileName]);
-    }
-    return rows;
+    return makeLinesRows(getTblById(uploadInfo.tbl_id), wavelengthCol, labelCol, descriptionCol, uploadInfo.fileName);
 }
 
 /**
@@ -231,13 +248,8 @@ async function recommendedLinesRows(sourceOptions, lineLists) {
     const checkedLists = lineLists.filter(({listId}) => checked.includes(listId));
     await Promise.all(checkedLists.map(({listId}) => ensureRecommendedList(listId)));
 
-    return checkedLists.flatMap(({listId, listLabel}) => {
-        const src = getTblById(recLinesTblId(listId));
-        return Array.from({length: src?.totalRows ?? 0}, (_, rowIdx) => {
-            const row = getTblRowAsObj(src, rowIdx);
-            return [row[WAVELENGTH_COL], row[LABEL_COL], row[DESCRIPTION_COL], listLabel];
-        });
-    });
+    return checkedLists.flatMap(({listId, listLabel}) =>
+        makeLinesRows(getTblById(recLinesTblId(listId)), WAVELENGTH_COL, LABEL_COL, DESCRIPTION_COL, listLabel));
 }
 
 /**
@@ -282,8 +294,21 @@ async function buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, wavel
 }
 
 const uploadColumnFields = () => [
-    {fieldKey: UPLOAD_WAVELENGTH_COL_KEY, name: 'Wavelength',
-        guessValue: (columns) => columns?.find(({name}) => ['wavelength', 'lambda'].includes(name.toLowerCase()))?.name ?? ''},
+    {
+        fieldKey: UPLOAD_WAVELENGTH_COL_KEY,
+        name: 'Wavelength',
+        guessValue: (columns) => columns?.find(({name}) =>
+            ['wavelength', 'lambda'].includes(name.toLowerCase()))?.name ?? '',
+        getFeedback: (value, columns) => {
+            if (!value) return undefined;
+            const col = columns?.find((c) => c.name === value);
+            if (!isColumnType(col, COL_TYPE.NUMBER)) return 'Column type is not numeric - none of its rows will load as lines.';
+            const unit = col?.units;
+            if (!unit) return 'Column unit is unspecified - rows will load as lines assuming µm, which may be wrong.';
+            return canUnitConv({from: unit, to: WAVELENGTH_COL_UNIT})
+                ? `Column unit "${unit}" recognized - rows will load as lines in µm.`
+                : `Column unit "${unit}" not recognized - none of its rows will load as lines.`;}
+    },
     {fieldKey: UPLOAD_LABEL_COL_KEY, name: 'Species Label'},
     {fieldKey: UPLOAD_DESCRIPTION_COL_KEY, name: 'Description (optional)'},
 ];
@@ -293,7 +318,9 @@ const uploadColumnFields = () => [
 const uploadColumnMappingHeader = ([wavelengthCol, labelCol, descriptionCol]) =>
     (!wavelengthCol || !labelCol)
         ? <Typography color='warning'>{MISSING_COLS_HEADER_MSG}</Typography>
-        : `${wavelengthCol}, ${labelCol}` + (descriptionCol ? `, ${descriptionCol}` : '');
+        : <Typography sx={{textWrap: 'wrap'}}>
+              {`${wavelengthCol}, ${labelCol}` + (descriptionCol ? `, ${descriptionCol}` : '')}
+          </Typography>;
 
 /* wraps the generic UploadTableSelector with the wavelength/label/description mapping for a spectral line list */
 function UploadTableSelectorSpectralLines({uploadInfo, setUploadInfo}) {
@@ -387,7 +414,7 @@ export function SpectralLinesPanel() {
 
     return (
         <FieldGroup groupKey={SPECTRAL_LINES_FG_KEY} keepState={true}>
-            <Stack sx={{minWidth: '36rem', maxHeight: '82vh'}}>
+            <Stack sx={{minWidth: '40rem', maxHeight: '82vh'}}>
                 <Stack spacing={2} sx={{p: 1, pr: 2, overflowY: 'auto', minHeight: 0}}>
                     <CollapsibleGroup>
                         <CollapsibleItem componentKey={SOURCES_COLLAPSIBLE_KEY}

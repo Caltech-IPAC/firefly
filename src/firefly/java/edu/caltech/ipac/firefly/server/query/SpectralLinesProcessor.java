@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,6 +42,7 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
             "Luisa", "/edu/caltech/ipac/firefly/resources/luisa_linelist.csv",
             "JWST",  "/edu/caltech/ipac/firefly/resources/jwst_linelist.tbl"
     );
+    private static final String WAVELENGTH_COL = "wavelength"; // must match SpectralLines.jsx's WAVELENGTH_COL
 
     public record LineListInfo(String listId, String listLabel, String src) {}
 
@@ -86,7 +88,16 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
                     FileUtil.writeToFile(is, tempFile, null);
                 }
             }
-            return TableUtil.readAnyFormat(tempFile, 0, req);
+            DataGroup dg = TableUtil.readAnyFormat(tempFile, 0, req);
+            DataType wlCol = dg.getDataDefintion(WAVELENGTH_COL);
+            if (wlCol == null) {
+                LOGGER.warn(String.format("Spectral line list \"%s\" from %s: \"%s\" column is missing - no lines will be loaded from this list.",
+                        info.listLabel(), info.src(), WAVELENGTH_COL));
+            } else if (StringUtils.isEmpty(wlCol.getUnits())) {
+                LOGGER.warn(String.format("Spectral line list \"%s\" from %s: \"%s\" column has no units metadata - client will assume microns.",
+                        info.listLabel(), info.src(), WAVELENGTH_COL));
+            }
+            return dg;
         } catch (Exception e) {
             LOGGER.error(e, "Unable to load spectral line list \"" + info.listLabel() + "\" from " + info.src());
             throw new DataAccessException("Unable to read spectral lines resource for " + info.listLabel(), e);

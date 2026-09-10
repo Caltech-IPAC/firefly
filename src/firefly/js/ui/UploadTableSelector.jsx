@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Box, Chip, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Chip, FormHelperText, Stack, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {defaultsDeep, omit} from 'lodash';
 
@@ -185,12 +185,14 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
  * @prop {string} fieldKey
  * @prop {string} name
  * @prop {function(columns):string} guessValue
+ * @prop {function(value, columns):Node} [getFeedback] - feedback text to render as help below ColumnFld
  * @prop {*} [additionalProps] - Any additional key that can be passed to ColumnFld as prop.
  */
 
 const columnFieldsType = PropTypes.arrayOf(PropTypes.shape({
     ...omit({...ColumnFld.propTypes}, ['cols']), //because cols come from uploadInfo
-    guessValue: PropTypes.func //(columns) => string
+    guessValue: PropTypes.func, //(columns) => string
+    getFeedback: PropTypes.func //(value, columns) => node
 }));
 
 UploadTableSelector.propTypes = {
@@ -268,11 +270,15 @@ export function ColumnMappingPanel({cols, columnFieldValues, columnFields, panel
                 }
                 {!children && (
                     <Stack {...{spacing: 1, ...slotProps?.columnFieldsRoot}}>
-                        {columnFields.map((columnField) => (
-                            <Box key={columnField.fieldKey} display='inline-flex'>
-                                <MappedColumnFld cols={cols} {...columnField}/>
-                            </Box>
-                        ))}
+                        {columnFields.map((columnField, i) => {
+                            const feedback = columnField.getFeedback?.(columnFieldValues[i], cols);
+                            return (
+                                <Box key={columnField.fieldKey} display='inline-flex' flexDirection='column' alignItems='flex-start'>
+                                    <MappedColumnFld cols={cols} {...columnField}/>
+                                    {feedback && <FormHelperText>{feedback}</FormHelperText>}
+                                </Box>
+                            );
+                        })}
                     </Stack>
                 )}
                 {children}
