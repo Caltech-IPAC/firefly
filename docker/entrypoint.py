@@ -6,6 +6,7 @@ import random
 import base64
 import subprocess
 import shlex
+import time
 import shutil
 from pathlib import Path
 from zipfile import ZipFile
@@ -360,7 +361,14 @@ def main():
             dry_run(cmd, webapps)
 
     # Start background cleanup
-    subprocess.Popen([f"{catalina_home}/cleanup.sh"])
+    cleanup = subprocess.Popen([f"{catalina_home}/cleanup.sh"])
+    time.sleep(1)
+    if cleanup.poll() is not None:
+        print(
+            f"WARNING: cleanup.sh exited immediately (status {cleanup.returncode})",
+            file=sys.stderr,
+            flush=True,
+        )
 
     # Start Tomcat; Replace the current process with Tomcat
     print("Starting Tomcat...")
