@@ -4,7 +4,7 @@ import {Button, Divider, Stack, Typography} from '@mui/joy';
 import {Insights} from '@mui/icons-material';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
-import {useFieldGroupValue, useFieldValueOnly, useStoreConnector} from 'firefly/ui/SimpleComponent';
+import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {getChartData, dispatchChartUpdate, CHART_UPDATE} from '../../ChartsCntlr.js';
 import {isSpectrum} from '../../ChartUtil.js';
 import {isKnownRefPos} from 'firefly/voAnalyzer/SpectrumDM';
@@ -320,13 +320,17 @@ export function SpectralLinesPanel() {
     // FieldGroup has keepState=true, so this fixed default only matters the very first time this
     // session the dialog is opened - after that, the group's own last-seen value takes over
     const initialSourceOptions = ''; // nothing checked by default - lines table starts empty until applied
-    const sourceOptions = useFieldValueOnly(SOURCE_OPTIONS_KEY, initialSourceOptions, SPECTRAL_LINES_FG_KEY);
+    const [getSourceOptions, setSourceOptions] = useFieldGroupValue(SOURCE_OPTIONS_KEY, SPECTRAL_LINES_FG_KEY);
+    const sourceOptions = getSourceOptions() ?? initialSourceOptions;
 
     const [getUploadInfo, setUploadInfo] = useFieldGroupValue(UPLOAD_INFO_KEY, SPECTRAL_LINES_FG_KEY);
     const uploadInfo = getUploadInfo() || undefined;
-    const uploadWavelengthCol = useFieldValueOnly(UPLOAD_WAVELENGTH_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
-    const uploadLabelCol = useFieldValueOnly(UPLOAD_LABEL_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
-    const uploadDescriptionCol = useFieldValueOnly(UPLOAD_DESCRIPTION_COL_KEY, '', SPECTRAL_LINES_FG_KEY);
+    const [getUploadWavelengthCol, setUploadWavelengthCol] = useFieldGroupValue(UPLOAD_WAVELENGTH_COL_KEY, SPECTRAL_LINES_FG_KEY);
+    const uploadWavelengthCol = getUploadWavelengthCol() ?? '';
+    const [getUploadLabelCol, setUploadLabelCol] = useFieldGroupValue(UPLOAD_LABEL_COL_KEY, SPECTRAL_LINES_FG_KEY);
+    const uploadLabelCol = getUploadLabelCol() ?? '';
+    const [getUploadDescriptionCol, setUploadDescriptionCol] = useFieldGroupValue(UPLOAD_DESCRIPTION_COL_KEY, SPECTRAL_LINES_FG_KEY);
+    const uploadDescriptionCol = getUploadDescriptionCol() ?? '';
 
     const [lineLists, setLineLists] = useState([]);
 
@@ -366,9 +370,19 @@ export function SpectralLinesPanel() {
             ? 'Showing previously loaded lines - click "Load Lines" above to reflect the changes in list(s) selection'
             : undefined);
 
-    const onUpdateLines = () => {
+    const onLoadLines = () => {
         void buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, uploadWavelengthCol, uploadLabelCol, uploadDescriptionCol);
         dispatchComponentStateChange(SOURCES_COLLAPSIBLE_KEY, {isOpen: false}); // collapse to reveal the table below
+    };
+
+    // clears every source (checked lists + upload/mapping) and immediately rebuilds to a truly empty lines table
+    const onClearAll = () => {
+        setSourceOptions('');
+        setUploadInfo(undefined);
+        setUploadWavelengthCol('');
+        setUploadLabelCol('');
+        setUploadDescriptionCol('');
+        void buildMergedLinesTable('', lineLists, undefined, '', '', '');
     };
 
     return (
@@ -405,8 +419,11 @@ export function SpectralLinesPanel() {
                                 mt: 3, mb: 1,
                                 mx: 'calc(-1 * var(--ListItem-paddingX))' // to extend to the edges of collapsible
                             }}/>
-                            <Stack direction='row' spacing={1} alignItems='center'>
-                                <Button size='md' variant='solid' onClick={onUpdateLines}>Load Lines</Button>
+                            <Stack spacing={0.5}>
+                                <Stack direction='row' spacing={1} alignItems='center'>
+                                    <Button size='md' variant='solid' onClick={onLoadLines}>Load Lines</Button>
+                                    <Button size='md' variant='soft' color='neutral' onClick={onClearAll}>Clear All</Button>
+                                </Stack>
                                 {hasPendingChanges &&
                                     <Typography level='body-xs' color='warning'>
                                         changes above not yet loaded in table below
