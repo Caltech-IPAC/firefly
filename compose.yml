@@ -24,6 +24,27 @@ services:
       - /opt/work/firefly/build
       - /opt/work/firefly/jars/build
       - /opt/work/firefly/node_modules
+
+  # Jest-only run, used by the GitHub Actions PR check.
+  test-js:
+    build:
+      context: ../
+      dockerfile: firefly/docker/Dockerfile
+      target: base
+    image: ipac/firefly-test-js:latest
+    environment:
+      # This makes src/firefly/jest.config.js drop the test suites
+      # that read a firefly_test_data checkout.
+      FIREFLY_SKIP_TESTDATA: ${FIREFLY_SKIP_TESTDATA:-true}
+      # Prevent OOM due to jsdom workers.
+      JEST_MAX_WORKERS: ${JEST_MAX_WORKERS:-2}
+    command: bash -c "cd firefly && gradle :firefly:jsTest"
+    # The reports reach the host through the bind, so CI can upload them.
+    volumes:
+      - ../firefly:/opt/work/firefly
+      - /opt/work/firefly/.gradle
+      - /opt/work/firefly/node_modules
+
   dev:
     build:
       context: ../

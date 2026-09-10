@@ -1,4 +1,3 @@
-import * as jest from 'jest';
 import {bootstrapRedux} from '../src/firefly/js/core/ReduxFlux';
 import {getBootstrapRegistry} from '../src/firefly/js/core/BootstrapRegistry.js';
 import {initHandleExternalUpload} from '../src/firefly/js/ui/FileUploadProcessor';
