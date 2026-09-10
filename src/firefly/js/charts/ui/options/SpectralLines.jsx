@@ -289,6 +289,7 @@ async function buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, wavel
     // store what this table was built from in meta, so the panel can tell when the checked lists/upload have since diverged
     const tableMeta = {sourceOptions, uploadSignature: uploadSignature(uploadInfo, wavelengthCol, labelCol, descriptionCol)};
     const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}, tableMeta};
+    if (data.length === 0) table.status = {code: 204, message: 'No lines to display yet'}; // to replace default "No Data Found" status
     table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
     dispatchTableAddLocal(table, undefined, false);
 }
