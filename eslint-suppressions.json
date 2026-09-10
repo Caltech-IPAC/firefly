@@ -1,0 +1,684 @@
+{
+  "buildScript/webpack.config.js": {
+    "no-redeclare": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/Firefly.js": {
+    "no-async-promise-executor": {
+      "count": 1
+    },
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/api/WebApi.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/api/webApiCommands/SiaCommands.js": {
+    "no-useless-escape": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/api/webApiCommands/TapCommands.js": {
+    "no-useless-escape": {
+      "count": 5
+    }
+  },
+  "src/firefly/js/astro/conv/Fk5prc.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/astro/conv/Galeqd.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/astro/conv/Gtjpa.js": {
+    "jsdoc/check-param-names": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/astro/conv/Jcnvc2.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/astro/conv/Jcnvp2.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/astro/conv/Jgtfkc.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/astro/conv/Nwcprc.js": {
+    "jsdoc/check-param-names": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/astro/conv/__tests__/CoordConv-test.js": {
+    "no-redeclare": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/astro/net/Resolver.js": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/charts/ChartUtil.js": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    },
+    "no-useless-escape": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/charts/ChartsCntlr.js": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/charts/dataTypes/FireflySpectrum.js": {
+    "jsdoc/check-param-names": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/charts/ui/ChartSelectPanel.jsx": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/charts/ui/ChartsContainer.jsx": {
+    "no-case-declarations": {
+      "count": 2
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/charts/ui/CombineChart.jsx": {
+    "react-hooks/rules-of-hooks": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/charts/ui/MultiChartViewer.jsx": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/charts/ui/PlotlyWrapper.jsx": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/core/AppDataCntlr.js": {
+    "no-sparse-arrays": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/core/AppDataReducers.js": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/core/ClickToAction.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/core/LayoutCntlr.js": {
+    "jsdoc/check-param-names": {
+      "count": 2
+    },
+    "no-case-declarations": {
+      "count": 9
+    }
+  },
+  "src/firefly/js/core/background/BackgroundCntlr.js": {
+    "no-case-declarations": {
+      "count": 2
+    },
+    "no-unreachable": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/core/reducers/MenuReducer.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/drawingLayers/Artifact.js": {
+    "no-case-declarations": {
+      "count": 1
+    },
+    "no-unreachable": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/drawingLayers/ComputeWebGridData.js": {
+    "no-irregular-whitespace": {
+      "count": 1
+    },
+    "no-redeclare": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/drawingLayers/FootprintTool.js": {
+    "@stylistic/js/semi": {
+      "count": 1
+    },
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/drawingLayers/HiPSGrid.js": {
+    "no-case-declarations": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/drawingLayers/HiPSMOC.js": {
+    "no-case-declarations": {
+      "count": 9
+    }
+  },
+  "src/firefly/js/drawingLayers/ImageLineBasedFootprint.js": {
+    "no-case-declarations": {
+      "count": 11
+    }
+  },
+  "src/firefly/js/drawingLayers/ImageOutline.js": {
+    "no-case-declarations": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/drawingLayers/MarkerTool.js": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/drawingLayers/RegionPlot.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/drawingLayers/SearchTarget.js": {
+    "no-case-declarations": {
+      "count": 1
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/drawingLayers/StatsPoint.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/drawingLayers/WebGrid.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/drawingLayers/hpx/HpxCatalog.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/fieldGroup/FieldGroupUtils.js": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/metaConvert/AnalysisUtils.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/metaConvert/DataProductsType.js": {
+    "jsdoc/check-param-names": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/metaConvert/DataProductsWatcher.js": {
+    "no-case-declarations": {
+      "count": 1
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/metaConvert/TableDataProductUtils.js": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/rpc/SearchServicesJson.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/tables/FilterInfo.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/tables/HpxIndexCntlr.js": {
+    "no-case-declarations": {
+      "count": 5
+    },
+    "no-unsafe-optional-chaining": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/tables/TableUtil.js": {
+    "no-control-regex": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/tables/__tests__/FilterInfo-test.js": {
+    "no-import-assign": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/tables/__tests__/TableUtil-test.js": {
+    "no-import-assign": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/tables/reducer/TableDataReducer.js": {
+    "no-constant-binary-expression": {
+      "count": 1
+    },
+    "no-sparse-arrays": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/tables/reducer/TableUiReducer.js": {
+    "no-case-declarations": {
+      "count": 5
+    }
+  },
+  "src/firefly/js/tables/ui/BasicTableView.jsx": {
+    "no-empty-pattern": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/tables/ui/TableRenderer.js": {
+    "no-unsafe-optional-chaining": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/tables/ui/TableSave.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/common/FireflyLayout.jsx": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/fireflyslate/FireflySlate.jsx": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/templates/fireflyslate/FireflySlateManager.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/fireflyviewer/FireflyViewerManager.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/fireflyviewer/LandingPage.jsx": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/fireflyviewer/LayoutChoice.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/lightcurve/LcPeriodPlotly.jsx": {
+    "no-case-declarations": {
+      "count": 5
+    }
+  },
+  "src/firefly/js/templates/lightcurve/LcResult.jsx": {
+    "no-useless-escape": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/lightcurve/LcUtil.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/templates/lightcurve/generic/errorMsg.js": {
+    "@stylistic/js/semi": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/ActionsDropDownButton.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/FileUploadProcessor.jsx": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/ui/PositionFieldDef.js": {
+    "no-useless-escape": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/ui/TargetFeedback.jsx": {
+    "@stylistic/js/semi": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/TargetPanelWorker.js": {
+    "no-async-promise-executor": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/UploadTableChooser.js": {
+    "no-unsafe-optional-chaining": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/WorkspaceViewer.jsx": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/ui/dynamic/DLGenAnalyzeSearch.js": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/dynamic/DynComponents.jsx": {
+    "jsdoc/check-param-names": {
+      "count": 2
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/dynamic/DynamicDef.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/dynamic/DynamicUISearchPanel.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/dynamic/ServiceDefTools.js": {
+    "no-case-declarations": {
+      "count": 8
+    }
+  },
+  "src/firefly/js/ui/tap/AdvancedADQL.jsx": {
+    "no-regex-spaces": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/tap/ColumnConstraintsPanel.jsx": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/tap/Cutout.js": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/ui/tap/TapViewType.jsx": {
+    "no-unsafe-optional-chaining": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/ui/tap/TemporalSearch.jsx": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/util/BrowserInfo.js": {
+    "no-useless-escape": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/util/ObsCoreSRegionParser.js": {
+    "no-case-declarations": {
+      "count": 1
+    },
+    "no-cond-assign": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/util/WebUtil.js": {
+    "no-case-declarations": {
+      "count": 7
+    }
+  },
+  "src/firefly/js/util/expr/Expr.js": {
+    "no-fallthrough": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/util/expr/Expression.js": {
+    "no-useless-escape": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/util/expr/__test__/Expression-test.js": {
+    "no-undef": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/visualize/CsysConverter.js": {
+    "no-case-declarations": {
+      "count": 5
+    }
+  },
+  "src/firefly/js/visualize/DrawLayerCntlr.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/HiPSMocUtil.js": {
+    "no-constant-binary-expression": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ImageViewerLayout.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/MultiViewCntlr.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/PlotViewUtil.js": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/VisMouseSync.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/WebPlot.js": {
+    "no-constant-binary-expression": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/WebPlotRequest.js": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/__tests__/PlotViewUtil-test.js": {
+    "@stylistic/js/semi": {
+      "count": 1
+    },
+    "no-debugger": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/draw/PointDataObj.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    },
+    "no-unreachable": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/draw/SelectBox.js": {
+    "no-dupe-else-if": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/draw/ShapeDataObj.js": {
+    "no-case-declarations": {
+      "count": 7
+    }
+  },
+  "src/firefly/js/visualize/draw/ShapeHighlight.js": {
+    "no-cond-assign": {
+      "count": 3
+    }
+  },
+  "src/firefly/js/visualize/iv/EventLayer.jsx": {
+    "no-unsafe-optional-chaining": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/projection/Wavelength.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/visualize/projection/__tests__/Wavelength-test.js": {
+    "no-case-declarations": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/visualize/rawData/ColorTable.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/rawData/RawDataCommon.js": {
+    "no-unsafe-optional-chaining": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/reducer/HandlePlotAdmin.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/reducer/HandlePlotCreation.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/region/Region.js": {
+    "jsdoc/check-param-names": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/region/RegionDrawer.js": {
+    "no-case-declarations": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/region/RegionFactory.js": {
+    "no-cond-assign": {
+      "count": 2
+    }
+  },
+  "src/firefly/js/visualize/saga/CoverageWatcher.js": {
+    "no-case-declarations": {
+      "count": 2
+    },
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/task/PlotAdminTask.js": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/visualize/ui/ColorPanelReducer.js": {
+    "no-case-declarations": {
+      "count": 4
+    }
+  },
+  "src/firefly/js/visualize/ui/ColorRGBHuePreservingPanel.jsx": {
+    "@stylistic/js/semi": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/CtxToolbarFunctions.js": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/DrawLayerPanel.jsx": {
+    "no-empty-pattern": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/ImageSearchPanelV2.jsx": {
+    "no-case-declarations": {
+      "count": 1
+    },
+    "no-empty-pattern": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/ImageTableRowViewer.jsx": {
+    "@stylistic/js/semi": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/MaskAddPanel.jsx": {
+    "no-empty-pattern": {
+      "count": 1
+    }
+  },
+  "src/firefly/js/visualize/ui/MouseReadoutUIUtil.js": {
+    "no-case-declarations": {
+      "count": 7
+    }
+  },
+  "src/firefly/js/visualize/ui/multiProduct/MultiProductViewer.jsx": {
+    "no-extra-boolean-cast": {
+      "count": 1
+    }
+  }
+}

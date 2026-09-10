@@ -1,0 +1,33 @@
+name: ESLint
+
+# Advisory: red when a PR introduces errors.
+on:
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eslint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  eslint:
+    name: eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26  # matches docker/Dockerfile (nodesource setup_26.x)
+          cache: yarn       # yarn.lock lives at the repo root
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-platform
+
+      # Errors recorded in eslint-suppressions.json do not fail the run;
+      # anything new does.
+      - name: Run ESLint
+        run: npx eslint . --pass-on-unpruned-suppressions
