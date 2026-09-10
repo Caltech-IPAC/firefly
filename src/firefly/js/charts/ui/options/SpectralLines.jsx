@@ -373,33 +373,38 @@ export function SpectralLinesPanel() {
 
     return (
         <FieldGroup groupKey={SPECTRAL_LINES_FG_KEY} keepState={true}>
-            <Stack spacing={2} sx={{p: 1, pr: 2, minWidth: '36rem'}}>
-                <CollapsibleGroup>
-                    <CollapsibleItem componentKey={SOURCES_COLLAPSIBLE_KEY}
-                                     header={(isOpen) => (
-                                         <Stack>
-                                             <Typography level='title-md'>Select line lists to load</Typography>
-                                             {!isOpen &&
-                                                 <Typography level='body-sm'>
-                                                     {linesCount === 0
-                                                         ? 'No lines loaded'
-                                                         : `${groupsCount} group${groupsCount === 1 ? '' : 's'}, ${linesCount} line${linesCount === 1 ? '' : 's'} loaded`}
-                                                 </Typography>}
-                                         </Stack>
-                                     )}
-                                     isOpen={true}>
-                        <Stack spacing={2}>
-                            <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
-                                                     label='Available line lists:'
-                                                     alignment='vertical'
-                                                     initialState={{value: initialSourceOptions}}
-                                                     options={lineLists.map(({listId, listLabel}) =>
-                                                         ({label: listLabel, value: listId}))}/>
-                            <Stack spacing={1}>
-                                <Typography level='body-sm' fontWeight='lg'>Upload your own line list:</Typography>
-                                <UploadTableSelectorSpectralLines uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}/>
+            <Stack sx={{minWidth: '36rem', maxHeight: '82vh'}}>
+                <Stack spacing={2} sx={{p: 1, pr: 2, overflowY: 'auto', minHeight: 0}}>
+                    <CollapsibleGroup>
+                        <CollapsibleItem componentKey={SOURCES_COLLAPSIBLE_KEY}
+                                         header={(isOpen) => (
+                                             <Stack>
+                                                 <Typography level='title-md'>Select line lists to load</Typography>
+                                                 {!isOpen &&
+                                                     <Typography level='body-sm'>
+                                                         {linesCount === 0
+                                                             ? 'No lines loaded'
+                                                             : `${groupsCount} list${groupsCount === 1 ? '' : 's'}, ${linesCount} line${linesCount === 1 ? '' : 's'} loaded`}
+                                                     </Typography>}
+                                             </Stack>
+                                         )}
+                                         isOpen={true}>
+                            <Stack spacing={2} sx={{}}>
+                                <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
+                                                         label='Available line lists:'
+                                                         alignment='vertical'
+                                                         initialState={{value: initialSourceOptions}}
+                                                         options={lineLists.map(({listId, listLabel}) =>
+                                                             ({label: listLabel, value: listId}))}/>
+                                <Stack spacing={0.25}>
+                                    <Typography level='title-sm'>Upload your own line list:</Typography>
+                                    <UploadTableSelectorSpectralLines uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}/>
+                                </Stack>
                             </Stack>
-                            <Divider/>
+                            <Divider sx={{
+                                mt: 3, mb: 1,
+                                mx: 'calc(-1 * var(--ListItem-paddingX))' // to extend to the edges of collapsible
+                            }}/>
                             <Stack direction='row' spacing={1} alignItems='center'>
                                 <Button size='md' variant='solid' onClick={onUpdateLines}>Load Lines</Button>
                                 {hasPendingChanges &&
@@ -407,35 +412,39 @@ export function SpectralLinesPanel() {
                                         changes above not yet loaded in table below
                                     </Typography>}
                             </Stack>
+                        </CollapsibleItem>
+                    </CollapsibleGroup>
+                    <Stack spacing={.5} sx={{pb: 1}}>
+                        <Typography level='title-md'>Select lines to plot:</Typography>
+                        {plotHelperText &&
+                            <Typography level='body-sm' color='neutral'>{plotHelperText}</Typography>}
+                        <Stack sx={{height: 240}}>
+                            <TablePanel
+                                tbl_id={LINES_TBL_ID}
+                                tbl_ui_id={LINES_TBL_UI_ID}
+                                border={false}
+                                showToolbar={false}
+                                showOptionButton={false}
+                                showTypes={false}
+                                showUnits={true}
+                                selectable={true}
+                                showSelectRowFilter={false}
+                                showFilters={true}
+                                highlightedRowHandler={() => undefined}
+                            />
                         </Stack>
-                    </CollapsibleItem>
-                </CollapsibleGroup>
-                <Stack spacing={.5}>
-                    <Typography level='title-md'>Select lines to plot:</Typography>
-                    {plotHelperText &&
-                        <Typography level='body-sm' color='neutral'>{plotHelperText}</Typography>}
-                    <Stack sx={{height: 240}}>
-                        <TablePanel
-                            tbl_id={LINES_TBL_ID}
-                            tbl_ui_id={LINES_TBL_UI_ID}
-                            border={false}
-                            showToolbar={false}
-                            showOptionButton={false}
-                            showTypes={false}
-                            showUnits={true}
-                            selectable={true}
-                            showSelectRowFilter={false}
-                            showFilters={true}
-                        />
                     </Stack>
-                    {selectedCount === 0
-                        ? <Typography level='body-sm'>0 lines selected - nothing plotted on spectral chart(s)</Typography>
-                        : <Typography level='body-sm'
-                                      sx={{pl: 0.5}}
-                                      startDecorator={<Insights color='primary'/>}>
-                              <Typography fontWeight='lg'>{selectedCount} lines</Typography>
-                              &nbsp;selected - plotted live on spectral chart(s) ↘
-                          </Typography>}
+                </Stack>
+                <Divider/>
+                <Stack sx={{py: 0.5, flexShrink: 0}}>
+                    <Typography level='body-sm' startDecorator={<Insights color='primary'/>}>
+                        {selectedCount === 0
+                            ? '0 lines selected - nothing plotted on spectral chart(s) ↘'
+                            : <>
+                                  <Typography fontWeight='lg'>{selectedCount} lines</Typography>
+                                  &nbsp;selected - plotted live on spectral chart(s) ↘
+                              </>}
+                    </Typography>
                 </Stack>
             </Stack>
         </FieldGroup>
