@@ -33,11 +33,6 @@ spec:
               containerPort: 8080
               protocol: TCP
           env:
-            {{- with .Values.env }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-            - name: CLEANUP_INTERVAL
-              value: {{ .Values.cleanupInterval | quote }}
             {{- if .Values.ingress.pathPrefix }}
             - name: PATH_PREFIX
               value: {{ .Values.ingress.pathPrefix | quote }}
@@ -55,6 +50,9 @@ spec:
             {{- if include "firefly.multiReplica" . }}
             - name: PROPS_redis__host
               value: {{ include "firefly.redisName" . }}
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           livenessProbe:
             httpGet:

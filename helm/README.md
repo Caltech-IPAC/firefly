@@ -170,13 +170,13 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | autoscaling.scaleUpWindow | int | `60` | Stabilization window in seconds before scaling up. |
 | autoscaling.targetCpuUsage | int | `80` | Target average CPU utilization (%) across pods to trigger scale up. Set to empty to disable. |
 | autoscaling.targetMemoryUsage | int | `100` | Target average memory utilization (%) across pods to trigger scale up. Set to empty to disable. |
-| cleanupInterval | string | `"1h"` | Interval for cleaning up temporary files. |
 | env | list | `[]` | Additional environment variables. |
+| extraLabels | object | `{}` | Additional labels added to all resources (e.g. owner: jenkins). |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | image.repository | string | `"ghcr.io/caltech-ipac/firefly"` | Image repository. |
 | image.tag | string | `""` | Image tag. Defaults to appVersion in Chart.yaml when not set. |
 | ingress.annotations | object | `{}` | Additional ingress annotations. |
-| ingress.className | string | `""` | Ingress class name. Omit to use the cluster default. When set to nginx, traefik, or haproxy, cookie-based session affinity annotations are automatically injected when replicaCount > 1. |
+| ingress.className | string | `"nginx"` | Ingress class name. Omit to use the cluster default. When set to nginx, traefik, or haproxy, cookie-based session affinity annotations are automatically injected when replicaCount > 1. |
 | ingress.enabled | bool | `true` | Enable ingress. If disabled, the service is only exposed internally and ingress settings are ignored. |
 | ingress.host | string | `"firefly.example.com"` | Hostname. This value is environment-specific. The default value is a placeholder and should be overridden. |
 | ingress.pathPrefix | string | `""` | Optional path prefix prepended to the Firefly path: [/pathPrefix]/firefly. |

@@ -9,8 +9,8 @@
 #
 # Each base dir holds one sub-directory per application, e.g.
 #     /firefly/workarea/<app>/temp_files
-# where <app> is the servlet display-name.  This script sweeps exactly one app, so a
-# container running several never has one app's cleanup touch another's files.  See
+# where <app> is the simple name of the application.  This script sweeps exactly one app,
+# so a container running several never has one app's cleanup touch another's files.  See
 # CLEANUP_APP_NAME below.  The app dir is cleaned in one of two modes:
 #
 #   age mode (default)  Each entry below a base dir has its own maximum age; files not
@@ -300,7 +300,7 @@ sweep_body() {
 
 # One pass over both base dirs, appended to today's log.  The name carries the date,
 # so the first sweep after midnight rolls onto a new file by itself.  If the log cannot
-# be written, clean anyway and fall back to stdout -- a full disk is the worse failure.
+# be written, clean anyway and fall back to stdout.
 sweep() {
     local app="$1" log_dir="${LOG_ROOT}/${app}" log_file
 
