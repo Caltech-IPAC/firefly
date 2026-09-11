@@ -160,6 +160,24 @@ entry_paths() {
     return 0
 }
 
+# entry_paths_of <baseDir> <app> <entry-spec>... -- every existing path in an entry table
+entry_paths_of() {
+    local base="$1" app="$2"; shift 2
+    local spec entry
+    for spec in "$@"; do
+        IFS='|' read -r entry _ _ <<< "${spec}"
+        entry_paths "${base}" "${app}" "${entry}"
+    done
+    return 0
+}
+
+# same_fs <dirA> <dirB> -- true when both sit on one filesystem, so df reports one pool
+same_fs() {
+    local a b
+    a=$(stat -c %d "$1" 2>/dev/null) && b=$(stat -c %d "$2" 2>/dev/null) || return 1
+    [[ "${a}" == "${b}" ]]
+}
+
 # CLEANUP_APP_NAME: Unset, it falls back to the first dir under the workarea (sorted, so the choice is
 # stable across sweeps).  That is right for the usual one-app container; set
 # CLEANUP_APP_NAME when a container serves several applications.
@@ -190,9 +208,12 @@ prune_empty_dirs() {
 # ------------------------------------------------------------------------------------
 
 clean_by_age() {
-    local base="$1" app="$2"; shift 2
-    local spec entry env_var default minutes paths
+    local label="$1" base="$2" app="$3"; shift 3
+    local app_dir="${base}/${app}" spec entry env_var default minutes paths
 
+    echo
+    echo "----- ${label}: ${app_dir}"
+    [[ -d "${app_dir}" ]] || { echo "does not exist, skipping"; return; }
     echo "Age mode: removing files not modified within each entry's max age"
     for spec in "$@"; do
         IFS='|' read -r entry env_var default <<< "${spec}"
@@ -216,24 +237,29 @@ clean_by_age() {
 # Mode: pct-full -- ignore ages, remove the oldest files until there is room
 # ------------------------------------------------------------------------------------
 
+# clean_by_pct_full <label> <dfDir> <path>...
+# The paths may span both base dirs: when they share a filesystem they share one pool
+# of free space, so they must be ranked together.
 clean_by_pct_full() {
-    local base="$1" app="$2" pct_full="$3" pct_delta="$4"; shift 4
-    local spec entry paths=() entry_paths_out
+    local label="$1" df_dir="$2"; shift 2
+    local paths=("$@")
     local total_kb used_kb used_pct target_pct need_kb freed_kb=0 removed=0
     local mtime kb path
 
-    read -r total_kb used_kb < <(df -Pk "${base}" | awk 'NR==2 {print $2, $3}')
+    echo
+    echo "----- ${label}"
+    read -r total_kb used_kb < <(df -Pk "${df_dir}" | awk 'NR==2 {print $2, $3}')
     if ! [[ "${total_kb:-0}" =~ ^[1-9][0-9]*$ ]]; then
-        warn "cannot read disk usage for ${base}; skipping"
+        warn "cannot read disk usage for ${df_dir}; skipping"
         return
     fi
     used_pct=$((used_kb * 100 / total_kb))
-    target_pct=$((pct_full - pct_delta))
+    target_pct=$((PCT_FULL - PCT_DELTA))
     ((target_pct < 0)) && target_pct=0      # delta larger than pct_full means "empty it"
 
-    echo "Pct-full mode: ${used_pct}% used, cleans above ${pct_full}%, target ${target_pct}%"
-    if ((used_pct < pct_full)); then
-        echo "Nothing to do -- below ${pct_full}%"
+    echo "Pct-full mode: ${used_pct}% used, cleans above ${PCT_FULL}%, target ${target_pct}%"
+    if ((used_pct < PCT_FULL)); then
+        echo "Nothing to do -- below ${PCT_FULL}%"
         return
     fi
 
@@ -241,12 +267,7 @@ clean_by_pct_full() {
     echo "Need to free ${need_kb} KB; removing oldest files first"
     echo
 
-    for spec in "$@"; do
-        IFS='|' read -r entry _ _ <<< "${spec}"
-        readarray -t entry_paths_out < <(entry_paths "${base}" "${app}" "${entry}")
-        ((${#entry_paths_out[@]})) && paths+=("${entry_paths_out[@]}")
-    done
-    ((${#paths[@]})) || { warn "no entries exist under ${base}/${app}; nothing can be freed"; return; }
+    ((${#paths[@]})) || { warn "no entries exist for ${label}; nothing can be freed"; return; }
 
     # mtime <tab> size-in-KB <tab> path, NUL terminated, oldest first
     while IFS=$'\t' read -r -d '' mtime kb path; do
@@ -259,7 +280,7 @@ clean_by_pct_full() {
 
     echo
     echo "Removed ${removed} files, freed ${freed_kb} KB of the ${need_kb} KB needed"
-    ((freed_kb < need_kb)) && warn "${base} is still above ${target_pct}%: nothing left to remove"
+    ((freed_kb < need_kb)) && warn "${label} is still above ${target_pct}%: nothing left to remove"
     [[ "${DRY_RUN}" == true ]] || prune_empty_dirs "${paths[@]}"
     return 0
 }
@@ -268,32 +289,31 @@ clean_by_pct_full() {
 # Per base dir driver
 # ------------------------------------------------------------------------------------
 
-# clean_base <label> <baseDir> <app> <pctFull> <pctDelta> <entry>...
-# Writes to stdout; sweep() redirects one log file around both calls.
-clean_base() {
-    local label="$1" base="$2" app="$3" pct_full="$4" pct_delta="$5"; shift 5
-    local app_dir="${base}/${app}"
-
-    echo
-    echo "----- ${label}: ${app_dir}"
-    [[ -d "${app_dir}" ]] || { echo "does not exist, skipping"; return; }
-    if ((pct_full > 0)); then
-        clean_by_pct_full "${base}" "${app}" "${pct_full}" "${pct_delta}" "$@"
-    else
-        clean_by_age "${base}" "${app}" "$@"
-    fi
-}
-
 # The work of one sweep, written to stdout for sweep() to place
 sweep_body() {
-    local app="$1"
+    local app="$1" work_paths=() shared_paths=()
     echo
     echo "===== cleanup start -- app '${app}' -- $(date) ====="
     [[ "${DRY_RUN}" == true ]] && echo "DRY RUN -- nothing will be removed"
-    clean_base "workarea" "${WORKAREA_DIR}" "${app}" \
-               "${PCT_FULL}" "${PCT_DELTA}" "${WORKAREA_ENTRIES[@]}"
-    clean_base "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" \
-               "${PCT_FULL}" "${PCT_DELTA}" "${SHARED_WORKAREA_ENTRIES[@]}"
+
+    if ((PCT_FULL > 0)); then
+        readarray -t work_paths   < <(entry_paths_of "${WORKAREA_DIR}" "${app}" "${WORKAREA_ENTRIES[@]}")
+        readarray -t shared_paths < <(entry_paths_of "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_WORKAREA_ENTRIES[@]}")
+        if same_fs "${WORKAREA_DIR}" "${SHARED_WORKAREA_DIR}"; then
+            # One filesystem, one pool of free space. Need to sweep them together
+            clean_by_pct_full "both work areas (one filesystem)" "${WORKAREA_DIR}" \
+                              "${work_paths[@]}" "${shared_paths[@]}"
+        else
+            clean_by_pct_full "workarea: ${WORKAREA_DIR}/${app}" "${WORKAREA_DIR}" \
+                              "${work_paths[@]}"
+            clean_by_pct_full "shared-workarea: ${SHARED_WORKAREA_DIR}/${app}" "${SHARED_WORKAREA_DIR}" \
+                              "${shared_paths[@]}"
+        fi
+    else
+        clean_by_age "workarea" "${WORKAREA_DIR}" "${app}" "${WORKAREA_ENTRIES[@]}"
+        clean_by_age "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_WORKAREA_ENTRIES[@]}"
+    fi
+
     echo
     echo "===== cleanup done -- $(date) ====="
 }
