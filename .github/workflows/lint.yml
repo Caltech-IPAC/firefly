@@ -1,6 +1,5 @@
 name: ESLint
 
-# Advisory: red when a PR introduces errors.
 on:
   pull_request:
     branches: [dev]
