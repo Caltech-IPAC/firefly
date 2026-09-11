@@ -57,10 +57,13 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
                                                   {...images}  />);
     }
     if (showXyPlots || coverageRight || imagesWithCharts) {
-        content.rightSide= (<RightSide {...{key:'rightSide', expanded,closeable,showXyPlots, showMeta, showFits,
+        content.rightSide= (<RightSide {...{key:'rightSide', closeable,showXyPlots, showMeta, showFits,
             dataProductTableId, coverageRight, imagesWithCharts}}/>);
-        if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
+    // expanded chart - a separate slot to the right side panel above; ResultsPanel renders one or the other,
+    // and the expanded chart may come from a viewer the right side panel does not contain (a data product chart)
+    if (expanded===LO_VIEW.xyPlots) content.xyPlot = makeExpandedChart(closeable);
+
     const renderTables= showTables && currLayoutMode?.includes('tables');
     if (renderTables) {
         content.tables = (<TablesContainer key='res-tables'
@@ -113,25 +116,15 @@ function makeKey(idObj) {
 
 
 
-function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
+function RightSide({closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
     const selectedTab = useStoreConnector(()=>getLayouInfo()?.rightSide?.selectedTab);
     const onTabSelect = (id) => {
         lastSelected= id;
         dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
     };
 
-    const chartExpandedMode= expanded===LO_VIEW.xyPlots;
-    const {expandedViewerId}= getExpandedChartProps();
     const viewerId = DEFAULT_PLOT2D_VIEWER_ID;
     const {showPinnedTab, activeLabel, pinnedLabel} = usePinnedChartInfo({viewerId});
-
-    if (chartExpandedMode) {
-        if (expandedViewerId === PINNED_CHART_VIEWER_ID) {
-            return makePinnedChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
-        } else {
-            return makeActiveChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
-        }
-    }
 
     const {pinChartCnt=0,tableCnt=0}= getResultCounts() ?? {};
     const anyTables= Boolean(tableCnt);
@@ -156,14 +149,29 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
 
     return(
         <TabPanel {...{key:makeKey(idObj), value: selectedTab ?? defaultSelected, style, onTabSelect} } >
-            {idObj[TAB_IDS.ACTIVE_CHART] && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true, id:TAB_IDS.ACTIVE_CHART}) }
-            {idObj[TAB_IDS.PINNED_CHART] && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true, id:TAB_IDS.PINNED_CHART}) }
+            {idObj[TAB_IDS.ACTIVE_CHART] && makeActiveChartTab({activeLabel, closeable, asTab:true, id:TAB_IDS.ACTIVE_CHART}) }
+            {idObj[TAB_IDS.PINNED_CHART] && makePinnedChartTab({pinnedLabel, closeable, asTab:true, id:TAB_IDS.PINNED_CHART}) }
             {idObj[TAB_IDS.COVERAGE] && makeCoverageTab({id:TAB_IDS.COVERAGE})}
             {idObj[TAB_IDS.DP] && makeMultiProductViewerTab({dataProductTableId,id:TAB_IDS.DP})}
             {idObj[TAB_IDS.PINNED_IMAGE] && makeFitsPinnedTab({id:TAB_IDS.PINNED_IMAGE,asTab:true})}
             {idObj[TAB_IDS.PROPERTY_SHEET] && makePropertySheetTab({id:TAB_IDS.PROPERTY_SHEET})}
         </TabPanel>
     );
+}
+
+// pick the panel matching the viewer from which the chart was expanded - the active and pinned viewers have
+// dedicated panels, any other viewer is rendered directly by its viewerId
+function makeExpandedChart(closeable) {
+    const {expandedViewerId, chartId} = getExpandedChartProps();
+    if (expandedViewerId === PINNED_CHART_VIEWER_ID) {
+        return makePinnedChartTab({chartExpandedMode: true, closeable});
+    }
+    if (!expandedViewerId || expandedViewerId === DEFAULT_PLOT2D_VIEWER_ID) {
+        return makeActiveChartTab({chartExpandedMode: true, closeable});
+    }
+    return (<ActiveChartsPanel key={`res-expanded-chart-${expandedViewerId}`}
+                               closeable={true} expandedMode={true}
+                               viewerId={expandedViewerId} chartId={chartId}/>);
 }
 
 function makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab, id}) {
