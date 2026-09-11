@@ -1,0 +1,53 @@
+\
+|label           |wavelength     |
+|char            |double         |
+|                |micron         |
+|                |               |
+ Lyman Break               0.0912 
+ Ly alpha                  0.1216 
+ Balmer Break              0.3646 
+ [O II]                    0.3727 
+ H Beta                    0.4861 
+ [O III]                   0.5007 
+ H alpha                   0.6563 
+ Paschen ionize            0.8206 
+ Paschen delta             1.0052 
+ Paschen gamma             1.0941 
+ Paschen beta              1.2822 
+ Bracket ionize            1.4588 
+ 1.6 um bump                  1.6 
+ Paschen alpha             1.8756 
+ Bracket delta             1.9451 
+ Bracket gamma             2.1661 
+ Pfund ionize              2.2794 
+ Bracket beta              2.6258 
+ NH3                         2.96 
+ H2O                         3.05 
+ H2 nu1-0 O(5)              3.235 
+ Humphreys ionize          3.2823 
+ PAH 3.3 um                  3.29 
+ Pfund delta                3.297 
+ -CH2,-CH3                   3.47 
+ H2 nu1-0 O(6)             3.5008 
+ CH3OH                       3.53 
+ Pfund gamma               3.7405 
+ H2 nu1-0 O(7)             3.8074 
+ H2 nu0-0 S(13)            3.8472 
+ CH3OH                       3.95 
+ H2S                         3.95 
+ H2 nu0-0 S(12)            3.9969 
+ Bracket alpha             4.0522 
+ H2 nu0-0 S(11)            4.1815 
+ CO2                         4.27 
+ 13CO2                       4.38 
+ H2 nu0-0 S(10)              4.41 
+ H2O                          4.5 
+ CO nu-1-0                    4.6 
+ XCN                         4.62 
+ Pfund beta                4.6537 
+ CO                          4.67 
+ H2 nu0-0 S(9)             4.6947 
+ 13CO                        4.78 
+ OCS                         4.91 
+ H2 nu0-0 S(8)             5.0531 
+ Humphreys delta           5.1286 

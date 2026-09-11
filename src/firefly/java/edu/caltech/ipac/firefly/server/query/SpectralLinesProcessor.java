@@ -39,9 +39,10 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     private static final Map<String, String> BUNDLED_RESOURCES = Map.of(
-            "Luisa", "/edu/caltech/ipac/firefly/resources/luisa_linelist.csv",
-            "JWST",  "/edu/caltech/ipac/firefly/resources/jwst_linelist.tbl"
-    );
+            "SPHEREx line list", "/edu/caltech/ipac/firefly/resources/spherex_lines.tbl",
+            "Spitzer PAHFIT line list",  "/edu/caltech/ipac/firefly/resources/pahfit_lines.csv",
+            "Herschel HSPOT line list",  "/edu/caltech/ipac/firefly/resources/hspot_lines.csv"
+            );
     private static final String WAVELENGTH_COL = "wavelength"; // must match SpectralLines.jsx's WAVELENGTH_COL
 
     public record LineListInfo(String listId, String listLabel, String src) {}
