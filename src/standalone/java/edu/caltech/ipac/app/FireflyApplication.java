@@ -193,7 +193,7 @@ public class FireflyApplication {
     }
 
     public static boolean isNewVersionAvailable(String currVer, String availableVer) {
-        if (currVer==null) currVer= "0,0.0";
+        if (currVer==null) currVer= "0.0.0";
         if (availableVer==null) availableVer= "0,0.0";
         var cVer= currVer.split("\\.");
         var nVer= availableVer.split("\\.");
@@ -250,6 +250,7 @@ public class FireflyApplication {
         ProcessBuilder pb = new ProcessBuilder(installScript.getAbsolutePath(),
                 "-url", packageUrl, "-asUpdate",
                 "-installDir", installDir.getAbsolutePath() );
+        pb.redirectErrorStream(true);
         try {
             Process process = pb.start();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
@@ -291,6 +292,7 @@ public class FireflyApplication {
 
     public static void doWorkAreaCleanup() {
         ProcessBuilder pb = new ProcessBuilder(cleanupScript.getAbsolutePath()," --once");
+        pb.redirectErrorStream(true);
         try {
             Process process = pb.start();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
@@ -353,7 +355,7 @@ public class FireflyApplication {
         }
         if (!exists || !dir.canWrite()) {
             System.out.println("Can't write to " + dir.getAbsolutePath() + " directory");
-            System.exit(0);
+            System.exit(1);
         }
     }
 
@@ -520,6 +522,7 @@ public class FireflyApplication {
         } catch (Exception e) {
             terminalOut.println("Error starting Firefly Application: " + e.getMessage());
             e.printStackTrace();
+            Runtime.getRuntime().halt(1);
         }
         Runtime.getRuntime().halt(0);
     }
