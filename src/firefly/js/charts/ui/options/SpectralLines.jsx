@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {isEqual} from 'lodash';
+import {cloneDeep, isEqual} from 'lodash';
 import {Button, Divider, Stack, Typography} from '@mui/joy';
 import {Insights} from '@mui/icons-material';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
@@ -288,7 +288,8 @@ async function buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, wavel
 
     // store what this table was built from in meta, so the panel can tell when the checked lists/upload have since diverged
     const tableMeta = {sourceOptions, uploadSignature: uploadSignature(uploadInfo, wavelengthCol, labelCol, descriptionCol)};
-    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns: LINES_TBL_COLUMNS, data}, tableMeta};
+    const columns = cloneDeep(LINES_TBL_COLUMNS); // fresh column objects are needed to prevent enum val staleness
+    const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns, data}, tableMeta};
     if (data.length === 0) table.status = {code: 204, message: 'No lines to display yet'}; // to replace default "No Data Found" status
     table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
     dispatchTableAddLocal(table, undefined, false);
@@ -368,7 +369,7 @@ export function SpectralLinesPanel() {
         void fetchLineLists().then((lists) => {
             setLineLists(lists);
             // build only if it doesn't exist yet - once built, row selection is user-owned and must survive
-            // the dialog being closed/reopened; only the "Update Lines" button rebuilds after this point
+            // the dialog being closed/reopened; only the "Load Lines" button rebuilds after this point
             if (!getTblById(LINES_TBL_ID)) {
                 void buildMergedLinesTable(sourceOptions, lists, uploadInfo, uploadWavelengthCol, uploadLabelCol, uploadDescriptionCol);
             }
@@ -378,8 +379,9 @@ export function SpectralLinesPanel() {
 
     const {selectedCount, groupsCount, linesCount, loadedSourceOptions, loadedUploadSignature} = useStoreConnector(() => {
         const tbl = getTblById(LINES_TBL_ID);
-        const linesCount = tbl?.totalRows ?? 0;
-        const groupsCount = linesCount ? new Set(getColumnValues(tbl, GROUP_COL)).size : 0;
+        const fullTbl = tbl?.origTableModel ?? tbl; // origTableModel stores the unfiltered table after any filter is applied
+        const linesCount = fullTbl?.totalRows ?? 0;
+        const groupsCount = linesCount ? new Set(getColumnValues(fullTbl, GROUP_COL)).size : 0;
         const selectedCount = SelectInfo.newInstance(tbl?.selectInfo).getSelectedCount();
         const loadedSourceOptions = tbl?.tableMeta?.sourceOptions ?? '';
         const loadedUploadSignature = tbl?.tableMeta?.uploadSignature ?? '';
