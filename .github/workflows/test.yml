@@ -1,19 +1,7 @@
 name: Tests
 
-# Advisory, non-blocking proof-of-concept. Reports pass/fail on a PR but is
-# deliberately NOT added to the branch-protection required checks for `dev`.
-#
-# TEST DATA IS NOT THE SAME AS JENKINS'. Jenkins uses
-# /stage/irsa-vcs/git/firefly_test_data.git@master, an internal bare repo a
-# GitHub-hosted runner cannot reach. We substitute the public LSST mirror
-# (lsst/firefly_test_data@main), which diverged in 2023 and is missing files the
-# current tests reference. Expected steady state: jest fully green (18/18), and
-# ~17 Java tests red purely for missing data -- not regressions. The job summary
-# lists them. Dropping the fetch step entirely takes that to 79 red.
-#
-# Toolchain pinned to docker/Dockerfile, which is authoritative (JDK 21,
-# Node 26, Gradle 8.10). There is no Gradle wrapper in this repo, so the
-# version has to be supplied here.
+# Toolchain versions track docker/Dockerfile. This repo has no Gradle wrapper,
+# so the Gradle version has to be pinned here.
 on:
   pull_request:
     branches: [dev]
@@ -32,7 +20,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -41,7 +29,7 @@ jobs:
           java-version: 21
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 26
           cache: yarn
@@ -51,41 +39,21 @@ jobs:
         with:
           gradle-version: '8.10'
 
-      # Pointer-only clone is ~296 MB in ~4s; the LFS pull adds ~1.1 GB of the
-      # subtrees the suite actually reads (the other 3.0 GB of the mirror is
-      # referenced by no test). The LSST LFS server serves anonymously, so no
-      # credentials are needed.
-      #
-      # Two destinations because the two suites disagree about where the data
-      # lives. Java reads `../firefly_test_data` relative to the Gradle working
-      # dir ($RUNNER_WORKSPACE/firefly_test_data). jest derives it as
-      # __dirname.split('firefly')[0] (see Projection-test.js), which lands a
-      # level higher because this repo is named `firefly`. Symlink, don't copy.
-      - name: Fetch test data
-        run: |
-          set -euo pipefail
-          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
-            https://github.com/lsst/firefly_test_data.git "$RUNNER_WORKSPACE/firefly_test_data"
-          git -C "$RUNNER_WORKSPACE/firefly_test_data" lfs pull \
-            --include="edu/**,FileUpload-samples/**,fits-tile-compression/**,LSSTFoorprintSources/**"
-          ln -sfn "$RUNNER_WORKSPACE/firefly_test_data" "$(dirname "$RUNNER_WORKSPACE")/firefly_test_data"
-          du -sh "$RUNNER_WORKSPACE/firefly_test_data"
-
-      # Run the two suites as separate steps so each reports on its own, and so
-      # the Java step still runs when jest is red. gradle.properties asks for
-      # -Xmx8048m, which is most of a 16 GB runner; 4 GB is ample here.
+      # Separate steps so each suite reports on its own. `!cancelled()` so a red
+      # jest run still lets the Java suite report, while a superseded run stops promptly.
+      # -Xmx4g is the Gradle daemon heap, overriding gradle.properties' 8 GB; 
+      # the forked test JVM is capped separately at 2 GB by buildScript/tasks.gincl.
       - name: JavaScript tests (jest)
         id: js-tests
-        continue-on-error: true
         run: gradle --no-daemon -Dorg.gradle.jvmargs=-Xmx4g :firefly:jsTest
 
       - name: Java tests (junit)
         id: java-tests
-        continue-on-error: true
+        if: '!cancelled()'
         run: gradle --no-daemon -Dorg.gradle.jvmargs=-Xmx4g --continue :firefly:test -x jsTest
 
       - name: Upload reports
-        if: always()
+        if: '!cancelled()'
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
@@ -94,16 +62,11 @@ jobs:
           retention-days: 14
 
       - name: Summarize
-        if: always()
+        if: '!cancelled()'
         run: |
           set -uo pipefail
           {
             echo "## Test results"
-            echo
-            echo "Advisory only -- this check does not gate merges."
-            echo "Test data comes from the public \`lsst/firefly_test_data\` mirror, which is"
-            echo "missing files the current tests reference. ~17 Java failures are expected"
-            echo "and are **not** regressions; Jenkins uses different, complete data."
             echo
             echo "| suite | result |"
             echo "| --- | --- |"
