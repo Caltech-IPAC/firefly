@@ -146,16 +146,16 @@ def logfix(landing: Path):
             file.truncate()
 
 
-def add_multi_props_env_var():
+def multi_props_env_var():
     """
     Process environment variable `PROPS`, where:
     - Key-value pairs are separated by `;`
     - Use double semicolons (`;;`) to escape semicolon `;`
 
     Returns:
-        str: JVM `-Dkey=value` options.
+        dict: property name -> raw value (quoting happens where opts are rendered).
     """
-    props_opts = ""
+    props = {}
     props_env = os.getenv("PROPS", "")
 
     if props_env:
@@ -166,31 +166,28 @@ def add_multi_props_env_var():
             prop = prop.replace(placeholder, ";")
             if "=" in prop:
                 key, value = prop.split("=", 1)
-                key = key.strip()
-                value = shlex.quote(value.strip())
-                props_opts += f" -D{key}={value}"
+                props[key.strip()] = value.strip()
 
-    return props_opts
+    return props
 
 
-def add_single_prop_env_vars():
+def single_prop_env_vars():
     """
     Process environment variables that match `PROPS_*`, replacing:
     - `__` in variable names with `.`
     - Supports secrets and hard-to-escape characters.
 
     Returns:
-        str: JVM `-Dkey=value` options.
+        dict: property name -> raw value (quoting happens where opts are rendered).
     """
-    props_opts = ""
+    props = {}
 
     for key, value in os.environ.items():
         if key.startswith("PROPS_"):
             prop_key = key.replace("PROPS_", "").replace("__", ".").strip()
-            value = shlex.quote(value.strip())
-            props_opts += f" -D{prop_key}={value}"
+            props[prop_key] = value.strip()
 
-    return props_opts
+    return props
 
 
 def log_env_info(path_prefix: str, visualize_fits_search_path: str):
@@ -300,33 +297,50 @@ def main():
         else f"/external:{visualize_fits_search_path}"
     )
 
-    catalina_opts = " ".join(
-        [
-            f"-XX:InitialRAMPercentage={os.getenv('INIT_RAM_PERCENT', '10')}",
-            f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
-            "-XX:+UnlockExperimentalVMOptions",
-            "-XX:TrimNativeHeapInterval=30000",
-            f"-DADMIN_USER={admin_user}",
-            f"-DADMIN_PASSWORD={admin_password}",
-            f"-Dhost.name={os.getenv('HOSTNAME', '')}",
-            f"-Dserver.cores={os.getenv('JVM_CORES', '')}",
-            "-Djava.net.preferIPv4Stack=true",
-            "-Dwork.directory=/firefly/workarea",
-            "-Dshared.work.directory=/firefly/shared-workarea",
-            "-Dserver_config_dir=/firefly/config",
-            "-Dstats.log.dir=/firefly/logs/statistics",
-            "-Dalerts.dir=/firefly/alerts",
-            f"-Dvisualize.fits.search.path={vis_path}",
-        ]
-    )
+    # Fixed options: NOT overridable by PROPS/PROPS_*.
+    # The work areas and config dir are the container's mount points, it should not be changed
+    fixed_opts = [
+        f"-XX:InitialRAMPercentage={os.getenv('INIT_RAM_PERCENT', '10')}",
+        f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:TrimNativeHeapInterval=30000",
+        "-Djava.net.preferIPv4Stack=true",
+        "-Dwork.directory=/firefly/workarea",
+        "-Dshared.work.directory=/firefly/shared-workarea",
+        "-Dserver_config_dir=/firefly/config",
+    ]
+    fixed_keys = {o[2:].split("=", 1)[0] for o in fixed_opts if o.startswith("-D")}
+
+    # Defaults: overridable by PROPS/PROPS_*
+    props = {
+        "ADMIN_USER": admin_user,
+        "ADMIN_PASSWORD": admin_password,
+        "host.name": os.getenv("HOSTNAME", ""),
+        "server.cores": os.getenv("JVM_CORES", ""),
+        "stats.log.dir": "/firefly/logs/statistics",
+        "alerts.dir": "/firefly/alerts",
+        "visualize.fits.search.path": vis_path,
+    }
 
     # Remove admin protection if disabled
     if use_admin_auth == "false":
-        catalina_opts += " -DADMIN_PROTECTED="
+        props["ADMIN_PROTECTED"] = ""
 
-    # extract and add properties defined as environment variables
-    catalina_opts += add_multi_props_env_var()
-    catalina_opts += add_single_prop_env_vars()
+    # properties defined as environment variables; PROPS_* wins over PROPS
+    props.update(multi_props_env_var())
+    props.update(single_prop_env_vars())
+
+    # one -D per key: drop anything trying to redefine a fixed option
+    for key in sorted(fixed_keys & props.keys()):
+        print(
+            f"WARNING: -D{key} is fixed by this image; ignoring the value from PROPS",
+            file=sys.stderr,
+        )
+        del props[key]
+
+    catalina_opts = " ".join(
+        fixed_opts + [f"-D{k}={shlex.quote(v)}" for k, v in props.items()]
+    )
 
     # Set environment variables so they persist in Tomcat
     os.environ["CATALINA_PID"] = os.path.join(catalina_home, "bin", "catalina.pid")
