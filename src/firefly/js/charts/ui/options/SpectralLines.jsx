@@ -18,6 +18,7 @@ import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 import {MISSING_COLS_HEADER_MSG, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
+import {getEffectiveSpectralFrameOption} from './SpectrumOptions.jsx';
 
 const recLinesTblId = (listId) => `rec-${listId}`;
 
@@ -112,9 +113,8 @@ function resolveSpectralLinesRedshift(fireflyData, activeTrace) {
     // a redshift is only resolvable when Spectral Frame options are shown (as opposed to a read-only value)
     if (!isKnownRefPos(fireflyData?.[activeTrace]?.spectralFrame?.refPos)) return undefined;
 
-    // TODO: spectralFrameOption is undefined until Modify Trace is applied at least once, so this
-    // assumes rest-frame (0) until then even if the real default would be observed with a redshift
-    const {value: sfOption, redshift: redshiftOption, userSpecified} = fireflyData?.[activeTrace]?.spectralFrameOption ?? {};
+    // falls back to the same default a fresh spectrum options panel would show, rather than assuming rest-frame
+    const {value: sfOption, redshift: redshiftOption, userSpecified} = getEffectiveSpectralFrameOption(fireflyData?.[activeTrace]);
     if (sfOption !== 'observed') return 0;
     const redshift = redshiftOption === 'userSpecified' ? userSpecified : redshiftOption;
     return Number(redshift) || 0;

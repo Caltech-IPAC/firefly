@@ -280,7 +280,7 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
     // get units and spectral frame options from the fields of active trace
     const xUnit = fields[`fireflyData.${activeTrace}.xUnit`];
     const yUnit = fields[`fireflyData.${activeTrace}.yUnit`]; // undefined if no field for yUnit
-    const currentSFOptionFields = getEffectiveSFOptionFields(fireflyData?.[activeTrace]);
+    const currentSFOptionFields = getEffectiveSpectralFrameOption(fireflyData?.[activeTrace]);
     const sfFieldKeys = SFOptionFieldKeys(activeTrace);
     const sfOptionFields = {
         value: fields[sfFieldKeys.value] ?? currentSFOptionFields.value,
@@ -342,13 +342,20 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});
 }
 
-function getEffectiveSFOptionFields(trace={}) {
+/**
+ * Get a trace's spectral-frame option: explicit spectralFrameOption fields, or the same defaults SpectralFrameOptions
+ * would show on first mount for any field not yet chosen.
+ * @param {object} [trace] - fireflyData[traceIdx]
+ * @returns {{value: string, redshift: string, userSpecified: string}}
+ */
+export function getEffectiveSpectralFrameOption(trace={}) {
     const spectralFrame = trace.spectralFrame || {};
     const spectralFrameOption = trace.spectralFrameOption || {};
     const refPos = spectralFrame.refPos?.toUpperCase?.();
     return {
         value: spectralFrameOption.value ?? (refPos === REF_POS.TOPOCENTER ? 'observed' : 'rest'),
-        redshift: spectralFrameOption.redshift ?? 'userSpecified',
+        // redshift defaults to getRedshiftOptions' first entry (because of radio button group)
+        redshift: spectralFrameOption.redshift ?? getRedshiftOptions(trace)[0]?.value ?? 'userSpecified',
         userSpecified: spectralFrameOption.userSpecified ?? '0'
     };
 }
@@ -405,8 +412,8 @@ const SFOptionFieldKeys = (activeTrace) => {
     return Object.fromEntries(['value', 'redshift', 'userSpecified'].map((subKey)=>[subKey, `${baseKey}.${subKey}`]));
 };
 
-function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: memoize it?
-    const refPos = spectralFrame.refPos.toUpperCase();
+function getRedshiftOptions({target, derivedRedshift, spectralFrame}={}){ //TODO: memoize it?
+    const refPos = spectralFrame?.refPos?.toUpperCase?.();
     let options = [];
 
     if (target?.redshift) {
