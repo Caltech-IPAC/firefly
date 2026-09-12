@@ -44,16 +44,17 @@ function getFitsColumnInfo(data) {
         });
 }
 
+
+let tblCount = 0;
 /**
  * handle submit for an uploaded table
  * @param request
  * @param setUploadInfo
  * @param {DefaultColsEnabled} defaultColsEnabled
-
+ * @param {TblOptions} [uploadTblOptions] - options for the uploaded table (see dispatchTableSearch())
  * @returns {boolean}
  */
-let tblCount = 0;
-function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
+function uploadSubmit(request,setUploadInfo,defaultColsEnabled,uploadTblOptions)  {
     if (!request) return false;
     const {additionalParams = {}, fileUpload: serverFile} = request;
     const {detailsModel, report, message, summaryModel, groupKey: summaryTblId, acceptList,
@@ -100,7 +101,7 @@ function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     const tblReq = makeFileRequest('Upload_Tbl_'+tblCount, serverFile, null, options);
     //tblReq.tbl_id = 'Upload_Tbl_' + tblReq.tbl_id;
     const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE, tbl_id: tblReq.tbl_id};
-    dispatchTableSearch(tblReq);
+    dispatchTableSearch(tblReq, uploadTblOptions);
     setUploadInfo(uploadInfo);
     dispatchHideDialog(dialogId);
     return false;
@@ -265,17 +266,18 @@ const LoadedTables= (props) => {
  * @param setUploadInfo
  * @param groupKey
  * @param {DefaultColsEnabled} defaultColsEnabledObj if this is non-empty, it will be used to replace the default selection of the uploaded table cols
+ * @param {TblOptions} [uploadTblOptions] - options for the uploaded table (see dispatchTableSearch())
  */
-export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=undefined) {
+export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=undefined,uploadTblOptions) {
     DialogRootContainer.defineDialog(dialogId,
         <PopupPanel title={'Upload'} layoutPosition={LayoutType.TOP_EDGE_CENTER}>
-            <TableUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj}}/>
+            <TableUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj,uploadTblOptions}}/>
         </PopupPanel>
     );
     dispatchShowDialog(dialogId);
 }
 
-const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
+const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj,uploadTblOptions}) => {
     const [isLoading, setLoading]= useState(false);
     return (
         <Stack height='35rem' sx={{resize:'both', overflow:'hidden',minHeight:'35rem', minWidth:'40rem'}}>
@@ -291,7 +293,7 @@ const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEna
                                 },
                                 acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
                                 onCancel:() => dispatchHideDialog(dialogId),
-                                onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
+                                onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj,uploadTblOptions),
                             }}/>
                         </Tab>
                         <Tab name='Loaded Tables' id='tableLoad' sx={{fontSize:'larger'}}>

@@ -10,13 +10,14 @@ import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {BeforeButton, DisplayTypeButtonGroup, NextButton} from '../../visualize/ui/Buttons.jsx';
 
 import {getChartData} from '../ChartsCntlr.js';
+import {isSpectrum} from '../ChartUtil.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 import {PagingControl} from '../../visualize/iv/ExpandedTools.jsx';
 import {ChartToolbar} from './ChartPanel';
 import {CloseButton} from '../../ui/CloseButton';
 import {closeExpandedChart} from 'firefly/charts/ui/ChartsContainer.jsx';
-import {AddBtn} from './PlotlyToolbar.jsx';
+import {AddBtn, SpectralLinesBtn} from './PlotlyToolbar.jsx';
 
 
 export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expandable, expandedMode, showAddChart, toolbarVariant,
@@ -28,10 +29,11 @@ export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expanda
     return (
         <Sheet variant={toolbarVariant}>
             <Stack direction='row' justifyContent='space-between'>
-                <Stack direction='row' spacing={3}>
+                <Stack direction='row'>
                     {!jsApi && showAddChart && <AddBtn/>}
-                    <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
+                    {isSpectrum(chartId) && <SpectralLinesBtn/>}
                 </Stack>
+                <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
                 <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
             </Stack>
         </Sheet>
@@ -61,11 +63,12 @@ export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expanda
     return (
         <Sheet variant={toolbarVariant}>
             <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
-                <Stack direction='row' spacing={3}>
+                <Stack direction='row' spacing={1}>
+                    {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
                     {!jsApi && showAddChart && <AddBtn/>}
-                    <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
+                    {isSpectrum(chartId) && <SpectralLinesBtn/>}
                 </Stack>
+                <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
                 <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
             </Stack>
         </Sheet>
@@ -131,7 +134,6 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
     return (
         <Sheet component={Stack} direction='row'
                sx={{
-                   flexGrow: 1,
                    px: 1,
                    alignItems: 'center',
                    justifyContent:'space-evenly',

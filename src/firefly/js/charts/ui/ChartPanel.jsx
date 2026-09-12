@@ -12,6 +12,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {allowPinnedCharts} from '../ChartUtil.js';
 import {PinChart, ShowTable} from './PinnedChartContainer.jsx';
 import {CombinePinnedCharts} from './CombineChart.jsx';
+import {useSpectralLinesSync} from './options/SpectralLines.jsx';
 
 
 function ChartPanelView(props) {
@@ -25,6 +26,8 @@ function ChartPanelView(props) {
             dispatchChartUnmounted(chartId);
         };
     }, [chartId]);
+
+    useSpectralLinesSync(chartId);
 
     if (isEmpty(chartData?.chartType) || isUndefined(Toolbar)) {
         return <div/>;

@@ -4,33 +4,117 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.packagedata.obscorepackager.ObsCoreUtil;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.URLDownload;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Serves the recommended spectral line list (a fixed resource dataset) as a table.
+ * Serves one of the recommended spectral line lists as a table, selected by the request's "listId" param.
+ * When "metaOnly" is true, returns an empty table whose tableMeta.lineLists carries the available
+ * {listId, listLabel} pairs as a JSON array, so the client can discover what's available.
+ * <p>
+ * The active set and ordering is driven by the "charts.spectrum.linelists" app config property, a JSON
+ * array of {label, src?} - src omitted falls back to BUNDLED_RESOURCES. The resolved src is fetched as a
+ * URL if it starts with http/https, otherwise as a classpath resource - so BUNDLED_RESOURCES can be a URL too.
  */
 @SearchProcessorImpl(id = "spectralLines")
 public class SpectralLinesProcessor extends EmbeddedDbProcessor {
-    private static final String RESOURCE = "/edu/caltech/ipac/firefly/resources/linelist_combined.csv";
+    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+
+    private static final Map<String, String> BUNDLED_RESOURCES = Map.of(
+            "SPHEREx line list", "/edu/caltech/ipac/firefly/resources/spherex_lines.tbl",
+            "Spitzer PAHFIT line list",  "/edu/caltech/ipac/firefly/resources/pahfit_lines.csv",
+            "Herschel HSPOT line list",  "/edu/caltech/ipac/firefly/resources/hspot_lines.csv"
+            );
+    private static final String WAVELENGTH_COL = "wavelength"; // must match SpectralLines.jsx's WAVELENGTH_COL
+
+    public record LineListInfo(String listId, String listLabel, String src) {}
+
+    public static final List<LineListInfo> LINE_LISTS = parseLineListsConfig();
+
+    private static List<LineListInfo> parseLineListsConfig() {
+        List<LineListInfo> lists = new ArrayList<>();
+        try {
+            JSONArray entries = (JSONArray) new JSONParser().parse(AppProperties.getProperty("charts.spectrum.linelists", "[]"));
+            for (Object o : entries) {
+                JSONObject entry = (JSONObject) o;
+                String label = (String) entry.get("label");
+                String src = (String) entry.get("src");
+                if (src == null) src = BUNDLED_RESOURCES.get(label);
+                if (src == null) {
+                    LOGGER.error("charts.spectrum.linelists: no bundled resource for label \"" + label + "\" - dropping from spectral lines list");
+                    continue;
+                }
+                String id = ObsCoreUtil.makeValidString(label).replace(".", "-");
+                lists.add(new LineListInfo(id, label, src));
+            }
+        } catch (Exception e) {
+            LOGGER.error(e, "charts.spectrum.linelists: failed to parse config - no spectral line lists will be available");
+        }
+        return lists;
+    }
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-        try (InputStream is = SpectralLinesProcessor.class.getResourceAsStream(RESOURCE)) {
-            if (is == null) throw new IOException("Resource not found: " + RESOURCE);
+        if (req.getBooleanParam("metaOnly")) return lineListsMetaDataGroup();
 
-            // readAnyFormat needs a File; copy the classpath resource to a temp file first
-            String ext = RESOURCE.substring(RESOURCE.lastIndexOf('.'));
-            File tempFile = createTempFile(req, ext);
-            FileUtil.writeToFile(is, tempFile, null);
+        String listId = req.getParam("listId");
+        LineListInfo info = LINE_LISTS.stream().filter(l -> l.listId().equals(listId)).findFirst()
+                .orElseThrow(() -> new DataAccessException("Unknown or missing spectral lines listId: " + listId));
 
-            return TableUtil.readAnyFormat(tempFile, 0, req);
-        } catch (IOException e) {
-            throw new DataAccessException("Unable to read spectral lines resource", e);
+        boolean isUrl = info.src().toLowerCase().startsWith("http");
+        try {
+            File tempFile = createTempFile(req, isUrl ? null : info.src().substring(info.src().lastIndexOf('.')));
+            if (isUrl) {
+                URLDownload.getDataToFile(new URI(info.src()).toURL(), tempFile);
+            } else {
+                try (InputStream is = SpectralLinesProcessor.class.getResourceAsStream(info.src())) {
+                    if (is == null) throw new IOException("Resource not found: " + info.src());
+                    FileUtil.writeToFile(is, tempFile, null);
+                }
+            }
+            DataGroup dg = TableUtil.readAnyFormat(tempFile, 0, req);
+            DataType wlCol = dg.getDataDefintion(WAVELENGTH_COL);
+            if (wlCol == null) {
+                LOGGER.warn(String.format("Spectral line list \"%s\" from %s: \"%s\" column is missing - no lines will be loaded from this list.",
+                        info.listLabel(), info.src(), WAVELENGTH_COL));
+            } else if (StringUtils.isEmpty(wlCol.getUnits())) {
+                LOGGER.warn(String.format("Spectral line list \"%s\" from %s: \"%s\" column has no units metadata - client will assume microns.",
+                        info.listLabel(), info.src(), WAVELENGTH_COL));
+            }
+            return dg;
+        } catch (Exception e) {
+            LOGGER.error(e, "Unable to load spectral line list \"" + info.listLabel() + "\" from " + info.src());
+            throw new DataAccessException("Unable to read spectral lines resource for " + info.listLabel(), e);
         }
+    }
+
+    private static DataGroup lineListsMetaDataGroup() {
+        DataGroup dg = new DataGroup("Spectral Line Lists", new DataType[0]);
+        JSONArray lists = new JSONArray();
+        LINE_LISTS.forEach(info -> {
+            JSONObject o = new JSONObject();
+            o.put("listId", info.listId());
+            o.put("listLabel", info.listLabel());
+            lists.add(o);
+        });
+        dg.getTableMeta().setAttribute("lineLists", lists.toJSONString());
+        return dg;
     }
 }

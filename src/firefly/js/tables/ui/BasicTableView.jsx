@@ -95,7 +95,8 @@ const tableStyleOverrides = {
 
 
 export const NoDataTableView = ({sx, children}) => (
-    <Box sx={{position: 'absolute', top: '50%', left: '50%', zIndex: 1, fontSize: 'lg', color: 'text.tertiary', ...sx}}>
+    <Box sx={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        fontSize: 'lg', color: 'text.tertiary', ...sx}}>
         {children}
     </Box>
 );
@@ -217,7 +218,8 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
                        tstate === TBL_STATE.NO_MATCH ? msg || noDataFromFilter :
                        tstate === TBL_STATE.LOADING ? 'Loading...' : '';
 
-        if (status) return <NoDataTableView> {status} </NoDataTableView>;
+        // adjust "top" sx to center within the rows area below the header, not the header+rows box as a whole
+        if (status) return <NoDataTableView sx={{top: `calc(50% + ${headerHeight / 2}px)`}}> {status} </NoDataTableView>;
         else return null;
     };
 
