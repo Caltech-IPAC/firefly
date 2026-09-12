@@ -434,12 +434,13 @@ export function SpectralLinesPanel() {
                                          )}
                                          isOpen={true}>
                             <Stack spacing={2} sx={{}}>
-                                <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
-                                                         label='Available line lists:'
-                                                         alignment='vertical'
-                                                         initialState={{value: initialSourceOptions}}
-                                                         options={lineLists.map(({listId, listLabel}) =>
-                                                             ({label: listLabel, value: listId}))}/>
+                                {lineLists.length > 0 &&
+                                    <CheckboxGroupInputField fieldKey={SOURCE_OPTIONS_KEY}
+                                                             label='Available line lists:'
+                                                             alignment='vertical'
+                                                             initialState={{value: initialSourceOptions}}
+                                                             options={lineLists.map(({listId, listLabel}) =>
+                                                                 ({label: listLabel, value: listId}))}/>}
                                 <Stack spacing={0.25}>
                                     <Typography level='title-sm'>Upload your own line list:</Typography>
                                     <UploadTableSelectorSpectralLines uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}/>
