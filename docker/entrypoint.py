@@ -202,7 +202,6 @@ def log_env_info(path_prefix: str, visualize_fits_search_path: str):
             Admin username                   ADMIN_USER                    {os.getenv('ADMIN_USER')}
             Admin password                   ADMIN_PASSWORD                {os.getenv('ADMIN_PASSWORD')}
             Additional data path             VISUALIZE_FITS_SEARCH_PATH    {visualize_fits_search_path}
-            Clean internal (e.g., 720m, 5h)  CLEANUP_INTERVAL              {os.getenv('CLEANUP_INTERVAL', '')}
             Context path prefix              PATH_PREFIX                   {path_prefix}
 
     Advanced environment variables:
