@@ -344,12 +344,9 @@ const Samples = () => {
     );
 };
 
-// a UCD1+ value is a ';'-delimited list, so this stays one text field rather than joy's `multiple`
-// chips, which split on ',' and would drop any atom not in UCDList. Matching is unchanged from the
-// pre-joy version: it tests every ';' token, not just the last one being typed.
+// UCD1+ value is a ';' delimited list.  The filter should return options that match any term.
+// When the input is empty, return all options.
 function ucdFilterOptions(options, {inputValue}) {
-    // joy passes an empty inputValue on the render that opens the popup, so returning [] here would
-    // blank the listbox on the first keystroke
     if (!inputValue) return options;
     const cvals = inputValue.toLowerCase().split(';').map((v) => v.trim());
     return options.filter(({value}) => cvals.some((v) => value.includes(v)));

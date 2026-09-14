@@ -163,7 +163,7 @@ AutoCompleteInput.propTypes= {
         validator: func,
         nullAllowed: bool,
     }),
-    ...omit(AutoCompleteInputView.propTypes, 'value', 'valid', 'message', 'fireValueChange'),
+    ...omit(AutoCompleteInputView.propTypes, 'value', 'valid', 'message', 'fireValueChange', 'validator'),
     tooltip: string,
 };
 
