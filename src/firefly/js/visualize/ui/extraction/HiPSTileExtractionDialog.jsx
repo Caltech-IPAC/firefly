@@ -49,7 +49,7 @@ function HiPSTileExtractionDialog({wasCanceled}) {
 
     const title= isHiPS(plot)
         ? `Extract: ${plot?.title ?? ''}`
-        : 'Not a HiPS image';
+        : 'Waiting for HiPS to be active';
 
     return(
         <PopupPanel {...{
@@ -89,7 +89,7 @@ function TileExtractContent({plot}) {
     if (!isHiPS(plot)) {
         return (
             <Typography sx={{p:4, whiteSpace: 'nowrap', minWidth: '30em'}}>
-                HiPS tile extraction only available for a HiPS display
+                Click back to a HiPS image to extract another tile
             </Typography>
         );
     }
@@ -114,6 +114,9 @@ function TileExtractContent({plot}) {
                 <Typography color='warning' level='body-sm'>
                     Warning: Some FITS tiles do not have valid WCS information
                 </Typography>}
+            <Typography color='warning' level='body-sm'>
+                Warning: Source FITS tiles are not yet projected into the HEALPix curvature, they will always appear square
+            </Typography>
             <Stack direction='horizontal' alignItems='center' >
                 <CompleteButton text= 'Extract Tile' onSuccess={ () => extractTile(plot, useWcs==='wcs',setWarn) } />
                 {warn && <Typography color='warning' sx={{pl:4}}> Click on image </Typography> }

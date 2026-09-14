@@ -22,6 +22,8 @@ import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUplo
 import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
+import HiPSGrid from '../../drawingLayers/HiPSGrid';
+import {dispatchAttachLayerToPlot} from '../DrawLayerDispatch';
 import {showExtractionDialog} from './extraction/ExtractionDialog.jsx';
 import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
 import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
@@ -44,13 +46,13 @@ import {ExpandType} from '../VisConst';
 import {getDlAry, visRoot} from '../VisStoreRoots';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
-    getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasWCSProjection,
+    getActivePlotView, getAllDrawLayersForPlot, getDrawLayerByType, getPlotViewById, hasWCSProjection,
     isCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {
     ColorButtonIcon, ColorDropDownButton, DistanceButton, DrawLayersButton, ExpandButton, ExtractLine, ExtractPoints,
     ExtractTile,
-    FlipYButton, InfoButton, RestoreButton, RotateButton, SaveButton, ToolsDropDown
+    FlipYButton, HiPSGridButton, InfoButton, RestoreButton, RotateButton, SaveButton, ToolsDropDown
 } from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
@@ -311,8 +313,9 @@ function ToolsDrop({pv,mi, enabled, image, hips, modalEndInfo, showRotateLocked}
                            modalEndInfo={modalEndInfo}
                 />
                 {showExtract && <ExtractRow pv={pv} mi={mi} enabled={enabled} image={image}
-                                            modalEndInfo={modalEndInfo}/>
-                }
+                                            modalEndInfo={modalEndInfo}/>}
+                {isHiPS(plot) && <HiPSDebugRow pv={pv} mi={mi} enabled={enabled} image={image}
+                                                    modalEndInfo={modalEndInfo}/> }
             </Stack>
         </DropDownMenu>
     );
@@ -372,7 +375,6 @@ function startExtraction(element,type,modalEndInfo) {
 const ExtractRow= ({pv,enabled,modalEndInfo,mi}) => {
     const plot= primePlot(pv);
     const standIm= isImage(plot) && !isThreeColor(pv);
-    const hipsWithFits= isHiPS(plot) && plot.hasFits;
     const cube= standIm && isCube(primePlot(pv));
     return (
         <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
@@ -390,9 +392,27 @@ const ExtractRow= ({pv,enabled,modalEndInfo,mi}) => {
                            enabled={standIm&&enabled}
                            onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
-            {isHiPS(plot) && <ExtractTile tip='Extract FITS tile from HiPS' enabled={hipsWithFits&&enabled}
-                           onClick={(element) => startExtraction(element,HIPS_TILE,modalEndInfo)}
-                           visible={mi.extractPoint}/> }
+        </Stack>
+    );
+};
+
+
+const HiPSDebugRow= ({pv,enabled,modalEndInfo,mi}) => {
+    const plot= primePlot(pv);
+    if (!isHiPS(plot)) return;
+    const hipsWithFits= isHiPS(plot) && plot.hasFits;
+    return (
+        <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
+            <Typography level='body-md' width='10em'>HiPS Debug:</Typography>
+            <HiPSGridButton tip='Show HiPS/Healpix grid'
+                      onClick={() => {
+                          const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
+                          dispatchAttachLayerToPlot(dl.drawLayerId,plot.plotId);
+                      }}
+                      visible={mi.hipsGrid}/>
+            <ExtractTile tip='Extract FITS tile from HiPS' enabled={hipsWithFits&&enabled}
+                                          onClick={(element) => startExtraction(element,HIPS_TILE,modalEndInfo)}
+                                          visible={mi.extractPoint}/>
         </Stack>
     );
 };

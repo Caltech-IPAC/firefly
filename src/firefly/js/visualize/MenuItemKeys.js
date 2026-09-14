@@ -50,7 +50,8 @@ export function getDefMenuItemKeys() {
         filterTableRows: true,
         clearTableFilters: true,
         imageStatistics: true,
-        clickToSearch: true
+        clickToSearch: true,
+        hipsGrid: true
     };
     return {...MenuItemKeys, ...getAppOptions()?.MenuItemKeys};
 }
