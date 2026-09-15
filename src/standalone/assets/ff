@@ -23,10 +23,37 @@ fi
 
 binDir="${INSTALL_DIR}/bin"
 applicationDir="${INSTALL_DIR}/application/current"
+configJsonFile="$fireflyDir/config.json"
+JQ=$(which jq || echo "$binDir/jq")
 
 isTrue() {
      v=$(echo "$1" | tr '[:upper:]' '[:lower:]')
      if [[ "$v" == "true" || "$v" == "t" ]]; then return 0; else return 1; fi
+}
+
+# --------------------------
+# stopOrphanedRedis: kill any redis-server process bound to the configured redis port.
+# Normally the embedded Redis child is stopped automatically by a JVM shutdown hook when
+# the main Firefly process receives SIGTERM (a plain "kill"), so this is a no-op in the
+# common case. It only matters if Firefly was previously killed with -9, crashed, or the
+# pid file was lost, leaving the redis-server child orphaned.
+# `ps aux` + awk is used because column 2 is the PID in both BSD ps (macOS) and GNU ps
+# (Linux), so this works the same on both platforms.
+# --------------------------
+
+stopOrphanedRedis() {
+  if [ ! -f "$configJsonFile" ]; then
+    return
+  fi
+  redisPort=$($JQ -r ".ports.redis" "$configJsonFile" 2> /dev/null)
+  if [[ -z "$redisPort" || "$redisPort" == "null" ]]; then
+    return
+  fi
+  redisPids=$(ps aux | grep -v grep | grep -E "redis-server.*:${redisPort}([^0-9]|$)" | awk '{print $2}')
+  for pid in $redisPids; do
+    echo "Stopping orphaned redis-server process at process id $pid"
+    kill "$pid" 2> /dev/null
+  done
 }
 
 
@@ -37,10 +64,25 @@ stop() {
    if [[ -f "$pidFile" && -s "$pidFile" && -r "$pidFile" ]]; then
         pid=$(cat "$pidFile");
         kill "$pid"
-        echo "Stopping firefly at process id $pid"
+        echo "Stopping firefly at process id $pid..."
+        echo "Waiting for Firefly to stop..."
+        sleep .25
+        for i in {1..3}; do
+          if ! kill -0 "$pid" 2> /dev/null; then
+            break
+          else
+            sleep 1
+          fi
+        done
+        if kill -0 "$pid" 2> /dev/null; then
+          echo "Firefly did not stop after 3 seconds, forcing it to stop at process id $pid..."
+          kill -9 "$pid"
+        fi
+        echo "Firefly stopped."
    else
-        echo "Filefly is not running or pid file was lost"
+        echo "Firefly is not running or pid file was lost"
    fi
+   stopOrphanedRedis
   fi
 }
 
@@ -54,8 +96,9 @@ uninstall() {
     echo
     doUninstallLower=$(echo "$doUninstall" | tr '[:upper:]' '[:lower:]')
     if [ "$doUninstallLower" = "y" ]; then
-      echo removing "$fireflyDir"
+      echo "removing $fireflyDir and ~/.local/bin/ff"
       /bin/rm -rf "$fireflyDir"
+      /bin/rm -f ~/.local/bin/ff
       echo removing "$INSTALL_DIR"
       exec /bin/rm -rf "$INSTALL_DIR"
     fi
@@ -86,7 +129,8 @@ stat() {
   if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "show if the firefly server is running and healthy"
   else
-    up=$(curl -sD - -o /dev/null http://localhost:8888/firefly/healthz | head -1)
+    ffPort=$($JQ -r ".ports.firefly" "$configJsonFile" 2> /dev/null)
+    up=$(curl -sD - -o /dev/null http://localhost:"$ffPort"/firefly/healthz | head -1)
     if [[ "$up" == *200* ]]; then
         echo "The Firefly server is running and healthy"
     elif [[ "$up" == "" ]]; then

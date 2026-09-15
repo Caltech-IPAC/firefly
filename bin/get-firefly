@@ -1,9 +1,81 @@
 #!/bin/bash
-INSTALL_SCRIPT="https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/install.sh"
-# use the following line for testing the code from a PR, modify for your PR
-# INSTALL_SCRIPT="https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/FIREFLY-1980-standalone/bin/install.sh"
 
-curl -s ${INSTALL_SCRIPT} > ./install.sh
-chmod +x ./install.sh
-./install.sh -dontConfirm "$@"
-/bin/rm -f ./install.sh
+# --------------------------
+# This script start the Firefly install on an end-user machine
+# --------------------------
+
+# --------------------------
+# How to use
+#
+# Production:
+#    curl -L https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/get-firefly | bash
+#
+# Testing in a branch:
+#    curl -L https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/FIREFLY-2099-stand-hard/bin/get-firefly | FIREFLY_BRANCH=Firefly-xxx bash
+# --------------------------
+
+ref="${FIREFLY_BRANCH:-dev}"
+INSTALL_SCRIPT="https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/${ref}/bin/install.sh"
+
+downloadedInstallScript=""
+jobArtifactZip=""
+jobExtractDir=""
+trap '[ -n "$downloadedInstallScript" ] && rm -f "$downloadedInstallScript"; [ -n "$jobArtifactZip" ] && rm -f "$jobArtifactZip"; [ -n "$jobExtractDir" ] && rm -rf "$jobExtractDir"' EXIT
+
+downloadedInstallScript=$(mktemp -t firefly-install.XXXXXX) || { echo "Failed to create a temporary file"; exit 1; }
+
+curl -fsSL "${INSTALL_SCRIPT}" -o "$downloadedInstallScript"
+curlStatus=$?
+if [ $curlStatus -ne 0 ] || [ ! -s "$downloadedInstallScript" ]; then
+  echo "Failed to download the Firefly installer from $INSTALL_SCRIPT"
+  exit 1
+fi
+chmod +x "$downloadedInstallScript"
+
+# --------------------------
+# The following two environment variables are only for testing.
+
+# FIREFLY_RUN_ID: when set, install the build of standalone.zip from that
+# specific GitHub Actions run (via nightly.link) instead of the latest formal GitHub
+# release. If testing is set up correctly then FIREFLY_RUN_ID should not be necessary
+#
+# FIREFLY_BRANCH: if FIREFLY_RUN_ID isn't set but this is, auto-resolve the latest
+# successful workflow_dispatch run on that branch.
+# Note this can't tell whether that run was actually a standalone_only
+# build - if not, nightly.link will just report no artifact found for it.
+#
+# --------------------------
+
+installUrlArgs=()
+if [ -z "$FIREFLY_RUN_ID" ] && [ -n "$FIREFLY_BRANCH" ]; then
+  if ! command -v jq > /dev/null 2>&1; then
+    echo "jq is required to resolve FIREFLY_BRANCH to a run id; install jq or set FIREFLY_RUN_ID directly"
+    exit 1
+  fi
+  runApiUrl="https://api.github.com/repos/Caltech-IPAC/firefly/actions/workflows/build_publish.yml/runs?branch=${FIREFLY_BRANCH}&status=success&event=workflow_dispatch"
+  FIREFLY_RUN_ID=$(curl -fsSL "$runApiUrl" | jq -r '.workflow_runs[0].id // empty')
+  if [ -z "$FIREFLY_RUN_ID" ]; then
+    echo "No successful workflow_dispatch run found for branch $FIREFLY_BRANCH"
+    exit 1
+  fi
+fi
+
+if [ -n "$FIREFLY_RUN_ID" ]; then
+  runLinkUrl="https://nightly.link/Caltech-IPAC/firefly/actions/runs/${FIREFLY_RUN_ID}/standalone-zip.zip"
+  jobArtifactZip=$(mktemp -t firefly-build-artifact.XXXXXX) || { echo "Failed to create a temporary file"; exit 1; }
+  curl -fsSL "$runLinkUrl" -o "$jobArtifactZip"
+  curlStatus=$?
+  if [ $curlStatus -ne 0 ] || [ ! -s "$jobArtifactZip" ]; then
+    echo "Failed to download the build from $runLinkUrl"
+    exit 1
+  fi
+  jobExtractDir=$(mktemp -d -t firefly-build-extract.XXXXXX) || { echo "Failed to create a temporary directory"; exit 1; }
+  if ! unzip -oq "$jobArtifactZip" -d "$jobExtractDir" || [ ! -f "$jobExtractDir/standalone.zip" ]; then
+    echo "Failed to expand the build artifact from $runLinkUrl"
+    exit 1
+  fi
+  installUrlArgs=(-url "$jobExtractDir/standalone.zip")
+fi
+
+# now execute the real install script
+"$downloadedInstallScript" -dontConfirm "${installUrlArgs[@]}" "$@"
