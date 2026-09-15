@@ -7,8 +7,9 @@ import PropTypes from 'prop-types';
 import {sortBy} from 'lodash';
 import {AutocompleteOption} from '@mui/joy';
 import {resolveNaifidObj} from  './NaifidPanelWorker.js';
-import {AutoCompleteInputView, useAsyncOptions, useDebounced} from './AutoCompleteInput.jsx';
+import {AutoCompleteInputView} from './AutoCompleteInput.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useAsyncOptions, useDebounced} from './SimpleComponent.jsx';
 import {TargetFeedback} from './TargetFeedback';
 
 

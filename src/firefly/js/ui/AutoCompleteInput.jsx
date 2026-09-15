@@ -1,11 +1,10 @@
-import React, {memo, useEffect, useRef, useState} from 'react';
+import React, {memo, useState} from 'react';
 import {bool, string, object, shape, arrayOf, func, oneOf, oneOfType, element, node, any} from 'prop-types';
 import {Autocomplete, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {isArray, isEmpty, omit} from 'lodash';
 
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {inputFieldTooltipProps} from 'firefly/ui/InputFieldView.jsx';
-import {logger} from '../util/Logger.js';
 
 
 // firefly / field-group concerns that must not be spread onto the Joy <Autocomplete>
@@ -177,60 +176,6 @@ const confirmListedValue= (v,props) => {
     if (isEmpty(options) || optionContain) return v;
     return defaultValue ?? (options[0]?.value ?? options[0]);
 };
-
-
-/**
- * Coalesce rapid changes: returns value only after it has stayed unchanged for `wait` ms.
- * @param {*} value - the value to debounce
- * @param {number} wait - quiet period in ms
- * @returns {*} the latest value that has been stable for `wait` ms
- */
-export function useDebounced(value, wait) {
-    const [debounced, setDebounced]= useState(value);
-    useEffect(() => {
-        const id= setTimeout(() => setDebounced(value), wait);
-        return () => clearTimeout(id);
-    }, [value, wait]);
-    return debounced;
-}
-
-
-/**
- * Resolve a list of options that the caller may produce either synchronously or asynchronously.
- * Options from a superseded request are dropped; side effects inside getOptions are not.
- * @param {function} getOptions - (value) => Array|Promise<Array>, called whenever value changes
- * @param {string} value - the current input value to look options up for
- * @returns {{options:Array, loading:boolean}}
- */
-export function useAsyncOptions(getOptions, value) {
-    const [result, setResult]= useState({options:[], loading:false});
-    const getOptionsRef= useRef(getOptions);
-    const latestRef= useRef(undefined);
-
-    useEffect(() => { getOptionsRef.current= getOptions; }); // keep the callback fresh without re-querying
-
-    useEffect(() => {
-        const arrayOrPromise= getOptionsRef.current?.(value);
-        latestRef.current= arrayOrPromise;
-        if (!arrayOrPromise || isArray(arrayOrPromise)) {
-            setResult({options: arrayOrPromise || [], loading:false});
-            return;
-        }
-        setResult((r) => ({options:r.options, loading:true})); // keep showing the old list until the new one lands
-        Promise.resolve(arrayOrPromise)
-            .then((options) => {
-                if (arrayOrPromise!==latestRef.current) return; // a newer request was made, this one is stale
-                setResult({options: isArray(options) ? options : [], loading:false});
-            })
-            .catch((err) => {
-                if (arrayOrPromise!==latestRef.current) return;
-                logger.error(err);
-                setResult({options:[], loading:false});
-            });
-    }, [value]);
-
-    return result;
-}
 
 
 function Decorator({children, setOpen}) {

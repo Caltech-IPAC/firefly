@@ -31,8 +31,7 @@ export { SwitchInputFieldView }                                 from '../src/fir
 // ─── Suggest / autocomplete ──────────────────────────────────────────────────
 
 export { AutoCompleteInput,
-         AutoCompleteInputView,
-         useAsyncOptions }                                      from '../src/firefly/js/ui/AutoCompleteInput.jsx';
+         AutoCompleteInputView }                                from '../src/firefly/js/ui/AutoCompleteInput.jsx';
 
 // ─── Target ──────────────────────────────────────────────────────────────────
 
