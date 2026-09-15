@@ -11,7 +11,7 @@ import {ValidationField} from './ValidationField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
+import {AutoCompleteInput} from './AutoCompleteInput.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
@@ -337,8 +337,9 @@ function FieldGroupTestView ({fields={}}) {
             <InputGroup labelWidth={110}>
                 <TargetPanel examples={defaultExamples} />
                 <NaifidPanel label={'NAIF-ID:'} popStyle={{width: 300, padding:2}}/>
-                <SuggestBoxInputField
+                <AutoCompleteInput
                     fieldKey='suggestion1'
+                    orientation='vertical'
                     initialState= {{
                         value: '',
                         validator:  (val) => {
@@ -352,10 +353,7 @@ function FieldGroupTestView ({fields={}}) {
                         label : 'Suggestion Field:',
                         labelWidth : 100
                     }}
-                    getSuggestions = {(val)=>{
-                        const suggestions = validSuggestions.filter((el)=>{return el.startsWith(val);});
-                        return suggestions.length > 0 ? suggestions : validSuggestions;
-                    }}
+                    options={validSuggestions}
                 />
 
                 {field1}
