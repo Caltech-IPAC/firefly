@@ -284,16 +284,25 @@ const UnitXref = {
         'W/m^2/Hz' : '%s',
         'erg/s/cm^2/Hz': '%s * 1.0E+3',
         Jy : '%s * 1.0E+26',
+        uJy : '%s * 1.0E+32',
     },
     'erg/s/cm^2/Hz' : {
         'W/m^2/Hz': '%s / 1.0E+3',
         'erg/s/cm^2/Hz' : '%s',
         Jy : '%s * 1.0E+23',
+        uJy : '%s * 1.0E+29',
     },
     Jy : {
         'W/m^2/Hz' : '%s / 1.0E+26', //SI units
         'erg/s/cm^2/Hz': '%s / 1.0E+23', //CGS units
         Jy : '%s',
+        uJy : '%s * 1.0E+6',
+    },
+    uJy : {
+        'W/m^2/Hz' : '%s / 1.0E+32',
+        'erg/s/cm^2/Hz': '%s / 1.0E+29',
+        Jy : '%s / 1.0E+6',
+        uJy : '%s',
     },
     // flux density in wavelength space -------------
     'erg/s/cm^2/A' : {
@@ -406,6 +415,10 @@ const UnitMetadata = {
     },
     Jy : {
         type: Measurement.F_NU.key,
+    },
+    uJy : {
+        type: Measurement.F_NU.key,
+        label: '\\mu Jy',
     },
     // flux density in wavelength space -------------
     'erg/s/cm^2/A' : {
