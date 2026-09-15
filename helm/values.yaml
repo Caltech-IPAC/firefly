@@ -6,9 +6,6 @@ replicaCount: 1
 # -- Additional labels added to all resources (e.g. owner: jenkins).
 extraLabels: {}
 
-# -- Interval for cleaning up temporary files.
-cleanupInterval: "1h"
-
 image:
   # -- Image repository.
   repository: ghcr.io/caltech-ipac/firefly
