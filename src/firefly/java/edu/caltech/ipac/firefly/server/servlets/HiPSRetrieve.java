@@ -53,7 +53,7 @@ public class HiPSRetrieve {
     private static final long minFitsFileLengthOnError = 5*K;
     private static final long minSizeCacheFile = K;
 
-    private static record DeadEntry(long time, int status) {};
+    private record DeadEntry(long time, int status) {};
     private static final Map<String, DeadEntry> deadFitsUrl= Collections.synchronizedMap(new HashMap<>());
     private static final int MAX_DEAD_URL_SIZE= 10000;
     private static final ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -241,7 +241,7 @@ public class HiPSRetrieve {
         var entry= deadFitsUrl.get(urlStr);
         if (entry == null) return false;
         if (deadFitsUrl.size() > MAX_DEAD_URL_SIZE) cleanDeadFitsUrlCache();
-        if (System.currentTimeMillis() > entry.status) {
+        if (System.currentTimeMillis() > entry.time) {
             deadFitsUrl.remove(urlStr);
             return false;
         }

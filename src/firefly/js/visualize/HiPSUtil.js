@@ -25,7 +25,7 @@ import {findViewerWithItemId, getMultiViewRoot} from './MultiViewCntlr';
 import {currentP, getFoV, primePlot} from './PlotViewUtil.js';
 import {makeDevicePt, makeImagePt, makeWorldPt} from './Point.js';
 import {makeHiPSProjection} from './projection/Projection';
-import RangeValues, {ABSOLUTE_STR, PERCENTAGE_STR, STRETCH_ASINH, ZSCALE} from './RangeValues';
+import RangeValues, {ABSOLUTE_STR, STRETCH_ASINH, ZSCALE} from './RangeValues';
 import {IMAGE} from './VisConst';
 import {computeDistance, convertCelestial, toDegrees, toRadians} from './VisUtil.js';
 import {changeHiPSProjectionCenter, getScreenPixScaleArcSec, isHiPS, isHiPSAitoff} from './WebPlot.js';
@@ -110,7 +110,7 @@ export function getTilePixelAngSize(nOrder) {
  * for drawing.
  */
 export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
-    if (!plot) return {norder:-1, useAllSky:false};
+    if (!plot) return {norder:-1, useAllSky:false, isMaxOrder:false, desiredNorder:-1};
 
     const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
     if (screenPixArcsecSize> 130) return  {useAllSky:true, norder:2, desiredNorder:2};
@@ -177,18 +177,6 @@ function getNOrderForPixArcSecSize(sizeInArcSec) {
     return norder;
 }
 
-function getCatalogNOrderForPixArcSecSize(sizeInArcSec) {
-    const sizeInArcSecKey= sizeInArcSec.toFixed(7);
-    let norder= catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey];
-    if (isUndefined(norder)) {
-        const nside = HealpixIndex.calculateNSide(sizeInArcSec*56);
-        norder = Math.log2(nside);
-        norder= Math.max(5, norder);
-        catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
-    }
-    return norder;
-}
-
 /**
  * @param plot
  * @param nOrder
@@ -217,15 +205,10 @@ function makeHipsTilePath(plot,nOrder,tileNumber,ext) {
 }
 
 export function makeHipsFitsTilePath(plot,nOrder,tileNumber) {
-    let tileUrl;
-    if (plot.hasFitsCube && plot.cubeDepth>1) {
-        tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
-        tileUrl= tileUrl.replace(/_\d*.fits/,'_cube.fits');
-    }
-    else {
-        tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
-    }
-    return tileUrl;
+    const tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
+    return plot.hasFitsCube && plot.cubeDepth>1
+        ? tileUrl.replace(/(_\d+)?\.fits$/,'_cube.fits')
+        : tileUrl;
 }
 
 /**
@@ -435,7 +418,6 @@ export function getHealpixPixelAtNorder(tileNorder, wp) {
     const tilePixel= ang2pixNest(polar.theta, polar.phi,2**(tileNorder));
     const pixel= ang2pixNest(polar.theta, polar.phi,2**(tileNorder+9));
     const tileCoords= healpixPixelTo512TileXY(pixel);
-    // const tileImagePt= makeImagePt(tileCoords.x,512-tileCoords.y-1);
     const tileImagePt= makeImagePt(tileCoords.x,512-tileCoords.y-1);
     return { norder:tileNorder+9, tileNorder, pixel, tilePixel, tileCoords, tileImagePt};
 }
