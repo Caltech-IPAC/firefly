@@ -5,7 +5,8 @@
 import {isEmpty} from 'lodash';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer} from '../DrawLayerDispatch';
 import {
-    dispatchAttributeChange, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchFlip, dispatchPositionLocking,
+    dispatchAttributeChange, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangePrimePlot,
+    dispatchFlip, dispatchPositionLocking,
     dispatchRecenter, dispatchRotate, dispatchUpdateViewSize, dispatchZoom
 } from '../ImagePlotDispatch';
 import {
@@ -14,9 +15,11 @@ import {
 import {dlRoot, visRoot} from '../VisStoreRoots';
 import {isEastLeftOfNorth, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {
-    applyToOnePvOrAll, findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType,
+    applyToOnePvOrAll, findCurrentCenterPoint, getCubePlaneIdx, getCenterOfProjection, getCorners, getCubeLength,
+    getDrawLayerByType,
     getMatchingRotationAngle,
-    getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot, refreshP
+    getPlotViewAry, getPlotViewById, hasWCSProjection, isCube, isRotationMatching, operateOnOthersInPositionGroup,
+    primePlot, refreshP, currentP
 } from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
@@ -165,6 +168,7 @@ export function wcsMatchActionCreator(action) {
                 payload: {wcsMatchCenterWP,wcsMatchType:false,mpwWcsPrimId:masterPv.plotId}
             });
         }
+        if (isCube(masterPlot)) matchCubePlanes(masterPlot.plotId);
     };
 }
 
@@ -181,6 +185,30 @@ export function locateOtherIfMatched(vr,plotId) {
         const imagePv= vr.plotViewAry.find( (aPv) => isImage(primePlot(aPv)));
         matchImageToHips(pv, imagePv);
     }
+}
+
+export function matchCubePlanes(plotId) {
+    setTimeout(
+        () => {
+            const {pv,plot}= currentP(plotId);
+            if (isCube(plot) && visRoot().positionLock) {
+                const idx= getCubePlaneIdx(plot);
+                const cubeLength= getCubeLength(pv);
+                operateOnOthersInPositionGroup(visRoot(), pv,
+                    (testPv) => {
+                        testPv= refreshP(testPv)                ;
+                        const testPlot= primePlot(testPv);
+                        if (!isCube(testPlot)) return;
+                        const {plotId}= testPlot;
+                        if (getCubeLength(testPlot) === cubeLength && getCubePlaneIdx(testPlot) !== idx) {
+                            isHiPS(testPlot)
+                                ? dispatchChangeHiPS({plotId, cubeIdx:idx})
+                                : dispatchChangePrimePlot({plotId,primeIdx:idx});
+                        }
+                    },
+                    true, true);
+            }
+        } ,5);
 }
 
 
@@ -216,7 +244,7 @@ function imageToHips(hipsPv, imagePv) {
     const wp= getCenterOfProjection(hipsPlot);
     const imageCenter= CCUtil.getWorldCoords(imagePlot, findCurrentCenterPoint(imagePv));
     if (!pointEquals(imageCenter,wp)) {
-        dispatchRecenter({plotId: imagePlot.plotId, centerPt:wp});
+        dispatchRecenter({plotId: imagePlot.plotId, centerPt:wp, updateWcsPrimId:false });
         imagePv= refreshP(imagePv);
         imagePlot= refreshP(imagePlot);
     }

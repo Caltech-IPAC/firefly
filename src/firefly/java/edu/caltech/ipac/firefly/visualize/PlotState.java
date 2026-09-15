@@ -171,10 +171,6 @@ public class PlotState {
 
     public RangeValues getRangeValues() { return get(firstBand()).getRangeValues(); }
 
-    public BandState.FileAndHeaderInfo getFileAndHeaderInfo(Band band) {
-        return get(band).getFileAndHeaderInfo();
-    }
-
     public String getWorkingFitsFileStr(Band band) { return band!=null ? get(band).getWorkingFitsFileStr() : null; }
     public void setWorkingFitsFileStr(String fileStr, Band band) { get(band).setWorkingFitsFileStr(fileStr); }
 

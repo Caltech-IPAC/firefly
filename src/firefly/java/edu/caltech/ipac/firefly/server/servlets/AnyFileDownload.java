@@ -127,7 +127,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         SrvParam sp= new SrvParam(req.getParameterMap());
         String hips= sp.getRequired(HIPS_PARAM);
         boolean alwaysUseCached= sp.getOptionalBoolean(ALWAYS_USE_CACHED,false);
-        FileInfo fi= HiPSRetrieve.retrieveHiPSData(hips, null, alwaysUseCached);
+        FileInfo fi= HiPSRetrieve.retrieveHiPSData(hips, alwaysUseCached);
 
         if (fi.getFile()==null) {
             if (fi.getResponseCode()==204) {
