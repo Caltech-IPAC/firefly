@@ -76,6 +76,7 @@ public class FireflyApplication {
             "application/octet-stream"
     ));
     private final static File pidTextOutFile= new File(ffDir, "pid.txt");
+    private final static File fireflyPortTextOutFile= new File(ffDir, "port.txt");
     private static final boolean useLogFile= true;
     private static final int DEFAULT_FIREFLY_PORT = 8888;
     private static String fireflyVersion;
@@ -122,7 +123,7 @@ public class FireflyApplication {
             connector.setProperty("useSendfile", "false");
             connector.setProperty("compressibleMimeType", compressibleMimeType);
             tomcat.start();
-            savePid();
+            saveInfo(fireflyPort);
             tomcatStarted = true;
         }
 
@@ -212,8 +213,9 @@ public class FireflyApplication {
     }
 
 
-    public static void savePid() {
+    public static void saveInfo(int fireflyPort) {
         FileUtil.writeStringToFile(pidTextOutFile,ProcessHandle.current().pid()+"");
+        FileUtil.writeStringToFile(fireflyPortTextOutFile,fireflyPort+"");
     }
 
     public static String saveVersion() {
@@ -381,6 +383,7 @@ public class FireflyApplication {
                            tomcat.stop();
                            tomcat.destroy();
                            var ignore= pidTextOutFile.delete();
+                           ignore= fireflyPortTextOutFile.delete();
                        }
                    } catch (Exception e) {
                        e.printStackTrace();
@@ -412,6 +415,7 @@ public class FireflyApplication {
                 tomcat.stop();
                 tomcat.destroy();
                 var ignore= pidTextOutFile.delete();
+                ignore= fireflyPortTextOutFile.delete();
             }
         } catch (Exception e) {
             e.printStackTrace();

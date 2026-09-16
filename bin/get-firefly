@@ -63,7 +63,7 @@ fi
 if [ -n "$FIREFLY_RUN_ID" ]; then
   runLinkUrl="https://nightly.link/Caltech-IPAC/firefly/actions/runs/${FIREFLY_RUN_ID}/standalone-zip.zip"
   jobArtifactZip=$(mktemp -t firefly-build-artifact.XXXXXX) || { echo "Failed to create a temporary file"; exit 1; }
-  curl -fsSL "$runLinkUrl" -o "$jobArtifactZip"
+  curl -fSL "$runLinkUrl" -o "$jobArtifactZip"
   curlStatus=$?
   if [ $curlStatus -ne 0 ] || [ ! -s "$jobArtifactZip" ]; then
     echo "Failed to download the build from $runLinkUrl"

@@ -269,7 +269,8 @@ fi
 # make the script executable, put some in correct place
 # --------------------------
 
-requiredFiles=("standalone_cleanup.sh" "$startScript" "startFireflyServer.sh" "javaInstaller.sh" "updater.sh")
+requiredFiles=("standalone_cleanup.sh" "$startScript" "startFireflyServer.sh" \
+               "stopFireflyServer.sh" "statusFireflyServer.sh" "javaInstaller.sh" "updater.sh")
 missingFiles=""
 for f in "${requiredFiles[@]}"; do
   if [ ! -f "$applicationDir/$f" ]; then
@@ -286,6 +287,8 @@ cp "$scriptPath" "$applicationDir/install.sh"
 chmod 775 "$applicationDir/standalone_cleanup.sh" \
           "$applicationDir/$startScript" \
           "$applicationDir/startFireflyServer.sh" \
+          "$applicationDir/stopFireflyServer.sh" \
+          "$applicationDir/statusFireflyServer.sh" \
           "$applicationDir/javaInstaller.sh" \
           "$applicationDir/updater.sh" \
           "$applicationDir/install.sh"
