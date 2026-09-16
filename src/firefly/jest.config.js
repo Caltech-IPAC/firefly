@@ -9,7 +9,7 @@ const needsTestData = ['/__tests__/Projection-test\\.js$', '/__tests__/Wavelengt
 
 module.exports = {
     ...baseConfig,
-    //add overrides here (if any)
+    // add overrides here (if any)
 
     // jest replaces its default rather than merging, so '/node_modules/' has to be repeated.
     testPathIgnorePatterns: [
