@@ -194,7 +194,7 @@ public class FireflyApplication {
 
     public static boolean isNewVersionAvailable(String currVer, String availableVer) {
         if (currVer==null) currVer= "0.0.0";
-        if (availableVer==null) availableVer= "0,0.0";
+        if (availableVer==null) availableVer= "0.0.0";
         var cVer= currVer.split("\\.");
         var nVer= availableVer.split("\\.");
         if (cVer.length!=3 || nVer.length!=3) return false;
