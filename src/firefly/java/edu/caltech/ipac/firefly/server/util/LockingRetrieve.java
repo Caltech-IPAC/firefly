@@ -9,10 +9,10 @@ import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
-import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileCacheHelper;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.RetrieveUtil;
 import edu.caltech.ipac.util.download.RetrieveUtil.ServiceCaller;
@@ -40,7 +40,7 @@ import java.util.concurrent.Callable;
  */
 public class LockingRetrieve {
 
-    private static final Map<BaseNetParams, Object> activeRequest = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<BaseNetParams, LockEntry> activeRequest = Collections.synchronizedMap(new HashMap<>());
     private static final Map<BaseNetParams, DownloadProgress> activeListeners = Collections.synchronizedMap(new HashMap<>());
 
     public static FileInfo serviceWithCacheMsg(ImageServiceParams params, ServiceCaller svcCaller) throws FailedRequestException {
@@ -48,7 +48,7 @@ public class LockingRetrieve {
     }
 
     /**
-     * download file with locking, cacheing, and messaging
+     * download file with locking, caching, and messaging
      * @param uri - accepts a URL, String, S3Ref, or UriRef
      **/
     public static FileInfo downloadWithCacheMsg(Object uri) throws FailedRequestException {
@@ -56,7 +56,7 @@ public class LockingRetrieve {
     }
 
     /**
-     * download file with locking, cacheing, and messaging
+     * download a uri with locking, caching, and messaging
      * @param uri - accepts a URL, String, S3Ref, or UriRef
      **/
     public static FileInfo downloadWithCacheMsg(Object uri, File downloadDir) throws FailedRequestException {
@@ -69,43 +69,66 @@ public class LockingRetrieve {
         return downloadWithCacheMsg(params);
     }
 
-    /** download file with locking, cacheing, and messaging */
+    /** download a uri with locking, caching, and messaging */
     public static FileInfo downloadWithCacheMsg(UriRefParams params) throws FailedRequestException {
         return lockingRetrieve(params, () -> RetrieveUtil.downloadCaching(params, makeDownloadProgressOrFind(params)));
     }
 
-//======================================================================
-//----------------------- Private Methods ------------------------------
-//======================================================================
-
-    private static FileInfo lockingRetrieve(BaseNetParams params, Callable<FileInfo> getter) throws FailedRequestException {
+    public static FileInfo lockingRetrieve(BaseNetParams params, Callable<FileInfo> getter) throws FailedRequestException {
+        LockEntry lockEntry= getLockEntry(params);
         try {
-            Object lockKey= activeRequest.computeIfAbsent(params, k -> new Object());
-            synchronized (lockKey) {
+            synchronized (lockEntry) {
                 return getter.call();
             }
         } catch (Exception e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
         } finally {
-            activeRequest.remove(params);
+            releaseLockEntry(params, lockEntry);
         }
     }
 
-    private static DownloadProgress makeDownloadProgressOrFind(UriRefParams params) { // todo: generalize beyond just plotId
+
+    private static LockEntry getLockEntry(BaseNetParams params) {
+        synchronized (activeRequest) {
+            LockEntry entry = activeRequest.computeIfAbsent(params, k -> new LockEntry());
+            entry.refCount++;
+            return entry;
+        }
+    }
+
+    /** Atomically decrement the refcount, and remove the map entry only if this was the last holder. */
+    private static void releaseLockEntry(BaseNetParams params, LockEntry entry) {
+        synchronized (activeRequest) {
+            entry.refCount--;
+            if (entry.refCount <= 0) activeRequest.remove(params, entry);
+        }
+    }
+
+
+
+    public static boolean isActiveRequest(BaseNetParams params) { return activeRequest.containsKey(params); }
+    public static boolean isActiveRequest(String urlStr) { return isActiveRequest(new UriRefParams(urlStr)); }
+
+    public static DownloadListener makeDownloadProgressOrFind(UriRefParams params) { // todo: generalize beyond just plotId
         if (params==null || params.getStatusKey()== null) return null;
-        DownloadProgress dl;
-
-        if (activeListeners.containsKey(params)) {
-            dl = activeListeners.get(params);
-            dl.addPlotId(params.getPlotId());
+        synchronized (activeListeners) {
+            DownloadProgress dl = activeListeners.get(params);
+            if (dl!=null) {
+                dl.addEntry(params);
+            }
+            else {
+                dl= new DownloadProgress(params) {
+                    public void downloadDone() { activeListeners.remove(params); }
+                };
+                activeListeners.put(params, dl);
+            }
+            return dl;
         }
-        else {
-            dl= new DownloadProgress(params.getStatusKey(), params.getPlotId());
-            activeListeners.put(params, dl);
-        }
-        return dl;
     }
 
+//======================================================================
+//----------------------- Private Methods ------------------------------
+//======================================================================
 
     private static FileInfo retrieveImageService(ImageServiceParams params, ServiceCaller svcCaller) throws IOException, FailedRequestException {
         FileInfo fileInfo= FileCacheHelper.getFileInfo(params);
@@ -116,29 +139,34 @@ public class LockingRetrieve {
         return fileInfo;
     }
 
-    private static class DownloadProgress implements DownloadListener {
-        private final String key;
-        private final List<String> plotIdList= new ArrayList<>();
+    private static abstract class DownloadProgress implements DownloadListener {
+        private record ListenerEntry(String key, String id) {}
+        private final List<ListenerEntry> entryList = new ArrayList<>();
 
-        DownloadProgress(String key, String plotId) {
-            this.key = key;
-            plotIdList.add(plotId);
+        DownloadProgress(BaseNetParams params) { addEntry(params); }
+
+        synchronized void addEntry(BaseNetParams params) {
+            if (!params.getNotify()) return;
+            entryList.add(new ListenerEntry(params.getStatusKey(),params.getId()));
         }
 
-        void addPlotId(String plotId) {plotIdList.add(plotId);}
-
+        /**
+         * call the listeners for each plot id. We don't care about synchronization when reading the list since the next
+         * call will fix it. Also, we don't want to sync when reading because that will be done very often
+         * @param ev
+         */
         public void dataDownloading(DownloadEvent ev) {
-            if (key == null) return;
-            String offStr = "";
+            if (entryList.isEmpty()) return;
             long current= ev.getCurrent();
             long max= ev.getMax();
-            if (max > 0 && current<max) {
-                offStr = " of " + FileUtil.getSizeAsString(max,true);
-            }
+            var offStr= (max > 0 && current<max) ? " of " + FileUtil.getSizeAsString(max,true) : "";
             String messStr = "Retrieved " + FileUtil.getSizeAsString(current,true) + offStr;
-            for(var plotId : plotIdList) {
-                PlotServUtils.updateProgress(key,plotId, ProgressStat.PType.DOWNLOADING, messStr);
-            }
+            entryList.forEach(entry->
+                    PlotServUtils.updateProgress(entry.key,entry.id, ProgressStat.PType.DOWNLOADING, messStr) );
         }
+    }
+
+    private static final class LockEntry {
+            int refCount = 0;
     }
 }

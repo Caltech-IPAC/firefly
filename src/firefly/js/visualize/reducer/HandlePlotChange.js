@@ -32,7 +32,7 @@ import {
     primePlot, clonePvAry, clonePvAryWithPv, applyToOnePvOrAll, applyToOnePvOrOverlayGroup,
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
     getPlotViewById, findCurrentCenterPoint, getCenterOfProjection,
-    isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle, isImageCube,
+    isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle, isCube,
     convertImageIdxToHDU, hasLocalStretchByteData
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
@@ -430,14 +430,14 @@ function changeHipsCoordinateSys(plotViewAry, pv, coordSys, applyToGroup) {
 
 
 function processScroll(state,action) {
-    const {plotId,scrollPt}= action.payload;
+    const {plotId,scrollPt,updateWcsPrimId=true}= action.payload;
     const {plotGroupAry, wcsMatchType}= state;
     let {plotViewAry, mpwWcsPrimId}= state;
     plotViewAry= updatePlotGroupScrollXY(state,plotId,plotViewAry, plotGroupAry,scrollPt);
 
-    if (wcsMatchType) mpwWcsPrimId= plotId;
+    if (wcsMatchType && updateWcsPrimId) mpwWcsPrimId= plotId;
 
-    return Object.assign({},state,{plotViewAry, mpwWcsPrimId});
+    return {...state,plotViewAry, mpwWcsPrimId};
 }
 
 
@@ -718,7 +718,7 @@ function makeNewPrimePlot(state,action) {
     if (!existingPv || isEmpty(existingPv.plots) || existingPv.plots.length<=primeIdx) return state;
     const pv= changePrimePlot(existingPv, primeIdx);
 
-    if (isImageCube(primePlot(pv))) {
+    if (isCube(primePlot(pv))) {
         const primeIdx= convertImageIdxToHDU(pv,pv.primeIdx).cubeIdx;
         pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
             if (!oPv.cube || !oPv.plot || !oPv.plots.length) return oPv;
@@ -833,13 +833,14 @@ function requestLocalData(state, action) {
 }
 
 function updatePlotProgress(state,action) {
-    const {plotId, message:plottingStatusMsg, done, requestKey, callSuccess=true, allowBackwardUpdates= false}= action.payload;
+    const {plotId, message:plottingStatusMsg, done, callSuccess=true, allowBackwardUpdates= false}= action.payload;
     const plotView=  getPlotViewById(state,plotId);
     const plot= primePlot(plotView);
 
     // validate the update
     if (!plotView) return state;
-    if (requestKey!==plotView.request.getRequestKey()) return state;
+
+    if (!matchRequest(action,plotView)) return state;
     if (plotView.plottingStatusMsg===plottingStatusMsg) return state;
 
     const tileDataLoading= isImage(plot) && !plot?.tileData && !hasLocalStretchByteData(plot);
@@ -850,6 +851,11 @@ function updatePlotProgress(state,action) {
     const serverCall= (done || tileDataLoading) ? callSuccess ? 'success' : 'fail' : 'working';
 
     return {...state,plotViewAry:clonePvAry(state,plotId, {plottingStatusMsg,serverCall})};
+}
+
+function matchRequest(action, plotView) {
+    const {payload={}}= action ?? {};
+    return (payload.requestKey===plotView?.request.getRequestKey());
 }
 
 function changeVisibility(state,action) {

@@ -17,12 +17,12 @@ import {RangeValues} from './RangeValues.js';
  * @prop plotRequest
  * @prop rangeValuesSerialize
  * @prop rangeValues
- * @prop directFileAccessData
  * @prop multiImageFile
  * @prop tileCompress
  * @prop cubeCnt
  * @prop fileType
- * @prop cubePlaneNumber
+ * @prop {number} hduNumber
+ * @prop {number} cubePlaneNumber
  */
 
 /**
@@ -37,11 +37,11 @@ export function makeBandState(plotRequest, rangeValues) {
         uploadFileNameStr: undefined,
         imageIdx: 0,
         originalImageIdx: 0,
-        directFileAccessData: undefined,
         multiImageFile: false,
         tileCompress: false,
         cubeCnt: 0,
         cubePlaneNumber: 0,
+        hduNumber: 0,
         fileType: undefined,
         plotRequest : isString(plotRequest) ? WebPlotRequest.parse(plotRequest) : plotRequest,
         rangeValues: isString(rangeValues) ? RangeValues.parse(rangeValues) : rangeValues,
@@ -68,16 +68,15 @@ export function makeBandStateWithJson(bsJson, overridePlotRequest, overrideRV ) 
     bState.tileCompress = Boolean(bsJson.tileCompress);
     bState.cubeCnt= bsJson.cubeCnt || 0;
     bState.cubePlaneNumber= bsJson.cubePlaneNumber || 0;
-    bState.directFileAccessData= bsJson.directFileAccessData;
     bState.fileType= bsJson.fileType;
+    bState.hduNumber= bsJson.hduNumber;
     return bState;
 }
 
 /**
  * @param {BandState|undefined|null} bs
- * @param {boolean} includeDirectAccessData include the directFileAccessData object
  */
-export function convertBandStateToJSON(bs, includeDirectAccessData= true) {
+export function convertBandStateToJSON(bs) {
     if (!bs || !bs.plotRequest) return undefined;
     const json= {};
     json.workingFitsFileStr= bs.workingFitsFileStr;
@@ -89,12 +88,12 @@ export function convertBandStateToJSON(bs, includeDirectAccessData= true) {
 
 
     json.rangeValuesSerialize= bs.rangeValues?.toJSON() ?? undefined;
-    if (includeDirectAccessData) json.directFileAccessData= bs.directFileAccessData;
     if (bs.multiImageFile) json.multiImageFile= bs.multiImageFile;
     if (bs.tileCompress) json.tileCompress = bs.tileCompress;
     if (bs.cubeCnt) json.cubeCnt= bs.cubeCnt;
     if (bs.cubePlaneNumber) json.cubePlaneNumber= bs.cubePlaneNumber;
     if (bs.fileType) json.fileType= bs.fileType;
+    if (bs.hduNumber) json.hduNumber= bs.hduNumber;
     return json;
 
 }

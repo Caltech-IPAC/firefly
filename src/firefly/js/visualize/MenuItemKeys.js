@@ -39,6 +39,7 @@ export function getDefMenuItemKeys() {
         extractZAxis: true,
         extractLine: true,
         extractPoint: true,
+        extractHiPSTile: true,
         extract: true,
         showImageToolbar: true,
         hipsSurveyPopup: true,
@@ -49,7 +50,8 @@ export function getDefMenuItemKeys() {
         filterTableRows: true,
         clearTableFilters: true,
         imageStatistics: true,
-        clickToSearch: true
+        clickToSearch: true,
+        hipsGrid: true
     };
     return {...MenuItemKeys, ...getAppOptions()?.MenuItemKeys};
 }

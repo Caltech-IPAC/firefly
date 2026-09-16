@@ -403,7 +403,6 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
     const wpRequest= WebPlotRequest.makeHiPSRequest(hipsUrl, centerPt, hipsFOVInDeg);
     wpRequest.setPlotGroupId(plotId+'-group');
-    wpRequest.setOverlayIds(['HIPS_GRID_TYPE']);
     wpRequest.setPlotId(plotId);
     if (coordinateSys) {
         wpRequest.setHipsUseCoordinateSys(coordinateSys);

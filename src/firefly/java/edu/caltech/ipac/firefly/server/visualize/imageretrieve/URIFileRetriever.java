@@ -5,9 +5,11 @@ package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.servlets.HiPSRetrieve;
 import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.GcsRef;
 import edu.caltech.ipac.util.download.ResponseMessage;
@@ -37,23 +39,36 @@ public class URIFileRetriever implements FileRetriever {
     }
 
     public FileInfo getFile(WebPlotRequest request, boolean handleAllErrors) throws FailedRequestException, GeomException, SecurityException {
+        var urlStr= request.getURL();
+        if (isFileOnServer(urlStr)) return new LocalFileRetriever().getFileByName(urlStr.substring(7));
+        else if (isHiPSServiceUrl(urlStr)) return retrieveHiPSTile(request);
+        else return getFileDefault(request,handleAllErrors);
+    }
 
-        if ((request.getURL()!=null && request.getURL().toLowerCase().startsWith("file:///"))) {
-            return new LocalFileRetriever().getFileByName(request.getURL().substring(7));
-        }
+    private static FileInfo retrieveHiPSTile(WebPlotRequest request) throws FailedRequestException, SecurityException {
+        var urlStr= request.getURL();
+        var url= URLDownload.makeURL(urlStr);
+        if (url==null) throw new FailedRequestException("Invalid URL");
+        UriRefParams params= new UriRefParams(url);
+        params.setStatusKey(makeProgressKey(request));
+        params.setId(request.getPlotId());
+        params.setCheckForNewer(true);
+        return HiPSRetrieve.retrieveHiPSData(params);
+    }
 
-        var s3Ref= makeS3UriRef(request);
-        var gcsRef= makeGcsUriRef(request);
-        var urlStr = request.getURL();
+    private static FileInfo getFileDefault(WebPlotRequest request, boolean handleAllErrors) throws FailedRequestException, GeomException, SecurityException {
+        String urlStr= request.getURL();
 
-        UriRef.ResourceType resType= UriRef.determineType(urlStr);
-        UriRef url = resType==UriRef.ResourceType.OnPrimUrl ? UriRef.make(makeUrl(urlStr)) : UriRef.make(urlStr);
-
-        var list= Stream.of(url,s3Ref,gcsRef).filter(Objects::nonNull).toList();
-        if (list.isEmpty()) throw new FailedRequestException("url, s3, gcs ref are all null");
-        var progressKey = makeProgressKey(request);
-        UriRefParams params= new UriRefParams(list, progressKey,request.getPlotId());
-        params.setOptimalUriRef(RetrieveUtil.getOptimalUri(params.getUriList(), ServerContext.getCloudEnvironment()));
+        UriRef url = UriRef.determineType(urlStr)==UriRef.ResourceType.OnPrimUrl
+                ? UriRef.make(makeUrl(urlStr))
+                : UriRef.make(urlStr);
+        var uriRefList= Stream.of(url,makeS3UriRef(request),makeGcsUriRef(request))
+                .filter(Objects::nonNull)
+                .toList();
+        if (uriRefList.isEmpty()) throw new FailedRequestException("url, s3, gcs ref are all null");
+        UriRef optimalUri= RetrieveUtil.getOptimalUri(uriRefList, ServerContext.getCloudEnvironment());
+        UriRefParams params= new UriRefParams(uriRefList, makeProgressKey(request), request.getPlotId());
+        params.setOptimalUriRef(optimalUri);
         params.setExpectStaticFile(request.getExpectStaticFile());
         return doGetFile(params, request, handleAllErrors);
     }
@@ -114,6 +129,20 @@ public class URIFileRetriever implements FileRetriever {
                 : request.getURL()!=null
                 ? request.getURL()
                 : ifNotNull(makeS3UriRef(request)).orElse("").get();
+    }
+
+    private static boolean isFileOnServer(String urlStr) {
+        return (urlStr !=null && urlStr.toLowerCase().startsWith("file:///"));
+    }
+
+    private static boolean isHiPSServiceUrl(String urlStr) {
+        if (urlStr == null) return false;
+        if (urlStr.startsWith("http") && urlStr.contains("Norder") && urlStr.contains("Dir") &&
+                urlStr.contains("Npix") && urlStr.endsWith("fits")) {
+            String[] npixNumParts = urlStr.substring(urlStr.indexOf("Npix") + 4).split("[_.]");
+            return npixNumParts.length > 0 && StringUtils.getInt(npixNumParts[0], -1) > -1;
+        }
+        return false;
     }
 
     private static UriRef makeS3UriRef(WebPlotRequest request) {

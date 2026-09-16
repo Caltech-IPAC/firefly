@@ -15,11 +15,12 @@ package edu.caltech.ipac.util.download;
 public abstract class BaseNetParams implements  NetParams {
 
     public String _statusKey;
-    public String _plotId;
+    public String id;
+    public boolean notify= true;
 
-    public BaseNetParams(String statusKey, String plotId) {
+    public BaseNetParams(String statusKey, String id) {
         _statusKey= statusKey;
-        _plotId= plotId;
+        this.id = id;
     }
 
     public abstract String getUniqueString();
@@ -29,15 +30,13 @@ public abstract class BaseNetParams implements  NetParams {
 
     @Override
     public boolean equals(Object o) {
-        boolean retval= false;
         if (this==o) {
-            retval= true;
+            return true;
         }
-        else if (o!=null && o instanceof BaseNetParams) {
-            BaseNetParams other= (BaseNetParams)o;
-            retval= toString().equals(other.toString());
+        else if (o instanceof BaseNetParams other) {
+            return toString().equals(other.toString());
         }
-        return retval;
+        return false;
     }
 
     @Override
@@ -45,8 +44,10 @@ public abstract class BaseNetParams implements  NetParams {
 
     public String getStatusKey() { return _statusKey; }
     public void setStatusKey(String statusKey) { _statusKey= statusKey; }
-    public String getPlotId() { return _plotId; }
-    public void setPlotId(String plotId) { _plotId= plotId; }
+    public String getId() { return id; }
+    public void setId(String plotId) { id = plotId; }
+    public void setNotify(boolean notify) { this.notify= notify; }
+    public boolean getNotify() { return notify; }
 
 }
 
