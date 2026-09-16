@@ -3,6 +3,8 @@
 /* eslint-env node */
 
 module.exports = {
+    // jest 27 changed the default to 'node'; these suites assume a DOM.
+    'testEnvironment': 'jsdom',
     'verbose': true,
     'clearMocks': true,
     'collectCoverage': true,
