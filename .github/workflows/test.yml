@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Scoped to jest only. The Java suite, and the two jest suites skipped below,
-    # read a firefly_test_data checkout that the runner can't reach.
+    # Scoped to jest only. This makes src/firefly/jest.config.js drop the two suites
+    # that read a firefly_test_data checkout, which the runner can't reach.
     env:
       FIREFLY_SKIP_TESTDATA: 'true'
 
