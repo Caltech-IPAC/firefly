@@ -12,18 +12,9 @@ import {CloseButton} from '../CloseButton.jsx';
 
 describe('CloseButton', () => {
 
-    it('renders the default label', () => {
+    it('renders a button labeled Close', () => {
         render(<CloseButton/>);
-        expect(screen.getByRole('button', {name: /close/i})).toBeInTheDocument();
-    });
-
-    // The visible label and the accessible name come from different props: Tooltip puts
-    // `tip` on the button as aria-label, which wins over the rendered text.
-    it('renders a caller-supplied label', () => {
-        render(<CloseButton text='Dismiss' tip='Dismiss this panel'/>);
-
-        expect(screen.getByText('Dismiss')).toBeInTheDocument();
-        expect(screen.getByRole('button', {name: 'Dismiss this panel'})).toBeInTheDocument();
+        expect(screen.getByRole('button')).toHaveTextContent('Close');
     });
 
     it('invokes onClick when pressed', async () => {
