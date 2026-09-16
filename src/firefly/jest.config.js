@@ -2,9 +2,9 @@
 
 const baseConfig = require('../../__jest__/jest.base.config');
 
-// Projection-test and Wavelength-test scan a sibling firefly_test_data checkout while the
-// module is still being declared, so a missing checkout fails the whole suite instead of
-// skipping it.  Set FIREFLY_SKIP_TESTDATA where that data is unavailable, e.g. CI.
+// These two suites read a firefly_test_data checkout at module load, not inside a test,
+// so a missing checkout fails the whole file instead of one test.
+// Set FIREFLY_SKIP_TESTDATA=true to skip them where the data is unavailable.
 const needsTestData = ['/__tests__/Projection-test\\.js$', '/__tests__/Wavelength-test\\.js$'];
 
 module.exports = {
