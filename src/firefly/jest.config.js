@@ -14,6 +14,6 @@ module.exports = {
     // jest replaces its default rather than merging, so '/node_modules/' has to be repeated.
     testPathIgnorePatterns: [
         '/node_modules/',
-        ...(process.env.FIREFLY_SKIP_TESTDATA ? needsTestData : []),
+        ...(process.env.FIREFLY_SKIP_TESTDATA === 'true' ? needsTestData : []),
     ],
 };

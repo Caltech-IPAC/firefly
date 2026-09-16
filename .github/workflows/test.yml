@@ -15,13 +15,12 @@ concurrency:
 
 jobs:
   test:
-    name: unit tests (advisory)
+    name: unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     # Scoped to jest for now. The Java suite, and the two jest suites skipped below,
-    # read a firefly_test_data checkout that no runner can reach; they go in once
-    # there is a way to fetch it.
+    # read a firefly_test_data checkout that no runner can reach currently.
     env:
       FIREFLY_SKIP_TESTDATA: 'true'
 
@@ -45,8 +44,6 @@ jobs:
         with:
           gradle-version: '8.10'
 
-      # jsTest only depends on loadConfig, so this skips prepareWebapp and the Java
-      # compile entirely. -Xmx4g is the Gradle daemon heap, overriding gradle.properties' 8 GB.
       - name: JavaScript tests (jest)
         id: js-tests
         run: gradle --no-daemon -Dorg.gradle.jvmargs=-Xmx4g :firefly:jsTest
