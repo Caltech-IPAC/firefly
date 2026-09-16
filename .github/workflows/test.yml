@@ -19,11 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # Scoped to jest for now. The Java suite, and the two jest suites skipped below,
+    # read a firefly_test_data checkout that no runner can reach; they go in once
+    # there is a way to fetch it.
+    env:
+      FIREFLY_SKIP_TESTDATA: 'true'
+
     steps:
       - uses: actions/checkout@v5
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -39,18 +45,11 @@ jobs:
         with:
           gradle-version: '8.10'
 
-      # Separate steps so each suite reports on its own. `!cancelled()` so a red
-      # jest run still lets the Java suite report, while a superseded run stops promptly.
-      # -Xmx4g is the Gradle daemon heap, overriding gradle.properties' 8 GB; 
-      # the forked test JVM is capped separately at 2 GB by buildScript/tasks.gincl.
+      # jsTest only depends on loadConfig, so this skips prepareWebapp and the Java
+      # compile entirely. -Xmx4g is the Gradle daemon heap, overriding gradle.properties' 8 GB.
       - name: JavaScript tests (jest)
         id: js-tests
         run: gradle --no-daemon -Dorg.gradle.jvmargs=-Xmx4g :firefly:jsTest
-
-      - name: Java tests (junit)
-        id: java-tests
-        if: '!cancelled()'
-        run: gradle --no-daemon -Dorg.gradle.jvmargs=-Xmx4g --continue :firefly:test -x jsTest
 
       - name: Upload reports
         if: '!cancelled()'
@@ -64,16 +63,10 @@ jobs:
       - name: Summarize
         if: '!cancelled()'
         run: |
-          set -uo pipefail
           {
             echo "## Test results"
             echo
             echo "| suite | result |"
             echo "| --- | --- |"
             echo "| JavaScript (jest) | ${{ steps.js-tests.outcome }} |"
-            echo "| Java (junit) | ${{ steps.java-tests.outcome }} |"
-            echo
           } >> "$GITHUB_STEP_SUMMARY"
-
-          python3 .github/scripts/summarize-junit.py \
-            build/dist/reports/firefly/xml >> "$GITHUB_STEP_SUMMARY"
