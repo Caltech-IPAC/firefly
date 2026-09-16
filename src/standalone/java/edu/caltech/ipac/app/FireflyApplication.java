@@ -75,8 +75,9 @@ public class FireflyApplication {
             "font/otf", "font/woff", "font/woff2",
             "application/octet-stream"
     ));
+    private final static File pidTextOutFile= new File(ffDir, "pid.txt");
     private static final boolean useLogFile= true;
-    private static final int DEFAULT_PORT= 8888;
+    private static final int DEFAULT_FIREFLY_PORT = 8888;
     private static String fireflyVersion;
     private static String javaVersion;
     private static boolean updateAvailable=  false;
@@ -86,6 +87,7 @@ public class FireflyApplication {
     private static MenuItem aboutItem = null; // only used in desktop mode
     private static boolean firstUpdateCheck= true;
 
+    public record Ports(int fireflyPort, int redisPort) {}
 
 
     public static void start() throws LifecycleException, URISyntaxException, IOException, InterruptedException {
@@ -93,42 +95,41 @@ public class FireflyApplication {
         javaVersion = System.getProperty("java.version");
         boolean useDesktop= AppProperties.getBooleanProperty("runAsDesktopApplication", false);
         ensureFireflyDir();
-        var port= getPort();
-        File readyTextOutFile= new File(ffDir, "ready-"+port+".txt");
-//        File pidTextOutFile= new File(ffDir, "pid-"+port+".txt");
-        File pidTextOutFile= new File(ffDir, "pid.txt");
+        var ports= getPorts();
+        var fireflyPort= ports.fireflyPort;
+        File readyTextOutFile= new File(ffDir, "ready-"+fireflyPort+".txt");
 
-        if (useDesktop) SwingUtilities.invokeLater(() -> initAboutLabel(port));
+        if (useDesktop) SwingUtilities.invokeLater(() -> initAboutLabel(fireflyPort));
 
 
         if (useLogFile) setupLogger();
 
         Tomcat tomcat = new Tomcat();
         tomcat.setBaseDir(tomcatDir.getAbsolutePath());
-        tomcat.setPort(port);
+        tomcat.setPort(fireflyPort);
 
 
         boolean tomcatStarted = false;
-        if (!isRunning(port)) {
+        if (!isRunning(fireflyPort)) {
             var ignore= readyTextOutFile.delete();
-            if (useDesktop) setupUI(tomcat, port, pidTextOutFile, readyTextOutFile);
+            if (useDesktop) setupUI(tomcat, ports, readyTextOutFile);
             tomcat.addUser("admin", "admin");
             tomcat.addWebapp("/firefly", fireflyWarDir.getAbsolutePath());
             terminalOut.println("Firefly server starting (is takes a few seconds)...");
             Connector connector= tomcat.getConnector();
-            connector.setPort(port);
+            connector.setPort(fireflyPort);
             connector.setProperty("compression", "on");
             connector.setProperty("useSendfile", "false");
             connector.setProperty("compressibleMimeType", compressibleMimeType);
             tomcat.start();
-            savePid(pidTextOutFile);
+            savePid();
             tomcatStarted = true;
         }
 
         if (!tomcatStarted) {
             terminalOut.println("Firefly is already running");
-            openBrowser(port,true);
-            fireflyReadyMessage(port, null);
+            openBrowser(fireflyPort,true);
+            fireflyReadyMessage(fireflyPort, null);
             System.exit(0);
         }
 
@@ -136,10 +137,10 @@ public class FireflyApplication {
         initComplete= true;
         if (useDesktop) {
             hideSplash();
-            SwingUtilities.invokeLater(() -> updateAboutLabel(port));
-            openBrowser(port,true);
+            SwingUtilities.invokeLater(() -> updateAboutLabel(ports));
+            openBrowser(fireflyPort,true);
         }
-        fireflyReadyMessage(port, readyTextOutFile);
+        fireflyReadyMessage(fireflyPort, readyTextOutFile);
         Thread.sleep(5 * 1000); // 5 seconds
         updateAvailable= doAutoUpdateCheck();
         doWorkAreaCleanup();
@@ -211,7 +212,7 @@ public class FireflyApplication {
     }
 
 
-    public static void savePid(File pidTextOutFile) {
+    public static void savePid() {
         FileUtil.writeStringToFile(pidTextOutFile,ProcessHandle.current().pid()+"");
     }
 
@@ -330,21 +331,31 @@ public class FireflyApplication {
         confirmDirOrExit(tomcatLogs);
     }
 
-    public static int getPort() {
-        int portProp= AppProperties.getIntProperty("firefly.port",0);
-        if (portProp!=0) return portProp;
+    public static Ports getPorts() {
+        int unknownRedisPort=0;
+        int runningPort= AppProperties.getIntProperty("firefly.port",0);
+        var defaultPorts= new Ports(runningPort!=0 ? runningPort : DEFAULT_FIREFLY_PORT, unknownRedisPort);
         try {
-            if (!configFile.canRead()) return DEFAULT_PORT;
+            if (!configFile.canRead()) return defaultPorts;
             String pStr= FileUtil.readFile(configFile);
-            if (pStr==null) return DEFAULT_PORT;
+            if (pStr==null) return defaultPorts;
             var obj= (JSONObject) new JSONParser().parse(pStr);
             var ports= (JSONObject)obj.get("ports");
-            if (ports==null) return DEFAULT_PORT;
-            Long port= (Long)ports.get("firefly");
-            if (port==null) return DEFAULT_PORT;
-            return port.intValue();
+            if (ports==null) return defaultPorts;
+            int fireflyPort;
+            if (runningPort!=0) {
+                fireflyPort= runningPort;
+            }
+            else {
+                Long fireflyPortJson= (Long)ports.get("firefly");
+                fireflyPort= (fireflyPortJson!=null) ? fireflyPortJson.intValue() : 0;
+            }
+            if (fireflyPort==0) return defaultPorts;
+            Long redisPortJson= (Long)ports.get("redis");
+            int redisPort= (redisPortJson!=null)  ? redisPortJson.intValue() : unknownRedisPort;
+            return new Ports(fireflyPort,redisPort);
         } catch (IOException | NumberFormatException | ParseException e) {
-            return DEFAULT_PORT;
+            return defaultPorts;
         }
     }
 
@@ -359,10 +370,10 @@ public class FireflyApplication {
         }
     }
 
-    private static void setupUI(Tomcat tomcat, int port, File pidTextOutFile, File readyTextOutFile) {
+    private static void setupUI(Tomcat tomcat, Ports ports, File readyTextOutFile) {
         System.setProperty("apple.awt.UIElement", "true");
 //      setupDock(port);
-        setupTray(tomcat, port, pidTextOutFile, readyTextOutFile);
+        setupTray(tomcat, ports, readyTextOutFile);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                    try {
                        if (tomcat.getServer().getState().isAvailable()) {
@@ -394,7 +405,7 @@ public class FireflyApplication {
 //
 //    }
 
-    public static void stopFireflyServer(Tomcat tomcat, File pidTextOutFile, File readyTextOutFile) {
+    public static void stopFireflyServer(Tomcat tomcat, File readyTextOutFile) {
         try {
             if (tomcat.getServer().getState().isAvailable()) {
                 System.out.println("Shutting down Firefly server...");
@@ -421,11 +432,15 @@ public class FireflyApplication {
         });
     }
 
-    public static void updateAboutLabel(int port) {
+    public static void updateAboutLabel(Ports ports) {
         if (aboutLabel==null) return;
-        String outstr= String.format("<html>Firefly Version: %s<br>Java Version: %s<br>",
-                fireflyVersion, javaVersion);
-        outstr+= String.format("To load Firefly: <a href=\"%s\">%s</a>",makeUrlString(port), makeUrlString(port));
+        var workDir= tomcatDir.getPath() +"/workarea";
+        var fireflyPort= ports.fireflyPort;
+        var portStr= String.format("Ports: Firefly %d, Redis %d, debug (if started with -d) 5005", ports.fireflyPort, ports.redisPort);
+        String outstr= String.format(
+                "<html>Firefly Version: %s<br>Java Version: %s<br>%s<br>pid: %s<br>Work dir: %s<br>Log dir: %s<br><br>",
+                fireflyVersion, javaVersion,portStr,ProcessHandle.current().pid()+"",workDir,tomcatLogs.getPath());
+        outstr+= String.format("To load Firefly: <a href=\"%s\">%s</a>",makeUrlString(fireflyPort), makeUrlString(fireflyPort));
         if (updateAvailable)  outstr+= "<br><br>"+"Update available (relaunch Firefly to finish update)";
         if (!initComplete)outstr+= "<br><br>"+"Server Initializing...";
         aboutLabel.setText(outstr);
@@ -435,11 +450,11 @@ public class FireflyApplication {
         }
     }
 
-    public static void showAboutDialog(int port, JFrame frame) {
+    public static void showAboutDialog(Ports ports, JFrame frame) {
         if (aboutLabel==null) return;
         SwingUtilities.invokeLater(() -> {
 
-            updateAboutLabel(port);
+            updateAboutLabel(ports);
 
             JDialog aboutDialog = new JDialog(frame, "About Firefly", true);
             aboutDialog.setLayout(new BorderLayout());
@@ -448,7 +463,7 @@ public class FireflyApplication {
             aboutDialog.add(aboutLabel, BorderLayout.CENTER);
 
             aboutDialog.pack();
-            aboutDialog.setSize(450, 150);
+            aboutDialog.setSize(550, 200);
             aboutDialog.setLocationRelativeTo(null); // Center on screen
             aboutDialog.setAlwaysOnTop(true);
             aboutDialog.setVisible(true);
@@ -470,7 +485,7 @@ public class FireflyApplication {
         if (splash != null) splash.close();
     }
 
-    public static void setupTray(Tomcat tomcat, int port, File pidTextOutFile, File readyTextOutFile) {
+    public static void setupTray(Tomcat tomcat, Ports ports, File readyTextOutFile) {
         System.setProperty("apple.awt.enableTemplateImages", "false");
         if (!SystemTray.isSupported()) {
             System.out.println("SystemTray is not supported on this platform.");
@@ -490,16 +505,16 @@ public class FireflyApplication {
         PopupMenu popup = new PopupMenu();
         MenuItem exitItem = new MenuItem("Shutdown Firefly Server");
         aboutItem = new MenuItem("About Firefly (initializing...)");
-        MenuItem openInBrowser = new MenuItem("Open in Browser: " + makeUrlString(port));
+        MenuItem openInBrowser = new MenuItem("Open in Browser: " + makeUrlString(ports.fireflyPort));
         popup.add(openInBrowser);
         popup.add(aboutItem);
         popup.addSeparator();
         popup.add(exitItem);
-        aboutItem.addActionListener(e -> showAboutDialog(port, dummyAnchor) );
+        aboutItem.addActionListener(e -> showAboutDialog(ports, dummyAnchor) );
         TrayIcon trayIcon = new TrayIcon(image, "Firefly Server", popup);
         trayIcon.setImageAutoSize(true); // Automatically scale the image
-        openInBrowser.addActionListener(e -> openBrowser(port, false));
-        exitItem.addActionListener(e -> stopFireflyServer(tomcat, pidTextOutFile, readyTextOutFile));
+        openInBrowser.addActionListener(e -> openBrowser(ports.fireflyPort, false));
+        exitItem.addActionListener(e -> stopFireflyServer(tomcat, readyTextOutFile));
 
         try {
             tray.add(trayIcon);

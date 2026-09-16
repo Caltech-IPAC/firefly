@@ -26,33 +26,43 @@ applicationDir="${INSTALL_DIR}/application/current"
 configJsonFile="$fireflyDir/config.json"
 JQ=$(which jq || echo "$binDir/jq")
 
+if [ -f "$configJsonFile" ]; then
+   redisPort=$($JQ -r ".ports.redis" "$configJsonFile" 2> /dev/null)
+   ffPort=$($JQ -r ".ports.firefly" "$configJsonFile" 2> /dev/null)
+fi
+
 isTrue() {
      v=$(echo "$1" | tr '[:upper:]' '[:lower:]')
      if [[ "$v" == "true" || "$v" == "t" ]]; then return 0; else return 1; fi
 }
 
 # --------------------------
-# stopOrphanedRedis: kill any redis-server process bound to the configured redis port.
-# Normally the embedded Redis child is stopped automatically by a JVM shutdown hook when
-# the main Firefly process receives SIGTERM (a plain "kill"), so this is a no-op in the
-# common case. It only matters if Firefly was previously killed with -9, crashed, or the
-# pid file was lost, leaving the redis-server child orphaned.
-# `ps aux` + awk is used because column 2 is the PID in both BSD ps (macOS) and GNU ps
-# (Linux), so this works the same on both platforms.
+# stopOrphans: kill any firefly/redis-server process bound to the configured ports that
+# isn't tracked by pid.txt. Normally the tracked Firefly process (and its embedded Redis
+# child, via a JVM shutdown hook when Firefly receives a plain SIGTERM) are already
+# stopped by the time this runs, so this is a no-op in the common case. It only matters
+# if a previous run was killed with -9, crashed, or its pid file was lost/deleted.
+# `ps aux` can be use on both linux and MacOS
 # --------------------------
 
-stopOrphanedRedis() {
+stopOrphans() {
   if [ ! -f "$configJsonFile" ]; then
     return
   fi
-  redisPort=$($JQ -r ".ports.redis" "$configJsonFile" 2> /dev/null)
+  if [[ -n "$ffPort" ]]; then
+    fireflyPids=$(ps aux | grep -v grep | grep "FireflyApplication" | grep -E "\-Dfirefly\.port=${ffPort}([^0-9]|$)" | awk '{print $2}')
+    for pid in $fireflyPids; do
+      echo "Stopping orphaned firefly process at process id $pid"
+      kill -9 "$pid" 2> /dev/null
+    done
+  fi
   if [[ -z "$redisPort" || "$redisPort" == "null" ]]; then
     return
   fi
   redisPids=$(ps aux | grep -v grep | grep -E "redis-server.*:${redisPort}([^0-9]|$)" | awk '{print $2}')
   for pid in $redisPids; do
     echo "Stopping orphaned redis-server process at process id $pid"
-    kill "$pid" 2> /dev/null
+    kill -9 "$pid" 2> /dev/null
   done
 }
 
@@ -82,7 +92,7 @@ stop() {
    else
         echo "Firefly is not running or pid file was lost"
    fi
-   stopOrphanedRedis
+   stopOrphans
   fi
 }
 
@@ -96,6 +106,7 @@ uninstall() {
     echo
     doUninstallLower=$(echo "$doUninstall" | tr '[:upper:]' '[:lower:]')
     if [ "$doUninstallLower" = "y" ]; then
+      stop
       echo "removing $fireflyDir and ~/.local/bin/ff"
       /bin/rm -rf "$fireflyDir"
       /bin/rm -f ~/.local/bin/ff
@@ -126,13 +137,39 @@ logs() {
 }
 
 stat() {
+
   if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "show if the firefly server is running and healthy"
   else
-    ffPort=$($JQ -r ".ports.firefly" "$configJsonFile" 2> /dev/null)
+    if [[ -z "$ffPort" ]]; then
+         echo "unknown server port, could not find status"
+         return
+    fi
     up=$(curl -sD - -o /dev/null http://localhost:"$ffPort"/firefly/healthz | head -1)
     if [[ "$up" == *200* ]]; then
-        echo "The Firefly server is running and healthy"
+        JAVA=$("$applicationDir"/javaInstaller.sh)
+        if [[ -n "$JAVA" ]]; then
+          jVersion=$("$JAVA" --version | head -n 1)
+        else
+          jVersion="unknown"
+        fi
+        if [[ -f "$fireflyDir/pid.txt" && -r "$fireflyDir/pid.txt" ]]; then
+          pid=$(cat "$fireflyDir/pid.txt")
+        else
+          pid="unknown"
+        fi
+        if [[ -f "$fireflyDir/version.txt" && -r "$fireflyDir/version.txt" ]]; then
+          fireflyVersionStr=$(cat "$fireflyDir/version.txt")
+        else
+          fireflyVersionStr="unknown"
+        fi
+        echo "---"
+        echo "Firefly server:  running and healthy (pid $pid)"
+        echo "Firefly Version: $fireflyVersionStr"
+        echo "Java Version:    $jVersion"
+        echo "Ports:           firefly $ffPort, redis $redisPort, debug (if started with -d) 5005"
+        echo "Work dir:        $fireflyDir/server/workarea"
+        echo "Log dir:         $fireflyDir/server/logs"
     elif [[ "$up" == "" ]]; then
         echo "The Firefly server is not running"
     else
