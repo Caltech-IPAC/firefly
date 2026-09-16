@@ -1,6 +1,5 @@
 name: Tests
 
-# Node version tracks docker/Dockerfile.
 on:
   pull_request:
     branches: [dev]
@@ -18,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Scoped to jest only. This makes src/firefly/jest.config.js drop the two suites
+    # This makes src/firefly/jest.config.js drop the two suites
     # that read a firefly_test_data checkout, which the runner can't reach.
     env:
       FIREFLY_SKIP_TESTDATA: 'true'
@@ -32,8 +31,6 @@ jobs:
           node-version: 26
           cache: yarn
 
-      # Same invocation as docker/Dockerfile. jest is reached directly rather than
-      # through :firefly:jsTest so the job needs no JDK or Gradle.
       - name: Install dependencies
         run: yarn install --ignore-platform --frozen-lockfile
 
