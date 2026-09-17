@@ -50,10 +50,20 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
 
     public static final List<LineListInfo> LINE_LISTS = parseLineListsConfig();
 
+    private static LineListInfo toLineListInfo(String label, String src) {
+        String id = ObsCoreUtil.makeValidString(label).replace(".", "-");
+        return new LineListInfo(id, label, src);
+    }
+
     private static List<LineListInfo> parseLineListsConfig() {
         List<LineListInfo> lists = new ArrayList<>();
         try {
-            String lineListsJson = AppProperties.getProperty(LINE_LISTS_PROP, "[]");
+            String lineListsJson = AppProperties.getProperty(LINE_LISTS_PROP);
+            if (StringUtils.isEmpty(lineListsJson)) {
+                // default to every bundled line list when not defined or blank (different from explicit "[]")
+                BUNDLED_RESOURCES.forEach((label, src) -> lists.add(toLineListInfo(label, src)));
+                return lists;
+            }
             var entries = Serializer.fromJson(lineListsJson, Map[].class);
             for (Map entry : entries) {
                 String label = (String) entry.get("label");
@@ -63,8 +73,7 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
                     LOGGER.error("%s: no bundled resource for label \"%s\" - dropping from spectral lines list".formatted(LINE_LISTS_PROP, label));
                     continue;
                 }
-                String id = ObsCoreUtil.makeValidString(label).replace(".", "-");
-                lists.add(new LineListInfo(id, label, src));
+                lists.add(toLineListInfo(label, src));
             }
         } catch (Exception e) {
             LOGGER.error(e, "%s: failed to parse config - no spectral line lists will be available".formatted(LINE_LISTS_PROP));
