@@ -36,9 +36,10 @@ services:
       target: base
     image: ipac/firefly-test-js:latest
     environment:
-      # This makes src/firefly/jest.config.js drop the two test suites
-      # that read a firefly_test_data checkout. Set it to false to run them.
+      # This makes src/firefly/jest.config.js drop the test suites
+      # that read a firefly_test_data checkout.
       FIREFLY_SKIP_TESTDATA: ${FIREFLY_SKIP_TESTDATA:-true}
+      # Prevent OOM due to jsdom workers.
       JEST_MAX_WORKERS: ${JEST_MAX_WORKERS:-2}
     command: bash -c "cd firefly && gradle :firefly:jsTest"
     # No anonymous volume over build/, unlike `test`: the reports reach the
