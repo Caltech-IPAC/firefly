@@ -89,9 +89,10 @@ export function makeSpectralLineShapes(xUnit, linesTblId, redshift=0) {
         label: {
             text: label,
             textposition: 'end',
+            xanchor: 'right',
             yanchor: 'bottom',
-            font: {size: 9.5, color: SPECTRAL_LINE_COLOR, family: SPECTRAL_LINE_FONT_FAMILY},
-            padding: 2,
+            font: { size: 9, color: SPECTRAL_LINE_COLOR, family: SPECTRAL_LINE_FONT_FAMILY },
+            padding: 0, // not pixel-perfect across chrome/firefox/safari - each measures the line's own SVG geometry differently (inspect <path> shape, not a font/text issue)
         },
         hovertext: `<b>${label}</b>  λ ${x} ${xUnit}` + (description ? `<br>${description}` : ''),
         legendgroup: SPECTRAL_LINES_GROUP,
