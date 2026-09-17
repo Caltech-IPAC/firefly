@@ -50,6 +50,8 @@ jobs:
 
       - name: Summarize
         if: '!cancelled()'
+        env:
+          COVERAGE: build/dist/reports/firefly/coverage-summary.json
         run: |
           {
             echo "## Test results"
@@ -57,4 +59,20 @@ jobs:
             echo "| suite | result |"
             echo "| --- | --- |"
             echo "| JavaScript (jest) | ${{ steps.js-tests.outcome }} |"
+
+            # Written by the json-summary reporter in __jest__/jest.base.config.js.
+            # Absent when the test step dies before jest writes its report.
+            if [ -f "$COVERAGE" ]; then
+              echo
+              echo "### Coverage"
+              echo
+              echo "| metric | covered | percent |"
+              echo "| --- | --- | --- |"
+              jq -r '.total as $t
+                     | ["statements","branches","functions","lines"][]
+                     | "| \(.) | \($t[.].covered)/\($t[.].total) | \($t[.].pct)% |"' "$COVERAGE"
+            else
+              echo
+              echo "_No coverage report was produced._"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

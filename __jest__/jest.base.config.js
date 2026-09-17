@@ -9,7 +9,7 @@ module.exports = {
     'clearMocks': true,
     'collectCoverage': true,
     'coverageDirectory': '../../build/dist/reports/firefly',
-    'coverageReporters': ['lcov'],
+    'coverageReporters': ['lcov', 'json-summary'],
     'moduleFileExtensions': [
         'js',
         'jsx'
