@@ -26,8 +26,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      # buildx, not `docker compose --build`, so the layers land in the Actions
-      # cache; these runners are ephemeral and would rebuild base every PR.
+      # buildx so the layers land in the Actions cache
       - name: Build test image
         uses: docker/build-push-action@v6
         with:
