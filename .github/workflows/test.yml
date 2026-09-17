@@ -17,11 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # This makes src/firefly/jest.config.js drop the two suites
-    # that read a firefly_test_data checkout, which the runner can't reach.
-    env:
-      FIREFLY_SKIP_TESTDATA: 'true'
-
     steps:
       # compose.yml's build context is the checkout's parent, so the checkout
       # has to live in a directory named `firefly`, same as build_publish.yml.
