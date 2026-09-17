@@ -106,9 +106,9 @@ describe('sprintf: ', () => {
         expect(sprintf('%.3f',  14480n))              .toBe('14480.000');
 
         // when precision may be lost, error is thrown.
-        expect(() => sprintf('%J',    1448045501351006139n)).toThrowError(TypeError);
-        expect(() => sprintf('%.20g', 1448045501351006139n)).toThrowError(TypeError);
-        expect(() => sprintf('%f',    1448045501351006139n)).toThrowError(TypeError);
+        expect(() => sprintf('%J',    1448045501351006139n)).toThrow(TypeError);
+        expect(() => sprintf('%.20g', 1448045501351006139n)).toThrow(TypeError);
+        expect(() => sprintf('%f',    1448045501351006139n)).toThrow(TypeError);
     });
 
 });
