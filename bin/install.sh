@@ -270,7 +270,7 @@ fi
 # --------------------------
 
 requiredFiles=("standalone_cleanup.sh" "$startScript" "startFireflyServer.sh" \
-               "stopFireflyServer.sh" "statusFireflyServer.sh" "javaInstaller.sh" "updater.sh")
+               "stopFireflyServer.sh" "statusFireflyServer.sh" "javaInstaller.sh" "updater.sh" "common.sh")
 missingFiles=""
 for f in "${requiredFiles[@]}"; do
   if [ ! -f "$applicationDir/$f" ]; then

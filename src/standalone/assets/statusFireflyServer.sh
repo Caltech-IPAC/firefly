@@ -6,22 +6,7 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 INSTALL_DIR=$(cd "${SCRIPT_DIR}/../.." && pwd)
-fireflyDir="${HOME}/.firefly"
-applicationDir="${INSTALL_DIR}/application/current"
-configJsonFile="$fireflyDir/config.json"
-binDir="${INSTALL_DIR}/bin"
-portFile="$fireflyDir/port.txt"
-JQ=$(which jq || echo "$binDir/jq")
-
-if [[ -f "$portFile" && -s "$portFile" && -r "$portFile" ]]; then
-    ffPort=$(cat "$portFile");
-fi
-if [ -f "$configJsonFile" ]; then
-   redisPort=$($JQ -r ".ports.redis" "$configJsonFile" 2> /dev/null)
-  if [[ -z "$ffPort" ]]; then
-     ffPort=$($JQ -r ".ports.firefly" "$configJsonFile" 2> /dev/null)
-  fi
-fi
+source "$SCRIPT_DIR/common.sh"
 
 if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "show if the firefly server is running and healthy"

@@ -6,22 +6,7 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 INSTALL_DIR=$(cd "${SCRIPT_DIR}/../.." && pwd)
-fireflyDir="${HOME}/.firefly"
-pidFile="$fireflyDir/pid.txt"
-portFile="$fireflyDir/port.txt"
-configJsonFile="$fireflyDir/config.json"
-binDir="${INSTALL_DIR}/bin"
-JQ=$(which jq || echo "$binDir/jq")
-
-if [[ -f "$portFile" && -s "$portFile" && -r "$portFile" ]]; then
-    ffPort=$(cat "$portFile");
-fi
-if [ -f "$configJsonFile" ]; then
-   redisPort=$($JQ -r ".ports.redis" "$configJsonFile" 2> /dev/null)
-  if [[ -z "$ffPort" ]]; then
-     ffPort=$($JQ -r ".ports.firefly" "$configJsonFile" 2> /dev/null)
-  fi
-fi
+source "$SCRIPT_DIR/common.sh"
 
 # --------------------------
 # stopOrphans: kill any firefly/redis-server process bound to the configured ports that

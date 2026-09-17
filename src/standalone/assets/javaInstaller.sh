@@ -50,12 +50,9 @@ getJreKey() {
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 INSTALL_DIR=$(cd "${SCRIPT_DIR}/../.." && pwd)
-binDir="${INSTALL_DIR}/bin"
-fireflyDir="${HOME}/.firefly"
+source "$SCRIPT_DIR/common.sh"
 javaInstallation="${INSTALL_DIR}/javaInstallation"
-jreJsonFile="${INSTALL_DIR}/application/current/jreVersion.json"
-configJsonFile="$fireflyDir/config.json"
-JQ=$(which jq || echo "$binDir/jq")
+jreJsonFile="${applicationDir}/jreVersion.json"
 
 
 jreKey=$(getJreKey)

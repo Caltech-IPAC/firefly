@@ -6,21 +6,17 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 INSTALL_DIR=$(cd "${SCRIPT_DIR}/../.." && pwd)
-fireflyDir="${HOME}/.firefly"
+source "$SCRIPT_DIR/common.sh"
 fireflyServer="${HOME}/.firefly/server"
-applicationDir="${INSTALL_DIR}/application/current"
 appNew="${INSTALL_DIR}/application/new"
 applicationJars="${applicationDir}/jars"
 appLog="${fireflyServer}/logs/application.log"
 userOpsFile="${fireflyDir}/user_ops.sh"
-configJsonFile="$fireflyDir/config.json"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="admin"
 MIN_JVM_SIZE=1G
 MAX_JVM_SIZE=10G
 STARTUP_TIMEOUT_SECONDS=45
-binDir="${INSTALL_DIR}/bin"
-JQ=$(which jq || echo "$binDir/jq")
 
 # todo - i think we can remove serverConfigDir
 serverConfigDir="${HOME}/config"
@@ -169,10 +165,8 @@ if [ ! -f "$applicationDir/jars/firefly.jar" ]; then
 fi
 
 # --------------------------
-# determine radis port
+# determine firefly port (redisPort already set by common.sh; no override for it)
 # --------------------------
-
-redisPort=$($JQ -r ".ports.redis" "$configJsonFile")
 
 if [[ $overridePort == "" ]]; then
    fireflyPort=$($JQ -r ".ports.firefly" "$configJsonFile")

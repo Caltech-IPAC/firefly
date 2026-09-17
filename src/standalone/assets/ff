@@ -19,8 +19,7 @@ else
    INSTALL_DIR=$(cat "$fireflyDir/applicationPath.txt")
 fi
 
-binDir="${INSTALL_DIR}/bin"
-applicationDir="${INSTALL_DIR}/application/current"
+source "${INSTALL_DIR}/application/current/common.sh"
 
 isTrue() {
      v=$(echo "$1" | tr '[:upper:]' '[:lower:]')
