@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.packagedata.obscorepackager.ObsCoreUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -30,18 +29,20 @@ import java.util.Map;
  * When "metaOnly" is true, returns an empty table whose tableMeta.lineLists carries the available
  * {listId, listLabel} pairs as a JSON array, so the client can discover what's available.
  * <p>
- * The active set and ordering is driven by the "charts.spectrum.linelists" app config property, a JSON
- * array of {label, src?} - src omitted falls back to BUNDLED_RESOURCES. The resolved src is fetched as a
- * URL if it starts with http/https, otherwise as a classpath resource - so BUNDLED_RESOURCES can be a URL too.
+ * The active set and ordering is driven by the "charts.spectrum.linelists" app config property, a JSON array of
+ * {id, label?, src?} objects - id is always required; label and src each independently fall back to a
+ * BUNDLED_RESOURCES entry of the same id when omitted (label falling back further to id itself). An entry with
+ * neither a src nor a bundled match is dropped and logged as an error. The resolved src is fetched as a URL if it
+ * starts with http/https, otherwise as a classpath resource.
  */
 @SearchProcessorImpl(id = "spectralLines")
 public class SpectralLinesProcessor extends EmbeddedDbProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    private static final Map<String, String> BUNDLED_RESOURCES = Map.of(
-            "SPHEREx line list", "/edu/caltech/ipac/firefly/resources/spherex_lines.tbl",
-            "Spitzer PAHFIT line list",  "/edu/caltech/ipac/firefly/resources/pahfit_lines.csv",
-            "Herschel HSPOT line list",  "/edu/caltech/ipac/firefly/resources/hspot_lines.csv"
+    private static final List<LineListInfo> BUNDLED_RESOURCES = List.of(
+            new LineListInfo("spherex-v1", "SPHEREx line list", "/edu/caltech/ipac/firefly/resources/spherex_lines.tbl"),
+            new LineListInfo("pahfit", "Spitzer PAHFIT line list", "/edu/caltech/ipac/firefly/resources/pahfit_lines.csv"),
+            new LineListInfo("hspot", "Herschel HSPOT line list", "/edu/caltech/ipac/firefly/resources/hspot_lines.csv")
             );
     private static final String WAVELENGTH_COL = "wavelength"; // must match SpectralLines.jsx's WAVELENGTH_COL
     private static final String LINE_LISTS_PROP = "charts.spectrum.linelists";
@@ -50,9 +51,8 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
 
     public static final List<LineListInfo> LINE_LISTS = parseLineListsConfig();
 
-    private static LineListInfo toLineListInfo(String label, String src) {
-        String id = ObsCoreUtil.makeValidString(label).replace(".", "-");
-        return new LineListInfo(id, label, src);
+    private static LineListInfo findBundled(String id) {
+        return BUNDLED_RESOURCES.stream().filter(b -> b.listId().equals(id)).findFirst().orElse(null);
     }
 
     private static List<LineListInfo> parseLineListsConfig() {
@@ -61,19 +61,26 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
             String lineListsJson = AppProperties.getProperty(LINE_LISTS_PROP);
             if (StringUtils.isEmpty(lineListsJson)) {
                 // default to every bundled line list when not defined or blank (different from explicit "[]")
-                BUNDLED_RESOURCES.forEach((label, src) -> lists.add(toLineListInfo(label, src)));
+                lists.addAll(BUNDLED_RESOURCES);
                 return lists;
             }
-            var entries = Serializer.fromJson(lineListsJson, Map[].class);
-            for (Map entry : entries) {
-                String label = (String) entry.get("label");
-                String src = (String) entry.get("src");
-                if (src == null) src = BUNDLED_RESOURCES.get(label);
-                if (src == null) {
-                    LOGGER.error("%s: no bundled resource for label \"%s\" - dropping from spectral lines list".formatted(LINE_LISTS_PROP, label));
+            var configEntries = Serializer.fromJson(lineListsJson, Map[].class);
+            for (Map configEntry : configEntries) {
+                String id = (String) configEntry.get("id");
+                if (id == null) {
+                    LOGGER.error("%s: entry missing required \"id\" - dropping from spectral lines list".formatted(LINE_LISTS_PROP));
                     continue;
                 }
-                lists.add(toLineListInfo(label, src));
+                LineListInfo bundledEntry = findBundled(id);
+                String label = (String) configEntry.get("label");
+                if (label == null) label = bundledEntry != null ? bundledEntry.listLabel() : id;
+                String src = (String) configEntry.get("src");
+                if (src == null) src = bundledEntry != null ? bundledEntry.src() : null;
+                if (src == null) {
+                    LOGGER.error("%s: entry \"%s\" has no bundled match and is missing \"src\" - dropping from spectral lines list".formatted(LINE_LISTS_PROP, id));
+                    continue;
+                }
+                lists.add(new LineListInfo(id, label, src));
             }
         } catch (Exception e) {
             LOGGER.error(e, "%s: failed to parse config - no spectral line lists will be available".formatted(LINE_LISTS_PROP));
