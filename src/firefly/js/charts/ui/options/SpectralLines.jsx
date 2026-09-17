@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {cloneDeep, isEqual} from 'lodash';
 import {Button, Divider, Stack, Typography} from '@mui/joy';
-import {Insights} from '@mui/icons-material';
+import SettingsIco from '@mui/icons-material/SettingsOutlined';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent';
@@ -34,7 +34,7 @@ const DESCRIPTION_COL = 'description';
 const GROUP_COL = 'list';
 const WAVELENGTH_COL_UNIT = 'um'; // canonical unit of WAVELENGTH_COL's values
 const LINES_TBL_COLUMNS = [
-    {name: WAVELENGTH_COL, units: WAVELENGTH_COL_UNIT, type: 'double'},
+    {name: WAVELENGTH_COL, label: 'wavelength*', units: WAVELENGTH_COL_UNIT, type: 'double'},
     {name: LABEL_COL, type: 'char'},
     {name: DESCRIPTION_COL, type: 'char'},
     {name: GROUP_COL, type: 'char'},
@@ -463,7 +463,7 @@ export function SpectralLinesPanel() {
                             </Stack>
                         </CollapsibleItem>
                     </CollapsibleGroup>
-                    <Stack spacing={.5} sx={{pb: 1}}>
+                    <Stack spacing={.5} sx={{pb: 1.5}}>
                         <Typography level='title-md'>Select lines to plot:</Typography>
                         {plotHelperText &&
                             <Typography level='body-sm' color='neutral'>{plotHelperText}</Typography>}
@@ -482,11 +482,15 @@ export function SpectralLinesPanel() {
                                 highlightedRowHandler={() => undefined}
                             />
                         </Stack>
+                        <Typography level='body-xs' color='neutral'>
+                            * Rest-frame wavelengths - a spectral chart in 'Observed Frame' redshifts these lines when plotting;
+                            see its Chart options (<SettingsIco sx={{fontSize: '1.2em', verticalAlign: 'middle'}}/>) for the redshift applied.
+                        </Typography>
                     </Stack>
                 </Stack>
                 <Divider/>
                 <Stack sx={{py: 0.5, flexShrink: 0}}>
-                    <Typography level='body-sm' startDecorator={<Insights color='primary'/>}>
+                    <Typography level='body-sm'>
                         {selectedCount === 0
                             ? '0 lines selected - nothing plotted on spectral chart(s) ↘'
                             : <>
