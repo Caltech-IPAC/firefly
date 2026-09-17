@@ -23,35 +23,45 @@ jobs:
       FIREFLY_SKIP_TESTDATA: 'true'
 
     steps:
+      # compose.yml's build context is the checkout's parent, so the checkout
+      # has to live in a directory named `firefly`, same as build_publish.yml.
       - uses: actions/checkout@v5
-
-      - name: Set up Node
-        uses: actions/setup-node@v5
         with:
-          node-version: 26
-          cache: yarn
+          path: firefly
 
-      - name: Install dependencies
-        run: yarn install --ignore-platform --frozen-lockfile
+      - uses: docker/setup-buildx-action@v3
+
+      # buildx, not `docker compose --build`, so the layers land in the Actions
+      # cache; these runners are ephemeral and would rebuild base every PR.
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: firefly/docker/Dockerfile
+          target: base
+          tags: ipac/firefly-test-js:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: JavaScript tests (jest)
         id: js-tests
-        working-directory: src/firefly
-        run: yarn run test-unit
+        working-directory: firefly
+        run: docker compose run --rm test-js
 
       - name: Upload reports
         if: '!cancelled()'
         uses: actions/upload-artifact@v7
         with:
           name: test-reports
-          path: build/dist/reports/firefly/
+          path: firefly/build/dist/reports/firefly/
           if-no-files-found: warn
           retention-days: 14
 
       - name: Summarize
         if: '!cancelled()'
         env:
-          COVERAGE: build/dist/reports/firefly/coverage-summary.json
+          COVERAGE: firefly/build/dist/reports/firefly/coverage-summary.json
         run: |
           {
             echo "## Test results"

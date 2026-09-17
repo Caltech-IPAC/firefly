@@ -24,6 +24,28 @@ services:
       - /opt/work/firefly/build
       - /opt/work/firefly/jars/build
       - /opt/work/firefly/node_modules
+
+  # Jest-only run, used by the GitHub Actions PR check. Builds from the same
+  # Dockerfile and `base` target as `test`, so the toolchain stays defined in
+  # one place; kept as its own service so the Jenkins `test` service is
+  # unaffected.
+  test-js:
+    build:
+      context: ../
+      dockerfile: firefly/docker/Dockerfile
+      target: base
+    image: ipac/firefly-test-js:latest
+    environment:
+      FIREFLY_SKIP_TESTDATA: ${FIREFLY_SKIP_TESTDATA:-}
+      JEST_MAX_WORKERS: ${JEST_MAX_WORKERS:-2}
+    command: bash -c "cd firefly && gradle :firefly:jsTest"
+    # No anonymous volume over build/, unlike `test`: the reports reach the
+    # host through the bind below, so CI can upload them without a copy step.
+    volumes:
+      - ../firefly:/opt/work/firefly
+      - /opt/work/firefly/.gradle
+      - /opt/work/firefly/node_modules
+
   dev:
     build:
       context: ../
