@@ -17,8 +17,5 @@ module.exports = {
         ...(process.env.FIREFLY_SKIP_TESTDATA === 'true' ? needsTestData : []),
     ],
 
-    // jest defaults to one worker per core. In a container that sees many cores
-    // but has a small memory ceiling, that many jsdom workers get OOM-killed.
-    // Set JEST_MAX_WORKERS to cap it; compose.yml does for the test-js service.
     ...(process.env.JEST_MAX_WORKERS ? {maxWorkers: Number(process.env.JEST_MAX_WORKERS)} : {}),
 };
