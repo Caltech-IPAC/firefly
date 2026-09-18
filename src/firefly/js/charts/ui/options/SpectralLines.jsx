@@ -293,6 +293,7 @@ async function buildMergedLinesTable(sourceOptions, lineLists, uploadInfo, wavel
     const table = {tbl_id: LINES_TBL_ID, title: 'Spectral Lines', tableData: {columns, data}, tableMeta};
     if (data.length === 0) table.status = {code: 204, message: 'No lines to display yet'}; // to replace default "No Data Found" status
     table.selectInfo = SelectInfo.newInstance({selectAll: true, rowCount: data.length}).data;
+    dispatchTableUiUpdate({tbl_ui_id: LINES_TBL_UI_ID, columnWidths: undefined}); // so that columnWidths get recomputed with current table data
     dispatchTableAddLocal(table, undefined, false);
 }
 
