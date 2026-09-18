@@ -6,20 +6,17 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 INSTALL_DIR=$(cd "${SCRIPT_DIR}/../.." && pwd)
-fireflyDir="${HOME}/.firefly"
+source "$SCRIPT_DIR/common.sh"
 fireflyServer="${HOME}/.firefly/server"
-applicationDir="${INSTALL_DIR}/application/current"
 appNew="${INSTALL_DIR}/application/new"
 applicationJars="${applicationDir}/jars"
 appLog="${fireflyServer}/logs/application.log"
 userOpsFile="${fireflyDir}/user_ops.sh"
-configJsonFile="$fireflyDir/config.json"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="admin"
 MIN_JVM_SIZE=1G
 MAX_JVM_SIZE=10G
-binDir="${INSTALL_DIR}/bin"
-JQ=$(which jq || echo "$binDir/jq")
+STARTUP_TIMEOUT_SECONDS=45
 
 # todo - i think we can remove serverConfigDir
 serverConfigDir="${HOME}/config"
@@ -91,6 +88,8 @@ while [ $# -gt 0 ]; do
        doExit="TRUE"
   elif [[ "$arg" == "-f" || "$arg" == "--foreground" ]]; then
        inBackground="FALSE"
+  elif [[ "$arg" == "-b" || "$arg" == "--background" ]]; then
+       inBackground="TRUE"
   elif [[ "$arg" == "--port"  ]]; then
     shift
      overridePort=$1
@@ -119,6 +118,7 @@ if isTrue $doHelp; then
   echo "$space --clean:              clean work area before startup"
   echo "$space --cleanAndExit:       clean work only and exit"
   echo "$space -f, --foreground:     start in foreground (server starts in background by default)"
+  echo "$space -b, --background:     start in background (this is the default)"
   echo "$space --port:               a port number to override the default firefly port, it can also be set in ~/.firefly/config.json"
   echo "$space --help, -h:           this message and exit"
   exit 0;
@@ -165,10 +165,8 @@ if [ ! -f "$applicationDir/jars/firefly.jar" ]; then
 fi
 
 # --------------------------
-# determine radis port
+# determine firefly port (redisPort already set by common.sh; no override for it)
 # --------------------------
-
-redisPort=$($JQ -r ".ports.redis" "$configJsonFile")
 
 if [[ $overridePort == "" ]]; then
    fireflyPort=$($JQ -r ".ports.firefly" "$configJsonFile")
@@ -191,6 +189,39 @@ elif [[ $ffStat == "INUSE" ]]; then
     echo "You can change the port my editing ~/.firefly/config.json or by using the --port parameter"
     exit 1;
 fi
+
+
+# --------------------------
+# determine if there are zombie processes
+# --------------------------
+if ! isTrue $alreadyRunning; then
+  zombieProcess=FALSE
+  fireflyPids=$(pgrep -f "java.*FireflyApplication")
+  for pid in $fireflyPids; do
+      zombiePort=$(ps -o args= -p "$pid" 2> /dev/null | grep -oE '\-Dfirefly\.port=[0-9]+' | cut -d= -f2)
+      if [[ -n "$zombiePort" && "$zombiePort" == "$fireflyPort" ]]; then
+          echo "A firefly server process is running at pid $pid on port $zombiePort - this is the port Firefly needs to start on"
+      else
+          echo "A firefly server process is running at pid $pid on port ${zombiePort:-unknown}"
+      fi
+      zombieProcess=TRUE
+  done
+  if isTrue $zombieProcess; then
+      echo "To start a new Firefly you must stop these processes"
+      read -n1 -s -p  "Do you want to stop the other processes? (y/n [y]): " doStopZombieEntry
+      doStopZombie=$(echo "$doStopZombieEntry" | tr '[:upper:]' '[:lower:]')
+      if [ "$doStopZombie" = "y" ] || [ "$doStopZombie" = "" ]; then
+          echo
+          "$applicationDir"/stopFireflyServer.sh
+      else
+          echo "Cannot start firefly server while other instances are running"
+          exit 1;
+      fi
+  fi
+fi
+
+
+
 
 # --------------------------
 # make directories
@@ -252,6 +283,7 @@ PROPS=" \
   -XX:+UnlockExperimentalVMOptions \
   -XX:TrimNativeHeapInterval=30000 \
   -XX:+UseZGC \
+  -DOP_standaloneEnabled=true \
   -Dnet.sf.ehcache.enableShutdownHook=true \
   -Dlogging.level=${loggingLevel} \
   -Djava.net.preferIPv4Stack=true \
@@ -259,7 +291,7 @@ PROPS=" \
   -DrunAsDesktopApplication=${runAsDesktopApplication} \
   -Djava.awt.headless=${headless} \
   -Dvisualize.fits.search.path=${HOME} \
-  -Dredis.db.dir=${fireflyServer}/temp/redis \
+  -Dredis.db.dir=${redisDbDir} \
   -Djava.io.tmpdir=${fireflyServer}/temp \
   -Dalerts.dir=${fireflyServer}/alerts \
   -Dserver_config_dir=${serverConfigDir} \
@@ -311,9 +343,10 @@ readyFile="$fireflyDir/ready-${fireflyPort}.txt"
 } >> "$appLog"
 
 if isTrue $inBackground; then
-  (cd "$applicationDir" && ${JAVA} ${splash} "${nameParam}" ${PROPS} edu.caltech.ipac.app.FireflyApplication &> "${fireflyServer}/logs/backgroundStart.log" &)
+  (cd "$applicationDir" && exec ${JAVA} ${splash} "${nameParam}" ${PROPS} edu.caltech.ipac.app.FireflyApplication) &> "${fireflyServer}/logs/backgroundStart.log" &
+  javaPid=$!
   if isTrue $alreadyRunning; then
-      echo "Firefly is already running on port"
+      echo "Firefly is already running on port $fireflyPort"
   else
       echo "Firefly server starting in background (it takes a few seconds)..."
   fi
@@ -325,9 +358,21 @@ if isTrue $inBackground; then
 
   if ! isTrue $alreadyRunning; then
       echo -n "Firefly server waiting for init to complete..."
+      waitedHalfSeconds=0
       ready=$(cat "$readyFile" 2> /dev/null)
       while ! isTrue $ready; do
+         if ! kill -0 "$javaPid" 2> /dev/null; then
+            echo
+            echo "Firefly failed to start, see ${fireflyServer}/logs/backgroundStart.log and ${appLog}"
+            exit 1
+         fi
+         if [ $waitedHalfSeconds -ge $((STARTUP_TIMEOUT_SECONDS * 2)) ]; then
+            echo
+            echo "Timed out after ${STARTUP_TIMEOUT_SECONDS}s waiting for Firefly to become ready, see ${fireflyServer}/logs/backgroundStart.log and ${appLog}"
+            exit 1
+         fi
          sleep .5
+         waitedHalfSeconds=$((waitedHalfSeconds + 1))
          ready=$(cat "$readyFile" 2> /dev/null)
       done
       echo "Ready"
