@@ -2,9 +2,10 @@ import {Button, CircularProgress, Input, Stack, Tooltip, Typography} from '@mui/
 import React, {memo, useEffect} from 'react';
 import {object, bool, func, string, shape} from 'prop-types';
 import {has, isFunction, isNil, isString} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr';
 import {getHttpErrorMessage} from '../util/HttpErrorMessage.js';
 import {validateUrl} from '../util/Validate.js';
-import {getStatusFromFetchError} from '../util/WebUtil.js';
+import {getStatusFromFetchError, toBoolean} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {upload} from '../rpc/CoreServices.js';
@@ -207,9 +208,19 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis, uploadParams={}) {
 const getUploadUrl= (fileOrUrl) =>
     isString(fileOrUrl) ? fileOrUrl?.trim() : fileOrUrl?.name ? fileOrUrl.name.trim() : undefined;
 
+function isValidUrlEntry(urlStr='') {
+    const fileOrUrl= urlStr.toLowerCase();
+    if (fileOrUrl.startsWith('s3://')) return true;
+    if (validateUrl('',getUploadUrl(fileOrUrl)).valid) return true;
+    const runningLocal= toBoolean(getAppOptions()?.standaloneEnabled);
+    if (runningLocal) return fileOrUrl.startsWith('file:///') || fileOrUrl.startsWith('/');
+    return false;
+
+}
+
 function doUpload(isFromURL, fileOrUrl, fileAnalysis, params={}) {
     if (isFromURL && isString(fileOrUrl)) fileOrUrl= fileOrUrl?.trim();
-    if (isFromURL && !fileOrUrl?.toLowerCase().startsWith('s3://') && !validateUrl('',getUploadUrl(fileOrUrl)).valid) {
+    if (isFromURL && !isValidUrlEntry(fileOrUrl)) {
         return Promise.resolve({status:404,message:'bad Url'});
     }
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;

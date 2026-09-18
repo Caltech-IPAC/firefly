@@ -190,6 +190,39 @@ elif [[ $ffStat == "INUSE" ]]; then
     exit 1;
 fi
 
+
+# --------------------------
+# determine if there are zombie processes
+# --------------------------
+if ! isTrue $alreadyRunning; then
+  zombieProcess=FALSE
+  fireflyPids=$(pgrep -f "java.*FireflyApplication")
+  for pid in $fireflyPids; do
+      zombiePort=$(ps -o args= -p "$pid" 2> /dev/null | grep -oE '\-Dfirefly\.port=[0-9]+' | cut -d= -f2)
+      if [[ -n "$zombiePort" && "$zombiePort" == "$fireflyPort" ]]; then
+          echo "A firefly server process is running at pid $pid on port $zombiePort - this is the port Firefly needs to start on"
+      else
+          echo "A firefly server process is running at pid $pid on port ${zombiePort:-unknown}"
+      fi
+      zombieProcess=TRUE
+  done
+  if isTrue $zombieProcess; then
+      echo "To start a new Firefly you must stop these processes"
+      read -n1 -s -p  "Do you want to stop the other processes? (y/n [y]): " doStopZombieEntry
+      doStopZombie=$(echo "$doStopZombieEntry" | tr '[:upper:]' '[:lower:]')
+      if [ "$doStopZombie" = "y" ] || [ "$doStopZombie" = "" ]; then
+          echo
+          "$applicationDir"/stopFireflyServer.sh
+      else
+          echo "Cannot start firefly server while other instances are running"
+          exit 1;
+      fi
+  fi
+fi
+
+
+
+
 # --------------------------
 # make directories
 # --------------------------
@@ -250,6 +283,7 @@ PROPS=" \
   -XX:+UnlockExperimentalVMOptions \
   -XX:TrimNativeHeapInterval=30000 \
   -XX:+UseZGC \
+  -DOP_standaloneEnabled=true \
   -Dnet.sf.ehcache.enableShutdownHook=true \
   -Dlogging.level=${loggingLevel} \
   -Djava.net.preferIPv4Stack=true \
@@ -257,7 +291,7 @@ PROPS=" \
   -DrunAsDesktopApplication=${runAsDesktopApplication} \
   -Djava.awt.headless=${headless} \
   -Dvisualize.fits.search.path=${HOME} \
-  -Dredis.db.dir=${fireflyServer}/temp/redis \
+  -Dredis.db.dir=${redisDbDir} \
   -Djava.io.tmpdir=${fireflyServer}/temp \
   -Dalerts.dir=${fireflyServer}/alerts \
   -Dserver_config_dir=${serverConfigDir} \
@@ -312,7 +346,7 @@ if isTrue $inBackground; then
   (cd "$applicationDir" && exec ${JAVA} ${splash} "${nameParam}" ${PROPS} edu.caltech.ipac.app.FireflyApplication) &> "${fireflyServer}/logs/backgroundStart.log" &
   javaPid=$!
   if isTrue $alreadyRunning; then
-      echo "Firefly is already running on port"
+      echo "Firefly is already running on port $fireflyPort"
   else
       echo "Firefly server starting in background (it takes a few seconds)..."
   fi

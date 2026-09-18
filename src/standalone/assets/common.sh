@@ -2,7 +2,7 @@
 # common.sh: shared variables for the Firefly standalone runtime scripts.
 # Must be sourced with $INSTALL_DIR already set (every caller needs it anyway to
 # locate this file). Defines: applicationDir, fireflyDir, binDir, configJsonFile,
-# JQ, pidFile, portFile, ffPort, redisPort.
+# JQ, pidFile, portFile, redisDbDir, ffPort, redisPort.
 # --------------------------
 
 applicationDir="${INSTALL_DIR}/application/current"
@@ -11,6 +11,7 @@ binDir="${INSTALL_DIR}/bin"
 configJsonFile="$fireflyDir/config.json"
 pidFile="$fireflyDir/pid.txt"
 portFile="$fireflyDir/port.txt"
+redisDbDir="${fireflyDir}/server/temp/redis"
 JQ=$(which jq || echo "$binDir/jq")
 
 if [[ -f "$portFile" && -s "$portFile" && -r "$portFile" ]]; then

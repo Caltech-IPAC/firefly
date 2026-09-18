@@ -23,19 +23,20 @@ stopOrphans() {
   if [ ! -f "$configJsonFile" ]; then
     return
   fi
-  if [[ -n "$ffPort" ]]; then
-    fireflyPids=$(pgrep -f "\-Dfirefly\.port=${ffPort}([^0-9]|\$).*FireflyApplication")
-    for pid in $fireflyPids; do
-      echo "Stopping orphaned firefly process at process id $pid"
-      kill -9 "$pid" 2> /dev/null
-    done
-  fi
-  if [[ -z "$redisPort" || "$redisPort" == "null" ]]; then
-    return
-  fi
-  redisPids=$(pgrep -f "redis-server.*:${redisPort}([^0-9]|\$)")
+  fireflyPids=$(pgrep -f "java.*FireflyApplication")
+  for pid in $fireflyPids; do
+    zombiePort=$(ps -o args= -p "$pid" 2> /dev/null | grep -oE '\-Dfirefly\.port=[0-9]+' | cut -d= -f2)
+    if [[ -n "$zombiePort" && "$zombiePort" == "$ffPort" ]]; then
+      echo "Stopping orphaned firefly process at process id $pid on port $zombiePort"
+    else
+      echo "Stopping orphaned firefly process at process id $pid on port ${zombiePort:-unknown}"
+    fi
+    kill -9 "$pid" 2> /dev/null
+  done
+  redisPids=$(pgrep -f "${redisDbDir}-")
   for pid in $redisPids; do
-    echo "Stopping orphaned redis-server process at process id $pid"
+    zombieRedisPort=$(ps -o args= -p "$pid" 2> /dev/null | grep -oE '[0-9]+$')
+    echo "Stopping orphaned redis-server process at process id $pid on port ${zombieRedisPort:-unknown}"
     kill -9 "$pid" 2> /dev/null
   done
   /bin/rm -f "$fireflyDir/port.txt" "$fireflyDir/pid.txt"
