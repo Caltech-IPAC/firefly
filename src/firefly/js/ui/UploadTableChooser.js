@@ -280,7 +280,7 @@ export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',d
 const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj,uploadTblOptions}) => {
     const [isLoading, setLoading]= useState(false);
     return (
-        <Stack height='35rem' sx={{resize:'both', overflow:'hidden',minHeight:'35rem', minWidth:'40rem'}}>
+        <Stack sx={{resize:'both', overflow:'hidden', height:'35rem', width:'50rem'}}>
             <FieldGroup groupKey={groupKey} sx={{ flexGrow: 1}}>
                 <Stack height='100%' pt={1}>
                     <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
@@ -289,7 +289,8 @@ const TableUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEna
                             <FileUploadDropdown {...{
                                 sx:{height:1,
                                     '.ff-FileUploadViewPanel-file':{ml:3},
-                                    '.ff-FileUploadViewPanel-acceptList':{ml:3},
+                                    '.ff-FileUploadViewPanel-acceptedWrapper':{ml:3},
+                                    '.ff-FileUploadViewPanel-acceptList':{ml:0},
                                 },
                                 acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
                                 onCancel:() => dispatchHideDialog(dialogId),
