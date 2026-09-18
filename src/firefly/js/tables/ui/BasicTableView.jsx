@@ -40,6 +40,10 @@ const tableStyleOverrides = {
     '.fixedDataTableRowLayout_rowWrapper': {
         fontSize: '12px',
     },
+    // Remove scroll container so the browser can't scroll the header and rows out of sync.
+    '.fixedDataTableRowLayout_main': {
+        overflow: 'clip',
+    },
     '.fixedDataTableCellLayout_main': {
         borderStyle: 'solid',
         borderWidth: '0 1px 1px 0',
