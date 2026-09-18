@@ -135,7 +135,7 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
                 {showActionOptions && !isGrouped &&
                     <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>}
                 {showActionOptions && !isGrouped && <Divider/>}
-                <Box py={1} overflow={'auto'} maxHeight={'60vh'} minWidth={'30rem'}>
+                <Box py={1} pr={1} overflow={'auto'} maxHeight={'60vh'} minWidth={'30rem'}>
                     <ChartActionOptions {...{chartAction: chartActionState, tbl_id, chartId, groupKey, hideDialog}}/>
                 </Box>
                 <Divider/>

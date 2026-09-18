@@ -12,12 +12,13 @@ import {monitorChanges, findGroupByTblId, getActiveTableId, isFullyLoaded, } fro
 import {TBL_RESULTS_ACTIVE, TABLE_LOADED, TABLE_SELECT} from '../../tables/TablesCntlr';
 import {DEFAULT_PLOT2D_VIEWER_ID, PLOT2D} from '../../visualize/VisConst';
 import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup, getChartData, dispatchChartAdd, getExpandedChartProps} from '../ChartsCntlr.js';
-import {getDefaultChartProps, allowPinnedCharts} from '../ChartUtil.js';
+import {getDefaultChartProps, allowPinnedCharts, isSpectrum} from '../ChartUtil.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel, ChartToolbar} from './ChartPanel.jsx';
 import {MultiChartViewer, getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {PinnedChartContainer} from 'firefly/charts/ui/PinnedChartContainer.jsx';
+import {SpectralLinesBtn} from './PlotlyToolbar.jsx';
 import {Stack} from '@mui/joy';
 
 
@@ -235,7 +236,10 @@ const ChartToolbarExt = ({chartId, viewerId, tbl_group, noChartToolbar, closeabl
 
     return (
         <Stack direction='row' justifyContent='space-between'>
-            {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
+            <Stack direction='row' spacing={1}>
+                {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
+                {isSpectrum(chartId) && <SpectralLinesBtn/>}
+            </Stack>
             {!noChartToolbar && <ChartToolbar {...{chartId, viewerId, tbl_group, expandable:false, expandedMode:true}}/>}
         </Stack>
     );
