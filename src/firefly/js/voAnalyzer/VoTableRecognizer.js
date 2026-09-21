@@ -9,7 +9,7 @@ import {
     alternateMainPos, ColNameIdx, mainMeta, obsCorePosColumns, OBSTAPCOLUMNS, POS_EQ_UCD, posCol, S_REGION,
     SSA_COV_UTYPE, UCDCoord, ucdSyntaxMap, UtypeColIdx
 } from './VoConst.js';
-import {getObsTabColEntry, isUCDWith} from './VoCoreUtils.js';
+import {findCsysFromUCD, getObsTabColEntry, isUCDWith} from './VoCoreUtils.js';
 
 
 /**
@@ -391,25 +391,29 @@ export class VoTableRecognizer {
             let lonCol;
             let latCol;
             if (useReg) {
-                let reLon = new RegExp(`^[A-z]*[-_]?(${lon})[1-9]*$`);
-                let reLat = new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`);
+                let reLon = new RegExp(`^[A-z]*[-_]?(${lon})[1-9]*$`, 'i');
+                let reLat = new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`, 'i');
                 lonCol = findColumn(lon, reLon);
                 latCol = findColumn(lat, reLat);
                 if (!lonCol || !latCol) {
-                    reLon = new RegExp(`^${lon}[-_].*$`);
-                    reLat = new RegExp(`^${lat}[-_].*$`);
+                    reLon = new RegExp(`^${lon}[-_].*$`, 'i');
+                    reLat = new RegExp(`^${lat}[-_].*$`, 'i');
                     lonCol = findColumn(lon, reLon);
                     latCol = findColumn(lat, reLat);
                 }
                 if (lonCol && latCol) {
-                    if (lonCol.name.replace(lon, '') !== latCol.name.replace(lat, '')) return undefined;
+                    const testLon= lonCol.name.toLowerCase();
+                    const testLat= latCol.name.toLowerCase();
+                    if (testLon.replace(lon.toLowerCase(), '') !== testLat.replace(lat.toLowerCase(), '')) return undefined;
                 }
             } else {
                 lonCol = findColumn(lon);
                 latCol = findColumn(lat);
             }
 
-            return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : undefined;
+            return (lonCol && latCol)
+                ? this.setCenterColumnsInfo([lonCol, latCol], findCsysForCoordColumns(lonCol,latCol))
+                : undefined;
         };
 
         const centerColumnInfo = (guess('ra', 'dec') || guess('lon', 'lat') || guess('ra', 'dec', true) || guess('lon', 'lat', true));
@@ -541,4 +545,11 @@ function centerColumnUTypesFromObsTap() {
     });
 
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
+}
+
+function findCsysForCoordColumns(lonCol, latCol) {
+    if (!lonCol || !latCol) return undefined;
+    const lonCsys= findCsysFromUCD(lonCol.UCD);
+    const latCsys= findCsysFromUCD(latCol.UCD);
+    return (lonCsys && lonCsys===latCsys) ? lonCsys : undefined;
 }

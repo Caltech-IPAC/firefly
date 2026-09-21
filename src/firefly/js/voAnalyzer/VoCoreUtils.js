@@ -4,7 +4,9 @@
 
 import {isObject, isString} from 'lodash';
 import {getCellValue, getColumnByRef, getTblById} from '../tables/TableUtil.js';
-import {cisxAdhocServiceUtype, ColNameIdx, OBSTAPCOLUMNS, standardIDs, UCDSyntax, UtypeColIdx} from './VoConst.js';
+import {
+    cisxAdhocServiceUtype, ColNameIdx, OBSTAPCOLUMNS, posCol, standardIDs, UCDSyntax, UtypeColIdx
+} from './VoConst.js';
 
 
 export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
@@ -89,6 +91,19 @@ export function isUCDWith(ucdValue, ucdWord, syntaxCode = UCDSyntax.any) {
     return (syntaxCode === UCDSyntax.primary && idx === 0) ||
         (syntaxCode === UCDSyntax.secondary && idx >= 1) ||
         (syntaxCode === UCDSyntax.any && idx >= 0);
+}
+
+/**
+ * If there is a match return a coordinate system that matches the ucd, otherwise return undefined
+ * @param {String} ucd
+ * @return {CoordinateSys|undefined}
+ */
+export function findCsysFromUCD(ucd) {
+    if (!ucd) return;
+    const foundPosCol= Object.values(posCol)
+        .find( (entry) => entry.ucd
+            .some( (pair) => pair.some((v) => isUCDWith(ucd, v))));
+    return foundPosCol?.coord;
 }
 
 /**
