@@ -84,11 +84,14 @@ public class DbDataIngestor {
 
     static FileInfo ingestVoTable(DbAdapter dbAdapter, String source, Consumer<DataGroup> extraMetaSetter, int tblIdx, boolean searchForSpectrum) throws IOException, DataAccessException {
         if (dbAdapter instanceof DuckDbAdapter) {
-            VoTableReader.parse(new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum), source, tblIdx);
+            var handler = new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum);
+            VoTableReader.parse(handler, source, tblIdx);
+            if (!handler.hasTable()) throw new DataAccessException("No table found in the VOTable");
             return new FileInfo(dbAdapter.getDbFile());
         } else {
-            DataGroup table = VoTableReader.voToDataGroups(source, tblIdx)[0];
-            return ingestTable(dbAdapter, table, searchForSpectrum);
+            DataGroup[] tables = VoTableReader.voToDataGroups(source, tblIdx);
+            if (tables.length == 0) throw new DataAccessException("No table found in the VOTable");
+            return ingestTable(dbAdapter, tables[0], searchForSpectrum);
         }
     }
 

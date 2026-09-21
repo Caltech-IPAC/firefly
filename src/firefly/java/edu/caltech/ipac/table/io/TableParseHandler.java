@@ -146,6 +146,11 @@ public interface TableParseHandler {
             if (appender != null)       Try.it(() -> appender.close());
             if (connWrapper != null)    Try.it(() -> connWrapper.close());
         }
+
+        /** true once a table header has been ingested, i.e. the DATA table exists */
+        public boolean hasTable() {
+            return table != null;
+        }
     }
 }
 
