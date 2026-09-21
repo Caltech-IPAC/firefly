@@ -64,4 +64,5 @@ tap.maxrec.maxval=@__$tap.maxrec.hardlimit@
 
 visualize.fits.MaxSizeInBytes= @visualize.fits.MaxSizeInBytes@
 
+charts.spectrum.linelists=@charts.spectrum.linelists@
 

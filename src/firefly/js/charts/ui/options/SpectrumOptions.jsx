@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {get, omit, range, isEqual} from 'lodash';
+import {get, range, isEqual} from 'lodash';
 import {getSpectrumDM, REF_POS, isKnownRefPos} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
@@ -32,8 +32,11 @@ import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 import {MathJax} from 'better-react-mathjax';
-import {SpectralLinesOptions, SPECTRAL_LINES_GROUP, makeSpectralLineShapes, sourceOptionToTblId} from './SpectralLines.jsx';
 
+// spectralFrameOption.value: whether spectral lines or the spectrum itself gets the redshift correction
+export const SF_OPTION = {OBSERVED: 'observed', REST: 'rest'};
+// a special non-numeric spectralFrameOption.redshift value: instructs the use of spectralFrameOption.userSpecified (dynamic user-input value)
+export const USER_SPECIFIED_REDSHIFT = 'userSpecified';
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
@@ -44,7 +47,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {tbl_id} = getChartProps(chartId, ptbl_id, activeTrace);
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin, xUnit, yUnit} = getSpectrumProps(tbl_id);
 
-    const {Xunit, Yunit, SpectralFrame, SpectralLines} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, GroupBy} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
     const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
@@ -83,7 +86,6 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                         {xMin && <Xmin/>}
                         <Xunit/>
                         <SpectralFrame labelWidth={labelWidth}/>
-                        <SpectralLines/>
                     </GroupedStack>
                     <GroupedStack groupTitle='Y-axis'>
                         <Y label={axisColumnFieldLabel('Flux', yUnit)}/>
@@ -150,10 +152,10 @@ const getRedshiftCorrectedExpr = ({cname, spectralFrame, sfOption, redshift=unde
     const multiplyBy = refPos?.toUpperCase?.() === REF_POS.CUSTOM
         ? ` * (1 + ${customRedshift ?? '0'})`
         : '';
-    const divideBy = sfOption === 'rest' && redshift ? ` / (1 + ${redshift})` : '';
+    const divideBy = sfOption === SF_OPTION.REST && redshift ? ` / (1 + ${redshift})` : '';
     let expr = `${quoteNonAlphanumeric(cname)}${multiplyBy}${divideBy}`;
     // multiplyBy = divideBy when correcting a spectrum with custom redshift to the rest frame
-    if (sfOption === 'rest' && customRedshift === redshift) expr = quoteNonAlphanumeric(cname);
+    if (sfOption === SF_OPTION.REST && customRedshift === redshift) expr = quoteNonAlphanumeric(cname);
     return expr;
 };
 
@@ -177,18 +179,18 @@ const getRedshiftInfo = (inFields, path, fireflyData, activeTrace) => {
         .map((fieldKey) => get(inFields, path(fieldKey)));
 
     // resolve the redshift number regardless of frame — spectral lines need it in observed frame too, not just rest
-    const redshift = redshiftOption==='userSpecified' ? userSpecifiedRedshift : redshiftOption;
+    const redshift = redshiftOption===USER_SPECIFIED_REDSHIFT ? userSpecifiedRedshift : redshiftOption;
 
     let sfLabel = 'Observed Frame';
     let redshiftLabel = '';
 
-    if(sfOption==='rest') {
+    if(sfOption===SF_OPTION.REST) {
         sfLabel = 'Rest Frame';
-        redshiftLabel = redshiftOption==='userSpecified'
+        redshiftLabel = redshiftOption===USER_SPECIFIED_REDSHIFT
             ? `Redshift = ${userSpecifiedRedshift}`
             : getRedshiftLabel(fireflyData, activeTrace, redshiftOption);
     }
-    else if(sfOption!=='observed') sfLabel = `${sfOption} Spectral Frame`;
+    else if(sfOption!==SF_OPTION.OBSERVED) sfLabel = `${sfOption} Spectral Frame`;
 
     return {sfOption, sfLabel, redshift, redshiftLabel};
 };
@@ -282,7 +284,7 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
     // get units and spectral frame options from the fields of active trace
     const xUnit = fields[`fireflyData.${activeTrace}.xUnit`];
     const yUnit = fields[`fireflyData.${activeTrace}.yUnit`]; // undefined if no field for yUnit
-    const currentSFOptionFields = getEffectiveSFOptionFields(fireflyData?.[activeTrace]);
+    const currentSFOptionFields = getEffectiveSpectralFrameOption(fireflyData?.[activeTrace]);
     const sfFieldKeys = SFOptionFieldKeys(activeTrace);
     const sfOptionFields = {
         value: fields[sfFieldKeys.value] ?? currentSFOptionFields.value,
@@ -340,45 +342,24 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
         });
     }
 
-    //preserve chart state while spectral-line fields might be temporarily unmounted while switching traces
-    const currentSpectralLines = getChartData(chartId)?.fireflyLayout?.spectralLines ?? {};
-    const spectralLinesEnabled = fields['spectralLines.enabled'] === undefined
-        ? toBoolean(currentSpectralLines.enabled)
-        : toBoolean(fields['spectralLines.enabled']);
-    const spectralLinesTblId = fields['spectralLines.sourceOptions'] === undefined
-        ? currentSpectralLines.source
-        : sourceOptionToTblId(fields['spectralLines.sourceOptions']);
-    fields = omit(fields, ['spectralLines.enabled', 'spectralLines.sourceOptions']);
-
-    // persisted only so UI controls can seed their initial state from the chart data next time this dialog opens
-    fields = updateSet(fields, ['fireflyLayout.spectralLines.enabled'], spectralLinesEnabled);
-    fields = updateSet(fields, ['fireflyLayout.spectralLines.source'], spectralLinesTblId);
-
-    // replace only this feature's shapes, preserve others
-    const otherShapes = getChartData(chartId)?.layout?.shapes?.filter((s) => s.legendgroup !== SPECTRAL_LINES_GROUP) ?? [];
-    // lines are rest-frame (lab) wavelengths; when the spectrum itself is shown in observed frame (i.e. not
-    // already rest-frame corrected), shift the lines by the same redshift to match - no shift needed in rest frame
-    const {sfOption, redshift} = getRedshiftInfo(fields, (p) => [p], fireflyData, activeTrace);
-    const spectralLinesRedshift = sfOption === 'observed' ? (Number(redshift) || 0) : 0;
-    const spectralLineShapes = spectralLinesEnabled ? makeSpectralLineShapes(xUnit, spectralLinesTblId, spectralLinesRedshift) : [];
-    fields = updateSet(fields, ['layout.shapes'], [...otherShapes, ...spectralLineShapes]);
-
-    // always persist the full, correct value — don't rely on the key being absent, since a stale value from any
-    // earlier Apply would never get cleared otherwise
-    fields = updateSet(fields, ['layout.showlegend'], data.length > 1 || spectralLinesEnabled);
-    // -----
-
     // propagate all of the above field changes to change the state (i.e. chart data in store)
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});
 }
 
-function getEffectiveSFOptionFields(trace={}) {
+/**
+ * Get a trace's spectral-frame option: explicit spectralFrameOption fields, or the same defaults SpectralFrameOptions
+ * would show on first mount for any field not yet chosen.
+ * @param {object} [trace] - fireflyData[traceIdx]
+ * @returns {{value: string, redshift: string, userSpecified: string}}
+ */
+export function getEffectiveSpectralFrameOption(trace={}) {
     const spectralFrame = trace.spectralFrame || {};
     const spectralFrameOption = trace.spectralFrameOption || {};
     const refPos = spectralFrame.refPos?.toUpperCase?.();
     return {
-        value: spectralFrameOption.value ?? (refPos === REF_POS.TOPOCENTER ? 'observed' : 'rest'),
-        redshift: spectralFrameOption.redshift ?? 'userSpecified',
+        value: spectralFrameOption.value ?? (refPos === REF_POS.TOPOCENTER ? SF_OPTION.OBSERVED : SF_OPTION.REST),
+        // redshift defaults to getRedshiftOptions' first entry (because of radio button group)
+        redshift: spectralFrameOption.redshift ?? getRedshiftOptions(trace)[0]?.value ?? USER_SPECIFIED_REDSHIFT,
         userSpecified: spectralFrameOption.userSpecified ?? '0'
     };
 }
@@ -424,11 +405,9 @@ export const useSpectrumInputs = ({activeTrace:pActiveTrace, chartId, groupKey})
             const allProps = {label: 'Spectral frame:', ...props};
             const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
             return isKnownRefPos(sfRefPos) //only show options when TOPOCENTER or CUSTOM
-                ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
+                ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} fireflyData={fireflyData} {...allProps}/>
                 : <ReadOnlyField value={sfRefPos} {...allProps}/>;
         }, [activeTrace, fireflyData, groupKey]),
-        SpectralLines: useCallback((props={}) =>
-            <SpectralLinesOptions activeTrace={activeTrace} chartId={chartId} {...props}/>, [activeTrace, chartId]),
     };
 };
 
@@ -437,8 +416,8 @@ const SFOptionFieldKeys = (activeTrace) => {
     return Object.fromEntries(['value', 'redshift', 'userSpecified'].map((subKey)=>[subKey, `${baseKey}.${subKey}`]));
 };
 
-function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: memoize it?
-    const refPos = spectralFrame.refPos.toUpperCase();
+function getRedshiftOptions({target, derivedRedshift, spectralFrame}={}){ //TODO: memoize it?
+    const refPos = spectralFrame?.refPos?.toUpperCase?.();
     let options = [];
 
     if (target?.redshift) {
@@ -460,7 +439,7 @@ function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: m
 
     options.push({
         label: 'Enter Redshift: ',
-        value: 'userSpecified'
+        value: USER_SPECIFIED_REDSHIFT
     });
 
     if (refPos === REF_POS.CUSTOM) {
@@ -473,23 +452,23 @@ function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: m
     return options;
 }
 
-function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, ...props}) {
-    const {spectralFrameOption} = fireflyData[activeTrace];
-    const spectralFrameOptions = [{label: 'Observed Frame', value: 'observed'}, {label: 'Rest Frame', value: 'rest'}];
-    const redshiftOptions = getRedshiftOptions(fireflyData[activeTrace]);
-    const defaultSFOption = refPos===REF_POS.TOPOCENTER ? 'observed' : 'rest';
+function SpectralFrameOptions ({groupKey, activeTrace, fireflyData, ...props}) {
+    const trace = fireflyData[activeTrace];
+    const {value, redshift, userSpecified} = getEffectiveSpectralFrameOption(trace);
+    const spectralFrameOptions = [{label: 'Observed Frame', value: SF_OPTION.OBSERVED}, {label: 'Rest Frame', value: SF_OPTION.REST}];
+    const redshiftOptions = getRedshiftOptions(trace);
 
     const isRestFrame = useStoreConnector(()=>
-        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).value)==='rest');
+        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).value)===SF_OPTION.REST);
 
     const isUserSpecifiedOption = useStoreConnector(()=>
-        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).redshift)==='userSpecified');
+        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).redshift)===USER_SPECIFIED_REDSHIFT);
 
     return (
         <Stack spacing={1}>
             <ListBoxInputField fieldKey={SFOptionFieldKeys(activeTrace).value}
                                options={spectralFrameOptions}
-                               initialState={{value: spectralFrameOption?.value ?? defaultSFOption}}
+                               initialState={{value}}
                                slotProps={{input: {sx: {minWidth: '12rem'}}}}
                                {...props}/>
             <ReadOnlyField label={'Redshift correction of:'}
@@ -497,12 +476,12 @@ function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, ...p
             <Box sx={{position: 'relative', pl: 1}}>
                     <RadioGroupInputField fieldKey={SFOptionFieldKeys(activeTrace).redshift}
                                           options={redshiftOptions}
-                                          initialState={{value: spectralFrameOption?.redshift}} //will select 1st option if undefined
+                                          initialState={{value: redshift}}
                                           orientation={'vertical'}
                     />
                     <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).userSpecified}
                                      sx={{position: 'absolute', bottom: 0, left: '9rem', width: '9rem', zIndex: 1}} //to align it with the last radio group option
-                                     initialState={{value: spectralFrameOption?.userSpecified ?? '0'}}
+                                     initialState={{value: userSpecified}}
                                      validator={(val) => isFloat('Redshift', val)}
                                      readonly={!isUserSpecifiedOption}
                                      tooltip='Redshift value'/>
