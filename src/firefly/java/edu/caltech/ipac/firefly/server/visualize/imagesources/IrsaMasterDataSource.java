@@ -5,16 +5,19 @@
 package edu.caltech.ipac.firefly.server.visualize.imagesources;
 
 
-import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import org.apache.commons.csv.CSVFormat;
 
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.util.FormatUtil;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import java.io.File;
-import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -22,9 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry.PARAMS;
-import org.apache.commons.io.FileUtils;
 
-import static edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData.makeJsonObj;
 
 /**
  * @author Trey Roby
@@ -173,30 +174,16 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
 
      DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {
 
-         InputStream inf= IrsaMasterDataSource.class.getResourceAsStream(masterTableName);
-         DataGroup dg = DsvTableIO.parse(inf, CSVFormat.DEFAULT);
-         return dg;
-     }
-
-     public static void main(String[] args) throws Exception {
-       IrsaMasterDataSource s = new IrsaMasterDataSource(){
-           @Override
-           DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {
-               FileInputStream inf = FileUtils.openInputStream(new File(masterTableName));//
-               DataGroup dg = DsvTableIO.parse(inf, CSVFormat.DEFAULT);
-               return dg;
-           }
-       };
-         List<ImageMasterDataEntry> dataList = s.createDataList("/hydra/cm/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-image-master-table.csv");
-//         ImageMasterDataEntry o = (ImageMasterDataEntry) dataList.get(0);
-         for(ImageMasterDataEntry o:dataList){
-            System.out.println(makeJsonObj(o.getDataMap()));
-         }
-
-         ExternalMasterDataSource e = new ExternalMasterDataSource();
-         List<ImageMasterDataEntry> imageMasterData = e.getImageMasterData();
-         for(ImageMasterDataEntry o:imageMasterData){
-             System.out.println(makeJsonObj(o.getDataMap()));
+         // copy it out first under the working dir so DuckDB can read it.
+         File spill = File.createTempFile("master-", ".csv", ServerContext.getTempWorkDir());
+         try (InputStream inf = IrsaMasterDataSource.class.getResourceAsStream(masterTableName)) {
+             if (inf == null)  throw new IOException("Master table not found: " + masterTableName);
+             Files.copy(inf, spill.toPath(), StandardCopyOption.REPLACE_EXISTING);
+             return DuckDbReadable.read(FormatUtil.Format.CSV, spill.getAbsolutePath());
+         } catch (DataAccessException e) {
+             throw new IOException("Unable to read master table: " + masterTableName, e);
+         } finally {
+             spill.delete();
          }
      }
 

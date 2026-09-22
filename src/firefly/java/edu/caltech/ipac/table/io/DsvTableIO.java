@@ -53,6 +53,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * LZ added another method in order to read file through an InputStream
  *
  */
+@Deprecated
 public class DsvTableIO {
 
     public static DataGroup parse(File inf, Format format) throws IOException {
