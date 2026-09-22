@@ -25,6 +25,24 @@
 //   - https://healpix.jpl.nasa.gov/html/java/healpix/core/HealpixIndex.html
 //   - https://healpix.jpl.nasa.gov/html/java/healpix/tools/SpatialVector.html
 
+/**
+ * HEALPix terms used throughout this file:
+ * - nside: the resolution parameter. The sphere is divided into 12 base faces, each subdivided
+ *   into nside x nside pixels, so npix = 12 * nside^2. nside must be a power of 2.
+ * - order (norder): log2(nside); the two are used interchangeably by different parts of this API.
+ * - ipix: the integer index identifying a single pixel, in one of two schemes:
+ *     - NEST (nested): pixel numbers are organized as a hierarchical quad-tree, so a pixel at one
+ *       order splits into exactly 4 child pixels at the next order via simple bit operations.
+ *       This is the scheme most callers in this codebase use, since it supports jumping between
+ *       resolutions (norders) cheaply.
+ *     - RING: pixel numbers increase ring by ring from the North Pole to the South Pole. Some
+ *       algorithms here (e.g. queryDisc/inRing) work in RING because pixels at a given latitude
+ *       form a single contiguous range of indexes, then convert the result to NEST if requested.
+ * - theta, phi: spherical coordinates in radians used internally by the HEALPix math -
+ *   theta is colatitude (0 at the North Pole, PI at the South Pole), phi is longitude (0 to 2*PI).
+ * - ra, dec: the more familiar equatorial coordinates in degrees. radecToPolar/polarToRadec and
+ *   SpatialVector convert between ra/dec and theta/phi.
+ */
 const Constants = {
     PI : Math.PI,
     C_PR : Math.PI / 180,
@@ -40,13 +58,38 @@ const Constants = {
 
 const toInt= (n) => Math.trunc(n);
 const powerOf2= Array.from({length:53}, (v,idx) => 2**idx);
+
+// bitwise shifts that work on values beyond the 32-bit range that JS's native << and >> support,
+// up to the 53 bits a JS number can hold without losing precision.
 const shiftRight= (v,bits) => toInt(v / powerOf2[bits]);
 const shiftLeft= (v,bits) => toInt(v * powerOf2[bits]);
+
+/**
+ * @param {number} nside
+ * @return {number} the HEALPix order (log2(nside)) if nside is a valid power of 2, otherwise -1
+ */
 const nside2order= (nside) => (nside & nside - 1) > 0 ? -1 : toInt(Math.log2(nside));
 
+/**
+ * Convert equatorial coordinates to the (theta, phi) spherical coordinates used by the HEALPix
+ * algorithms in this file.
+ * @param {number} ra right ascension in degrees
+ * @param {number} dec declination in degrees
+ * @return {{theta:number, phi:number}} theta (colatitude) and phi (longitude), both in radians
+ */
 export const radecToPolar= (ra, dec) => ({ theta: Math.PI / 2 - dec / 180 * Math.PI, phi: ra / 180 * Math.PI });
+
+/**
+ * Convert HEALPix (theta, phi) spherical coordinates back to equatorial coordinates.
+ * @param {number} t theta (colatitude) in radians
+ * @param {number} s phi (longitude) in radians
+ * @return {{ra:number, dec:number}} right ascension and declination, both in degrees
+ */
 export const polarToRadec= (t, s) => ({ ra: 180 * s / Math.PI, dec: 180 * (Math.PI / 2 - t) / Math.PI });
 
+// bigAnd/bigOr/orAll: bitwise AND/OR that work correctly on values up to 53 bits, by splitting
+// each operand into a high 32nd bit and the remaining low 31 bits, since JS's native &/| operators
+// only work correctly on 32-bit integers.
 function bigAnd(v1, v2) {
     const hi = 0x80000000;
     const low = 0x7fffffff;
@@ -73,6 +116,16 @@ function bigOr(v1, v2) {
 
 const orAll= (...args) => args.reduce( (prev,curr) => bigOr(prev,curr) ,0);
 
+/**
+ * Find which pixel, at a given nside resolution, contains a point on the sphere, using the NEST
+ * pixel numbering scheme. This is the primary entry point for looking up "which HEALPix pixel is
+ * this position in", and is used throughout firefly to map ra/dec (via radecToPolar) to a HiPS
+ * tile/pixel number at a given order.
+ * @param {number} theta colatitude in radians, in [0, PI] (0 = North Pole)
+ * @param {number} phi longitude in radians, in [0, 2*PI)
+ * @param {number} nside the resolution (must be a power of 2)
+ * @return {number} the NEST pixel index, in [0, 12*nside^2)
+ */
 export function ang2pixNest(theta, phi, nside) {
     const order = nside2order(nside);
     let  tp, o, c, jp, jm, ntt, face_num, ix, iy;
@@ -134,6 +187,16 @@ export function ang2pixNest(theta, phi, nside) {
     return xyf2nest(ix, iy, face_num, order);
 }
 
+/**
+ * Combine a pixel's (x, y) position within a HEALPix base face with the face number into a single
+ * NEST pixel index, by interleaving the bits of x and y (via the UTAB lookup table) and prefixing
+ * the face number.
+ * @param {number} ix x coordinate within the face, in [0, nside)
+ * @param {number} iy y coordinate within the face, in [0, nside)
+ * @param {number} face_num the base face number, in [0, 12)
+ * @param {number} order the HEALPix order (log2(nside))
+ * @return {number} the NEST pixel index
+ */
 function xyf2nest(ix, iy, face_num, order) {
     const nest= shiftLeft(face_num, 2 * order) +
         orAll(
@@ -148,6 +211,14 @@ function xyf2nest(ix, iy, face_num, order) {
     return nest;
 }
 
+/**
+ * The inverse of xyf2nest: split a NEST pixel index back into its base face number and (x, y)
+ * position within that face (by de-interleaving bits via the CTAB lookup table).
+ * @param {number} ipix the NEST pixel index
+ * @param {number} order the HEALPix order (log2(nside))
+ * @param {number} npface number of pixels per face (nside^2)
+ * @return {{face_num:number, ix:number, iy:number}}
+ */
 function nest2xyf(ipix, order, npface) {
     // if (ipix>0x7FFFFFF) {
     //     console.log('nest2xyf: ipix greater');
@@ -182,7 +253,18 @@ function nest2xyf(ipix, order, npface) {
 }
 
 
+/**
+ * A 3D unit-sphere position, usable either as an (x, y, z) Cartesian vector or as ra/dec
+ * equatorial coordinates - the two representations are kept in sync lazily via updateXYZ()/
+ * updateRaDec(). This is the coordinate type accepted by HealpixIndex.queryDisc() and returned
+ * by HealpixIndex.corners_nest()/corners_ring() and HealpixIndex.vector().
+ */
 export class SpatialVector {
+    /**
+     * @param {number} [x] Cartesian x
+     * @param {number} [y] Cartesian y
+     * @param {number} [z] Cartesian z
+     */
     constructor(x, y, z) {
         this.x = x;
         this.y = y;
@@ -192,9 +274,12 @@ export class SpatialVector {
         this.okRaDec_ = false;
     }
 
+    /** @return {number} the length (magnitude) of the vector */
     length() { return Math.sqrt(this.lengthSquared()); }
+    /** @return {number} the squared length of the vector, cheaper than length() when only comparing magnitudes */
     lengthSquared() { return this.x * this.x + this.y * this.y + this.z * this.z; }
 
+    /** Rescale this vector in place to unit length (magnitude 1), leaving its direction unchanged. */
     normalized() {
         const vectorLength = this.length();
         this.x /= vectorLength;
@@ -202,6 +287,11 @@ export class SpatialVector {
         this.z /= vectorLength;
     }
 
+    /**
+     * Set this vector's position from equatorial coordinates, recomputing its (x, y, z).
+     * @param {number} lon right ascension in degrees
+     * @param {number} lat declination in degrees
+     */
     set(lon, lat) {
         this.ra_ = lon;
         this.dec_ = lat;
@@ -209,6 +299,10 @@ export class SpatialVector {
         this.updateXYZ();
     }
 
+    /**
+     * @param {SpatialVector} v1
+     * @return {number} the angle, in radians, between this vector and v1
+     */
     angle(v1) {
         const xx = this.y * v1.z - this.z * v1.y;
         const yy = this.z * v1.x - this.x * v1.z;
@@ -217,20 +311,49 @@ export class SpatialVector {
         return Math.abs(Math.atan2(cross, this.dot(v1)));
     }
 
+    /** @return {number[]} this vector's Cartesian coordinates as [x, y, z] */
     get() { return [this.x, this.y, this.z]; }
 
     toString() { return 'SpatialVector[' + this.x + ', ' + this.y + ', ' + this.z + ']'; }
 
+    /**
+     * @param {SpatialVector} v
+     * @return {SpatialVector} the cross product of this vector and v
+     */
     cross(v) {
         return new SpatialVector(this.y * v.z - v.y * this.z, this.z * v.x - v.z * this.x, this.x * v.y - v.x() * this.y);
     }
 
+    /**
+     * @param {SpatialVector} other
+     * @return {boolean} true if this vector's Cartesian coordinates exactly equal other's
+     */
     equal(other) { return Boolean(this.x===other.x && this.y===other.y && this.z===other.z); }
+    /**
+     * @param {number} s scale factor
+     * @return {SpatialVector} a new vector scaled by s
+     */
     mult(s) { return new SpatialVector(s * this.x, s * this.y, s * this.z); }
+    /**
+     * @param {SpatialVector} v1
+     * @return {number} the dot product of this vector and v1
+     */
     dot(v1) { return this.x * v1.x + this.y * v1.y + this.z * v1.z; }
+    /**
+     * @param {SpatialVector} s
+     * @return {SpatialVector} a new vector, the sum of this vector and s
+     */
     add(s) { return new SpatialVector(this.x + s.x, this.y + s.y, this.z + s.z); }
+    /**
+     * @param {SpatialVector} s
+     * @return {SpatialVector} a new vector, this vector minus s
+     */
     sub(s) { return new SpatialVector(this.x - s.x, this.y - s.y, this.z - s.z); }
 
+    /**
+     * @return {number} declination, in degrees, of this position (normalizing the vector first if
+     *      it was set via x/y/z rather than via set())
+     */
     dec() {
         if (this.okRaDec_) return this.dec_;
         this.normalized();
@@ -238,6 +361,10 @@ export class SpatialVector {
         return this.dec_;
     }
 
+    /**
+     * @return {number} right ascension, in degrees, of this position (normalizing the vector first
+     *      if it was set via x/y/z rather than via set())
+     */
     ra() {
         if (this.okRaDec_) return this.ra_;
         this.normalized();
@@ -245,6 +372,7 @@ export class SpatialVector {
         return this.ra_;
     }
 
+    /** Recompute (x, y, z) from the currently stored ra_/dec_ (degrees). */
     updateXYZ() {
         const t = Math.cos(this.dec_ * Constants.C_PR);
         this.x = Math.cos(this.ra_ * Constants.C_PR) * t;
@@ -252,6 +380,7 @@ export class SpatialVector {
         this.z = Math.sin(this.dec_ * Constants.C_PR);
     }
 
+    /** Recompute ra_/dec_ (degrees) from the currently stored (x, y, z); assumes a unit vector. */
     updateRaDec() {
         this.dec_ = Math.asin(this.z) / Constants.C_PR;
         const t = Math.cos(this.dec_ * Constants.C_PR);
@@ -274,6 +403,7 @@ function addRangeToSet(s,first,last) {
     for (let i = first; last >= i; i++) s.add(i);
 }
 
+/** highest HEALPix order (norder) supported by this implementation; nside can go up to 2^ORDER_MAX */
 export const ORDER_MAX = 25;
 const NSIDE_LIST = new Array(ORDER_MAX).fill(0).map((val,idx) => 2**idx);
 const JPLL = [1, 3, 5, 7, 0, 2, 4, 6, 1, 3, 5, 7];
@@ -281,6 +411,9 @@ const JRLL = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
 const NS_MAX = NSIDE_LIST[NSIDE_LIST.length-1];
 const Z0 = Constants.TWOTHIRD;
 
+// CTAB/UTAB: lookup tables used to interleave/de-interleave the bits of an (x, y) pair with a
+// single table lookup per byte, rather than bit-by-bit, when converting between NEST pixel
+// indexes and (x, y, face) coordinates (see xyf2nest/nest2xyf).
 const TAB_SIZE = 256;
 const CTAB= new Array(TAB_SIZE).fill(0).map( (v,i) =>
                1 & i | (2 & i) << 7 | (4 & i) >>> 1 | (8 & i) << 6 | (16 & i) >>> 2 | (32 & i) << 5 | (64 & i) >>> 3 | (128 & i) << 4);
@@ -288,25 +421,37 @@ const UTAB= new Array(TAB_SIZE).fill(0).map( (v,i) =>
                1 & i | (2 & i) << 1 | (4 & i) << 2 | (8 & i) << 3 | (16 & i) << 4 | (32 & i) << 5 | (64 & i) << 6 | (128 & i) << 7);
 
 
+/**
+ * A HEALPix pixelization at a fixed resolution (nside). An instance precomputes the values
+ * derived from nside (number of pixels, cap sizes, etc.) that its methods need repeatedly, so a
+ * new HealpixIndex should be created once per nside and reused rather than per lookup.
+ *
+ * Provides pixel <-> coordinate conversions in both the NEST and RING numbering schemes (see the
+ * file-level comment above for what those mean), lookup of the pixels covering a disc on the sky
+ * (queryDisc), and lookup of a pixel's corner coordinates (corners_nest/corners_ring).
+ */
 export class HealpixIndex {
 
+    /** @param {number} nside the resolution to build this index for; must be a power of 2 */
     constructor(nside) {
         this.nside = nside;
         this.nl2 = 2 * nside;
         this.nl3 = 3 * nside;
         this.nl4 = 4 * nside;
-        this.npface = nside * nside;
-        this.ncap = 2 * nside * (nside - 1);
-        this.npix = 12 * this.npface;
+        this.npface = nside * nside; // pixels per base face
+        this.ncap = 2 * nside * (nside - 1); // number of pixels in the north polar cap
+        this.npix = 12 * this.npface; // total number of pixels at this nside
         this.fact2 = 4 / this.npix;
         this.fact1 = (nside << 1) * this.fact2;
         this.order = nside2order(nside);
     }
 
     /**
-     *
-     * @param {number} pixsize
-     * @return {number}
+     * Find the nside whose pixels most closely match a desired angular pixel size. Used to pick
+     * a HEALPix/HiPS resolution appropriate for a given on-screen or on-sky size, e.g. to choose
+     * which HiPS tile order to load for the current zoom level.
+     * @param {number} pixsize desired pixel size, in arcseconds
+     * @return {number} the nside (power of 2, <= 2^ORDER_MAX) giving pixels closest to that size
      */
     static calculateNSide(pixsize) {
         let i = 0;
@@ -333,6 +478,10 @@ export class HealpixIndex {
         return i;
     }
 
+    /**
+     * @param {number} ipix a NEST pixel index at this index's nside
+     * @return {{theta:number, phi:number}} spherical coordinates (radians) of the pixel's center
+     */
     pix2ang_nest(ipix) {
         if (0 > ipix || ipix > this.npix - 1) {
             throw {
@@ -369,6 +518,10 @@ export class HealpixIndex {
         const phi = (jp - .5 * (kshift + 1)) * (Constants.PIOVER2 / nr);
         return { theta, phi };
     }
+    /**
+     * @param {number} nside must be a power of 2, > 0 and <= NS_MAX (2^(ORDER_MAX-1))
+     * @return {number} the total number of pixels (npix) covering the whole sphere at that nside
+     */
     static nside2Npix(nside) {
         if (0 > nside || (nside & -nside) !==nside || nside > NS_MAX) {
             throw {
@@ -379,6 +532,14 @@ export class HealpixIndex {
         const i = 12 * nside * nside;
         return i;
     }
+    /**
+     * The RING-scheme equivalent of xyf2nest: combine a pixel's (x, y) position within a base
+     * face with the face number into a RING pixel index.
+     * @param {number} ix x coordinate within the face
+     * @param {number} iy y coordinate within the face
+     * @param {number} face_num the base face number, in [0, 12)
+     * @return {number} the RING pixel index
+     */
     xyf2ring(ix, iy, face_num) {
         let nr, kshift, startpix;
         const r = JRLL[face_num] * this.nside - ix - iy - 1;
@@ -408,14 +569,28 @@ export class HealpixIndex {
         }
         return startpix + jp - 1;
     }
+    /**
+     * @param {number} ipnest a NEST pixel index
+     * @return {number} the same pixel's RING pixel index
+     */
     nest2ring(ipnest) {
         const {ix,iy,face_num} = nest2xyf(ipnest,this.order,this.npface);
         return this.xyf2ring(ix, iy, face_num);
     }
+    /**
+     * @param {number} ipix a NEST pixel index
+     * @param {number} step number of extra points to compute along each pixel edge, in addition
+     *      to the 2 pole-facing corners; e.g. step=1 returns the 4 corners of the pixel
+     * @return {SpatialVector[]} points along the boundary of the pixel, on the unit sphere
+     */
     corners_nest(ipix, step) {
         const i = this.nest2ring(ipix);
         return this.corners_ring(i, step);
     }
+    /**
+     * @param {number} ipix a RING pixel index at this index's nside
+     * @return {[number, number]} [theta, phi] spherical coordinates (radians) of the pixel's center
+     */
     pix2ang_ring(ipix) {
         let theta, phi, iring, iphi, ip,  fodd, hip, fihip;
         if (0 > ipix || ipix > this.npix - 1) {
@@ -457,6 +632,10 @@ export class HealpixIndex {
         return [theta, phi];
     }
 
+    /**
+     * @param {number} ipix a RING pixel index
+     * @return {number} the ring number (1 = the ring closest to the north pole) that pixel lies on
+     */
     ring(ipix) {
         const {npix,nside,ncap,nl2,nl4}= this;
         const ipixPlus1 = ipix + 1;
@@ -479,6 +658,12 @@ export class HealpixIndex {
         }
     }
 
+    /**
+     * Helper used by corners_ring() to locate a ring's north/center/south edges in terms of
+     * cos(theta), so the pixel's corner points can be positioned along those latitude lines.
+     * @param {number} i_th a ring number
+     * @return {[number, number, number]} [north, center, south] cos(theta) values bounding the ring
+     */
     integration_limits_in_costh(i_th) {
         const {nside,npface,nl3,nl4}= this;
         let s, i, n;
@@ -506,6 +691,15 @@ export class HealpixIndex {
         return [n, i, s];
     }
 
+    /**
+     * Helper used by corners_ring() to find the left/right phi (longitude) boundaries of a pixel
+     * at a given latitude line (cos_theta) within the pixel.
+     * @param {number} i_th ring number of the pixel
+     * @param {number} i_phi phi index of the pixel within its ring
+     * @param {number} i_zone which of the 4 longitude quadrants (base-face column) the pixel is in
+     * @param {number} cos_theta cosine of the latitude line to find the boundary at
+     * @return {[number, number]} [phi_left, phi_right] in radians
+     */
     pixel_boundaries(i_th, i_phi, i_zone, cos_theta) {
         let sq3th, factor, jd, ju, ku, kd, phi_l, phi_r;
         const r_n_nside = 1 * this.nside;
@@ -547,6 +741,11 @@ export class HealpixIndex {
         }
         return [phi_l, phi_r];
     }
+    /**
+     * @param {number} theta colatitude in radians
+     * @param {number} phi longitude in radians
+     * @return {SpatialVector} the unit-sphere position for those spherical coordinates
+     */
     static vector(theta, phi) {
         const x = Math.sin(theta) * Math.cos(phi);
         const y = Math.sin(theta) * Math.sin(phi);
@@ -554,6 +753,12 @@ export class HealpixIndex {
         return new SpatialVector(x, y, z);
     }
 
+    /**
+     * @param {number} pix a RING pixel index
+     * @param {number} step number of extra points to compute along each pixel edge, in addition
+     *      to the 2 pole-facing corners; e.g. step=1 returns the 4 corners of the pixel
+     * @return {SpatialVector[]} points along the boundary of the pixel, on the unit sphere
+     */
     corners_ring(pix, step) {
         const n = 2 * step + 2;
         const res = Array(n);
@@ -594,6 +799,10 @@ export class HealpixIndex {
         }
         return res;
     }
+    /**
+     * @param {SpatialVector} spatialVector a position on (or direction toward) the unit sphere
+     * @return {[number, number]} [theta, phi] spherical coordinates (radians) of that position
+     */
     static vec2Ang(spatialVector) {
         const s = spatialVector.z / spatialVector.length();
         const i = Math.acos(s);
@@ -608,14 +817,19 @@ export class HealpixIndex {
     }
 
     /**
-     * Returns a range set of pixels whose centers lie within a given disk. <p>
-     *  This method is more efficient in the RING scheme.
-     *  @param {SpatialVector} spatialVector the angular coordinates of the disk center
-     *  @param {number} radius the radius (in radians) of the disk
-     *  @param {boolean} nest true if nest, false if ring
-     *  @param {boolean} inclusive If False, return the exact set of pixels whose pixel centers lie
-     *       within the disk; if True, return all pixels that overlap with the disk,
-     *  @return {Array.<number> }the requested set of pixel number ranges
+     * Find all the pixels covering a circular disc (cone) on the sky. This is the main way
+     * firefly answers "which HiPS/HEALPix pixels overlap this region of the sky" - e.g. to find
+     * which tiles need to be fetched to cover the visible field of view. Internally this always
+     * works in the RING scheme, since pixels at a given latitude form contiguous ranges there,
+     * then converts to NEST pixel indexes if requested.
+     * @param {SpatialVector} spatialVector the angular coordinates of the disk center
+     * @param {number} radius the radius (in radians) of the disk, in [0, PI]
+     * @param {boolean} nest true to return NEST pixel indexes, false for RING
+     * @param {boolean} inclusive If False, return the exact set of pixels whose pixel centers lie
+     *      within the disk; if True, return all pixels that overlap with the disk (found by
+     *      slightly enlarging the disk before the search), which may include some false positives
+     *      near the edge.
+     * @return {number[]} the pixel indexes covering (or overlapping, if inclusive) the disk
      */
     queryDisc(spatialVector, radius, nest, inclusive) {
         if (0 > radius || radius > Constants.PI) {
@@ -672,6 +886,15 @@ export class HealpixIndex {
         }
     }
 
+    /**
+     * Add to pixSet all RING-scheme pixels on a given ring whose centers fall within the
+     * longitude range [phi0-dphi, phi0+dphi]. Used by queryDisc() to accumulate, ring by ring,
+     * the pixels that intersect a disc on the sky.
+     * @param {number} ring ring number to search
+     * @param {number} phi0 center longitude of the range, in radians
+     * @param {number} dphi half-width of the longitude range, in radians (PI selects the whole ring)
+     * @param {Set<number>} pixSet set to add matching RING pixel indexes to
+     */
     inRing(ring, phi0, dphi, pixSet) {
         let e, ringPix, startpix, hi, nr;
         const verySmall = 1e-12;
@@ -731,6 +954,11 @@ export class HealpixIndex {
         }
     }
 
+    /**
+     * @param {number} z cos(theta) of a latitude line
+     * @return {number} the ring number of the ring just north of (i.e. with a smaller theta than)
+     *      that latitude, used by queryDisc() to bound which rings to search
+     */
     ringAbove(z) {
         const az = Math.abs(z);
         if (az > Constants.TWOTHIRD) {
@@ -740,11 +968,21 @@ export class HealpixIndex {
         return toInt(this.nside * (2 - 1.5 * z));
     }
 
+    /**
+     * @param {number} ipRing a RING pixel index
+     * @return {number} the same pixel's NEST pixel index
+     */
     ring2nest(ipRing) {
         const xyf = this.ring2xyf(ipRing);
         return xyf2nest(xyf.ix, xyf.iy, xyf.face_num, this.order);
     }
 
+    /**
+     * The inverse of xyf2ring: split a RING pixel index back into its base face number and
+     * (x, y) position within that face.
+     * @param {number} pix a RING pixel index
+     * @return {{face_num:number, ix:number, iy:number}}
+     */
     ring2xyf(pix) {
         let iring, iphi, kshift, nr;
         const ret = {}; // Xyf

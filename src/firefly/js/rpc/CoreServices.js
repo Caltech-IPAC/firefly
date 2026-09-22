@@ -75,7 +75,7 @@ function buildUploadParam(item, params={}) {
     const overrideUploadParamKey= Object.keys(params).find( (k) => overrideKeys.includes(k));
     if (overrideUploadParamKey) return {[overrideUploadParamKey]:params[overrideUploadParamKey]};
     if (isString(item)) {
-       return (item.startsWith('${') || item.startsWith('/')) ? {fileOnServer:item} : {URL: item};
+       return (item.startsWith('${') || item.startsWith('/') || item.startsWith('file://')) ? {fileOnServer:item} : {URL: item};
     }
     else if (WebPlotRequest.isWPR(item)) return {webPlotRequest: item.toString()};
     else if (item instanceof Blob)  return {file:item}; // handles blob or file
