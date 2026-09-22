@@ -60,7 +60,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         DataGroup stats = new DataGroup("stats", columns);
         List<String> sqlCols = new ArrayList<>();
         for (DataType col : cols) {
-            if (col.isNumeric() && col.getVisibility() != Visibility.hidden) {
+            if (col.isNumeric() && !col.isArrayType() && col.getVisibility() != Visibility.hidden) {
                 String cname = col.getKeyName();
                 String desc = col.getDesc();
                 String units = col.getUnits();
