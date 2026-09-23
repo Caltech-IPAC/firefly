@@ -10,7 +10,7 @@ import {isHiPS} from '../WebPlot.js';
 import {createCanvas, memorizeUsingMap} from '../../util/WebUtil';
 
 export function createImageUrl(plot, tile) {
-    if (isHiPS(plot)) return makeHiPSTileUrl(plot,tile.nside, tile.tileNumber);
+    if (isHiPS(plot)) return makeHiPSTileUrl(plot,tile.norder, tile.tileNumber);
     else console.log('fits image URL tiles are deprecated');
 }
 

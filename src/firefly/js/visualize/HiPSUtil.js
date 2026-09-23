@@ -786,3 +786,13 @@ function getHipsPixelCutRangeValues(plot) {
     }
     return defaultRv;
 }
+
+/**
+ * get the 4 child pixels at the prograded norder
+ * @param {number} pixel
+ * @return {Array.<number>} array of 4 pixels
+ */
+export function getProGradeTilePixels(pixel) {
+    const base = pixel * 4;
+    return [base, base + 1, base + 2, base + 3];
+}

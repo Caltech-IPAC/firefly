@@ -7,8 +7,9 @@ import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixInd
 import {logger} from '../util/Logger';
 import {blockWhileAsyncIdWaiting, synchronizeAsyncFunctionById} from '../util/SynchronizeAsync';
 import {createBackgroundRunner, isDefined} from '../util/WebUtil';
-import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/VisConst';
+import {getProGradeTilePixels} from '../visualize/HiPSUtil';
 import {makeWorldPt} from '../visualize/Point';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/VisConst';
 import {convertCelestial} from '../visualize/VisUtil';
 import {findTableCenterColumns, makeWorldPtUsingCenterColumns} from '../voAnalyzer/TableAnalysis';
 import {getTableModel} from '../voAnalyzer/VoCoreUtils';
@@ -512,11 +513,6 @@ export function onOrderDataReady(tbl_id) {
 }
 
 
-
-export function getProGradeTilePixels(pixel) {
-    const base= pixel*4;
-    return [base,base+1,base+2,base+3];
-}
 
 export const getRetroGradeIpix= (ipix, retroCnt=1) => retroCnt ? Math.trunc(ipix/(4**retroCnt)) : ipix;
 
