@@ -252,7 +252,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             else {
                 int idx = fromUrl.lastIndexOf('/');
                 fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-                fname = fname.contains("?") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
+                fname = fname.contains("?") ||  fname.contains("&") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
                 File dir= getSessUploadDir(sp.convertToServerRequest());
                 statusFileInfo = LockingRetrieve.downloadWithCacheMsg(fromUrl, dir);
             }

@@ -587,9 +587,10 @@ export class HealpixIndex {
         const i = this.nest2ring(ipix);
         return this.corners_ring(i, step);
     }
+    
     /**
      * @param {number} ipix a RING pixel index at this index's nside
-     * @return {[number, number]} [theta, phi] spherical coordinates (radians) of the pixel's center
+     * @return {Array.<number>} [theta, phi] spherical coordinates (radians) of the pixel's center
      */
     pix2ang_ring(ipix) {
         let theta, phi, iring, iphi, ip,  fodd, hip, fihip;
@@ -662,7 +663,7 @@ export class HealpixIndex {
      * Helper used by corners_ring() to locate a ring's north/center/south edges in terms of
      * cos(theta), so the pixel's corner points can be positioned along those latitude lines.
      * @param {number} i_th a ring number
-     * @return {[number, number, number]} [north, center, south] cos(theta) values bounding the ring
+     * @return {Array.<number>} [north, center, south] cos(theta) values bounding the ring
      */
     integration_limits_in_costh(i_th) {
         const {nside,npface,nl3,nl4}= this;
@@ -698,7 +699,7 @@ export class HealpixIndex {
      * @param {number} i_phi phi index of the pixel within its ring
      * @param {number} i_zone which of the 4 longitude quadrants (base-face column) the pixel is in
      * @param {number} cos_theta cosine of the latitude line to find the boundary at
-     * @return {[number, number]} [phi_left, phi_right] in radians
+     * @return {Array.<number>} [phi_left, phi_right] in radians
      */
     pixel_boundaries(i_th, i_phi, i_zone, cos_theta) {
         let sq3th, factor, jd, ju, ku, kd, phi_l, phi_r;
@@ -801,7 +802,7 @@ export class HealpixIndex {
     }
     /**
      * @param {SpatialVector} spatialVector a position on (or direction toward) the unit sphere
-     * @return {[number, number]} [theta, phi] spherical coordinates (radians) of that position
+     * @return {Array.<number>} [theta, phi] spherical coordinates (radians) of that position
      */
     static vec2Ang(spatialVector) {
         const s = spatialVector.z / spatialVector.length();

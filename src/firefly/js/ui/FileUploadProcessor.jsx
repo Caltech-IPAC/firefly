@@ -503,7 +503,9 @@ function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
 
             wpRequest.setMultiImageExts(extList);
 
-            const plotId = `${fileName.replace('.', '_')}-${imageIndices.join('_')}`;
+            let plotId = `${fileName.replace('.', '_')}-${imageIndices.join('_')}`;
+            plotId= plotId.replaceAll('&','__');
+            plotId= plotId.replaceAll('=','__');
             dispatchPlotImage({plotId, wpRequest, viewerId});
         }
     }
