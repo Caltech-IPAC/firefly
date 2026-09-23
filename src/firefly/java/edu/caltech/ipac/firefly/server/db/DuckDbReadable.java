@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.FileUtil;
@@ -30,6 +31,8 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.applyInfoToDataType;
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.dbToDataGroup;
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
 
 /**
@@ -116,6 +119,49 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return table;
     }
 
+    /** Same as {@link #read(FormatUtil.Format, String, Consumer)}, with no extra meta. */
+    public static DataGroup read(FormatUtil.Format format, String source) throws DataAccessException {
+        return read(format, source, null);
+    }
+
+    /**
+     * Reads the given source with the adapter that handles this format.
+     * @param format  format of the source
+     * @return  the source as a DataGroup, or null if no adapter reads this format
+     * @see #read(String, Consumer)
+     */
+    public static DataGroup read(FormatUtil.Format format, String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
+        var adapter = getDetachedAdapter(format);
+        return adapter == null ? null : adapter.read(source, extraMetaSetter);
+    }
+
+    /** Same as {@link #read(String, Consumer)}, with no extra meta. */
+    public DataGroup read(String source) throws DataAccessException {
+        return read(source, null);
+    }
+
+    /**
+     * Reads the given source into a DataGroup. The data is read into memory; no dbFile needed.
+     * @param source            can be a local file path or a URL
+     * @param extraMetaSetter   additional meta to apply to the returned table
+     * @return  the source as a DataGroup
+     */
+    public DataGroup read(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
+        StopWatch.getInstance().start("read: " + source);
+        DataGroup tableMeta = getTableMeta(source, extraMetaSetter);    // the source's schema, with all of its meta applied
+        String sql = "SELECT * from %s".formatted(sqlReadSource(source));
+        try {
+            DataGroup table = getJdbcTmpl().query(sql, rs -> dbToDataGroup(rs, tableMeta));   // adds the rows to it
+            StopWatch.getInstance().printLog("read: " + source);
+            return table;
+        } catch (Exception e) {
+            LOGGER.warn("read failed with error: " + e.getMessage(),
+                    "sql: " + sql,
+                    "source: " + source);
+            throw handleSqlExp("Query failed", e);
+        }
+    }
+
     /**
      * Ingest data directly from a source file.  This file can be local or remote.
      * @param source can be a local file path or a URL
@@ -179,20 +225,46 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
             return "read_parquet('%s')".formatted(srcFile);
         }
 
+        /**
+         * Start from the Parquet schema then apply embedded VOTable metadata on top, ensuring column info matches the actual file.
+         */
         @Override
         protected DataGroup getTableMeta(String source, Consumer<DataGroup> extraMetaSetter) throws DataAccessException {
+            DataGroup tableMeta = super.getTableMeta(source, null);      // the schema, straight from the file
+            ifNotNull(readVoTableMeta(source)).apply(voMeta -> applyVoMeta(tableMeta, voMeta));
+            if (extraMetaSetter != null)  extraMetaSetter.accept(tableMeta);
+            return tableMeta;
+        }
+
+        /**
+         * Applies VOTable metadata onto the given table
+         */
+        private static void applyVoMeta(DataGroup table, DataGroup voMeta) {
+            for (DataType col : table.getDataDefinitions()) {
+                DataType info = voMeta.getDataDefintion(col.getKeyName());                      // exact match first;
+                if (info == null)  info = voMeta.getDataDefintion(col.getKeyName(), true);      // then, ignore case
+                applyInfoToDataType(col, info);
+            }
+            table.setTitle(voMeta.getTitle());
+            table.setTableMeta(voMeta.getTableMeta());
+            table.setGroupInfos(voMeta.getGroupInfos());
+            table.setLinkInfos(voMeta.getLinkInfos());
+            table.setParamInfos(voMeta.getParamInfos());
+            table.setResourceInfos(voMeta.getResourceInfos());
+        }
+
+        /**
+         * @return the VOTable stored in the Parquet metadata, or null if unavailable or unreadable
+         */
+        private DataGroup readVoTableMeta(String source) {
             var jdbc = JdbcFactory.getTemplate(getDbInstance());
             try {
                 var votable = jdbc.queryForObject(
                         "SELECT decode(value) FROM parquet_kv_metadata('%s') where key = 'IVOA.VOTable-Parquet.content'".formatted(source),
                         String.class);
-                if (votable != null) {
-                    DataGroup tableMeta = VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
-                    if (tableMeta != null && extraMetaSetter != null)    extraMetaSetter.accept(tableMeta);
-                    return tableMeta;
-                }
-            } catch (Exception ignored) {}        // ignored if it can't read
-            return super.getTableMeta(source, extraMetaSetter);
+                return votable == null ? null :
+                        VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
+            } catch (Exception ignored) { return null; }        // ignored if it can't read
         }
 
         public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {

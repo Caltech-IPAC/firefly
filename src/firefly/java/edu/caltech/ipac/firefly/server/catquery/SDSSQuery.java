@@ -25,7 +25,8 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.util.FormatUtil;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.query.DataGroupQuery;
@@ -34,7 +35,6 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import org.apache.commons.csv.CSVFormat;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -164,7 +164,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             // check for errors in returned file
             evaluateCVS(csv);
 
-            DataGroup dg = DsvTableIO.parse(csv, CSVFormat.DEFAULT.withCommentMarker('#'));
+            DataGroup dg = csv.length() == 0 ? null : DuckDbReadable.read(FormatUtil.Format.CSV, csv.getAbsolutePath());
             if (dg == null) {
                     _log.info("no data found for search");
                     return null;

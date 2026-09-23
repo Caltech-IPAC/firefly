@@ -5,7 +5,9 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
-import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.table.io.SpectrumMetaInspector;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
@@ -59,7 +61,12 @@ public class TableUtil {
                 return tables[0];
             } else return null;
         } else if (format == FormatUtil.Format.CSV || format == FormatUtil.Format.TSV) {
-            return DsvTableIO.parse(inf, format, request);
+            try {
+                return DuckDbReadable.read(format, inf.getAbsolutePath(),
+                        dg -> SpectrumMetaInspector.searchForSpectrum(dg, request));
+            } catch (DataAccessException e) {
+                throw new IOException("Unable to read %s file: %s".formatted(format, inf), e);
+            }
         } else if (format == FormatUtil.Format.FITS ) {
             try {
                 return FITSTableReader.readFitsTable(inf.getAbsolutePath(), request, tableIndex);

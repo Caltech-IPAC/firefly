@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.SpectrumMetaInspector;
@@ -78,7 +77,7 @@ public class DbDataIngestor {
         } else if (format == PARQUET) {
             throw new DataAccessException("Unsupported format (%s), file: %s".formatted(format, source));
         } else {
-            DataGroup table = DsvTableIO.parse(new File(source), format);
+            DataGroup table = DuckDbReadable.read(format, source);      // to avoid using DsvTableIO.parse
             return ingestTable(dbAdapter, table, searchForSpectrum);
         }
     }

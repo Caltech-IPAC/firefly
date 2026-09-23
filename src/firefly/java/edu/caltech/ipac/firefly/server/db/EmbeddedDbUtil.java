@@ -31,6 +31,8 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,37 +63,73 @@ import static java.time.ZoneOffset.UTC;
 public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
-    static final String DD_INSERT_SQL = "insert into %s_DD values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    static final String DD_CREATE_SQL = "create table %s_DD "+
-            "(" +
-            "  cname    varchar(64000)" +
-            ", label    varchar(64000)" +
-            ", type     varchar(255)" +
-            ", units    varchar(255)" +
-            ", null_str varchar(255)" +
-            ", format   varchar(255)" +
-            ", fmtDisp  varchar(64000)" +
-            ", width    int" +
-            ", visibility varchar(255)" +
-            ", sortable   boolean" +
-            ", filterable boolean" +
-            ", fixed      boolean" +
-            ", description varchar(64000)" +
-            ", enumVals varchar(64000)" +
-            ", ID       varchar(64000)" +
-            ", precision varchar(64000)" +
-            ", ucd      varchar(64000)" +
-            ", utype    varchar(64000)" +
-            ", ref      varchar(64000)" +
-            ", maxValue varchar(64000)" +
-            ", minValue varchar(64000)" +
-            ", links    TEXT" +
-            ", dataOptions varchar(64000)" +
-            ", arraySize varchar(255)" +
-            ", cellRenderer varchar(64000)" +
-            ", sortByCols varchar(64000)" +
-            ", order_index    int" +
-            ")";
+    /** reads one DD column out of a ResultSet row; the type-specific getter matters, ie. getInt() gives 0 where getObject() gives null */
+    interface RsDDReader { Object read(ResultSet rs, String col) throws SQLException; }
+
+    /**
+     * Column's info: The DD table schema, read/write logic, and DataType mapping are all derived from it.
+     * @param name    the DD column name
+     * @param dbType  its SQL type
+     * @param get     the value to store, taken from a DataType
+     * @param set     applies the stored value to a DataType; null for column-identifying info
+     * @param read    pulls the value out of a DD row
+     */
+    record DdCol(String name, String dbType, Function<DataType,Object> get,
+                 BiConsumer<DataType,Object> set, RsDDReader read) {}
+
+    private static DdCol text(String name, int size, Function<DataType,Object> get, BiConsumer<DataType,Object> set) {
+        return new DdCol(name, "varchar(%d)".formatted(size), get, set, ResultSet::getString);
+    }
+    private static String asStr(Object v) { return (String) v; }
+
+    /** every piece of column info the DD carries, in DD column order.  order_index is appended separately; it is
+     *  the column's position in the table rather than anything a DataType holds. */
+    static final List<DdCol> DD_COLS = List.of(
+            text("cname",       64000, DataType::getKeyName,      null),
+            text("label",       64000, DataType::getLabel,        (dt,v) -> dt.setLabel(asStr(v))),
+            text("type",          255, DataType::getTypeDesc,     (dt,v) -> {
+                        dt.setTypeDesc(asStr(v));
+                        dt.setDataType(DataType.descToType(asStr(v), dt.getDataType()));   // if desc is unknown, keep the type we already have
+                    }),
+            text("units",         255, DataType::getUnits,        (dt,v) -> dt.setUnits(asStr(v))),
+            text("null_str",      255, DataType::getNullString,   (dt,v) -> dt.setNullString(asStr(v))),
+            text("format",        255, DataType::getFormat,       (dt,v) -> dt.setFormat(asStr(v))),
+            text("fmtDisp",     64000, DataType::getFmtDisp,      (dt,v) -> dt.setFmtDisp(asStr(v))),
+            new DdCol("width",     "int", DataType::getWidth,
+                    (dt,v) -> dt.setWidth((Integer) v), ResultSet::getInt),
+            text("visibility",    255, dt -> dt.getVisibility().name(),
+                    (dt,v) -> dt.setVisibility(DataType.Visibility.valueOf(asStr(v)))),
+            new DdCol("sortable",   "boolean", DataType::isSortable,
+                    (dt,v) -> dt.setSortable((Boolean) v), ResultSet::getBoolean),
+            new DdCol("filterable", "boolean", DataType::isFilterable,
+                    (dt,v) -> dt.setFilterable((Boolean) v), ResultSet::getBoolean),
+            new DdCol("fixed",      "boolean", DataType::isFixed,
+                    (dt,v) -> dt.setFixed((Boolean) v), ResultSet::getBoolean),
+            text("description", 64000, DataType::getDesc,         (dt,v) -> dt.setDesc(asStr(v))),
+            text("enumVals",    64000, DataType::getEnumVals,     (dt,v) -> dt.setEnumVals(asStr(v))),
+            text("ID",          64000, DataType::getID,           (dt,v) -> dt.setID(asStr(v))),
+            text("precision",   64000, DataType::getPrecision,    (dt,v) -> dt.setPrecision(asStr(v))),
+            text("ucd",         64000, DataType::getUCD,          (dt,v) -> dt.setUCD(asStr(v))),
+            text("utype",       64000, DataType::getUType,        (dt,v) -> dt.setUType(asStr(v))),
+            text("ref",         64000, DataType::getRef,          (dt,v) -> dt.setRef(asStr(v))),
+            text("maxValue",    64000, DataType::getMaxValue,     (dt,v) -> dt.setMaxValue(asStr(v))),
+            text("minValue",    64000, DataType::getMinValue,     (dt,v) -> dt.setMinValue(asStr(v))),
+            new DdCol("links", "TEXT", dt -> Util.serialize(dt.getLinkInfos()),
+                    (dt,v) -> applyIfNotEmpty(Try.it(() -> Util.deserialize(asStr(v))).get(),
+                                              o -> dt.setLinkInfos((List<LinkInfo>) o)),
+                    ResultSet::getString),
+            text("dataOptions", 64000, DataType::getDataOptions,  (dt,v) -> dt.setDataOptions(asStr(v))),
+            text("arraySize",     255, DataType::getArraySize,    (dt,v) -> dt.setArraySize(asStr(v))),
+            text("cellRenderer",64000, DataType::getCellRenderer, (dt,v) -> dt.setCellRenderer(asStr(v))),
+            text("sortByCols",  64000, DataType::getSortByCols,   (dt,v) -> dt.setSortByCols(asStr(v))),
+            text("xtype",         255, DataType::getXType,        (dt,v) -> dt.setXType(asStr(v)))
+    );
+
+    static final String DD_INSERT_SQL = "insert into %s_DD values (" +
+            String.join(",", Collections.nCopies(DD_COLS.size() + 1, "?")) + ")";
+    static final String DD_CREATE_SQL = "create table %s_DD (" +
+            DD_COLS.stream().map(c -> "%s %s".formatted(c.name(), c.dbType())).collect(Collectors.joining(", ")) +
+            ", order_index int)";
     static final String META_INSERT_SQL = "insert into %s_META values (?,?,?)";
     static final String META_CREATE_SQL = "create table %s_META "+
                     "(" +
@@ -381,42 +419,36 @@ public class EmbeddedDbUtil {
         return 0;
     }
 
+    /** Applies non-empty values from a DD row to dtype in place. */
     public static void dbToDataType(DataType dtype, ResultSet rs) {
         try {
-            applyIfNotEmpty(rs.getString("type"), (s) -> {
-                dtype.setTypeDesc(s);
-                dtype.setDataType(DataType.descToType(s, dtype.getDataType()));     // if desc is unknown, use what's in the database.
-            });
-
-            applyIfNotEmpty(rs.getString("label"), dtype::setLabel);
-            applyIfNotEmpty(rs.getString("units"), dtype::setUnits);
-            dtype.setNullString(rs.getString("null_str"));
-            applyIfNotEmpty(rs.getString("format"), dtype::setFormat);
-            applyIfNotEmpty(rs.getString("fmtDisp"), dtype::setFmtDisp);
-            applyIfNotEmpty(rs.getInt("width"), dtype::setWidth);
-            applyIfNotEmpty(rs.getString("visibility"), v -> dtype.setVisibility(DataType.Visibility.valueOf(v)));
-            applyIfNotEmpty(rs.getString("description"), dtype::setDesc);
-            applyIfNotEmpty(rs.getBoolean("sortable"), dtype::setSortable);
-            applyIfNotEmpty(rs.getBoolean("filterable"), dtype::setFilterable);
-            applyIfNotEmpty(rs.getBoolean("fixed"), dtype::setFixed);
-            applyIfNotEmpty(rs.getString("enumVals"), dtype::setEnumVals);
-            applyIfNotEmpty(rs.getString("ID"), dtype::setID);
-            applyIfNotEmpty(rs.getString("precision"), dtype::setPrecision);
-            applyIfNotEmpty(rs.getString("ucd"), dtype::setUCD);
-            applyIfNotEmpty(rs.getString("utype"), dtype::setUType);
-            applyIfNotEmpty(rs.getString("ref"), dtype::setRef);
-            applyIfNotEmpty(rs.getString("maxValue"), dtype::setMaxValue);
-            applyIfNotEmpty(rs.getString("minValue"), dtype::setMinValue);
-            applyIfNotEmpty(rs.getString("dataOptions"), dtype::setDataOptions);
-            applyIfNotEmpty(rs.getString("arraySize"), dtype::setArraySize);
-            applyIfNotEmpty(rs.getString("cellRenderer"), dtype::setCellRenderer);
-            applyIfNotEmpty(rs.getString("sortByCols"), dtype::setSortByCols);
-
-            if (ignoreCols.contains(dtype.getKeyName())) {
-                dtype.setVisibility(DataType.Visibility.hide);
-            }
+            applyInfo(dtype, col -> col.read().read(rs, col.name()));
         } catch (Exception e) {
             logger.warn(e);
+        }
+    }
+
+    /** Applies non-empty metadata from info to dtype in place. */
+    public static void applyInfoToDataType(DataType dtype, DataType info) {
+        if (info == null) return;
+        try {
+            applyInfo(dtype, col -> col.get().apply(info));
+        } catch (Exception e) {
+            logger.warn(e);
+        }
+    }
+
+    /** supplies each column's value */
+    private interface DdSource { Object valueOf(DdCol col) throws Exception; }
+
+    private static void applyInfo(DataType dtype, DdSource source) throws Exception {
+        if (dtype == null) return;
+        for (DdCol col : DD_COLS) {
+            if (col.set() == null) continue;        // no setter; don't apply updates
+            applyIfNotEmpty(source.valueOf(col), v -> col.set().accept(dtype, v));
+        }
+        if (ignoreCols.contains(dtype.getKeyName())) {
+            dtype.setVisibility(DataType.Visibility.hide);
         }
     }
 

@@ -734,35 +734,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
             case ROW_NUM -> 1_000_001;
             default -> colIdx;
         };
-        return new Object[] {
-                dt.getKeyName(),
-                dt.getLabel(),
-                dt.getTypeDesc(),
-                dt.getUnits(),
-                dt.getNullString(),
-                dt.getFormat(),
-                dt.getFmtDisp(),
-                dt.getWidth(),
-                dt.getVisibility().name(),
-                dt.isSortable(),
-                dt.isFilterable(),
-                dt.isFixed(),
-                dt.getDesc(),
-                dt.getEnumVals(),
-                dt.getID(),
-                dt.getPrecision(),
-                dt.getUCD(),
-                dt.getUType(),
-                dt.getRef(),
-                dt.getMaxValue(),
-                dt.getMinValue(),
-                Util.serialize(dt.getLinkInfos()),       // index(21) is used in HsqlDbAdapter.  if it changes, update.
-                dt.getDataOptions(),
-                dt.getArraySize(),
-                dt.getCellRenderer(),
-                dt.getSortByCols(),
-                colIdx
-        };
+        Object[] row = new Object[EmbeddedDbUtil.DD_COLS.size() + 1];
+        for (int i = 0; i < EmbeddedDbUtil.DD_COLS.size(); i++) {
+            row[i] = EmbeddedDbUtil.DD_COLS.get(i).get().apply(dt);
+        }
+        row[row.length-1] = colIdx;                 // order_index is the column's position, not something dt holds
+        return row;
     }
 
     // insert column info into the table
@@ -964,17 +941,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 // if this column is not in DataGroup.  no need to update the info
                 if (dtype != null) {
                     EmbeddedDbUtil.dbToDataType(dtype, rs);
-                    handleSpecialDTypes(dtype, dg, rs);
                 }
             };
         } catch (SQLException e) {
             LOGGER.error(e);
         }
         return 0;
-    }
-
-    void handleSpecialDTypes(DataType dtype, DataGroup dg, ResultSet rs) {
-        applyIfNotEmpty(deserialize(rs, "links"), v -> dtype.setLinkInfos((List<LinkInfo>) v));
     }
 
     public void copyDDFromSource(String tblName, String sourceTbl) {
