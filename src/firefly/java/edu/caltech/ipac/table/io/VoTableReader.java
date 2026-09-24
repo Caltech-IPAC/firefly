@@ -78,6 +78,8 @@ public class VoTableReader {
 
     private static final String MULTI_SPEC_UTYPE_LOWER= "ipac:multispectrum";
 
+    private static final String NO_ERROR_MESSAGE = "The service reported an error but provided no message";
+
 
     private static final Pattern HMS_UCD_PATTERN =
             Pattern.compile( "POS_EQ_RA.*|pos\\.eq\\.ra.*",
@@ -171,7 +173,7 @@ public class VoTableReader {
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(PREFER_MEMORY);
             VOElement top = voFactory.makeVOElement(inputStream, null);
-            return getQueryStatusError(top);
+            return findErrorMessage(top);
         }  catch (SAXException |IOException e) {
             LOG.error(e);
             throw new DataAccessException("unable to parse " + location + "\n"+
@@ -184,38 +186,74 @@ public class VoTableReader {
 //
 //====================================================================
 
-    private static String getQueryStatusError(VOElement top) {
-        String error = null;
-        // check for errors: section 4.4 of http://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html
-        VOElement[] resources = top.getChildrenByName( "RESOURCE" );
-        for (VOElement r : resources) {
-            if ("results".equals(r.getAttribute("type"))) {
-                VOElement[] infos = r.getChildrenByName("INFO");
-                for (VOElement info : infos) {
-                    if ("QUERY_STATUS".equals(info.getName()) &&
-                            "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
-                        error = info.getTextContent();
+    /**
+     * Look for an error message in this document, trying the shapes real archives emit in order of
+     * specificity.  The first non-blank message wins; it is always trimmed, and null is returned when
+     * the document does not look like an error document.
+     *
+     * @param top   the root of the votable
+     */
+    private static String findErrorMessage(VOElement top) {
+
+        boolean errorFlagged = false;       // a QUERY_STATUS="ERROR" marker was seen, with or without a message
+
+        // 1. DALI 1.1 section 4.4 / TAP: the marker is an INFO in the results RESOURCE, message in its text content.
+        //    https://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html#sect:errors
+        //    NED: the same marker as a PARAM, message in its DESCRIPTION, which the text content includes.
+        for (VOElement res : top.getChildrenByName("RESOURCE")) {
+            if (!"results".equals(res.getAttribute("type"))) continue;
+            for (String tag : new String[] {"INFO", "PARAM"}) {
+                for (VOElement el : res.getChildrenByName(tag)) {
+                    if ("QUERY_STATUS".equals(el.getName()) && "ERROR".equalsIgnoreCase(el.getAttribute("value"))) {
+                        errorFlagged = true;
+                        String msg = trimToNull(el.getTextContent());
+                        if (msg != null) return msg;
                     }
                 }
             }
         }
-        if (error == null) {
-            // workaround for misplaced INFO attributes with errors
-            NodeList infos = top.getElementsByVOTagName("INFO");            // all descendant elements
-            String [] namesWithMisspelling = {"QUERY_STATUS","QUERY STATUS"};
-            for (int i = 0; i < infos.getLength(); i++) {
-                Node node = infos.item(i);
-                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                    Element info = (Element) node;
-                    String name = info.getAttribute("name");
-                    if (Arrays.asList(namesWithMisspelling).contains(name)
-                            && "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
-                        error = info.getTextContent();
-                    }
-                }
+
+        // 2. the same marker, INFO or PARAM, but misplaced in the document or with the name missing the underscore.
+        List<Element> markers = descendantsByVOTagName(top, "INFO");
+        markers.addAll(descendantsByVOTagName(top, "PARAM"));
+        for (Element el : markers) {
+            String name = el.getAttribute("name");
+            if (("QUERY_STATUS".equalsIgnoreCase(name) || "QUERY STATUS".equalsIgnoreCase(name))
+                    && "ERROR".equalsIgnoreCase(el.getAttribute("value"))) {
+                errorFlagged = true;
+                String msg = trimToNull(el.getTextContent());
+                if (msg != null) return msg;
             }
         }
-        return error;
+
+        // 3. an INFO or PARAM anywhere in the document whose name or ID is "Error", with the message in its
+        //    value attribute.  The text content is used only when value is blank.
+        for (Element el : markers) {
+            if ("Error".equalsIgnoreCase(el.getAttribute("name")) || "Error".equalsIgnoreCase(el.getAttribute(ID))) {
+                String msg = trimToNull(el.getAttribute("value"));
+                if (msg == null) msg = trimToNull(el.getTextContent());
+                if (msg != null) return msg;
+            }
+        }
+
+        // 4. a QUERY_STATUS="ERROR" marker was found but carried no message: return a generic one.
+        //    Otherwise return null.
+        return errorFlagged ? NO_ERROR_MESSAGE : null;
+    }
+
+    /** all descendant elements with the given unqualified VOTable tag name, in document order */
+    private static List<Element> descendantsByVOTagName(VOElement top, String voTagName) {
+        NodeList nodes = top.getElementsByVOTagName(voTagName);
+        List<Element> elements = new ArrayList<>(nodes.getLength());
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) elements.add((Element) node);
+        }
+        return elements;
+    }
+
+    private static String trimToNull(String s) {
+        return isEmpty(s) ? null : s.trim();
     }
 
     private static VOElement getVoTableRoot(String location, StoragePolicy policy) throws IOException {
@@ -269,7 +307,7 @@ public class VoTableReader {
                 });
 
         if (tableAry.isEmpty()) {
-            String error = getQueryStatusError(docRoot);
+            String error = findErrorMessage(docRoot);
             if (error != null) {
                 throw new IOException(error);
             }
