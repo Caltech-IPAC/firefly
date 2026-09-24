@@ -12,9 +12,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
@@ -158,6 +161,8 @@ public class RequestAgent {
 
     public static final class HTTP extends RequestAgent {
         private static final String AUTH_KEY = "JOSSO_SESSIONID";
+        // headers that may be passed as query parameters instead, e.g. when downloading via form submit, which cannot set headers
+        private static final List<String> QUERY_PARAM_HEADERS = List.of("FF-connID", "FF-channel");
         private static final Logger.LoggerImpl LOG = Logger.getLogger();
         private final HashMap<String, String> headers = new HashMap<>();      // key stored as lowercase;
         private final HashMap<String, Cookie> cookies = new HashMap<>();
@@ -171,6 +176,11 @@ public class RequestAgent {
 
             Collections.list(request.getHeaderNames()).forEach(h -> {
                 headers.put(h.toLowerCase(), request.getHeader(h));
+            });
+            QUERY_PARAM_HEADERS.forEach(h -> {
+                if (StringUtils.isEmpty(headers.get(h.toLowerCase()))) {
+                    applyIfNotEmpty(getQueryParam(request, h), v -> headers.put(h.toLowerCase(), v));
+                }
             });
             applyIfNotEmpty(request.getCookies(), v -> {
                 Arrays.stream(v).forEach(c -> cookies.put(c.getName(), c));
@@ -240,6 +250,21 @@ public class RequestAgent {
             if (response != null) {
                 response.addCookie(cookie);
             }
+        }
+
+        /**
+         * Read a parameter from the query string only.  Unlike request.getParameter, this does not consume the body of a POST request.
+         */
+        private static String getQueryParam(HttpServletRequest request, String name) {
+            String qs = request.getQueryString();
+            if (StringUtils.isEmpty(qs)) return null;
+            for (String kv : qs.split("&")) {
+                String[] parts = kv.split("=", 2);
+                if (URLDecoder.decode(parts[0], StandardCharsets.UTF_8).equals(name)) {
+                    return parts.length > 1 ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8) : "";
+                }
+            }
+            return null;
         }
 
         @Override
