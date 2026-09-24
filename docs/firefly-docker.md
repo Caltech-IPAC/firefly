@@ -12,7 +12,7 @@ Firefly from Docker
 
 To run latest or nightly dev:
 
-- `docker run -p 8090:8080  -m 4g --rm ipac/firefly:latest`
+- `docker run -p 8090:8080 -m 4g --rm ipac/firefly:latest`
 - `docker run -p 8090:8080 -m 4g --rm ipac/firefly:nightly`
 
 

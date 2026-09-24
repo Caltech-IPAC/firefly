@@ -2,17 +2,44 @@
 
 ## Intro
 
-Firefly is an open-source web-based UI library for astronomical data archive access and visualization developed at [Caltech](https://caltech.edu).
-The development was started in the context of archive-specific applications at the [NASA/IPAC Infrared Science Archive (IRSA)](https://irsa.ipac.caltech.edu), and was then generalized to serve data from many different archives at IRSA (and beyond). It was open sourced in 2015, hosted at GitHub.
+Firefly is an open-source web-based UI application, library, and framework for astronomical data archive access and visualization developed at the [NASA/IPAC Infrared Science Archive (IRSA)](https://irsa.ipac.caltech.edu) at [Caltech](https://caltech.edu).
 
-Firefly is designed to build complex web-based front-end applications making use of  reusable [React](https://reactjs.org) components to enable accessing and exploring astronomical data with advanced data visualization capabilities.
+### Core Features
+- Viewing FITS files
+- Exploring multi-resolution HiPS maps
+- Exploring tables interactively
+- Creating charts, including spectra and spectral lines
+- Brushing and linking across images, tables, and charts
+- Overlaying catalogs or DS9 region files on images
+- Searching VO services (TAP, SIA, ObsTAP)
+- Using Firefly from Python ([details](docs/firefly-python-wrapper.md))
 
-The visualization provides user with an integrated experience with brushing and linking capabilities among images, catalogs, and plots. Firefly is used in [IRSA](https://irsa.ipac.caltech.edu) GUIs to query and visualize data from missions such as [WISE](https://irsa.ipac.caltech.edu/applications/wise/), [Spitzer](https://irsa.ipac.caltech.edu/applications/Spitzer/SHA/), [SOFIA](https://irsa.ipac.caltech.edu/applications/sofia/), [ZTF](https://irsa.ipac.caltech.edu/applications/ztf/), [PTF](https://irsa.ipac.caltech.edu/applications/ptf/), etc. and a large number of highly-used contributed data products from a diverse set of astrophysics projects. It is also used in various user interfaces of the NASA Exoplanet Science Institute ([NExScI](https://nexsci.caltech.edu)) and the NASA/IPAC Extragalactic Database ([NED](http://ned.ipac.caltech.edu)), as well as to construct the Portal Aspect of the Vera C. Rubin Observatory Science Platform.
+For details on using these features, see the [Firefly Online Help](https://irsacloud.ipac.caltech.edu/firefly/onlinehelp/).
 
-### Quick-start
+### Quick Start: Installing Firefly
 
-The fastest way to start using Firefly and check examples is to make use of Docker images.
-See the Docker quick-start [here](docs/firefly-docker.md).
+There are several ways to deploy Firefly, depending on whether you want it for personal use or for an operational deployment.
+
+#### Laptop / desktop — macOS or Linux (personal use) ([Details](docs/using-firefly-standalone.md))
+```bash
+curl -fsSL https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/get-firefly | bash
+```
+Then follow the instructions.
+
+#### Docker ([Details](docs/firefly-docker.md))
+```bash
+docker run -p 8090:8080 -m 4g --rm ipac/firefly:latest
+```
+Then open http://localhost:8090/firefly/
+
+#### Helm / Kubernetes ([Details](helm/README.md))
+Replace `firefly.example.com` with your own hostname.
+```bash
+helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
+  -n firefly \
+  --create-namespace \
+  --set ingress.host=firefly.example.com
+```
 
 ## Release note
 
@@ -25,7 +52,13 @@ Firefly builds are available on Docker and additional notes for using it are on 
 
 ## Firefly Framework
 
-Firefly is being reused for various archives because it is a framework of archive components. This has allowed us to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has undergone an extensive re-write since then, adopted React/Redux framework for the client side, making it much  easier to work with other JavaScript libraries. Firefly's general scientific visualizations are based on the Plotly.js graphing library.
+Firefly started as a set of archive-specific applications at [IRSA](https://irsa.ipac.caltech.edu) and was then generalized to serve data from many different archives at IRSA (and beyond). It was open sourced in 2015.
+
+Firefly is designed to build complex web-based front-end applications making use of reusable [React](https://reactjs.org) components to enable accessing and exploring astronomical data with advanced data visualization capabilities.
+
+The visualization provides users with an integrated experience with brushing and linking capabilities among images, catalogs, and plots. Firefly is used in [IRSA](https://irsa.ipac.caltech.edu) GUIs to query and visualize data from missions such as [WISE](https://irsa.ipac.caltech.edu/applications/wise/), [Spitzer](https://irsa.ipac.caltech.edu/applications/Spitzer/SHA/), [SOFIA](https://irsa.ipac.caltech.edu/applications/sofia/), [ZTF](https://irsa.ipac.caltech.edu/applications/ztf/), [PTF](https://irsa.ipac.caltech.edu/applications/ptf/), etc. and a large number of heavily used contributed data products from a diverse set of astrophysics projects. It is also used in various user interfaces of the NASA Exoplanet Science Institute ([NExScI](https://nexsci.caltech.edu)) and the NASA/IPAC Extragalactic Database ([NED](https://ned.ipac.caltech.edu)), as well as to construct the Portal Aspect of the Vera C. Rubin Observatory Science Platform.
+
+Firefly is being reused for various archives because it is a framework of archive components. This has allowed us to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has undergone an extensive re-write since then, adopted React/Redux framework for the client side, making it much easier to work with other JavaScript libraries. Firefly's general scientific visualizations are based on the Plotly.js graphing library.
 
 ### Firefly Viewer
 
@@ -116,10 +149,10 @@ The documentation is accessible via http://localhost:8080/firefly/docs/js/index.
 
 Firefly supports the following browsers:
 
- - safari >= 12
- - chrome >= 81
- - firefox >= 79
- - edge >= 83
+ - safari >= 17
+ - chrome >= 130
+ - firefox >= 134
+ - edge >= 130
 
 
 ## More Docs
