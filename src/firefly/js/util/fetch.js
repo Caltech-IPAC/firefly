@@ -77,6 +77,16 @@ const MAX_WAIT = 30 * 60 * 1000;                    // stop waiting for the down
  * @return {Promise<boolean>} true when started, false on error; never rejects.
  */
 export async function download(url) {
+    try {
+        return await submitDownload(url);
+    } catch (e) {
+        // e.g. websocket setup failed or the url is malformed
+        showInfoPopup(truncate(e?.message || DOWNLOAD_ERROR_MSG, {length: 200}), 'Unexpected error');
+        return false;
+    }
+}
+
+async function submitDownload(url) {
     if (!url) return false;
     const {origin, protocol, host, path, hash, searchObject = {}} = parseUrl(url);
     const {connId, channel} = await getOrCreateWsConn();
@@ -109,7 +119,10 @@ export async function download(url) {
     let stopped = false;
     try {
         return await Promise.race([
-            waitForCookie(DOWNLOAD_COOKIE_PREFIX + token, () => stopped).then(() => true),
+            waitForCookie(DOWNLOAD_COOKIE_PREFIX + token, () => stopped).then((found) => {
+                if (found) setTimeout(() => iframe.remove(), 60_000);   // Handed off to the browser's download manager. Safe to remove the iframe after a brief delay.
+                return true;                                            // on timeout: cannot tell, same as cross-origin
+            }),
             failed.then(() => false)
         ]);
     } finally {
@@ -154,17 +167,18 @@ function getJsonErrorMsg(text) {
  * Wait for the cookie to appear, then remove it.
  * @param {string} name  cookie name
  * @param {function(): boolean} isStopped  stop waiting when it returns true
- * @return {Promise<void>} resolves when the cookie appears, when stopped, or after MAX_WAIT
+ * @return {Promise<boolean>} true if the cookie appeared; false if stopped or timed out after MAX_WAIT
  */
 async function waitForCookie(name, isStopped) {
     const startTime = Date.now();
     while (!isStopped() && Date.now() - startTime < MAX_WAIT) {
         if (document.cookie.split(';').some((c) => c.trim().startsWith(name + '='))) {
             document.cookie = `${name}=; max-age=0; path=/`;
-            return;
+            return true;
         }
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
     }
+    return false;
 }
 
 function submitForm(action, params, target) {
