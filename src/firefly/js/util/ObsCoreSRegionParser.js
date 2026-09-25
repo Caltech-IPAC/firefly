@@ -200,9 +200,9 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
             break;
 
         case regionShape.box.key:
-            if (sAry.length = height + 1) {
-                const w = getDim(sAry[width], coordSys, unit, 'arcsec');
-                const h = getDim(sAry[height], coordSys, unit, 'arcsec');
+            if (sAry.length === height + 1) {
+                const w = getDim(sAry[width], coordSys, unit, ShapeDataObj.UnitType.ARCSEC);
+                const h = getDim(sAry[height], coordSys, unit, ShapeDataObj.UnitType.ARCSEC);
                 pairCoord = getPairCoord(sAry, [coord1, coord2]);
 
                 if (pairCoord.length === 2 && w !== null && h !== null) {

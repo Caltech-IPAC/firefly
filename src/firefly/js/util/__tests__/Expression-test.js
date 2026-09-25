@@ -105,6 +105,20 @@ describe('A test suite for expr/Expression.js', function () {
         // expect(expressionGood.getValue()).toBe(2^x);
     });
 
+    it('nvl2', function () {
+        const expr = new Expression('nvl2(x, 1, 2)', ['x']);
+        expect(expr.isValid()).toBeTruthy();
+        expr.setVariableValue('x', 5);
+        expect(expr.getValue()).toBe(1);
+        expr.setVariableValue('x', NaN);
+        expect(expr.getValue()).toBe(2);
+
+        // all-constant arguments are evaluated while parsing
+        const constExpr = new Expression('nvl2(1, 2, 3)', []);
+        expect(constExpr.isValid()).toBeTruthy();
+        expect(constExpr.getValue()).toBe(2);
+    });
+
      it('invalid expression', function () {
          const expressionBad = new Expression('2*sin(x)+y/z', ['x','y']);
          expect(expressionBad.isValid()).toBeFalsy();

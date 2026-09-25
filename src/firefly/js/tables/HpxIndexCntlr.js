@@ -798,7 +798,7 @@ export function getPixelCount(orderData,norder) {
 
 export function getValuesForOrder(orderData,norder) {
     if (!orderData) return [];
-    if (norder<11) return [...orderData[norder]?.tiles[0]?.values()];
+    if (norder<11) return [...(orderData[norder]?.tiles[0]?.values() ?? [])];
     const joinAry= [];
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
        joinAry.push(Array.from(orderData[norder]?.tiles[i].values()));
@@ -807,7 +807,8 @@ export function getValuesForOrder(orderData,norder) {
 }
 
 export function getKeysForOrder(orderData,norder) {
-    if (norder<11) return [...orderData[norder]?.tiles[0]?.keys()];
+    if (!orderData) return [];
+    if (norder<11) return [...(orderData[norder]?.tiles[0]?.keys() ?? [])];
     const joinAry= [];
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
         joinAry.push(Array.from(orderData[norder]?.tiles[i].keys()));
