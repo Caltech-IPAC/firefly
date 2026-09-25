@@ -4,17 +4,6 @@
 import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
 
 
-
-const makeSource4Triangle= (centerPt, min, max) => {
-    return [
-        [{x:max, y:max}, centerPt, {x:max, y:min}],  // 3 >
-        [{x:max, y:min}, centerPt, {x:min, y:min}], // 12 ^
-        [{x:min, y:max}, centerPt, {x:min, y:min}], // 9 <
-        [{x:max, y:max}, centerPt, {x:min, y:max}], // 6 v
-    ];
-};
-
-
 /**
  * Compute the amount of correction based on how zoom in the display is, The more zoomed in the less correction
  * is needed. Too much correction make for distortion
@@ -54,36 +43,12 @@ function getCorrection(tileSize, norder,desiredNorder,isMaxOrder) {
  * @param {number} desiredNorder
  */
 export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, isMaxOrder, norder, desiredNorder) {
-    const triangles= norder > isMaxOrder && desiredNorder>norder ? 4 : 2;
     const correction= getCorrection(tileSize,norder,desiredNorder,isMaxOrder);
+    const triangle1= [{x:tileSize, y:tileSize}, {x:tileSize, y:0}, {x:0, y:tileSize}];
+    const triangle2= [{x:tileSize, y:0}, {x:0, y:tileSize}, {x:0, y:0}];
 
-    if (triangles===2) {
-        const triangle1= [{x:tileSize, y:tileSize}, {x:tileSize, y:0}, {x:0, y:tileSize}];
-        const triangle2= [{x:tileSize, y:0}, {x:0, y:tileSize}, {x:0, y:0}];
-
-        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cornersAry[1], cornersAry[3], correction, true);
-        drawTexturedTriangle(ctx, img,offset, ...triangle2, cornersAry[1], cornersAry[3], cornersAry[2], correction, true);
-    }
-    else if (triangles===4) {
-        draw4Triangles(ctx, img, correction, offset, cornersAry,tileSize);
-    }
-    else if (triangles===8) { // keep this section around if we have to use it, it is not complete and not tested
-        //todo - will probably never do this
-    }
-}
-
-
-function draw4Triangles(ctx, img, correction, offset, cornersAry,tileSize) {
-    const mp=tileSize/2;
-    const cMx= cornersAry.reduce( (total,pt) => total+pt.x, 0)/cornersAry.length;
-    const cMy= cornersAry.reduce( (total,pt) => total+pt.y, 0)/cornersAry.length;
-    const cPt= {x:cMx,y:cMy};
-
-    const [triangle1, triangle2, triangle3, triangle4]= makeSource4Triangle({x:mp, y:mp}, 0, tileSize);
-    drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1], correction, false); // 3 >
-    drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2], correction, false); // 12 ^
-    drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2], correction, false); // 9 <
-    drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3], correction, false); // 6 v
+    drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cornersAry[1], cornersAry[3], correction, true);
+    drawTexturedTriangle(ctx, img,offset, ...triangle2, cornersAry[1], cornersAry[3], cornersAry[2], correction, true);
 }
 
 

@@ -132,7 +132,7 @@ function alignWCS(getState, pv) {
         }
         else if (isHiPS(primePlot(pv))) {
            let imagePv= getPlotViewById(visRoot, visRoot.mpwWcsPrimId);
-           if (!isImage(primePlot(pv))) {
+           if (!isImage(primePlot(imagePv))) {
                imagePv= visRoot.plotViewAry.find( (pv) => isImage(primePlot(pv)));
            }
            if (imagePv) matchImageToHips(pv, imagePv);
