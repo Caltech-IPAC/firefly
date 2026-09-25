@@ -230,7 +230,7 @@ class TernaryExpr {
         const arg1 = this.rand1.value();
         const arg2 = this.rand2.value();
         switch (this.rator) {
-            case NVL2: Number.isFinite(arg0) ? arg1 : arg2;
+            case NVL2: return Number.isFinite(arg0) ? arg1 : arg2;
             default: throw 'BUG: bad rator: '+this.rator;
         }
     }
