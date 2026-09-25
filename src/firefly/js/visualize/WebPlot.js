@@ -421,7 +421,7 @@ function getAllHeaderAndWlInfo(cubeCtx, wpInit, plotState) {
         allWlMap[bStr]=processAllWavelengthAltWcs(headerAry[b.value], bandWlTable, idx>0);
     });
 
-    plotState.getBands().forEach( (b,idx) => {
+    plotState.getBands().forEach( (b) => {
         const bStr= b.toString();
         if (wlDataAry[b.value]) {
             allWlMap[bStr]['']= wlDataAry[b.value];
@@ -592,7 +592,6 @@ export const WebPlot= {
 
         const hipsPlot= {
             //HiPS specific
-            nside: 3,
             colorTableId: NO_COLOR_TABLE,
             hipsUrlRoot,
             dataCoordSys : hipsCoordSys,

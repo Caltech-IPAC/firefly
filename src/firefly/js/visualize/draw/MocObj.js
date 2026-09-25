@@ -1,5 +1,4 @@
 import {getAppOptions} from '../../api/ApiUtil.js';
-import {getProGradeTilePixels} from '../../tables/HpxIndexCntlr';
 import {logger} from '../../util/Logger';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
@@ -10,7 +9,9 @@ import {
     getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
     isTileVisibleByPosition, initSidePoints, NSIDE4, getSidePointsNorder, NSIDE2
 } from '../HiPSMocUtil.js';
-import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
+import {
+    getHealpixCornerTool, getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel, getProGradeTilePixels
+} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
 import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';

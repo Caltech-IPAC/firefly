@@ -1,5 +1,5 @@
 import chroma from 'chroma-js';
-import {getHistgramForNorder, getProGradeTilePixels, getTile} from '../../tables/HpxIndexCntlr';
+import {getHistgramForNorder, getTile} from '../../tables/HpxIndexCntlr';
 import {getBWBackground} from '../../util/Color';
 import CoordSys from '../../visualize/CoordSys';
 import {TextLocation} from '../../visualize/draw/DrawingDef';
@@ -7,7 +7,7 @@ import {DrawSymbol} from '../../visualize/draw/DrawSymbol';
 import FootprintObj from '../../visualize/draw/FootprintObj';
 import PointDataObj from '../../visualize/draw/PointDataObj';
 import ShapeDataObj, {UnitType} from '../../visualize/draw/ShapeDataObj';
-import {getCornersForCell} from '../../visualize/HiPSUtil';
+import {getCornersForCell, getProGradeTilePixels} from '../../visualize/HiPSUtil';
 import {makeDevicePt} from '../../visualize/Point';
 import {computeSimpleDistance, computeSimpleSlope, lineIntersect2, RtoD} from '../../visualize/VisUtil';
 import {

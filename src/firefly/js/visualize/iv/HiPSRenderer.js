@@ -3,7 +3,6 @@
  */
 
 import {isNil} from 'lodash';
-import BrowserInfo from '../../util/BrowserInfo';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import {NO_COLOR_TABLE} from '../rawData/ColorTable';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
@@ -46,6 +45,20 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
     //  ------------------------------------------------------------
     //  -------------------------  private functions
     //  ------------------------------------------------------------
+
+    const normalCaseDrawOneCell= (tile, image, tileSize= tile.tileSize || image.width, x= tile.dx, y= tile.dy) => {
+        if (tile.subCells && (tile.incompleteCell || desiredNorder>norder)) {
+            const half= tileSize/2;
+            tile.subCells.forEach( (subTile) => {
+                normalCaseDrawOneCell(subTile,image, half, x+subTile.dx*half, y+subTile.dy*half);
+            });
+        }
+        else {
+            if (!tile.incompleteCell) {
+                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x,y}, isMaxOrder, norder, desiredNorder);
+            }
+        }
+    };
 
     /**
      * draw a single tile async (retrieve image and draw tile)
@@ -117,8 +130,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             }
             if (abortRender) return;
 
-            const tileSize= tile.tileSize || image.width;
-            drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
+            normalCaseDrawOneCell(tile,image);
 
 
             if (doRenderNow()) renderToScreen();
@@ -126,12 +138,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
-            if (tile.devPtCorners.filter( (t) => t).length ===4) {
-                drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
-            }
-            else {
-                console.log('********************* found one');
-            }
+            normalCaseDrawOneCell(tile, emptyTileCanvas);
             addFailedImage(src);
             if (doRenderNow()) {
                 renderComplete= true;
@@ -145,21 +152,9 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
      * draw a tile when all
      * @param image
      * @param {HiPSDeviceTileData} tile
-     * @param {HiPSAllSkyCacheInfo} [cachedAllSkyData]
      */
-    const drawTileImmediate= (image, tile, cachedAllSkyData) => {
-        if (image) {
-            if (tile.coordsWrap && cachedAllSkyData) {
-                tile.subCells?.forEach( (cell) => {
-                    const subImage= cachedAllSkyData.order3Array[cell.tileNumber];
-                    drawOneHiPSTile(offscreenCtx, subImage, cell.devPtCorners, subImage.width, {x:0,y:0}, isMaxOrder, norder, desiredNorder);
-                });
-            }
-            else {
-                const tileSize= tile.tileSize || image.width;
-                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
-            }
-        }
+    const drawTileImmediate= (image, tile) => {
+        if (image) normalCaseDrawOneCell(tile,image);
         renderedCnt++;
         if (renderedCnt === totalCnt) {
             renderComplete= true;
@@ -229,7 +224,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             if (abortRender) return;
             const allSkyAry= norder===3 ? cachedAllSky.order3Array : cachedAllSky.order2Array;
             for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-                drawTileImmediate(allSkyAry[tilesToLoad[i].tileNumber], tilesToLoad[i], cachedAllSky);
+                drawTileImmediate(allSkyAry[tilesToLoad[i].tileNumber], tilesToLoad[i]);
             }
         },
 
