@@ -25,6 +25,7 @@ and includes FITS compression reading fixes.
 - DCE: support for MOC configuration — Firefly-2024 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1995))
 - UWS: improved recognition of ipac:MultiSpectrum format — IRSA-7890 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1991))
 - Downloads: Improve downloading system — Firefly-2064 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2023))
+- HiPS: rendering HiPS more accurately — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
 
 
 #### Infrastructure Updates
@@ -41,10 +42,6 @@ and includes FITS compression reading fixes.
 - Fixed: bug expanding charts from Multi-product Viewer — Firefly-2101 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2012))
 - Fixed: Time series — period field is a required input field, drag/drop broken — Firefly-2080 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2007))
 - Fixed: disable contextual font ligatures — Firefly-2057 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2001))
-
-### _Patches 2026.3_
-#### 2026.3.1 coming patches (not released yet)
-- HiPS: rendering HiPS more accurately — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
 - Fixed: HiPS sometime loses WCS lock with image — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
 
 ---
