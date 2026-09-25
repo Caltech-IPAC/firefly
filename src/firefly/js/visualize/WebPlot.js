@@ -461,7 +461,7 @@ export const WebPlot= {
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
         if (!request0) request0= plotState.getWebPlotRequest();
-        const colorTableId= request0?.getInitialColorTable()+'' ?? '0';
+        const colorTableId= String(request0?.getInitialColorTable() ?? '0');
 
         const {processHeader, wlData, wlDataAry, headerAry, header, zeroHeader,
             allWCSMap, allWlMap}= getAllHeaderAndWlInfo(cubeCtx,wpInit,plotState);
