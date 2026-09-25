@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.filters.CorsFilter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONObject;
 
@@ -42,6 +43,7 @@ public class CommandService extends BaseHttpServlet {
         rval.put("success", false);
         rval.put("error", error);
         String msg = rval.toJSONString();
+        resetForError(req, res);
         res.setStatus(statusCode);
         res.setContentLength(msg.length());
         res.setContentType(JSON.mime());
@@ -52,6 +54,15 @@ public class CommandService extends BaseHttpServlet {
             LOGGER.error("Unable to send error response to client.", e.getMessage());
         }
 
+    }
+
+    /**
+     * If a download fails before sending data, reset the response to prevent downloading the error.
+     */
+    private static void resetForError(HttpServletRequest req, HttpServletResponse res) {
+        if (res.isCommitted() || !res.containsHeader("Content-Disposition")) return;
+        res.reset();
+        CorsFilter.enableCors(req, res);
     }
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {

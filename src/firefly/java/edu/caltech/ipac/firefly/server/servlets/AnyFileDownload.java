@@ -13,9 +13,11 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.download.UriRef;
 import edu.caltech.ipac.util.download.UriRefParams;
 import edu.caltech.ipac.visualize.net.URLParms;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -43,6 +45,7 @@ public class AnyFileDownload extends BaseHttpServlet {
     public static final String FILE_PARAM  = "file"; // required for other request
     public static final String RETURN_PARAM= "return"; // a name for the file, if empty or USE_SERVER_NAME the use file name on server
     public static final String LOG_PARAM   = "log"; // if true, log status
+    public static final String DOWNLOAD_TOKEN = "ffDownloadToken"; // parameter sent by the client to be notified when the download starts
 
 
     public static final String USE_SERVER_NAME = "USE_SERVER_NAME";
@@ -52,6 +55,7 @@ public class AnyFileDownload extends BaseHttpServlet {
 
     private static final String BASE_URL = "servlet/Download?"+ LOG_PARAM +"=true&" + FILE_PARAM +"=";
     private static final String RET_FILE = "&"+RETURN_PARAM+"=";
+    private static final String DOWNLOAD_COOKIE_PREFIX = "ffdl_";
 
     public static String getDownloadURL(File file, String suggestedFileName) {
         return getDownloadURL(file, suggestedFileName, ServerContext.getRequestOwner().getBaseUrl());
@@ -206,6 +210,15 @@ public class AnyFileDownload extends BaseHttpServlet {
     }
 
 
+    /** Let the client know the download has started by setting a short-lived cookie named after its download token. */
+    public static void sendDownloadStartedCookie(String token, HttpServletResponse res) {
+        if (isEmpty(token) || !token.matches("[A-Za-z0-9_-]{1,64}")) return;
+        Cookie cookie = new Cookie(DOWNLOAD_COOKIE_PREFIX + token, "1");
+        cookie.setPath("/");
+        cookie.setMaxAge(60);
+        res.addCookie(cookie);
+    }
+
     private void sendFileToClient(HttpServletRequest req, HttpServletResponse res, File f, String local) throws IOException {
         SrvParam sp= new SrvParam(req.getParameterMap());
         boolean log= sp.getOptionalBoolean(LOG_PARAM,false);
@@ -218,8 +231,9 @@ public class AnyFileDownload extends BaseHttpServlet {
         String retFileStr= (local!=null) ? local : f.getName();
         if (retFileStr.equals(USE_SERVER_NAME)) retFileStr= f.getName();
         if (!isEmpty(retFileStr)) {
-            res.addHeader("Content-Disposition", "attachment; filename=" + retFileStr);
+            res.addHeader("Content-Disposition", URLDownload.makeContentDisposition(retFileStr));
         }
+        sendDownloadStartedCookie(sp.getOptional(DOWNLOAD_TOKEN), res);
 
 
 

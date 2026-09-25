@@ -36,8 +36,12 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -49,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -174,15 +180,40 @@ public class URLDownload {
         return new FileInfo(codeFromException(e),ResponseMessage.getNetworkCallFailureMessage(e));
     }
 
+    private static final Pattern DISP_EXT_FILENAME = Pattern.compile("filename\\*\\s*=\\s*([^']*)'[^']*'([^;\\s]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DISP_FILENAME = Pattern.compile("filename\\s*=\\s*(?:\"([^\"]*)\"|([^;]+))", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Parse the file name from a Content-Disposition header value.
+     * Handles quoted and unquoted filename, and the RFC 6266 filename* extended form, which takes precedence.
+     * @param disposition the Content-Disposition header value
+     * @return a sanitized file name, or null if none is found
+     */
     public static String getSuggestedFileName(String disposition) {
         if (disposition == null) return null;
-        String[] strs = disposition.split(";");
-        if (strs.length != 2) return null;
-        String[] fname = strs[1].split("=");
-        if (fname[0].toLowerCase().contains("filename")) {
-            return sanitizeFilename(fname[1]);
+        Matcher m = DISP_EXT_FILENAME.matcher(disposition);
+        if (m.find()) {
+            try {
+                Charset cs = isEmpty(m.group(1)) ? StandardCharsets.UTF_8 : Charset.forName(m.group(1).trim());
+                return sanitizeFilename(URLDecoder.decode(m.group(2).replace("+", "%2B"), cs));
+            } catch (Exception ignored) {}   // bad encoding; fall back to filename
         }
+        m = DISP_FILENAME.matcher(disposition);
+        if (m.find()) return sanitizeFilename(m.group(1) != null ? m.group(1) : m.group(2));
         return null;
+    }
+
+    /**
+     * Create a Content-Disposition header value for sending the given file name as an attachment.
+     * Includes a quoted ASCII-only filename for older clients, and filename* (RFC 6266) to preserve the full name.
+     * @param fileName the file name the client should save as
+     * @return the header value
+     */
+    public static String makeContentDisposition(String fileName) {
+        String name = fileName == null ? "" : fileName.replaceAll("[\\p{Cntrl}/\\\\]", "_");     // no control chars or path separators
+        String asciiName = name.replaceAll("[^\\x20-\\x7E]|\"", "_");
+        String encoded = URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20").replace("*", "%2A");
+        return "attachment; filename=\"" + asciiName + "\"; filename*=UTF-8''" + encoded;
     }
 
     public static String getFileNameFromUrl(URL url) {

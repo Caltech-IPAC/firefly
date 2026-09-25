@@ -20,17 +20,19 @@ import {DownloadOptionsDialog, fileNameValidator, getTypeData,
 import {WS_SERVER_PARAM, isWsFolder, isValidWSFolder,
         getWorkspacePath, dispatchWorkspaceUpdate} from  '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
+import {INFO_POPUP, showInfoPopup} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {download, makeDefaultDownloadFileName} from '../../util/fetch';
-import {getCmdSrvSyncURL} from '../../util/WebUtil';
+import {callWhileAwaiting, getCmdSrvSyncURL} from '../../util/WebUtil';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
+import {IfWorkingMaskById} from 'firefly/ui/panel/MaskPanel.jsx';
+import {dispatchAddWorkingTask} from 'firefly/core/AppDataCntlr.js';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name'},
@@ -79,6 +81,8 @@ const defValues = {
 };
 
 const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
+const TBL_SAVE_MASK_ID = 'TableSavePanel';
+const WORKING_DELAY = 1000;         // ms before showing the working mask
 
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
@@ -136,7 +140,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} :
                    isWs ? {height:'20em'} : {height:'19em'};
     return (
-        <Stack spacing={1} p={1} overflow='hidden' minWidth='40em' sx={sizing}>
+        <Stack spacing={1} p={1} overflow='hidden' minWidth='40em' position='relative' sx={sizing}>
             <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}
                         sx={{display:'flex', overflow:'hidden', flexGrow:1}}>
                 <Stack spacing={1} flexGrow={1}>
@@ -162,6 +166,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                     text={'Save'}/>
                 <Button onClick={() => onComplete?.()}>Cancel</Button>
             </Stacker>
+            <IfWorkingMaskById id={TBL_SAVE_MASK_ID} message='Preparing file for download...'/>
         </Stack>
     );
 }
@@ -257,32 +262,40 @@ function resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols) {
             return Object.assign(params, {file_format : fileFormat, mode});
         };
 
+        // resolves to true when the file is on its way; false if it failed and the error was shown
         const downloadFile = (urlOrOp) => {
             if (isWorkspace()) {
                 doDownloadWorkspace(getCmdSrvSyncURL(), {params: urlOrOp});
+                return true;
             } else {
-                download(urlOrOp);
+                return download(urlOrOp);
             }
-
-            onComplete?.();
         };
 
-        const {origTableModel} = getTblById(tbl_id) || {};
-        if (origTableModel) {
-            getAsyncTableSourceUrl(tbl_ui_id, getOtherParams(fileName)).then((urlOrOp) => {
-                downloadFile(urlOrOp);
-            });
-        } else {
-            let urlOrOp;
-            if (tbl_ui_id) {
-                urlOrOp= getTableSourceUrl(tbl_ui_id, getOtherParams(fileName));
-            }
-            else {
+        const getUrlOrOp = async () => {
+            const {origTableModel} = getTblById(tbl_id) || {};
+            if (origTableModel) {
+                return getAsyncTableSourceUrl(tbl_ui_id, getOtherParams(fileName));
+            } else if (tbl_ui_id) {
+                return getTableSourceUrl(tbl_ui_id, getOtherParams(fileName));
+            } else {
                 const table= getTblById(tbl_id);
-                urlOrOp = makeTableSourceUrl(table.tableData.columns, table.request, getOtherParams(fileName));
+                return makeTableSourceUrl(table.tableData.columns, table.request, getOtherParams(fileName));
             }
-            downloadFile(urlOrOp);
+        };
+
+        const saving = getUrlOrOp()
+            .then(downloadFile)
+            .catch((e) => {
+                showInfoPopup(e?.message || 'Unable to save the table', 'Save table');
+                return false;
+            });
+
+        // if the download has not started within WORKING_DELAY, mask the dialog until it does, then close it.  on error, keep it open.
+        if (!isWorkspace()) {
+            callWhileAwaiting(saving, (p) => dispatchAddWorkingTask(TBL_SAVE_MASK_ID, p, 'Preparing file for download...'), WORKING_DELAY);
         }
+        saving.then((ok) => ok && onComplete?.());
     };
 }
 

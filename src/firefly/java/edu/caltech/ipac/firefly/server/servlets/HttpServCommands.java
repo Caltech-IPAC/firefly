@@ -17,6 +17,7 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONObject;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -85,7 +86,8 @@ public class HttpServCommands {
                 return;
             }
 
-            res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
+            res.setHeader("Content-Disposition", URLDownload.makeContentDisposition(fileName + fileNameExt));
+            AnyFileDownload.sendDownloadStartedCookie(sp.getOptional(AnyFileDownload.DOWNLOAD_TOKEN), res);
             FileInfo fi = am.save(res.getOutputStream(), request, tblFormat, mode);
             if (fi != null) {
                 long length = fi.getSizeInBytes(); // if written from the db, the length is 0

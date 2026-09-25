@@ -523,10 +523,8 @@ function doDownload(job, index) {
         return;
     }
     dispatchBgJobInfo( updateSet(job, ['downloadState',index], 'WORKING') );
-    download(url).then( () => {
-        dispatchBgJobInfo( updateSet(job, ['downloadState',index], 'DONE') );
-    }).catch(() => {
-        dispatchBgJobInfo( updateSet(job, ['downloadState',index], 'FAIL') );
+    download(url).then( (started) => {
+        dispatchBgJobInfo( updateSet(job, ['downloadState',index], started ? 'DONE' : 'FAIL') );
     });
 }
 
