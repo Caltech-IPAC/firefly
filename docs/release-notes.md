@@ -8,16 +8,57 @@
 
 ---
 
-## Version 2026.2
-- 2026.2.1 — (Aug 4, 2026), _Docker tag_: `2026.2.1`, `2026.2`, `latest`
-- 2026.2.0 — (July 22, 2026), _Docker tag_: `2026.2.0`,
+## Version 2026.3
+- 2026.3.0 — (Oct 1, 2026), _Docker tag_: `2026.3.0`, `2026.3`, `latest`
 
-This stability release includes numerous bug fixes and introduces the first end-user installable version of Firefly.
+This release moves the standalone installation out of beta, adds spectral line plotting and color grouping by column to Charts,
+and includes FITS compression reading fixes.
+
+#### General Features
+- Firefly standalone is out of beta — Firefly-2099 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2013))
+- HiPS: handling underlying FITS — Firefly-2058 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2002))
+- Charts: color grouping based on column value — Firefly-2006 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1992)), Firefly-2094 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2003))
+- Charts: spectral line plotting — Firefly-2066 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2015)), Firefly-1971 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1985))
+- Tables: query optimization — Firefly-2059 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1982))
+- Tables: improve CSV, TSV table reading, better recognizes data — Firefly-2108 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2020))
+- Multiple nom.tam.fits updates and related bug fixes — Firefly-2006, Firefly-2074 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1992)), ([nom-tam-fits releases](https://github.com/nom-tam-fits/nom-tam-fits/releases/))
+- DCE: support for MOC configuration — Firefly-2024 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1995))
+- UWS: improved recognition of ipac:MultiSpectrum format — IRSA-7890 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1991))
+- Downloads: Improve downloading system — Firefly-2064 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2023))
+
+
+#### Infrastructure Updates
+- Docker, K8s deployments: Refactor cleanup.sh to improve configuration and maintainability — Firefly-2077 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2014))
+
+#### Bug Fixes
+- Fixed: Use Image Search (ObsTAP) toggle not turning off — Firefly-2072 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1999))
+- Fixed: Statistics dialog fails to come up when selected region contains only NaNs — Firefly-2079 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1997))
+- Fixed: bug in reading tables with TZERO — Firefly-2048 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1994))
+- Fixed: better handling of VOTable errors — Firefly-2091 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2021))
+- Fixed: Charts: dialog fails to load values on certain tables — Firefly-2107 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2019))
+- Fixed: Column coordinate guesser is not using UCDs — Firefly-2118 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2018))
+- Fixed: Table header scroll bug — Firefly-1259 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2017))
+- Fixed: bug expanding charts from Multi-product Viewer — Firefly-2101 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2012))
+- Fixed: Time series — period field is a required input field, drag/drop broken — Firefly-2080 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2007))
+- Fixed: disable contextual font ligatures — Firefly-2057 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2001))
+
+### _Patches 2026.3_
+#### 2026.3.1 coming patches (not released yet)
+- HiPS: rendering HiPS more accurately — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
+- Fixed: HiPS sometime loses WCS lock with image — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
+
+---
+
+## Version 2026.2
+- 2026.2.1 — (Aug 4, 2026), _Docker tag_: `2026.2.1`, `2026.2`
+- 2026.2.0 — (July 22, 2026), _Docker tag_: `2026.2.0`
+
+This stability release includes numerous bug fixes and introduces the first end-user installable version of Firefly (in beta).
 
 #### General Features
 - Updated Standalone Firefly application landing page — Firefly-1981 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1959))
 - Change default menus and tabs for standalone Firefly application — Firefly-2028 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1967))
-- Added support for end-user installation of Firefly — Firefly-1980 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1962))
+- Added support for end-user installation of Firefly (in beta) — Firefly-1980 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1962))
 - URL API: added SIA support and cleaned up of `hipsPanel` command — Firefly-2026 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1973))
 - Fits Images: Give an error or sometimes silently skip an unsupported 4d+ HDU — Firefly-2049 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1976))
 - MOC: Added support for MOC 2.0, with `ORDERING=NUNIQ` — Firefly-2049 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1976))
@@ -39,7 +80,7 @@ This stability release includes numerous bug fixes and introduces the first end-
 ### _Patches 2026.2_
 #### 2026.2.1
 - Fixed: Update nom.tam.fits (1.22.2) to fixed a decompression issue — Firefly-2071 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1989))
-- Fixed: Ensure only single local result fire are used — Firefly-2070 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1988))
+- Fixed: Ensure only single local result file are used — Firefly-2070 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1988))
 - Fixed: table init scrolling half line off — Firefly-2065 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1987))
 - Fixed: product not showing obs_title — ([commit](https://github.com/Caltech-IPAC/firefly/commit/a017d1f5fff41b37d60c19c246700e64db454d2d))
 - Fixed: overwrite an empty directory in the HiPS cache — ([commit](https://github.com/Caltech-IPAC/firefly/commit/6fbb9334fc3fabf8faecaa105a49a23c8b1f963d))

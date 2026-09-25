@@ -16,7 +16,7 @@ This is a full-featured installation that performs very well when working with l
 ### Quick install
 
 ```bash
-curl -L https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/get-firefly | bash
+curl -fsSL https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/get-firefly | bash
 ```
 #### Usage
 1. Change to the directory where you want to install Firefly.
