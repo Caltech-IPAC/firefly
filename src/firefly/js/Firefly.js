@@ -434,58 +434,53 @@ export const firefly = {
  * @param {AppProps} props - application properties
  * @param {FireflyOptions} clientAppSpecificOptions - firefly options specific to this client
  * @param {Array.<WebApiCommand>} webApiCommands
- * @returns {Promise.<boolean>}
+ * @returns {Promise.<void>}
  */
-function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
+async function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
 
-    if (window?.firefly?.initialized) return Promise.resolve(); // if initialized, don't run it again.
+    if (window?.firefly?.initialized) return; // if initialized, don't run it again.
 
     set(window, 'firefly.initialized', true);
-    return new Promise(async (resolve) => {
 
-        const processDecor= (process) => (rawAction) => {
-            getOrCreateWsConn().catch(() => {
-                if (!getConnectionStatus()?.lost) {         // set lost status only when it's not already set, to avoid circular dispatches
-                    dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'});
-                }
-            });
-            process(rawAction);
-            recordHistory(rawAction);
-        };
-
-        bootstrapRedux( getBootstrapRegistry(), processDecor);
-        flux.process( {type : APP_LOAD} );  // setup initial store/state
-
-        let srvAppSpecificOptions={};
-        try {
-            srvAppSpecificOptions= await getJsonProperty('FIREFLY_OPTIONS');
-        }
-        catch (err) {
-            logger.error('could not retrieve valid server options');
-        }
-        // const appSpecificOptions = mergeObjectOnly(clientAppSpecificOptions, srvAppSpecificOptions);
-        const appSpecificOptions = mergeAppOptions(clientAppSpecificOptions, srvAppSpecificOptions);
-
-        const client= await getOrCreateWsConn(); // establish websocket connection first before doing anything else.
-
-        fireflyInit(props, appSpecificOptions, webApiCommands);
-
-        client.addListener(ActionEventHandler);
-        window.firefly.wsClient = client;
-        notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
-        loadAllJobs();
-        resolve?.();
-
-
-    }).then(() => {
-        // when all is done, mark app as 'ready'
-        defer(() => {
-            setTimeout(() => {
-                dispatchUpdateAppData({isReady: true});
-            },3);
+    const processDecor= (process) => (rawAction) => {
+        getOrCreateWsConn().catch(() => {
+            if (!getConnectionStatus()?.lost) {         // set lost status only when it's not already set, to avoid circular dispatches
+                dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'});
+            }
         });
-        initWorkerContext();
+        process(rawAction);
+        recordHistory(rawAction);
+    };
+
+    bootstrapRedux( getBootstrapRegistry(), processDecor);
+    flux.process( {type : APP_LOAD} );  // setup initial store/state
+
+    let srvAppSpecificOptions={};
+    try {
+        srvAppSpecificOptions= await getJsonProperty('FIREFLY_OPTIONS');
+    }
+    catch (err) {
+        logger.error('could not retrieve valid server options');
+    }
+    // const appSpecificOptions = mergeObjectOnly(clientAppSpecificOptions, srvAppSpecificOptions);
+    const appSpecificOptions = mergeAppOptions(clientAppSpecificOptions, srvAppSpecificOptions);
+
+    const client= await getOrCreateWsConn(); // establish websocket connection first before doing anything else.
+
+    fireflyInit(props, appSpecificOptions, webApiCommands);
+
+    client.addListener(ActionEventHandler);
+    window.firefly.wsClient = client;
+    notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
+    loadAllJobs();
+
+    // when all is done, mark app as 'ready'
+    defer(() => {
+        setTimeout(() => {
+            dispatchUpdateAppData({isReady: true});
+        },3);
     });
+    initWorkerContext();
 }
 
 /**

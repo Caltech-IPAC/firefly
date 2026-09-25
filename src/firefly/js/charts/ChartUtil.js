@@ -1195,7 +1195,7 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
             // quote columns, assuming column names are alpha-numeric
             expr.getParsedVariables().forEach((v) => {
                 if (!v.startsWith('"')) {
-                    const re = new RegExp('([^A-Za-z\d_"]|^)(' + v + ')([^A-Za-z\d_"]|$)', 'g');
+                    const re = new RegExp('([^A-Za-z0-9_"]|^)(' + v + ')([^A-Za-z0-9_"]|$)', 'g');
                     while (colOrExpr.match(re)) { // while is needed to handle cases like v*v
                         colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
                     }
