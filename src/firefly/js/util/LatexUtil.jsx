@@ -16,6 +16,11 @@ const mathJaxConfig = {
         scale: PLOTLY_FONT_SCALE, // will apply globally but is needed because plotly dynamically creates temporary MathJax containers and injects its nodes into the chart SVG
         mtextInheritFont: true,
     },
+    options: {
+        // From Contextual Menu Options: https://docs.mathjax.org/en/v3.2/options/menu.html
+        // disable the menu, else it puts every mjx-container in the tab order (tabindex=0), hijacking keyboard navigation in forms
+        enableMenu: false,
+    },
 };
 
 export const latexRootStyles = {
