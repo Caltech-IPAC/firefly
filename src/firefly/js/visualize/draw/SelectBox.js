@@ -198,7 +198,7 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
             DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
         } else if (selectedShape === SelectedShape.circle.key) {
             DrawUtil.drawCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
-        } else if (selectedShape === SelectedShape.circle.key) {
+        } else if (selectedShape === SelectedShape.ellipse.key) {
             DrawUtil.drawEclipseWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
 
         }
