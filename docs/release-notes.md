@@ -9,7 +9,7 @@
 ---
 
 ## Version 2026.3
-- 2026.3.0 — (Oct 1, 2026), _Docker tag_: `2026.3.0`, `2026.3`, `latest`
+- 2026.3.0 — (Sept 25, 2026), _Docker tag_: `2026.3.0`, `2026.3`, `latest`
 
 This release moves the standalone installation out of beta, adds spectral line plotting and color grouping by column to Charts,
 and includes FITS compression reading fixes.
