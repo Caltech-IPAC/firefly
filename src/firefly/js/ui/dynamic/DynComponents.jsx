@@ -142,7 +142,7 @@ export function isSimpleTargetPanel(fieldDefAry) {
     if (sizeKey && manageAllSpacial && targetDetails?.hipsUrl) {
         return false;
     }
-    return !Boolean(targetDetails?.hipsUrl);
+    return !targetDetails?.hipsUrl;
 }
 
 

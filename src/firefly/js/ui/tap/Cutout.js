@@ -150,7 +150,7 @@ export function getCutoutTargetType(dataProductsComponentKey=DEFAULT_DATA_PRODUC
     if (typeFromOptions === ROW_POSITION && canDoRow) return ROW_POSITION;
 
     // compute fallback from the default based on if a search target exist
-    if (canDoRow) return Boolean(getSearchTargetFromTable(tbl_id)) ? SEARCH_POSITION : ROW_POSITION;
+    if (canDoRow) return getSearchTargetFromTable(tbl_id) ? SEARCH_POSITION : ROW_POSITION;
 
     // fallback to SEARCH_POSITION
     return SEARCH_POSITION;

@@ -953,7 +953,7 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 export const hasWLInfo= (plot) =>
            Boolean(plot?.wlData?.hasPlainOnlyCoordInfo || plot?.wlData?.hasPixelLevelCoordInfo );
 
-export const wavelengthInfoParsedSuccessfully= (plot) => !Boolean(plot?.wlData?.failReason);
+export const wavelengthInfoParsedSuccessfully= (plot) => !plot?.wlData?.failReason;
 
 export const getWavelengthParseFailReason= (plot) => plot?.wlData?.failReason;
 
