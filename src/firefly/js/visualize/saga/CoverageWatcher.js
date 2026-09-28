@@ -608,7 +608,7 @@ function makeOverlayCoverageDrawing() {
 
                 tblCatIdMap[tbl_id].forEach((cId) => {
                     const layer = getDrawLayerById(getDlAry(), cId);
-                    const tableRemoved= !Boolean(getTblById(tbl_id));
+                    const tableRemoved= !getTblById(tbl_id);
                     if (layer && (tableRemoved || tbl_id===affectedTblId)) {
                         drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
                         selectOps[cId] = layer.selectOption;

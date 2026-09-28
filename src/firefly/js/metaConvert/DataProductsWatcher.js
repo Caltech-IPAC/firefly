@@ -81,7 +81,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
     const dpView= getViewer(mvRoot, dataTypeViewerId);
 
     if (!action) {
-        if (paused) paused= !Boolean(imView || dpView);
+        if (paused) paused= !(imView || dpView);
         if (!paused && getActiveTableId()===tbl_id) {
             updateDataProducts(factoryKey, null, firstTime, tbl_id, activateParams);
             firstTime= false;

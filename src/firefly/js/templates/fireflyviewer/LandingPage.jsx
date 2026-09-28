@@ -112,7 +112,7 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems, slotProps}
     return (
         <Sheet variant='soft' sx={{pt: 8, pb: 4, px: 2}} {...slotProps?.root}>
             <Stack spacing={10} alignItems='center'>
-                <Stack spacing={Boolean(subtext) ? 6 : 3}>
+                <Stack spacing={subtext ? 6 : 3}>
                     <Stack spacing={2} alignItems='center'>
                         {icon}
                         <Stack spacing={.5} alignItems='center'>

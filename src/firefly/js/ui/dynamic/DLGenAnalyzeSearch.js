@@ -224,7 +224,7 @@ export function supportsUpload(qAna, standardID, useConcurrent= false) {
     const hasUpload= getCisxUIValue(qAna,'IRSA_SIA_upload_extension') && isSIAStandardID(standardID);
     if (!hasUpload) return false;
     if (!useConcurrent) return true;
-    return !Boolean(qAna.concurrentSearchDef?.length);
+    return !qAna.concurrentSearchDef?.length;
 }
 
 
