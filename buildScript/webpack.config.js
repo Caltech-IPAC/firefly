@@ -1,5 +1,4 @@
 /* eslint-env node */
-/* global process */
 
 import webpack from 'webpack';
 import TerserPlugin from 'terser-webpack-plugin';

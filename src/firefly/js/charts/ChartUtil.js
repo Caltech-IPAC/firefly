@@ -727,7 +727,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
 
     let getDataVal;
     const changes = {};
-    changes[`fireflyData.${traceNum}.isLoading`] = !Boolean(tableModel);
+    changes[`fireflyData.${traceNum}.isLoading`] = !tableModel;
     if (tableModel) {
         const cols = tableModel.tableData.columns.map((c) => c.name);
         const transposed = tableModel.tableData.columns.map(() => []);

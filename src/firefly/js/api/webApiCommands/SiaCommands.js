@@ -33,7 +33,7 @@ export const siaPanelOverview= {
         obsCoreWavelengthRangeType : 'Type of Wavelength search for Observations. `contains` or `overlaps`',
         obsCoreWavelengthContains : `Wavelength value (in ${wvlUnit}) when selecting \`obsCoreWavelengthRangeType=contains\``,
         obsCoreWavelengthMinRange : `Upper limit of an observation's wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
-        obsCoreWavelengthMaxRange : `Lower limit of an observation\'s wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
+        obsCoreWavelengthMaxRange : `Lower limit of an observation's wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
 
         [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],

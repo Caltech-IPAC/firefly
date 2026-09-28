@@ -52,7 +52,7 @@ function creator(initPayload, presetDefaults) {
         destroyWhenAllDetached: true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         canUserDelete,
-        allocatedColor: !Boolean(color),
+        allocatedColor: !color,
     };
     return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef, [RECENTER, UPDATE_SEARCH_TARGET]);
 }

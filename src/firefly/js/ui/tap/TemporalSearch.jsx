@@ -143,7 +143,7 @@ export function TemporalSearch({cols, columnsModel, tableName}) {
         if (existingTimeCol) timeColExists = cols.some((c) => c.name === existingTimeCol);
         if (!timeColExists) existingTimeCol = findTimeCol;
         setVal(TemporalColumns, existingTimeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        if (Boolean(findTimeCol)) checkHeaderCtl.setPanelOpen(true);
+        if (findTimeCol) checkHeaderCtl.setPanelOpen(true);
     }, [columnsModel]);
 
 

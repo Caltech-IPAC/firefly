@@ -461,7 +461,8 @@ export class RegionFactory {
             case RegionType.text:
                 if (params.length < 2) break;
 
-                if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
+                wp1 = this.parseXY(regionCsys, params[n], params[++n]);
+                if (wp1) {
                     region = makeRegionText(wp1.pt);
                 }
                 if (params.length >= 3) {
@@ -472,7 +473,8 @@ export class RegionFactory {
             case RegionType.point:
                 if (params.length < 2) break;
 
-                if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
+                wp1 = this.parseXY(regionCsys, params[n], params[++n]);
+                if (wp1) {
                     region = makeRegionPoint(wp1.pt);
                 }
                 if (pointType) {

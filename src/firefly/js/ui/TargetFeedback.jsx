@@ -30,7 +30,7 @@ function formatExample(row, fieldKey, setFld) {
                 }
             })}
         </Stack>
-    )
+    );
 }
 
 
