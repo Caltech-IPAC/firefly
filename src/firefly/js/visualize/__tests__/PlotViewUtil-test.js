@@ -1,6 +1,6 @@
 import {primePlot, getPlotViewById, isActivePlotView, getActivePlotView} from '../PlotViewUtil.js';
 import {makePlotView} from '../reducer/PlotView.js';
-import {WebPlotRequest} from '../WebPlotRequest.js'
+import {WebPlotRequest} from '../WebPlotRequest.js';
 import {findPlot, primePlotType} from '../PlotViewUtil';
 
 
