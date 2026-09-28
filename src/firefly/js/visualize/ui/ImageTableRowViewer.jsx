@@ -262,7 +262,7 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
 
     useEffect(()=>{
         if (matchInit.wcsMatchInitDone) return;
-        const {pv}= currentP()
+        const {pv}= currentP();
         const plotId= (!pv || pv.plotViewCtx.useForCoverage || !pv.plotViewCtx.useForSearchResults) ? undefined : activePlotId;
         if(plotId && wcsMatchType!==defaultWcsMatchType) {
             //to make sure wcsMatch checkbox is checked on initial render

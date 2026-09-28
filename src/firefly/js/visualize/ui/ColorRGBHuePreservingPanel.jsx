@@ -23,7 +23,7 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
     );
     if (!rgbFields) return <div/>;
     const {zscale} = rgbFields;
-    const zscaleValue = zscale?.value
+    const zscaleValue = zscale?.value;
     const renderRange = (isZscale) => {
         if (isZscale) {
             return null;
