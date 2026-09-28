@@ -183,6 +183,8 @@ task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
             from ("$rootDir/config/") { include '*.prop' }
             into("${warDir}/WEB-INF/config")
             filter(ReplaceTokens, tokens: project.appConfigProps)
+            // drop common.prop props whose @token@ the app's config didn't fill, so they're truly unset and code defaults apply
+            filesMatching('common.prop') { filter { line -> line.trim().endsWith('@') ? '' : line } }
         }
 
         copy {
