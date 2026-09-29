@@ -115,7 +115,6 @@ describe('Less used PlotViewUtil functions', () => {
     });
 
     test('findPlot)', () => {
-        debugger;
         const pv= getPlotViewById(pvAry, 'testId1');
         const plot= findPlot(pv, 'testId1-image1');
         expect(plot).toBeDefined();
