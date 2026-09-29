@@ -17,7 +17,7 @@ describe('FilterInfo', () => {
             }
         };
 
-        TblUtil.getTblById = jest.fn().mockReturnValue(aStringColumn);          // mock getTblById to return the aStringColumn table
+        jest.spyOn(TblUtil, 'getTblById').mockReturnValue(aStringColumn);          // mock getTblById to return the aStringColumn table
 
         let actual = FilterInfo.conditionValidator('=abc', 'a_fake_tbl_id', 'desc');
         expect(actual.valid).toBe(true);
@@ -36,7 +36,7 @@ describe('FilterInfo', () => {
             }
         };
 
-        TblUtil.getTblById = jest.fn().mockReturnValue(aNumericColumn);          // once again mock getTblById to return the different (numeric) table
+        jest.spyOn(TblUtil, 'getTblById').mockReturnValue(aNumericColumn);          // once again mock getTblById to return the different (numeric) table
 
         const {valid, value} = FilterInfo.conditionValidator('>1.23', 'a_fake_tbl_id', 'ra');
         expect(valid).toBe(true);
