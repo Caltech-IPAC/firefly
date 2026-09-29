@@ -114,12 +114,12 @@ CombineChart.propTypes = {
  * @constructor
  */
 export const CombinePinnedCharts = ({viewerId, slotProps}) => {
-    if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
-
     const {chartIds, selectedChartId} = useStoreConnector(() => ({
         chartIds: getViewerItemIds(getMultiViewRoot(), viewerId),
         selectedChartId: getActiveViewerItemId(viewerId, true)
     }), [viewerId]);
+
+    if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
     return <CombineChart {...{chartIds, selectedChartId, slotProps}} />;
 };
 
