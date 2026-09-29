@@ -85,7 +85,7 @@ function doHeadersMatchMOCv2(entries, doTableValidation= true) {
         && entries.TTYPE1);
 
     if (doTableValidation) {
-        valid &&= entries.TFIELDS='1' && ['J','1J','K','1K'].includes(entries.TFORM1);
+        valid &&= entries.TFIELDS === '1' && ['J','1J','K','1K'].includes(entries.TFORM1);
     }
     const mocRetVal= valid && { uniqColName: entries.TTYPE1, mocOrder: entries.MOCORD_S+'' };
     return {valid, [MOCInfo]: mocRetVal};
