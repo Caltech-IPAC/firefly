@@ -63,6 +63,8 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
     }
 
+    
+
     if (showCoverage || showFits || showMeta) {
         return (
             <TabPanel key={key} value={selectedTab} onTabSelect={onTabSelect}>
@@ -225,7 +227,7 @@ function layoutHandler(action) {
 
 /*-----------------------------------------------------------------------------------------*/
 
-
+const RIGHT= 'RIGHT';
 
 function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
@@ -238,7 +240,7 @@ const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAUL
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    const {images={}, showTables}  = layoutInfo;
+    const {images={}, showTables, coverageSide}  = layoutInfo;
     let {showImages} = layoutInfo;
     let {showFits, showMeta, selectedTab, dataProductTableId} = images;
     const isMeta = isDataProductsTable(tbl_id);
@@ -247,7 +249,7 @@ function handleNewTable(layoutInfo, action) {
     const showCoverage= hasCoverageTable(tblList)|| hasCoverageData(tbl_id) || isOrbitalPathTable(tbl_id) || isCatalog(tbl_id);
 
     if (isMeta || showTables ) {
-        if (!showFits) selectedTab = TAB_IDS.COVERAGE;
+        if (!showFits && coverageSide!==RIGHT) selectedTab = TAB_IDS.COVERAGE;
         showFits= showFits || shouldShowFits();
     }
     if (isMeta && showTables) {
