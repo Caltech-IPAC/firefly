@@ -62,7 +62,7 @@ function DrawLayerPanel() {
 }
 
 const defaultTitle = 'Layers- ';
-export function DrawLayerPanelTitle({}) {
+export function DrawLayerPanelTitle() {
     const plotTitle = useStoreConnector(() => currentP().plot?.title);
     return (plotTitle ? `${defaultTitle}${plotTitle}` : defaultTitle);
 }

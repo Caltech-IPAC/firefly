@@ -308,7 +308,7 @@ HiPSImage.propTypes = {
     imageMasterData: PropTypes.array,
 };
 
-function ImageType({}) {
+function ImageType() {
     const options = [  {label: 'View FITS Images', value: 'singleChannel'},
                      {label: 'Create 3-Color Composite', value: 'threeColor'}];
 

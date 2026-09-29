@@ -29,7 +29,7 @@ export function showMaskDialog() {
 
 
 
-export function MaskAddPanel({}) {
+export function MaskAddPanel() {
 
 
     return (
