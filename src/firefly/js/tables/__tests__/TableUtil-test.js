@@ -355,7 +355,7 @@ describe('TableUtil: datarights', () => {
                 ],
             }
         };
-        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+        jest.spyOn(TblUtil, 'getTblById').mockReturnValue(table);
 
         const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
         const otable = get(dataRoot, 'id123');
@@ -378,7 +378,7 @@ describe('TableUtil: datarights', () => {
                 ],
             }
         };
-        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+        jest.spyOn(TblUtil, 'getTblById').mockReturnValue(table);
 
         const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
         const otable = get(dataRoot, 'id123');
@@ -401,7 +401,7 @@ describe('TableUtil: datarights', () => {
                 ],
             }
         };
-        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+        jest.spyOn(TblUtil, 'getTblById').mockReturnValue(table);
 
         const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
         const otable = get(dataRoot, 'id123');
