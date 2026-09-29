@@ -165,7 +165,6 @@ function getLayerChanges(drawLayer, action) {
             const {tableModel}= action.payload.changes;
             return tableModel ? Object.assign({tableModel}, createDrawData(drawLayer, tableModel)) :
                                 {tableModel:null, drawData: null};
-            break;
 
         case ATTACH_LAYER_TO_PLOT:
         case CHANGE_VISIBILITY:
