@@ -78,18 +78,9 @@ export default [
             "prefer-spread": 1,
             "prefer-template": 0,
 
-            // recommended rules with existing violations: warn until those sites are fixed
+            // recommended rules with existing violations: warn until the sites are addressed
             "no-case-declarations": 1,
-            // "no-useless-escape": 1,
-            // "no-redeclare": 1,
-            // "no-unsafe-optional-chaining": 1,
-            // "no-prototype-builtins": 1,
-            // "no-import-assign": 1,
-            // "no-empty-pattern": 1,
-            // "no-sparse-arrays": 1,
-            // "no-constant-binary-expression": 1,
-            // "no-async-promise-executor": 1,
-            // "no-control-regex": 1,
+            "no-async-promise-executor": 1,
 
             "@stylistic/js/arrow-parens": [2, "always"],
             "@stylistic/js/comma-spacing": 0,
