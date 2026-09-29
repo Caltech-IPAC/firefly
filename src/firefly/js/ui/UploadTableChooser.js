@@ -12,7 +12,7 @@ import {TABLES} from './FileUploadUtil.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {LayoutType, PopupPanel} from './PopupPanel.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
-import {getTableGroup, getTableUiByTblId, getTblById} from 'firefly/tables/TableUtil';
+import {getColumns, getTableGroup, getTableUiByTblId, getTblById} from 'firefly/tables/TableUtil';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FormPanel} from 'firefly/ui/FormPanel';
 import {ServerParams} from 'firefly/data/ServerParams';
@@ -223,7 +223,7 @@ const LoadedTables= (props) => {
         if (!tbl.tableData) continue;
         //ToFix: converted row and col to string because searching their columns as number gives an error
         const title = [tables[tblId].title,
-            (tbl.tableData.columns?.filter( (c) => c.visibility!=='hidden').length).toString(),
+            getColumns(tbl).length.toString(),
             (tbl.totalRows).toString(), tblId];
         data.push(title);
     }
