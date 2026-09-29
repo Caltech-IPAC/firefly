@@ -579,7 +579,7 @@ describe('A test suite for CoordConv.js', function () {
     });
 
 
-    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=ECLIPTIC_B outEquinox=1950 lat=-90.0',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=90.0',  function () {
 
         const expectedLons = [
             359.68340855555186,
