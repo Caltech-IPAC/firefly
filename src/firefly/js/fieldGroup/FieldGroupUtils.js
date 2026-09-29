@@ -39,7 +39,7 @@ function validateSingle(groupKey, includeUnmounted) {
             const newValue= fields[key].value();
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
-                newValue.hasOwnProperty('value') ) {
+                Object.prototype.hasOwnProperty.call(newValue, 'value') ) {
                 dispatchValueChange({valid:true,fieldKey:key,groupKey,...newValue});
             }
             else {
