@@ -412,16 +412,16 @@ describe('A test suite for CoordConv.js', function () {
              179.69493905911276
         ];
         const expectedLats =[
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600971
-            -89.72157064600968
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600971,
+            -89.72157064600968,
              -89.7215706460096,
              -89.7215706460096,
              -89.7215706460096,
@@ -456,7 +456,6 @@ describe('A test suite for CoordConv.js', function () {
 
         const inLat =  -90;//-35.955853;
 
-        var lons = [];
         var lats = [];
         var ret;
         const tobs=1983.5;
@@ -558,7 +557,6 @@ describe('A test suite for CoordConv.js', function () {
 
         const inLat = 0.0;
 
-        var lons = [];
         var lats = [];
         var ret;
         const tobs=1983.5;
@@ -661,7 +659,6 @@ describe('A test suite for CoordConv.js', function () {
 
         const inLat =90.0;
 
-        var lons = [];
         var lats = [];
         var ret;
         const tobs=1983.5;
@@ -684,19 +681,19 @@ describe('A test suite for CoordConv.js', function () {
     });
 
 
-    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=90.0',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=ECLIPTIC_B outEquinox=1950 lat=-90.0',  function () {
 
         const expectedLons = [
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418388,
-           69.3002173418387,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418388,
+           269.3002173418387,
            269.3002173418387,
            269.3002173418387,
            269.3002173418387,
@@ -762,9 +759,8 @@ describe('A test suite for CoordConv.js', function () {
             lons[i] = deltaLon*i;
         }
 
-        const inLat =90.0;
+        const inLat = -90.0;
 
-        var lons = [];      // TODO: this line causes test to skip over all of the assert below.. no test were performed
         var lats = [];
         var ret;
         const tobs=1983.5;
