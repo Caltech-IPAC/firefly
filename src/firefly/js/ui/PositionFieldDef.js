@@ -119,7 +119,7 @@ export function formatPosForHelp(wp) {
         }
     }
     else {
-        s = `<div style=\"font-size:10px;\"> 
+        s = `<div style="font-size:10px;"> 
             ${lonStr},&nbsp;${latStr}&nbsp;&nbsp;${csys}</div>`;
         s += getEQJ2000(wp);
     }
