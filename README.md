@@ -2,7 +2,8 @@
 
 ## Intro
 
-Firefly is an open-source web-based UI application, library, and framework for astronomical data archive access and visualization developed at the [NASA/IPAC Infrared Science Archive (IRSA)](https://irsa.ipac.caltech.edu) at [Caltech](https://caltech.edu).
+Firefly is an open-source web-based UI application, library, and framework for astronomical data archive access and visualization developed at the [NASA/IPAC Infrared Science Archive (IRSA)](https://irsa.ipac.caltech.edu).
+It has been supported by NASA, principally through IRSA at [Caltech](https://caltech.edu), and by the National Science Foundation, through the [Vera C. Rubin Observatory](https://www.lsst.org/).
 
 ### Core Features
 - Viewing FITS files
