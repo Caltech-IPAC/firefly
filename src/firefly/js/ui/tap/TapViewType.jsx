@@ -187,7 +187,7 @@ function BasicUI(props) {
                 setTableName(lockedTableName);
             }
             else {
-                const [schema, table] = obsCoreTableModel?.tableData?.data[0];
+                const [schema, table] = obsCoreTableModel.tableData.data[0];
                 setSchemaName(schema);
                 setTableName(table);
             }

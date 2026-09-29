@@ -97,7 +97,7 @@ export async function populateRawImagePixelDataInWorker(obj) {
 
 export function getTransferable(result) {
     if (!result?.rawTileDataGroup) return [];
-    const {rawTileDataAry}= result?.rawTileDataGroup;
+    const {rawTileDataAry}= result.rawTileDataGroup;
     let tran;
     tran = rawTileDataAry
         .map((e) => isArrayBuffer(e.pixelDataStandard) && e.pixelDataStandard)

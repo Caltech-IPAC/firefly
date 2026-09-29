@@ -330,7 +330,7 @@ export function makeDefaultRenderer(col={}) {
     let renderer = (col.type === 'location' || !isEmpty(col.links)) ? LinkCell : TextCell;
     renderer.allowActions = true;
     if (col.cellRenderer) {
-        const [name='', propsStr] = col.cellRenderer?.split('::');
+        const [name='', propsStr] = col.cellRenderer.split('::');
         const XRef = RendererXRef[name.trim()];
         if (XRef) {
             const XRefProps = getPropsFromStr(propsStr.trim());

@@ -18,8 +18,8 @@ function fireEvent(inEvent, transform, plotId, mouseState, eventCallback, doPrev
     if (doStopPropagation) inEvent.stopPropagation();
     const ev= inEvent.nativeEvent ?? inEvent;
     const {screenX, screenY}= ev.touches?.[0]
-        ?ev.touches?.[0]
-        :ev;
+        ? ev.touches[0]
+        : ev;
     let {offsetX, offsetY}= ev;
     if (ev.touches?.[0]) {
         const rect= ev.target.getBoundingClientRect();
