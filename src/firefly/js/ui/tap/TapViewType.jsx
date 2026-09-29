@@ -306,7 +306,7 @@ function BasicUI(props) {
     };
 
     const loadObsCoreMeta = (serviceUrl, obsCoreTableModel) => {
-        const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0];
+        const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0] ?? [];
         const serviceId= getServiceId(serviceUrl);
         const supportsObsCoreMetadataLoad = getDataServiceOption('enableMetadataLoad', serviceId, false);
 
