@@ -423,7 +423,6 @@ function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
             break;
         case DrawSymbol.ROTATE:
             return retList;   // no region
-            break;
         default:
             pointType = 'box';
     }
