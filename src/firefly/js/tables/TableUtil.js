@@ -1056,7 +1056,8 @@ export function tableToIpac(tableModel) {
                     ' ' +
                         columns.map((c, idx) =>
                                 padEnd(formatValue(c, row[idx]), colWidths[idx])
-                                .replace(/[^\x1F-\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
+                                // eslint-disable-next-line no-control-regex
+                                .replace(/[\x00-\x1F\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
                     ' ').join('\n');
 
     return [meta, '\\', head, dataStr].join('\n');
@@ -1079,7 +1080,8 @@ export function tableTextView(columns, dataAry, tableMeta) {
                 ' ' +
                     cols.map(([c, idx]) =>
                             padEnd(formatValue(c, row[idx]), colWidths[idx])
-                            .replace(/[^\x1F-\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
+                            // eslint-disable-next-line no-control-regex
+                            .replace(/[\x00-\x1F\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
                 ' ').join('\n');
 
     return [meta, head, dataStr].filter((c) => c).join('\n');
