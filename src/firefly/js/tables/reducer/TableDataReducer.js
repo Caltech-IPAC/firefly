@@ -175,7 +175,7 @@ function fixStatus(root, tbl_id) {
         if (code && (code < 200 || code >= 400)) {
             if (!table.error) {          // if there error status but no error in tableModel, add error for backward compatibility.
                 const {message:error, cause} = parseError(message);
-                return updateSet(root, [tbl_id, 'error'],  new Error(error, {cause}) || 'Unable to load table.');
+                return updateSet(root, [tbl_id, 'error'],  new Error(error, {cause}));
             }
         }
     } else {
