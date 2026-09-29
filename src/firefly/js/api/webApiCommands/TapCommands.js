@@ -33,7 +33,7 @@ export const tapPanelOverview= {
         obsCoreWavelengthRangeType : 'Type of Wavelength search for Observations. `contains` or `overlaps`',
         obsCoreWavelengthContains : `Wavelength value (in ${wvlUnit}) when selecting \`obsCoreWavelengthRangeType=contains\``,
         obsCoreWavelengthMinRange : `Upper limit of an observation's wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
-        obsCoreWavelengthMaxRange : `Lower limit of an observation\'s wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
+        obsCoreWavelengthMaxRange : `Lower limit of an observation's wavelength coverage (in ${wvlUnit}). Requires \`obsCoreWavelengthRangeType=overlaps\``,
         [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],
         polygon: 'polygon as a list of ra dec strings, example: 269.3 68.2, 272.85 68.2, 272.7 66.7, 269.3 66.7',
@@ -134,7 +134,7 @@ WHERE CONTAINS(POINT('ICRS', ra, dec),CIRCLE('ICRS', 83.63321237, 22.01446012, 0
             service: 'https://irsa.ipac.caltech.edu/TAP',
             adql:
 `SELECT ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,w1snr,w1rchi2,w1mpro_allwise,w1sigmpro_allwise,w4mpro_allwise,w4sigmpro_allwise \
-FROM neowiser_p1bs_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.013))=1`,
+FROM neowiser_p1bs_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.68479, 41.26906, 0.013))=1`,
         }
     },
     {
@@ -143,7 +143,7 @@ FROM neowiser_p1bs_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE(\'ICRS\', 1
             service: 'https://irsa.ipac.caltech.edu/TAP',
             adql:
 `SELECT ra,dec,sigra,sigdec,sigradec,w2mpro,w2sigmpro,w2snr,w2rchi2,w2mpro_allwise,w2sigmpro_allwise,w3mpro_allwise,w3sigmpro_allwise \
-FROM neowiser_p1bs_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.013))=1`,
+FROM neowiser_p1bs_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.68479, 41.26906, 0.013))=1`,
             execute: 'true',
         }
     }
