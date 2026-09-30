@@ -98,8 +98,10 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
 
     const preSetUploadInfo= (uploadInfo) => {
         // initialize field group state for each column field fieldKey
+        // don't mark fields as required here; each field's nullAllowed decides that
+        // (this allows for optional fields to not be marked as required - on re-uploads)
         for (const columnField of columnFields) {
-            setVal(columnField.fieldKey, '', {validator: getColValidator(uploadInfo.columns, true, false), valid: true});
+            setVal(columnField.fieldKey, '', {validator: getColValidator(uploadInfo.columns, false, false), valid: true});
         }
         // set upload info based on what was loaded from upload table dialog
         setUploadInfo(uploadInfo);
