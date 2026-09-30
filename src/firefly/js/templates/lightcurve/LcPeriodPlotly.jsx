@@ -965,7 +965,7 @@ function setPFTableSuccess() {
  */
 function setPFTableFail() {
     return () => {
-        return showInfoPopup('Period value is required, enter one manually or use the slider or periodogram table to populate the input field.', 'Error');
+        return showInfoPopup('Period value is required; enter one manually or use the slider or periodogram table to populate the input field.', 'Error');
     };
 }
 
