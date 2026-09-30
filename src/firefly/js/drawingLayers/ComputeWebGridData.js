@@ -1367,7 +1367,7 @@ function getLevels(ranges,factor, maxLines){
                 levels[i]=[];
             }
             else if ( Math.abs(min - (-90.0))  < 0.1 && Math.abs(max - 90.0) <0.1){ //include both poles
-                levels[i]= [-75.,-60., -45., -30., -15., 0., 15., 30.,  45., 60.,  75.];
+                levels[i]= [-75.,-60., -45., -30., -15., 0., 15., 30.,  45., 60.,  75.];
             }
             else {
                 /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one
