@@ -189,6 +189,6 @@ function fixStatus(root, tbl_id) {
 
 function parseStatus(error) {
     if (!error) return {code:200, message: ''};
-    const [,code=500,message=error] = error.trim?.().match(/^(\d{3})\W+(.*)/) || [,,];
+    const [,code=500,message=error] = error.trim?.().match(/^(\d{3})\W+(.*)/) || [];
     return {code, message};
 }
