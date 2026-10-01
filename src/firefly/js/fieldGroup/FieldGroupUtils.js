@@ -40,10 +40,10 @@ function validateSingle(groupKey, includeUnmounted) {
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
                 Object.prototype.hasOwnProperty.call(newValue, 'value') ) {
-                dispatchValueChange({valid:true,fieldKey:key,groupKey,...newValue});
+                dispatchValueChange({valid:true, fieldKey:key, groupKey, ...newValue});
             }
             else {
-                dispatchValueChange({fieldKey:key,groupKey,valid:true,value:newValue});
+                dispatchValueChange({valid:true, fieldKey:key, groupKey, value:newValue});
             }
         }
     });
