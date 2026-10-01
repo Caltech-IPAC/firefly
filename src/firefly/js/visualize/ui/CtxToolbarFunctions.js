@@ -135,7 +135,7 @@ function tabulateStatics(wpResult, cc) {
         tblData[STable] = [{'cells': ['', 'Position', 'Value']}];
 
         for (let i = 0; i < ipMetrics.length; i++) {
-            if (!b[ipMetrics[i]]) {
+            if (!Object.prototype.hasOwnProperty.call(b, ipMetrics[i])) {
                 continue;
             }
 
