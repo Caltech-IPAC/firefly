@@ -24,9 +24,11 @@ export var parseResolver= function(resolveStr) {
     if (!resolveStr) return undefined;
     var retval= null;
     for( var resolveType in Resolver) {
-        if (resolveStr.toLowerCase()===Resolver[resolveType].key) {
-            retval= Resolver[resolveType];
-            break;
+        if (Object.prototype.hasOwnProperty.call(Resolver, resolveType)) {
+            if (resolveStr.toLowerCase()===Resolver[resolveType].key) {
+                retval= Resolver[resolveType];
+                break;
+            }
         }
     }
     return retval;
