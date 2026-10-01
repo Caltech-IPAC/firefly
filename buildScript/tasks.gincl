@@ -327,6 +327,20 @@ task jsTest (dependsOn: [loadConfig]) {
     }
 }
 
+task jsLint (dependsOn: [loadConfig]) {
+    group = DEV_GROUP
+
+    doLast {
+        if (file("package.json").exists()) {
+            println ">> running ESLint..."
+            def res = project.NODE 'yarn', 'run', 'lint'
+            if (res.getExitValue() != 0) {
+                throw new GradleException("ESLint fail.")
+            }
+        }
+    }
+}
+
 test {
     description= ''' Run Java and JavaScript unit test
         Only JS test:

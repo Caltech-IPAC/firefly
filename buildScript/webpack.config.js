@@ -52,7 +52,6 @@ export default function makeWebpackConfig(config) {
 
     const def_config = {
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/war`),
-        do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
         html_dir    : 'html',
         use_loader  : true,
         loaderPostfix: '_loader.js',

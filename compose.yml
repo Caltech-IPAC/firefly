@@ -45,6 +45,19 @@ services:
       - /opt/work/firefly/.gradle
       - /opt/work/firefly/node_modules
 
+  # ESLint-only run, used by the GitHub Actions PR check.
+  lint-js:
+    build:
+      context: ../
+      dockerfile: firefly/docker/Dockerfile
+      target: base
+    image: ipac/firefly-test-js:latest
+    command: bash -c "cd firefly && gradle :firefly:jsLint"
+    volumes:
+      - ../firefly:/opt/work/firefly
+      - /opt/work/firefly/.gradle
+      - /opt/work/firefly/node_modules
+
   dev:
     build:
       context: ../

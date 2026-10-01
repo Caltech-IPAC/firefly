@@ -111,14 +111,16 @@ JSDoc packages:
 - taffydb  - JSDoc claims not to need this for 4.0 but I think ink-docstrap needs it
 
 #### `ESLint`
-ESLint is completely up to date. We should always keep this up-to-date
+Version 9.
 
 ESLint packages:
 - eslint
-- babel-eslint
-- eslint-loader
+- @eslint/js
+- @eslint/compat
+- @babel/eslint-parser
+- @stylistic/eslint-plugin
 - eslint-plugin-jsdoc
-- eslint-plugin-jsx-a11y
 - eslint-plugin-react
 - eslint-plugin-react-hooks
+- globals
 

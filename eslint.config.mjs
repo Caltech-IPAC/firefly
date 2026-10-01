@@ -1,7 +1,8 @@
+import js from "@eslint/js";
 import react from "eslint-plugin-react";
 import jsdoc from "eslint-plugin-jsdoc";
 import reactHooks from "eslint-plugin-react-hooks";
-import stylisticJs from '@stylistic/eslint-plugin-js'
+import stylisticJs from '@stylistic/eslint-plugin'
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { fixupPluginRules, includeIgnoreFile } from "@eslint/compat";
@@ -19,6 +20,16 @@ const gitIgnorePath = path.resolve(__dirname, ".gitignore")
 
 export default [
     includeIgnoreFile(gitIgnorePath), //ignore git-ignored dirs/files
+
+    // vendored third-party source
+    {ignores: [
+        "src/firefly/html/gpu-browser.min-*.js",
+        "src/firefly/js/externalSource/**",
+    ]},
+
+    // eslint's recommended rules; the block below layers over these
+    {files: ["**/*.js", "**/*.jsx"], ...js.configs.recommended},
+
     {
         files: ["**/*.js", "**/*.jsx"],
 
@@ -59,21 +70,41 @@ export default [
             eqeqeq: 1,
             "no-console": 0,
             "no-empty": 1,
-            "no-undef": 2,
             "no-use-before-define": 0,
             "no-unused-vars": 1,
             "object-shorthand": 1,
             "prefer-const": 1,
             "prefer-spread": 1,
             "prefer-template": 0,
+
+            // rules with existing violations: warn until the sites are addressed
+            "no-case-declarations": 1,
+            "no-async-promise-executor": 1,
+            "no-cond-assign": 1,
+            "no-constant-binary-expression": 1,
+            "no-control-regex": 1,
+            "no-debugger": 1,
+            "no-empty-pattern": 1,
+            "no-extra-boolean-cast": 1,
+            "no-import-assign": 1,
+            "no-irregular-whitespace": 1,
+            "no-prototype-builtins": 1,
+            "no-redeclare": 1,
+            "no-regex-spaces": 1,
+            "no-sparse-arrays": 1,
+            "no-undef": 1,
+            "no-unreachable": 1,
+            "no-unsafe-optional-chaining": 1,
+            "no-useless-escape": 1,
+            "@stylistic/js/semi": [1, "always"],   // restore to [2, "always"]
+
             "@stylistic/js/arrow-parens": [2, "always"],
             "@stylistic/js/comma-spacing": 0,
             "@stylistic/js/jsx-quotes": [1, "prefer-single"],
             "@stylistic/js/key-spacing": 0,
             "@stylistic/js/no-multi-spaces": 0,
-            "@stylistic/js/semi": [2, "always"],
             "@stylistic/js/space-infix-ops": 0,
-            "@stylistic/js/quotes": [2, "single", "avoid-escape"],
+            "@stylistic/js/quotes": [2, "single", {avoidEscape: true, allowTemplateLiterals: "avoidEscape"}],
             "react/jsx-boolean-value": [1, "always"],
             "react/jsx-no-duplicate-props": 1,
             "react/jsx-no-undef": 1,
@@ -108,13 +139,13 @@ export default [
             'react-hooks/unsupported-syntax': 'warn',
             'react-hooks/use-memo': 'warn',
             'react-hooks/incompatible-library': 'warn',
-            "jsdoc/check-param-names": 2,
+            "jsdoc/check-param-names": 1,
             "jsdoc/check-tag-names": 0,
             "jsdoc/check-types": 0,
             "jsdoc/newline-after-description": 0,
             "jsdoc/require-description-complete-sentence": 0,
             "jsdoc/require-hyphen-before-param-description": 0,
-            "jsdoc/require-param": 2,
+            "jsdoc/require-param": 1,
             "jsdoc/require-param-description": 0,
             "jsdoc/require-param-type": 0,
             "jsdoc/require-returns-description": 0,

@@ -10,6 +10,9 @@ def libTgz     = "${libPackDir}/firefly-components-v${libVersion}.tgz"
 // tasks.gincl is applied via subprojects{} — disable JS/Java test pipeline for this subproject
 jsTest.actions.clear()
 jsTest.dependsOn = []
+// :firefly:jsLint already lints the whole repo, this directory included
+jsLint.actions.clear()
+jsLint.dependsOn = []
 
 task installDeps {
     description = 'Install component-library node dependencies.'
