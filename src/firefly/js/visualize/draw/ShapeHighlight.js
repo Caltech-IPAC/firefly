@@ -71,19 +71,19 @@ export function getDrawobjArea(drawObj, cc, def={}) {
             rCover = getDrawobjPolygonArea(drawObj, cc);
             break;
         case ShapeDataObj.ShapeType.Annulus:
-            firstObj = get(drawObj, [doAry, '0']);
+            firstObj = drawObj[doAry]?.[0];
             if (firstObj) {
                 rCover = getDrawobjCircleArea(firstObj, cc, def);
             }
             break;
         case ShapeDataObj.ShapeType.BoxAnnulus:
-            firstObj = get(drawObj, [doAry, '0']);
+            firstObj = drawObj[doAry]?.[0];
             if (firstObj) {
                 rCover = getDrawobjRectArea(firstObj, cc, def);
             }
             break;
         case ShapeDataObj.ShapeType.EllipseAnnulus:
-            firstObj = get(drawObj, [doAry, '0']);
+            firstObj = drawObj[doAry]?.[0];
             if (firstObj) {
                 rCover = getDrawobjEllipseArea(firstObj, cc, def);
             }
