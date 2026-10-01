@@ -1,8 +1,3 @@
-/*eslint-env node, mocha */
-
-// to run: from firefly/src/firefly
-// node ../../node_modules/mocha/bin/mocha js/util/expr/__test__/*test.js --compilers js:babel-core/register --requires ignore-styles
-
 import {Expression} from '../expr/Expression.js';
 
 describe('A test suite for expr/Expression.js', function () {
