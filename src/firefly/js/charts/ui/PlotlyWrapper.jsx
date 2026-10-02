@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 import {debounce, isEmpty, set, omit, forEach, isPlainObject} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {flattenObject} from '../../util/WebUtil.js';
+import {flattenObject, hasProperty} from '../../util/WebUtil.js';
 import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -48,7 +48,7 @@ function deltas(a, b, wrapArray=true) {
     const doDiff = (a2, b2, r, wrapArray) => {
         forEach(a2, function(v, k) {
             // already checked this or equal or original has no value...
-            if (b2 && (r.hasOwnProperty(k) || shallowequal(b2[k], v))) return;
+            if (b2 && (hasProperty(r, k) || shallowequal(b2[k], v))) return;
             // but what if it returns an empty object? still attach?
             r[k] = b2 && isPlainObject(v) ? diff(v, b2[k], wrapArray) : v;
             if (wrapArray && Array.isArray(r[k])) {

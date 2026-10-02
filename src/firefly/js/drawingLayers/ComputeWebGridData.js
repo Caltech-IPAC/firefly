@@ -133,20 +133,20 @@ function getRangeFromFourSides(plot, csys,  cc){
     var wLen, hLen;
     wLen = width/det;
     hLen = height/det;
-    for (var i=0; i<wLen; i++){
+    for (let i=0; i<wLen; i++){
         x=i*det;
         y=0;
         points1[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
     }
     //from 0,0 to 0, height: (0, 0) - (0, height)
-    for (var i=0; i<hLen; i++){
+    for (let i=0; i<hLen; i++){
         x=0;
         y=i*det;
         points2[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
     }
 
     //from (0, height) - (width, height)
-    for (var i=0; i<wLen; i++){
+    for (let i=0; i<wLen; i++){
         x=i*det;
         y=height;
         points3[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
@@ -154,7 +154,7 @@ function getRangeFromFourSides(plot, csys,  cc){
 
     //from (width, 0) - (width, height)
     //from 0,0 to 0, height: (0, 0) - (0, height)
-    for (var i=0; i<hLen; i++){
+    for (let i=0; i<hLen; i++){
         x=width;
         y=i*det;
         points4[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
@@ -753,7 +753,7 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
     if (opoints)  {
         i0 = 1;
         di = 2;
-        for (var i=0; i <= intervals; i += 2) {
+        for (let i=0; i <= intervals; i += 2) {
             xpoints[0][i] = opoints[0][Math.trunc(i/2)];
             xpoints[1][i] = opoints[1][Math.trunc(i/2)];
         }
@@ -764,7 +764,7 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
     }
 
     var sharedLon, wpt, ip, xy,sharedLat,tx, ty;
-    for (var i=i0; i <= intervals; i += di) {
+    for (let i=i0; i <= intervals; i += di) {
         tx= x0+i*dx;
         tx = tx > 360?tx-360:tx;
         tx=tx<0?tx+360:tx;
@@ -1367,7 +1367,7 @@ function getLevels(ranges,factor, maxLines){
                 levels[i]=[];
             }
             else if ( Math.abs(min - (-90.0))  < 0.1 && Math.abs(max - 90.0) <0.1){ //include both poles
-                levels[i]= [-75.,-60., -45., -30., -15., 0., 15., 30.,  45., 60.,  75.];
+                levels[i]= [-75.,-60., -45., -30., -15., 0., 15., 30.,  45., 60.,  75.];
             }
             else {
                 /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one

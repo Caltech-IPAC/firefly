@@ -198,7 +198,7 @@ function parseVersion(ua,key,browser) {
     let idx= ua.indexOf(key);
     if (idx!==-1) idx+= key.length;
     const ver= ua.substring(idx).match(/[0-9.]+/)?.[0];
-    const sAry= ver?.split('\.') ?? [];
+    const sAry= ver?.split('.') ?? [];
     return {
         browser,
         majorVersion: !isNaN(Number(sAry[0])) ? parseInt(sAry[0]) : UNKNOWN_VER,

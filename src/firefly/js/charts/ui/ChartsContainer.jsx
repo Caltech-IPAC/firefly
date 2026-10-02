@@ -176,7 +176,7 @@ export const ActiveChartsPanel = (props) => {
                     chartId,
                     tbl_group,
                     toolbarVariant,
-                    showToolbar: !Boolean(noChartToolbar),
+                    showToolbar: !noChartToolbar,
                 }}/>
             );
         }

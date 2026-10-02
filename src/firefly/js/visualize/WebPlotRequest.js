@@ -934,7 +934,7 @@ function cleanupObj(r) {
  * @return {String[]} an array of invalid keys
  */
 export function findInvalidWPRKeys(r) {
-    return [...Object.keys(r),...plotAttKeys].filter( (k) => !Boolean(allKeys.get(k)));
+    return [...Object.keys(r),...plotAttKeys].filter( (k) => !allKeys.get(k));
 }
 
 /**

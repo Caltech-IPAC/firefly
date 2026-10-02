@@ -219,6 +219,6 @@ function shouldGetInput(dpId,dataProductsState) {
     const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
     const serDescActive = isServiceDescriptorActivated(dpId,serDef.internalServiceDescriptorID);
     if (noInputRequired && isDefined(serDescActive)) return !serDescActive;
-    return !Boolean(searchParams);
+    return !searchParams;
 }
 

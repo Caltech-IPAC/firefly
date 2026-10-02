@@ -454,7 +454,7 @@ function makeColumnTag(props, col, idx) {
         tbl_id, renderers, startIdx, cellRenderers} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
-    const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
+    const HeadRenderer = renderers?.[col.name]?.headRenderer ?? (showHeader ? HeaderCell : ()=>null);
     const CellRenderer = renderers?.[col.name]?.cellRenderer || cellRenderers?.[idx];
     const fixed = col.fixed || false;
     const {resizable=true} = col;

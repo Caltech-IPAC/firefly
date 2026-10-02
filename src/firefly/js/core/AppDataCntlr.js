@@ -160,7 +160,7 @@ export function dispatchConnectionStatus({lost, reason}) {
 export function dispatchNotifyRemoteAppReady() {
     const channel= getWsChannel();
     if (!channel) return;
-    const [, sourceChannel, app] = channel.match(channel_matcher) || [,channel];
+    const [, sourceChannel, app] = channel.match(channel_matcher) || [undefined, channel];
     dispatchRemoteAction(sourceChannel,{ type : NOTIFY_REMOTE_APP_READY, payload: {ready:true, viewerChannel:channel}});
 }
 

@@ -151,7 +151,7 @@ export class MultiChartViewer extends PureComponent {
         //console.log('Active chart ID: '+activeItemId);
 
         const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
-        const showChartToolbar = !Boolean(noChartToolbar);
+        const showChartToolbar = !noChartToolbar;
 
         const borderSettings= useBorder ?
             {border: '1px solid', borderColor: 'divider', borderRadius: '5px'} : {};

@@ -6,7 +6,7 @@ import {isFunction, hasIn, isBoolean, isEmpty, pick, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import {smartMerge} from '../tables/TableUtil.js';
-import {isDefined} from '../util/WebUtil.js';
+import {isDefined, hasProperty} from '../util/WebUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 import {Logger} from '../util/Logger.js';
 
@@ -39,11 +39,11 @@ function validateSingle(groupKey, includeUnmounted) {
             const newValue= fields[key].value();
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
-                newValue.hasOwnProperty('value') ) {
-                dispatchValueChange({valid:true,fieldKey:key,groupKey,...newValue});
+                hasProperty(newValue, 'value') ) {
+                dispatchValueChange({valid:true, fieldKey:key, groupKey, ...newValue});
             }
             else {
-                dispatchValueChange({fieldKey:key,groupKey,valid:true,value:newValue});
+                dispatchValueChange({valid:true, fieldKey:key, groupKey, value:newValue});
             }
         }
     });

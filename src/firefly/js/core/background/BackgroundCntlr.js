@@ -247,7 +247,6 @@ function reducer(state={}, action={}) {
                 nstate = TblUtil.smartMerge(nstate, updates);
             }
             return nstate;
-            break;
         case BG_LOAD_JOBS: {
             const {jobs, overflow} = action.payload;
             let nstate = state;
@@ -256,14 +255,12 @@ function reducer(state={}, action={}) {
                 nstate = updateObject(nstate, updates);
             }
             return nstate;
-            break;
         }
         case BG_SET_INFO : {
             const {email, notifEnabled} = action.payload;
             let nstate = updateSet(state, 'email', email);
             nstate  = updateSet(nstate, 'notifEnabled', notifEnabled);
             return nstate;
-            break;
         }
         default:
             return state;

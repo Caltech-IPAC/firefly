@@ -22,7 +22,7 @@ export class Expression {
             allowedVariables.forEach((v)=>{
                 parser.allow(makeVariable(v));
                 // also allow quoted variables
-                if (!v.startsWith('\"')) {
+                if (!v.startsWith('"')) {
                     parser.allow(makeVariable(`"${v}"`));
                 }
             });
