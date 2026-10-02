@@ -6,7 +6,7 @@ import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omit
 import shallowequal from 'shallowequal';
 
 import {flux} from '../core/ReduxFlux.js';
-import {updateSet, updateObject, toBoolean} from '../util/WebUtil.js';
+import {updateSet, updateObject, toBoolean, hasProperty} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
 import {getTblById, getColumn, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
@@ -360,7 +360,7 @@ function chartUpdate(action) {
     return (dispatch) => {
         const {chartId, changes, replaceTableSources=false} = action.payload;
         // when selection  is undefined, selections layer must be removed
-        if (Object.prototype.hasOwnProperty.call(changes, 'selection') && !changes.selection) changes['layout.selections'] = [];
+        if (hasProperty(changes, 'selection') && !changes.selection) changes['layout.selections'] = [];
         // remove any table's mappings from changes because it will be applied by the connectors.
         const changesWithoutTblMappings = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
         set(action, 'payload.changes', changesWithoutTblMappings);

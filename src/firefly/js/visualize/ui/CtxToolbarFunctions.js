@@ -37,6 +37,7 @@ import {callGetAreaStatistics} from '../../rpc/PlotServicesJson';
 import {dlRoot} from '../VisStoreRoots';
 import {showImageAreaStatsPopup} from './ImageStatsPopup';
 import {logger} from '../../util/Logger.js';
+import {hasProperty} from '../../util/WebUtil.js';
 import CoordUtil from '../CoordUtil';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
@@ -135,7 +136,7 @@ function tabulateStatics(wpResult, cc) {
         tblData[STable] = [{'cells': ['', 'Position', 'Value']}];
 
         for (let i = 0; i < ipMetrics.length; i++) {
-            if (!Object.prototype.hasOwnProperty.call(b, ipMetrics[i])) {
+            if (!hasProperty(b, ipMetrics[i])) {
                 continue;
             }
 

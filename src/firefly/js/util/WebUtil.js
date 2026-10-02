@@ -124,6 +124,14 @@ export const isPromise = (p) => isFunction(p?.then);
 export const isDefined= (x) => x!==undefined;
 
 /**
+ * Determines whether an object has an own property with the specified property key.
+ * @param {Object} obj
+ * @param {string|number|symbol} prop
+ * @return {boolean}
+ */
+export const hasProperty = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
+/**
  * load a js script by dynamically adding a script tag.
  * @param scriptName
  * @return {Promise} when the script is loaded or failed to load

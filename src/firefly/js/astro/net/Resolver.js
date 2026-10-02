@@ -1,3 +1,5 @@
+import {hasProperty} from '../../util/WebUtil.js';
+
 function toString() {
     return this.key;
 }
@@ -24,7 +26,7 @@ export var parseResolver= function(resolveStr) {
     if (!resolveStr) return undefined;
     var retval= null;
     for( var resolveType in Resolver) {
-        if (Object.prototype.hasOwnProperty.call(Resolver, resolveType)) {
+        if (hasProperty(Resolver, resolveType)) {
             if (resolveStr.toLowerCase()===Resolver[resolveType].key) {
                 retval= Resolver[resolveType];
                 break;
