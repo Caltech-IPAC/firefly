@@ -155,10 +155,8 @@ public class FitsExtract {
         int naxis1= FitsReadUtil.getNaxis1(header);
         int naxis2= FitsReadUtil.getNaxis2(header);
         int bitpix= FitsReadUtil.getBitPix(header);
-        if (ptSizeX<1) ptSizeX= 1;
-        else if (ptSizeX>5) ptSizeX= 5;
-        if (ptSizeY<1) ptSizeY= 1;
-        else if (ptSizeY>5) ptSizeY= 5;
+        ptSizeX= Math.clamp(ptSizeX,1,7);
+        ptSizeY= Math.clamp(ptSizeY,1,7);
         int adjustX= (int)Math.floor((ptSizeX-1) / 2.0);
         int adjustY= (int)Math.floor((ptSizeY-1) / 2.0);
         x= x - adjustX;
