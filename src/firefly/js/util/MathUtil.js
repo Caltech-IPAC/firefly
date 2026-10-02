@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isString, isNumber} from 'lodash';
+import {sprintf} from '../externalSource/sprintf';
 
 export function getDecimalPlaces(range, numSigDigits) {
     if (range===0) { return undefined; }
@@ -49,3 +50,9 @@ export function allDigits(s) {
 }
 
 export const clampInRange = (num, min, max) => num <= max ? (num >= min ? num : min) : max;
+
+export function formatNumber(v,precision,conversion='g') {
+    if (isNaN(v)) return '';
+    if (Number.isInteger(v)) return v + '';
+    return sprintf(`%.${precision}${conversion}`,v);
+}

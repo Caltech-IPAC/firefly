@@ -43,10 +43,10 @@ import {makeImagePt} from '../../Point';
 import {PLOT_IMAGE} from '../../VisConst';
 import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
-import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart.jsx';
+import {genPointChartData, genSliceChartData, genZAxisChartData, POINTS_CURVE_NUM} from './ExtractionChart.jsx';
 import {keepDataExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
 import {
-    cancelLineExtraction, EXTRACT_DIALOG_ID, endExtraction, EXTRACT_END_ID, ZAXIS_POINT_SELECTION_ID
+    EXTRACT_DIALOG_ID, endExtraction, EXTRACT_END_ID, ZAXIS_POINT_SELECTION_ID
 } from './ExtractionUIUtil';
 
 const CUBE_WARNING=`
@@ -92,7 +92,7 @@ export function showExtractionDialog(element,extractionType,wasCanceled) {
 
     dispatchAddActionWatcher( {
         id: EXTRACT_END_ID,
-        callback: (action) => exTypeCntl[extractionType].start(),
+        callback: () => exTypeCntl[extractionType].start(),
         actions:[PLOT_IMAGE]
     });
 }
@@ -159,17 +159,19 @@ function afterZAxisChartRedraw(imPt, pv, chart) {
     });
 }
 
-function afterLineChartRedraw(pv, chart,pl, imPtAry, pt1, pt2) {
+function afterLineChartRedraw(pv, chart,pl, imPtAry) {
     chart.on('plotly_click', (ev) => {
+        const evPt= ev.points.find( (p) => p.curveNumber===POINTS_CURVE_NUM); // ignore clicks on the highlight point
+        if (!evPt) return;
         setTimeout( () => {
             const plot= primePlot(pv);
-            const imPt= makeImagePt(Math.round(imPtAry[ev.points[0].pointNumber].x)+.5, Math.round(imPtAry[ev.points[0].pointNumber].y)+.5);
+            const imPt= makeImagePt(Math.round(imPtAry[evPt.pointNumber].x)+.5, Math.round(imPtAry[evPt.pointNumber].y)+.5);
             dispatchModifyCustomField( ExtractLineTool.TYPE_ID,
                 {activePt: hasWCSProjection(plot) ? CCUtil.getWorldCoords(plot,imPt) : imPt},
                 pv.plotId);
             dispatchAttributeChange({plotId:plot.plotId,overlayColorScope:false,toAllPlotsInPlotView:false,
                 changes:{
-                    [PlotAttribute.SELECT_ACTIVE_CHART_PT]: {x:ev.points[0].x,y:ev.points[0].y}
+                    [PlotAttribute.SELECT_ACTIVE_CHART_PT]: {x:evPt.x,y:evPt.y}
                 }
             });
         },5);
@@ -178,16 +180,18 @@ function afterLineChartRedraw(pv, chart,pl, imPtAry, pt1, pt2) {
 
 function afterPointsChartRedraw(pv, chart,pl,chartXAxis, imPtAry) {
     chart.on('plotly_click', (ev) => {
+        const evPt= ev.points.find( (p) => p.curveNumber===POINTS_CURVE_NUM); // ignore clicks on the highlight point
+        if (!evPt) return;
         setTimeout( () => {
             const plot= primePlot(pv);
-            const key= chartXAxis==='imageX' ? 'x' : 'y';
-            const {x,y}= ev.points[0];
-            const imPt= imPtAry.find( (pt) => pt[key]===x);
+            const {x,y,pointNumber:idx}= evPt;
+            const imPt= imPtAry[idx];
+            if (!imPt) return;
             const cenImPt= makeImagePt(imPt.x+.5, imPt.y+.5);
             dispatchModifyCustomField( ExtractPointsTool.TYPE_ID,
                 {activePt: hasWCSProjection(plot) ? CCUtil.getWorldCoords(plot,cenImPt) : cenImPt}, pv.plotId);
             dispatchAttributeChange({plotId:plot.plotId,overlayColorScope:false,toAllPlotsInPlotView:false,
-                changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: {x,y,chartXAxis}}
+                changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: {x,y,chartXAxis,idx}}
             });
         },5);
     });
@@ -228,7 +232,6 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
-    const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const [chartXAxis]= useState('imageX');
     const plot= primePlot(pv);
     const ptAry=plot?.attributes?.[PlotAttribute.PT_ARY] ??[];
@@ -241,17 +244,19 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const {plotId,plotImageId}= plot ?? {};
     const hduNum= getHDU(plot);
     const plane= getCubePlaneIdx(plot)>-1 ? getCubePlaneIdx(plot) : 0;
-    const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
+    const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis,idx:chartIdx}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
     useEffect(() => {
+        let active= true;
         const getData= async () => {
             if (imPtAry && imPtAry.length && plot) {
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, pointSize, combineOp, allRelatedHDUS);
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, pointSize, combineOp);
+                if (!active) return;
                 const chartTitle= 'Point Extract Preview';
                 let activeIdx= 0;
                 const key= lastChartChartXAxis==='imageX' ? 'x' : 'y';
                 if (plot.attributes[PlotAttribute.SELECT_ACTIVE_CHART_PT]) {
-                    activeIdx= imPtAry.findIndex( (pt) => pt[key]===chartX);
+                    activeIdx= imPtAry[chartIdx]?.[key]===chartX ? chartIdx : imPtAry.findIndex( (pt) => pt[key]===chartX);
                     if (activeIdx<0) activeIdx= 0;
                 }
                 const chartData=
@@ -259,14 +264,15 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                         pointSize,combineOp, chartTitle, chartXAxis, activeIdx);
                 setChartParams(chartData);
             }
-            // if (!pv) cancelPointExtraction();
         };
         getData();
-    },[ptAry.length,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY,chartXAxis]);
+        return () => { active= false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[ptAry.length,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY,chartXAxis,chartIdx]);
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
+            pointSize, setPointSize, combineOp, setCombineOp,
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
             hasFloatingData:hasFloatingData(plot),
             startUpHelp: (
@@ -290,7 +296,6 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [imPtAry,setImPtAry]= useState(undefined);
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
-    const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const [axis,setAxis]= useState('x');
     const plot= primePlot(pv);
     const {pt0:pt1,pt1:pt2}=plot?.attributes?.[PlotAttribute.ACTIVE_DISTANCE] ?? {};
@@ -309,6 +314,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
 
     useEffect(() => {
+        let active= true;
         const getData= async () => {
             if (ipt1 && ipt2 && plot) {
                 const {dataWidth,dataHeight}= plot;
@@ -324,32 +330,34 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
                 const pointSizeX= newAxis==='y' ? pointSize : 1;
                 const pointSizeY= newAxis==='x' ? pointSize : 1;
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSizeX, pointSizeY, combineOp, allRelatedHDUS);
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSizeX, pointSizeY, combineOp);
+                if (!active) return;
                 const chartTitle= makeLineExtractionTitle(pv,x1,y1,x2,y2);
                 const pt0= hasWCSProjection(plot) ? cc.getWorldCoords(newImPtAry[0]) : newImPtAry[0];
                 const xOffAry= hasWCSProjection(plot)
                     ? newImPtAry.map( (pt) => computeDistance(pt0,cc.getWorldCoords(pt))*3600)
                     : newImPtAry.map( (pt) => computeScreenDistance(pt0.x,pt0.y,pt.x,pt.y));
                 const chartData=
-                    genSliceChartData(plot, ipt1,ipt2,xOffAry, dataAry, chartX, chartY, pointSize, combineOp, chartTitle, direction<0);
+                    genSliceChartData(plot, xOffAry, dataAry, chartX, chartY, pointSize, combineOp, chartTitle, direction<0);
                 setChartParams(chartData);
                 setImPtAry(newImPtAry);
                 setAxis(newAxis);
             }
-            if (!pv) cancelLineExtraction();
         };
         if (extractionData) void getData();
+        return () => { active= false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY]);
 
     const plotlyDataToUse= extractionData&&!helpWarning ? plotlyData : undefined;
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
+            pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
             plotlyDivStyle, plotlyData: plotlyDataToUse, plotlyLayout, hasFloatingData:hasFloatingData(plot),
             sizeType: axis==='y'?SIZE_HORIZONTAL:SIZE_VERTICAL,
             startUpHelp: <LineStartUpHelp {...{helpWarning,plot,pvCnt}}/>,
-            afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
+            afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry),
             callKeepExtraction: (save, doOverlay) =>
                 keepDataExtraction({pv,baseImPtAry:getLinePointAry(ipt1, ipt2),save,
                     doOverlay,axis,pointSize,combineOp, isLine:true})
@@ -452,6 +460,7 @@ function ExtractWholeLine({plot}) {
             },
             plot.plotId);
 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [line,col,dirVal]);
 
 
@@ -525,22 +534,17 @@ function ExtractWholeLine({plot}) {
 const xLineData= (pt1,pt2) => {
     if (usingXAxis(pt1,pt2)) {
         return {
-            startValue: minValue(pt1,pt2),
             direction: pt1.x-pt2.x < 0 ? 1 : -1,
             axis:'x'
         };
     }
     else {
         return {
-            startValue: minValue(pt1,pt2),
             direction: pt1.y - pt2.y < 0 ? 1 : -1,
             axis:'y'
         };
     }
 };
-
-const minValue= (pt1,pt2) => usingXAxis(pt1,pt2) ? Math.min(pt1.x,pt2.x) : Math.min(pt1.y,pt2.y);
-// const maxValue= (pt1,pt2) => usingXAxis(pt1,pt2) ? Math.max(pt1.x,pt2.x) : Math.max(pt1.y,pt2.y);
 
 function usingXAxis(pt1,pt2) {
     const deltaX = Math.abs(pt2.x - pt1.x);
@@ -551,7 +555,6 @@ function usingXAxis(pt1,pt2) {
 
 function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     const [pointSize,setPointSize]= useState(1);
-    const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const [combineOp,setCombineOp]= useState(AVG);
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const plot= primePlot(pv);
@@ -564,25 +567,28 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     const extName= getExtName(plot);
 
     useEffect(() => {
+        let active= true;
         const updateChart= async () => {
             if (ipt && plot) {
                 if (!isCube(plot)) {
                     setChartParams({});
                     return;
                 }
-                const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, combineOp, allRelatedHDUS);
+                const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, combineOp);
+                if (!active) return;
                 const plane=getCubePlaneIdx(plot);
-                const chartTitle= `Z Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
+                const chartTitle= `Z-Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
                 setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, combineOp, chartTitle));
             }
-            // if (!pv) cancelZaxisExtraction();
         };
         void updateChart();
+        return () => { active= false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[x,y,hduNum,plotId,pointSize,combineOp,plotImageId]);
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
+            pointSize, setPointSize, combineOp, setCombineOp,
             hasFloatingData:hasFloatingData(plot),
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
             startUpHelp: <CubeStartUpHelp {...{plot}}/>,
@@ -596,8 +602,6 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
 
 const pointSizeTip= 'Extract and manipulate the pixel values in the specified aperture centered on the pixel closest to where you clicked.';
 
-const extractAddedChartInfo = ({payload}) => ( {chartId: payload.chartId, tbl_id: payload.data?.[0].tbl_id});
-
 const SIZE_SQUARE= 'sizeSquare';
 const SIZE_VERTICAL= 'sizeVertical';
 const SIZE_HORIZONTAL= 'sizeHorizontal';
@@ -605,7 +609,7 @@ const SIZE_HORIZONTAL= 'sizeHorizontal';
 function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
                                  plotlyData, canCreateExtractionTable, sizeType= SIZE_SQUARE,
                                  plotlyLayout, startUpHelp, callKeepExtraction,
-                                 bottomUI, combineOp, setCombineOp, hasFloatingData, children}) {
+                                 combineOp, setCombineOp, hasFloatingData, children}) {
 
 
     const sizeOp=[];
@@ -646,7 +650,6 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
             </Stack>
             {plotlyData && <Divider sx={{mb:.5}}/>}
             {children}
-            {bottomUI && <div>{bottomUI} </div>}
             <Stack {...{
                 textAlign:'center', alignSelf: 'stretch', direction:'row',
                 justifyContent:'space-between', pt:2, pl:2, pb:1, pr: 1}}>
@@ -670,7 +673,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
 
 async function keepExtractionAndPin(callKeepExtraction,allowpinChart=false) {
     const tblIdAry = await callKeepExtraction(false,true);
-    if (!allowpinChart) return;
+    if (!allowpinChart || !tblIdAry) return;
     for (const tbl_id of tblIdAry) {
         await onTableLoaded(tbl_id);
         const chartId = ensureDefaultChart(tbl_id);
