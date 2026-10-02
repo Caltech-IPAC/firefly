@@ -472,7 +472,7 @@ function SpectralFrameOptions ({groupKey, activeTrace, fireflyData, ...props}) {
                                slotProps={{input: {sx: {minWidth: '12rem'}}}}
                                {...props}/>
             <ReadOnlyField label={'Redshift correction of:'}
-                           value={isRestFrame ? 'Spectrum' : 'Spectral Lines'}/>
+                           value={isRestFrame ? 'Spectrum' : 'Spectral Line Annotations (if present)'}/>
             <Box sx={{position: 'relative', pl: 1}}>
                     <RadioGroupInputField fieldKey={SFOptionFieldKeys(activeTrace).redshift}
                                           options={redshiftOptions}
