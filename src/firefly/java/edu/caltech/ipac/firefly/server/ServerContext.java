@@ -45,6 +45,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
+
 
 /**
  * A static server-centric class used hold server related information.
@@ -662,7 +664,7 @@ public class ServerContext {
         File dir= getUsersBaseDir();
         Assert.argTst(dir.canWrite(), "can't write to the users image working dir");
         RequestOwner owner= getRequestOwner();
-        String dirStr= owner.getUserKey();
+        String dirStr= ifNotEmpty(owner.getUserKey()).getOrElse("unknown");
         File userDir= new File(dir, dirStr);
         if (!userDir.exists()) {
             makeDirs(userDir);
