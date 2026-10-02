@@ -103,7 +103,7 @@ async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION
     return use64Bit ? new Float64Array(arrayBuffer) : new Float32Array(arrayBuffer);
 }
 
-export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, combineOp, relatedCubes) {
+export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, combineOp, relatedCubes=true) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'z-axis',
@@ -116,7 +116,7 @@ export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, combineO
         });
 }
 
-export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptSize, combineOp, relatedHDUS) {
+export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptSize, combineOp, relatedHDUS=true) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'line',
@@ -131,7 +131,7 @@ export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptS
         });
 }
 
-export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSizeX, ptSizeY, combineOp, relatedHDUS) {
+export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSizeX, ptSizeY, combineOp, relatedHDUS=true) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'points',

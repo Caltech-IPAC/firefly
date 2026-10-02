@@ -112,10 +112,10 @@ function TileExtractContent({plot}) {
                 options={[ {label: 'Enable WCS Match', value: 'wcs'}]} />
             {!plot.hasFitsCube &&
                 <Typography color='warning' level='body-sm'>
-                    Warning: Some FITS tiles do not have valid WCS information
+                    Warning: Some FITS tiles do not have valid WCS information.
                 </Typography>}
             <Typography color='warning' level='body-sm'>
-                Warning: Source FITS tiles are not yet projected into the HEALPix curvature, they will always appear square
+                Warning: Source FITS tiles are not yet projected into the HEALPix curvature; they will always appear square.
             </Typography>
             <Stack direction='horizontal' alignItems='center' >
                 <CompleteButton text= 'Extract Tile' onSuccess={ () => extractTile(plot, useWcs==='wcs',setWarn) } />
