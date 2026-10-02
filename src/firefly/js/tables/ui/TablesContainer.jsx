@@ -114,7 +114,7 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
         Object.keys(tables).map( (key) => {
             const {tbl_id, removable, tbl_ui_id, options:inOptions={}, title:titleStr} = tables[key];
             const {title:titleUI, color} = getTableUiById(tbl_ui_id) || {};
-            const options = {...inOptions, tableOptions};
+            const options = {...inOptions, ...tableOptions};
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);
             };
