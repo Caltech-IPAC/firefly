@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get, isArray, isEmpty, isString, isUndefined, memoize, reverse, set} from 'lodash';
+import {get, isArray, isEmpty, isString, isUndefined, set} from 'lodash';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/VisConst';
 
 import {dispatchChartAdd, dispatchChartUpdate, getChartData} from '../../ChartsCntlr.js';
@@ -24,6 +24,7 @@ import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 import {colorsOnTypes, getChartProps, toRGBA, TRACE_COLORS, uniqueChartId, isSpectrum} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
+import {evalAxisRangeChanges, isAxisReversed} from '../../AxisRangeUtil.js';
 
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
@@ -55,10 +56,7 @@ function getOptions(a, layout) {
     if ( (isUndefined(showgrid) && get(layout, `${a}axis.gridwidth`)) || showgrid) {
         opts.push('grid');
     }
-    const range = get(layout, `${a}axis.range`) || [];
-    const autorange = get(layout, `${a}axis.autorange`);
-    const reversed = (autorange === 'reversed') || (range[1] < range[0]);
-    if (reversed) {
+    if (isAxisReversed(get(layout, `${a}axis`))) {
         opts.push('flip');
     }
     if (get(layout, `${a}axis.side`) === (a==='x'?'top':'right')) {
@@ -320,30 +318,6 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
             ['x','y'].forEach((a) => {
                 if (k === `__${a}options`) {
                     const opts = v || '';
-
-                    // helper hidden fields __xreset and __yreset keep track of whether x and y have changed
-                    // if this field is set, we'd like to clear range
-                    const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
-
-                    if (opts.includes('flip')) {
-                        if (range) {
-                            // reverse mutates the original array
-                            changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse([range[0],range[1]]) : range;
-                            if (range[0]<range[1]) { changes[`layout.${a}axis.autorange`] = false; }
-                        } else {
-                            changes[`layout.${a}axis.autorange`] = 'reversed';
-                            changes[`layout.${a}axis.range`] = undefined;
-                        }
-                    } else {
-                        if (range) {
-                            // reverse mutates the original array
-                            changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse([range[0],range[1]]) : range;
-                            if (range[1]<range[0]) { changes[`layout.${a}axis.autorange`] = false; }
-                        } else {
-                            changes[`layout.${a}axis.autorange`] = true;
-                            changes[`layout.${a}axis.range`] = undefined;
-                        }
-                    }
                     if (opts.includes('opposite')) {
                         changes[`layout.${a}axis.side`] = (a==='x'?'top':'right');
                     } else {
@@ -356,8 +330,6 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
                     } else if (get(layout, `${a}axis.type`, '') === 'log') {
                         changes[`layout.${a}axis.type`] = 'linear';
                     }
-                } else if (k === `__${a}reset` && v) {
-                    changes[`layout.${a}axis.range`] = undefined;
                 }
             });
         } else if (k===`data.${traceNum}.marker.color`) {
@@ -415,52 +387,12 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
         }
 
     });
-    adjustAxesRange(layout, changes);
 
-    return changes;
-}
-
-function adjustAxesRange(layout, changes) {
-    ['x', 'y'].forEach((a) => {
-        let minUser = parseFloat(get(changes, `fireflyLayout.${a}axis.min`));
-        let maxUser = parseFloat(get(changes, `fireflyLayout.${a}axis.max`));
-
-        if (!Number.isNaN(minUser) || !Number.isNaN(maxUser) || changes[`layout.${a}axis.type`]) {
-            // range values of a log axis are logs - convert them back
-            const range = changes[`layout.${a}axis.range`] &&
-                (get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e));
-            if (Number.isNaN(minUser) && range) {
-                minUser = Math.min(range[0], range[1]);
-            }
-            if (Number.isNaN(maxUser) && range) {
-                maxUser = Math.max(range[0], range[1]);
-            }
-
-            if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
-                const autorange = changes[`layout.${a}axis.autorange`];
-                const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
-
-                changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
-                changes[`layout.${a}axis.autorange`] = false;
-            }
-        }
-    });
-}
-
-
-/**
- * Get range for a plotly axis
- * Plotly requires range to be reversed if the axis is reversed,
- * and limits to be log if axis scale is log
- * @param min - minimum value
- * @param max - maximum value
- * @param isLog - true, if an axis uses log scale
- * @param isReversed - true, if the axis should be reversed
- * @returns {Array<number>} an array for axis range property in plotly layout
- */
-function getRange(min, max, isLog, isReversed) {
-    const [r1, r2] = isReversed ? [max, min] : [min, max];
-    return isLog ? [Math.log10(r1), Math.log10(r2)] : [r1, r2];
+    return {
+        ...changes,
+        ...evalAxisRangeChanges({a: 'x', fields, axisLayout: layout.xaxis}),
+        ...evalAxisRangeChanges({a: 'y', fields, axisLayout: layout.yaxis}),
+    };
 }
 
 /**
