@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get, isArray, isEmpty, isString, isUndefined, memoize, reverse, set} from 'lodash';
+import {get, isArray, isEmpty, isString, isUndefined, set} from 'lodash';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/VisConst';
 
 import {dispatchChartAdd, dispatchChartUpdate, getChartData} from '../../ChartsCntlr.js';
@@ -49,16 +49,19 @@ const Y_AXIS_OPTIONS = [
 ];
 const Y_AXIS_OPTIONS_NOLOG = Y_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
 
+function isAxisReversed(axisLayout) {
+    const autorange = axisLayout?.autorange;
+    const range = axisLayout?.range || [];
+    return (autorange === 'reversed') || (range[1] < range[0]);
+}
+
 function getOptions(a, layout) {
     const opts = [];
     const showgrid = get(layout, `${a}axis.showgrid`);
     if ( (isUndefined(showgrid) && get(layout, `${a}axis.gridwidth`)) || showgrid) {
         opts.push('grid');
     }
-    const range = get(layout, `${a}axis.range`) || [];
-    const autorange = get(layout, `${a}axis.autorange`);
-    const reversed = (autorange === 'reversed') || (range[1] < range[0]);
-    if (reversed) {
+    if (isAxisReversed(get(layout, `${a}axis`))) {
         opts.push('flip');
     }
     if (get(layout, `${a}axis.side`) === (a==='x'?'top':'right')) {
@@ -325,24 +328,17 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
                     // if this field is set, we'd like to clear range
                     const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
 
-                    if (opts.includes('flip')) {
-                        if (range) {
-                            // reverse mutates the original array
-                            changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse([range[0],range[1]]) : range;
-                            if (range[0]<range[1]) { changes[`layout.${a}axis.autorange`] = false; }
-                        } else {
-                            changes[`layout.${a}axis.autorange`] = 'reversed';
-                            changes[`layout.${a}axis.range`] = undefined;
-                        }
+                    const flip = opts.includes('flip');
+                    if (range) {
+                        // keep the current range, but reorder its bounds to match the direction requested by the 'flip' option
+                        // plotly encodes reversal in the range order (r0 > r1), while the UI keeps it as a separate 'flip' flag
+                        const [r0, r1] = range;
+                        const needsSwap = flip ? r0 < r1 : r1 < r0;
+                        changes[`layout.${a}axis.range`] = needsSwap ? [r1, r0] : range;
+                        if (needsSwap) changes[`layout.${a}axis.autorange`] = false;
                     } else {
-                        if (range) {
-                            // reverse mutates the original array
-                            changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse([range[0],range[1]]) : range;
-                            if (range[1]<range[0]) { changes[`layout.${a}axis.autorange`] = false; }
-                        } else {
-                            changes[`layout.${a}axis.autorange`] = true;
-                            changes[`layout.${a}axis.range`] = undefined;
-                        }
+                        changes[`layout.${a}axis.autorange`] = flip ? 'reversed' : true;
+                        changes[`layout.${a}axis.range`] = undefined;
                     }
                     if (opts.includes('opposite')) {
                         changes[`layout.${a}axis.side`] = (a==='x'?'top':'right');
@@ -426,21 +422,35 @@ function adjustAxesRange(layout, changes) {
         let maxUser = parseFloat(get(changes, `fireflyLayout.${a}axis.max`));
 
         if (!Number.isNaN(minUser) || !Number.isNaN(maxUser) || changes[`layout.${a}axis.type`]) {
-            // range values of a log axis are logs - convert them back
-            const range = changes[`layout.${a}axis.range`] &&
-                (get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e));
-            if (Number.isNaN(minUser) && range) {
-                minUser = Math.min(range[0], range[1]);
+            const currRange = layout[`${a}axis`]?.range ?? [];
+            const currDataRange = layout[`${a}axis`]?.type === 'log'
+                ? currRange.map((e) => 10 ** e) // range values of a log axis are logs - convert them back
+                : currRange;
+            const newRange = changes[`layout.${a}axis.range`]; // what evalChangesFromFields wrote
+
+            // fill a missing bound from the current range, only if it was kept in changes (not reset by an axis column change)
+            if (Number.isNaN(minUser) && newRange) {
+                minUser = Math.min(currDataRange[0], currDataRange[1]);
             }
-            if (Number.isNaN(maxUser) && range) {
-                maxUser = Math.max(range[0], range[1]);
+            if (Number.isNaN(maxUser) && newRange) {
+                maxUser = Math.max(currDataRange[0], currDataRange[1]);
             }
 
             if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
                 const autorange = changes[`layout.${a}axis.autorange`];
-                const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
+                let isReversed;
+                if (newRange) {
+                    // changes kept the current range, already ordered to the requested direction
+                    isReversed = newRange[1] < newRange[0]; // infer from range bounds
+                } else if (autorange !== undefined) {
+                    // changes dropped the range (e.g. axis column changed) and set the requested direction as autorange
+                    isReversed = autorange === 'reversed'; // infer from autorange value
+                } else {
+                    // changes have no direction (reverse/flip option not in fields)
+                    isReversed = isAxisReversed(layout[`${a}axis`]); // infer from the current layout axis (range + autorange)
+                }
 
-                changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
+                changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', isReversed);
                 changes[`layout.${a}axis.autorange`] = false;
             }
         }
