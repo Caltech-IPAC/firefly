@@ -389,7 +389,7 @@ export function validateFileName(wsSelect, fileName) {
     const fullPath = getWorkspacePath(wsSelect, fileName);
 
     if (isExistWorspaceFile(fullPath)) {
-        workspacePopupMsg(`the file, ${fullPath}, already exists in workspace, please change the file name.`,
+        workspacePopupMsg(`The file, ${fullPath}, already exists in the workspace. Please change the file name.`,
             'Save to workspace');
         return false;
     } else {

@@ -40,7 +40,7 @@ export function CompareRowCharts({fetchRowChart, activatePinnedCharts, rowLimit=
 
     const buttonTip = 'Combine charts (from the selected rows)';
     if (selectedRowIdxs.length > rowLimit) {
-        const content = `Number of rows selected for chart comparison exceeds the limit! Please select ${rowLimit} rows or lesser.`;
+        const content = `Number of rows selected for chart comparison exceeds the limit! Please select ${rowLimit} rows or fewer.`;
         return (<CombineChartButton onClick={()=>showInfoPopup(content)} tip={buttonTip} {...slotProps?.button}/>);
     }
 

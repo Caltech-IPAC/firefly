@@ -188,7 +188,7 @@ const disableRowLimitMsg = (
     <div style={{width: 260}}>
         Disabling the row limit is not recommended. <br/>
         You are about to submit a query without a TOP or WHERE constraint. <br/>
-        This may results in a HUGE amount of data. <br/><br/>
+        This may result in a HUGE amount of data. <br/><br/>
         Are you sure you want to continue?
     </div>
 );

@@ -285,7 +285,7 @@ export function getWorkspaceErrorMsg(){
             errorMsg = 'You do not have access right';
             break;
         case '404':
-            errorMsg = 'The request resources can not be found';
+            errorMsg = 'The request resources cannot be found';
             break;
         case '500':
             errorMsg = 'Internal Server Error';

@@ -101,7 +101,7 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
     if (!descriptors) return dpdtSimpleMsg('Could not find any service descriptors');
     if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to these data.');
     const dlTableUrl= makeDlUrl(findDataLinkServeDescs(descriptors)[0],table, row);
-    if (!dlTableUrl) return dpdtSimpleMsg('a datalink service descriptors return images is required for related grid');
+    if (!dlTableUrl) return dpdtSimpleMsg('a datalink service descriptor that returns images is required for related grid');
     return getDatalinkRelatedImageGridProduct({dlTableUrl, activateParams,table,row,threeColorOps,options});
 }
 

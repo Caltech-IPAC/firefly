@@ -28,7 +28,7 @@ public class CtxControl {
     private static final AtomicLong cnt = new AtomicLong(0);
 
     public static void confirmFiles(PlotState state) throws FailedRequestException {
-        if (state==null) throw new FailedRequestException("state cannot but null");
+        if (state==null) throw new FailedRequestException("state cannot be null");
         if (isFitsFilesMissing(state)) revalidatePlot(state,true); //most of the time the files are there so nothing happens
     }
 
@@ -41,7 +41,7 @@ public class CtxControl {
     }
 
     public static ActiveFitsReadGroup prepare(PlotState state) throws FailedRequestException {
-        if (state==null) throw new FailedRequestException("state cannot but null");
+        if (state==null) throw new FailedRequestException("state cannot be null");
         try {
             return revalidatePlot(state, false);
         } catch (FailedRequestException e) {
@@ -67,7 +67,7 @@ public class CtxControl {
         } catch (IOException|FitsException e) {
             if (recreate) Logger.getLogger().warn(e, "prepare failed on re-validate plot: " + e.getMessage());
             throw new FailedRequestException(
-                    recreate ? "Could not revalidate plot after recreation" : "Could ot revalidate",e);
+                    recreate ? "Could not revalidate plot after recreation" : "Could not revalidate",e);
         }
     }
 

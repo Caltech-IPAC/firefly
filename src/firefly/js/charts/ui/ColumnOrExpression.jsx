@@ -32,7 +32,7 @@ export const ColsShape = PropTypes.arrayOf(PropTypes.shape({
 }));
 
 
-const DEFAULT_MSG= 'Can not be empty. Please provide value or expression';
+const DEFAULT_MSG= 'Cannot be empty. Please provide value or expression';
 
 export function getColValidator(cols, required=true, canBeExpression=true, message=DEFAULT_MSG) {
     const colNames = cols.map((colVal) => {return colVal.name;});

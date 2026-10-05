@@ -44,7 +44,7 @@ public class JsonFromExternalTask extends JsonStringProcessor {
     public String fetchData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
         if (launcher == null) {
-            throw new DataAccessException(ExternalTaskHandler.LAUNCHER+" parameter is not found in request.");
+            throw new DataAccessException(ExternalTaskHandler.LAUNCHER+" parameter was not found in the request.");
         }
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
 
@@ -75,7 +75,7 @@ public class JsonFromExternalTask extends JsonStringProcessor {
             return jsonText;
         } catch(ParseException pe){
             LOGGER.error(getUniqueID(request) + " Can not parse returned JSON: " + pe.toString() + "\n" + jsonText);
-            throw new DataAccessException(request.getRequestId()+" Can not parse returned JSON: " + pe.toString());
+            throw new DataAccessException(request.getRequestId()+" Cannot parse returned JSON: " + pe.toString());
         } catch (Exception e) {
             LOGGER.error(e, "Unable get to data from external task: "+request.toString());
             throw new DataAccessException("Unable to get data from external task: "+e.getMessage());

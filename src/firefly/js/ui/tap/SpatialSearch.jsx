@@ -710,8 +710,8 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     if (!validUpload && spatialType===MULTI) {
         if (!serverFile) errList.addError('Upload file has not been specified');
         if (!upLonCol && !upLatCol) errList.addError('Upload columns have not been specified');
-        if (!upLonCol) errList.addError('Upload Longitude column have not been specified');
-        if (!upLatCol) errList.addError('Upload Latitude column have not been specified');
+        if (!upLonCol) errList.addError('Upload Longitude column has not been specified');
+        if (!upLatCol) errList.addError('Upload Latitude column has not been specified');
     }
 
     if (useSIAv2) {

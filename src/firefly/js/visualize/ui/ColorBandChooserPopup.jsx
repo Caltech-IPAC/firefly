@@ -120,7 +120,7 @@ function update3Color(request, bandData, viewerId, dataId) {
 
 function validate(request) {
     if (Object.keys(request).every(  (k) => request[k]==='NONE')) {
-        return { valid:false, errStr: 'You must enable a least one color band' };
+        return { valid:false, errStr: 'You must enable at least one color band' };
     }
     return {valid:true};
 }

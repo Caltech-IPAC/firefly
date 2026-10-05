@@ -342,7 +342,7 @@ function getImmediateResponse(fileFormat,request,url,serDef,parts,menuKey) {
         case FileAnalysisType.TAR:
             return makeTarEntry(url);
         case FileAnalysisType.REGION:
-            return dpdtMessageWithDownload('Cannot not display Region file, you may only download it', 'Download Region File', url);
+            return dpdtMessageWithDownload('Cannot display Region file, you may only download it', 'Download Region File', url);
         case FileAnalysisType.PNG:
             return makePngEntry(url);
         case FileAnalysisType.HTML:

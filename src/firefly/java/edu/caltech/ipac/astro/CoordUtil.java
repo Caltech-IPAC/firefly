@@ -33,7 +33,7 @@ public class CoordUtil
   private static final String LON_TOO_BIG =
        "Longitude is too big (>=360.0)";
   private static final String LON_NEGATIVE =
-       "Longitude can not be negative";
+       "Longitude cannot be negative";
   private static final String RA_TOO_BIG =
        "RA is too big (>=24 hours)";
   private static final String INVALID_STRING = "Invalid Input";

@@ -21,7 +21,7 @@ const FORM_DMS = 1;             // 12d34m23.4s
 const FORM_HMS = 2;             // 12h34m23.4s
 const LAT_OUT_RANGE = 'Latitude is out of range [-90.0, +90.0]';
 const LON_TOO_BIG = 'Longitude is too big (>=360.0)';
-const LON_NEGATIVE = 'Longitude can not be negative';
+const LON_NEGATIVE = 'Longitude cannot be negative';
 const RA_TOO_BIG = 'RA is too big (>=24 hours)';
 const INVALID_STRING = 'Invalid Input';
 const HMS_FOR_LAT = 'HMS notation not valid for latitude';

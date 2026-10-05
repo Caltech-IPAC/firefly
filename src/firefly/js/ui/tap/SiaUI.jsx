@@ -30,7 +30,7 @@ export function SiaUI({initArgs, serviceUrl, serviceLabel, siaMeta, sx={}}) {
     return (
         <Stack spacing={1} width={1} maxWidth='75rem' sx={sx}>
             {showNoMetaError && <Typography color='warning' pl={3}>
-                {`Warning: The ${serviceLabel} SIAv2 service does not return any meta data to configure search panel`}
+                {`Warning: The ${serviceLabel} SIAv2 service does not return any metadata to configure the search panel`}
             </Typography>}
             <SpatialSearch {...{cols:undefined, serviceUrl, serviceLabel, serviceId, columnsModel:undefined, initArgs, obsCoreEnabled:false,
                 tableName:undefined, useSIAv2,

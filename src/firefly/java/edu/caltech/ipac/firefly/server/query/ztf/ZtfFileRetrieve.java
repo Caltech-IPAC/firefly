@@ -40,7 +40,7 @@ public class ZtfFileRetrieve extends URLFileInfoProcessor {
             return sciFileRetrieve.getURL(sr);
         } else {
             Logger.warn("cannot find param: productLevel or the param returns null");
-            throw new MalformedURLException("Can not find the file");
+            throw new MalformedURLException("Cannot find the file");
         }
 
     }
@@ -53,7 +53,7 @@ public class ZtfFileRetrieve extends URLFileInfoProcessor {
                 return ZtfSciimsFileRetrieve.getBaseURL(sr);
             } else {
                 Logger.warn("cannot find param: productLevel or the param returns null");
-                throw new MalformedURLException("Can not find the file");
+                throw new MalformedURLException("Cannot find the file");
             }
 
         }

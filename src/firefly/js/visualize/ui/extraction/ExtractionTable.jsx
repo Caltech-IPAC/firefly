@@ -61,7 +61,7 @@ let titleCnt = 1;
 
 export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractionSize, combineOp, save = false, doOverlay = true) {
     if (!pv || !plot || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
+        showInfoPopup('Plot no longer exists. Cannot extract.');
         return;
     }
 
@@ -130,7 +130,7 @@ export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both
     const plot= primePlot(pv);
     const filename= plot?.plotState?.getWorkingFitsFileStr();
     if (!pv || !plot || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
+        showInfoPopup('Plot no longer exists. Cannot extract.');
         return;
     }
     const extractionSizeX= axis==='x' ? 1 : pointSize;

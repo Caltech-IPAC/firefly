@@ -310,7 +310,7 @@ export async function createHiPSMocLayer({ivoid, title, hipsUrl, plot, visible=f
         }
     }
     catch (e) {
-        showInfoPopup('Could not find the MOC for: '+ title, 'Moc Not Found');
+        showInfoPopup('Could not find the MOC for: '+ title, 'MOC Not Found');
         console.log(`MOC not found at URL (this is not uncommon): ${e}`) ;
     }
 }

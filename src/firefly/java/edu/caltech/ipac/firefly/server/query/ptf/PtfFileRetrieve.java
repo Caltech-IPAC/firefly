@@ -34,7 +34,7 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
             return l1FileRetrieve.getURL(sr);
         } else {
             Logger.warn("cannot find param: productLevel or the param returns null");
-            throw new MalformedURLException("Can not find the file");
+            throw new MalformedURLException("Cannot find the file");
         }
 
     }
@@ -47,7 +47,7 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
             return PtfProcimsFileRetrieve.getBaseURL(sr);
         } else {
             Logger.warn("cannot find param: productLevel or the param returns null");
-            throw new MalformedURLException("Can not find the file");
+            throw new MalformedURLException("Cannot find the file");
         }
 
     }

@@ -68,7 +68,7 @@ public class AtlasIbeImageGetter {
                 dataParam.setDoZip(true);
                 return ibe.getData(dataParam, null);
             } else {
-                throw new FailedRequestException("Area not covered "+
+                throw new FailedRequestException("Area not covered in "+
                         params.getSchema()+"/"+params.getTable()+"/"+params.getBand());
             }
         } catch (IOException me) {

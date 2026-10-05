@@ -95,12 +95,12 @@ export function getBasicTitling(title,obsTitle='',fileType='') {
             loadInBrowserMsg: 'Open PDF File'+obsTitleMsg
         };
         case Format.HTML : return {...defResult('HTML', 'Open'),
-            message: 'This is a web page or web application. It can be open in another tab',
+            message: 'This is a web page or web application. It can be opened in another tab',
             loadInBrowserMsg: 'Open Page'+obsTitleMsg
         };
         default: return {
             ...defResult('Unknown', 'Download'),
-            message: 'This file may only only be downloaded'
+            message: 'This file may only be downloaded'
         };
 
     }

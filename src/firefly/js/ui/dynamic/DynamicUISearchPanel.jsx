@@ -48,7 +48,7 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
         if (!hasValidSpacialSearch(request,fieldDefAry)) {
             showInfoPopup(
                 getSpacialSearchType(request,fieldDefAry)===CONE_CHOICE_KEY ?
-                    'Target is required' : 'Search Area is require and must have a least 3 points');
+                    'Target is required' : 'Search Area is required and must have at least 3 points');
             return false;
         }
         return onSubmit?.(convertRequest(request, fieldDefAry));

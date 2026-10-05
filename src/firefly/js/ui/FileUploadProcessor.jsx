@@ -89,8 +89,8 @@ export function resultSuccess(request,cacheKey) {
 
     if (unsupportedIndexes.length>0) {
         showInfoPopup(unsupportedIndexes.length===1
-                ? 'You have select a unsupported item, loading the rest'
-                : 'You have select some unsupported items, loading the rest',
+                ? 'You have selected an unsupported item, loading the rest'
+                : 'You have selected some unsupported items, loading the rest',
             'Unsupported items'
         );
     }
@@ -248,13 +248,13 @@ const errorObj = {
     noExtensionErr: {valid: false, errorMsg: 'No extension is selected', title:'Validation Error'},
     nonMocFitsErr: {valid: false, errorMsg: 'Warning: Loading a non-MOC FITS file from this dialog is not supported.', title: 'File Type Mismatch'},
     nonDLErr: {valid: false, errorMsg: 'Warning: Loading a non-DataLink Table file from this dialog is not supported.', title: 'File Type Mismatch'},
-    nonMocAndDLErr: {valid: false, errorMsg: 'Warning: You may only load a MOC FITS or Data Link Table file from here.', title: 'File Type Mismatch'},
+    nonMocAndDLErr: {valid: false, errorMsg: 'Warning: You may only load a MOC FITS or DataLink Table file from here.', title: 'File Type Mismatch'},
     noImgOrTblErr: {valid: false, errorMsg: 'You may not load a FITS file from here.', title: 'File Type Mismatch'},
     noTblSelectedErr: {valid: false, errorMsg: 'You must select at least one Table.', title: 'Validation Error'},
     noImgSelectedErr: {valid: false, errorMsg: 'You must select at least one Image.', title: 'Validation Error'},
     imgNotAcceptedErr: {valid: false, errorMsg: 'You may not load an image file from here.', title: 'File Type Mismatch'},
     tblNotAcceptedErr: {valid: false, errorMsg: 'You may not load tables from here.', title: 'File Type Mismatch'},
-    unsupportedMultiErr: {valid: false, errorMsg: 'All selected images are not supported', title: 'Unsupported'},
+    unsupportedMultiErr: {valid: false, errorMsg: 'None of the selected items are supported', title: 'Unsupported'},
     unsupportedSingleErr: {valid: false, errorMsg: 'Unsupported item', title: 'Unsupported'},
 };
 

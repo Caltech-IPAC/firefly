@@ -832,7 +832,7 @@ public class ServerContext {
                 return ServerContext.getRequestOwner().getBaseUrl() + url;
             }
         } catch (Exception e) {
-            throw new IllegalStateException("host url can not be derived");
+            throw new IllegalStateException("host url cannot be derived");
         }
     }
 
