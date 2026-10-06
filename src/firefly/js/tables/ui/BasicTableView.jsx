@@ -17,7 +17,7 @@ import {
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {calcHeaderHeight, CellWrapper, FixedCellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
+import {calcHeaderHeight, CellWrapper, FixedCellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader, selectRowFilterFitsAbove} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -114,7 +114,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers, onRowDoubleClick} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes=false, showFilters=false, showSelectRowFilter,
+    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes=false, showFilters=false, showSelectRowFilter=true,
             showUnits=false, filterInfo, selectable, sortInfo, textView} = uiStates;
     const tableRef = useRef();
 
@@ -159,7 +159,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
     useEffect( () => {
         const changes = {};
         if (!isEmpty(columns)){
-            const calcWidth = width-15-( selectable ? 25 : 0);
+            const calcWidth = width-15-selColWidth({selectable, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter});
             if (calcWidth > 0 && isSingleColumnTable(columns) && (columnWidths?.[0]!==calcWidth)) {
                 // set 1st (only visible) column's width to table's width minus scrollbar's width (15px)
                 changes.columnWidths = [calcWidth, ...Array(columns.length - 1).fill(0)];
@@ -174,7 +174,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
         if (!isEmpty(changes)) {
             dispatchTableUiUpdate({tbl_ui_id, ...changes});
         }
-    }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop]);
+    }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop, selectable, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter]);
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
         columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter,
@@ -484,21 +484,30 @@ function makeColumnTag(props, col, idx) {
     );
 }
 
-function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter,
+// the left gutter holds the select checkboxes and, on the filter row, the filter help icon
+const hasSelColumn = ({selectable, showHeader, showFilters}) => selectable || (showHeader && showFilters);
+
+const selColWidth = ({selectable, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter}) => {
+    if (!hasSelColumn({selectable, showHeader, showFilters})) return 0;
+    const sharesFilterRow = selectable && showFilters && showSelectRowFilter && !selectRowFilterFitsAbove({showUnits, showTypes});
+    return sharesFilterRow ? 50 : 25;       // 50: the select-row filter and the help icon side by side
+};
+
+function makeSelColTag({selectable, showHeader, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter,
                            onFilterSelected, selectInfoCls, onRowSelect}) {
 
-    if (!selectable) return false;
+    if (!hasSelColumn({selectable, showHeader, showFilters})) return false;
 
-    const checked = selectInfoCls.isSelectAll();
-    const hasSelected = selectInfoCls.getSelectedCount() > 0;
+    const checked = selectable && selectInfoCls.isSelectAll();
+    const hasSelected = selectable && selectInfoCls.getSelectedCount() > 0;
     return (
         <Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={<SelectableHeader {...{checked, hasSelected, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter, onFilterSelected}} />}
-            cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
+            header={<SelectableHeader {...{selectable, checked, hasSelected, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter, onFilterSelected}} />}
+            cell={selectable ? <SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} /> : null}
             fixed={true}
-            width={25}
+            width={selColWidth({selectable, showHeader, showUnits, showTypes, showFilters, showSelectRowFilter})}
             allowCellsRecycling={true}
         />
     );

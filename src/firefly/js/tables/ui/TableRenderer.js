@@ -33,6 +33,7 @@ import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
 
 
 export const headerStyle = {fontSize:'var(--joy-fontSize-sm)', fontWeight:'var(--joy-fontWeight-md)'};  // maybe faulty becuase it's translated from Typography title-sm, which is dynamic.
@@ -192,9 +193,9 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
-            showWarning={false}
             slotProps={{
-                input: {size:'sm', endDecorator, autoComplete: 'off' }
+                input: {size:'sm', endDecorator, autoComplete: 'off' },
+                tooltip: {sx: {whiteSpace: 'pre-line', maxWidth: '40em'}}
             }}
         />
     );
@@ -255,18 +256,41 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     );
 }
 
-export function SelectableHeader ({checked, hasSelected=true, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
+/**
+ * True when a units or types row leaves room between the select-all checkbox and the filter row
+ * for the select-row filter button.  Otherwise it shares the filter row with the help icon.
+ * @param {object} p
+ * @param {boolean} p.showUnits
+ * @param {boolean} p.showTypes
+ * @returns {boolean}
+ */
+export const selectRowFilterFitsAbove = ({showUnits, showTypes}) => Boolean(showUnits || showTypes);
+
+
+export function SelectableHeader ({selectable=true, checked, hasSelected=true, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
                                       onFilterSelected, sx}) {
+    const hasSelectRowFilter = selectable && showFilters && showSelectRowFilter;
+    const fitsAbove = selectRowFilterFitsAbove({showUnits, showTypes});
+    // stacked above the help icon with only one units or types row, both icons are shrunk to fit
+    const iconSize = hasSelectRowFilter && fitsAbove && !(showUnits && showTypes) ? '22px' : '28px';
+    const selectRowFilter = hasSelectRowFilter &&
+        <FilterButton  iconButtonSize={iconSize}
+                       onClick={onFilterSelected}
+                       enabled={hasSelected}
+                       tip={hasSelected ? 'Filter on selected rows' : 'Check rows to filter on them'}/>;
     return (
-        <Stack alignItems='center' height={1} justifyContent='space-between' pt='4px' pb='2px' sx={sx}>
-            <Checkbox size='sm'
+        <Stack alignItems='center' height={1} justifyContent={selectable ? 'space-between' : 'flex-end'} pt='4px' pb='2px' sx={sx}>
+            {selectable && <Checkbox size='sm'
                 tabIndex={-1}
                 checked={checked}
-                onChange={(e) => onSelectAll(e.target.checked)}/>
-            {showFilters && showSelectRowFilter && <FilterButton  iconButtonSize='28px'
-                                 onClick={onFilterSelected}
-                                 enabled={hasSelected}
-                                 tip={hasSelected ? 'Filter on selected rows' : 'Check rows to filter on them'}/>}
+                onChange={(e) => onSelectAll(e.target.checked)}/>}
+            {fitsAbove && selectRowFilter}
+            {showFilters &&
+                <Stack direction='row' alignItems='center'>
+                    {!fitsAbove && selectRowFilter}
+                    <HelpIcon helpId='tables.filters' iconButtonSize={iconSize}/>
+                </Stack>
+            }
         </Stack>
     );
 }
