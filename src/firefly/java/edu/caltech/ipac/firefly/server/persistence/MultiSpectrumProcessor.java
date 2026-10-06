@@ -74,6 +74,9 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
 
             File inFile = QueryUtil.resolveFileFromSource(source, true, tmpFileForUrl(source, treq.getRequestId() + "_", getSessUploadDir(treq)));
             DataGroup table = TableUtil.readAnyFormat(inFile);
+            if (table.getAttribute(TableMeta.UTYPE, "").equalsIgnoreCase(MULTI_SPECTRUM_UTYPE)) {
+                addDataProductCols(table, treq);  //store the data product columns with the data; this enables server-side features (e.g. packaging, sort/filter, etc.)
+            }
 
             setJobResults(inFile);
 
@@ -198,24 +201,15 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     }
 
     private DataGroupPart createDataProductTable(TableServerRequest treq, DbAdapter dbAdapter, MultiSpecInfo specs) throws DataAccessException {
-        if (isEmpty(treq.getInclColumns())) {
-            treq = (TableServerRequest) treq.cloneRequest();
-            treq.setInclColumns(  specs.metaCols.stream()
-                    .map(DataType::getKeyName)
-                    .map(this::quote)
-                    .toArray(String[]::new)
-            );
-        }
-
-        DataGroupPart dgp = dbAdapter.execRequestQuery(treq, dbAdapter.getDataTable());
+        // use the standard resultset handling so that selectInfo, sort/filter, etc. work as with any other table
+        // the data product columns are already stored with the data; see fetchDataGroup above
+        DataGroupPart dgp = super.getResultSet(treq, dbAdapter);
         DataGroup table = dgp.getData();
 
-        Arrays.asList("dataproduct_type", "access_format", "access_url")
-                .forEach(cname -> {
-                    DataType col = new DataType(cname, String.class);
-                    col.setVisibility(DataType.Visibility.hidden);
-                    table.addDataDefinition(col);
-                });
+        table.removeDataDefinition(Arrays.stream(table.getDataDefinitions())
+                .filter(DataType::isArrayType)
+                .map(DataType::getKeyName)
+                .toArray(String[]::new));  //remove the spectrum array data; as getResultSet above will return the table with all columns, including arrays
 
         table.setGroupInfos(table.getGroupInfos().stream()
                 .filter(gi -> !"ipac:Spectrum.ArrayData".equalsIgnoreCase(String.valueOf(gi.getUtype())))
@@ -223,13 +217,22 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         table.setResourceInfos(table.getResourceInfos().stream()
                 .filter(ri -> !MULTI_SPECTRUM_UTYPE.equalsIgnoreCase(String.valueOf(ri.getUtype())))
                 .collect(Collectors.toList()));     // remove all ipac:MultiSpectrum resources;
+        return dgp;
+    }
+
+    private void addDataProductCols(DataGroup table, TableServerRequest treq) {
+        Arrays.asList("dataproduct_type", "access_format", "access_url")
+                .forEach(cname -> {
+                    DataType col = new DataType(cname, String.class);
+                    col.setVisibility(DataType.Visibility.hidden);
+                    table.addDataDefinition(col);
+                });
 
         for (int i = 0; i < table.size(); i++) {
             table.setData("dataproduct_type", i, "spectrum");
             table.setData("access_format", i, "application/x-votable+xml;content=datalink");
             table.setData("access_url", i, createLinksUrl(treq, getRowIdx(table, i)));
         }
-        return dgp;
     }
 
     private int getRowIdx(DataGroup table, int rowNum) {
