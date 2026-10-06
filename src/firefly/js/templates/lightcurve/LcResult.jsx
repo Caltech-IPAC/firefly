@@ -122,7 +122,7 @@ export class LcResult extends PureComponent {
 }
 
 export function defaultDownloadPanel(mission='', cutoutSize, addtlParams={}) {
-    mission = mission.replace(/[\/ ]/g, '_');       // clean up mission description to be used for save as value.
+    mission = mission.replace(/[/ ]/g, '_');       // clean up mission description to be used for save as value.
     return (
         <DownloadButton
             makeButton={(onClick,tbl_id,isRowSelected) => {

@@ -451,7 +451,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                             POLYGON('<coordinate system>', POINT1, POINT2, POINT3...)
                                             DISTANCE(POINT1, POINT2)
                                             CONTAINS(REGION1, REGION2)
-                                            INTERSECTS(REGION1, REGION2)`).replace(/    +/g, '')
+                                            INTERSECTS(REGION1, REGION2)`).replace(/ {4,}/g, '')
                                                 }
                                             </code>
                                         </pre>

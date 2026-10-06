@@ -52,7 +52,7 @@ var areaObj = (min_x, max_x, min_y, max_y, unit = ShapeDataObj.UnitType.IMAGE_PI
  */
 export function getDrawobjArea(drawObj, cc, def={}) {
     var rCover = null;
-    var firstObj;
+    const firstObj = drawObj[doAry]?.[0];
 
     switch (drawObj.sType) {
         case ShapeDataObj.ShapeType.Line:
@@ -71,17 +71,17 @@ export function getDrawobjArea(drawObj, cc, def={}) {
             rCover = getDrawobjPolygonArea(drawObj, cc);
             break;
         case ShapeDataObj.ShapeType.Annulus:
-            if (firstObj = get(drawObj, [doAry, '0'])) {
+            if (firstObj) {
                 rCover = getDrawobjCircleArea(firstObj, cc, def);
             }
             break;
         case ShapeDataObj.ShapeType.BoxAnnulus:
-            if (firstObj = get(drawObj, [doAry, '0'])) {
+            if (firstObj) {
                 rCover = getDrawobjRectArea(firstObj, cc, def);
             }
             break;
         case ShapeDataObj.ShapeType.EllipseAnnulus:
-            if (firstObj = get(drawObj, [doAry, '0'])) {
+            if (firstObj) {
                 rCover = getDrawobjEllipseArea(firstObj, cc, def);
             }
             break;

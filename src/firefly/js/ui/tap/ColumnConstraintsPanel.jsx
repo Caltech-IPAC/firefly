@@ -63,7 +63,7 @@ function validSingleCondition(s) {
     if (sUp.startsWith('IN')) return sUp.match(/^IN\s*\(.*\)$/);
     if (startsWithAny(sUp,['=','>','<',])) return validParam(sUp.substr(1));
     if (startsWithAny(sUp,['!=','>=','<='])) return validParam(sUp.substr(2));
-    return !Boolean(sUp.match(/( [A-Za-z]\S* )/));
+    return !sUp.match(/( [A-Za-z]\S* )/);
 }
 
 function validParam(param) {
