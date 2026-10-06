@@ -101,7 +101,7 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
         }
         loadTapCapabilities(serviceUrl)
             .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
-            .catch(() => setError(`Fail to retrieve capability for: ${serviceUrl}`));
+            .catch(() => setError(`Failed to retrieve capability for: ${serviceUrl}`));
     }, [serviceUrl]);
 
 
@@ -175,7 +175,7 @@ function BasicUI(props) {
         }
         loadTapCapabilities(serviceUrl)
             .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
-            .catch(() => setError(`Fail to retrieve capability for: ${serviceUrl}`));
+            .catch(() => setError(`Failed to retrieve capability for: ${serviceUrl}`));
     }, [serviceUrl]);
 
 

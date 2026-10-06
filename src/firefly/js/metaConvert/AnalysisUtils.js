@@ -99,7 +99,7 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
                     const activate = createGridImagesActivate(newReqAry, imageViewerId, table.tbl_id, plotRows);
                     return Promise.resolve(dpdtImage({name:'Image', activate}));
                 } else {
-                    return Promise.resolve(dpdtMessage('This product cannot be show in image grid', undefined, {gridNotSupported: true}));
+                    return Promise.resolve(dpdtMessage('This product cannot be shown in image grid', undefined, {gridNotSupported: true}));
                 }
             })
             .catch(() => {

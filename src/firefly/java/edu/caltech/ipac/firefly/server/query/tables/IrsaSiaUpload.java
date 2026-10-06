@@ -57,7 +57,7 @@ public class IrsaSiaUpload extends EmbeddedDbProcessor {
         var fileStr= (String)uploadParams.get("serverFile");
         var circleSize= req.getParam("circleSize");
         if (lonCol==null || latCol==null || fileStr==null || circleSize==null)  {
-            throw new DataAccessException("lonCol, latCol, circleSize and serverFile is required");
+            throw new DataAccessException("lonCol, latCol, circleSize and serverFile are required");
         }
         updateJob(ji -> {
             ji.getAux().setJobUrl(urlStr);

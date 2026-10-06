@@ -135,7 +135,7 @@ function SDPanelContent({fieldDefAry, plotId, serDef={}, setSearchParams, dataSe
                                        slotProps={{
                                            FormPanel: {
                                                onSuccess: (r) => submitSearch(r),
-                                               onError: () => showInfoPopup('Some field are not valid'),
+                                               onError: () => showInfoPopup('Some fields are not valid'),
                                                sx: hasSpacial && simpleTargetUI ? {alignSelf:'flex-start', mt:3} : undefined,
                                            },
                                        }}

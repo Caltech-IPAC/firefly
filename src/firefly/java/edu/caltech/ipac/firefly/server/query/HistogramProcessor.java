@@ -670,7 +670,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (a == null && b != null) return b;
         if (b == null && a != null) return a;
         if (a == null && b == null) {
-            throw new DataAccessException("can not concatenate two null data arrays ");
+            throw new DataAccessException("cannot concatenate two null data arrays");
         }
         double[] r = new double[a.length + b.length];
         System.arraycopy(a, 0, r, 0, a.length);

@@ -44,7 +44,7 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
 
         WorldPt wpt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (wpt == null) {
-            throw new DataAccessException("could not find the paramater: " + ServerParams.USER_TARGET_WORLD_PT);
+            throw new DataAccessException("could not find the parameter: " + ServerParams.USER_TARGET_WORLD_PT);
         }
         wpt = VisUtil.convert(wpt, CoordinateSys.EQ_J2000);
 

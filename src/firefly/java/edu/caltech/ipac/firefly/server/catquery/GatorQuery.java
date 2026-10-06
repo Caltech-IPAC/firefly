@@ -154,7 +154,7 @@ public class GatorQuery extends BaseGator {
                 sb.append(param(CatalogRequest.POLYGON, urlEncode(req.getPolygon())));
                 break;
             case TABLE:
-                throw new EndUserException("Could not do Multi Object search, internal configuration wrong.",
+                throw new EndUserException("Could not do Multi Object search, the internal configuration is wrong.",
                         "table should be a post search not a get");
             default:
                 assert false; // should only happend if a new method was added and not added here
@@ -240,7 +240,7 @@ public class GatorQuery extends BaseGator {
             requiredPostFileCacheParam(CatalogRequest.FILE_NAME, req.getFileName());
 
         } else {
-            throw new EndUserException("Could not do search, internal configuration wrong.",
+            throw new EndUserException("Could not do search, the internal configuration is wrong.",
                     "search should be a get search not a post");
         }
         switch (req.getMethod()) {

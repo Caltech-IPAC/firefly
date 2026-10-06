@@ -73,7 +73,7 @@ public class SearchManager {
             if (dataRequest != null) {
                 return processor.writeData(saveTo, dataRequest, format, mode);
             } else {
-                throw new DataAccessException("Request fail inspection.  Operation aborted.");
+                throw new DataAccessException("Request failed inspection.  Operation aborted.");
             }
         } catch (Exception e) {
             throw new DataAccessException("Error while writing to Stream", e);
@@ -107,7 +107,7 @@ public class SearchManager {
                 }
             } catch (ClassCastException e) {
                 LOGGER.error(e, "Invalid processor mapping.  Return value is not of type FileInfo.");
-                throw new DataAccessException("Request failed due to unexpected exception.", e);
+                throw new DataAccessException("Request failed due to an unexpected exception.", e);
             }
         }
         return null;

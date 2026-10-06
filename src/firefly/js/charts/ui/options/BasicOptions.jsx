@@ -155,7 +155,7 @@ export function basicFieldReducer({chartId, activeTrace}) {
                             if (Number.isFinite(valMin)) {
                                 if (logVal && valMin <= 0) {
                                     inFields = updateSet(inFields, [v.min, 'valid'], false);
-                                    inFields = updateSet(inFields, [v.min, 'message'], 'The minimum of a log axis can not be 0 or less');
+                                    inFields = updateSet(inFields, [v.min, 'message'], 'The minimum of a log axis cannot be 0 or less');
                                 } else {
                                     const valMax = Number.parseFloat(get(inFields, [v.max, 'value']));
                                     if (Number.isFinite(valMax) && valMin > valMax) {

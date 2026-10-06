@@ -48,14 +48,14 @@ public class LocalFileRetriever implements FileRetriever {
             if (f==null) {
                 if (fStr.charAt(0)==File.separatorChar) {
                     if (new File(fStr).canRead()) {
-                        throw new FailedRequestException("Could read file, "+
+                        throw new FailedRequestException("Could not read file, "+
                                 fileName +
                                 " is not in the path specified by " +
                                 "visualize.fits.search.path in the configuration file");
                     }
                     else {
                         throw new FailedRequestException("File not found", "Could not find your requested file, "+
-                                "the file: " + fileName + " is was not found");
+                                "the file: " + fileName + " was not found");
                     }
                 }
                 else {

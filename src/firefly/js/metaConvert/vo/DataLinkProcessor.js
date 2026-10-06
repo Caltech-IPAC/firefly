@@ -437,13 +437,13 @@ export function createDataLinkSingleRowItem({dlData, activateParams, options}) {
 export function getCutoutTotalWarning(dlDataAry, length) {
     const allSize= dlDataAry.map ( (d) => d.size).reduce((tot,v) => tot+v,0) ;
     if (isWarnSize(allSize)) {
-        return `Warning: Loading ${length} images with a total size of ${getSizeAsString(allSize)}, it might take awhile to load`;
+        return `Warning: Loading ${length} images with a total size of ${getSizeAsString(allSize)}, it might take a while to load`;
     }
 }
 
 export function getCutoutSizeWarning(dlData) {
     if (isWarnSize(dlData.size)) {
-        return `Warning: Full image file is ${getSizeAsString(dlData.size)}, it might take awhile to load`;
+        return `Warning: Full image file is ${getSizeAsString(dlData.size)}, it might take a while to load`;
     }
 }
 

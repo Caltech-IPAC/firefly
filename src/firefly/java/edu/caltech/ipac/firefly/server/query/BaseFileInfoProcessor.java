@@ -50,7 +50,7 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
         } catch (DataAccessException e) {
             throw e;
         } catch (Exception e) {
-            throw new DataAccessException("Request failed due to unexpected exception: ", e);
+            throw new DataAccessException("Request failed due to an unexpected exception", e);
         }
     }
 

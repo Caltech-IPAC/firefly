@@ -484,7 +484,7 @@ function doSubmitSearch(r,siaCtx,dataServiceId, docRows,qAna,fdAry,searchObjFds,
     if (!hasValidSpacialSearch(r,fds) && !doingUpload) {
         showInfoPopup( getSpacialSearchType(r,fds)===CONE_CHOICE_KEY ?
                 'Target is required' :
-                'Search Area is require and must have at least 3 point pairs, each optionally separated by commas',
+                'Search Area is required and must have at least 3 point pairs, each optionally separated by commas',
             'Error');
         return false;
     }

@@ -104,7 +104,7 @@ function explainWhy(reason, expected, scanner) {
             sb.push('That variable is unknown or has no value.');
             break;
         default:
-            throw 'Can not happen';
+            throw 'Cannot happen';
     }
     return ''.concat(...sb);
 }

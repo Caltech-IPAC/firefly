@@ -205,7 +205,7 @@ public class QueryWise extends IBESearchProcessor {
                 return dg;
             }
         }
-        throw new EndUserException("Can not find " + colName + " column in the uploaded table.", "Unable to create search request.");
+        throw new EndUserException("Cannot find " + colName + " column in the uploaded table.", "Unable to create search request.");
     }
 
     private File uploadedPostprocess(WiseRequest req, DataGroup inDg, File outFile) throws IpacTableException, IOException {

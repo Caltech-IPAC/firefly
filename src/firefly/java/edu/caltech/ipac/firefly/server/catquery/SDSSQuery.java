@@ -134,7 +134,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
                     sdssUFile = getSDSSUploadFile(uploadFile);
                 } else {
                     throw new EndUserException("SDSS catalog search failed",
-                            "Can not read uploaded file: "+ uploadFname);
+                            "Cannot read uploaded file: "+ uploadFname);
                 }
 
                 URL url = new URL(SERVICE_URL_UPLOAD);
@@ -241,7 +241,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             _postBuilder.addFile("targets",sdssUFile);
         } else {
             throw new EndUserException("SDSS catalog search failed",
-                    "Can not read uploaded file in SDSS format: "+ sdssUFile);
+                    "Cannot read uploaded file in SDSS format: "+ sdssUFile);
         }
 
         String radiusArcMin = request.getParam(SDSSRequest.RADIUS_ARCMIN);

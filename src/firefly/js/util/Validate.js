@@ -129,7 +129,7 @@ export const validateDate = function(description, valStr){
         }
         catch (e) {
             retval.valid = false;
-            retval.message = description + ': Unrecognized entry. date should follow the format yyyy-mm-dd';
+            retval.message = description + ': Unrecognized entry. The date should follow the format yyyy-mm-dd';
         }
     }
     return retval;

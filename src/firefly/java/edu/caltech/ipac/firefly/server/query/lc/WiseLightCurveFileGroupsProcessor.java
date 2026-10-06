@@ -141,7 +141,7 @@ public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
                 scanId = (String) dgData.get(rowIdx, "scan_id");
                 frameNum = (Integer) dgData.get(rowIdx, "frame_num");
                 if(scanId ==null || frameNum ==null){
-                    throw new DataAccessException("Missing column name for downnloading images");
+                    throw new DataAccessException("Missing column name for downloading images");
                 }
             }
 

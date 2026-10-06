@@ -108,14 +108,14 @@ export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, hi
     const {hasRelatedBands:canGrid=false, relatedBandMethod=GROUP_BY_DATALINK_RESULT }= options ?? {};
     if (!canGrid) return Promise.reject('related data products not supported');
     if (relatedBandMethod!==GROUP_BY_DATALINK_RESULT && relatedBandMethod!==GROUP_BY_RELATED_COLUMNS) {
-        return dpdtSimpleMsg(`related data products not supported (related band method no supported: ${relatedBandMethod})`);
+        return dpdtSimpleMsg(`related data products not supported (related band method not supported: ${relatedBandMethod})`);
     }
     const {dataSource,prodType,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
     const errMsg= doErrorChecks(table,row,prodType,dataSource);
     if (errMsg) return errMsg;
     if (prodType!=='image') return dpdtSimpleMsg(`${prodType} is not supported for grid`);
-    if (isPng) return dpdtSimpleMsg(`${prodType} must be fits for related grid support`);
-    if (!isDataLinkRow) return dpdtSimpleMsg('datalink required for supported for related grid');
+    if (isPng) return dpdtSimpleMsg(`${prodType} must be FITS for related grid support`);
+    if (!isDataLinkRow) return dpdtSimpleMsg('datalink is required for related grid support');
 
     if (relatedBandMethod===GROUP_BY_DATALINK_RESULT) {
         return getDatalinkRelatedImageGridProduct({dlTableUrl:dataSource, activateParams,table,row,threeColorOps, options});

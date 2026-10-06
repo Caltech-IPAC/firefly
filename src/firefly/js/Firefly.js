@@ -501,7 +501,7 @@ function mergeAppOptions(ops, overrideOps) {
 function renderRoot(root, viewer, props, webApiCommands) {
     const element= document.getElementById(props.div);
     if (!element) {
-        showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
+        showInfoPopup('HTML page is not set up correctly, Firefly cannot start.');
         logger.error(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
         return;
     }

@@ -164,7 +164,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         // reload TAP schema when serviceUrl changes
         loadTapSchemas(serviceUrl).then(async (tm) => {
             if (tm.error) {
-                setError(`Fail to retrieve schema for: ${serviceUrl}`);
+                setError(`Failed to retrieve schema for: ${serviceUrl}`);
                 return;
             }
             if (key === cFetchKey) {

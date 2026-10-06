@@ -341,13 +341,13 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             // Must followRedirect because TAP specifically say this endpoint may be redirected.
             HttpServices.Status status = HttpServices.getData(url, outFile);
             if (status.isError()) {
-                throw createDax("Failed to retrieve the result from", url, status.getException());
+                throw createDax("Failed to retrieve the result", url, status.getException());
             }
             DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
             return results.length > 0 ? results[0] : null;
 
         } catch (Exception e) {
-            throw createDax("Fail to fetch result", url, e);
+            throw createDax("Failed to fetch the result", url, e);
         }
     }
 
@@ -373,7 +373,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 return new HttpServices.Status(404, error);
             }
         });
-        if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
+        if (status.isError()) throw createDax("Failed to fetch UWS job info", jobUrl, status.getException());
         JobInfo jobInfo = jInfo.get();
         if (jobInfo != null) jobInfo.getAux().setJobUrl(jobUrl);
         return jobInfo;

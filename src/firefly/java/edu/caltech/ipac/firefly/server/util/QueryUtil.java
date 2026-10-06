@@ -595,7 +595,7 @@ public class QueryUtil {
                 }
                 IpacTableTargetsParser.parseTargets(dg, targetList, true);
             }
-            if (targetList.size()==0) throw createEndUserException("Unable to uploaded file:" + ufile.getName());
+            if (targetList.size()==0) throw createEndUserException("Unable to parse uploaded file: " + ufile.getName());
 
             for (TargetFixedSingle t: targetList) {
                 //check for invalid targets

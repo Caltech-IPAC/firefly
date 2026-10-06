@@ -36,7 +36,7 @@ public class DaliQuery extends EmbeddedDbProcessor {
             File outFile = createTempFile(req, ".vot");
             HttpServices.Status status = HttpServices.getData(inputs, outFile);
             if (status.isError()) {
-                throw DaliUtil.createDax("Failed to retrieve the result from", inputs.getRequestUrl(), status.getException());
+                throw DaliUtil.createDax("Failed to retrieve the result", inputs.getRequestUrl(), status.getException());
             }
             DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
 
@@ -45,7 +45,7 @@ public class DaliQuery extends EmbeddedDbProcessor {
             return results.length > 0 ? results[0] : null;
 
         } catch (Exception e) {
-            throw DaliUtil.createDax("Failed to retrieve the result from", inputs.getRequestUrl(), e);
+            throw DaliUtil.createDax("Failed to retrieve the result", inputs.getRequestUrl(), e);
         }
     }
 
