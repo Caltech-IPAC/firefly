@@ -14,11 +14,15 @@ import {BasicTableViewWithConnector} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import {FilterInfo, FILTER_CONDITION_TTIPS} from '../../tables/FilterInfo.js';
+import {FilterInfo} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {useFieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
-const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
+const CONSTRAINTS_TIP = 'Limit the query results by this column. ' +
+    'Operators: =, !=, <, >, <=, >=, LIKE, NOT LIKE, IN, NOT IN, IS NULL, IS NOT NULL. ' +
+    'Enclose strings in single quotes; IN needs parentheses. Separate multiple conditions with a semicolon; all must match. ' +
+    'Examples: > 12; < 20, IN (1,2,3), LIKE \'2MASS%\'';
+const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10, desc: CONSTRAINTS_TIP};
 
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
@@ -359,7 +363,7 @@ class ConstraintPanel extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.newInputCell = createInputCell(FILTER_CONDITION_TTIPS,
+        this.newInputCell = createInputCell(undefined,
             15,
             FilterInfo.conditionValidatorNoAutoCorrect,
             this.props.onTableChanged, {width: '100%', boxSizing: 'border-box'});

@@ -14,7 +14,7 @@ const operators = /(!=|>=|<=|<|>|=| not like | like | not in | in | is not | is 
 export const FILTER_SEP = ' _AND_ ';        // internal use need to match what's defined in TableServerRequest.FILTER_SEP
 
 export const FILTER_CONDITION_TTIPS =
-`Valid values include any of the following operators: =, >, <, !=, >=, <=, LIKE, NOT LIKE, IS, IS NOT.
+`Filter conditions can use any of these operators: =, >, <, !=, >=, <=, LIKE, NOT LIKE, IS, IS NOT.
 Each operator should be followed by a value, separated by a space.
 Alternatively, use IN or NOT IN, followed by a comma-separated list of values.
 You may combine conditions using either AND or OR. 

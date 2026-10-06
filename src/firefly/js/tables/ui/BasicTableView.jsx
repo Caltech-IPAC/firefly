@@ -490,11 +490,12 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
     if (!selectable) return false;
 
     const checked = selectInfoCls.isSelectAll();
+    const hasSelected = selectInfoCls.getSelectedCount() > 0;
     return (
         <Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter, onFilterSelected}} />}
+            header={<SelectableHeader {...{checked, hasSelected, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter, onFilterSelected}} />}
             cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}

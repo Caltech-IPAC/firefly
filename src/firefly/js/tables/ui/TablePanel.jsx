@@ -20,6 +20,7 @@ import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
 import {makeConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
+import {FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
@@ -40,6 +41,7 @@ const TT_INFO = 'Show additional table info';
 const TT_OPTIONS = 'Table Options';
 const TT_SAVE = 'Save the table';
 const TT_CLEAR_FILTER = 'Remove all filters';
+const TT_FILTER = `Show/edit filters\n\n${FILTER_CONDITION_TTIPS}`;
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 const TT_JOB_INFO = 'Show job info for this table';
@@ -342,6 +344,8 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                 }
                 {showFilterButton &&
                 <FilterButton  badgeCount={filterCount}
+                               tip={TT_FILTER}
+                               slotProps={{tooltip: {sx: {whiteSpace: 'pre-line', maxWidth: '40em'}}}}
                                onClick={toggleFilter}/>
                 }
                 {showToggleTextView &&

@@ -8,6 +8,11 @@ import {dispatchTableFilter, dispatchTableAddLocal, TABLE_LOADED, TABLE_REPLACE,
 import {ColumnConstraintsPanel, getTableConstraints} from './ColumnConstraintsPanel.jsx';
 import {makeFullyQualifiedColumn, ADQL_LINE_LENGTH, maybeQuote} from './TapUtil.js';
 
+const CONSTRAINTS_TIP = 'Limit the query results by this column. ' +
+    'Operators: =, !=, <, >, <=, >=, LIKE, IN, IS NULL. ' +
+    'Enclose strings in single quotes; IN needs parentheses. Combine conditions with AND or OR. ' +
+    'Examples: > 12 AND < 20, IN (1,2,3), LIKE \'2MASS%\'';
+
 const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
 const SELECT_ALL_COLUMNS_WHEN_NO_PRINCIPAL=false; //todo- determine what to if not of the principal columns are set
@@ -169,7 +174,7 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
 
     // add constraints column
     const constraintsColIdx = 1;
-    const constraintsCol = {name: 'constraints', idx: constraintsColIdx, type: 'char', width: 10, fixed: true};
+    const constraintsCol = {name: 'constraints', idx: constraintsColIdx, type: 'char', width: 10, fixed: true, desc: CONSTRAINTS_TIP};
     columns.splice(constraintsColIdx, 0, cloneDeep(constraintsCol));
     data.map((e) => {
         e.splice(constraintsColIdx, 0, '');

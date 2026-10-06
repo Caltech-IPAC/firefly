@@ -7,7 +7,7 @@ import {Cell} from 'fixed-data-table-2';
 import {get, isEmpty, isString, omit, set, toNumber} from 'lodash';
 import {Box, Button, Checkbox, Chip, Link, MenuItem, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 
-import {FILTER_CONDITION_TTIPS, FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
+import {FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
 import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isExternalSource, isHtml, isOfType, NOT_CELL_DATA, splitCols, splitVals} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -160,7 +160,6 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
     const col = useStoreConnector(colGetter);
-    const [showTooltip, setShowTooltip] = useState(true);
     const dropdownEl = useRef(null);
 
     useEffect(() => {
@@ -178,8 +177,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const filterInfoCls = FilterInfo.parse(filterInfo);
 
     const endDecorator = enumVals && (
-        <DropDown onFocusChange={(v) => setShowTooltip(!v)}     // only show input tooltip when dropdown is not active
-                  slotProps={{button: {sx: {mr: -1}}}}
+        <DropDown slotProps={{button: {sx: {mr: -1}}}}
                   title='Filter to a subset of values in this column'
         >
             <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
@@ -191,13 +189,12 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             validator={validator}
             fieldKey={name}
             sx={{width: 1, '--Input-radius': ''}}
-            tooltip={showTooltip && FILTER_CONDITION_TTIPS}
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
             showWarning={false}
             slotProps={{
-                input: {size:'sm', endDecorator }
+                input: {size:'sm', endDecorator, autoComplete: 'off' }
             }}
         />
     );
@@ -258,7 +255,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     );
 }
 
-export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
+export function SelectableHeader ({checked, hasSelected=true, onSelectAll, showUnits, showTypes, showFilters, showSelectRowFilter=true,
                                       onFilterSelected, sx}) {
     return (
         <Stack alignItems='center' height={1} justifyContent='space-between' pt='4px' pb='2px' sx={sx}>
@@ -268,7 +265,8 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
                 onChange={(e) => onSelectAll(e.target.checked)}/>
             {showFilters && showSelectRowFilter && <FilterButton  iconButtonSize='28px'
                                  onClick={onFilterSelected}
-                                 tip='Filter on selected rows'/>}
+                                 enabled={hasSelected}
+                                 tip={hasSelected ? 'Filter on selected rows' : 'Check rows to filter on them'}/>}
         </Stack>
     );
 }
