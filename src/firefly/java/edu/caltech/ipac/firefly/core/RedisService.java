@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.servlets.ServerStatus;
@@ -25,6 +26,7 @@ import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.ConnectionDeactivatedEvent;
 import io.lettuce.core.resource.DefaultClientResources;
 import redis.embedded.RedisServer;
+import redis.embedded.core.ExecutableProvider;
 
 import java.io.File;
 import java.security.MessageDigest;
@@ -162,15 +164,36 @@ public class RedisService {
         }
     }
 
+    /**
+     * Redis without TLS packaged with standalone Firefly for Apple Silicon (see assets/redis/osx/redis-info.md).
+     * The Redis bundled in embedded-redis for Apple Silicon needs Homebrew's OpenSSL.
+     * Returns null when not applicable
+     */
+    private static ExecutableProvider packagedRedis7Provider() {
+        boolean appleSilicon =
+                System.getProperty("os.name", "").startsWith("Mac")
+                && "aarch64".equals(System.getProperty("os.arch"));
+        String path = System.getProperty(ExecutableProvider.PROPERTY_EXECUTABLE_LOCATION);
+        if (!appleSilicon || path == null) return null;
+        if (!new File(path).canExecute()) {
+            LOG.warn("Redis build without TLS not found or not executable: " + path + ", using the bundled Redis");
+            return null;
+        }
+        return ExecutableProvider.newSystemPropertyProvider();
+    }
+
     private static void startLocal() throws Exception {
         new File(DB_DIR).mkdirs();
-        RedisServer localRedis = RedisServer.newRedisServer()
+        var execProvider = ServerContext.isStandalone() ? packagedRedis7Provider() : null;
+        var dbFile = execProvider==null ? "redis.rdb" : "redis-7.2.rdb";   // Redis 6.2 cannot read an rdb written by 7.2
+        var builder = RedisServer.newRedisServer()
                 .port(REDIS_PORT)
                 .setting("maxmemory %s".formatted(LOCAL_MAX_MEM))
                 .setting("dir %s".formatted(DB_DIR))
-                .setting("dbfilename redis.rdb")
-                .setting("save 600 1")
-                .build();
+                .setting("dbfilename %s".formatted(dbFile))
+                .setting("save 600 1");
+        if (execProvider != null) builder = builder.executableProvider(execProvider);
+        RedisServer localRedis = builder.build();
         localRedis.start();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
