@@ -548,8 +548,11 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
     const op = ops.find((t) => t.value === value);
     if (!op) return 'none';
     const details= cleanUp(op.label,0);
+    const text = op.displayLabel ?? op.label;
+    const shown = cleanUp(text);
+    const isCut = shown !== cleanUp(text, 0);       // the tooltip only adds something when the shown text is cut short
     return (
-        <Tooltip title={
+        <Tooltip title={isCut &&
                 <Typography level='body-sm' component='div' width='30rem'>
                     <div dangerouslySetInnerHTML={{__html: `${details}`}}/>
                 </Typography>
@@ -580,7 +583,7 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
                                     WebkitBoxOrient: 'vertical',
                                 } : {}}
                             sx={{whiteSpace:'normal', textAlign:'left'}}>
-                <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.displayLabel??op.label)}`}}/>
+                <div dangerouslySetInnerHTML={{__html: `${shown}`}}/>
                 </Typography>
             </Stack>
         </Tooltip>
