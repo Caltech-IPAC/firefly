@@ -14,15 +14,11 @@ import {BasicTableViewWithConnector} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import {FilterInfo} from '../../tables/FilterInfo.js';
+import {FilterInfo, FILTER_CONDITION_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {useFieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
-const CONSTRAINTS_TIP = 'Limit the query results by this column. ' +
-    'Operators: =, !=, <, >, <=, >=, LIKE, NOT LIKE, IN, NOT IN, IS NULL, IS NOT NULL. ' +
-    'Enclose strings in single quotes; IN needs parentheses. Separate multiple conditions with a semicolon; all must match. ' +
-    'Examples: > 12; < 20, IN (1,2,3), LIKE \'2MASS%\'';
-const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10, desc: CONSTRAINTS_TIP};
+const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10, desc: FILTER_CONDITION_TTIPS};
 
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
