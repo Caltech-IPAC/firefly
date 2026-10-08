@@ -9,7 +9,7 @@ export function inputFieldTooltipProps({valid, message, showWarning=true, toolti
         (
             <Stack direction='column'>
                 <Typography level='body-md' color={'danger'}> {message} </Typography>
-                <Typography level='body-md' color={'neutral'} whiteSpace='pre'> {tooltip} </Typography>
+                {tooltip && <Typography level='body-md' color={'neutral'} whiteSpace='pre'> {tooltip} </Typography>}
             </Stack>
         ) : tooltip && <Typography level='body-md' whiteSpace='pre'>{tooltip}</Typography>;
     const enterDelay = showErrorTip ? 700 : undefined;
