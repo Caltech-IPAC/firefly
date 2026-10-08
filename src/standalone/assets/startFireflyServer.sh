@@ -265,12 +265,14 @@ if [[ "$name" == "Darwin" ]]; then
    nameParam='-Xdock:name=Firefly Server'
    runAsDesktopApplication="true"
    headless="false"
+   redisExecParam="-Dembedded.redis.executable=${redisMacExecFile}"
    #dockIcon="-Xdock:icon=${applicationDir}/fireflyDockIcon.png"  --- keep around if we decide to read dock
 else
    splash=
    nameParam="-DdockPlaceHolder="
    runAsDesktopApplication="false"
    headless="true"
+   redisExecParam=
    #dockIcon=
 fi
 
@@ -296,6 +298,7 @@ PROPS=" \
   -Djava.awt.headless=${headless} \
   -Dvisualize.fits.search.path=${HOME} \
   -Dredis.db.dir=${redisDbDir} \
+  ${redisExecParam} \
   -Djava.io.tmpdir=${fireflyServer}/temp \
   -Dalerts.dir=${fireflyServer}/alerts \
   -Dserver_config_dir=${serverConfigDir} \

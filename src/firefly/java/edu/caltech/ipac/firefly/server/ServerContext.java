@@ -843,6 +843,10 @@ public class ServerContext {
     public static UriRef.CloudEnvironment getCloudEnvironment() {return cloudEnvironment;}
     public static boolean isRunningInCloud() {return cloudEnvironment!= UriRef.CloudEnvironment.ON_PREM;}
 
+    public static boolean isStandalone() {
+        return AppProperties.getBooleanProperty("OP_standaloneEnabled", false);
+    }
+
 
     private static class AssertLogger implements Assert.Logger {
         private final Logger.LoggerImpl _log= Logger.getLogger();
