@@ -571,7 +571,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
                         value={val}
                         onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
                         actOn={['blur','enter']}
-                        showWarning={false}
+                        slotProps={{tooltip: {sx: {whiteSpace: 'pre-line', maxWidth: '40em'}}}}
                     />
                 </Box>
             );
