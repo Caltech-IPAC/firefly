@@ -270,7 +270,8 @@ fi
 # --------------------------
 
 requiredFiles=("standalone_cleanup.sh" "$startScript" "startFireflyServer.sh" \
-               "stopFireflyServer.sh" "statusFireflyServer.sh" "javaInstaller.sh" "updater.sh" "common.sh")
+               "stopFireflyServer.sh" "statusFireflyServer.sh" "javaInstaller.sh" "updater.sh" "common.sh" \
+               "redis/osx/redis-server-7.2-darwin-arm64")
 missingFiles=""
 for f in "${requiredFiles[@]}"; do
   if [ ! -f "$applicationDir/$f" ]; then
@@ -293,6 +294,13 @@ chmod 775 "$applicationDir/standalone_cleanup.sh" \
           "$applicationDir/updater.sh" \
           "$applicationDir/install.sh"
 /bin/mv "$applicationDir/updater.sh" "$applicationRoot"
+
+# redis for macOS (see assets/redis/osx/redis-info.md). unzip marks the files of a browser-downloaded zip as
+# quarantined, and macOS kills a quarantined binary that is not notarized
+if [[ "$(uname)" == "Darwin" ]]; then
+  chmod +x "$applicationDir/redis/osx/redis-server-7.2-darwin-arm64"
+  xattr -dr com.apple.quarantine "$applicationDir/redis" 2> /dev/null
+fi
 
 cp "$applicationDir/$startScript" "$binDir"
 chmod +x "$binDir/$startScript"

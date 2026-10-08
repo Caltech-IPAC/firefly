@@ -2,7 +2,7 @@
 # common.sh: shared variables for the Firefly standalone runtime scripts.
 # Must be sourced with $INSTALL_DIR already set (every caller needs it anyway to
 # locate this file). Defines: applicationDir, fireflyDir, binDir, configJsonFile,
-# JQ, pidFile, portFile, redisDbDir, ffPort, redisPort.
+# JQ, pidFile, portFile, redisDbDir, redisMacExecFile, ffPort, redisPort.
 # --------------------------
 
 # shellcheck disable=SC2034
@@ -13,6 +13,7 @@ configJsonFile="$fireflyDir/config.json"
 pidFile="$fireflyDir/pid.txt"
 portFile="$fireflyDir/port.txt"
 redisDbDir="${fireflyDir}/server/temp/redis"
+redisMacExecFile="${applicationDir}/redis/osx/redis-server-7.2-darwin-arm64"
 JQ=$(which jq || echo "$binDir/jq")
 
 if [[ -f "$portFile" && -s "$portFile" && -r "$portFile" ]]; then

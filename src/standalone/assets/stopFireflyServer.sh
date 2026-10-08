@@ -33,9 +33,11 @@ stopOrphans() {
     fi
     kill -9 "$pid" 2> /dev/null
   done
-  redisPids=$(pgrep -f "${redisDbDir}-")
+  redisPids=$(pgrep -f "${redisDbDir}-|${redisMacExecFile}")
   for pid in $redisPids; do
-    zombieRedisPort=$(ps -o args= -p "$pid" 2> /dev/null | grep -oE '[0-9]+$')
+    # Redis rewrites its process title to "<path> <bind-address>:<port>" followed by padding spaces,
+    # so take the digits after the last ":" and allow trailing spaces
+    zombieRedisPort=$(ps -o args= -p "$pid" 2> /dev/null | sed -nE 's/.*:([0-9]+) *$/\1/p')
     echo "Stopping orphaned redis-server process at process id $pid on port ${zombieRedisPort:-unknown}"
     kill -9 "$pid" 2> /dev/null
   done
