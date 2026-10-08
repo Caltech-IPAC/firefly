@@ -161,6 +161,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
     const col = useStoreConnector(colGetter);
+    const [dropdownActive, setDropdownActive] = useState(false);
     const dropdownEl = useRef(null);
 
     useEffect(() => {
@@ -178,7 +179,8 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const filterInfoCls = FilterInfo.parse(filterInfo);
 
     const endDecorator = enumVals && (
-        <DropDown slotProps={{button: {sx: {mr: -1}}}}
+        <DropDown onFocusChange={setDropdownActive}     // hide the error tooltip while the dropdown is hovered or open
+                  slotProps={{button: {sx: {mr: -1}}}}
                   title='Filter to a subset of values in this column'
         >
             <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
@@ -193,6 +195,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
+            showWarning={!dropdownActive}
             slotProps={{
                 input: {size:'sm', endDecorator, autoComplete: 'off' },
                 tooltip: {sx: {whiteSpace: 'pre-line', maxWidth: '40em'}}
