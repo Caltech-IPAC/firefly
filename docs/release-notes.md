@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.3
-- 2026.3.0 — (Sept 25, 2026), _Docker tag_: `2026.3.0`, `2026.3`, `latest`
+- 2026.3.1 — (Oct 8, 2026), _Docker tag_: `2026.3.1`, `2026.3`, `latest`
+- 2026.3.0 — (Sept 25, 2026), _Docker tag_: `2026.3.0`
 
 This release moves the standalone installation out of beta, adds spectral line plotting and color grouping by column to Charts,
 and includes FITS compression reading fixes.
@@ -42,7 +43,26 @@ and includes FITS compression reading fixes.
 - Fixed: bug expanding charts from Multi-product Viewer — Firefly-2101 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2012))
 - Fixed: Time series — period field is a required input field, drag/drop broken — Firefly-2080 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2007))
 - Fixed: disable contextual font ligatures — Firefly-2057 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2001))
-- Fixed: HiPS sometime loses WCS lock with image — Firefly-2020 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2022))
+
+
+### _Patches 2026.3_
+#### 2026.3.1
+- Fixed: Spectral lines app config not propagating — Firefly-2066 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2026))
+- Fixed: tab navigation skipping to MathJax labels in spectrum options — IRSA-7359 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2025))
+- Fixed: Pinned charts no showing — Firefly-2102 ([commit](https://github.com/Caltech-IPAC/firefly/commit/f08cd43d084280dd45650a574518bc049e7d21a0))
+- Fixed: Spectrophotometry Prepare Download bug — Firefly-2127 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2037))
+- Fixed: missing help icons for multiple tabbed tables — Firefly-1508 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2034))
+- Fixed: Email notification not sent when background job completes — Firefly-2082 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2033))
+- Fixed: Wavelength tooltip issue in charts — Firefly-2044 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2032))
+- Fixed: SPHEREx "optional target name required" bug — Firefly-2029 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2031))
+- Fixed: Standalone: use a non-OpenSSL version of Redis — Firefly-2137 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2039))
+- Updated text of HiPS extraction and periodogram warnings — Firefly-2123 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2030))
+
+##### _Pull Requests in this Release_
+
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2026.3+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2026.3+)
+
 
 ---
 
