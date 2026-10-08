@@ -12,7 +12,7 @@ import {CssVarsProvider} from '@mui/joy';
 import {SelectableHeader} from '../TableRenderer.js';
 
 const noop = () => undefined;
-// HelpIcon reads the color scheme, which MUI only provides under a CssVarsProvider; jsdom has no matchMedia
+// handle HelpIcon's color mode lookup: it needs a CssVarsProvider, which needs matchMedia
 window.matchMedia ??= (media) => ({matches: false, media, addEventListener: noop, removeEventListener: noop, addListener: noop, removeListener: noop});
 const render = (ui) => rtlRender(ui, {wrapper: CssVarsProvider});
 const checkbox = () => screen.queryByRole('checkbox');
