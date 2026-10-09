@@ -1,12 +1,12 @@
 import React, {useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {get, set, cloneDeep, isArray} from 'lodash';
+import {get, set, cloneDeep, isArray, merge} from 'lodash';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
 import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isGroupedChart, isScatter2d,
-    makeShapeHoverTrace} from '../ChartUtil.js';
+    makeShapeHoverTrace, makeShapesAutorangeLayout} from '../ChartUtil.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {Skeleton, useTheme} from '@mui/joy';
 
@@ -77,10 +77,14 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
     const {traces: hoverTraces, layout: hoverLayout} = makeShapeHoverTrace(layout.shapes);
     pdata = pdata.concat(hoverTraces);
 
+    // keep shapes (e.g. spectral lines) and their hover traces from widening autorange beyond the data
+    const shapesAutorangeLayout = makeShapesAutorangeLayout(data, layout);
+
     const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
 
     const showlegend = isGroupedChart(chartId) ? true : (layout?.showlegend ?? data.length > 1);
     const playout = cloneDeep({showlegend, ...adjustLayout(layout, theme), width: chartWidth, height: chartHeight, annotations, ...hoverLayout});
+    merge(playout, shapesAutorangeLayout); // deep merge (in place): it adds keys inside existing axes
 
     const style = {float: 'left'};
     if (chartWidth > widthPx || chartHeight > heightPx) {

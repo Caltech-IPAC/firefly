@@ -645,6 +645,13 @@ export function flattenAnnotations(annotations) {
 }
 
 const SHAPE_HOVER_STEPS = 10; // points per line stacked along the shape's height, for a hover target that tracks the cursor vertically
+const SHAPES_AUTORANGE_PAD = 0.05; // fraction of the data span padded on each side of an autorange clip, standing in for Plotly's own padding
+
+/**
+ * vertical line at a data x, with y in 'paper' (0-1 of plot area height) units. E.g. a spectral line
+ * @param shape
+ */
+const isVerticalPaperLine = (shape) => shape?.type === 'line' && shape.xref === 'x' && shape.yref === 'paper' && shape.x0 === shape.x1;
 
 /**
  * Builds companion hover trace(s) for Plotly shapes that carry a `hovertext`.
@@ -667,7 +674,7 @@ const SHAPE_HOVER_STEPS = 10; // points per line stacked along the shape's heigh
  * (the 'y2' axis they're plotted on) to merge in alongside them — empty/{} when there's nothing hoverable
  */
 export function makeShapeHoverTrace(shapes=[]) {
-    const hoverable = shapes.filter((s) => s?.type === 'line' && s.yref === 'paper' && s.hovertext);
+    const hoverable = shapes.filter((shape) => isVerticalPaperLine(shape) && shape.hovertext);
     if (hoverable.length === 0) return {traces: [], layout: {}};
 
     const byGroup = new Map();
@@ -697,6 +704,65 @@ export function makeShapeHoverTrace(shapes=[]) {
     });
 
     return {traces, layout: {yaxis2: {overlaying: 'y', range: [0, 1], visible: false, fixedrange: true}}};
+}
+
+/**
+ * Builds the layout fragment that keeps shapes from widening axis autorange beyond the data.
+ *
+ * Plotly counts data-referenced shapes (and their hover traces from makeShapeHoverTrace) in autorange, with no
+ * per-shape opt-out, so shapes far outside the data, squeeze plotted data into a sliver. This clips the affected axis'
+ * autorange (`autorangeoptions.clipmin/clipmax`) to the padded data extent: autorange stays on, so the 1x button and
+ * filter/column resets keep working, and shapes beyond it are still drawn when zoomed out. An explicit range (e.g.
+ * user-set min/max) turns autorange off, so the clip doesn't apply then. Not specific to any one feature.
+ *
+ * NOTE: Only handles vertical line shapes with paper y (`xref:'x', yref:'paper', x0=x1`), which only affect x.
+ *
+ * @param {Array<object>} data - chart traces to fit (not selected/highlighted/hover traces)
+ * @param {object} layout - chart layout; uses `shapes` and the axis `type` ('log' pads in log space)
+ * @returns {object} {} for a chart without `shapes`, otherwise a fragment to deep-merge into the plotly layout, e.g.
+ * `{xaxis: {autorangeoptions: {clipmin, clipmax}}}`, with null bounds when there's nothing to clip.
+ */
+export function makeShapesAutorangeLayout(data=[], layout={}) {
+    if (!layout.shapes) return {};
+    const clip = layout.shapes.some(isVerticalPaperLine) ? getDataXExtentClip(data, layout.xaxis?.type === 'log') : undefined;
+    // null, not undefined, clears a clip Plotly already has: PlotlyWrapper's relayout only sends keys present here
+    return {xaxis: {autorangeoptions: {clipmin: clip?.clipmin ?? null, clipmax: clip?.clipmax ?? null}}};
+}
+
+/**
+ * @param {Array<object>} data - chart traces; hidden ones are skipped, x error bars included
+ * @param {boolean} isLog - pad in log space and skip x <= 0
+ * @returns {{clipmin: number, clipmax: number}|undefined} padded x extent, undefined when it's empty or zero-width
+ */
+function getDataXExtentClip(data, isLog) {
+    let min = Infinity, max = -Infinity;
+    const addX = (xVal) => {
+        if (!Number.isFinite(xVal) || (isLog && xVal <= 0)) return;
+        if (xVal < min) min = xVal;
+        if (xVal > max) max = xVal;
+    };
+
+    data.filter((trace) => trace?.visible !== false && trace?.visible !== 'legendonly').forEach((trace) => {
+        const xVals = trace.x ?? [];
+        const err = trace.error_x?.visible !== false ? trace.error_x : undefined;
+        const errPlus = err?.array;
+        const errMinus = err?.symmetric === false ? err?.arrayminus : errPlus;
+        for (let idx = 0; idx < xVals.length; idx++) {
+            const xVal = parseFloat(xVals[idx]); // NaN (skipped) for null/undefined/''
+            addX(xVal);
+            if (errPlus) addX(xVal + parseFloat(errPlus[idx]));
+            if (errMinus) addX(xVal - parseFloat(errMinus[idx]));
+        }
+    });
+    if (!(max > min)) return undefined;
+
+    if (isLog) {
+        const [logMin, logMax] = [Math.log10(min), Math.log10(max)];
+        const pad = SHAPES_AUTORANGE_PAD * (logMax - logMin);
+        return {clipmin: 10 ** (logMin - pad), clipmax: 10 ** (logMax + pad)};
+    }
+    const pad = SHAPES_AUTORANGE_PAD * (max - min);
+    return {clipmin: min - pad, clipmax: max + pad};
 }
 
 export function updateSelection(chartId, selectInfo) {
