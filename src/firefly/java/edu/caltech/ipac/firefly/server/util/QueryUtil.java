@@ -240,7 +240,8 @@ public class QueryUtil {
     public static File tmpFileForUrl(String urlStr, String prefix, File dir) {
         URL url = makeUrl(urlStr);
         String pExt = url == null ? null : FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""), true);
-        String ext = isEmpty(pExt) ? ".ul" : "." + pExt;
+        String pQuery = url == null ? null : url.getQuery();
+        String ext = isEmpty(pExt) || !isEmpty(pQuery) ? ".ul" : "." + pExt;
         return Util.Try.it(() -> File.createTempFile(prefix, ext, dir)).get();
     }
 

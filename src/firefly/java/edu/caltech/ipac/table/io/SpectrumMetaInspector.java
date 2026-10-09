@@ -179,6 +179,8 @@ public class SpectrumMetaInspector {
         //    - guessing columns or checking utype
         //    - checking utype only
 
+        fixAnyBadDataGroup(dg);
+
         List<DataType> dtAry= Arrays.asList(dg.getDataDefinitions());
         List<GroupInfo> groupInfosList= new ArrayList<>();
         var nonStandardSpecType= dg.getAttribute("SPEC_TYPE","").toLowerCase();
@@ -484,6 +486,25 @@ public class SpectrumMetaInspector {
 
         dg.setGroupInfos(groupInfosList);
         meta.addKeyword(TableMeta.UTYPE,SPEC_SPECTRUM);
+    }
+
+    static void fixAnyBadDataGroup(DataGroup dg) {
+        var keyWords= dg.getTableMeta().getKeywords();
+        var isHopsSpec= keyWords.stream().filter(s -> (s.getKey()==null && s.getValue().startsWith("HOPS"))).count()==1 &&
+                        keyWords.stream().filter(s -> (s.getKey()==null && s.getValue().startsWith("Spitzer"))).count()==1;
+        if (isHopsSpec) { // try to fix it
+            var dtAry= dg.getDataDefinitions();
+            for (DataType dt : dtAry){
+                if (dt.getDataType()==String.class) {
+                    dt.setDataType(Double.class);
+                    dt.setUnits(dt.getTypeDesc());
+                    dt.setTypeDesc("double");
+                }
+            }
+        }
+
+        // add others here
+
     }
 
     public record InsertEntry(String column, String unit) {}

@@ -13,10 +13,25 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.zip.GZIPOutputStream;
 
-import static edu.caltech.ipac.util.FormatUtil.Format.*;
+import static edu.caltech.ipac.util.FormatUtil.Format.CSV;
+import static edu.caltech.ipac.util.FormatUtil.Format.FITS;
+import static edu.caltech.ipac.util.FormatUtil.Format.GZIP;
+import static edu.caltech.ipac.util.FormatUtil.Format.HTML;
+import static edu.caltech.ipac.util.FormatUtil.Format.IPACTABLE;
+import static edu.caltech.ipac.util.FormatUtil.Format.JSON;
+import static edu.caltech.ipac.util.FormatUtil.Format.PARQUET;
+import static edu.caltech.ipac.util.FormatUtil.Format.PNG;
+import static edu.caltech.ipac.util.FormatUtil.Format.REGION;
+import static edu.caltech.ipac.util.FormatUtil.Format.TEXT;
+import static edu.caltech.ipac.util.FormatUtil.Format.TSV;
+import static edu.caltech.ipac.util.FormatUtil.Format.UNKNOWN;
+import static edu.caltech.ipac.util.FormatUtil.Format.VO_TABLE;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -204,12 +219,12 @@ public class FormatUtilTest extends ConfigTest {
     }
 
     @Test
-    public void mimeType() {
+    public void mimeType() throws IOException {
         File tfile = FileLoader.resolveFile("FileUpload-samples/VOTable/binary/binary_gaia.xml");
-        assertEquals(tfile.getName(), "application/xml", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), VO_TABLE.mime(), FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("FileUpload-samples/VOTable/fits/starlinkVOfits.xml");
-        assertEquals(tfile.getName(), "application/xml", FormatUtil.getMimeType(tfile).mime());
+        assertEquals(tfile.getName(), VO_TABLE.mime(), FormatUtil.getMimeType(tfile).mime());
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/firefly/server/query/ptf-lc.tbl");
         assertEquals(tfile.getName(), UNKNOWN.mime(), FormatUtil.getMimeType(tfile).mime());
@@ -217,5 +232,44 @@ public class FormatUtilTest extends ConfigTest {
         tfile = FileLoader.resolveFile("stripe82-testfits/calexp-i-0-366,0.fits.gz");
         String mtype = FormatUtil.getMimeType(tfile).mime();
         assertEquals(tfile.getName(), GZIP.mime(), mtype);
+        assertEquals(tfile.getName(), FITS, FormatUtil.detect(tfile));
+
+        // gzipped FITS must be detected by content, not by a "fit" in the file name (e.g. temp files for urls with a query string)
+        Path tmp = Files.createTempFile("req_", ".ul");
+        tmp.toFile().deleteOnExit();
+        Files.copy(tfile.toPath(), tmp, StandardCopyOption.REPLACE_EXISTING);
+        assertEquals("gzipped fits named .ul", FITS, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void extensionDoesNotDecideFormat() throws IOException {
+        // a .fits name must not decide the format; on linux /etc/mime.types maps .fits to image/fits
+        Path tmp = Files.createTempFile("test", ".fits");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, "a,b,c\n1,2,3\n4,5,6\n");
+        assertEquals("csv named .fits", CSV, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void voTableWithWrongExtension() throws IOException {
+        File tfile = FileLoader.resolveFile("FileUpload-samples/VOTable/binary/binary_gaia.xml");
+        for (String ext : new String[] {".csv", ".json"}) {
+            Path tmp = Files.createTempFile("test", ext);
+            tmp.toFile().deleteOnExit();
+            Files.copy(tfile.toPath(), tmp, StandardCopyOption.REPLACE_EXISTING);
+            assertEquals("votable named " + ext, VO_TABLE.mime(), FormatUtil.getMimeType(tmp.toFile()).mime());
+            assertEquals("votable named " + ext, VO_TABLE, FormatUtil.detect(tmp.toFile()));
+        }
+    }
+
+    @Test
+    public void gzipNotFitsNamedFits() throws IOException {
+        // the name says fits but the decompressed content does not
+        Path tmp = Files.createTempFile("test", ".fits.gz");
+        tmp.toFile().deleteOnExit();
+        try (OutputStream out = new GZIPOutputStream(Files.newOutputStream(tmp))) {
+            out.write("a,b,c\n1,2,3\n".getBytes());
+        }
+        assertEquals("gzipped csv named .fits.gz", GZIP, FormatUtil.detect(tmp.toFile()));
     }
 }

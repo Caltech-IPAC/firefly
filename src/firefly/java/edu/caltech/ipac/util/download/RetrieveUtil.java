@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.GcsCloud;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.OnPrimUrl;
 import static edu.caltech.ipac.util.download.UriRef.ResourceType.S3Cloud;
@@ -94,11 +95,13 @@ public class RetrieveUtil {
         String path;
         String outLoc;
         String prefix;
+        String query= null;
 
         switch (uri.ref()) {
             case URL url -> {
                 loc= url.getHost();
                 path= url.getFile();
+                query= url.getQuery();
                 outLoc = FileUtil.makeShortHostName(loc);
                 prefix= "URL-";
             }
@@ -134,7 +137,7 @@ public class RetrieveUtil {
         retval = prefix + outLoc + "-" + originalHashCode + baseKey;
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]/\\\\|*?<>=,]", "-");
-        String ext= FileUtil.getExtension(fileStr,true);
+        String ext= isEmpty(query) ? FileUtil.getExtension(fileStr,true) : "";
         var fileExt= EXT_LIST.contains(ext) ? ext : EXT_LIST.getFirst();
         return retval + "." + fileExt;
     }
