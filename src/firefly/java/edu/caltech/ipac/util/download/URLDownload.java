@@ -134,17 +134,12 @@ public class URLDownload {
         var paramList= url.getQuery().split("&");
         var queryParamMap = new HashMap<String, List<String>>();
         for(var p : paramList) {
-            var parts = p.split("=");
-            if (parts.length == 2) {
-                var key= parts[0].trim();
-                var value= parts[1].trim();
-                var valueList= queryParamMap.get(key);
-                if (valueList == null) {
-                   valueList = new ArrayList<>();
-                   queryParamMap.put(key, valueList);
-                }
-                valueList.add(value);
-            }
+            var parts = p.split("=", 2);   // split on the first "=" only, so values can contain "=" (e.g. base64 padding)
+            var key= parts[0].trim();
+            if (key.isEmpty()) continue;
+            var value= parts.length == 2 ? parts[1].trim() : "true";  // a parameter with no value, e.g. ?flag
+            var valueList = queryParamMap.computeIfAbsent(key, k -> new ArrayList<>());
+            valueList.add(value);
         }
         return queryParamMap;
     }
@@ -161,7 +156,7 @@ public class URLDownload {
         return foundKey!=null ? getFirstVal(params, foundKey) : null;
     }
 
-    private static int codeFromException(Exception e) {
+    static int codeFromException(Exception e) {   // package-private for testing
         return switch (e) {
             case SSLException ignored -> 495;
             case SocketTimeoutException ignored -> HttpURLConnection.HTTP_CLIENT_TIMEOUT;

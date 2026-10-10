@@ -9,19 +9,19 @@ package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import javax.annotation.Nonnull;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.Set;
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.table.IpacTableUtil.isIpacTable;
@@ -36,6 +36,7 @@ import static edu.caltech.ipac.util.FormatUtil.Format.*;
 public class FormatUtil {
     private static final int SAMPLE_SIZE = (int) (8 * FileUtil.K);
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final int[] FITS_MAGIC= {'S','I','M','P','L','E',' ',' ','='};
 
     public record MimeDesc(String mime, String desc) {}
 
@@ -114,7 +115,7 @@ public class FormatUtil {
 
     /**
      * Detects the MIME type of file using magic-byte inspection of the file header,
-     * falling back to OS-level and extension-based guessing for unrecognized types.
+     * falling back to extension-based guessing for unrecognized types.
      * This is platform-independent for all binary formats handled here; text-based
      * formats (FITS text headers, VOTable, IPAC table, etc.) are handled downstream
      * by {@link FormatUtil#detect}.
@@ -159,17 +160,21 @@ public class FormatUtil {
             if (magic(hdr, 257, 'u','s','t','a','r'))
                 return new MimeDesc(TAR.mime(), "POSIX tar archive");
             // Binary FITS: header block starts with "SIMPLE  ="
-            if (magic(hdr, 0, 'S','I','M','P','L','E',' ',' ','='))
+            if (magic(hdr, 0, FITS_MAGIC))
                 return new MimeDesc(FITS.mime(), "FITS image data");
+
+            var hdrStr= new String(hdr);
+            if ((hdrStr.startsWith("<?xml") && hdrStr.contains("<VOTABLE")) || hdrStr.startsWith("<VOTABLE")) { // this is not a magic number but close and might fit in the 264 bytes
+                return new MimeDesc(VO_TABLE.mime(), "VO Table");
+            }
 
         } catch (Exception ex) {
             Logger.getLogger().error(ex, "Failed to read header for mime detection: " + inFile);
         }
 
-        // Fall back to OS content probing and extension-based guess for text formats
+        // Fall back to extension-based guess for text formats
         try {
-            String mime = Files.probeContentType(Path.of(inFile));
-            if (mime == null) mime = java.net.URLConnection.guessContentTypeFromName(inFile);
+            var mime = java.net.URLConnection.guessContentTypeFromName(inFile);
             if (mime != null) return new MimeDesc(mime, mime);
         } catch (Exception ex) {
             Logger.getLogger().error(ex, "Failed to detect mime type for: " + inFile);
@@ -208,14 +213,8 @@ public class FormatUtil {
         }
 
 
-        if ((format == BZIP2 || format == GZIP) &&
-                inFile.getName().toLowerCase().contains("fit")) {
-            // special case and a very heavy operation: we can handle fits bz2 or gzip files but don't try unless we are pretty sure
-            // in archives: legacy files are often named a.fits.gz or a.fits.bz2
-            try (var ignored = new Fits(inFile)) {
-                return FITS;
-            }
-            catch (FitsException ignore) {}
+        if (isCompressedFits(inFile, format)) { // archives often serve a.fits.gz or a.fits.bz2; check the decompressed header
+            return FITS;
         }
 
         format = ifNotNull(guessBySamplingContent(inFile)).getOrElse(format);
@@ -307,7 +306,7 @@ public class FormatUtil {
                     //NAME-RESOLVER: xxx
                     return FIXEDTARGETS;
                 } else if (line.startsWith("<VOTABLE") ||
-                        (line.contains("<?xml") && line.contains("<VOTABLE "))) {
+                        (line.contains("<?xml") && line.contains("<VOTABLE"))) {
                     return VO_TABLE;
                 } else if (isUwsEl(line)) {
                     return UWS;
@@ -323,6 +322,20 @@ public class FormatUtil {
         line = line.trim().toLowerCase();
         boolean isUws = line.contains("www.ivoa.net/xml/uws");
         return isUws && line.matches("<(.+:)?job .*");
+    }
+
+    /**
+     * Check the first bytes of a gzip or bzip2 file, after decompressing, for the FITS "SIMPLE  =" keyword
+     */
+    private static boolean isCompressedFits(File inFile, Format format) {
+        if (format != BZIP2 && format != GZIP) return false;
+        try (var fis = new FileInputStream(inFile);
+             InputStream in = format == GZIP ? new GZIPInputStream(fis) : new BZip2CompressorInputStream(fis)) {
+            byte[] hdr = in.readNBytes(9);
+            return magic(hdr, 0, FITS_MAGIC);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /** Returns true when {@code data[offset..]} starts with the given byte values. */
