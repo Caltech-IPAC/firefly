@@ -38,6 +38,7 @@ Before calling a change done, run the full suites CI runs: `gradle :firefly:jsTe
 
 - Match the surrounding code's style, reuse existing utilities, and follow established patterns rather than reinventing them. The exception is a pattern that's clearly legacy or bug-prone. Use the modern approach there, and say that you did.
 - Use descriptive names — no single-letter or cryptic abbreviations like `t`, `xs`, `ll`; the name should say what the value holds.
+- For debug output, use `Logger` from `util/Logger.js` rather than `console.log`. Turn it on in the browser console with `window.firefly.debug = 'debug'`; filter it with `window.firefly.debugTags = 'Table'`.
 - Add short comments where the reason isn't obvious (a temporary hardcode, a subtle check); don't narrate what the code does.
 - JSDoc: when a function also has rest params, document destructured props as `@param {object} props` / `@param props.field` to satisfy `jsdoc/check-param-names`.
 - Tests: one helper per function under test, named after that function. Avoid chained generic helpers and hidden defaults — each test should show its inputs.
