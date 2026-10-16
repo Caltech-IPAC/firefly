@@ -155,6 +155,43 @@ persistence:
 ### Redis
 Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for configuration options including image, resources, and persistence.
 
+### Cleanup
+Each pod runs `cleanup.sh`, which removes expired files from its work areas. Cleanup settings are `CLEANUP_*` environment variables set through `env`; see the header of [cleanup.sh](https://github.com/Caltech-IPAC/firefly/blob/dev/docker/cleanup.sh) for all of them.
+
+#### Multi-replica with this chart
+The pods share `sharedWorkDir`, so a CronJob (`<release>-cleanup`, on `cleanup.schedule`) cleans it once, and each pod cleans only its own `workDir`.
+
+The chart sets `CLEANUP_TARGETS` in the pods and the CronJob, and `CLEANUP_APP_NAME` (from `cleanup.appName`) in the CronJob, and fails to render if `env` sets either one. The pods find their app dir themselves. Other settings in `env` reach both, and each side ignores the ones it does not use. For example, to sweep the shared work area every 6 hours and cap it at 50Gi:
+```yaml
+cleanup:
+  schedule: "0 */6 * * *"
+
+env:
+  - name: CLEANUP_SHARED_MAX
+    value: "50Gi"
+```
+
+#### Multi-replica without this chart
+When several Firefly containers share `/firefly/shared-workarea`, only one process should sweep the shared work area.
+Split the work in two:
+
+**Each Firefly container** cleans only its own work area:
+```bash
+CLEANUP_TARGETS=workarea           # required: leave the shared work area to the scheduled job
+```
+
+**One scheduled job** (e.g. Kubernetes CronJob) runs the same image with the shared volume mounted at `/firefly/shared-workarea`
+and the command `/usr/local/tomcat/cleanup.sh --once`, which makes one sweep, logs it to stdout and exits:
+
+```bash
+CLEANUP_TARGETS=shared             # required
+CLEANUP_APP_NAME=firefly           # required: the job has no work area to find the app dir from
+CLEANUP_SHARED_MAX=50Gi            # optional: cap the shared work area
+```
+Run the job about as often as you would set `CLEANUP_INTERVAL`. `CLEANUP_APP_NAME` is the app's directory under the work areas: `firefly` for the stock image, or the name of your app if it is built on the Firefly image.
+
+For a Kubernetes example, see this chart's [cleanup-cronjob.yaml](https://github.com/Caltech-IPAC/firefly/blob/dev/helm/templates/cleanup-cronjob.yaml).
+
 ## Reference
 
 {{ template "chart.valuesSection" . }}

@@ -153,6 +153,43 @@ persistence:
 ### Redis
 Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for configuration options including image, resources, and persistence.
 
+### Cleanup
+Each pod runs `cleanup.sh`, which removes expired files from its work areas. Cleanup settings are `CLEANUP_*` environment variables set through `env`; see the header of [cleanup.sh](https://github.com/Caltech-IPAC/firefly/blob/dev/docker/cleanup.sh) for all of them.
+
+#### Multi-replica with this chart
+The pods share `sharedWorkDir`, so a CronJob (`<release>-cleanup`, on `cleanup.schedule`) cleans it once, and each pod cleans only its own `workDir`.
+
+The chart sets `CLEANUP_TARGETS` in the pods and the CronJob, and `CLEANUP_APP_NAME` (from `cleanup.appName`) in the CronJob, and fails to render if `env` sets either one. The pods find their app dir themselves. Other settings in `env` reach both, and each side ignores the ones it does not use. For example, to sweep the shared work area every 6 hours and cap it at 50Gi:
+```yaml
+cleanup:
+  schedule: "0 */6 * * *"
+
+env:
+  - name: CLEANUP_SHARED_MAX
+    value: "50Gi"
+```
+
+#### Multi-replica without this chart
+When several Firefly containers share `/firefly/shared-workarea`, only one process should sweep the shared work area.
+Split the work in two:
+
+**Each Firefly container** cleans only its own work area:
+```bash
+CLEANUP_TARGETS=workarea           # required: leave the shared work area to the scheduled job
+```
+
+**One scheduled job** (e.g. Kubernetes CronJob) runs the same image with the shared volume mounted at `/firefly/shared-workarea`
+and the command `/usr/local/tomcat/cleanup.sh --once`, which makes one sweep, logs it to stdout and exits:
+
+```bash
+CLEANUP_TARGETS=shared             # required
+CLEANUP_APP_NAME=firefly           # required: the job has no work area to find the app dir from
+CLEANUP_SHARED_MAX=50Gi            # optional: cap the shared work area
+```
+Run the job about as often as you would set `CLEANUP_INTERVAL`. `CLEANUP_APP_NAME` is the app's directory under the work areas: `firefly` for the stock image, or the name of your app if it is built on the Firefly image.
+
+For a Kubernetes example, see this chart's [cleanup-cronjob.yaml](https://github.com/Caltech-IPAC/firefly/blob/dev/helm/templates/cleanup-cronjob.yaml).
+
 ## Reference
 
 ## Values
@@ -170,6 +207,9 @@ Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for c
 | autoscaling.scaleUpWindow | int | `60` | Stabilization window in seconds before scaling up. |
 | autoscaling.targetCpuUsage | int | `80` | Target average CPU utilization (%) across pods to trigger scale up. Set to empty to disable. |
 | autoscaling.targetMemoryUsage | int | `100` | Target average memory utilization (%) across pods to trigger scale up. Set to empty to disable. |
+| cleanup.appName | string | `"firefly"` | App dir name under the shared work area, passed to the cleanup CronJob as CLEANUP_APP_NAME. The pods find their app dir themselves. Override only for an app built on the Firefly image. |
+| cleanup.resources | object | `{"limits":{"memory":"256Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | CronJob resource requests and limits. |
+| cleanup.schedule | string | `"0 * * * *"` | Schedule of the CronJob that cleans the shared work area. The CronJob is created in multi-replica mode only; each pod then cleans just its own work area. Cleanup settings (CLEANUP_*) go in `env` and apply to both. |
 | env | list | `[]` | Additional environment variables. |
 | extraLabels | object | `{}` | Additional labels added to all resources (e.g. owner: jenkins). |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |

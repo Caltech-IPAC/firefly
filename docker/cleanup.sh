@@ -2,56 +2,59 @@
 #
 # Cleanup script for the Firefly app.
 #
-# Runs forever: every CLEANUP_INTERVAL it sweeps both base work areas, then sleeps.
-# Sweeps append to /firefly/logs/cleanup/<app>/cleanup.<YYYYMMDD>.log, one file per day,
-# rolling at midnight and keeping CLEANUP_LOG_KEEP days.
+# Usage: cleanup.sh [--once] [--dry-run] [--help]
+#   (default)   run forever: every CLEANUP_INTERVAL sweep the targeted work areas, then sleep.
+#               Sweeps append to /firefly/logs/cleanup/<app>/cleanup.<YYYYMMDD>.log, one file
+#               per day, keeping 7 days.
+#   --once      make one sweep, log it to stdout and exit; for an external scheduler such as
+#               a Kubernetes CronJob.  Exits 1 when the sweep cannot run.
+#   --dry-run   log what would be removed, remove nothing.
 #
 # Each base dir holds one sub-directory per application, e.g.
 #     /firefly/workarea/<app>/temp_files
-# where <app> is the simple name of the application.
-# See # CLEANUP_APP_NAME below for details.  Each sweep makes up to two passes over the app dir:
+# where <app> is the simple name of the application; see CLEANUP_APP_NAME.
+# Each targeted base dir gets two passes per sweep, workarea first:
 #
-#   age pass (always)   Each entry below a base dir has its own maximum age; files not
-#                       *modified* within that age are removed.
-#   pct-full pass       Runs after the age pass when CLEANUP_PCT_FULL is 1-99.  Max ages
-#                       are ignored: while the filesystem is still at least PCT_FULL
-#                       percent full, the oldest files are removed until usage drops to
-#                       (PCT_FULL - PCT_RECLAIM).
+#   age pass     Each entry has a maximum age; files not *modified* within it are removed.
+#   size pass    Only when the base dir's MAX is set.  When usage is at or above it, ages
+#                are ignored and the oldest files are removed until usage is down to
+#                90% of MAX.
 #
 # ------------------------------------------------------------------------------------
 # Environment variables (all optional)
 #
-#   Name                              Default  Description
-#   --------------------------------  -------  ----------------------------------------
-#   CLEANUP_APP_NAME                  auto     app dir to sweep under both base dirs;
-#                                              unset uses the first dir under the
-#                                              workarea; set it when necessary.
-#   CLEANUP_INTERVAL                  1h       how often a sweep runs
-#   CLEANUP_LOG_KEEP                  7        days of logs kept (in /firefly/logs/cleanup)
-#   CLEANUP_DRY_RUN                   false    log what would be removed, remove nothing
+#   Name                   Default  Description
+#   ---------------------  -------  ---------------------------------------------------
+#   CLEANUP_INTERVAL       1h       how often a sweep runs; ignored with --once
+#   CLEANUP_TARGETS        all      base dirs to sweep: all, workarea, shared or none.
+#                                   Use workarea in app containers when one other
+#                                   process (e.g. a CronJob) sweeps the shared-workarea.
+#   CLEANUP_APP_NAME       auto     app dir to sweep under the base dirs.  Unset uses the
+#                                   first dir under the workarea; required when
+#                                   CLEANUP_TARGETS=shared.
 #
-#   age pass -- maximum age per directory
-#   CLEANUP_AGE_TEMP_FILES            1h       everything except; Hips, stage, upload
-#                                              (defaults to CLEANUP_INTERVAL)
-#   CLEANUP_AGE_HIPS                  90d      HiPS
-#   CLEANUP_AGE_STAGE                 7d       stage
-#   CLEANUP_AGE_UPLOAD                7d       upload
+#   age pass -- maximum age per group of entries
+#   CLEANUP_AGE_WORKAREA   1h       workarea: temp_files, perm_files, visualize/*
+#   CLEANUP_AGE_HIPS       90d      workarea: HiPS
+#   CLEANUP_AGE_SHARED     7d       shared-workarea: stage, upload
 #
-#   pct-full pass -- runs after the age pass, over both base dirs
-#   CLEANUP_PCT_FULL                  85       1-99 enables the pass; 0 = off
-#   CLEANUP_PCT_RECLAIM               5        percent of the filesystem to free
-#   CLEANUP_SHARED_PCT_FULL           =above   shared-workarea only; it often has its own volume.
-#   CLEANUP_SHARED_PCT_RECLAIM        =above
+#   size pass -- the most a base dir may use; unset or empty means no size pass
+#   CLEANUP_WORKAREA_MAX   unset    workarea
+#   CLEANUP_SHARED_MAX     unset    shared-workarea
 #
-# Ages are <n>m, <n>h or <n>d (minutes, hours, days).  An invalid value falls back to
-# the default with a warning.
+# Ages are <n>m, <n>h or <n>d (minutes, hours, days).
+# A MAX is one of:
+#   <n>%     1-99, percent of the base dir's filesystem in use, as df's Use% reports it.
+#            Counts everything on that filesystem; best when the volume is dedicated.
+#   <size>   <n>K, <n>M, <n>G or <n>T, binary (1G = 1024M); Kubernetes' Ki/Mi/Gi/Ti also
+#            work.  Measured with du of the whole base dir (every app's files), so it
+#            suits a volume shared with other data.  The filesystem itself is not checked.
+# An invalid age falls back to its default, and an invalid MAX to no size pass, with a warning.
 #
 # Notes:
 #   - Age is modification time.
 #   - Only the entries listed below are ever touched, and only under this app's dir;
 #     anything else under a base dir is left alone, in both passes.
-#   - pct-full reads df, which measures the whole filesystem.  When several apps share a
-#     volume each one triggers on total usage but can only free its own files.
 #   - Files may live up to CLEANUP_INTERVAL longer than their configured age, since they
 #     only expire when a sweep runs.
 #
@@ -60,51 +63,62 @@ set -u
 readonly FIND=/usr/bin/find
 readonly RM=/bin/rm
 readonly LOG_ROOT=/firefly/logs/cleanup   # outside the dirs being cleaned
-
-# ------------------------------------------------------------------------------------
-# Requirements: bash 4+ (readarray, ${var,,}) and a GNU userland (find -printf, sort -z,
-# date -d).
-# ------------------------------------------------------------------------------------
+readonly LOG_KEEP=7                       # days of logs kept per app
+readonly CLEAN_TO_PCT=90                  # the size pass cleans down to this % of MAX
 
 warn() {      # <message...>          -- reports a problem and carries on
     echo "Cleanup: WARNING: $*" >&2
+}
+
+error() {     # <message...>          -- reports a misconfiguration; the caller skips the sweep
+    echo "Cleanup: ERROR: $*" >&2
 }
 
 require() {   # <what is missing>     -- reports it and stops the script
     echo "cleanup.sh: requires $1" >&2
     exit 1
 }
+
+# ------------------------------------------------------------------------------------
+# Command line
+# ------------------------------------------------------------------------------------
+ONCE=false
+DRY_RUN=false
+for arg in "$@"; do
+    case "${arg}" in
+        --once)    ONCE=true ;;
+        --dry-run) DRY_RUN=true ;;
+        -h|--help) awk 'NR > 1 && !/^#/ {exit} NR > 1 {sub(/^# ?/, ""); print}' "$0"; exit 0 ;;
+        *)         echo "cleanup.sh: unknown option '${arg}'; see --help" >&2; exit 2 ;;
+    esac
+done
+readonly ONCE DRY_RUN
+
+# ------------------------------------------------------------------------------------
+# Requirements: bash 4+ (readarray, ${var,,}) and a GNU userland (find -printf, sort -z,
+# date -d).
+# ------------------------------------------------------------------------------------
 ((BASH_VERSINFO[0] >= 4))                  || require "bash 4+, found ${BASH_VERSION}"
 ${FIND} /dev/null -maxdepth 0 -printf '' 2>/dev/null || require "GNU findutils (find -printf)"
 printf '' | sort -z >/dev/null 2>&1        || require "GNU coreutils (sort -z)"
 date -d @0 >/dev/null 2>&1                 || require "GNU coreutils (date -d)"
-
-# Resolve CLEANUP_INTERVAL: how often a sweep runs, and also used as the default age for temp files.
-readonly DEFAULT_INTERVAL=1h
-INTERVAL="${CLEANUP_INTERVAL:-${DEFAULT_INTERVAL}}"
-if ! [[ "${INTERVAL}" =~ ^[0-9]+[mhd]$ ]]; then
-    warn "CLEANUP_INTERVAL='${INTERVAL}' is not valid (use <n>m, <n>h or <n>d);" \
-         "using ${DEFAULT_INTERVAL}"
-    INTERVAL="${DEFAULT_INTERVAL}"
-fi
-readonly INTERVAL
 
 # ------------------------------------------------------------------------------------
 # Base dir definitions.  Entries are "<path relative to an app dir>|<env var>|<default>"
 # ------------------------------------------------------------------------------------
 readonly WORKAREA_DIR=/firefly/workarea
 readonly WORKAREA_ENTRIES=(
-    "temp_files|CLEANUP_AGE_TEMP_FILES|${INTERVAL}"
-    "perm_files|CLEANUP_AGE_TEMP_FILES|${INTERVAL}"
-    "visualize/fits-cache|CLEANUP_AGE_TEMP_FILES|${INTERVAL}"
-    "visualize/users|CLEANUP_AGE_TEMP_FILES|${INTERVAL}"
+    "temp_files|CLEANUP_AGE_WORKAREA|1h"
+    "perm_files|CLEANUP_AGE_WORKAREA|1h"
+    "visualize/fits-cache|CLEANUP_AGE_WORKAREA|1h"
+    "visualize/users|CLEANUP_AGE_WORKAREA|1h"
     "HiPS|CLEANUP_AGE_HIPS|90d"
 )
 
 readonly SHARED_WORKAREA_DIR=/firefly/shared-workarea
 readonly SHARED_WORKAREA_ENTRIES=(
-    "stage|CLEANUP_AGE_STAGE|7d"
-    "upload|CLEANUP_AGE_UPLOAD|7d"
+    "stage|CLEANUP_AGE_SHARED|7d"
+    "upload|CLEANUP_AGE_SHARED|7d"
 )
 
 # ------------------------------------------------------------------------------------
@@ -123,67 +137,132 @@ to_minutes() {
     esac
 }
 
-# minutes_setting <envVar> <default>
-minutes_setting() {
-    local name="$1" default="$2" value="${!1:-$2}" minutes
-    if ! minutes=$(to_minutes "${value}"); then
-        warn "${name}='${value}' is not a valid age (use <n>m, <n>h or <n>d); using ${default}"
-        minutes=$(to_minutes "${default}")
-    fi
-    echo "${minutes}"
+declare -A AGE_MINUTES=()   # age env var -> max age in minutes
+declare -A AGE_SHOWN=()     # age env var -> the value in effect, as written
+
+# age_settings <entry-spec>... -- resolves each distinct age env var once
+age_settings() {
+    local spec entry name default value minutes
+    for spec in "$@"; do
+        IFS='|' read -r entry name default <<< "${spec}"
+        [[ -n "${AGE_MINUTES[${name}]:-}" ]] && continue   # several entries share one
+        value="${!name:-${default}}"
+        if ! minutes=$(to_minutes "${value}"); then
+            warn "${name}='${value}' is not a valid age (use <n>m, <n>h or <n>d); using ${default}"
+            value="${default}"
+            minutes=$(to_minutes "${default}")
+        fi
+        AGE_MINUTES[${name}]="${minutes}"
+        AGE_SHOWN[${name}]="${value}"
+    done
 }
 
-# int_setting <envVar> <default> <min> <max>
-int_setting() {
-    local name="$1" default="$2" min="$3" max="$4" value="${!1:-$2}"
-    if ! [[ "${value}" =~ ^[0-9]+$ ]] || ((value < min || value > max)); then
-        warn "${name}='${value}' must be an integer from ${min} to ${max}; using ${default}"
-        value="${default}"
-    fi
-    echo "${value}"
+# describe_ages <entry-spec>... -- prints each distinct age setting, in table order
+describe_ages() {
+    local spec entry name seen=" "
+    for spec in "$@"; do
+        IFS='|' read -r entry name _ <<< "${spec}"
+        [[ "${seen}" == *" ${name} "* ]] && continue
+        seen+="${name} "
+        printf 'Cleanup:   %s=%s\n' "${name}" "${AGE_SHOWN[${name}]}"
+    done
 }
 
-# bool_setting <envVar> <default>
-bool_setting() {
-    local value="${!1:-$2}"
-    [[ "${value,,}" == true || "${value,,}" == yes || "${value}" == 1 ]] && echo true || echo false
+# "5Gi" -> 5242880.  Prints nothing and fails if the value is not a positive <n>K|M|G|T.
+to_kb() {
+    local num
+    [[ "${1^^}" =~ ^([0-9]+)([KMGT])I?B?$ ]] || return 1
+    num=$((10#${BASH_REMATCH[1]}))
+    ((num > 0)) || return 1
+    case "${BASH_REMATCH[2]}" in
+        K) echo "${num}" ;;
+        M) echo $((num * 1024)) ;;
+        G) echo $((num * 1024 ** 2)) ;;
+        T) echo $((num * 1024 ** 3)) ;;
+    esac
+}
+
+# "85%" -> "pct 85", "5Gi" -> "kb 5242880".  Fails if the value is neither.
+to_max() {
+    local pct kb
+    if [[ "$1" =~ ^([0-9]+)%$ ]]; then
+        pct=$((10#${BASH_REMATCH[1]}))
+        ((pct >= 1 && pct <= 99)) || return 1
+        echo "pct ${pct}"
+    else
+        kb=$(to_kb "$1") || return 1
+        echo "kb ${kb}"
+    fi
+}
+
+# max_setting <envVar> -- prints the parsed max, or "off" when unset, empty or invalid
+max_setting() {
+    local name="$1" value="${!1:-}" max
+    [[ -n "${value}" ]] || { echo off; return 0; }
+    if ! max=$(to_max "${value}"); then
+        warn "${name}='${value}' is not valid (use <n>% from 1 to 99, or a size such as 5Gi);" \
+             "no size pass"
+        max=off
+    fi
+    echo "${max}"
+}
+
+# "pct 85" -> "85%", "kb 5242880" -> "5242880 KB", "off" -> "off"
+describe_max() {
+    local mode value
+    read -r mode value <<< "$1"
+    case "${mode}" in
+        pct) echo "${value}%" ;;
+        kb)  echo "${value} KB" ;;
+        *)   echo "off" ;;
+    esac
+}
+
+# targets_setting -- prints "<target> <workarea> <shared>", the last two true or false
+targets_setting() {
+    local value="${CLEANUP_TARGETS:-all}"
+    case "${value,,}" in
+        all)      echo "all true true" ;;
+        workarea) echo "workarea true false" ;;
+        shared)   echo "shared false true" ;;
+        none)     echo "none false false" ;;
+        *)
+            warn "CLEANUP_TARGETS='${value}' must be all, workarea, shared or none; using all"
+            echo "all true true" ;;
+    esac
 }
 
 # ------------------------------------------------------------------------------------
 # Path helpers
 # ------------------------------------------------------------------------------------
 
-# entry_paths <baseDir> <app> <relativePath> -- prints <base>/<app>/<entry> if it exists
-entry_paths() {
-    local path="${1}/${2}/${3}"
-    [[ -d "${path}" ]] && echo "${path}"
-    return 0
-}
-
-# entry_paths_of <baseDir> <app> <entry-spec>... -- every existing path in an entry table
-entry_paths_of() {
-    local base="$1" app="$2"; shift 2
-    local spec entry
-    for spec in "$@"; do
-        IFS='|' read -r entry _ _ <<< "${spec}"
-        entry_paths "${base}" "${app}" "${entry}"
-    done
-    return 0
-}
-
-# same_fs <dirA> <dirB> -- true when both sit on one filesystem, so df reports one pool
-same_fs() {
-    local a b
-    a=$(stat -c %d "$1" 2>/dev/null) && b=$(stat -c %d "$2" 2>/dev/null) || return 1
-    [[ "${a}" == "${b}" ]]
-}
-
 # CLEANUP_APP_NAME: Unset, it falls back to the first dir under the workarea (sorted, so the choice is
 # stable across sweeps).  That is right for the usual one-app container; set
 # CLEANUP_APP_NAME when there are multiple apps under the workarea and you want to sweep a specific one.
+# Set, it must name a dir under the workarea when the workarea is a target, or the sweep is
+# skipped with an error: a wrong name would otherwise clean nothing, quietly.  With only the
+# shared-workarea targeted a missing dir is not an error, since the app creates it on first use.
+# The shared-workarea is not searched: it may hold other data (e.g. redis), so a guess could be wrong.
+# Returns 1 on an error, 2 when there is nothing to clean yet.
 resolve_app_name() {
-    local dirs=()
-    if [[ -n "${CLEANUP_APP_NAME:-}" ]]; then echo "${CLEANUP_APP_NAME}"; return 0; fi
+    local name="${CLEANUP_APP_NAME:-}" dirs=()
+    if [[ -n "${name}" ]]; then
+        if [[ "${DO_WORKAREA}" == true && ! -d "${WORKAREA_DIR}/${name}" ]]; then
+            error "CLEANUP_APP_NAME='${name}': ${WORKAREA_DIR}/${name} is not a dir;" \
+                  "skipping this sweep"
+            return 1
+        fi
+        if [[ "${DO_WORKAREA}" != true && ! -d "${SHARED_WORKAREA_DIR}/${name}" ]]; then
+            echo "Cleanup: ${SHARED_WORKAREA_DIR}/${name} does not exist yet; nothing to clean" >&2
+            return 2
+        fi
+        echo "${name}"
+        return 0
+    fi
+    if [[ "${DO_WORKAREA}" != true ]]; then
+        warn "CLEANUP_APP_NAME must be set when the workarea is not a target; skipping this sweep"
+        return 1
+    fi
     readarray -t dirs < <(${FIND} "${WORKAREA_DIR}" -mindepth 1 -maxdepth 1 -type d \
                           ! -name cleanup_logs -printf '%f\n' 2>/dev/null | sort)
     ((${#dirs[@]})) || {
@@ -207,67 +286,77 @@ prune_empty_dirs() {
 # Pass 1: age -- each entry expires on its own -mmin
 # ------------------------------------------------------------------------------------
 
+# clean_by_age <appDir> <entry-spec>...
 clean_by_age() {
-    local label="$1" base="$2" app="$3"; shift 3
-    local app_dir="${base}/${app}" spec entry env_var default minutes paths
+    local app_dir="$1"; shift
+    local spec entry env_var minutes path
 
-    echo
-    echo "----- ${label}: ${app_dir}"
-    [[ -d "${app_dir}" ]] || { echo "does not exist, skipping"; return; }
     echo "Age pass: removing files not modified within each entry's max age"
     for spec in "$@"; do
-        IFS='|' read -r entry env_var default <<< "${spec}"
-        minutes=$(minutes_setting "${env_var}" "${default}")
-
-        readarray -t paths < <(entry_paths "${base}" "${app}" "${entry}")
-        ((${#paths[@]})) || continue
+        IFS='|' read -r entry env_var _ <<< "${spec}"
+        path="${app_dir}/${entry}"
+        [[ -d "${path}" ]] || continue
+        minutes="${AGE_MINUTES[${env_var}]}"
 
         echo
-        echo "--- ${entry}: older than ${minutes} minutes (${env_var}=${!env_var:-${default}})"
+        echo "--- ${entry}: older than ${minutes} minutes (${env_var}=${AGE_SHOWN[${env_var}]})"
         if [[ "${DRY_RUN}" == true ]]; then
-            ${FIND} "${paths[@]}" -type f -mmin "+${minutes}" -print
+            ${FIND} "${path}" -type f -mmin "+${minutes}" -print
         else
-            ${FIND} "${paths[@]}" -type f -mmin "+${minutes}" -print -delete
-            prune_empty_dirs "${paths[@]}"
+            ${FIND} "${path}" -type f -mmin "+${minutes}" -print -delete
+            prune_empty_dirs "${path}"
         fi
     done
 }
 
 # ------------------------------------------------------------------------------------
-# Pass 2: pct-full -- ignore ages, remove the oldest files until there is room
+# Pass 2: size -- ignore ages, remove the oldest files until usage is under the max
 # ------------------------------------------------------------------------------------
 
-# clean_by_pct_full <label> <dfDir> <pctFull> <pctReclaim> <path>...
-# The paths may span both base dirs: when they share a filesystem they share one pool
-# of free space, so they must be ranked together.
-clean_by_pct_full() {
-    local label="$1" df_dir="$2" pct_full="$3" pct_reclaim="$4"; shift 4
+# clean_by_size <baseDir> <max> <path>...
+# A "pct" max is df of baseDir's filesystem; a "kb" max is du of baseDir.
+clean_by_size() {
+    local base_dir="$1" max="$2"; shift 2
     local paths=("$@")
-    local total_kb used_kb used_pct target_pct need_kb freed_kb=0 removed=0
+    local mode value used_kb avail_kb max_kb target_kb need_kb freed_kb=0 removed=0
     local mtime kb path
 
+    read -r mode value <<< "${max}"
     echo
-    echo "----- ${label}"
-    read -r total_kb used_kb < <(df -Pk "${df_dir}" | awk 'NR==2 {print $2, $3}')
-    if ! [[ "${total_kb:-0}" =~ ^[1-9][0-9]*$ ]]; then
-        warn "cannot read disk usage for ${df_dir}; skipping"
+    if [[ "${mode}" == pct ]]; then
+        # Use% as df reports it: used / (used + available), so reserved blocks count as full
+        read -r used_kb avail_kb < <(df -Pk "${base_dir}" 2>/dev/null | awk 'NR==2 {print $3, $4}')
+        if ! [[ "${used_kb:-}" =~ ^[0-9]+$ && "${avail_kb:-}" =~ ^[0-9]+$ ]] ||
+           ((used_kb + avail_kb == 0)); then
+            warn "cannot read disk usage for ${base_dir}; skipping the size pass"
+            return
+        fi
+        max_kb=$(((used_kb + avail_kb) * value / 100))
+        target_kb=$((max_kb * CLEAN_TO_PCT / 100))
+        echo "Size pass (df of ${base_dir}): $((used_kb * 100 / (used_kb + avail_kb)))% used," \
+             "max ${value}%, cleans down to $((value * CLEAN_TO_PCT / 100))%"
+    else
+        # the max covers the whole base dir, so count every app's files, not only this one's
+        used_kb=$(du -skx "${base_dir}" 2>/dev/null | awk '{print $1}')
+        if ! [[ "${used_kb:-}" =~ ^[0-9]+$ ]]; then
+            warn "cannot read disk usage for ${base_dir}; skipping the size pass"
+            return
+        fi
+        max_kb="${value}"
+        target_kb=$((max_kb * CLEAN_TO_PCT / 100))
+        echo "Size pass (du of ${base_dir}): ${used_kb} KB used, max ${max_kb} KB," \
+             "cleans down to ${target_kb} KB"
+    fi
+    if ((used_kb < max_kb)); then
+        echo "Nothing to do -- below the max"
         return
     fi
-    used_pct=$((used_kb * 100 / total_kb))
-    target_pct=$((pct_full - pct_reclaim))
-    ((target_pct < 0)) && target_pct=0      # delta larger than pct_full means "empty it"
 
-    echo "Pct-full pass: ${used_pct}% used, cleans above ${pct_full}%, target ${target_pct}%"
-    if ((used_pct < pct_full)); then
-        echo "Nothing to do -- below ${pct_full}%"
-        return
-    fi
-
-    need_kb=$((used_kb - total_kb * target_pct / 100))
+    need_kb=$((used_kb - target_kb))
     echo "Need to free ${need_kb} KB; removing oldest files first"
     echo
 
-    ((${#paths[@]})) || { warn "no entries exist for ${label}; nothing can be freed"; return; }
+    ((${#paths[@]})) || { warn "no entries exist under ${base_dir}; nothing can be freed"; return; }
 
     # mtime <tab> size-in-KB <tab> path, NUL terminated, oldest first
     while IFS=$'\t' read -r -d '' mtime kb path; do
@@ -280,60 +369,55 @@ clean_by_pct_full() {
 
     echo
     echo "Removed ${removed} files, freed ${freed_kb} KB of the ${need_kb} KB needed"
-    ((freed_kb < need_kb)) && warn "${label} is still above ${target_pct}%: nothing left to remove"
+    ((freed_kb < need_kb)) && warn "${base_dir} is still above its target: nothing left to remove"
     [[ "${DRY_RUN}" == true ]] || prune_empty_dirs "${paths[@]}"
     return 0
 }
 
 # ------------------------------------------------------------------------------------
-# Per base dir driver
+# Sweep
 # ------------------------------------------------------------------------------------
 
-# Does the work of one sweep, writing to stdout.
+# sweep_dir <label> <baseDir> <app> <max> <entry-spec>...
+sweep_dir() {
+    local label="$1" base="$2" app="$3" max="$4"; shift 4
+    local app_dir="${base}/${app}" paths=() spec entry
+
+    echo
+    echo "----- ${label}: ${app_dir}"
+    [[ -d "${app_dir}" ]] || { echo "does not exist, skipping"; return; }
+    clean_by_age "${app_dir}" "$@"
+
+    [[ "${max}" == off ]] && return
+    for spec in "$@"; do
+        IFS='|' read -r entry _ _ <<< "${spec}"
+        [[ -d "${app_dir}/${entry}" ]] && paths+=("${app_dir}/${entry}")
+    done
+    clean_by_size "${base}" "${max}" "${paths[@]}"
+}
+
+# Does the work of one sweep, writing to stdout.  The workarea goes first so its
+# short-lived files are reclaimed before the shared ones when both share a filesystem.
 sweep_body() {
-    local app="$1" work_paths=() shared_paths=() pf pd
+    local app="$1"
     echo
     echo "===== cleanup start -- app '${app}' -- $(date) ====="
     [[ "${DRY_RUN}" == true ]] && echo "DRY RUN -- nothing will be removed"
 
-    # First pass: expire by age.  Always runs.
-    clean_by_age "workarea" "${WORKAREA_DIR}" "${app}" "${WORKAREA_ENTRIES[@]}"
-    clean_by_age "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_WORKAREA_ENTRIES[@]}"
-
-    # Second pass: if still too full, reclaim least-recently-modified first, regardless of the max ages.
-    if ((PCT_FULL > 0 || SHARED_PCT_FULL > 0)); then
-        readarray -t work_paths   < <(entry_paths_of "${WORKAREA_DIR}" "${app}" "${WORKAREA_ENTRIES[@]}")
-        readarray -t shared_paths < <(entry_paths_of "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_WORKAREA_ENTRIES[@]}")
-        if same_fs "${WORKAREA_DIR}" "${SHARED_WORKAREA_DIR}"; then
-            # Same filesystem: sweep both base dirs as one pool, at the lower threshold.
-            pf="${PCT_FULL}"; pd="${PCT_RECLAIM}"
-            if ((SHARED_PCT_FULL > 0)) && ((PCT_FULL == 0 || SHARED_PCT_FULL < PCT_FULL)); then
-                pf="${SHARED_PCT_FULL}"; pd="${SHARED_PCT_RECLAIM}"
-            fi
-            if ((PCT_FULL != SHARED_PCT_FULL || PCT_RECLAIM != SHARED_PCT_RECLAIM)); then
-                echo "note: both base dirs are on one filesystem; using the stricter" \
-                     "${pf}%/${pd}% and ignoring the other setting"
-            fi
-            clean_by_pct_full "both work areas (one filesystem)" "${WORKAREA_DIR}" "${pf}" "${pd}" \
-                              "${work_paths[@]}" "${shared_paths[@]}"
-        else
-            if ((PCT_FULL > 0)); then
-                clean_by_pct_full "workarea: ${WORKAREA_DIR}/${app}" "${WORKAREA_DIR}" \
-                                  "${PCT_FULL}" "${PCT_RECLAIM}" "${work_paths[@]}"
-            fi
-            if ((SHARED_PCT_FULL > 0)); then
-                clean_by_pct_full "shared-workarea: ${SHARED_WORKAREA_DIR}/${app}" "${SHARED_WORKAREA_DIR}" \
-                                  "${SHARED_PCT_FULL}" "${SHARED_PCT_RECLAIM}" "${shared_paths[@]}"
-            fi
-        fi
+    if [[ "${DO_WORKAREA}" == true ]]; then
+        sweep_dir "workarea" "${WORKAREA_DIR}" "${app}" "${WORKAREA_MAX}" "${WORKAREA_ENTRIES[@]}"
+    fi
+    if [[ "${DO_SHARED}" == true ]]; then
+        sweep_dir "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_MAX}" \
+                  "${SHARED_WORKAREA_ENTRIES[@]}"
     fi
 
     echo
     echo "===== cleanup done -- $(date) ====="
 }
 
-# One pass over both base dirs, appended to today's log, or to stdout if that fails.
-sweep() {
+# One sweep, appended to today's log, or to stdout if that fails.
+sweep_to_log() {
     local app="$1" log_dir="${LOG_ROOT}/${app}" log_file
 
     log_file="${log_dir}/cleanup.$(date +%Y%m%d).log"
@@ -353,48 +437,65 @@ sweep() {
 }
 
 # ------------------------------------------------------------------------------------
-# Resolve settings once, report them, then loop
+# Resolve settings once, report them, then sweep
 # ------------------------------------------------------------------------------------
 
-readonly LOG_KEEP=$(int_setting CLEANUP_LOG_KEEP 7 1 1000)
-readonly DRY_RUN=$(bool_setting CLEANUP_DRY_RUN false)
+# Resolve CLEANUP_INTERVAL: how often a sweep runs.
+readonly DEFAULT_INTERVAL=1h
+INTERVAL="${CLEANUP_INTERVAL:-${DEFAULT_INTERVAL}}"
+if ! [[ "${INTERVAL}" =~ ^[0-9]+[mhd]$ ]]; then
+    warn "CLEANUP_INTERVAL='${INTERVAL}' is not valid (use <n>m, <n>h or <n>d);" \
+         "using ${DEFAULT_INTERVAL}"
+    INTERVAL="${DEFAULT_INTERVAL}"
+fi
+readonly INTERVAL
 
-readonly PCT_FULL=$(int_setting CLEANUP_PCT_FULL 85 0 99)
-readonly PCT_RECLAIM=$(int_setting CLEANUP_PCT_RECLAIM 5 1 99)
-# shared-workarea may sit on its own volume, where df measures only this app's quota
-readonly SHARED_PCT_FULL=$(int_setting CLEANUP_SHARED_PCT_FULL "${PCT_FULL}" 0 99)
-readonly SHARED_PCT_RECLAIM=$(int_setting CLEANUP_SHARED_PCT_RECLAIM "${PCT_RECLAIM}" 1 99)
+read -r TARGETS DO_WORKAREA DO_SHARED <<< "$(targets_setting)"
+readonly TARGETS DO_WORKAREA DO_SHARED
+if [[ "${DO_WORKAREA}" == true ]]; then
+    age_settings "${WORKAREA_ENTRIES[@]}"
+    readonly WORKAREA_MAX=$(max_setting CLEANUP_WORKAREA_MAX)
+fi
+if [[ "${DO_SHARED}" == true ]]; then
+    age_settings "${SHARED_WORKAREA_ENTRIES[@]}"
+    readonly SHARED_MAX=$(max_setting CLEANUP_SHARED_MAX)
+fi
 
-
-
-# Prints each distinct resolved age setting from the entry tables.
-describe_ages() {
-    local spec entry env_var default seen=""
-    for spec in "${WORKAREA_ENTRIES[@]}" "${SHARED_WORKAREA_ENTRIES[@]}"; do
-        IFS='|' read -r entry env_var default <<< "${spec}"
-        [[ " ${seen} " == *" ${env_var} "* ]] && continue   # several entries share one
-        seen+=" ${env_var}"
-        printf 'Cleanup:   %s=%s\n' "${env_var}" "${!env_var:-${default}}"
-    done
-}
-
+if [[ "${ONCE}" == true ]]; then mode="once"; else mode="every ${INTERVAL}"; fi
+[[ "${DRY_RUN}" == true ]] && mode+=", dry run"
 echo "Cleanup: started with:"
 printf 'Cleanup:   %s\n' \
-    "CLEANUP_APP_NAME=${CLEANUP_APP_NAME:-}" \
-    "CLEANUP_INTERVAL=${INTERVAL}" \
-    "CLEANUP_LOG_KEEP=${LOG_KEEP}" \
-    "CLEANUP_DRY_RUN=${DRY_RUN}"
-describe_ages
-printf 'Cleanup:   %s\n' \
-    "CLEANUP_PCT_FULL=${PCT_FULL}" \
-    "CLEANUP_PCT_RECLAIM=${PCT_RECLAIM}" \
-    "CLEANUP_SHARED_PCT_FULL=${SHARED_PCT_FULL}" \
-    "CLEANUP_SHARED_PCT_RECLAIM=${SHARED_PCT_RECLAIM}"
+    "mode=${mode}" \
+    "CLEANUP_TARGETS=${TARGETS}" \
+    "CLEANUP_APP_NAME=${CLEANUP_APP_NAME:-auto}"
+if [[ "${DO_WORKAREA}" == true ]]; then
+    describe_ages "${WORKAREA_ENTRIES[@]}"
+    printf 'Cleanup:   %s\n' "CLEANUP_WORKAREA_MAX=$(describe_max "${WORKAREA_MAX}")"
+fi
+if [[ "${DO_SHARED}" == true ]]; then
+    describe_ages "${SHARED_WORKAREA_ENTRIES[@]}"
+    printf 'Cleanup:   %s\n' "CLEANUP_SHARED_MAX=$(describe_max "${SHARED_MAX}")"
+fi
+
+if [[ "${DO_WORKAREA}" != true && "${DO_SHARED}" != true ]]; then
+    echo "Cleanup: no targets; nothing to do"
+    exit 0
+fi
+
+if [[ "${ONCE}" == true ]]; then
+    app=$(resolve_app_name)
+    case $? in
+        0) sweep_body "${app}" ;;
+        2) ;;                       # nothing to clean yet
+        *) exit 1 ;;
+    esac
+    exit 0
+fi
 
 sleep 30    # give the app time to create its work area before the first sweep
 
 while true; do
     # re-resolve every sweep: the app dir may not exist yet at container start
-    if app=$(resolve_app_name); then sweep "${app}"; fi
+    if app=$(resolve_app_name); then sweep_to_log "${app}"; fi
     sleep "${INTERVAL}"
 done
