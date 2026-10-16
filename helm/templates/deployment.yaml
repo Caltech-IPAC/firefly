@@ -51,6 +51,11 @@ spec:
             - name: PROPS_redis__host
               value: {{ include "firefly.redisName" . }}
             {{- end }}
+            {{- if include "firefly.multiReplica" . }}
+            # the shared work area is cleaned by the cleanup CronJob
+            - name: CLEANUP_TARGETS
+              value: workarea
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
