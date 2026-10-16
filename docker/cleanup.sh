@@ -10,13 +10,14 @@
 #               a Kubernetes CronJob.  Exits 1 when the sweep cannot run.
 #   --dry-run   log what would be removed, remove nothing.
 #
-# Each base dir holds one sub-directory per application, e.g.
-#     /firefly/workarea/<app>/temp_files
+# An app has two work areas, each a dir named after the app:
+#     workarea          /firefly/workarea/<app>           this container's own files
+#     shared workarea   /firefly/shared-workarea/<app>    files shared by all replicas
 # where <app> is the simple name of the application; see CLEANUP_APP_NAME.
-# Each targeted base dir gets two passes per sweep, workarea first:
+# Each targeted work area gets two passes per sweep, workarea first:
 #
 #   age pass     Each entry has a maximum age; files not *modified* within it are removed.
-#   size pass    Only when the base dir's MAX is set.  When usage is at or above it, ages
+#   size pass    Only when the work area's MAX is set.  When usage is at or above it, ages
 #                are ignored and the oldest files are removed until usage is down to
 #                90% of MAX.
 #
@@ -26,35 +27,34 @@
 #   Name                   Default  Description
 #   ---------------------  -------  ---------------------------------------------------
 #   CLEANUP_INTERVAL       1h       how often a sweep runs; ignored with --once
-#   CLEANUP_TARGETS        all      base dirs to sweep: all, workarea, shared or none.
+#   CLEANUP_TARGETS        all      work areas to sweep: all, workarea, shared or none.
 #                                   Use workarea in app containers when one other
-#                                   process (e.g. a CronJob) sweeps the shared-workarea.
-#   CLEANUP_APP_NAME       auto     app dir to sweep under the base dirs.  Unset uses the
-#                                   first dir under the workarea; required when
+#                                   process (e.g. a CronJob) sweeps the shared workarea.
+#   CLEANUP_APP_NAME       auto     the app, i.e. the work area dir name.  Unset uses the
+#                                   first dir under /firefly/workarea; required when
 #                                   CLEANUP_TARGETS=shared.
 #
 #   age pass -- maximum age per group of entries
 #   CLEANUP_AGE_WORKAREA   1h       workarea: temp_files, perm_files, visualize/*
 #   CLEANUP_AGE_HIPS       90d      workarea: HiPS
-#   CLEANUP_AGE_SHARED     7d       shared-workarea: stage, upload
+#   CLEANUP_AGE_SHARED     7d       shared workarea: stage, upload
 #
-#   size pass -- the most a base dir may use; unset or empty means no size pass
+#   size pass -- a usage limit per work area; unset or empty means no size pass
 #   CLEANUP_WORKAREA_MAX   unset    workarea
-#   CLEANUP_SHARED_MAX     unset    shared-workarea
+#   CLEANUP_SHARED_MAX     unset    shared workarea
 #
 # Ages are <n>m, <n>h or <n>d (minutes, hours, days).
 # A MAX is one of:
-#   <n>%     1-99, percent of the base dir's filesystem in use, as df's Use% reports it.
+#   <n>%     1-99, percent of the work area's filesystem in use, as df's Use% reports it.
 #            Counts everything on that filesystem; best when the volume is dedicated.
 #   <size>   <n>K, <n>M, <n>G or <n>T, binary (1G = 1024M); Kubernetes' Ki/Mi/Gi/Ti also
-#            work.  Measured with du of the whole base dir (every app's files), so it
-#            suits a volume shared with other data.  The filesystem itself is not checked.
+#            work.  Measured with du of the work area. Use <n>% to keep the volume itself from filling.
 # An invalid age falls back to its default, and an invalid MAX to no size pass, with a warning.
 #
 # Notes:
 #   - Age is modification time.
-#   - Only the entries listed below are ever touched, and only under this app's dir;
-#     anything else under a base dir is left alone, in both passes.
+#   - Only the entries listed below are ever touched; anything else in a work area, and
+#     anything outside the app's work areas, is left alone, in both passes.
 #   - Files may live up to CLEANUP_INTERVAL longer than their configured age, since they
 #     only expire when a sweep runs.
 #
@@ -104,7 +104,7 @@ printf '' | sort -z >/dev/null 2>&1        || require "GNU coreutils (sort -z)"
 date -d @0 >/dev/null 2>&1                 || require "GNU coreutils (date -d)"
 
 # ------------------------------------------------------------------------------------
-# Base dir definitions.  Entries are "<path relative to an app dir>|<env var>|<default>"
+# Work area definitions.  Entries are "<path relative to the work area>|<env var>|<default>"
 # ------------------------------------------------------------------------------------
 readonly WORKAREA_DIR=/firefly/workarea
 readonly WORKAREA_ENTRIES=(
@@ -313,10 +313,10 @@ clean_by_age() {
 # Pass 2: size -- ignore ages, remove the oldest files until usage is under the max
 # ------------------------------------------------------------------------------------
 
-# clean_by_size <baseDir> <max> <path>...
-# A "pct" max is df of baseDir's filesystem; a "kb" max is du of baseDir.
+# clean_by_size <appDir> <max> <path>...
+# A "pct" max is df of appDir's filesystem; a "kb" max is du of appDir.
 clean_by_size() {
-    local base_dir="$1" max="$2"; shift 2
+    local app_dir="$1" max="$2"; shift 2
     local paths=("$@")
     local mode value used_kb avail_kb max_kb target_kb need_kb freed_kb=0 removed=0
     local mtime kb path
@@ -325,26 +325,26 @@ clean_by_size() {
     echo
     if [[ "${mode}" == pct ]]; then
         # Use% as df reports it: used / (used + available), so reserved blocks count as full
-        read -r used_kb avail_kb < <(df -Pk "${base_dir}" 2>/dev/null | awk 'NR==2 {print $3, $4}')
+        read -r used_kb avail_kb < <(df -Pk "${app_dir}" 2>/dev/null | awk 'NR==2 {print $3, $4}')
         if ! [[ "${used_kb:-}" =~ ^[0-9]+$ && "${avail_kb:-}" =~ ^[0-9]+$ ]] ||
            ((used_kb + avail_kb == 0)); then
-            warn "cannot read disk usage for ${base_dir}; skipping the size pass"
+            warn "cannot read disk usage for ${app_dir}; skipping the size pass"
             return
         fi
         max_kb=$(((used_kb + avail_kb) * value / 100))
         target_kb=$((max_kb * CLEAN_TO_PCT / 100))
-        echo "Size pass (df of ${base_dir}): $((used_kb * 100 / (used_kb + avail_kb)))% used," \
+        echo "Size pass (df of ${app_dir}): $((used_kb * 100 / (used_kb + avail_kb)))% used," \
              "max ${value}%, cleans down to $((value * CLEAN_TO_PCT / 100))%"
     else
-        # the max covers the whole base dir, so count every app's files, not only this one's
-        used_kb=$(du -skx "${base_dir}" 2>/dev/null | awk '{print $1}')
+        # this app's own dir; other apps and data on the volume are not this app's to cap
+        used_kb=$(du -skx "${app_dir}" 2>/dev/null | awk '{print $1}')
         if ! [[ "${used_kb:-}" =~ ^[0-9]+$ ]]; then
-            warn "cannot read disk usage for ${base_dir}; skipping the size pass"
+            warn "cannot read disk usage for ${app_dir}; skipping the size pass"
             return
         fi
         max_kb="${value}"
         target_kb=$((max_kb * CLEAN_TO_PCT / 100))
-        echo "Size pass (du of ${base_dir}): ${used_kb} KB used, max ${max_kb} KB," \
+        echo "Size pass (du of ${app_dir}): ${used_kb} KB used, max ${max_kb} KB," \
              "cleans down to ${target_kb} KB"
     fi
     if ((used_kb < max_kb)); then
@@ -356,7 +356,7 @@ clean_by_size() {
     echo "Need to free ${need_kb} KB; removing oldest files first"
     echo
 
-    ((${#paths[@]})) || { warn "no entries exist under ${base_dir}; nothing can be freed"; return; }
+    ((${#paths[@]})) || { warn "no entries exist under ${app_dir}; nothing can be freed"; return; }
 
     # mtime <tab> size-in-KB <tab> path, NUL terminated, oldest first
     while IFS=$'\t' read -r -d '' mtime kb path; do
@@ -369,7 +369,7 @@ clean_by_size() {
 
     echo
     echo "Removed ${removed} files, freed ${freed_kb} KB of the ${need_kb} KB needed"
-    ((freed_kb < need_kb)) && warn "${base_dir} is still above its target: nothing left to remove"
+    ((freed_kb < need_kb)) && warn "${app_dir} is still above its target: nothing left to remove"
     [[ "${DRY_RUN}" == true ]] || prune_empty_dirs "${paths[@]}"
     return 0
 }
@@ -393,7 +393,7 @@ sweep_dir() {
         IFS='|' read -r entry _ _ <<< "${spec}"
         [[ -d "${app_dir}/${entry}" ]] && paths+=("${app_dir}/${entry}")
     done
-    clean_by_size "${base}" "${max}" "${paths[@]}"
+    clean_by_size "${app_dir}" "${max}" "${paths[@]}"
 }
 
 # Does the work of one sweep, writing to stdout.  The workarea goes first so its

@@ -161,7 +161,7 @@ Each pod runs `cleanup.sh`, which removes expired files from its work areas. Cle
 #### Multi-replica with this chart
 The pods share `sharedWorkDir`, so a CronJob (`<release>-cleanup`, on `cleanup.schedule`) cleans it once, and each pod cleans only its own `workDir`.
 
-The chart sets `CLEANUP_TARGETS` in the pods and the CronJob, and `CLEANUP_APP_NAME` (from `cleanup.appName`) in the CronJob, and fails to render if `env` sets either one. The pods find their app dir themselves. Other settings in `env` reach both, and each side ignores the ones it does not use. For example, to sweep the shared work area every 6 hours and cap it at 50Gi:
+The chart sets `CLEANUP_TARGETS` in the pods and the CronJob, and `CLEANUP_APP_NAME` (from `cleanup.appName`) in the CronJob, and fails to render if `env` sets either one. The pods find their app dir themselves. Other settings in `env` reach both, and each side ignores the ones it does not use. For example, to sweep the shared work area every 6 hours and cap the app's dir there at 50Gi:
 ```yaml
 cleanup:
   schedule: "0 */6 * * *"
