@@ -180,7 +180,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case ANY_REPLOT:
             if (!paused) {
-                const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
+                const makeActive= !isDefaultCoverageActive(getMultiViewRoot());
                 if (makeActive) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
             }
             zoomOnNextViewSizeChange= false;

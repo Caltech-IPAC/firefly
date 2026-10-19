@@ -1,8 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
 import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import {isUndefined} from 'lodash';
 import React, {useEffect, useState} from 'react';
@@ -17,7 +15,7 @@ import ExtractLineTool, {
     addLineDistAttributesToPlots, COLUMN_SELECTION, FREE_SELECTION, LINE_SELECTION
 } from '../../../drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from '../../../drawingLayers/ExtractPointsTool.js';
-import {callGetCubeDrillDownAry, callGetPointExtractionAry} from '../../../rpc/PlotServicesJson.js';
+import {callGetCubeDrillDownAry, callGetFileFlux, callGetPointExtractionAry} from '../../../rpc/PlotServicesJson.js';
 import {onTableLoaded} from '../../../tables/TableUtil.js';
 import CompleteButton from '../../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../../ui/DialogRootContainer.jsx';
@@ -29,34 +27,35 @@ import {CHART_RESIZE_DEBOUNCE, wrapResizeMonitor} from '../../../ui/ResizeMonito
 import {useFieldGroupValue, useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {ValidationField} from '../../../ui/ValidationField';
 import {intValidator} from '../../../util/Validate';
+import {Band} from '../../Band';
 import {CCUtil, CysConverter} from '../../CsysConverter.js';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchModifyCustomField} from '../../DrawLayerDispatch';
 import {getExtName, hasFloatingData} from '../../FitsHeaderUtil.js';
-import {dispatchAttributeChange, dispatchChangePointSelection, dispatchChangePrimePlot} from '../../ImagePlotDispatch';
+import {getHiPSFitsTileLocation, getHiPSNorderlevel, isHiPSFitsCube} from '../../HiPSUtil.js';
+import {
+    dispatchAttributeChange, dispatchChangeHiPS, dispatchChangePointSelection, dispatchChangePrimePlot
+} from '../../ImagePlotDispatch';
+import {STATUS_VALUE} from '../../MouseReadoutCntlr';
 import {PlotAttribute} from '../../PlotAttribute.js';
 import {
     convertHDUIdxToImageIdx, currentP, getCubePlaneFromWavelength, getDrawLayerByType, getHDU, getHDUIndex,
-    getCubePlaneIdx, getPlotViewAry, hasWCSProjection, hasWLInfo, isDrawLayerAttached, isCube, isMultiHDUFits,
-    primePlot
+    getCubePlaneIdx, getPlotViewAry, hasWCSProjection, hasWLInfo, isDrawLayerAttached, isCube,
+    primePlot, getPlotStateAry
 } from '../../PlotViewUtil.js';
 import {makeImagePt} from '../../Point';
 import {PLOT_IMAGE} from '../../VisConst';
 import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
+import {isHiPS, isImage} from '../../WebPlot.js';
 import {genPointChartData, genSliceChartData, genZAxisChartData, POINTS_CURVE_NUM} from './ExtractionChart.jsx';
-import {keepDataExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
+import {keepDataExtraction, keepHiPSPointExtraction, keepZAxisExtraction} from './ExtractionTable.jsx';
 import {
-    EXTRACT_DIALOG_ID, endExtraction, EXTRACT_END_ID, ZAXIS_POINT_SELECTION_ID
+    EXTRACT_DIALOG_ID, endExtraction, EXTRACT_END_ID, ZAXIS_POINT_SELECTION_ID, POINT_CHART_TITLE, makeHiPSLinePtAry,
+    makeHiPSLineExtractionTitle, makeExtractPtAry, makeLineExtractionTitle, CHART_ID, HIPS_APERTURE_NOTE, CUBE_WARNING,
+    SELECT_TYPE_TIP
 } from './ExtractionUIUtil';
 
-const CUBE_WARNING=`
-Values are taken directly from cube plane pixels without spatial interpolation, background subtraction, or PSF corrections. 
-This is a quick-look tool for exploration, not a research-ready product.
-`;
 
-const CHART_ID= 'extractionChart';
-
-const SELECT_TYPE_TIP= 'Choose mouse selection type: mouse line lock, mouse column lock or free selection';
 
 const exTypeCntl= {
     Z_AXIS: {
@@ -73,7 +72,6 @@ const exTypeCntl= {
     }
 
 };
-
 
 function enableDrawLayer(typeId) {
     const {pv}= currentP();
@@ -146,14 +144,19 @@ const combineIntOps= [
 ];
 
 
-function afterZAxisChartRedraw(imPt, pv, chart) {
+const canExtractZAxis= (plot) => (isImage(plot) && isCube(plot)) || isHiPSFitsCube(plot);
+
+function afterZAxisChartRedraw(imPt, inPv, chart) {
     chart.on('plotly_click', (ev) => {
         setTimeout( () => {
-            const plane= hasWLInfo(primePlot(pv)) ?
-                getCubePlaneFromWavelength(pv,ev.points[0].x,imPt) : ev.points[0].x-1;
-            const primeIdx= convertHDUIdxToImageIdx(pv, getHDUIndex(pv,primePlot(pv)), plane);
-            if (pv.primeIdx!==primeIdx) {
-                dispatchChangePrimePlot({plotId:pv.plotId,primeIdx});
+            const {pv,plot,plotId}= currentP(inPv.plotId);
+            const plane= hasWLInfo(plot) ? getCubePlaneFromWavelength(pv,ev.points[0].x,imPt) : ev.points[0].x-1;
+            if (isHiPSFitsCube(plot)) {
+                if (plane>-1 && plot.cubeIdx!==plane) dispatchChangeHiPS({plotId, cubeIdx:plane});
+            }
+            else {
+                const primeIdx= convertHDUIdxToImageIdx(pv, getHDUIndex(pv,plot), plane);
+                if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId,primeIdx});
             }
         },5);
     });
@@ -213,19 +216,6 @@ function ExtractionChart({plotlyDivStyle, plotlyData, plotlyLayout, afterRedraw,
 
 const ExtractionChartResizeable= wrapResizeMonitor(ExtractionChart,CHART_RESIZE_DEBOUNCE);
 
-function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
-    const plot= primePlot(pv);
-    let hduInfo= '';
-    let cubeInfo= '';
-    if (isMultiHDUFits(pv)) {
-        const extName= getExtName(plot);
-        hduInfo= (extName || ` HDU #${getHDU(plot)}`)  + ' - ';
-    }
-    if (getCubePlaneIdx(plot)>-1) {
-        cubeInfo= `Plane #${getCubePlaneIdx(plot)+1} - `;
-    }
-    return  `Line Extract Preview - ${hduInfo}${cubeInfo}(${x1},${y1}) to (${x2},${y2})`;
-}
 
 
 function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
@@ -234,41 +224,41 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [combineOp,setCombineOp]= useState(AVG);
     const [chartXAxis]= useState('imageX');
     const plot= primePlot(pv);
+    const hips= isHiPS(plot);
     const ptAry=plot?.attributes?.[PlotAttribute.PT_ARY] ??[];
-    const cc= CysConverter.make(plot);
-    const imPtAry= ptAry
-        .map( (pt) => cc?.getImageCoords(pt))
-        .map( (pt) => pt? makeImagePt(Math.trunc(pt.x), Math.trunc(pt.y)) : undefined)
-        .filter((pt) => pt);
+    const nOrder= hips ? getHiPSPointNorder(plot) : undefined;
+    const {foundPts, imPtAry, hipsTileLocAry, wptAry}= makeExtractPtAry(plot, ptAry, nOrder);
 
-    const {plotId,plotImageId}= plot ?? {};
-    const hduNum= getHDU(plot);
+    const {plotId,plotImageId,cubeIdx}= plot ?? {};
+    const hduNum= getHDU(plot); // not used for HiPS, the server uses the first image HDU of the tile
     const plane= getCubePlaneIdx(plot)>-1 ? getCubePlaneIdx(plot) : 0;
     const {x:chartX,y:chartY,chartXAxis:lastChartChartXAxis=chartXAxis,idx:chartIdx}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
     useEffect(() => {
         let active= true;
         const getData= async () => {
-            if (imPtAry && imPtAry.length && plot) {
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, pointSize, combineOp);
-                if (!active) return;
-                const chartTitle= 'Point Extract Preview';
-                let activeIdx= 0;
-                const key= lastChartChartXAxis==='imageX' ? 'x' : 'y';
-                if (plot.attributes[PlotAttribute.SELECT_ACTIVE_CHART_PT]) {
-                    activeIdx= imPtAry[chartIdx]?.[key]===chartX ? chartIdx : imPtAry.findIndex( (pt) => pt[key]===chartX);
-                    if (activeIdx<0) activeIdx= 0;
-                }
-                const chartData=
-                    genPointChartData(plot, dataAry,imPtAry, imPtAry[activeIdx][key], dataAry[activeIdx],
-                        pointSize,combineOp, chartTitle, chartXAxis, activeIdx);
-                setChartParams(chartData);
+            if (!foundPts) return;
+            const dataAry= await callGetPointExtractionAry(
+                {plot, hduNum, plane, ptAry:hips?hipsTileLocAry:imPtAry, ptSizeX:pointSize, ptSizeY:pointSize, combineOp});
+            if (!active) return;
+            const hipsUnits= hips ? await getHiPSPointUnits(pv, hipsTileLocAry[0], wptAry[0]) : '';
+            if (!active) return;
+            const chartPtAry= wptAry ?? imPtAry; // RA or Dec for HiPS or an image with a WCS, otherwise image x or y
+            let activeIdx= 0;
+            const key= lastChartChartXAxis==='imageX' ? 'x' : 'y';
+            if (plot.attributes[PlotAttribute.SELECT_ACTIVE_CHART_PT]) {
+                activeIdx= chartPtAry[chartIdx]?.[key]===chartX ? chartIdx : chartPtAry.findIndex( (pt) => pt[key]===chartX);
+                if (activeIdx<0) activeIdx= 0;
             }
+            const chartData=
+                genPointChartData(plot, dataAry,chartPtAry, chartPtAry[activeIdx][key], dataAry[activeIdx],
+                    pointSize,combineOp, POINT_CHART_TITLE, chartXAxis, activeIdx, hipsUnits);
+            setChartParams(chartData);
         };
         getData();
         return () => { active= false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[ptAry.length,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY,chartXAxis,chartIdx]);
+    },[ptAry.length,hduNum,plotId,plotImageId,cubeIdx,nOrder,pointSize,combineOp,chartX,chartY,chartXAxis,chartIdx]);
 
     return (
         <ExtractionPanelView {...{
@@ -279,13 +269,42 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 <div>
                     <Typography>Click on an image to extract a point, continue clicking to extract more points. </Typography>
                     {pvCnt>1 && <Typography {...{mt:3}}>Shift-click will change the selected image without extracting points. </Typography>}
+                    {hips && <Typography {...{mt:3, level:'body-sm'}}>{HIPS_APERTURE_NOTE}</Typography>}
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
-            callKeepExtraction: (save, doOverlay) =>
-                keepDataExtraction({pv,baseImPtAry:imPtAry,save,doOverlay,pointSize,combineOp})
+            callKeepExtraction: (save, doOverlay) => hips
+                ? keepHiPSPointExtraction({pv, hipsTileLocAry, hipsWptAry: wptAry, plane, pointSize, combineOp, save, doOverlay})
+                : keepDataExtraction({pv,baseImPtAry:imPtAry,save,doOverlay,pointSize,combineOp})
         }} /> );
 }
+
+/**
+ * get the flux units of the HiPS FITS tiles by doing a flux call on one point
+ * @param {PlotView} pv
+ * @param {{tileUrl:String, tilePt:ImagePt}} tileLoc - the FITS tile location of the point
+ * @param {WorldPt} wpt - the point
+ * @return {Promise<String>} the units, empty string if they can not be determined
+ */
+async function getHiPSPointUnits(pv, tileLoc, wpt) {
+    try {
+        const plot= primePlot(pv);
+        const result= await callGetFileFlux(getPlotStateAry(pv), tileLoc.tilePt, wpt, true, tileLoc.tileUrl, plot?.cubeIdx);
+        const fluxResult= result?.[Band.NO_BAND.key];
+        return fluxResult?.status===STATUS_VALUE ? (fluxResult.unit ?? '') : '';
+    } catch {
+        return '';
+    }
+}
+
+/**
+ * the norder of the HiPS FITS tiles to extract points from, FITS cube tiles only exist at hips_order,
+ * otherwise use the norder that is currently displayed
+ * @param {WebPlot} plot
+ * @return {number}
+ */
+const getHiPSPointNorder= (plot) =>
+    plot.hasFitsCube ? Number(plot.hipsProperties?.hips_order) : getHiPSNorderlevel(plot, true).norder;
 
 
 
@@ -297,7 +316,10 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
     const [axis,setAxis]= useState('x');
+    const [hipsLinePts,setHipsLinePts]= useState(undefined);
     const plot= primePlot(pv);
+    const hips= isHiPS(plot);
+    const hipsNorder= hips ? getHiPSPointNorder(plot) : undefined;
     const {pt0:pt1,pt1:pt2}=plot?.attributes?.[PlotAttribute.ACTIVE_DISTANCE] ?? {};
     const extractionData=plot?.attributes?.[PlotAttribute.EXTRACTION_DATA] ?? false;
     const cc= CysConverter.make(plot);
@@ -307,16 +329,41 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const y1= Math.trunc(ipt1?.y ?? 0);
     const x2= Math.trunc(ipt2?.x ?? 0);
     const y2= Math.trunc(ipt2?.y ?? 0);
-    const {plotId,plotImageId}= plot ?? {};
-    const hduNum= getHDU(plot);
+    const {plotId,plotImageId,cubeIdx}= plot ?? {};
+    const hduNum= getHDU(plot); // not used for HiPS, the server uses the first image HDU of the tile
     const plane= getCubePlaneIdx(plot)>-1 ? getCubePlaneIdx(plot) : 0;
     const {x:chartX,y:chartY}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
 
     useEffect(() => {
         let active= true;
+        const getHiPSData= async () => {
+            const {imPtAry:newImPtAry, hipsTileLocAry, hipsWptAry}= makeHiPSLinePtAry(plot, ipt1, ipt2, hipsNorder);
+            if (!newImPtAry.length) {
+                setImPtAry(undefined);
+                setHipsLinePts(undefined);
+                setChartParams({});
+                return;
+            }
+            const dataAry= await callGetPointExtractionAry(
+                {plot, hduNum, plane, ptAry:hipsTileLocAry, ptSizeX:pointSize, ptSizeY:pointSize, combineOp});
+            if (!active) return;
+            const hipsUnits= await getHiPSPointUnits(pv, hipsTileLocAry[0], hipsWptAry[0]);
+            if (!active) return;
+            const xOffAry= hipsWptAry.map( (wpt) => computeDistance(hipsWptAry[0],wpt)*3600);
+            const chartData= genSliceChartData(plot, xOffAry, dataAry, chartX, chartY, pointSize, combineOp,
+                makeHiPSLineExtractionTitle(plot, hipsWptAry), false, hipsUnits);
+            setChartParams(chartData);
+            setImPtAry(newImPtAry);
+            setHipsLinePts({hipsTileLocAry, hipsWptAry});
+        };
+
         const getData= async () => {
             if (ipt1 && ipt2 && plot) {
+                if (hips) {
+                    await getHiPSData();
+                    return;
+                }
                 const {dataWidth,dataHeight}= plot;
                 const {direction,axis:newAxis}= xLineData(ipt1,ipt2);
                 const newImPtAry= getLinePointAry(ipt1,ipt2)
@@ -330,7 +377,8 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
                 const pointSizeX= newAxis==='y' ? pointSize : 1;
                 const pointSizeY= newAxis==='x' ? pointSize : 1;
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSizeX, pointSizeY, combineOp);
+                const dataAry= await callGetPointExtractionAry(
+                    {plot, hduNum, plane, ptAry:newImPtAry, ptSizeX:pointSizeX, ptSizeY:pointSizeY, combineOp});
                 if (!active) return;
                 const chartTitle= makeLineExtractionTitle(pv,x1,y1,x2,y2);
                 const pt0= hasWCSProjection(plot) ? cc.getWorldCoords(newImPtAry[0]) : newImPtAry[0];
@@ -347,22 +395,25 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
         if (extractionData) void getData();
         return () => { active= false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY]);
+    },[x1,y1,x2,y2,hduNum,plotId,plotImageId,cubeIdx,hipsNorder,pointSize,combineOp,chartX,chartY]);
 
     const plotlyDataToUse= extractionData&&!helpWarning ? plotlyData : undefined;
+    let sizeType= axis==='y' ? SIZE_HORIZONTAL : SIZE_VERTICAL;
+    if (hips) sizeType= SIZE_SQUARE; // the tile pixels are not lined up with the line, so use a square aperture
 
     return (
         <ExtractionPanelView {...{
             pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
             plotlyDivStyle, plotlyData: plotlyDataToUse, plotlyLayout, hasFloatingData:hasFloatingData(plot),
-            sizeType: axis==='y'?SIZE_HORIZONTAL:SIZE_VERTICAL,
+            sizeType,
             startUpHelp: <LineStartUpHelp {...{helpWarning,plot,pvCnt}}/>,
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry),
-            callKeepExtraction: (save, doOverlay) =>
-                keepDataExtraction({pv,baseImPtAry:getLinePointAry(ipt1, ipt2),save,
+            callKeepExtraction: (save, doOverlay) => hips
+                ? keepHiPSPointExtraction({pv, ...hipsLinePts, plane, pointSize, combineOp, save, doOverlay, isLine:true})
+                : keepDataExtraction({pv,baseImPtAry:getLinePointAry(ipt1, ipt2),save,
                     doOverlay,axis,pointSize,combineOp, isLine:true})
         }}>
-            <LineExtractionType {...{plotlyData:plotlyDataToUse, plotId, selectionType}}/>
+            {!hips && <LineExtractionType {...{plotlyData:plotlyDataToUse, plotId, selectionType}}/>}
         </ExtractionPanelView>
     );
 }
@@ -371,26 +422,31 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 const CubeStartUpHelp= ({plot}) => (
     <Stack spacing={3}>
         <Typography >
-            {isCube(plot) ?
+            {canExtractZAxis(plot) ?
                 'Click on a pixel to extract data from all planes of the cube' :
                 'Please choose a cube to extract z-axis data'}
         </Typography>
         <Stack spacing={1}>
             <Divider orientation='horizontal'/>
-            {isCube(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
+            {canExtractZAxis(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
                 {CUBE_WARNING}
+            </Typography>}
+            {isHiPSFitsCube(plot) && <Typography {...{level:'body-sm', sx: {textAlign: 'left'} }}>
+                {HIPS_APERTURE_NOTE}
             </Typography>}
         </Stack>
     </Stack>
 );
+
 
 const LineStartUpHelp= ({helpWarning,plot,pvCnt}) => (
     <Stack alignItems='center'>
         <Typography {...{color: helpWarning?'warning':undefined, level:helpWarning?'h4':undefined}}>
             Draw line on image to extract point on line and show chart. </Typography>
         {pvCnt>1 && !helpWarning && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
-        {!helpWarning && <Typography pt={1} color='warning' size={'body-lg'}>OR</Typography>}
-        {!helpWarning && <Stack pt={1} spacing={1}>
+        {!helpWarning && isHiPS(plot) && <Typography {...{mt:3, level:'body-sm'}}>{HIPS_APERTURE_NOTE}</Typography>}
+        {!helpWarning && isImage(plot) && <Typography pt={1} color='warning' size={'body-lg'}>OR</Typography>}
+        {!helpWarning && isImage(plot) && <Stack pt={1} spacing={1}>
             <FieldGroup groupKey='extract-full-line' >
                 <ExtractWholeLine plot={plot}/>
             </FieldGroup>
@@ -559,32 +615,40 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const plot= primePlot(pv);
     const {pt}=plot?.attributes?.[PlotAttribute.ACTIVE_POINT] ?? {};
-    const ipt= CCUtil.getImageCoords(plot,pt);
+    const hipsCube= isHiPSFitsCube(plot);
+    const wpt= hipsCube ? CCUtil.getWorldCoords(plot,pt) : undefined;
+    const tileLoc= hipsCube
+        ? getHiPSFitsTileLocation(plot, wpt, Number(plot.hipsProperties?.hips_order))
+        : {};
+    const hipsTileUrl= hipsCube ? tileLoc.tileUrl : undefined;
+    const ipt= hipsCube ? tileLoc.tilePt : CCUtil.getImageCoords(plot,pt);
     const x= Math.trunc(ipt?.x ?? 0);
     const y= Math.trunc(ipt?.y ?? 0);
-    const {plotId,plotImageId}= plot ?? {};
-    const hduNum= getHDU(plot);
-    const extName= getExtName(plot);
+    const {plotId,plotImageId,cubeIdx}= plot ?? {};
+    const hduNum= getHDU(plot); // not used for HiPS, the server uses the first image HDU of the tile
+    const extName= hipsCube ? undefined : getExtName(plot);
 
     useEffect(() => {
         let active= true;
         const updateChart= async () => {
             if (ipt && plot) {
-                if (!isCube(plot)) {
+                if (!canExtractZAxis(plot)) {
                     setChartParams({});
                     return;
                 }
-                const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, combineOp);
+                const dataAry = await callGetCubeDrillDownAry( {plot, hduNum, ipt, pointSize, combineOp, hipsTileUrl});
                 if (!active) return;
                 const plane=getCubePlaneIdx(plot);
-                const chartTitle= `Z-Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
+                const chartTitle= hipsCube
+                    ? `Z-Axis Preview - Norder ${tileLoc.norder}, Npix ${tileLoc.ipix}, Point: (${x},${y})`
+                    : `Z-Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
                 setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, combineOp, chartTitle));
             }
         };
         void updateChart();
         return () => { active= false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[x,y,hduNum,plotId,pointSize,combineOp,plotImageId]);
+    },[x,y,hduNum,plotId,pointSize,combineOp,plotImageId,tileLoc.ipix,cubeIdx]);
 
     return (
         <ExtractionPanelView {...{
@@ -594,8 +658,9 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: <CubeStartUpHelp {...{plot}}/>,
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
             callKeepExtraction: (download, doOverlay) =>
-                keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(),
-                    hduNum, pointSize, combineOp, download,doOverlay),
+                keepZAxisExtraction(makeImagePt(x,y), pv, plot,
+                    hipsCube ? hipsTileUrl : plot?.plotState.getWorkingFitsFileStr(),
+                    hduNum, pointSize, combineOp, download,doOverlay, wpt),
         }} />
     );
 }
@@ -623,7 +688,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
         for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x${i}`, value:i});
     }
 
-    const canExtract = plotlyData && canCreateExtractionTable;
+    const canExtract = plotlyData && canCreateExtractionTable && callKeepExtraction;
 
     return (
         <Stack {...{p:.5, alignItems:'stretch', overflow: 'hidden', zIndex:1, direction:'column',
@@ -657,7 +722,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     {canExtract &&
                         <CompleteButton text= {allowPinnedCharts() ? 'Pin Chart/Table' : 'Pin Table'}
                                         onSuccess={ () => void keepExtractionAndPin(callKeepExtraction, allowPinnedCharts()) } />}
-                    {plotlyData &&
+                    {plotlyData && callKeepExtraction &&
                         <CompleteButton primary={false} text='Download as Table'
                                         onSuccess={()=> void callKeepExtraction(true,false)}/>}
                     {plotlyData &&

@@ -7,7 +7,7 @@ import java.io.Serializable;
  *
  */
 public record DirectFileAccess  (
-        int hduNumber, boolean cube, int cubeLength, int planeNumber,
+        String nameOrType, int hduNumber, boolean cube, int cubeLength, int naxis,
         long dataOffset, int bitpix, int naxis1, int naxis2, int naxis3, double cdelt2,
         String bunit, double bscale, double bzero, String blankValue, String origin, PalomarDirectMod palomar
 ) implements Serializable {

@@ -22,6 +22,7 @@ import nom.tam.fits.FitsException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -116,13 +117,12 @@ public class FITSExtractToTable {
         meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
     }
 
-    public static DataGroup getCubeZaxisAsTable(ImagePt pt, WorldPt wpt, String filename, int refHduNum,
+    public static DataGroup getCubeZaxisAsTable(ImagePt pt, WorldPt wpt, File f, int refHduNum,
                                                 boolean allMatchingHDUs, int ptSize,
                                                 FitsExtract.CombineType ct,
                                                 FitsExtract.SecondaryHduCombine secondaryCombine,
-                                                double[] wlAry, String wlUnit, Map<Integer,String> fluxUnit)
+                                                double[] wlAry, String wlUnit)
             throws IOException, FitsException {
-        File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllZAxisAryFromRelatedCubes(
                 pt, f, refHduNum, allMatchingHDUs, ptSize, ct, secondaryCombine);
         ArrayList<DataType> dataTypes = new ArrayList<>();
@@ -137,9 +137,8 @@ public class FITSExtractToTable {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
             desc= appendCombineType(desc,ptSize,ptSize,result.ct());
             String key= makeKeyByHDU(result);
-            String u= fluxUnit.get(result.hduNum());
             Class<?> dataType= getDataType(result.aryData());
-            DataType dt = new DataType(key,dataType, desc, u, null, null);
+            DataType dt = new DataType(key,dataType, desc, result.fluxUnits(), null, null);
             if (result.refHDU()) refKey= key;
 
             dataTypes.add(dt);
@@ -292,6 +291,133 @@ public class FITSExtractToTable {
 
         dataGroup.trimToSize();
         return dataGroup;
+    }
+
+
+    /**
+     * Make a table of the values at points or along a line from HiPS FITS tiles, each point can be in a different tile.
+     * Each tile is read once, and on its own, so an aperture near a tile edge is clipped to the pixels inside that tile.
+     * Like a FITS image, there is a column for every HDU in the tile that matches the
+     * reference HDU, the column data type matches the HDU data. A point whose tile can not be read, or that is a blank
+     * pixel, has a NaN value, or no value if the HDU data is an integer type.
+     * @param tileUrlAry the url of the FITS tile for each point, the file name is shown in the Tile column
+     * @param tileFileAry the FITS tile file for each point, null if the tile could not be retrieved
+     * @param tilePtAry the pixel in the tile for each point
+     * @param wptAry the world point of each point
+     * @param refHduNum the HDU of the tile to extract from, FitsExtract.FIRST_IMAGE_HDU for the first image HDU
+     * @param plane the cube plane, ignored if the tile is not a cube
+     * @param allMatchingHDUs if true, extract from every HDU that matches the reference HDU, otherwise just the reference HDU
+     * @param ptSizeX aperture width
+     * @param ptSizeY aperture height
+     * @param ct how to combine the values in the aperture
+     * @param secondaryCombine how to combine the values in the aperture for the HDUs that are not the reference HDU
+     * @param isLine if true the points are along a line, an offset column is added and used for the chart
+     * @return the table with the columns offset (line only), ra, dec, Tile, Tile X, Tile Y, and a column for each HDU
+     */
+    public static DataGroup getHiPSPointsAsTable(String[] tileUrlAry, File[] tileFileAry, ImagePt[] tilePtAry, WorldPt[] wptAry,
+                                                 int refHduNum, int plane, boolean allMatchingHDUs,
+                                                 int ptSizeX, int ptSizeY, FitsExtract.CombineType ct,
+                                                 FitsExtract.SecondaryHduCombine secondaryCombine, boolean isLine) {
+        int len= tilePtAry.length;
+        if (tileUrlAry.length!=len || tileFileAry.length!=len || wptAry.length!=len) {
+            throw new IllegalArgumentException("tileUrlAry, tileFileAry, tilePtAry, and wptAry must be the same length");
+        }
+        Map<File,List<Integer>> ptIdxByFile= new LinkedHashMap<>();
+        for(int i=0; i<len; i++) {
+            if (tileFileAry[i]!=null) ptIdxByFile.computeIfAbsent(tileFileAry[i], (k) -> new ArrayList<>()).add(i);
+        }
+
+        List<FitsExtract.ExtractionResults> hduResults= null; // the HDUs of the first tile that is read, used for the columns
+        Map<Integer,Number[]> valuesByHdu= new LinkedHashMap<>();
+        for(var entry : ptIdxByFile.entrySet()) {
+            List<Integer> idxList= entry.getValue();
+            ImagePt[] pts= idxList.stream().map( (i) -> tilePtAry[i]).toArray(ImagePt[]::new);
+            try {
+                var results= FitsExtract.getAllPointsFromRelatedHDUs(pts, entry.getKey(), refHduNum, plane,
+                        allMatchingHDUs, ptSizeX, ptSizeY, ct, secondaryCombine);
+                if (hduResults==null) hduResults= results;
+                for(var result : results) {
+                    Number[] values= valuesByHdu.computeIfAbsent(result.hduNum(), (k) -> new Number[len]);
+                    for(int j=0; j<idxList.size(); j++) values[idxList.get(j)]= result.aryData().get(j);
+                }
+            } catch (IOException | FitsException ignore) {
+                // leave the values for this tile as null
+            }
+        }
+        if (hduResults==null) throw new IllegalArgumentException("Could not read any of the HiPS FITS tiles");
+
+        List<DataType> dataTypes= new ArrayList<>();
+        if (isLine) dataTypes.add(new DataType("offset", Double.class, "offset", "arcsec", null, null));
+        dataTypes.add(new DataType("ra",Double.class, "ra", "deg", null, null));
+        dataTypes.add(new DataType("dec",Double.class, "dec","deg", null, null ));
+        dataTypes.add(new DataType("tile", String.class, "Tile", null, null, null));
+        dataTypes.add(new DataType("tileX", Integer.class, "Tile X", "pixel", null, null));
+        dataTypes.add(new DataType("tileY", Integer.class, "Tile Y", "pixel", null, null));
+        String refKey= null;
+        for(var result : hduResults) {
+            String key= makeKeyByHDU(result,null,plane);
+            String planeStr= FitsReadUtil.getNaxis3(result.header())>1 ? "/"+(plane+1) : "";
+            String desc= result.extName()!=null ? result.extName()+planeStr : "HDU# "+result.hduNum()+planeStr;
+            desc= appendCombineType(desc,ptSizeX,ptSizeY,result.ct());
+            dataTypes.add(new DataType(key, getDataType(result.aryData()), desc, result.fluxUnits(), null, null));
+            if (result.refHDU()) refKey= key;
+        }
+
+        DataGroup dataGroup = new DataGroup("HiPS points extract", dataTypes);
+        for (int i = 0; (i < len); i++) {
+            DataObject aRow = new DataObject(dataGroup);
+            if (isLine) aRow.setDataElement("offset",rnd(VisUtil.computeDistance(wptAry[0],wptAry[i])*3600,3));
+            aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
+            aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
+            aRow.setDataElement("tile",getTileFileName(tileUrlAry[i]));
+            aRow.setDataElement("tileX",(int)tilePtAry[i].getX());
+            aRow.setDataElement("tileY",(int)tilePtAry[i].getY());
+            for(var result : hduResults) {
+                DataType dt= dataGroup.getDataDefintion(makeKeyByHDU(result,null,plane));
+                Class<?> type= dt.getDataType();
+                Number value= valuesByHdu.get(result.hduNum())[i];
+                boolean hasValue= value!=null && !Double.isNaN(value.doubleValue());
+                if (hasValue) aRow.setDataElement(dt, toColumnType(value, type));
+                else if (type==Float.class) aRow.setDataElement(dt, Float.NaN);
+                else if (type==Double.class) aRow.setDataElement(dt, Double.NaN);
+                // an integer column has no value for a point whose tile could not be read or that is a blank pixel
+            }
+            dataGroup.add(aRow);
+        }
+
+        TableMeta meta= dataGroup.getTableMeta();
+        meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(hduResults));
+        if (plane>0) meta.addKeyword(MetaConst.FITS_IMAGE_HDU_CUBE_PLANE, plane+"");
+        meta.addKeyword(MetaConst.CENTER_COLUMN, "ra;dec;J2000");
+        meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, isLine ? "line" : "points");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, isLine ? "offset" : "ra");
+        if (refKey!=null) meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, refKey);
+        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+        dataGroup.trimToSize();
+        return dataGroup;
+    }
+
+    /**
+     * @param value the value
+     * @param type the data type of the column
+     * @return the value converted to the data type of the column
+     */
+    private static Object toColumnType(Number value, Class<?> type) {
+        if (type==Integer.class) return value.intValue();
+        if (type==Long.class) return value.longValue();
+        if (type==Float.class) return value.floatValue();
+        if (type==Double.class) return value.doubleValue();
+        return value;
+    }
+
+    /**
+     * @param tileUrl the url of a HiPS tile
+     * @return the file name part of the url, such as Npix1234.fits
+     */
+    private static String getTileFileName(String tileUrl) {
+        if (tileUrl==null) return "";
+        String path= tileUrl.replaceFirst("[?#].*$", "");
+        return path.substring(path.lastIndexOf('/')+1);
     }
 
 

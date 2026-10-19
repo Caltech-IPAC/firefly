@@ -444,6 +444,23 @@ public class FitsReadUtil {
 
     public static String getBUnit(Header h) { return getBUnit(h,""); }
     public static String getBUnit(Header h, String def) { return h.getStringValue(Standard.BUNIT, def); }
+
+    /**
+     * Get the flux units of an image HDU. Use BUNIT, if not defined then use the BUNIT of the primary HDU
+     * @param h the header of the image HDU
+     * @param zeroHeader the header of the primary HDU, may be null
+     * @return the flux units, "---" if not defined
+     */
+    public static String getFluxUnits(Header h, Header zeroHeader) {
+        String bunit= getBUnit(h,null);
+        if (bunit==null || bunit.equalsIgnoreCase("null")) {
+            bunit= zeroHeader!=null ? getBUnit(zeroHeader,"---") : "---";
+        }
+        if (bunit.startsWith("HITS")) return "frames";
+        if (h.getStringValue(ImageHeader.ORIGIN,"").startsWith(ImageHeader.PALOMAR_ID)) return "mag";
+        return bunit;
+    }
+
     public static String getExtName(Header h) { return h.getStringValue(Standard.EXTNAME); }
     public static String getExtType(Header h, String defVal) { return h.getStringValue(EXTTYPE,defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }

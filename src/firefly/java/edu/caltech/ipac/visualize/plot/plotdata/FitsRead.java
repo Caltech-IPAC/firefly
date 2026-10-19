@@ -294,10 +294,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     }
 
     public String getFluxUnits() {
-        String bunit = getBUnit();
-        if (bunit.startsWith("HITS")) return "frames";
-        if (getOrigin().startsWith(ImageHeader.PALOMAR_ID)) return "mag";
-        return bunit;
+        return FitsReadUtil.getFluxUnits(header, zeroHeader);
     }
 
     public boolean hasHdu() { return hdu!=null;}

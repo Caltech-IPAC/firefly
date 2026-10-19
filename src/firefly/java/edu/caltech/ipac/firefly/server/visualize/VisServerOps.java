@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.servlets.HiPSRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
@@ -47,7 +48,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,33 +136,61 @@ public class VisServerOps {
 
     private interface Extractor { List<Number> getData(File fitsFile) throws Exception; }
 
-    private static List<Number> getDataAry(String desc, PlotState state, Extractor extractor) {
+    private static List<Number> getDataAry(String desc, File fitsFile, Extractor extractor) {
+        if (fitsFile==null) return Collections.emptyList();
         try {
-            CtxControl.confirmFiles(state);
             PlotServUtils.statsLog(desc);
-            File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
             return extractor.getData(fitsFile);
         } catch (Exception e) {
             return Collections.emptyList();
         }
-
     }
-    public static List<Number> getZAxisAry(PlotState state, ImagePt pt, int hduNum,
+
+    public static List<Number> getZAxisAry(File fitsFile, ImagePt pt, int hduNum,
                                            int ptSize, FitsExtract.CombineType ct) {
-        return getDataAry("z-axis drilldown", state,
+        return getDataAry("z-axis drilldown", fitsFile,
                 (f) -> FitsExtract.getZAxisAryFromCube(pt, f, hduNum, ptSize, ct));
     }
 
-    public static List<Number> getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum,
+    public static List<Number> getLineDataAry(File fitsFile, ImagePt pt, ImagePt pt2, int plane, int hduNum,
                                               int drillSize, FitsExtract.CombineType ct) {
-        return getDataAry("point data", state,
+        return getDataAry("line data", fitsFile,
                 (f) -> FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, drillSize, ct));
     }
 
-    public static List<Number> getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum,
+    public static List<Number> getPointDataAry(File fitsFile, ImagePt[] ptAry, int plane, int hduNum,
                                                int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
-        return getDataAry("line data", state,
+        return getDataAry("point data", fitsFile,
                 (f) -> FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, ptSizeX, ptSizeY, ct));
+    }
+
+    /**
+     * Get the values at points from HiPS FITS tiles, each point can be in a different tile.
+     * Each tile is retrieved once, and the values are returned in the same order as the points.
+     * Each tile is read on its own, so an aperture near a tile edge is clipped to the pixels inside that tile.
+     * @param tileUrlAry the url of the HiPS FITS tile for each point, same length as ptAry
+     * @param ptAry the pixel in the tile for each point
+     * @param hduNum the HDU of the tile to extract from, FitsExtract.FIRST_IMAGE_HDU for the first image HDU
+     * @param plane the cube plane, ignored if the tile is not a cube
+     * @param ptSizeX aperture width
+     * @param ptSizeY aperture height
+     * @param ct how to combine the values in the aperture
+     * @return a value for each point, NaN for a point whose tile could not be read
+     */
+    public static List<Number> getHiPSPointDataAry(String[] tileUrlAry, ImagePt[] ptAry, int hduNum, int plane,
+                                                   int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
+        if (tileUrlAry==null || ptAry==null || tileUrlAry.length!=ptAry.length) return Collections.emptyList();
+        Number[] retAry= new Number[ptAry.length];
+        Arrays.fill(retAry, Double.NaN);
+        Map<String,List<Integer>> ptIdxByUrl= new LinkedHashMap<>();
+        for(int i=0; i<tileUrlAry.length; i++) ptIdxByUrl.computeIfAbsent(tileUrlAry[i], (k) -> new ArrayList<>()).add(i);
+        ptIdxByUrl.forEach( (url,idxList) -> {
+            ImagePt[] tilePtAry= idxList.stream().map( (i) -> ptAry[i]).toArray(ImagePt[]::new);
+            List<Number> values= getPointDataAry(HiPSRetrieve.getHiPSFitsTileFile(url), tilePtAry, plane, hduNum,
+                    ptSizeX, ptSizeY, ct);
+            for(int j=0; j<values.size() && j<idxList.size(); j++) retAry[idxList.get(j)]= values.get(j);
+        });
+        return Arrays.asList(retAry);
     }
 
 

@@ -249,7 +249,9 @@ public class FitsCacher {
         var blankVal= FitsReadUtil.getBlankValue(h);
         var blankValStr= Double.isNaN(blankVal) ? "" : blankVal+"";
         return new DirectFileAccess(
-                fr.getHduNumber(), fr.isCube(), FitsReadUtil.getNaxis3(h), -1, dataOffset, h.getIntValue(SPOT_BP),
+                FitsReadUtil.getExtNameOrType(h),
+                fr.getHduNumber(), fr.isCube(), FitsReadUtil.getNaxis3(h), FitsReadUtil.getNaxis(h),
+                dataOffset, h.getIntValue(SPOT_BP),
                 FitsReadUtil.getNaxis1(h), FitsReadUtil.getNaxis2(h), FitsReadUtil.getNaxis3(h),
                 FitsReadUtil.getCdelt2(h), FitsReadUtil.getBUnit(h,"---"),
                 FitsReadUtil.getBscale(h), FitsReadUtil.getBzero(h),
