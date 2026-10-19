@@ -1,0 +1,61 @@
+{{- if include "firefly.multiReplica" . }}
+{{/*
+In multi-replica mode the pods share sharedWorkDir, so one CronJob cleans it instead of
+every pod.  The pods clean only their own work area (CLEANUP_TARGETS=workarea).
+*/}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "firefly.fullname" . }}-cleanup
+  labels:
+    {{- include "firefly.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cleanup
+spec:
+  schedule: {{ .Values.cleanup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            # not firefly.selectorLabels: these pods must not receive Service traffic
+            app.kubernetes.io/instance: {{ .Release.Name }}
+            app.kubernetes.io/component: cleanup
+        spec:
+          restartPolicy: Never
+          {{- if .Values.serviceAccount.create }}
+          serviceAccountName: {{ .Values.serviceAccount.name | default (include "firefly.fullname" .) }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: cleanup
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["/usr/local/tomcat/cleanup.sh", "--once"]
+              env:
+                - name: CLEANUP_TARGETS
+                  value: shared
+                - name: CLEANUP_APP_NAME
+                  value: {{ .Values.cleanup.appName | quote }}
+                {{- with .Values.env }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+              resources:
+                {{- toYaml .Values.cleanup.resources | nindent 16 }}
+              volumeMounts:
+                - name: shared-work-dir
+                  mountPath: /firefly/shared-workarea
+          volumes:
+            # firefly.validate guarantees a sharedWorkDir PVC in multi-replica mode
+            - name: shared-work-dir
+              persistentVolumeClaim:
+                claimName: {{ .Values.persistence.sharedWorkDir.existingClaim | default (printf "%s-shared-work" (include "firefly.fullname" .)) }}
+{{- end }}

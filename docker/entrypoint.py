@@ -373,15 +373,16 @@ def main():
         elif arg == "--dry-run":
             dry_run(cmd, webapps)
 
-    # Start background cleanup
-    cleanup = subprocess.Popen([f"{catalina_home}/cleanup.sh"])
-    time.sleep(1)
-    if cleanup.poll() is not None:
-        print(
-            f"WARNING: cleanup.sh exited immediately (status {cleanup.returncode})",
-            file=sys.stderr,
-            flush=True,
-        )
+    # Start background cleanup, unless another process (e.g. a CronJob) owns it
+    if os.environ.get("CLEANUP_TARGETS", "all").strip().lower() != "none":
+        cleanup = subprocess.Popen([f"{catalina_home}/cleanup.sh"])
+        time.sleep(1)
+        if cleanup.poll() is not None:
+            print(
+                f"WARNING: cleanup.sh exited immediately (status {cleanup.returncode})",
+                file=sys.stderr,
+                flush=True,
+            )
 
     # Start Tomcat; Replace the current process with Tomcat
     print("Starting Tomcat...")

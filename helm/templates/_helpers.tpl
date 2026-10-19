@@ -36,4 +36,11 @@ Validates chart values. Call this from deployment.yaml to catch misconfiguration
 {{- if and (include "firefly.multiReplica" .) (not .Values.persistence.sharedWorkDir.pvc) (not .Values.persistence.sharedWorkDir.existingClaim) }}
 {{- fail "persistence.sharedWorkDir must be configured (pvc or existingClaim) in multi-replica mode (replicaCount > 1 or autoscaling.enabled). Use ReadWriteMany accessMode." }}
 {{- end }}
+{{- if include "firefly.multiReplica" . }}
+{{- range .Values.env }}
+{{- if has .name (list "CLEANUP_TARGETS" "CLEANUP_APP_NAME") }}
+{{- fail (printf "env: %s is set by the chart in multi-replica mode (pods sweep the workarea, the cleanup CronJob sweeps the shared work area); use cleanup.appName for the app dir" .name) }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

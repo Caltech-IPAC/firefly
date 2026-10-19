@@ -97,6 +97,23 @@ redis:
   # -- Redis persistence. Falls back to sharedWorkDir PVC if configured, otherwise emptyDir.
   persistence: {}
 
+cleanup:
+  # -- App dir name under the shared work area, passed to the cleanup CronJob as
+  # CLEANUP_APP_NAME. The pods find their app dir themselves. Override only for an app
+  # built on the Firefly image.
+  appName: firefly
+  # -- Schedule of the CronJob that cleans the shared work area. The CronJob is created
+  # in multi-replica mode only; each pod then cleans just its own work area.
+  # Cleanup settings (CLEANUP_*) go in `env` and apply to both.
+  schedule: "0 * * * *"
+  # -- CronJob resource requests and limits.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
 autoscaling:
   # -- Enable horizontal pod autoscaling. When enabled, Redis is automatically deployed
   # and session affinity annotations are injected into the ingress.
