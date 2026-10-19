@@ -133,7 +133,7 @@ export class SimplePt {
     static make(x, y, type) {
         const pt = new SimplePt(x, y);
 
-        if (type && Object.keys(Point).includes(type)) {
+        if (type && Object.values(Point).includes(type)) {
             pt.type = type;
         }
         return pt;
@@ -391,7 +391,7 @@ export function makeAnyPt(x,y,coordSys) {
         case CoordinateSys.PIXEL:        return makeImagePt(x, y);
         case CoordinateSys.ZEROBASED:    return makeZeroBasedImagePt(x, y);
         case CoordinateSys.FITSPIXEL:    return makeFitsImagePt(x, y);
-        default:                         return makeWorldPt(x,y,coordSys,true);
+        default:                         return makeWorldPt(x,y,csys,true);
     }
 }
 

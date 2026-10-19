@@ -11,7 +11,7 @@ import {
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, PLOT_PROGRESS_UPDATE, POSITION_LOCKING, PROCESS_SCROLL, RECENTER,
     REQUEST_LOCAL_DATA, ROTATE, STRETCH_CHANGE, UPDATE_VIEW_SIZE, ZOOM_HIPS, ZOOM_IMAGE, ZOOM_LOCKING
 } from '../VisConst';
-import {getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from '../WebPlotAnalysis';
+import {getRotationAngle, isEastLeftOfNorth, isPlotNorth} from '../WebPlotAnalysis';
 import {RotateType} from '../PlotState';
 import {
     replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
@@ -33,7 +33,7 @@ import {
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
     getPlotViewById, findCurrentCenterPoint, getCenterOfProjection,
     isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle, isCube,
-    convertImageIdxToHDU, hasLocalStretchByteData
+    convertImageIdxToHDU, hasLocalStretchByteData, isEastDisplayedLeft
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
@@ -452,14 +452,8 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     const plot= primePlot(pv);
     if (!masterPlot || !plot) return pv;
     if (getRotationAngle(masterPlot)!==getRotationAngle(plot)) rotateNorthLock= false;
-    const csysDirMatching= isCsysDirMatching(plot,masterPlot);
-    let rotation= getMatchingRotationAngle(masterPv,pv);
-    if (isEastLeftOfNorth(masterPlot)) {
-        rotation= csysDirMatching ? 360-rotation :360+rotation;
-    }
-    else {
-        rotation= csysDirMatching ? 360+rotation :360-rotation;
-    }
+    const angle= getMatchingRotationAngle(masterPv,pv);
+    const rotation= isEastDisplayedLeft(pv,plot) ? 360-angle : angle; // same conversion as RotateType.ANGLE
     pv= {...pv, rotation, plotViewCtx: {...pv.plotViewCtx, rotateNorthLock}};
     return updateTransform(pv);
 }

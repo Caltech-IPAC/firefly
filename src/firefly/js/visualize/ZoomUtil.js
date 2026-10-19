@@ -95,8 +95,7 @@ export function getEstimatedFullZoomFactor(plot, viewDim, fullType) {
     let overrideFullType= fullType;
 
     if (plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {
-        const s= plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE];
-        if (FullType.has(s)) overrideFullType= FullType.get(s);
+        overrideFullType= FullType.get(plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) ?? fullType;
     }
     return getEstimatedFullZoomFactorDetails(overrideFullType, plot.dataWidth, plot.dataHeight,
                                               width,height, isHiPS(plot) && isHiPSAitoff(plot));

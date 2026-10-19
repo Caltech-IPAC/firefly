@@ -55,7 +55,7 @@ const getUnitType = (coordSys) => {
 };
 
 const getDim = (dim, coordSys, unit, toUnit) => {
-    return getUnitType() === ShapeDataObj.UnitType.IMAGE_PIXEL ? dim : convertAngle(unit, toUnit.key, Number(dim));
+    return getUnitType() === ShapeDataObj.UnitType.IMAGE_PIXEL ? dim : convertAngle(unit, toUnit.key, Number(dim), false);
 };
 
 

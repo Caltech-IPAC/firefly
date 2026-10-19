@@ -16,7 +16,7 @@ import {MouseState} from '../VisMouseSync.js';
 import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {getPixScale, getScreenPixScale, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {
-    getHealpixCellAtNorder, getHealpixPixelAtNorder, getPlotTilePixelAngSize, makeHipsFitsTilePath
+    getHiPSFitsTileLocation, getPlotTilePixelAngSize
 } from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
@@ -273,11 +273,9 @@ function makeHiPSPlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeCol
     const radix = 10;
     const norderForFitsReadout= plot.hasFitsCube ? Number(plot.hipsProperties?.hips_order) : hipsLocation.tileNorder;
 
-    const cell = getHealpixCellAtNorder(norderForFitsReadout, worldPt, plot.dataCoordSys);
-    if (!cell || norderForFitsReadout<1) return;
-    const hipsTileUrl= makeHipsFitsTilePath(plot,norderForFitsReadout,cell.ipix);
-    const {tileImagePt}= getHealpixPixelAtNorder(norderForFitsReadout,worldPt,plot.dataCoordSys);
-    return doFluxCall(plotView, makeImagePt(tileImagePt.x+.5, tileImagePt.y+.5), worldPt, hipsTileUrl, plot.cubeIdx)
+    const {tileUrl, tilePt}= getHiPSFitsTileLocation(plot, worldPt, norderForFitsReadout);
+    if (!tileUrl) return;
+    return doFluxCall(plotView, makeImagePt(tilePt.x+.5, tilePt.y+.5), worldPt, tileUrl, plot.cubeIdx)
         .then((fluxResult) => {
             return makeReadoutWithFlux(readoutItems, primePlot(plotView), fluxResult, radix, false);
         });

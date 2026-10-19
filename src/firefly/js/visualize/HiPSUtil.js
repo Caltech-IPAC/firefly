@@ -206,9 +206,29 @@ function makeHipsTilePath(plot,nOrder,tileNumber,ext) {
 
 export function makeHipsFitsTilePath(plot,nOrder,tileNumber) {
     const tileUrl= makeHipsTilePath(plot,nOrder,tileNumber,'fits');
-    return plot.hasFitsCube && plot.cubeDepth>1
+    return isHiPSFitsCube(plot)
         ? tileUrl.replace(/(_\d+)?\.fits$/,'_cube.fits')
         : tileUrl;
+}
+
+/**
+ * @param {WebPlot|undefined} plot
+ * @return {boolean} true if this is a HiPS with FITS cube tiles (all planes of a tile in one FITS file)
+ */
+export const isHiPSFitsCube= (plot) => Boolean(isHiPS(plot) && plot.hasFitsCube && plot.cubeDepth>1);
+
+/**
+ * Find the HiPS FITS tile and the pixel in that tile that contains a world point
+ * @param {WebPlot|undefined} plot
+ * @param {WorldPt} wpt
+ * @param {number} norder - the tile norder
+ * @return {{norder:number, ipix:number, tileUrl:String, tilePt:ImagePt}}
+ */
+export function getHiPSFitsTileLocation(plot, wpt, norder) {
+    if (!plot || !wpt || !norder) return {};
+    const {tilePixel, tileImagePt}= getHealpixPixelAtNorder(norder, wpt, plot.dataCoordSys) ?? {};
+    if (!tileImagePt) return {};
+    return {norder, ipix:tilePixel, tileUrl:makeHipsFitsTilePath(plot,norder,tilePixel), tilePt:tileImagePt};
 }
 
 /**
@@ -777,7 +797,7 @@ function getHipsPixelCutRangeValues(plot) {
         const max= Number(stretchValues[1]);
         if (!isNaN(min) && !isNaN(max) && min < max) {
             const algorithm= (stretchValues.length>2  && RangeValues.isAlgorithmSupported(stretchValues[2]))
-                ? stretchValues[2]
+                ? stretchValues[2].toLowerCase()
                 : 'log';
             const rv=  RangeValues.makeSimple(ABSOLUTE_STR,min,max,algorithm);
             if (algorithm==='asinh') rv.asinhQValue= 1;

@@ -286,7 +286,7 @@ function drawOneCircle(r, wp, options, propChkAry) {
     var radius;
 
     if (unit === ShapeDataObj.UnitType.ARCSEC) {
-        radius = convertAngle(r.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r.value);
+        radius = convertAngle(r.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r.value, false);
     } else {
         radius = r.value;
     }
@@ -353,8 +353,8 @@ function drawOneBox(w, h, a, wp, options, propChkAry, isOnWorld) {
     var width, height, angle;
 
     if (unit === ShapeDataObj.UnitType.ARCSEC) {
-        width = convertAngle(w.unit.key, ShapeDataObj.UnitType.ARCSEC.key, w.value);
-        height = convertAngle(h.unit.key, ShapeDataObj.UnitType.ARCSEC.key, h.value);
+        width = convertAngle(w.unit.key, ShapeDataObj.UnitType.ARCSEC.key, w.value, false);
+        height = convertAngle(h.unit.key, ShapeDataObj.UnitType.ARCSEC.key, h.value, false);
         /*
         var angleInfo = calculateRectAngleInScreen(wp, width, height, unit);
         width = angleInfo.width;
@@ -370,7 +370,7 @@ function drawOneBox(w, h, a, wp, options, propChkAry, isOnWorld) {
 
     // DS9 angle is counterclockwise, canvas angle is clockwise
     if (angleUnit === ShapeDataObj.UnitType.ARCSEC) {
-        angle = -convertAngle(a.unit.key, angleUnit.key, a.value);
+        angle = -convertAngle(a.unit.key, angleUnit.key, a.value, false);
     } else {  // treat as radian
         angle = -convertAngle('radian', 'arcsec', a.value);
         angleUnit = ShapeDataObj.UnitType.ARCSEC;
@@ -510,8 +510,8 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry, isOnWorld) {
     var radius1, radius2, angle;
 
     if (unit === ShapeDataObj.UnitType.ARCSEC) {
-        radius1 = convertAngle(r1.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r1.value);
-        radius2 = convertAngle(r2.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r2.value);
+        radius1 = convertAngle(r1.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r1.value, false);
+        radius2 = convertAngle(r2.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r2.value, false);
 /*
         var angleInfo = calculateRectAngleInScreen(wp, radius1, radius2, unit);
         radius1 = angleInfo.width;     // in screen point unit
@@ -526,7 +526,7 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry, isOnWorld) {
 
     // DS9 angle is counterclockwise, canvas angle is clockwise
     if (angleUnit === ShapeDataObj.UnitType.ARCSEC) {
-        angle = -convertAngle(a.unit.key, angleUnit.key, a.value);
+        angle = -convertAngle(a.unit.key, angleUnit.key, a.value, false);
     } else {  // treat as radian
         angle = -convertAngle('radian', 'arcsec', a.value);
         angleUnit = ShapeDataObj.UnitType.ARCSEC;

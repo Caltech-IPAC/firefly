@@ -61,7 +61,17 @@ public class HiPSRetrieve {
 
     public static FileInfo retrieveHiPSData(String urlStr, boolean alwaysUseCached) {
         return retrieveHiPSData(urlStr,null, alwaysUseCached);
+    }
 
+    /**
+     * Get a HiPS FITS tile, retrieving it if it is not in the cache. This call will block on the retrieve.
+     * @param fitsTileUrl the url of the HiPS FITS tile
+     * @return the cached FITS file or null if it could not be retrieved
+     */
+    public static File getHiPSFitsTileFile(String fitsTileUrl) {
+        if (fitsTileUrl==null || isDeadFitsUrl(fitsTileUrl)) return null;
+        FileInfo fi= retrieveHiPSData(fitsTileUrl, true);
+        return fi.isSuccess() ? fi.getFile() : null;
     }
 
     public static FileInfo retrieveHiPSData(String urlStr, String fileName, boolean alwaysUseCached) {

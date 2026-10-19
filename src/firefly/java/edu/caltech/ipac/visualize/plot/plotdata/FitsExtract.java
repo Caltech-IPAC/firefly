@@ -31,6 +31,14 @@ public class FitsExtract {
     }
     public enum SecondaryHduCombine {AUTO, SAME}
 
+    /**
+     * Use as an HDU number to extract from the first image HDU that has data. A HiPS FITS tile might have its image
+     * in the primary HDU or in an extension, the extension may not be HDU 1 if the file has a table first.
+     */
+    public static final int FIRST_IMAGE_HDU= -1;
+    /** Use as a default when an HDU number parameter is missing, it is never a valid HDU number */
+    public static final int NOT_SPECIFIED = Integer.MAX_VALUE;
+
     public static final List<String> uncertainty= List.of("UNCERTAINTY", "ERROR", "ERR", "UNC", "SIGMA", "NOISE", "UNCRT", "STDDEV");
     public static final List<String> variance= List.of("VARIANCE", "VAR", "SIGMA2", "VARMAP", "ERRSQR");
     public static final List<String> flags= List.of("FLAGS", "MASK", "MSK", "DQ", "FLAG", "BITMASK", "QUALITY", "BADPIX", "BADMAP", "PIXELMASK");
@@ -84,7 +92,7 @@ public class FitsExtract {
     private static Class<?> arrayTypeFromBitpix(Header header) {
         return switch (FitsReadUtil.getBitPix(header)) {
             case -32 -> Float.TYPE;
-            case 8, 16, 32 -> Integer.TYPE;
+            case 8, 16, 32 -> FitsReadUtil.hasScaling(header) ? Float.TYPE : Integer.TYPE;
             case 64 -> Long.TYPE;
             default -> Double.TYPE;
         };
@@ -268,9 +276,11 @@ public class FitsExtract {
             throws FitsException, IOException {
         try (Fits fits = new Fits(fitsFile)) {
             BasicHDU<?>[] hdus = fits.read();
+            refHduNum= resolveHduNum(hdus, refHduNum);
             BasicHDU<?> hdu = hdus[refHduNum];
             validateImageAtHDU(hdus, refHduNum);
             Header refHeader = hdu.getHeader();
+            Header zeroHeader = hdus[0].getHeader();
             int dims = FitsReadUtil.getNaxis(refHeader);
             int xLen = FitsReadUtil.getNaxis1(refHeader);
             int yLen = FitsReadUtil.getNaxis2(refHeader);
@@ -283,12 +293,14 @@ public class FitsExtract {
                     CombineType newCt= getCombineType(h,i,ct,secondaryCombine,refHduNum);
                     if (FitsReadUtil.getNaxis(h) == dims && FitsReadUtil.getNaxis1(h) == xLen && FitsReadUtil.getNaxis2(h) == yLen && FitsReadUtil.getNaxis3(h) == zLen) {
                         var list = extractor.extractAry(hdus, i, newCt);
-                        retList.add(new ExtractionResults(i, FitsReadUtil.getExtNameOrType(h), list, i == refHduNum, h,newCt));
+                        retList.add(new ExtractionResults(i, FitsReadUtil.getExtNameOrType(h), list, i == refHduNum, h,newCt,
+                                FitsReadUtil.getFluxUnits(h,zeroHeader)));
                     }
                 }
             } else {
                 var list = extractor.extractAry(hdus, refHduNum, ct);
-                retList.add(new ExtractionResults(refHduNum, FitsReadUtil.getExtNameOrType(refHeader), list,true, refHeader,ct));
+                retList.add(new ExtractionResults(refHduNum, FitsReadUtil.getExtNameOrType(refHeader), list,true, refHeader,ct,
+                        FitsReadUtil.getFluxUnits(refHeader,zeroHeader)));
             }
             return retList;
         }
@@ -332,8 +344,27 @@ public class FitsExtract {
     public static List<Number> extractFromHDU(File fitsFile, int hduNum, CombineType ct, Extractor extractor)
             throws FitsException, IOException {
         try (Fits fits= new Fits(fitsFile)) {
-            return extractor.extractAry(fits.read(), hduNum, ct);
+            BasicHDU<?>[] hdus= fits.read();
+            return extractor.extractAry(hdus, resolveHduNum(hdus,hduNum), ct);
         }
+    }
+
+    /**
+     * @param hdus the HDUs of a FITS file
+     * @param hduNum an HDU number or FIRST_IMAGE_HDU
+     * @return hduNum, if hduNum is FIRST_IMAGE_HDU then the index of the first image HDU that has data
+     * @throws FitsException if hduNum is FIRST_IMAGE_HDU and there is no image HDU with data
+     */
+    static int resolveHduNum(BasicHDU<?>[] hdus, int hduNum) throws FitsException {
+        if (hduNum!=FIRST_IMAGE_HDU) return hduNum;
+        for(int i=0; i<hdus.length; i++) {
+            if (hdus[i] instanceof CompressedImageHDU) return i;
+            if (hdus[i] instanceof ImageHDU) {
+                Header h= hdus[i].getHeader();
+                if (FitsReadUtil.getNaxis(h)>=2 && FitsReadUtil.getNaxis1(h)>0 && FitsReadUtil.getNaxis2(h)>0) return i;
+            }
+        }
+        throw new FitsException("no image HDU with data");
     }
 
 
@@ -420,5 +451,6 @@ public class FitsExtract {
 
     public interface Extractor { List<Number> extractAry(BasicHDU<?>[] hdus, int hduNum, CombineType ct) throws FitsException, IOException; }
 
-    public record ExtractionResults(int hduNum, String extName, List<Number> aryData, boolean refHDU, Header header, CombineType ct) { }
+    public record ExtractionResults(int hduNum, String extName, List<Number> aryData, boolean refHDU, Header header,
+                                    CombineType ct, String fluxUnits) { }
 }

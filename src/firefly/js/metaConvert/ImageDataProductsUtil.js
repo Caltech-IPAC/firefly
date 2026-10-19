@@ -88,7 +88,7 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
     }
     return () => {
         // const covViewer= ;
-        const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
+        const makeActive= !isDefaultCoverageActive(getMultiViewRoot());
         replotImageDataProducts(request.getPlotId(), makeActive, imageViewerId, tbl_id, [request]);
     };
 }

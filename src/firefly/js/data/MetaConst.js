@@ -72,6 +72,12 @@ export const MetaConst = {
     FITS_FILE_PATH: 'FitsFilePath',
 
     /**
+     * HiPS FITS tile url, the url of the HiPS FITS tile that is associated with this table.
+     * It is used in extraction from a HiPS. The HiPS root of the url will match the hipsUrlRoot of a HiPS WebPlot
+     */
+    HIPS_TILE_URL: 'HiPSTileUrl',
+
+    /**
      * Fits Image HDU, The HDU number of a FITS file that is associated with this table
      */
     FITS_IMAGE_HDU: 'FitsImageHDU',
