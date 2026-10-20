@@ -3,36 +3,37 @@
 # Cleanup script for the Firefly app.
 #
 # Usage: cleanup.sh [--once] [--dry-run] [--help]
-#   (default)   run forever: every CLEANUP_INTERVAL sweep the targeted work areas, then sleep.
+#   (default)   run forever: every CLEANUP_INTERVAL sweep both work areas, then sleep.
 #               Sweeps append to /firefly/logs/cleanup/<app>/cleanup.<YYYYMMDD>.log, one file
 #               per day, keeping 7 days.
-#   --once      make one sweep, log it to stdout and exit; for an external scheduler such as
-#               a Kubernetes CronJob.  Exits 1 when the sweep cannot run.
+#   --once      make one sweep, log it to stdout and exit.
 #   --dry-run   log what would be removed, remove nothing.
 #
 # An app has two work areas, each a dir named after the app:
 #     workarea          /firefly/workarea/<app>           this container's own files
 #     shared workarea   /firefly/shared-workarea/<app>    files shared by all replicas
 # where <app> is the simple name of the application; see CLEANUP_APP_NAME.
-# Each targeted work area gets two passes per sweep, workarea first:
+# Each work area gets two passes per sweep, workarea first:
 #
 #   age pass     Each entry has a maximum age; files not *modified* within it are removed.
 #   size pass    Only when the work area's MAX is set.  When usage is at or above it, ages
 #                are ignored and the oldest files are removed until usage is down to
 #                90% of MAX.
 #
+# Replicas sharing a work area take turns, using two files in its app dir:
+#   .cleanup.lock/   held during a sweep; others skip it.  Broken when not refreshed
+#                    for 2 x CLEANUP_INTERVAL (at least 30m).
+#   .cleanup.last    the last sweep; one within CLEANUP_INTERVAL means skip.
+# --dry-run uses neither.
+#
 # ------------------------------------------------------------------------------------
 # Environment variables (all optional)
 #
 #   Name                   Default  Description
 #   ---------------------  -------  ---------------------------------------------------
-#   CLEANUP_INTERVAL       1h       how often a sweep runs; ignored with --once
-#   CLEANUP_TARGETS        all      work areas to sweep: all, workarea, shared or none.
-#                                   Use workarea in app containers when one other
-#                                   process (e.g. a CronJob) sweeps the shared workarea.
+#   CLEANUP_INTERVAL       1h       how often a sweep runs
 #   CLEANUP_APP_NAME       auto     the app, i.e. the work area dir name.  Unset uses the
-#                                   first dir under /firefly/workarea; required when
-#                                   CLEANUP_TARGETS=shared.
+#                                   first dir under /firefly/workarea.
 #
 #   age pass -- maximum age per group of entries
 #   CLEANUP_AGE_WORKAREA   1h       workarea: temp_files, perm_files, visualize/*
@@ -65,6 +66,12 @@ readonly RM=/bin/rm
 readonly LOG_ROOT=/firefly/logs/cleanup   # outside the dirs being cleaned
 readonly LOG_KEEP=7                       # days of logs kept per app
 readonly CLEAN_TO_PCT=90                  # the size pass cleans down to this % of MAX
+readonly LOCK_NAME=.cleanup.lock          # in each app dir; see "Several pods" above
+readonly LAST_NAME=.cleanup.last
+readonly SLACK_SECONDS=60                 # a sweep this much early is still due
+readonly REFRESH_EVERY=1000               # the size pass refreshes its lock per this many files
+HOST="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
+readonly HOST
 
 warn() {      # <message...>          -- reports a problem and carries on
     echo "Cleanup: WARNING: $*" >&2
@@ -102,6 +109,7 @@ readonly ONCE DRY_RUN
 ${FIND} /dev/null -maxdepth 0 -printf '' 2>/dev/null || require "GNU findutils (find -printf)"
 printf '' | sort -z >/dev/null 2>&1        || require "GNU coreutils (sort -z)"
 date -d @0 >/dev/null 2>&1                 || require "GNU coreutils (date -d)"
+stat -c %Y / >/dev/null 2>&1               || require "GNU coreutils (stat -c)"
 
 # ------------------------------------------------------------------------------------
 # Work area definitions.  Entries are "<path relative to the work area>|<env var>|<default>"
@@ -218,20 +226,6 @@ describe_max() {
     esac
 }
 
-# targets_setting -- prints "<target> <workarea> <shared>", the last two true or false
-targets_setting() {
-    local value="${CLEANUP_TARGETS:-all}"
-    case "${value,,}" in
-        all)      echo "all true true" ;;
-        workarea) echo "workarea true false" ;;
-        shared)   echo "shared false true" ;;
-        none)     echo "none false false" ;;
-        *)
-            warn "CLEANUP_TARGETS='${value}' must be all, workarea, shared or none; using all"
-            echo "all true true" ;;
-    esac
-}
-
 # ------------------------------------------------------------------------------------
 # Path helpers
 # ------------------------------------------------------------------------------------
@@ -239,29 +233,20 @@ targets_setting() {
 # CLEANUP_APP_NAME: Unset, it falls back to the first dir under the workarea (sorted, so the choice is
 # stable across sweeps).  That is right for the usual one-app container; set
 # CLEANUP_APP_NAME when there are multiple apps under the workarea and you want to sweep a specific one.
-# Set, it must name a dir under the workarea when the workarea is a target, or the sweep is
-# skipped with an error: a wrong name would otherwise clean nothing, quietly.  With only the
-# shared-workarea targeted a missing dir is not an error, since the app creates it on first use.
+# Set, it must name a dir in at least one work area, or the sweep is skipped with an error: a
+# wrong name would otherwise clean nothing, quietly.  A work area without the dir is skipped.
 # The shared-workarea is not searched: it may hold other data (e.g. redis), so a guess could be wrong.
-# Returns 1 on an error, 2 when there is nothing to clean yet.
+# Returns 1 on an error.
 resolve_app_name() {
     local name="${CLEANUP_APP_NAME:-}" dirs=()
     if [[ -n "${name}" ]]; then
-        if [[ "${DO_WORKAREA}" == true && ! -d "${WORKAREA_DIR}/${name}" ]]; then
-            error "CLEANUP_APP_NAME='${name}': ${WORKAREA_DIR}/${name} is not a dir;" \
-                  "skipping this sweep"
+        if [[ ! -d "${WORKAREA_DIR}/${name}" && ! -d "${SHARED_WORKAREA_DIR}/${name}" ]]; then
+            error "CLEANUP_APP_NAME='${name}': not a dir under ${WORKAREA_DIR} or" \
+                  "${SHARED_WORKAREA_DIR}; skipping this sweep"
             return 1
-        fi
-        if [[ "${DO_WORKAREA}" != true && ! -d "${SHARED_WORKAREA_DIR}/${name}" ]]; then
-            echo "Cleanup: ${SHARED_WORKAREA_DIR}/${name} does not exist yet; nothing to clean" >&2
-            return 2
         fi
         echo "${name}"
         return 0
-    fi
-    if [[ "${DO_WORKAREA}" != true ]]; then
-        warn "CLEANUP_APP_NAME must be set when the workarea is not a target; skipping this sweep"
-        return 1
     fi
     readarray -t dirs < <(${FIND} "${WORKAREA_DIR}" -mindepth 1 -maxdepth 1 -type d \
                           ! -name cleanup_logs -printf '%f\n' 2>/dev/null | sort)
@@ -306,6 +291,7 @@ clean_by_age() {
             ${FIND} "${path}" -type f -mmin "+${minutes}" -print -delete
             prune_empty_dirs "${path}"
         fi
+        refresh_lock
     done
 }
 
@@ -365,6 +351,7 @@ clean_by_size() {
         [[ "${DRY_RUN}" == true ]] || ${RM} -f -- "${path}" || continue
         freed_kb=$((freed_kb + kb))
         removed=$((removed + 1))
+        ((removed % REFRESH_EVERY)) || refresh_lock
     done < <(${FIND} "${paths[@]}" -type f -printf '%T@\t%k\t%p\0' | sort -z -t$'\t' -k1,1n)
 
     echo
@@ -372,6 +359,92 @@ clean_by_size() {
     ((freed_kb < need_kb)) && warn "${app_dir} is still above its target: nothing left to remove"
     [[ "${DRY_RUN}" == true ]] || prune_empty_dirs "${paths[@]}"
     return 0
+}
+
+# ------------------------------------------------------------------------------------
+# Taking turns with other pods sweeping the same work area
+# ------------------------------------------------------------------------------------
+
+HELD_LOCK=""    # the lock this process holds, removed on exit
+
+# mtime_of <path> -- seconds since the epoch, by the clock of the filesystem holding it
+mtime_of() {
+    stat -c %Y -- "$1" 2>/dev/null
+}
+
+# fs_now <dir> -- the time now by <dir>'s filesystem: a file made there carries its clock
+fs_now() {
+    local probe="$1/.cleanup.clock.${HOST}.$$" now
+    : > "${probe}" 2>/dev/null || return 1
+    now=$(mtime_of "${probe}")
+    ${RM} -f -- "${probe}"
+    [[ -n "${now}" ]] && echo "${now}"
+}
+
+# owner_of <file> -- the pod named in a lock's owner or a last-ran file
+owner_of() {
+    local line
+    read -r line < "$1" 2>/dev/null && echo "${line}" || echo "unknown"
+}
+
+# take_lock <appDir> -- 0 when the lock is ours, 1 when another pod holds it
+take_lock() {
+    local lock="$1/${LOCK_NAME}" now taken age stale
+    if ! mkdir "${lock}" 2>/dev/null; then
+        # held: break it only when its holder has stopped refreshing it
+        now=$(fs_now "$1") && taken=$(mtime_of "${lock}") || return 1
+        age=$((now - taken))
+        ((age >= LOCK_TTL_SECONDS)) || return 1
+        # renaming is atomic, so of several pods breaking it at once only one succeeds
+        stale="${lock}.stale.${HOST}.$$"
+        mv -T -- "${lock}" "${stale}" 2>/dev/null &&
+            warn "broke a lock held $((age / 60)) min by $(owner_of "${stale}/owner")" &&
+            ${RM} -rf -- "${stale}"
+        mkdir "${lock}" 2>/dev/null || return 1
+    fi
+    HELD_LOCK="${lock}"
+    echo "${HOST} pid $$ since $(date '+%F %T %Z')" > "${lock}/owner"
+}
+
+# refresh_lock -- shows the lock is still in use, so a long sweep is not taken for a dead one
+refresh_lock() {
+    [[ -n "${HELD_LOCK}" ]] && touch -c -- "${HELD_LOCK}" 2>/dev/null
+    return 0
+}
+
+release_lock() {
+    [[ -n "${HELD_LOCK}" ]] && ${RM} -rf -- "${HELD_LOCK}"
+    HELD_LOCK=""
+}
+trap release_lock EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+
+# claim_area <appDir> -- 0 to sweep it, 1 to leave it to another pod for now
+claim_area() {
+    local app_dir="$1" now last
+    if [[ ! -w "${app_dir}" ]]; then
+        warn "cannot write ${app_dir}; sweeping without a lock"
+        return 0
+    fi
+    if ! take_lock "${app_dir}"; then
+        echo "locked by $(owner_of "${app_dir}/${LOCK_NAME}/owner"); skipping"
+        return 1
+    fi
+    # the lock was just made, so its time is the filesystem's now
+    now=$(mtime_of "${HELD_LOCK}")
+    last=$(mtime_of "${app_dir}/${LAST_NAME}")
+    if [[ -n "${now}" && -n "${last}" ]] && ((now - last < INTERVAL_SECONDS - SLACK_SECONDS)); then
+        echo "swept $(((now - last) / 60)) min ago by $(owner_of "${app_dir}/${LAST_NAME}"); skipping"
+        release_lock
+        return 1
+    fi
+}
+
+# done_area <appDir> -- records the sweep and lets the next pod in
+done_area() {
+    echo "${HOST} $(date '+%F %T %Z')" > "$1/${LAST_NAME}" 2>/dev/null
+    release_lock
 }
 
 # ------------------------------------------------------------------------------------
@@ -386,14 +459,19 @@ sweep_dir() {
     echo
     echo "----- ${label}: ${app_dir}"
     [[ -d "${app_dir}" ]] || { echo "does not exist, skipping"; return; }
+    if [[ "${DRY_RUN}" != true ]]; then
+        claim_area "${app_dir}" || return
+    fi
     clean_by_age "${app_dir}" "$@"
 
-    [[ "${max}" == off ]] && return
-    for spec in "$@"; do
-        IFS='|' read -r entry _ _ <<< "${spec}"
-        [[ -d "${app_dir}/${entry}" ]] && paths+=("${app_dir}/${entry}")
-    done
-    clean_by_size "${app_dir}" "${max}" "${paths[@]}"
+    if [[ "${max}" != off ]]; then
+        for spec in "$@"; do
+            IFS='|' read -r entry _ _ <<< "${spec}"
+            [[ -d "${app_dir}/${entry}" ]] && paths+=("${app_dir}/${entry}")
+        done
+        clean_by_size "${app_dir}" "${max}" "${paths[@]}"
+    fi
+    [[ "${DRY_RUN}" == true ]] || done_area "${app_dir}"
 }
 
 # Does the work of one sweep, writing to stdout.  The workarea goes first so its
@@ -404,13 +482,9 @@ sweep_body() {
     echo "===== cleanup start -- app '${app}' -- $(date) ====="
     [[ "${DRY_RUN}" == true ]] && echo "DRY RUN -- nothing will be removed"
 
-    if [[ "${DO_WORKAREA}" == true ]]; then
-        sweep_dir "workarea" "${WORKAREA_DIR}" "${app}" "${WORKAREA_MAX}" "${WORKAREA_ENTRIES[@]}"
-    fi
-    if [[ "${DO_SHARED}" == true ]]; then
-        sweep_dir "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_MAX}" \
-                  "${SHARED_WORKAREA_ENTRIES[@]}"
-    fi
+    sweep_dir "workarea" "${WORKAREA_DIR}" "${app}" "${WORKAREA_MAX}" "${WORKAREA_ENTRIES[@]}"
+    sweep_dir "shared-workarea" "${SHARED_WORKAREA_DIR}" "${app}" "${SHARED_MAX}" \
+              "${SHARED_WORKAREA_ENTRIES[@]}"
 
     echo
     echo "===== cleanup done -- $(date) ====="
@@ -449,53 +523,37 @@ if ! [[ "${INTERVAL}" =~ ^[0-9]+[mhd]$ ]]; then
     INTERVAL="${DEFAULT_INTERVAL}"
 fi
 readonly INTERVAL
+readonly INTERVAL_SECONDS=$(($(to_minutes "${INTERVAL}") * 60))
+# a lock unrefreshed this long is abandoned: 2 intervals, at least 30 minutes
+readonly LOCK_TTL_SECONDS=$((INTERVAL_SECONDS * 2 > 1800 ? INTERVAL_SECONDS * 2 : 1800))
 
-read -r TARGETS DO_WORKAREA DO_SHARED <<< "$(targets_setting)"
-readonly TARGETS DO_WORKAREA DO_SHARED
-if [[ "${DO_WORKAREA}" == true ]]; then
-    age_settings "${WORKAREA_ENTRIES[@]}"
-    readonly WORKAREA_MAX=$(max_setting CLEANUP_WORKAREA_MAX)
-fi
-if [[ "${DO_SHARED}" == true ]]; then
-    age_settings "${SHARED_WORKAREA_ENTRIES[@]}"
-    readonly SHARED_MAX=$(max_setting CLEANUP_SHARED_MAX)
-fi
+age_settings "${WORKAREA_ENTRIES[@]}" "${SHARED_WORKAREA_ENTRIES[@]}"
+readonly WORKAREA_MAX=$(max_setting CLEANUP_WORKAREA_MAX)
+readonly SHARED_MAX=$(max_setting CLEANUP_SHARED_MAX)
 
 if [[ "${ONCE}" == true ]]; then mode="once"; else mode="every ${INTERVAL}"; fi
 [[ "${DRY_RUN}" == true ]] && mode+=", dry run"
 echo "Cleanup: started with:"
 printf 'Cleanup:   %s\n' \
     "mode=${mode}" \
-    "CLEANUP_TARGETS=${TARGETS}" \
-    "CLEANUP_APP_NAME=${CLEANUP_APP_NAME:-auto}"
-if [[ "${DO_WORKAREA}" == true ]]; then
-    describe_ages "${WORKAREA_ENTRIES[@]}"
-    printf 'Cleanup:   %s\n' "CLEANUP_WORKAREA_MAX=$(describe_max "${WORKAREA_MAX}")"
-fi
-if [[ "${DO_SHARED}" == true ]]; then
-    describe_ages "${SHARED_WORKAREA_ENTRIES[@]}"
-    printf 'Cleanup:   %s\n' "CLEANUP_SHARED_MAX=$(describe_max "${SHARED_MAX}")"
-fi
-
-if [[ "${DO_WORKAREA}" != true && "${DO_SHARED}" != true ]]; then
-    echo "Cleanup: no targets; nothing to do"
-    exit 0
-fi
+    "CLEANUP_APP_NAME=${CLEANUP_APP_NAME:-auto}" \
+    "CLEANUP_INTERVAL=${INTERVAL}"
+describe_ages "${WORKAREA_ENTRIES[@]}"
+printf 'Cleanup:   %s\n' "CLEANUP_WORKAREA_MAX=$(describe_max "${WORKAREA_MAX}")"
+describe_ages "${SHARED_WORKAREA_ENTRIES[@]}"
+printf 'Cleanup:   %s\n' "CLEANUP_SHARED_MAX=$(describe_max "${SHARED_MAX}")"
 
 if [[ "${ONCE}" == true ]]; then
-    app=$(resolve_app_name)
-    case $? in
-        0) sweep_body "${app}" ;;
-        2) ;;                       # nothing to clean yet
-        *) exit 1 ;;
-    esac
+    app=$(resolve_app_name) || exit 1
+    sweep_body "${app}"
     exit 0
 fi
 
-sleep 30    # give the app time to create its work area before the first sweep
+# "sleep & wait" so a TERM stops the script at once, instead of waiting for the sleep to end.
+sleep 30 & wait $!    # give the app time to create its work area before the first sweep
 
 while true; do
     # re-resolve every sweep: the app dir may not exist yet at container start
     if app=$(resolve_app_name); then sweep_to_log "${app}"; fi
-    sleep "${INTERVAL}"
+    sleep "${INTERVAL}" & wait $!
 done
