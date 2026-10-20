@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.3
-- 2026.3.1 — (Oct 8, 2026), _Docker tag_: `2026.3.1`, `2026.3`, `latest`
+- 2026.3.2 — (Oct 20, 2026), _Docker tag_: `2026.3.2`, `2026.3`, `latest`
+- 2026.3.1 — (Oct 8, 2026), _Docker tag_: `2026.3.1`
 - 2026.3.0 — (Sept 25, 2026), _Docker tag_: `2026.3.0`
 
 This release moves the standalone installation out of beta, adds spectral line plotting and color grouping by column to Charts,
@@ -46,6 +47,12 @@ and includes FITS compression reading fixes.
 
 
 ### _Patches 2026.3_
+
+#### 2026.3.2
+- Docker, K8s deployments: more advanced cleanup script ([Documentation in script](https://github.com/Caltech-IPAC/firefly/blob/dev/docker/cleanup.sh)) — Firefly-2143 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2044), [PR](https://github.com/Caltech-IPAC/firefly/pull/2045))
+  - now supports an optional maximum size for the work area and the shared work area (`CLEANUP_WORKAREA_MAX`, `CLEANUP_SHARED_MAX`, as a size or a percentage of the filesystem)
+  - replicas now take turns cleaning the shared work area
+
 #### 2026.3.1
 - Fixed: Spectral lines app config not propagating — Firefly-2066 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2026))
 - Fixed: tab navigation skipping to MathJax labels in spectrum options — IRSA-7359 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2025))
