@@ -153,6 +153,18 @@ persistence:
 ### Redis
 Automatically deployed when `replicaCount > 1`. Consult `Reference Values` for configuration options including image, resources, and persistence.
 
+### Cleanup
+Each pod runs `cleanup.sh`, which removes expired files from its work areas. Cleanup settings are `CLEANUP_*` environment variables set through `env`; see the header of [cleanup.sh](https://github.com/Caltech-IPAC/firefly/blob/dev/docker/cleanup.sh) for all of them.
+
+For example, to sweep every 6 hours and cap the app's dir in the shared work area at 50Gi:
+```yaml
+env:
+  - name: CLEANUP_INTERVAL
+    value: "6h"
+  - name: CLEANUP_SHARED_MAX
+    value: "50Gi"
+```
+
 ## Reference
 
 ## Values
