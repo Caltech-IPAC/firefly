@@ -161,8 +161,7 @@ public class AnyFileDownloadTest extends ConfigTest {
 
     @Test
     public void remoteServerGoingSilentAfterARedirectEndsTheDownload() throws Exception {
-        CountDownLatch silence = new CountDownLatch(1);
-        upstream.createContext("/stall", stallsAfter(new byte[64 * 1024], silence));
+        upstream.createContext("/stall", sendsThenHangs(new byte[64 * 1024]));
         upstream.createContext("/moved", ex -> {          // TAP result URLs often redirect; the timeout must carry over
             ex.getResponseHeaders().set("Location", baseUrl + "/stall");
             ex.sendResponseHeaders(302, -1);
@@ -178,15 +177,13 @@ public class AnyFileDownloadTest extends ConfigTest {
             assertTrue(String.valueOf(e.getCause()), e.getCause() instanceof SocketTimeoutException);
         } finally {
             System.clearProperty(STREAM_READ_TIMEOUT);
-            silence.countDown();
         }
         assertEquals(64 * 1024, res.body().length);
     }
 
     @Test
     public void remoteServerSilentBeforeTheFirstChunkBecomesAReadableMessage() throws Exception {
-        CountDownLatch silence = new CountDownLatch(1);
-        upstream.createContext("/silent", stallsAfter(new byte[0], silence));
+        upstream.createContext("/silent", sendsThenHangs(new byte[0]));
 
         FakeResponse res = new FakeResponse(new ByteArrayOutputStream());
         System.setProperty(STREAM_READ_TIMEOUT, "1");
@@ -194,7 +191,6 @@ public class AnyFileDownloadTest extends ConfigTest {
             new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/silent", DOWNLOAD_TOKEN, "tok4"), res.proxy);
         } finally {
             System.clearProperty(STREAM_READ_TIMEOUT);
-            silence.countDown();
         }
 
         assertEquals(502, res.status);
@@ -212,27 +208,30 @@ public class AnyFileDownloadTest extends ConfigTest {
 
     @Test
     public void namesTheFileFromReturnAndContentType() throws Exception {
+        // return name + extension of the content type: "my query" + ".xml" (application/x-votable+xml)
         upstream.createContext("/async/42/results/result", text("application/x-votable+xml", "<VOTABLE/>"));
-
         FakeResponse res = new FakeResponse(new ByteArrayOutputStream());
         new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/async/42/results/result", RETURN_PARAM, "my query"), res.proxy);
-
         assertTrue(res.headers.get("Content-Disposition"), res.headers.get("Content-Disposition").startsWith("attachment; filename=\"my query.xml\""));
 
+        // no return name: URL file name + extension of the content type: "result" + ".xml"
         FakeResponse noReturn = new FakeResponse(new ByteArrayOutputStream());
         new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/async/42/results/result"), noReturn.proxy);
         assertTrue(noReturn.headers.get("Content-Disposition"), noReturn.headers.get("Content-Disposition").startsWith("attachment; filename=\"result.xml\""));
 
+        // no return name, and the URL file name has an extension: the URL file name as is: "cat.vot"
         upstream.createContext("/data/cat.vot", text("application/x-votable+xml", "<VOTABLE/>"));
         FakeResponse urlName = new FakeResponse(new ByteArrayOutputStream());
         new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/data/cat.vot"), urlName.proxy);
         assertTrue(urlName.headers.get("Content-Disposition"), urlName.headers.get("Content-Disposition").startsWith("attachment; filename=\"cat.vot\""));
 
+        // text/xml has no known extension, nor does the URL file name: return name + ".xml": "mast query" + ".xml"
         upstream.createContext("/async/43/results/result", text("text/xml; charset=utf-8", "<VOTABLE/>"));
         FakeResponse textXml = new FakeResponse(new ByteArrayOutputStream());
         new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/async/43/results/result", RETURN_PARAM, "mast query"), textXml.proxy);
         assertTrue(textXml.headers.get("Content-Disposition"), textXml.headers.get("Content-Disposition").startsWith("attachment; filename=\"mast query.xml\""));
 
+        // text/xml has no known extension: return name + extension of the URL file name: "q" + ".vot"
         upstream.createContext("/data/other.vot", text("text/xml", "<VOTABLE/>"));
         FakeResponse urlExtFirst = new FakeResponse(new ByteArrayOutputStream());
         new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/data/other.vot", RETURN_PARAM, "q"), urlExtFirst.proxy);
@@ -293,17 +292,15 @@ public class AnyFileDownloadTest extends ConfigTest {
         };
     }
 
-    /** Sends the headers alone (chunked), 300 ms later {@code body}, then nothing, with the connection open, until {@code silence} ends. */
-    private static HttpHandler stallsAfter(byte[] body, CountDownLatch silence) {
+    /** Sends the headers (chunked), waits 300 ms, sends {@code body}, then hangs for 10 s with the connection open before ending the response. */
+    private static HttpHandler sendsThenHangs(byte[] body) {
         return ex -> {
             ex.sendResponseHeaders(200, 0);
             try (OutputStream os = ex.getResponseBody()) {
                 Thread.sleep(300);
-                if (body.length > 0) {
-                    os.write(body);
-                    os.flush();
-                }
-                await(silence);
+                os.write(body);
+                os.flush();
+                Thread.sleep(10_000);               // well past the 1 s read timeout
             } catch (IOException | InterruptedException ignored) {}
         };
     }
