@@ -794,6 +794,8 @@ public class URLDownload {
                 if (getResponseCode(urlConn) == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     String urlStr= urlConn.getURL().toString();
                     loggerInfo(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
+                    // the cached file is confirmed current, touch it so age based cleanup does not treat it as stale
+                    var ignore= outfile.setLastModified(System.currentTimeMillis());
                     retval = new FileInfo(outfile, getSuggestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
                                      ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");

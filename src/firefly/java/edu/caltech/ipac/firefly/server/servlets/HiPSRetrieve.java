@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.LockingRetrieve;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.FormatUtil.Format;
 import edu.caltech.ipac.util.download.DownloadListener;
@@ -90,7 +91,7 @@ public class HiPSRetrieve {
         if (url==null) return new FileInfo(404, "Invalid URL");
 
         File targetFile = getHipsCacheFile(url, fileName);
-        var locationPrepared= prepareTargetLocation(targetFile);
+        var locationPrepared= prepareTargetLocation(targetFile, url, fileName);
 
         if (!locationPrepared) {
             return new FileInfo(HttpURLConnection.HTTP_FORBIDDEN,
@@ -139,8 +140,12 @@ public class HiPSRetrieve {
         return imageRequest(f) ? new FileInfo(HTTP_NO_CONTENT) : new FileInfo(HTTP_NOT_FOUND); // return 204 because: the request was valid, but there is no image content to return
     }
 
-    private static boolean prepareTargetLocation(File targetFile) {
+    private static boolean prepareTargetLocation(File targetFile, URL url, String fileName) {
         File dir= targetFile.getParentFile();
+        if (dir.exists() && !dir.isDirectory()) {
+            logCacheConflict("parent path is a regular file: " + dir.getAbsolutePath(), url, fileName);
+            if (dir.delete()) Logger.getLogger().warn("deleting file and making a directory");
+        }
         if (!dir.exists() && !dir.mkdirs()) {
             return false;
         }
@@ -148,6 +153,7 @@ public class HiPSRetrieve {
         if (!targetFile.exists()) return true;
 
         if (targetFile.isDirectory()) {
+            logCacheConflict("target is a directory: " + targetFile.getAbsolutePath(), url, fileName);
             if (isDirectoryEmpty(targetFile)) {
                 if (!targetFile.delete()) return false;
             }
@@ -159,6 +165,10 @@ public class HiPSRetrieve {
             if (!targetFile.delete()) return false;
         }
         return true;
+    }
+
+    private static void logCacheConflict(String desc, URL url, String fileName) {
+        Logger.getLogger().warn("HiPS cache conflict, " + desc, "url: " + url, "fileName: " + fileName);
     }
 
     private static FileInfo lockUrlDownload(URL url, String fileName, File targetFile, URLDownload.Options options) throws FailedRequestException {
