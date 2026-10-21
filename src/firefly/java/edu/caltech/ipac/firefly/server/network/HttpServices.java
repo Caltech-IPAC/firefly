@@ -218,6 +218,10 @@ public class HttpServices {
             }
 
             HttpClient httpClient = newHttpClient();
+            if (input.getReadTimeout() > 0) {
+                // on the connection manager, not the method: HttpClient 3 drops a method's timeout while it waits for a chunked body
+                httpClient.getHttpConnectionManager().getParams().setSoTimeout(input.getReadTimeout());
+            }
 
             handleAuth(httpClient, method, input.getUserId(), input.getPasswd());
 
@@ -386,6 +390,8 @@ public class HttpServices {
                             input.getHeaders().entrySet().stream()
                                     .filter(h -> isForwardHeader(h.getKey()))
                                     .forEach(h -> redirect.setHeader(h.getKey(), h.getValue()));
+                            // carry over the read timeout
+                            redirect.setReadTimeout(input.getReadTimeout());
 
                             return getData(redirect, maxFollow-1, handler);
                         } else {

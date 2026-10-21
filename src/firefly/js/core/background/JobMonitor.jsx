@@ -4,16 +4,16 @@ import {IconButton, Button, Sheet, Skeleton, Stack, Typography, ListItemDecorato
 import moment from 'moment';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getMetadata, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, loadAllJobs, Phase, loadJobResult, fixTapResults, getProgressMsg, getResultDownloadUrl} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton';
 import {getAppOptions} from '../AppDataCntlr';
-import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
+import {dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
 import Validate from '../../util/Validate';
 import {dispatchTableAddLocal, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr';
 import {showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil';
-import {isDefined, updateSet} from '../../util/WebUtil';
+import {isDefined} from '../../util/WebUtil';
 import {download} from '../../util/fetch';
 import {isJobInfoOpen, showJobInfo} from './JobInfo';
 import {dispatchHideDropDown, dispatchShowDropDown} from '../LayoutCntlr';
@@ -121,7 +121,7 @@ export function showMultiDownloads(job) {
     const {results} = job || [];
     const popup = results.map( (r, idx) => (
         <Stack key={idx} direction='row' alignItems='center' gap={2}>
-            <DownloadBtn job={job} index={idx}/>
+            <DownloadBtn job={job} resultIdx={idx}/>
             <ResultDesc job={job} resultIdx={idx}/>
         </Stack>
     ));
@@ -309,8 +309,9 @@ function ControlRenderer({cellInfo}) {
     const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
     if (!job?.meta?.jobId) return null;
 
+    // the table reuses a row's cells for whichever job sorts into that row; the key gives each job its own button state
     return  (
-        <Stack mx={1} direction='row' justifyContent='right'>
+        <Stack key={jobId} mx={1} direction='row' justifyContent='right'>
             <Progress job={job}/>
             <Results job={job}/>
             <InfoPopup job={job}/>
@@ -375,7 +376,13 @@ function Results({job}) {
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
         const fJob = fixTapResults(job);
-        return fJob?.results?.length === 1 ? <ShowResultButton job={fJob} resultIdx={0}/> : <MultiResultsPopup job={fJob}/>;
+        if (fJob?.results?.length !== 1) return <MultiResultsPopup job={fJob}/>;
+        return (
+            <>
+                <ShowResultButton job={fJob} resultIdx={0}/>
+                <DownloadBtn job={fJob} resultIdx={0}/>
+            </>
+        );
     } else {
         if (job?.results?.length === 1) {
             return <DownloadBtn job={job}/>;
@@ -400,9 +407,9 @@ export function showMultiMultiResults(job) {
     } else {
         showInfoPopup(
             <Stack gap={1} mb={2}>
-                <Typography level={'body-md'}>This job has multiple results. Please click on each icon to load the corresponding result.</Typography>
+                <Typography level={'body-md'}>This job has multiple results. Please click on each icon to load or download the corresponding result.</Typography>
                 <Stack>
-                    <ResultsBlock job={job} ActionBtn={ShowResultButton}/>
+                    <ResultsBlock job={job} ActionBtn={ShowResultAndDownloadButtons}/>
                 </Stack>
             </Stack>
         );
@@ -426,7 +433,7 @@ export function ResultDesc({job, resultIdx=0}) {
         <Stack direction='row' gap={1} overflow='hidden'>
             <KeywordBlockOpt label='id' value={idDesc} title={idDesc}/>
             <KeywordBlockOpt label='mimeType' value={mimeType} title={mimeType}/>
-            <KeywordBlockOpt label='href' value={href} title={href} asLink={true} overflow='hidden'/>
+            <KeywordBlockOpt label='href' value={href} title={href} asLink={/^https?:\/\//i.test(href)} overflow='hidden'/>
         </Stack>
     );
 }
@@ -447,19 +454,38 @@ export function ShowResultButton({job, resultIdx=0}) {
     }
 }
 
+function ShowResultAndDownloadButtons(props) {
+    return (
+        <>
+            <ShowResultButton {...props}/>
+            <DownloadBtn {...props}/>
+        </>
+    );
+}
 
-function DownloadBtn({job, index=0}) {
-    const dlState = useStoreConnector( () => getJobInfo(job?.meta?.jobId)?.downloadState?.[index], [job?.meta?.jobId, index]);
-    const stateMap = (state) => ({
-        DONE: ['neutral', 'Downloaded'],
+/**
+ * Downloads a result's original file.  Renders nothing when the result has no file to download.
+ * The download state is kept in the component's state, not in the job store: every poll replaces the job objects,
+ * and a UWS job opened from the Upload panel is not in the job store.
+ * @param {Object} p - props
+ * @param {Object} p.job
+ * @param {number} [p.resultIdx=0]
+ */
+export function DownloadBtn({job, resultIdx=0}) {
+    const [dlState, setDlState] = useState();
+    const url = getResultDownloadUrl(job, resultIdx);
+    if (!url) return null;
+
+    const [color, title] = {
+        DONE: ['neutral', 'Download started'],
         FAIL: ['danger', 'Download may have failed or timed out'],
-    }[state] ?? ['primary', 'Click to download file']);
-    const loading = dlState === 'WORKING';
-    const color = stateMap(dlState)[0];
-    const title = stateMap(dlState)[1];
-
+    }[dlState] ?? ['primary', 'Click to download file'];
+    const onClick = () => {
+        setDlState('WORKING');
+        download(url).then((started) => setDlState(started ? 'DONE' : 'FAIL'));
+    };
     return  (
-        <IconButton title='Download file' onClick={() => doDownload(job, index)} {...{color, loading, title}}><DownloadIcon/></IconButton>
+        <IconButton onClick={onClick} loading={dlState === 'WORKING'} {...{color, title}}><DownloadIcon/></IconButton>
     );
 }
 
@@ -514,18 +540,6 @@ function defaultRequest(doFilter) {
     const sortInfo = SortInfo.newInstance(SORT_DESC, 'Created').serialize();
     const filters = doFilter ? "Phase IN ('EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED')" : undefined;
     return {sortInfo, filters};
-}
-
-function doDownload(job, index) {
-    const url = job?.results?.[index]?.href;
-    if (!url) {
-        showInfoPopup('Bad URL. Cannot download');
-        return;
-    }
-    dispatchBgJobInfo( updateSet(job, ['downloadState',index], 'WORKING') );
-    download(url).then( (started) => {
-        dispatchBgJobInfo( updateSet(job, ['downloadState',index], started ? 'DONE' : 'FAIL') );
-    });
 }
 
 function getMonitoredJob(jobMap) {
