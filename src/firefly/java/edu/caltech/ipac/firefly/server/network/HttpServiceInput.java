@@ -39,6 +39,7 @@ public class HttpServiceInput implements Cloneable, Serializable {
     private String userId;
     private String passwd;
     private boolean followRedirect = true;
+    private int readTimeout;        // milliseconds to wait for the next byte from the remote server; 0 waits forever
 
     public HttpServiceInput() {}
 
@@ -204,6 +205,12 @@ public class HttpServiceInput implements Cloneable, Serializable {
     public boolean isFollowRedirect() { return followRedirect; }
     public HttpServiceInput setFollowRedirect(boolean followRedirect) {
         this.followRedirect = followRedirect;
+        return this;
+    }
+
+    public int getReadTimeout() { return readTimeout; }
+    public HttpServiceInput setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
         return this;
     }
 

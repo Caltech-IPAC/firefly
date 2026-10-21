@@ -9,7 +9,7 @@ import {makeUniquePlotIdFromBase} from '../../visualize/PlotViewUtil';
 
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgLoadJobs, dispatchJobAdd} from './BackgroundCntlr.js';
-import {getCmdSrvAsyncURL, isURL} from '../../util/WebUtil.js';
+import {encodeUrl, getCmdSrvAsyncURL, getRootURL, isURL} from '../../util/WebUtil.js';
 import {COMPONENT_STATE_CHANGE, dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
 import {jsonFetch} from '../JsonUtils.js';
@@ -313,6 +313,37 @@ export function fixTapResults(jobInfo) {
     return jobInfo;     // otherwise, return as is and hope the server provides the result URL correctly in the jobInfo.
 }
 
+
+/**
+ * Returns the URL that downloads a job result's original file, or undefined when there is nothing to download.
+ * It goes by the result's href, not the job type, so UWS jobs opened from the Upload panel work too.
+ * @param {Object} job
+ * @param {number} [resultIdx=0]
+ * @return {string|undefined}
+ */
+export function getResultDownloadUrl(job, resultIdx=0) {
+    const {results=[]} = job ?? {};
+    const href = results[resultIdx]?.href?.trim();
+    if (!href) return;
+
+    const resultId = results.length > 1 ? `-${results[resultIdx].id ?? resultIdx}` : '';
+    const fileName = `${getJobTitle(job) ?? 'result'}${resultId}`;
+    const downloadUrl = getRootURL() + 'servlet/Download';
+
+    if (href.startsWith('${')) {        // a file the Firefly server saved for a SEARCH job
+        const ext = href.match(/(\.[A-Za-z0-9]{1,5})$/)?.[1] ?? '';
+        return encodeUrl(downloadUrl, {file: href, return: fileName + ext});
+    }
+    if (!/^https?:\/\//i.test(href) || !isURL(href)) return;
+
+    const rootPath = new URL(getRootURL()).pathname;
+    const {pathname} = new URL(href);
+    if (pathname === rootPath + 'servlet/Download') return href;           // the Firefly server's own download URL, e.g. a PACKAGE result
+    if (pathname.startsWith(rootPath + 'CmdSrv/async/')) return;           // reruns the search and returns Firefly's internal JSON, not a file
+
+    // the Firefly server relays the remote file as it arrives, and adds an extension to the name
+    return encodeUrl(downloadUrl, {streamURL: href, return: fileName});
+}
 
 export function loadJobResult({jobInfo, resultIdx}) {
     const {request, tbl_id, loader, href,  mimeType, id, size} = getMetadata({jobInfo, resultIdx});
