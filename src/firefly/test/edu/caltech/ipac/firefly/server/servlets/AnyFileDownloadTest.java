@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPOutputStream;
 
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.DOWNLOAD_TOKEN;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.RETURN_PARAM;
@@ -84,6 +85,29 @@ public class AnyFileDownloadTest extends ConfigTest {
         assertTrue(res.headers.get("Content-Disposition").startsWith("attachment; filename=\"cat.vot.gz\""));
         assertEquals("nosniff", res.headers.get("X-Content-Type-Options"));
         assertEquals("ffdl_tok1", res.cookies.get(0).getName());
+    }
+
+    @Test
+    public void passesGzipEncodingThroughForTheBrowserToDecode() throws Exception {
+        ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+        try (GZIPOutputStream gz = new GZIPOutputStream(compressed)) {
+            gz.write("<TR><TD>10.68</TD><TD>41.27</TD></TR>\n".repeat(5_000).getBytes(StandardCharsets.UTF_8));
+        }
+        byte[] gzBody = compressed.toByteArray();
+        upstream.createContext("/cat.vot", ex -> {
+            ex.getResponseHeaders().set("Content-Type", "application/x-votable+xml");
+            ex.getResponseHeaders().set("Content-Encoding", "gzip");
+            ex.sendResponseHeaders(200, gzBody.length);
+            try (OutputStream os = ex.getResponseBody()) { os.write(gzBody); }
+        });
+
+        FakeResponse res = new FakeResponse(new ByteArrayOutputStream());
+        new AnyFileDownload().processRequest(request(STREAM_URL, baseUrl + "/cat.vot", RETURN_PARAM, "job-7"), res.proxy);
+
+        assertEquals(200, res.status);
+        assertArrayEquals("still compressed", gzBody, res.body());
+        assertEquals("gzip", res.headers.get("Content-Encoding"));
+        assertEquals(String.valueOf(gzBody.length), res.headers.get("Content-Length"));
     }
 
     @Test
