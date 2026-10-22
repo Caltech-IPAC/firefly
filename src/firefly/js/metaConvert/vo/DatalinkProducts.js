@@ -2,6 +2,7 @@ import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil';
 import {doFetchTable, getCellValue, getColumnByRef, getMetaEntry} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {logger} from '../../util/Logger';
+import {isDefined} from '../../util/WebUtil.js';
 import {currentP} from '../../visualize/PlotViewUtil';
 import {getObsCoreAccessURL} from '../../voAnalyzer/TableAnalysis';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -430,9 +431,14 @@ export function makeDlUrl(dlServDesc, table, row) {
     if (!dlServDesc) return undefined;
     const {serDefParams, accessURL}= dlServDesc;
     const sendParams={};
-    serDefParams?.filter( ({ref}) => ref).forEach( (p) => {
-        const colName= p.colName || getColumnByRef(table, p.ref)?.name;
-        sendParams[p.name]=getCellValue(table, row, colName);
+    serDefParams?.forEach( (p) => {
+        if (p.ref) { // value comes from the row
+            const colName= p.colName || getColumnByRef(table, p.ref)?.name;
+            sendParams[p.name]=getCellValue(table, row, colName);
+        }
+        else if (isDefined(p.value) && p.value!=='') { // fixed value set by the service descriptor, e.g. RELEASE=dr1
+            sendParams[p.name]= p.value;
+        }
     });
     const newUrl= new URL(accessURL);
     Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
