@@ -45,7 +45,7 @@ describe('DownloadBtn', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    test('downloads the result of the row clicked in the Results block', async () => {
+    test('calls download() with the URL of the row clicked in the Results block', async () => {
         const {spy} = stubDownload();
         render(<ResultsBlock job={job} ActionBtn={DownloadBtn}/>);
 
@@ -55,7 +55,7 @@ describe('DownloadBtn', () => {
         expect(new URL(spy.mock.calls[0][0]).searchParams.get('streamURL')).toBe(job.results[1].href);
     });
 
-    test('shows progress, then success', async () => {
+    test('shows progress, then that the download started', async () => {
         const {settle} = stubDownload();
         render(<DownloadBtn job={job}/>);
 
@@ -91,7 +91,7 @@ describe('DownloadBtn', () => {
         expect(screen.getByRole('button')).toHaveAccessibleName('Download started');
     });
 
-    test('does not add a job opened from the Upload panel to the job store', async () => {
+    test('does not add a job missing from the job store to it, e.g. one opened from the Upload panel', async () => {
         const {settle} = stubDownload();
         render(<DownloadBtn job={job}/>);
 
