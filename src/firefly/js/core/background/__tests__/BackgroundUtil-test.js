@@ -15,7 +15,7 @@ const makeJob = (results, title = 'TAP 2MASS M81') => ({jobId: '25113176', jobIn
 
 describe('getResultDownloadUrl', () => {
 
-    test('relays a remote result through the Firefly server, with the href intact', () => {
+    test('builds a Download servlet URL with the remote href as streamURL, unchanged', () => {
         // a signed storage URL breaks if a single character changes, including its escapes
         const href = 'https://storage.example.org/b/result.parquet?X-Goog-Signature=ab%2Fcd%3D&X-Goog-Expires=3600';
 
@@ -25,7 +25,7 @@ describe('getResultDownloadUrl', () => {
         expect(params).toEqual({streamURL: href, return: 'TAP 2MASS M81'});
     });
 
-    test('downloads the file the Firefly server saved for a SEARCH job, keeping its extension', () => {
+    test('builds a Download servlet URL for a SEARCH job\'s saved file, with its extension on the name', () => {
         const href = '${stage}/jobs/GX/GatorQuery2114264923686407498.tbl';
 
         const {servlet, params} = parse(getResultDownloadUrl(makeJob([{id: 'result', href}], 'Gator 2MASS M81')));
@@ -40,7 +40,7 @@ describe('getResultDownloadUrl', () => {
         expect(getResultDownloadUrl(makeJob([{id: 'SIASearch.zip', href}]))).toBe(href);
     });
 
-    test('offers no download for a Firefly async result, which reruns the search and returns JSON', () => {
+    test('returns no URL for a Firefly async result', () => {
         const href = getRootURL() + 'CmdSrv/async/KJ2wy2kHzq6eW7Lz9KK5na/results/result';
 
         expect(getResultDownloadUrl(makeJob([{id: 'result', href}]))).toBeUndefined();
@@ -52,11 +52,11 @@ describe('getResultDownloadUrl', () => {
         ['a relative href', [{href: 'results/result'}]],
         ['an ftp href', [{href: 'ftp://ftp.example.org/x.fits'}]],
         ['a file href', [{href: 'file:///etc/passwd'}]],
-    ])('offers no download for %s', (desc, results) => {
+    ])('returns no URL for %s', (desc, results) => {
         expect(getResultDownloadUrl(makeJob(results))).toBeUndefined();
     });
 
-    test('names each result of a multi-result job after its id, or its position when it has none', () => {
+    test('appends each result\'s id, or its position when it has none, to the download name of a multi-result job', () => {
         const job = makeJob([
             {id: 'curl-script', href: 'https://example.org/a.sh'},
             {href: 'https://example.org/b.txt'},
@@ -66,7 +66,7 @@ describe('getResultDownloadUrl', () => {
         expect(parse(getResultDownloadUrl(job, 1)).params).toEqual({streamURL: 'https://example.org/b.txt', return: 'TAP 2MASS M81-1'});
     });
 
-    test('works for a UWS job opened from the Upload panel, which has no job type or title', () => {
+    test('names the download after the jobId when the job has no title or runId', () => {
         const job = {jobId: '25113176', results: [{id: 'result', href: 'https://irsa.ipac.caltech.edu/TAP/async/25113176/results/result'}]};
 
         expect(parse(getResultDownloadUrl(job)).params.return).toBe('25113176');
