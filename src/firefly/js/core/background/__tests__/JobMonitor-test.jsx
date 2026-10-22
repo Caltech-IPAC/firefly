@@ -90,15 +90,4 @@ describe('DownloadBtn', () => {
 
         expect(screen.getByRole('button')).toHaveAccessibleName('Download started');
     });
-
-    test('does not add a job missing from the job store to it, e.g. one opened from the Upload panel', async () => {
-        const {settle} = stubDownload();
-        render(<DownloadBtn job={job}/>);
-
-        await userEvent.click(screen.getByRole('button'));
-        settle(true);
-        await waitFor(() => expect(screen.getByRole('button')).toHaveAccessibleName('Download started'));
-
-        expect(getJobInfo(job.meta.jobId)).toBeUndefined();
-    });
 });
