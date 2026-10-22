@@ -155,12 +155,14 @@ export function HeaderText({val, level='body-sm', sx, ...rest}) {
 }
 
 const blurEnter = ['blur','enter'];
+const syntaxTipProps = {enterDelay: 300};      // filter boxes and constraint cells can open their syntax tooltip quickly
 
 function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
     const col = useStoreConnector(colGetter);
     const [showTooltip, setShowTooltip] = useState(true);
+    const [editing, setEditing] = useState(false);       // the syntax tooltip shows only while this box has focus
     const dropdownEl = useRef(null);
 
     useEffect(() => {
@@ -191,13 +193,19 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             validator={validator}
             fieldKey={name}
             sx={{width: 1, '--Input-radius': ''}}
-            tooltip={showTooltip && FILTER_CONDITION_TTIPS}
+            tooltip={editing && showTooltip && FILTER_CONDITION_TTIPS}
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
             showWarning={false}
             slotProps={{
-                input: {size:'sm', endDecorator }
+                input: {size:'sm', endDecorator, autoComplete: 'off'},
+                // Handle focus on the dropdown or checkboxes bubbling up and triggering the tooltip
+                control: {
+                    onFocus: (e) => setEditing(e.target.tagName === 'INPUT' && e.currentTarget.contains(e.target)),
+                    onBlur: () => setEditing(false),
+                },
+                tooltip: syntaxTipProps,
             }}
         />
     );
@@ -530,8 +538,14 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
         onChange && onChange(v, data, rowIndex, colIdx);
     };
 
-    return ({rowIndex, data, colIdx}) => {
-        const val = get(data, [rowIndex, colIdx]);
+    return function InputCell({rowIndex, data, colIdx}) {
+        const [editing, setEditing] = useState(false);       // the syntax tooltip shows only while this box has focus
+        const [shownRow, setShownRow] = useState(rowIndex);
+        if (shownRow !== rowIndex) {        // clear editing when a scroll moves the cell to another row
+            setShownRow(rowIndex);
+            setEditing(false);
+        }
+        const val = data?.[rowIndex]?.[colIdx];
 
 
         if (val === NOT_CELL_DATA) {
@@ -543,13 +557,14 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
                         key={rowIndex + '-' +colIdx}
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
                         sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
-                        tooltip={tooltips}
+                        tooltip={editing && tooltips}
                         size={size}
                         style={style}
                         value={val}
                         onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
                         actOn={['blur','enter']}
                         showWarning={false}
+                        slotProps={{input: {autoComplete: 'off'}, control: {onFocus: () => setEditing(true), onBlur: () => setEditing(false)}, tooltip: syntaxTipProps}}
                     />
                 </Box>
             );
@@ -571,7 +586,13 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
  */
 export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange, ...props}) => {
 
-    return ({rowIndex, data, colIdx}) => {
+    return function InputColumnCell({rowIndex, data, colIdx}) {
+        const [editing, setEditing] = useState(false);       // the tooltip shows only while this box has focus
+        const [shownRow, setShownRow] = useState(rowIndex);
+        if (shownRow !== rowIndex) {        // clear editing when a scroll moves the cell to another row
+            setShownRow(rowIndex);
+            setEditing(false);
+        }
         const val = get(data, [rowIndex, colIdx]);
         if (isReadOnly && isReadOnly(rowIndex, data, colIdx)) {
             return <div style={{width: '100%', height: '100%', ...style}}>{val}</div>;
@@ -582,11 +603,12 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
                         key={rowIndex + '-' +colIdx}
                         sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
                         validator={ validator && ((v) => validator(v, data, rowIndex, colIdx))}
-                        tooltip={tooltips}
+                        tooltip={editing && tooltips}
                         style={{width: '100%', boxSizing: 'border-box', ...style}}
                         value={val}
                         onChange={makeChangeHandler(rowIndex, data, colIdx, tbl_id, cname, validator, onChange)}
                         actOn={['blur','enter']}
+                        slotProps={{input: {autoComplete: 'off'}, control: {onFocus: () => setEditing(true), onBlur: () => setEditing(false)}, tooltip: syntaxTipProps}}
                     />
                 </Box>
             );
