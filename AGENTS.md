@@ -34,6 +34,8 @@ npx eslint src/firefly/js/charts/ChartUtil.js          # lint changed files, run
 
 Before calling a change done, run the full suites CI runs: `gradle :firefly:jsTest`, `gradle :firefly:jsLint`, and `gradle :firefly:test` if Java changed.
 
+Some Java and Jest tests read data from a separate `firefly_test_data` repo (internal, not on GitHub), checked out next to this one as `../firefly_test_data`. If it's missing or out of date, those tests fail with file-not-found errors — a data gap, not a regression. `FIREFLY_SKIP_TESTDATA=true` skips the Jest ones (see `src/firefly/jest.config.js`).
+
 ## Code conventions
 
 - Match the surrounding code's style, reuse existing utilities, and follow established patterns rather than reinventing them. The exception is a pattern that's clearly legacy or bug-prone. Use the modern approach there, and say that you did.
