@@ -437,6 +437,7 @@ public class FitsReadUtil {
     public static int getZNaxisN(Header h, int axis) { return h.getIntValue("ZNAXIS"+axis,-1); }
     public static double getBscale(Header h) { return h.getDoubleValue(Standard.BSCALE, 1.0); }
     public static double getBzero(Header h) { return h.getDoubleValue(Standard.BZERO, 0.0); }
+    public static boolean hasScaling(Header h) { return getBscale(h) != 1.0 || getBzero(h) != 0.0; }
     public static double getBlankValue(Header h) {
         // blank value is only applicable to integer values (BITPIX > 0)
         return getBitPix(h) > 0 ? h.getDoubleValue(Standard.BLANK, Double.NaN) : Double.NaN;

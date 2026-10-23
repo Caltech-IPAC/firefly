@@ -92,7 +92,7 @@ public class FitsExtract {
     private static Class<?> arrayTypeFromBitpix(Header header) {
         return switch (FitsReadUtil.getBitPix(header)) {
             case -32 -> Float.TYPE;
-            case 8, 16, 32 -> Integer.TYPE;
+            case 8, 16, 32 -> FitsReadUtil.hasScaling(header) ? Float.TYPE : Integer.TYPE;
             case 64 -> Long.TYPE;
             default -> Double.TYPE;
         };
