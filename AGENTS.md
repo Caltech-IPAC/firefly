@@ -11,7 +11,8 @@ Firefly is IPAC's astronomy data visualization and archive UI toolkit: a React/R
 - `src/firefly/js/` — client code
   - `visualize/` images, HiPS and coordinates; `tables/` table model and UI; `charts/` Plotly-based charts
   - `ui/` components, dialogs and search panels; `core/` Redux store, reducers and sagas; `api/` public JS API; `util/` helpers
-  - `*Cntlr.js` files (e.g. `charts/ChartsCntlr.js`) define a state slice's action types, `dispatch*` functions and reducer
+  - `*Cntlr.js` files (e.g. `charts/ChartsCntlr.js`) usually define a state slice's action types, `dispatch*` functions and reducer
+    - the modern pattern splits them to avoid circular imports, e.g. image zoom: action type `ZOOM_IMAGE` in `visualize/VisConst.js`, `dispatchZoom()` in `ImagePlotDispatch.js`, reducer in `ImagePlotCntlr.js`, store getters like `visRoot()` in `VisStoreRoots.js`. Use it for new controllers and when refactoring old ones.
   - tests live next to the code in `__tests__/` folders, named `<Module>-test.js`
 - `src/firefly/java/edu/caltech/ipac/` — server code (`firefly/`, `table/`, `visualize/`, `util/`, `astro/`)
 - `src/firefly/test/` — Java tests, mirroring the `java/` package layout
