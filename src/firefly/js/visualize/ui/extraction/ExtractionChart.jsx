@@ -3,7 +3,7 @@ import {getExtName} from '../../FitsHeaderUtil.js';
 import {
     getAllWaveLengthsForCube, getHDU, getPtWavelength, hasWCSProjection, hasWLInfo, primePlot
 } from '../../PlotViewUtil.js';
-import {getFluxUnits} from '../../WebPlot.js';
+import {getFluxUnits, isHiPS} from '../../WebPlot.js';
 
 const plotlyDivStyle = {width: '100%', height: '100%'};
 
@@ -38,8 +38,10 @@ function makePlotlyLayoutObj(title, xAxis, yAxis, reversed = false) {
 }
 
 
-function makePlotlyDataObj(xDataAry, yDataAry, x, y, ttXStr, ttYStr, makeXDesc = (i) => formatNumber(xDataAry[i],6),
-                           highlightXDesc = formatNumber(x,6), makeYDesc = (i) => formatNumber(yDataAry[i],6)) {
+function makePlotlyDataObj(xDataAry, yDataAry, x, y, ttXStr, ttYStr,
+                           makeXDesc = (i) => formatNumber(xDataAry[i],6),
+                           highlightXDesc = formatNumber(x,6),
+                           makeYDesc = (i) => formatNumber(yDataAry[i],6)) {
     const dataRoot = {mode: 'markers', hoverinfo: 'text'};
     const result = [
         {
@@ -82,12 +84,14 @@ function makePlotlyDataObj(xDataAry, yDataAry, x, y, ttXStr, ttYStr, makeXDesc =
  * @param {string} combineOp - how the values in the box are combined: 'AVG', 'SUM', or 'OR'
  * @param {string} title - chart title
  * @param {boolean} reversed - if true, reverse the x-axis
+ * @param {string} [hipsUnits] - HiPS only, the units of the pixel values
  * @return {ExtractionChartParams}
  */
-export function genSliceChartData(plot, xDataAry, yDataAry, x, y, pointSize, combineOp, title, reversed) {
+export function genSliceChartData(plot, xDataAry, yDataAry, x, y, pointSize, combineOp, title, reversed, hipsUnits) {
     const unitStr = hasWCSProjection(plot) ? ' (arcsec)' : '';
-    const yUnits = getFluxUnits(plot);
-    const yAxisLabel = getExtName(plot) || 'HDU# ' + getHDU(plot);
+    const hips= isHiPS(plot);
+    const yUnits = hips ? (hipsUnits ?? '') : getFluxUnits(plot);
+    const yAxisLabel = hips ? 'Pixel Value' : getExtName(plot) || 'HDU# ' + getHDU(plot);
     return {
         plotlyDivStyle,
         plotlyData: makePlotlyDataObj(xDataAry, yDataAry, x, y, 'Offset' + unitStr, yAxisLabel),
@@ -108,15 +112,29 @@ export function genSliceChartData(plot, xDataAry, yDataAry, x, y, pointSize, com
  * @param {string} title - chart title
  * @param {string} chartXAxis - 'imageX' to plot against image x, any other value to plot against image y
  * @param {number} activeIdx - index into imPtAry of the highlighted point
+ * @param {string} [hipsUnits] - HiPS only, the units of the pixel values
  * @return {ExtractionChartParams}
  */
-export function genPointChartData(plot, dataAry, imPtAry, x, y, pointSize, combineOp, title, chartXAxis, activeIdx) {
+export function genPointChartData(plot, dataAry, imPtAry, x, y, pointSize, combineOp, title, chartXAxis, activeIdx, hipsUnits='') {
 
-    const xAxis = chartXAxis === 'imageX' ? imPtAry.map((pt) => pt.x) : imPtAry.map((pt) => pt.y);
-    const xAxisTitle = chartXAxis === 'imageX' ? 'Image X' : 'Image Y';
-    const xLabel = (i) => `(${imPtAry[i].x},${imPtAry[i].y})`;
-    const yUnits = getFluxUnits(plot);
-    const yAxisLabel = getExtName(plot) || 'HDU# ' + getHDU(plot);
+    const useXforXAxis= chartXAxis === 'imageX';
+    const xAxis = useXforXAxis ? imPtAry.map((pt) => pt.x) : imPtAry.map((pt) => pt.y);
+    const xLabel = (i) => `(${formatNumber(imPtAry[i].x,6)},${formatNumber(imPtAry[i].y,6)})`;
+    let xAxisTitle;
+    let yAxisLabel;
+    let yUnits;
+    if (isHiPS(plot)) {
+        xAxisTitle = useXforXAxis ? 'RA' : 'Dec';
+        yAxisLabel= 'Pixel Value';
+        yUnits= hipsUnits;
+    }
+    else {
+        xAxisTitle = hasWCSProjection(plot)
+            ? useXforXAxis ? 'RA' : 'Dec'
+            : useXforXAxis ? 'Image X' : 'Image Y';
+        yAxisLabel = getExtName(plot) || 'HDU# ' + getHDU(plot);
+        yUnits = getFluxUnits(plot);
+    }
 
     return {
         plotlyDivStyle,

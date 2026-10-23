@@ -42,6 +42,7 @@ import {
     dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip, dispatchRestoreDefaults,
     dispatchRotate
 } from '../ImagePlotDispatch';
+import {isHiPSFitsCube} from '../HiPSUtil.js';
 import {ExpandType} from '../VisConst';
 import {getDlAry, visRoot} from '../VisStoreRoots';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
@@ -375,21 +376,22 @@ function startExtraction(element,type,modalEndInfo) {
 const ExtractRow= ({pv,enabled,modalEndInfo,mi}) => {
     const plot= primePlot(pv);
     const standIm= isImage(plot) && !isThreeColor(pv);
-    const cube= standIm && isCube(primePlot(pv));
+    const cube= (standIm && isCube(plot)) || isHiPSFitsCube(plot);
+    const hipsWithFits= isHiPS(plot) && plot.hasFits;
     return (
         <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
             <Typography level='body-md' width='10em'>Extract:</Typography>
             <ToolbarButton icon={DRILL_DOWN}
                            tip={`Extract Z-axis from cube${cube?'':' - disabled: only available for FITS cubes'}`}
-                           enabled={standIm&&cube&&enabled}
+                           enabled={cube&&enabled}
                            onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
                            visible={mi.extractZAxis}/>
-            <ExtractLine tip={`Extract line from image${standIm?'':' - disabled: only available for images'}`}
-                         enabled={standIm&&enabled}
+            <ExtractLine tip={`Extract line from image${(standIm||hipsWithFits)?'':' - disabled: only available for images or HiPS with FITS tiles'}`}
+                         enabled={(standIm||hipsWithFits)&&enabled}
                            onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
                            visible={mi.extractLine}/>
-            <ExtractPoints tip={`Extract points from image${standIm?'':' - disabled: only available for images'}`}
-                           enabled={standIm&&enabled}
+            <ExtractPoints tip={`Extract points from image${(standIm||hipsWithFits)?'':' - disabled: only available for images or HiPS with FITS tiles'}`}
+                           enabled={(standIm||hipsWithFits)&&enabled}
                            onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
         </Stack>

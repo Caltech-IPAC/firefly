@@ -12,7 +12,8 @@ import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
 import {getCmdSrvSyncURL} from 'firefly/util/WebUtil.js';
 import {fetchUrl} from 'firefly/api/ApiUtil.js';
-import {getBixPix, getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
+import {getBixPix} from 'firefly/visualize/FitsHeaderUtil.js';
+import {isHiPS} from 'firefly/visualize/WebPlot.js';
 
 
 /**
@@ -103,13 +104,29 @@ async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION
     return use64Bit ? new Float64Array(arrayBuffer) : new Float32Array(arrayBuffer);
 }
 
-export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, combineOp, relatedCubes=true) {
+/**
+ * Get the z-axis values of a pixel from a cube
+ * @param {Object} p
+ * @param {WebPlot|undefined} p.plot
+ * @param {number} p.hduNum
+ * @param {ImagePt} p.ipt - for HiPS, the pixel in the FITS cube tile
+ * @param {number} p.pointSize
+ * @param {String} p.combineOp
+ * @param {String} [p.hipsTileUrl] - required for HiPS, url of the FITS cube tile
+ * @param {boolean} [p.relatedCubes]
+ * @return {Promise<Float32Array|Float64Array>}
+ */
+export async function callGetCubeDrillDownAry({plot, hduNum, ipt, pointSize, combineOp, hipsTileUrl, relatedCubes=true}) {
+    if (!plot) return;
+    const fileParams= isHiPS(plot)
+        ? {[ServerParams.IS_HIPS_TILE]: true+'', [ServerParams.URL]: hipsTileUrl}
+        : {[ServerParams.STATE]: plot.plotState.toJson(false)};
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'z-axis',
-            [ServerParams.STATE]: plot.plotState.toJson(false),
-            [ServerParams.PT] : pt.toString(),
-            [ServerParams.POINT_SIZE] : ptSize+'',
+            ...fileParams,
+            [ServerParams.PT] : ipt.toString(),
+            [ServerParams.POINT_SIZE] : pointSize+'',
             [ServerParams.COMBINE_OP] : combineOp,
             [ServerParams.HDU_NUM] : hduNum+'',
             [ServerParams.RELATED_HDUS] : relatedCubes+'',
@@ -131,12 +148,36 @@ export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptS
         });
 }
 
-export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSizeX, ptSizeY, combineOp, relatedHDUS=true) {
+/**
+ * Get the values at a list of points
+ * @param {Object} p
+ * @param {WebPlot|undefined} p.plot
+ * @param {number} p.hduNum
+ * @param {number} p.plane
+ * @param {Array.<ImagePt>|Array.<{tileUrl:String, tilePt:ImagePt}>} p.ptAry - for an image, an array of image points,
+ * for HiPS, an array of the FITS tile location of each point (see getHiPSFitsTileLocation)
+ * @param {number} p.ptSizeX
+ * @param {number} p.ptSizeY
+ * @param {String} p.combineOp
+ * @param {boolean} [p.relatedHDUS]
+ * @return {Promise<Float32Array|Float64Array>}
+ */
+export async function callGetPointExtractionAry({plot, hduNum, plane, ptAry, ptSizeX, ptSizeY, combineOp, relatedHDUS=true}) {
+    if (!plot) return;
+    const ptParams= isHiPS(plot)
+        ? {
+            [ServerParams.IS_HIPS_TILE]: true+'',
+            [ServerParams.HIPS_TILE_URL_ARY]: JSON.stringify(ptAry.map( ({tileUrl}) => tileUrl)),
+            [ServerParams.PTARY]: JSON.stringify(ptAry.map( ({tilePt}) => tilePt.toString())),
+        }
+        : {
+            [ServerParams.STATE]: plot.plotState.toJson(false),
+            [ServerParams.PTARY]: JSON.stringify(ptAry.map( (pt) => pt.toString())),
+        };
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'points',
-            [ServerParams.STATE]: plot.plotState.toJson(false),
-            [ServerParams.PTARY] : JSON.stringify(ptAry.map( (pt) => pt.toString())),
+            ...ptParams,
             [ServerParams.POINT_SIZE_X] : ptSizeX+'',
             [ServerParams.POINT_SIZE_Y] : ptSizeY+'',
             [ServerParams.COMBINE_OP] : combineOp,

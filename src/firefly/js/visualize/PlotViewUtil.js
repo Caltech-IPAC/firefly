@@ -9,13 +9,13 @@ import {
 } from './VisConst';
 import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
-import {memorizeLastCall} from '../util/WebUtil';
+import {memorizeLastCall, splitByWhiteSpace} from '../util/WebUtil';
 import {Band} from './Band';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {getViewer} from './MultiViewCntlr.js';
 import {
-    getCenterPtOfPlot, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth
+    getCenterPtOfPlot, getRotationAngle, isEastLeftOfNorth, isPlotNorth
 } from './WebPlotAnalysis';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeTransform} from './PlotTransformUtils.js';
@@ -43,7 +43,7 @@ export function getPlotViewAry(ref, plotGroupId= undefined) {
         pvAry= ref;
     }
     if (!plotGroupId) return pvAry ?? [];
-    return pvAry.filter( (pv) => pv.plotGroupId===plotGroupId);
+    return (pvAry ?? []).filter( (pv) => pv.plotGroupId===plotGroupId);
 }
 
 /**
@@ -637,7 +637,7 @@ export function getCenterOfProjection(plot) {
  * Find the point in the plot that is at the center of the display.
  * The point returned is in ImagePt coordinates.
  * We return it in and ImagePt not screen because if the plot is zoomed the image point will still
- * be what we want in the center. A alternate scrollX and scrollY may be passed otherwise the current
+ * be what we want in the center. An alternate scrollX and scrollY may be passed otherwise the current
  * scrollX and scrollY is used.
  *
  * @param {PlotView} plotView
@@ -689,7 +689,7 @@ export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
  * @param {String} plotId
  * @return {number}
  */
-const getCanvasIdx= (c,start,plotId) => Number(c.id.substr(0, c.id.length - plotId.length - 1).substr(start));
+const getCanvasIdx= (c,start,plotId) => Number(c.id.substring(start.length, c.id.length - plotId.length - 1));
 
 export function getCorners(plot) {
     if (!plot) return null;
@@ -799,7 +799,7 @@ export const getHduPlotStartIndexes= (pv) => pv?.plotViewCtx.hduPlotStartIndexes
  * @param {PlotView} pv
  * @return {Number}
  */
-export const getHDUCount= (pv) => getHduPlotStartIndexes?.(pv).length ?? 0;
+export const getHDUCount= (pv) => getHduPlotStartIndexes(pv)?.length ?? 0;
 
 
 /**
@@ -951,7 +951,36 @@ export function convertImageIdxToHDU(pv, imageIdx) {
  * @return {boolean}
  */
 export const hasWLInfo= (plot) =>
-           Boolean(plot?.wlData?.hasPlainOnlyCoordInfo || plot?.wlData?.hasPixelLevelCoordInfo );
+    isHiPS(plot)
+        ? Boolean(getHiPSCubeWavelengths(plot))
+        : Boolean(plot?.wlData?.hasPlainOnlyCoordInfo || plot?.wlData?.hasPixelLevelCoordInfo );
+
+const parseHiPSCubeWavelengths= memorizeLastCall( (crval3ArrStr, cubeDepth) => {
+    const wlAry= splitByWhiteSpace(crval3ArrStr).map( (s) => Number(s));
+    return (wlAry.length===cubeDepth && wlAry.every( (v) => Number.isFinite(v))) ? wlAry : undefined;
+}, 4);
+
+/**
+ * Get the wavelength of each plane of a HiPS cube from the data_cube_crval3_arr property
+ * @param {WebPlot|undefined} plot
+ * @return {Array.<number>|undefined} the wavelengths, undefined if not a HiPS cube or no valid wavelength for every plane
+ */
+function getHiPSCubeWavelengths(plot) {
+    if (!isHiPS(plot) || !(plot.cubeDepth>1)) return;
+    const crval3ArrStr= plot.hipsProperties?.data_cube_crval3_arr;
+    if (!crval3ArrStr) return;
+    return parseHiPSCubeWavelengths(crval3ArrStr, plot.cubeDepth);
+}
+
+/**
+ * Get the wavelength units of a HiPS cube from the data_cube_bunit3 property
+ * @param {WebPlot|undefined} plot
+ * @return {string}
+ */
+function getHiPSCubeWavelengthUnits(plot) {
+    const bunit3= plot?.hipsProperties?.data_cube_bunit3;
+    return (bunit3 && bunit3!=='null' && bunit3!=='nil' && bunit3!=='undefined') ? bunit3 : '';
+}
 
 export const wavelengthInfoParsedSuccessfully= (plot) => !plot?.wlData?.failReason;
 
@@ -998,8 +1027,11 @@ export const getWaveLengthUnits= (plot, band) => getWlUnitValue(plot,0,band);
  */
 export const getBandWidthUnits= (plot, band) => getWlUnitValue(plot,1,band);
 
-const getWlUnitValue= (plot, idx, band= Band.NO_BAND) =>
-    hasWLInfo(plot) ? plot.wlDataAry[band.value]?.spectralCoords?.[idx]?.units : '';
+const getWlUnitValue= (plot, idx, band= Band.NO_BAND) => {
+    if (!hasWLInfo(plot)) return '';
+    if (isHiPS(plot)) return idx===0 ? getHiPSCubeWavelengthUnits(plot) : '';
+    return plot.wlDataAry[band.value]?.spectralCoords?.[idx]?.units;
+};
 
 
 const micronRe= new RegExp('microns|micron|um|micrometers','gi');
@@ -1049,6 +1081,7 @@ export const getPtWavelength= (plot, pt, cubeIdx, band) => getPtSpectralCoords(p
  * @return {Array.<number>}
  */
 export function getPtSpectralCoords(plot, pt, cubeIdx, band= Band.NO_BAND) {
+    if (isHiPS(plot)) return [getHiPSCubeWavelengths(plot)?.[cubeIdx] ?? 0, 0];
     if (!plot?.wlDataAry?.[band.value] || !hasWLInfo(plot)) return [0,0];
     const ipt= CCUtil.getImageCoords(plot,pt);
     if (!ipt && plot?.wlData?.hasPixelLevelCoordInfo) return [0,0];
@@ -1155,7 +1188,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
 
 
 /**
- * Return true if the plot in both PlotViews are rotated the same
+ * Return true if the plot in both PlotViews are rotated the same, that is north points the same way on the screen
  * @param {PlotView|undefined} pv1
  * @param {PlotView|undefined} pv2
  * @return {boolean}
@@ -1167,9 +1200,29 @@ export function isRotationMatching(pv1, pv2) {
     if (!p1 || !p2) return false;
     if (isNorthCountingRotation(pv1, p1) && isNorthCountingRotation(pv2, p2)) return true;
     const centerFirstPlot= isImage(p1) ? getCenterPtOfPlot(p1) : undefined; // if image use center point method
-    const r1 = getRotationAngle(p1,centerFirstPlot) + pv1.rotation;
-    const r2 = getRotationAngle(p2,centerFirstPlot) + pv2.rotation;
-    return Math.abs((r1 % 360) - (r2 % 360)) < .9;
+    const diff= Math.abs(getScreenNorthAngle(pv1,p1,centerFirstPlot) - getScreenNorthAngle(pv2,p2,centerFirstPlot));
+    return Math.min(diff, 360-diff) < .9;
+}
+
+/**
+ * Return true if east is displayed to the left of north, taking the flipY of the PlotView into account
+ * @param {PlotView} pv
+ * @param {WebPlot} [plot]
+ * @return {boolean}
+ */
+export const isEastDisplayedLeft= (pv, plot= primePlot(pv)) => isEastLeftOfNorth(plot)!==Boolean(pv.flipY);
+
+/**
+ * Return the direction of north on the screen, in degrees clockwise from up, in the range 0 to 360
+ * @param {PlotView} pv
+ * @param {WebPlot} plot
+ * @param {WorldPt} [wp] the world point to base rotation angle on
+ * @return {number}
+ */
+function getScreenNorthAngle(pv, plot, wp) {
+    const imageAngle= getRotationAngle(plot,wp);
+    const angle= isEastDisplayedLeft(pv,plot) ? imageAngle + pv.rotation : pv.rotation - imageAngle;
+    return ((angle % 360) + 360) % 360;
 }
 
 const isNorthCountingRotation = (pv, plot) => pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation);
@@ -1187,11 +1240,10 @@ export function isAllStretchDataLoaded(vr) {
 
 /**
  *
- * @param {VisRoot} vr
  * @param {MultiViewerRoot} mvr
  * @returns {boolean}
  */
-export function isDefaultCoverageActive(vr, mvr) {
+export function isDefaultCoverageActive(mvr) {
     if (currentP().plotId!==DEFAULT_COVERAGE_PLOT_ID) return false;
     return Boolean(getViewer(mvr,DEFAULT_COVERAGE_VIEWER_ID)?.mounted);
 }
@@ -1237,7 +1289,8 @@ export function canConvertBetweenHipsAndFits(pv) {
 }
 
 /**
- * return an angle that will rotate the pv to match the rotation of masterPv
+ * return an angle that will rotate the pv to match the rotation of masterPv. The angle is the one passed
+ * to dispatchRotate with RotateType.ANGLE
  * @param {PlotView} masterPv
  * @param {PlotView} pv
  * @return {number}
@@ -1246,21 +1299,11 @@ export function getMatchingRotationAngle(masterPv, pv) {
     const masterPlot = primePlot(masterPv);
     const plot = primePlot(pv);
     if (!plot || !masterPlot) return 0;
-    const centerMasterPlot= isImage(plot) ? getCenterPtOfPlot(plot) : undefined; // if image use center point method
-    const flipDiff= masterPv.flipY!==pv.flipY;
-    const masterRot = masterPv?.rotation * (flipDiff ? -1 : 1);
-    const rot = getRotationAngle(plot,centerMasterPlot);
-    let targetRotation;
-    if (isEastLeftOfNorth(masterPlot) && !masterPv.flipY) {
-        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + masterRot) - rot) * (flipDiff ? 1 : -1);
-    } else {
-        targetRotation = ((getRotationAngle(masterPlot,centerMasterPlot) + (360 - masterRot)) - rot) * (flipDiff ? 1 : -1);
-
-    }
-    if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;
-    if (targetRotation < 0) targetRotation += 360;
-    if (targetRotation > 359) targetRotation %= 360;
-    return targetRotation;
+    const centerMasterPlot= isImage(masterPlot) ? getCenterPtOfPlot(masterPlot) : undefined; // if image use center point method
+    const masterNorth= getScreenNorthAngle(masterPv,masterPlot,centerMasterPlot);
+    const imageAngle= getRotationAngle(plot,centerMasterPlot);
+    const targetRotation= isEastDisplayedLeft(pv,plot) ? imageAngle - masterNorth : masterNorth + imageAngle;
+    return ((targetRotation % 360) + 360) % 360;
 }
 
 /**
@@ -1271,12 +1314,12 @@ export function getMatchingRotationAngle(masterPv, pv) {
 export function makeUniquePlotIdFromBase(inId) {
     if (!getPlotViewById(visRoot(), inId)) return inId;
 
+    const prefix= `${inId} - `;
     const numList= getPlotViewAry(visRoot())
-        .filter((pv) => pv.plotId.startsWith(inId))
         .map((pv) => pv.plotId)
-        .map((id) => id?.substring(inId.length).trim().split('-')?.[1])
-        .map(Number)
-        .filter(Boolean);
+        .filter((id) => id?.startsWith(prefix))
+        .map((id) => Number(id.substring(prefix.length)))
+        .filter((n) => Number.isInteger(n) && n>0);
 
     const maxNum = numList?.length ? Math.max(...numList) : 0;
     return `${inId} - ${maxNum + 1}`;
