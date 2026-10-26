@@ -14,7 +14,7 @@ import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {PrismADQLAware} from '../../ui/tap/AdvancedADQL';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
-import {jobMonitorGroupKey, ResultsBlock, toDateString, useLocalTimeKey} from '../../core/background/JobMonitor';
+import {DownloadBtn, jobMonitorGroupKey, ResultsBlock, toDateString, useLocalTimeKey} from '../../core/background/JobMonitor';
 
 const dialogID = 'show-job-info';
 
@@ -96,7 +96,7 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
                 <CollapsibleGroup>
                     <OptionalBlock label='Error Summary' title='Referred to as "errorSummary" in UWS' value={errorSummary} Component={ErrorBlock} job={jobInfo} isOpen={isOpen}/>
                     <OptionalBlock label='Parameters' title='Referred to as "parameters" in UWS' value={parameters} isOpen={isOpen}/>
-                    <OptionalBlock label='Results' title='Referred to as "results" in UWS' value={results} Component={ResultsBlock} job={jobInfo} isOpen={isOpen}/>
+                    <OptionalBlock label='Results' title='Referred to as "results" in UWS' value={results} Component={ResultsBlock} job={jobInfo} ActionBtn={DownloadBtn} isOpen={isOpen}/>
                     <OptionalBlock label='Extra Information' title='Referred to as "jobInfo" in UWS' value={aux} isOpen={isOpen}/>
                 </CollapsibleGroup>
             )}
