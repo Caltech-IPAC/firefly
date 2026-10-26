@@ -5,11 +5,11 @@
 import {isNil} from 'lodash';
 import {callWhileAwaiting} from '../../util/WebUtil';
 import {NO_COLOR_TABLE} from '../rawData/ColorTable';
-import {retrieveAndProcessImage} from './ImageProcessor.js';
+import {retrieveAndProcessImage} from '../iv/ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
 import { dispatchAddWorkingTask } from '../../core/AppDataCntlr.js';
-import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
+import {createImageUrl, createEmptyTile} from '../iv/TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
 
@@ -47,7 +47,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
     //  ------------------------------------------------------------
 
     const normalCaseDrawOneCell= (tile, image, tileSize= tile.tileSize || image.width, x= tile.dx, y= tile.dy) => {
-        if (tile.subCells && (tile.incompleteCell || desiredNorder>norder)) {
+        if (tile.subCells) { // subCells are only set when needed: incomplete cell, zoomed beyond norder, or near a pole
             const half= tileSize/2;
             tile.subCells.forEach( (subTile) => {
                 normalCaseDrawOneCell(subTile,image, half, x+subTile.dx*half, y+subTile.dy*half);

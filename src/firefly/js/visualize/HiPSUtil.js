@@ -15,7 +15,7 @@
 import {isUndefined} from 'lodash';
 import {
     ang2pixNest, HealpixIndex, ORDER_MAX, radecToPolar, SpatialVector
-} from '../externalSource/aladinProj/HealpixIndex.js';
+} from './hips/HealpixIndex.js';
 import {getFireflySessionId} from '../Firefly';
 import {encodeServerUrl, getRootURL, loadImage} from '../util/WebUtil.js';
 import {CoordinateSys} from './CoordSys.js';
@@ -138,13 +138,12 @@ export function getCatalogNorderlevel(plot,minNOrder=7, maxNorder,gridSize=128) 
 
     const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
     if (screenPixArcsecSize> 100) return minNOrder;
-    const sizeInArcSecKey= `${screenPixArcsecSize.toFixed(7)}---${gridSize}`;
+    const sizeInArcSecKey= `${screenPixArcsecSize.toFixed(7)}---${gridSize}---${minNOrder}---${maxNorder}`;
     let norder= catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey];
     if (!norder) {
         const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*gridSize);
         norder= Math.max(minNOrder, Math.log2(nside));
         norder= Math.min(norder, maxNorder);
-        if (norder>maxNorder) norder= maxNorder;
         catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
     }
     return norder;
@@ -458,7 +457,7 @@ export function getHealpixCellAtNorder(norder, wp, dataCoordSys) {
     const polar = radecToPolar(dataWp.x,dataWp.y);
     const ipix= ang2pixNest(polar.theta, polar.phi,2**(norder));
     const nside= 2**norder;
-    return {...healpixCache.makeCornersForPix(ipix, nside, dataCoordSys),norder};
+    return {...getHealpixCornerTool().makeCornersForPix(ipix, nside, dataCoordSys),norder};
 }
 
 
@@ -550,11 +549,14 @@ function getPixCellList(norder,desiredNorder, centerWp, fov, viewDim, dataCoordS
 
 }
 
+/**
+ * @param {number} norder
+ * @param {number} ipix
+ * @param {CoordinateSys} dataCoordSys
+ * @return {{ipix:number, wpCorners:Array.<WorldPt>}} the cell, from the cache for norder 1 to 3
+ */
 export function getCornersForCell(norder, ipix, dataCoordSys) {
-    return (norder<=3) ?
-        getHealpixCornerTool().getFullCellList(norder, dataCoordSys)?.[ipix]?.wpCorners :
-        getHealpixCornerTool().makeCornersForPix(ipix, 2**norder, dataCoordSys); // this branch in this call is untested
-
+    return getHealpixCornerTool().makeCornersForPix(ipix, 2**norder, dataCoordSys);
 }
 
 /**
@@ -751,7 +753,7 @@ let keyCnt= 0;
 export function extractFitsFromHiPS(plot,nOrder,tileNumber) {
     if (!plot.hasFits) return;
 
-    const {min,max}= getHipsDataRange(plot);
+    // const {min,max}= getHipsDataRange(plot);
     const rv= getHipsPixelCutRangeValues(plot);
 
     const {pv} = currentP(plot.plotId);

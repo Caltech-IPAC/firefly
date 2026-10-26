@@ -59,17 +59,19 @@ export function* watchReadout() {
 
         let getNextWithWithAsync= false;
         const lockByClick= isLockByClick(readoutRoot());
-        let {worldPt,screenPt,imagePt}= mouseCtx;
-        const {plotId,mouseState, shiftDown,eventType, hipsLocation}= mouseCtx;
-        const useEv= !igoreEvTypes.includes(eventType);
-
-        if (!useEv) {
-            if (!lockByClick) savedWP= undefined;
-            if (lockByClick && worldPt && !shiftDown && mouseState===MouseState.CLICK) savedWP= worldPt;
-        }
-
+        let {worldPt,screenPt,imagePt}= mouseCtx ?? {};
+        const {plotId,mouseState, shiftDown,eventType, hipsLocation}= mouseCtx ?? {};
+        let useEv= false;
         const {plot,pv:plotView}= currentP(plotId);
         const threeColor= plot?.plotState?.threeColor;
+        if (mouseCtx) {
+            useEv= !igoreEvTypes.includes(eventType);
+
+            if (!useEv) {
+                if (!lockByClick) savedWP= undefined;
+                if (lockByClick && worldPt && !shiftDown && mouseState===MouseState.CLICK) savedWP= worldPt;
+            }
+        }
 
         if (useEv) {
             if (plot && lockByClick && savedWP && shiftDown && mouseState===MouseState.CLICK) {

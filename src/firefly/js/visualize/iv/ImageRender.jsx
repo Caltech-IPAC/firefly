@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {initImageDrawer}  from './ImageTileDrawer.js';
-import {createHiPSDrawer} from './HiPSTileDrawer.js';
+import {createHiPSDrawer} from '../hips/HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
 import {CANVAS_IMAGE_ID_START} from '../VisConst';
 import {primePlot} from '../PlotViewUtil';

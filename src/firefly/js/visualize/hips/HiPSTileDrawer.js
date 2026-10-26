@@ -5,7 +5,7 @@
 import Enum from 'enum';
 import {dispatchAddWorkingTask} from '../../core/AppDataCntlr';
 import {callWhileAwaiting} from '../../util/WebUtil';
-import {createImageUrl,initOffScreenCanvas, computeBounding} from './TileDrawHelper.jsx';
+import {createImageUrl,initOffScreenCanvas, computeBounding} from '../iv/TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot, loadImageMultiCall} from '../HiPSUtil.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
@@ -13,8 +13,8 @@ import {makeHipsRenderer} from './HiPSRenderer.js';
 import {isHiPS, isHiPSAitoff} from '../WebPlot';
 import {getHipsColorOps} from './HipsColor.js';
 import {getColorModel, NO_COLOR_TABLE} from '../rawData/ColorTable.js';
-import {brighter, darker} from 'firefly/util/Color.js';
-import {findCellOnScreen} from 'firefly/visualize/iv/HiPSCellFinder.js';
+import {brighter, darker} from '../../util/Color.js';
+import {findCellOnScreen} from './HiPSCellFinder.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
