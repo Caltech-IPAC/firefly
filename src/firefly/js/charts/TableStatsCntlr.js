@@ -103,7 +103,7 @@ export function reducer(state=getInitState(), action={}) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
             const {tbl_id} = action.payload;
-            if (has(state, tbl_id)) {
+            if (has(state, [tbl_id])) {
                 return Object.assign({}, omit(state,[tbl_id]));
             }
             return state;
@@ -115,12 +115,12 @@ export function reducer(state=getInitState(), action={}) {
             // save original table file path
             const resultSetID = get(getTblById(tblId), 'tableMeta.resultSetID');
 
-            return updateSet(state, tblId, {resultSetID, isColStatsReady: false});
+            return updateSet(state, [tblId], {resultSetID, isColStatsReady: false});
         }
         case (UPDATE_TBL_STATS)  :
         {
             const {tblId, isColStatsReady, colStats} = action.payload;
-            return updateMerge(state, tblId, {isColStatsReady, colStats});
+            return updateMerge(state, [tblId], {isColStatsReady, colStats});
         }
         case (REINIT_APP)  :
             return getInitState();

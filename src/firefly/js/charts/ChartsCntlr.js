@@ -711,7 +711,7 @@ function reduceData(state={}, action={}) {
             if (tData) {
                 Object.assign(rest, {activeTrace: tData-1, curveNumberMap: range(tData)});
             }
-            state = updateSet(state, chartId,
+            state = updateSet(state, [chartId],
                 omitBy({
                     chartId,
                     chartType,
@@ -728,7 +728,7 @@ function reduceData(state={}, action={}) {
             chartData = updateObject(chartData, changes);
             useScatterGL && changeToScatterGL(chartData);
 
-            return updateSet(state, chartId, chartData);
+            return updateSet(state, [chartId], chartData);
         }
         case (CHART_TRACE_REMOVE)  :
         {
@@ -743,13 +743,13 @@ function reduceData(state={}, action={}) {
                     chartData = updateObject(chartData, moreChanges);
                 }
             }
-            return updateSet(state, chartId, chartData);
+            return updateSet(state, [chartId], chartData);
         }
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
             logger.info('CHART_REMOVE '+chartId);
-            return omit(state, chartId);
+            return omit(state, [chartId]);
         }
         case (CHART_MOUNTED) :
         {
@@ -763,7 +763,7 @@ function reduceData(state={}, action={}) {
         case (CHART_UNMOUNTED) :
         {
             const {chartId} = action.payload;
-            if (has(state, chartId)) {
+            if (has(state, [chartId])) {
                 const n = get(state, [chartId,'mounted'], 0);
                 if (n > 0) {
                     state = updateSet(state, [chartId, 'mounted'], Number(n) - 1);
