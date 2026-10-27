@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 
-import {getElapsedTime, getJobInfo, getJobPctComplete, getProgressMsg, isActive, isTapJob, isUWS} from './BackgroundUtil.js';
+import {getElapsedTime, getJobInfo, getJobTitle, getJobPctComplete, getProgressMsg, isActive, isTapJob, isUWS} from './BackgroundUtil.js';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {KeywordBlockOpt, KeywordBlock} from '../../tables/ui/TableInfo.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -142,6 +142,7 @@ function JobInfoDetails({jobInfo={}}) {
     const useLocalTime = useStoreConnector(() => getFieldVal(jobMonitorGroupKey, useLocalTimeKey));
     const toDate = (d) => d && new Date(d);
     const {ownerId, phase, executionDuration} = jobInfo;
+    const title = getJobTitle(jobInfo);
     const startTime = toDate(jobInfo.startTime);
     const endTime = toDate(jobInfo.endTime);
     const creationTime = toDate(jobInfo.creationTime);
@@ -152,6 +153,11 @@ function JobInfoDetails({jobInfo={}}) {
     const dateProps = {width: '18rem', justifyContent:'space-between'};
     return (
         <Grid container spacing={.5}>
+            {title && (
+                <GridRow>
+                    <KeywordBlock label='Title' value={title} mb={1}/>
+                </GridRow>
+            )}
             <GridRow>
                 <KeywordBlock label='Phase' title='Referred to as "phase" in UWS' value={phase} mb={1}/>
                 <JobIdWrapper jobInfo={jobInfo}/>
