@@ -32,6 +32,31 @@ public class CtxControl {
         if (isFitsFilesMissing(state)) revalidatePlot(state,true); //most of the time the files are there so nothing happens
     }
 
+    /**
+     * Get the NO_BAND working FITS file of a standard (non-HiPS) plot
+     * @param state the plot state
+     * @return the FITS file or null if it could not be confirmed
+     */
+    public static File getConfirmedWorkingFitsFile(PlotState state) {
+        return getConfirmedWorkingFitsFile(state,Band.NO_BAND);
+    }
+
+    /**
+     * Get the working FITS file of a standard (non-HiPS) plot
+     * @param state the plot state
+     * @param band the band of the file
+     * @return the FITS file or null if it could not be confirmed
+     */
+    public static File getConfirmedWorkingFitsFile(PlotState state, Band band) {
+        try {
+            confirmFiles(state);
+            return ServerContext.convertToFile(state.getWorkingFitsFileStr(band));
+        } catch (FailedRequestException e) {
+            Logger.getLogger().warn(e, "could not confirm working FITS file: " + e.getMessage());
+            return null;
+        }
+    }
+
     private static boolean isFitsFilesMissing(PlotState state) {
         return state.isThreeColor() ?
                 Arrays.stream(state.getBands())

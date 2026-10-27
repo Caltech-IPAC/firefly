@@ -116,13 +116,13 @@ const sex2dd = function (coordstr, islat, isequ) {
     const sepJoin= sep.join(''); // join all the separators for easier testing
     if (part.length===3) {
         if (sepJoin==='hms' || sepJoin==='hm ') degrees = 0;
-        else if (sepJoin==='dms' || sepJoin==='dm ' || sepJoin===`d'"` || sepJoin===`d' `) degrees = 1;// eslint-disable-line @stylistic/js/quotes
+        else if (sepJoin==='dms' || sepJoin==='dm ' || sepJoin===`d'"` || sepJoin===`d' `) degrees = 1;
         else if (sepJoin===':: ' || sepJoin==='   ') degrees = -1;
         else throw INVALID_SEPARATOR;
     }
     else if (part.length===2) {
         if (sepJoin==='hm' || sepJoin==='h ') degrees = 0;
-        else if (sepJoin==='dm' || sepJoin==='d ' || sepJoin===`d'` ||  sepJoin===`'"` || sepJoin===`' `) degrees = 1;// eslint-disable-line @stylistic/js/quotes
+        else if (sepJoin==='dm' || sepJoin==='d ' || sepJoin===`d'` ||  sepJoin===`'"` || sepJoin===`' `) degrees = 1;
         else if (sepJoin==='ms' || sepJoin==='m ' || sepJoin===': ' || sepJoin==='  ') degrees = -1;
         else throw INVALID_SEPARATOR;
     }
@@ -137,7 +137,7 @@ const sex2dd = function (coordstr, islat, isequ) {
             isdec= !(isequ && !islat);
         } else if (sep[0] ==='m' || sep[0] ==='s') {
             degrees = -1;
-        } else if (sep[0] ===`'` || sep[0] ==='"') {// eslint-disable-line @stylistic/js/quotes
+        } else if (sep[0] ===`'` || sep[0] ==='"') {
             degrees = 1;
         } else {
             throw INVALID_SEPARATOR;

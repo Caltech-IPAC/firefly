@@ -6,7 +6,7 @@ import {makeTblRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {isBlankHiPSURL} from './WebPlot.js';
-import {fixHiPSRoot} from '../visualize/WebPlotRequest';
+import {fixHiPSRoot} from './WebPlotRequest';
 
 /**
  * @typedef HiPSDataType

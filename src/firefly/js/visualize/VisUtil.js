@@ -108,12 +108,12 @@ export function getLonDist(lon1,lon2) {
     if (lon1>lon2) {
         const diff= lon1-lon2;
         if (diff<=180) return -diff;
-        else return ( (360-lon1) - lon2);
+        else return ( (360-lon1) + lon2);
     }
     else {
         const diff= lon2-lon1;
         if (diff<=180) return diff;
-        else return -1*( (360-lon2) - lon1);
+        else return -1*( (360-lon2) + lon1);
 
     }
 }
@@ -145,34 +145,46 @@ export function convertCelestial(wpt, to= CoordinateSys.EQ_J2000) {
 const convertToJ2000= (wpt) => convertCelestial(wpt);
 
 /**
+ * Find the center of the smallest longitude range that holds all the longitudes. The range is everything outside
+ * the largest gap between neighboring longitudes, so it works across the 0/360 line.
+ * @param {Array.<number>} lons
+ * @return {number} center longitude in [0,360)
+ */
+function computeCentralLon(lons) {
+    const sortedLons= lons.map( (lon) => ((lon%360)+360)%360 ).sort( (lon1,lon2) => lon1-lon2 );
+    const lastIdx= sortedLons.length-1;
+    let gapIdx= -1; // -1 is the gap that crosses the 0/360 line
+    let maxGap= sortedLons[0] + 360 - sortedLons[lastIdx];
+    for(let i=0; i<lastIdx; i++) {
+        const gap= sortedLons[i+1]-sortedLons[i];
+        if (gap>maxGap) {
+            maxGap= gap;
+            gapIdx= i;
+        }
+    }
+    if (gapIdx===-1) return (sortedLons[0] + sortedLons[lastIdx]) / 2;
+    const centralLon= (sortedLons[gapIdx+1] + sortedLons[gapIdx] + 360) / 2;
+    return centralLon>=360 ? centralLon-360 : centralLon;
+}
+
+/**
  * Find an approximate central point and search radius for a group of positions
  *
  * @param inPoints array of points for which the central point is desired
  * @return {{centralPoint:WorldPt, maxRadius: Number}}
  */
 export function computeCentralPointAndRadius(inPoints) {
-    let lon;
-    let radius;
     let maxRadius = Number.NEGATIVE_INFINITY;
 
     const points= inPoints
         .map((wp) => convertToJ2000(wp))
         .filter(Boolean);
+    if (!points.length) return {centralPoint:undefined, maxRadius};
 
-
-    /* get max,min of lon and lat */
-    let maxLon = Number.NEGATIVE_INFINITY;
-    let minLon = Number.POSITIVE_INFINITY;
     let maxLat = Number.NEGATIVE_INFINITY;
     let minLat = Number.POSITIVE_INFINITY;
 
     points.forEach((pt) => {
-            if (pt.x > maxLon) {
-                maxLon = pt.x;
-            }
-            if (pt.x < minLon) {
-                minLon = pt.x;
-            }
             if (pt.y > maxLat) {
                 maxLat = pt.y;
             }
@@ -180,18 +192,13 @@ export function computeCentralPointAndRadius(inPoints) {
                 minLat = pt.y;
             }
         });
-    if (maxLon - minLon > 180) {
-        minLon = 360 + minLon;
-    }
-    lon = (maxLon + minLon) / 2;
-    if (lon > 360) lon -= 360;
     const lat = (maxLat + minLat) / 2;
 
-    const centralPoint = makeWorldPt(lon, lat);
+    const centralPoint = makeWorldPt(computeCentralLon(points.map( (pt) => pt.x)), lat);
 
 
     points.forEach((pt) => {
-        radius = computeDistance(centralPoint,
+        const radius = computeDistance(centralPoint,
                                  makeWorldPt(pt.x, pt.y));
         if (maxRadius < radius) {
             maxRadius = radius;
@@ -245,8 +252,6 @@ function isOnePoint(wpList) {
  * @return {number} position angle in degrees between the two objects
  */
 export function getPositionAngle(ra0, dec0, ra, dec) {
-    let sind, sinpa, cospa;
-
     const alf = ra * DtoR;
     const alf0 = ra0 * DtoR;
     const del = dec * DtoR;
@@ -261,15 +266,11 @@ export function getPositionAngle(ra0, dec0, ra, dec) {
     const dist = Math.acos(cosd);
     let pa = 0.0;
     if (dist > 0.0000004) {
-        sind = Math.sin(dist);
-        cospa = (sd * cd0 - cd * sd0 * cosda) / sind;
-        if (cospa > 1.0) cospa = 1.0;
-        if (cospa < -1.0) cospa = -1.0;
-        sinpa = cd * Math.sin(alf - alf0) / sind;
-        pa = Math.acos(cospa) * RtoD;
-        if (sinpa < 0.0) pa = 360.0 - (pa);
+        // atan2 keeps full precision near 0 and 180, where acos loses it
+        const eastComponent = cd * Math.sin(alf - alf0);
+        const northComponent = sd * cd0 - cd * sd0 * cosda;
+        pa = (Math.atan2(eastComponent, northComponent) * RtoD + 360) % 360;
     }
-    // dist *= RtoD;
     if (dec0===90) pa = 180.0;
     if (dec0===-90) pa = 0.0;
 
@@ -378,7 +379,7 @@ export function getTranslateAndRotatePosition(referencePosition, rotatedReferenc
  * @param {number} phi  the position angle in degrees to the second object
  * @return {WorldPt} WorldPt of the new object
  */
-const getNewPosition= function(ra, dec, dist, phi) {
+function getNewPosition(ra, dec, dist, phi) {
     let tmp;
     let ra1;
 
@@ -402,7 +403,7 @@ const getNewPosition= function(ra, dec, dist, phi) {
     }
     ra1 *= RtoD;
     return makeWorldPt(ra1, dec1);
-};
+}
 
 
 
@@ -461,34 +462,27 @@ export function linesIntersect1(a,b,c,d,p,q,r,s) {
   }
 }
 
+/**
+ * Test to see if two line segments intersect. Segments that touch at an end point intersect, parallel and
+ * collinear segments do not.
+ * @param {number} x1 first segment start x
+ * @param {number} y1 first segment start y
+ * @param {number} x2 first segment end x
+ * @param {number} y2 first segment end y
+ * @param {number} x3 second segment start x
+ * @param {number} y3 second segment start y
+ * @param {number} x4 second segment end x
+ * @param {number} y4 second segment end y
+ * @return {boolean} true if segment (x1,y1)-(x2,y2) intersects segment (x3,y3)-(x4,y4)
+ */
 export function lineIntersect2(x1,y1,x2,y2, x3,y3,x4,y4) {
-    var x=((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
-    var y=((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
-    if (isNaN(x)||isNaN(y)) {
-        return false;
-    } else {
-        if (x1>=x2) {
-            if (!(x2<=x&&x<=x1)) {return false;}
-        } else {
-            if (!(x1<=x&&x<=x2)) {return false;}
-        }
-        if (y1>=y2) {
-            if (!(y2<=y&&y<=y1)) {return false;}
-        } else {
-            if (!(y1<=y&&y<=y2)) {return false;}
-        }
-        if (x3>=x4) {
-            if (!(x4<=x&&x<=x3)) {return false;}
-        } else {
-            if (!(x3<=x&&x<=x4)) {return false;}
-        }
-        if (y3>=y4) {
-            if (!(y4<=y&&y<=y3)) {return false;}
-        } else {
-            if (!(y3<=y&&y<=y4)) {return false;}
-        }
-    }
-    return true;
+    // t and u are how far along each segment the crossing is, 0 to 1 means it is on the segment. This avoids
+    // comparing a computed crossing point to the zero width range of a vertical or horizontal segment.
+    const denom= (x2-x1)*(y4-y3) - (y2-y1)*(x4-x3);
+    if (!denom) return false; // parallel, collinear, or NaN input
+    const t= ((x3-x1)*(y4-y3) - (y3-y1)*(x4-x3)) / denom;
+    const u= ((x3-x1)*(y2-y1) - (y3-y1)*(x2-x1)) / denom;
+    return t>=0 && t<=1 && u>=0 && u<=1;
 }
 
 
@@ -504,22 +498,23 @@ export function lineIntersect2(x1,y1,x2,y2, x3,y3,x4,y4) {
  */
 export function contains(x0, y0, w0, h0, x, y) {
     return (x >= x0 && y >= y0 && x < x0 + w0 && y < y0 + h0);
-};
+}
 
 /**
- * test to see if the first rectangle contains the second rectangle
+ * test to see if the first rectangle contains the second rectangle. The second rectangle may reach the edges of
+ * the first, so a rectangle contains itself.
  * @param x0 the point x of the rec, top left
  * @param y0 the point y of the rec, top left
  * @param w0 the rec width
  * @param h0 the rec height
  * @param x the second point x, top left
  * @param y the second point y, top left
- * @param w h the second rec width
- * @param h the second rec height
- * @return {boolean} true if rectangles intersect
+ * @param w the second rec width, not negative
+ * @param h the second rec height, not negative
+ * @return {boolean} true if the first rectangle contains the second
  */
 export const containsRec= function(x0, y0, w0, h0, x, y, w, h) {
-     return contains(x0,y0,w0,h0,x,y) && contains(x0,y0,w0,h0,x+w,y+h);
+    return x >= x0 && y >= y0 && x + w <= x0 + w0 && y + h <= y0 + h0;
 };
 
 export const containsCircle= function(x, y, centerX, centerY, radius) {
@@ -786,8 +781,8 @@ export function isAngleUnit(unit) {
  * @param {string} to 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
  * @param {*} angle  number or string
  * @param {boolean} limitPrecision limit the number of digits after decimal point for arcmin and arcsec units
- * by truncation. Set it to false if you want full precision or want to handle precision in the caller function
- * in another way (like rounding instead of truncation). Default is true.
+ * by rounding. Set it to false if you want full precision or want to handle precision in the caller function
+ * in another way. Default is true.
  * @returns {number}
  */
 export function convertAngle(from, to, angle, limitPrecision=true) {
@@ -813,13 +808,11 @@ export function convertAngle(from, to, angle, limitPrecision=true) {
         const v=  numAngle * Math.pow(60.0, (toIdx - fromIdx));
         if (!limitPrecision) return v;
 
-        switch (to) {
+        switch (to.toLowerCase()) {
             case 'arcsec':
-                return Math.round(10*v)/10; // limit to 1 decimal places by truncating extra digits
+                return Math.round(10*v)/10; // limit to 1 decimal place
             case 'arcmin':
-                return Math.round(10000*v)/10000; // limit to 4 decimal places by truncating extra digits
-            case 'degree':
-                return v;
+                return Math.round(10000*v)/10000; // limit to 4 decimal places
         }
         return v;
     }
@@ -867,7 +860,7 @@ export function findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y
 export function doSegmentsCross(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y2, seg2x2, seg2y2) {
     const result= findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y2, seg2x2, seg2y2);
     if (!result) return false;
-    return result.onSeg1 || result.onSeg2;
+    return result.onSeg1 && result.onSeg2;
 }
 
 export function lineCrossesRect(segX1, segY1, segX2, segY2, x, y, w,h) {
@@ -971,13 +964,14 @@ export function pointInRec(point1, view_corners) {
  * @param pts
  * @param cc
  * @param pt
- * @returns {number}
+ * @returns {number} the distance in screen pixels, NaN if a point is missing or can't be converted to screen coordinates
  */
 export function distToLine(pts, cc, pt) {
     if (!pt || !pts || !pts[0] || !pts[1]) return NaN;
     const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
     const pt0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
     const pt1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);
+    if (!spt || !pt0 || !pt1) return NaN; // off the projection
     const e1 = makeScreenPt((pt1.x - pt0.x), (pt1.y - pt0.y));
     const e2 = makeScreenPt((spt.x - pt0.x), (spt.y - pt0.y));
     const e3 = makeScreenPt((pt0.x - pt1.x), (pt0.y - pt1.y));
@@ -1101,25 +1095,24 @@ export function getLinePointAry(pt1, pt2) {
     if (deltaX > deltaY) {
         const slope = (y2-y1)/(x2-x1);
         const yIntercept = y1-slope*x1;
-        const minX = Math.trunc(Math.min(x1, x2));
-        const maxX = Math.trunc(Math.max(x1, x2));
+        const minX = Math.floor(Math.min(x1, x2));
+        const maxX = Math.floor(Math.max(x1, x2));
         for (x=minX; x<=maxX; x+=1) {
-            y = Math.trunc(slope*x + yIntercept);
+            y = Math.floor(slope*x + yIntercept);
             pts.push(makeImagePt(x,y));
         }
         return pts;
     } else if (y1!==y2) {
         const islope = (x2-x1)/(y2-y1);
         const xIntercept = x1-islope*y1;
-        const minY = Math.trunc(Math.min(y1, y2));
-        const maxY = Math.trunc(Math.max(y1, y2));
+        const minY = Math.floor(Math.min(y1, y2));
+        const maxY = Math.floor(Math.max(y1, y2));
         for (y=minY; y<=maxY; y+=1) {
-            x = Math.trunc(islope*y + xIntercept);
+            x = Math.floor(islope*y + xIntercept);
             pts.push(makeImagePt(x,y));
         }
         return pts;
     }
-    return;
 }
 
 function getEllipsePointForAngle(cx, cy, rx, ry, rotationAngle, theta) {

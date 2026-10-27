@@ -47,6 +47,9 @@ const boundsStrToConst = {
 
 const RGB_PRESERVE_HUE_DEFAULT= 0; // user 0 for false
 
+// lowerWhich, lowerValue, upperWhich, upperValue, algorithm, zscaleContrast, zscaleSamples, zscaleSamplesPerLine
+const REQUIRED_PARAM_IDX= [0,1,2,3,6,7,8,9];
+
 export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,
@@ -194,7 +197,7 @@ export class RangeValues {
      */
     static makeSimple(boundsType= PERCENTAGE_STR,
                 lowerValue= 1.0,
-                upperValue= 1.0,
+                upperValue= 99.0,
                 algorithm= LINEAR_STR) {
 
         let btValue= PERCENTAGE;
@@ -225,7 +228,7 @@ export class RangeValues {
      */
     static serializeSimple(boundsType= PERCENTAGE_STR,
                            lowerValue= 1.0,
-                           upperValue= 1.0,
+                           upperValue= 99.0,
                            algorithm= LINEAR_STR ) {
         const rv= RangeValues.makeSimple(boundsType,lowerValue,upperValue,algorithm);
         return rv.toJSON();
@@ -246,7 +249,8 @@ export class RangeValues {
 
 
         const params= sIn.split(',').map( (v) => Number.parseFloat(v) );
-        const valid= params.every( (v)=> typeof v !== 'undefined');
+        if (params.length<REQUIRED_PARAM_IDX.length+2) return undefined;
+        const valid= REQUIRED_PARAM_IDX.every( (idx) => !isNaN(params[idx]) );
 
         return valid ? new RangeValues(...params) : undefined;
     }
@@ -272,7 +276,7 @@ export class RangeValues {
     }
 
     static isAlgorithmSupported(a) {
-        return Boolean(alStrToConst[a]);
+        return Boolean(alStrToConst[a?.toLowerCase()]);
     }
     
 }

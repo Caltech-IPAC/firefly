@@ -2,25 +2,27 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isEmpty} from 'lodash';
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
+import {dispatchAddActionWatcher} from '../../../core/MasterSaga.js';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField
-} from '../DrawLayerDispatch';
-import {dispatchChangePrimePlot} from '../ImagePlotDispatch';
-import {CHANGE_PRIME_PLOT} from '../VisConst';
+} from '../../DrawLayerDispatch';
+import {isHiPSFitsCube} from '../../HiPSUtil.js';
+import {dispatchChangeHiPS, dispatchChangePrimePlot} from '../../ImagePlotDispatch';
+import {CHANGE_HIPS, CHANGE_PRIME_PLOT} from '../../VisConst';
 import {
     dispatchTableHighlight, TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
     TABLE_UPDATE, TBL_RESULTS_ACTIVE
-} from 'firefly/tables/TablesCntlr.js';
-import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from 'firefly/tables/TableUtil.js';
-import {MetaConst} from 'firefly/data/MetaConst.js';
+} from '../../../tables/TablesCntlr.js';
+import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from '../../../tables/TableUtil.js';
+import {MetaConst} from '../../../data/MetaConst.js';
 import {
-    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getCubePlaneIdx, isCube, primePlot
-} from 'firefly/visualize/PlotViewUtil.js';
-import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
-import SearchTarget from 'firefly/drawingLayers/SearchTarget.js';
-import {findPlotViewUsingFitsPathMeta} from 'firefly/visualize/saga/CatalogWatcher.js';
-import {dlRoot} from '../VisStoreRoots';
+    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getCubePlaneIdx, getPlotViewAry, isCube, primePlot
+} from '../../PlotViewUtil.js';
+import {makeImagePt, parseImagePt, parseWorldPt} from '../../Point.js';
+import SearchTarget from '../../../drawingLayers/SearchTarget.js';
+import {findPlotViewUsingFitsPathMeta} from '../../saga/CatalogWatcher.js';
+import {dlRoot, visRoot} from '../../VisStoreRoots';
+import {isHiPS} from '../../WebPlot.js';
 
 let idCnt=0;
 
@@ -36,7 +38,7 @@ export function addZAxisExtractionWatcher(tbl_id) {
         id: 'plot-zaxis-watcher-${idCnt}--'+tbl_id,
         callback:zAxisExtractionPlotWatcher,
         params:{tbl_id},
-        actions:[CHANGE_PRIME_PLOT, TABLE_REMOVE]
+        actions:[CHANGE_PRIME_PLOT, CHANGE_HIPS, TABLE_REMOVE]
     });
 }
 
@@ -94,12 +96,15 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         idCnt++;
         drawLayerId= `zaxis-drill-point-${idCnt}--`+tbl_id;
         const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
+        const searchTargetPoint= isHiPS(plot)
+            ? parseWorldPt(getMetaEntry(table,MetaConst.FITS_WORLD_PT))
+            : makeImagePt(Math.trunc(imPt.x)+.5, Math.trunc(imPt.y)+.5);
         const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
             {
                 plotId: plot.plotId,
                 drawLayerId,
                 layersPanelLayoutId: 'z-axis-layout',
-                searchTargetPoint: makeImagePt(Math.trunc(imPt.x)+.5, Math.trunc(imPt.y)+.5),
+                searchTargetPoint,
                 titlePrefix: table.title,
                 canUserDelete: true,
                 color: SELECTED_COLOR
@@ -110,8 +115,13 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
 
     if (isNaN(table.highlightedRow)) return retData();
     const plane= getCellValue(table,table.highlightedRow,'plane');
-    const primeIdx= convertHDUIdxToImageIdx(pv,getHDUIndex(pv,plot),plane-1);
-    if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId:plot.plotId,primeIdx});
+    if (isHiPS(plot)) {
+        if (plot.cubeIdx!==plane-1) dispatchChangeHiPS({plotId:plot.plotId, cubeIdx:plane-1});
+    }
+    else {
+        const primeIdx= convertHDUIdxToImageIdx(pv,getHDUIndex(pv,plot),plane-1);
+        if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId:plot.plotId,primeIdx});
+    }
     return retData();
 }
 
@@ -119,6 +129,10 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
 function isTargetCube(tbl_id) {
     const {table,pv,plot,extractionType,hdus,hduNum}= getInfo(tbl_id);
     if (!pv || !plot|| !table || extractionType!=='z-axis') return;
+    if (isHiPS(plot)) {
+        const wpt= parseWorldPt(getMetaEntry(table,MetaConst.FITS_WORLD_PT));
+        return isHiPSFitsCube(plot) && Boolean(wpt) && getColumnIdx(table, 'plane')>=0;
+    }
     if (!isCube(plot)) return false;
     const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
     if (isEmpty(hdus) || !imPt || !Object.keys(hdus).includes(hduNum+'')) return false;
@@ -128,7 +142,7 @@ function isTargetCube(tbl_id) {
 
 function getInfo(tbl_id) {
     const table= getTblById(tbl_id);
-    const pv= findPlotViewUsingFitsPathMeta(table);
+    const pv= findPlotViewUsingFitsPathMeta(table) ?? findHiPSPlotViewUsingTileUrlMeta(table);
     if (!pv || !table || !getMetaEntry(table, MetaConst.FITS_EXTRACTION_TYPE)) return {};
     const plot= primePlot(pv);
 
@@ -141,6 +155,17 @@ function getInfo(tbl_id) {
         hduNum: getHDU(plot)
     };
 
+}
+
+function findHiPSPlotViewUsingTileUrlMeta(table) {
+    const tileUrl= getMetaEntry(table,MetaConst.HIPS_TILE_URL);
+    if (!tileUrl) return;
+    return getPlotViewAry(visRoot()).find( (pv) => {
+        const plot= primePlot(pv);
+        if (!isHiPSFitsCube(plot)) return false;
+        const root= plot.hipsUrlRoot.endsWith('/') ? plot.hipsUrlRoot : plot.hipsUrlRoot+'/';
+        return tileUrl.startsWith(root);
+    });
 }
 
 function getHDUs(table) {

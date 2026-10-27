@@ -405,16 +405,6 @@ public class FitsReadUtil {
         return new ImageHDU(newHeader,  null);
     }
 
-    public static void writeFitsFileForCropOnly(File outfile, FitsRead[] fitsReadAry, Fits refFits) throws IOException {
-        Fits outputFits = new Fits();
-        for (FitsRead fr : fitsReadAry) {
-            BasicHDU<?> refHdu = refFits.getHDU(0);
-            ImageHDU imageHDU = makeImageHDU(refHdu.getHeader(), FitsReadUtil.getImageData(refHdu, fr.getDataFloatForOlderUtils()));
-            outputFits.addHDU(imageHDU);
-        }
-        outputFits.write(outfile);
-    }
-
     public static int getBitPix(Header h) {return h.getIntValue(Standard.BITPIX); }
     public static int getNaxis(Header h) { return h.getIntValue(Standard.NAXIS, 0); }
     public static int getZNaxis(Header h) { return h.getIntValue("ZNAXIS", 0); }
@@ -437,6 +427,7 @@ public class FitsReadUtil {
     public static int getZNaxisN(Header h, int axis) { return h.getIntValue("ZNAXIS"+axis,-1); }
     public static double getBscale(Header h) { return h.getDoubleValue(Standard.BSCALE, 1.0); }
     public static double getBzero(Header h) { return h.getDoubleValue(Standard.BZERO, 0.0); }
+    public static boolean hasScaling(Header h) { return getBscale(h) != 1.0 || getBzero(h) != 0.0; }
     public static double getBlankValue(Header h) {
         // blank value is only applicable to integer values (BITPIX > 0)
         return getBitPix(h) > 0 ? h.getDoubleValue(Standard.BLANK, Double.NaN) : Double.NaN;
@@ -444,6 +435,23 @@ public class FitsReadUtil {
 
     public static String getBUnit(Header h) { return getBUnit(h,""); }
     public static String getBUnit(Header h, String def) { return h.getStringValue(Standard.BUNIT, def); }
+
+    /**
+     * Get the flux units of an image HDU. Use BUNIT, if not defined then use the BUNIT of the primary HDU
+     * @param h the header of the image HDU
+     * @param zeroHeader the header of the primary HDU, may be null
+     * @return the flux units, "---" if not defined
+     */
+    public static String getFluxUnits(Header h, Header zeroHeader) {
+        String bunit= getBUnit(h,null);
+        if (bunit==null || bunit.equalsIgnoreCase("null")) {
+            bunit= zeroHeader!=null ? getBUnit(zeroHeader,"---") : "---";
+        }
+        if (bunit.startsWith("HITS")) return "frames";
+        if (h.getStringValue(ImageHeader.ORIGIN,"").startsWith(ImageHeader.PALOMAR_ID)) return "mag";
+        return bunit;
+    }
+
     public static String getExtName(Header h) { return h.getStringValue(Standard.EXTNAME); }
     public static String getExtType(Header h, String defVal) { return h.getStringValue(EXTTYPE,defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }

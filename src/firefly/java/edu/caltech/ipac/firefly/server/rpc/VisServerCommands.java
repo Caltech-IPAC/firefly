@@ -8,7 +8,9 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.servlets.HiPSRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.CtxControl;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
 import edu.caltech.ipac.firefly.server.visualize.FluxValueUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
@@ -26,6 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -201,30 +204,36 @@ public class VisServerCommands {
     public static class ExtractionCmd extends ServerCommandAccess.HttpCommand {
         public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
 
-            PlotState state= sp.getState();
+            boolean isHiPSTile= sp.getOptionalBoolean(ServerParams.IS_HIPS_TILE, false);
             String exType= sp.getRequired(ServerParams.EXTRACTION_TYPE);
             boolean useFloat = sp.getOptionalInt(ServerParams.EXTRACTION_FLOAT_SIZE,64)==32;
             int ptSize= sp.getOptionalInt(ServerParams.POINT_SIZE,1);
             int ptSizeX= sp.getOptionalInt(ServerParams.POINT_SIZE_X,1);
             int ptSizeY= sp.getOptionalInt(ServerParams.POINT_SIZE_Y,1);
-            int hduNum= sp.getRequiredInt(ServerParams.HDU_NUM);
+            int hduNum= isHiPSTile ? FitsExtract.FIRST_IMAGE_HDU : sp.getRequiredInt(ServerParams.HDU_NUM);
             FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,sp.getOptional(ServerParams.COMBINE_OP,"AVG"));
 
             List<Number> extractList= switch (exType) {
                 case "z-axis" ->
-                    VisServerOps.getZAxisAry(state,
+                    VisServerOps.getZAxisAry(getFitsFile(sp,isHiPSTile),
                             sp.getRequiredImagePt(ServerParams.PT),
                             hduNum, ptSize, ct);
 
                 case "line" ->
-                    VisServerOps.getLineDataAry(state,
+                    VisServerOps.getLineDataAry(getFitsFile(sp,isHiPSTile),
                             sp.getRequiredImagePt(ServerParams.PT),
                             sp.getRequiredImagePt(ServerParams.PT2),
                             sp.getRequiredInt(ServerParams.PLANE),
                             hduNum, ptSize, ct);
 
-                case "points" ->
-                        VisServerOps.getPointDataAry(state,
+                case "points" -> isHiPSTile
+                        ? VisServerOps.getHiPSPointDataAry(
+                                SrvParam.getStringAryFromJson(sp.getRequired(ServerParams.HIPS_TILE_URL_ARY)),
+                                sp.getRequiredImagePtAry(ServerParams.PTARY),
+                                hduNum,
+                                sp.getRequiredInt(ServerParams.PLANE),
+                                ptSizeX, ptSizeY, ct)
+                        : VisServerOps.getPointDataAry(getFitsFile(sp,isHiPSTile),
                                 sp.getRequiredImagePtAry(ServerParams.PTARY),
                                 sp.getRequiredInt(ServerParams.PLANE),
                                 hduNum, ptSizeX, ptSizeY, ct);
@@ -251,6 +260,17 @@ public class VisServerCommands {
             chan.write(byteBuf);
             chan.close();
         }
+    }
+
+    /**
+     * @param sp the parameters
+     * @param isHiPSTile if true use the URL parameter of a HiPS FITS tile, otherwise the plot state
+     * @return the FITS file to extract from or null if it is not available
+     */
+    private static File getFitsFile(SrvParam sp, boolean isHiPSTile) {
+        return isHiPSTile
+                ? HiPSRetrieve.getHiPSFitsTileFile(sp.getRequired(ServerParams.URL))
+                : CtxControl.getConfirmedWorkingFitsFile(sp.getState());
     }
 
     public static class Crop extends ServCommand {

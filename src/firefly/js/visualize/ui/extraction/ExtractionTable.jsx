@@ -15,13 +15,13 @@ import {CCUtil, CysConverter} from '../../CsysConverter';
 import {getExtName} from '../../FitsHeaderUtil';
 import {visRoot} from '../../VisStoreRoots';
 import {
-    getAllWaveLengthsForCube, getHDU, getHduPlotStartIndexes, getCubePlaneIdx, getPlotViewAry,
+    getAllWaveLengthsForCube, getHDU, getCubePlaneIdx, getPlotViewAry,
     getPtWavelength, getWaveLengthUnits,
     hasPixelLevelWLInfo, hasWCSProjection, hasWLInfo, isCube, isMultiHDUFits, primePlot,
 } from '../../PlotViewUtil';
 import {makeImagePt} from '../../Point';
-import {getFluxUnits, isImage} from '../../WebPlot';
-import {addZAxisExtractionWatcher} from '../ExtractionWatchers';
+import {isHiPS, isImage} from '../../WebPlot';
+import {addZAxisExtractionWatcher} from './ExtractionWatchers';
 
 let idCnt = 0;
 const MAX_HDU= 21;
@@ -59,13 +59,27 @@ function doDispatchTable(req, doOverlay) {
 
 let titleCnt = 1;
 
-export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractionSize, combineOp, save = false, doOverlay = true) {
+/**
+ * @param {ImagePt} pt - for HiPS, the pixel in the FITS cube tile
+ * @param {PlotView} pv
+ * @param {WebPlot|undefined} plot
+ * @param {String} filename - the server FITS file, for HiPS the url of the FITS cube tile
+ * @param {number} refHDUNum
+ * @param {number} extractionSize
+ * @param {String} combineOp
+ * @param {boolean} [save]
+ * @param {boolean} [doOverlay]
+ * @param {WorldPt} [wpt] - world point of the extraction, required for HiPS, computed from pt if not passed
+ * @return {Promise<Array.<String>>|undefined} the table ids
+ */
+export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractionSize, combineOp, save = false, doOverlay = true,
+                                    wpt= undefined) {
     if (!pv || !plot || !filename) {
         showInfoPopup('Plot no longer exists. Cannot extract.');
         return;
     }
 
-    const params= {pt,pv,filename,refHDUNum,extractionSize,combineOp,save,doOverlay};
+    const params= {pt,wpt,pv,filename,refHDUNum,extractionSize,combineOp,save,doOverlay};
 
     if (extractionSize===1) {
         return Promise.resolve([makeZAsixExtractionTable(params)]);
@@ -86,16 +100,16 @@ export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractio
 
 }
 
-export function makeZAsixExtractionTable({pt, pv, filename, refHDUNum, extractionSize, combineOp, secondaryCombine, save = false, doOverlay = true})  {
+export function makeZAsixExtractionTable({pt, wpt:inWpt, pv, filename, refHDUNum, extractionSize, combineOp, secondaryCombine,
+                                             save = false, doOverlay = true})  {
     const plot= primePlot(pv);
-    const wlUnit = getWaveLengthUnits(plot);
-    const wpt = CCUtil.getWorldCoords(plot, pt);
-    const fluxUnit = getHduPlotStartIndexes(pv)
-        .map((idx) => ({hdu: getHDU(pv.plots[idx]), unit: getFluxUnits(pv.plots[idx])}))
-        .map(({hdu, unit}) => `${hdu}=${unit}`);
+    if (!plot) return;
+    const wlUnit= getWaveLengthUnits(plot);
+    const wpt = inWpt ?? CCUtil.getWorldCoords(plot, pt);
 
     const tbl_id = getNextTblId();
     addZAxisExtractionWatcher(tbl_id);
+
     const dataTableReq = makeTblRequest('ExtractFromImage', `Extraction Z-Axis - ${titleCnt}`,
         {
             startIdx: 0,
@@ -104,9 +118,8 @@ export function makeZAsixExtractionTable({pt, pv, filename, refHDUNum, extractio
             wpt: wpt?.toString(),
             wlAry: hasWLInfo(plot) ? JSON.stringify(getAllWaveLengthsForCube(pv, pt)) : undefined,
             wlUnit,
-            fluxUnit: JSON.stringify(fluxUnit),
             secondaryCombine: secondaryCombine==='AUTO' ? 'AUTO' : 'SAME',
-            filename,
+            ...(isHiPS(plot) ? {hipsTileUrl: filename} : {filename}),
             refHDUNum,
             extractionSizeX: extractionSize,
             extractionSizeY: extractionSize,
@@ -125,6 +138,70 @@ export function makeZAsixExtractionTable({pt, pv, filename, refHDUNum, extractio
 
 
 
+
+/**
+ * Make a table from the values at points or along a line of a HiPS, the values come from the HiPS FITS tiles.
+ * Like a FITS image, the table has a column for every HDU in the tile that matches the reference HDU.
+ * @param {Object} params
+ * @param {PlotView} params.pv
+ * @param {Array.<{tileUrl:String, tilePt:ImagePt}>} params.hipsTileLocAry - the FITS tile location of each point
+ * @param {Array.<WorldPt>} params.hipsWptAry - the world point of each point, same order as hipsTileLocAry
+ * @param {number} params.plane - the cube plane
+ * @param {number} params.pointSize
+ * @param {String} params.combineOp
+ * @param {boolean} [params.save]
+ * @param {boolean} [params.doOverlay]
+ * @param {boolean} [params.isLine] - if true the points are along a line
+ * @return {Promise<Array.<String>>|undefined} the table ids
+ */
+export function keepHiPSPointExtraction(params) {
+    const {pv,hipsTileLocAry,pointSize}= params;
+    if (!pv || !isHiPS(primePlot(pv)) || !hipsTileLocAry?.length) {
+        showInfoPopup('Plot no longer exists. Cannot extract.');
+        return;
+    }
+    if (pointSize===1) return Promise.resolve([makeHiPSPointExtractionTable(params)]);
+    return new Promise((resolve) => {
+        showFieldGroupPopup({groupKey:'ExtractOptions', keepState:true,
+            successText:'Pin Chart/Table', title:'Secondary HDUs',
+            content:(
+                <Stack m={2} minWidth={300}>
+                    <ApertureSecondaryCombine/>
+                </Stack>
+            ),
+            onSuccess:({secondaryCombine}) => {
+                resolve([makeHiPSPointExtractionTable({...params,secondaryCombine})]);
+            }
+        });
+    });
+}
+
+function makeHiPSPointExtractionTable({pv, hipsTileLocAry, hipsWptAry, plane, pointSize, combineOp,
+                                          secondaryCombine, save=false, doOverlay=true, isLine=false}) {
+    const plot= primePlot(pv);
+    const tbl_id = getNextTblId();
+    const dataTableReq = makeTblRequest('ExtractFromImage',
+        makePlaneTitle(`Extract ${isLine?'Line':'Points'}`, pv, plot, titleCnt),
+        {
+            startIdx: 0,
+            extractionType: isLine ? 'line' : 'points',
+            [ServerParams.HIPS_TILE_URL_ARY]: JSON.stringify(hipsTileLocAry.map( ({tileUrl}) => tileUrl)),
+            [ServerParams.PTARY]: JSON.stringify(hipsTileLocAry.map( ({tilePt}) => tilePt.toString())),
+            [ServerParams.WPT_ARY]: JSON.stringify(hipsWptAry.map( (wpt) => wpt.toString())),
+            [ServerParams.PLANE]: plane,
+            extractionSizeX: pointSize,
+            extractionSizeY: pointSize,
+            [ServerParams.COMBINE_OP]: combineOp,
+            secondaryCombine: secondaryCombine==='AUTO' ? 'AUTO' : 'SAME',
+            allMatchingHDUs: true,
+        },
+        {tbl_id});
+    if (save) dataTableReq.pageSize = 0;
+    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
+    idCnt++;
+    titleCnt++;
+    return tbl_id;
+}
 
 export function keepDataExtraction({pv, baseImPtAry, save, doOverlay, axis='both', pointSize, combineOp, isLine=false}) {
     const plot= primePlot(pv);
@@ -201,7 +278,7 @@ const ExtractTableOptions= ({pvAry:initPvAry, usingAperture}) => {
             ? initPvAry.filter( (pv) => primePlot(pv).totalImageHdusInFile<=MAX_HDU && hasWCSProjection(pv))
             : initPvAry.filter( (pv) => hasWCSProjection(pv));
         setPvAry(newPvAry);
-    }, [allHdus, allToSameFile, initPvAry, someHduOverMax]);
+    }, [allHdus, allToSameFile, initPvAry, setPvAry, someHduOverMax]);
 
     const wcsPvAry= initPvAry.filter( (testPv) => hasWCSProjection(testPv));
     const wcsWarning= wcsPvAry.length < initPvAry.length;

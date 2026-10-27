@@ -58,7 +58,7 @@ export const CoordinateSys = function () {
 
     const parse= (desc) => {
         if (!desc) return undefined;
-        desc= normalizeCoordSysStr(desc);
+        desc= normalizeCoordSysStr(desc).trim().toUpperCase();
         if (desc===EQ_J2000.toString() || desc==='EQJ2000' ||desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
             return EQ_J2000;
         } else if (desc===EQ_B2000.toString() || desc==='EQB2000' )  {
@@ -81,6 +81,8 @@ export const CoordinateSys = function () {
             return ZEROBASED;
         } else if (desc===FITSPIXEL.toString()) {
             return FITSPIXEL;
+        } else if (desc===UNDEFINED.toString()) {
+            return UNDEFINED;
         } else {
             return undefined;
         }
