@@ -361,7 +361,7 @@ export function ContentEllipsis({children, text, isTrusted=true, textAlign, sx, 
     };
 
     return (
-        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} sx={sx}
+        <Stack direction='row'  overflow='clip' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} sx={sx}
                onMouseEnter={checkOverflow} onMouseLeave={() => setShowActions(false)}
         >
             <Stack ref={contentEl}>{children}</Stack>
