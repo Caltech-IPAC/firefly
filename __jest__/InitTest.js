@@ -36,12 +36,6 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
     };
 });
 
-jest.mock('firefly/core/background/JobMonitor.jsx', () => {
-    return {
-        showJobMonitor: () => '',
-    };
-});
-
 jest.mock('firefly/core/LayoutCntlr.js', () => {
     return {
         CHART_ADD: 'CHART_ADD',
