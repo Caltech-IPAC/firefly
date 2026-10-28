@@ -3,7 +3,7 @@ import {dispatchAddWorkingTask} from '../core/AppDataCntlr';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {flux} from '../core/ReduxFlux';
-import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixIndex';
+import {ang2pixNest, radecToPolar} from '../visualize/hips/HealpixIndex';
 import {logger} from '../util/Logger';
 import {blockWhileAsyncIdWaiting, synchronizeAsyncFunctionById} from '../util/SynchronizeAsync';
 import {createBackgroundRunner, isDefined} from '../util/WebUtil';

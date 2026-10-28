@@ -6,7 +6,7 @@ import {visRoot} from '../VisStoreRoots';
 import {getPlotViewAry, primePlot} from '../PlotViewUtil.js';
 import {NO_COLOR_TABLE} from '../rawData/ColorTable';
 import {isHiPS} from '../WebPlot.js';
-import {initOffScreenCanvas} from './TileDrawHelper.jsx';
+import {initOffScreenCanvas} from '../iv/TileDrawHelper.jsx';
 import {createCanvas} from '../../util/WebUtil.js';
 
 

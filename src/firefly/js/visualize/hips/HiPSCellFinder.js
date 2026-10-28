@@ -3,11 +3,44 @@
  */
 import { getHealpixCornerTool, getProGradeTilePixels, getVisibleHiPSCells, tileCoordsWrap} from '../HiPSUtil.js';
 import {isHiPSAitoff} from '../WebPlot.js';
-import {isQuadTileOnScreen} from './TileDrawHelper.jsx';
+import {isQuadTileOnScreen} from '../iv/TileDrawHelper.jsx';
 import {makeDevicePt} from '../Point';
 import {CysConverter} from '../CsysConverter';
 
 const imageOffsets= [[0,0],[0,1],[1,0],[1,1]]; // which half of the parent tile image, in units of the child tile size
+const POLE_DEGREES= 10; // tiles with any corner within this many degrees of a healpix pole are subdivided more
+const POLE_SUBDIVIDE_DEPTH= 3; // number of levels to subdivide a tile near the pole
+const INNER_POLE_DEGREES= 2; // when zoomed beyond the tile norder, tiles this close to a pole are subdivided even more
+const INNER_POLE_SUBDIVIDE_DEPTH= 4; // number of levels to subdivide a tile in the inner pole area when zoomed
+const DEEP_ZOOM_OVER= 3; // when zoomed more than this many orders beyond the tile norder, use DEEP_INNER_POLE_SUBDIVIDE_DEPTH
+const DEEP_INNER_POLE_SUBDIVIDE_DEPTH= 5; // number of levels to subdivide a tile in the inner pole area when deeply zoomed
+const MIN_POLE_SPLIT_SIZE= 32; // device pixels, a tile smaller than this on the screen is not subdivided because of a pole
+
+/**
+ * @param {Array.<WorldPt>} wpCorners - corners in the HiPS data coordinate system
+ * @param {number} zoomOver - how many orders the desired norder is beyond the tile norder, 0 if not zoomed beyond
+ * @return {number} how many levels below the base tile a tile with these corners should be subdivided because of pole distortion
+ */
+function getPoleDepth(wpCorners, zoomOver) {
+    const maxLat= Math.max(...wpCorners.map( (wp) => wp ? Math.abs(wp.y) : 0));
+    if (zoomOver>0 && maxLat >= 90-INNER_POLE_DEGREES) {
+        return zoomOver>DEEP_ZOOM_OVER ? DEEP_INNER_POLE_SUBDIVIDE_DEPTH : INNER_POLE_SUBDIVIDE_DEPTH;
+    }
+    if (maxLat >= 90-POLE_DEGREES) return POLE_SUBDIVIDE_DEPTH;
+    return 0;
+}
+
+/**
+ * @param {Array.<DevicePt>} devPtCorners
+ * @return {number} the larger of the width or height of the bounding box of the corners
+ */
+function getDevSize(devPtCorners) {
+    const pts= devPtCorners.filter(Boolean);
+    if (!pts.length) return 0;
+    const xs= pts.map( (pt) => pt.x);
+    const ys= pts.map( (pt) => pt.y);
+    return Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys));
+}
 
 /**
  * @global
@@ -19,6 +52,7 @@ const imageOffsets= [[0,0],[0,1],[1,0],[1,1]]; // which half of the parent tile 
  * @prop {Array.<DevicePt>} devPtCorners - the target corners of the tile in device coordinates
  * @prop {number} dx - x offset into image, for a subCell of a normal tile: 0 or 1, the half of the parent tile
  * @prop {number} dy - y offset into image, for a subCell of a normal tile: 0 or 1, the half of the parent tile
+ * @prop {Array.<WorldPt>} [wpCorners] - the corners in the data coordinate system, only set on subCells
  * @prop {boolean} [incompleteCell] - some corners cannot be projected or the cell wraps, only the subCells are drawn
  * @prop {Array.<HiPSDeviceTileData>} [subCells]
  */
@@ -63,7 +97,7 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNor
                     if (!devPtCorners[j]) break;
                 }
                 if (aitoffAll || isQuadTileOnScreen(devPtCorners, viewDim)) {
-                    const subCells= computeDeeperTiles(cc,dataCoordSys,norder,desiredNorder,cell.ipix);
+                    const subCells= computeDeeperTiles(cc,dataCoordSys,norder,desiredNorder,cell.ipix,cell.wpCorners,devPtCorners);
                     retCells.push({devPtCorners, tileNumber:cell.ipix, dx:0, dy:0, norder, incompleteCell:false, subCells});
                 }
             }
@@ -88,7 +122,7 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNor
                 if (subCells) retCells.push({devPtCorners, tileNumber:cells[i].ipix, dx:0, dy:0, norder,subCells, incompleteCell:true});
             }
             else if (isQuadTileOnScreen(devPtCorners, viewDim)) {
-                const subCells= computeDeeperTiles(cc,dataCoordSys,norder,desiredNorder,cells[i].ipix);
+                const subCells= computeDeeperTiles(cc,dataCoordSys,norder,desiredNorder,cells[i].ipix,cells[i].wpCorners,devPtCorners);
                 retCells.push({devPtCorners, tileNumber:cells[i].ipix, dx:0, dy:0, norder,subCells});
             }
         }
@@ -101,6 +135,8 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNor
  * or, with checkWrap, that wraps around the edge of an aitoff projection.
  * Children that fully project are kept, incomplete children are replaced by their fully projected grandchildren.
  * Only parts that are on the screen are kept, unless allOnScreen is true.
+ * Drawable parts near a pole are subdivided further, so they reach the same depth (POLE_SUBDIVIDE_DEPTH) below the
+ * parent as a normal cell near the pole.
  * @param {CysConverter} cc
  * @param {CoordinateSys} dataCoordSys
  * @param {number} norder - norder of the parent tile
@@ -114,6 +150,9 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNor
  */
 function computeIncompleteTiles(cc, dataCoordSys, norder, npix, viewDim, {checkWrap=false, allOnScreen=false, centerDevPt}={}) {
     const onScreen= (t) => !t.incompleteCell && (allOnScreen || isQuadTileOnScreen(t.devPtCorners, viewDim));
+    const addPoleSubCells= (t, level) => {
+        t.subCells= makeSubTilesToDepth(cc,dataCoordSys,t,{level});
+    };
     const subTiles= getProgradeTiles(cc,dataCoordSys,norder,npix, {allowPartial:true, checkWrap});
     if (!subTiles) return;
     subTiles.forEach( (t) => {
@@ -121,32 +160,61 @@ function computeIncompleteTiles(cc, dataCoordSys, norder, npix, viewDim, {checkW
             const grandChildCells= (getProgradeTiles(cc,dataCoordSys,norder+1,t.tileNumber,
                         {allowPartial:true, checkWrap, shim:Boolean(centerDevPt), centerDevPt, viewDim}) ?? [])
                 .filter(onScreen);
+            grandChildCells.forEach( (gc) => addPoleSubCells(gc, 2));
             t.subCells= grandChildCells.length>0 ? grandChildCells : undefined;
         }
     });
     const retSubTiles= subTiles.filter( (t) => t.incompleteCell ? t.subCells : onScreen(t));
+    retSubTiles.forEach( (t) => {
+        if (!t.incompleteCell) addPoleSubCells(t, 1);
+    });
     return retSubTiles.length>0 ? retSubTiles : undefined;
 }
 
 /**
- * Compute the child cells of a tile so it can be drawn as smaller quads when zoomed in beyond the tile norder.
- * Goes at most two levels deep: one level when desiredNorder is norder+1, otherwise two (the second in each child's subCells).
+ * Compute the child cells of a tile so it can be drawn as smaller quads when zoomed in beyond the tile norder
+ * or when the tile is near a pole, where the healpix cells are too distorted to draw accurately as 2 triangles.
+ * For zoom, goes at most two levels deep: one level when desiredNorder is norder+1, otherwise two.
+ * Near a pole, goes POLE_SUBDIVIDE_DEPTH levels deep, or INNER_POLE_SUBDIVIDE_DEPTH when zoomed and very close to the pole,
+ * each child is evaluated by its own distance to the pole.
  * The dx/dy of each child is 0 or 1, the half of the parent tile image it comes from.
  * @param {CysConverter} cc
  * @param {CoordinateSys} dataCoordSys
  * @param {number} norder - norder of the parent tile
  * @param {number} desiredNorder
  * @param {number} npix - healpix pixel number of the parent tile
+ * @param {Array.<WorldPt>} wpCorners - corners of the parent tile in the data coordinate system
+ * @param {Array.<DevicePt>} devPtCorners - corners of the parent tile in device coordinates
  * @return {Array.<HiPSDeviceTileData>|undefined} the 4 child cells, or undefined if not needed or any child cannot be projected
  */
-function computeDeeperTiles(cc, dataCoordSys, norder, desiredNorder, npix) {
-    if (!desiredNorder) return;
-    if (desiredNorder<=norder) return;
-    const subTiles= getProgradeTiles(cc,dataCoordSys,norder,npix);
+function computeDeeperTiles(cc, dataCoordSys, norder, desiredNorder, npix, wpCorners, devPtCorners) {
+    const zoomOver= desiredNorder>norder ? desiredNorder-norder : 0;
+    const zoomDepth= Math.min(zoomOver, 2);
+    return makeSubTilesToDepth(cc, dataCoordSys, {norder, tileNumber:npix, wpCorners, devPtCorners}, {zoomDepth, zoomOver});
+}
+
+/**
+ * Recursively make child cells until both the zoom depth and the pole depth of each cell are reached.
+ * The pole depth is computed for each cell from its own corners, and a cell smaller than MIN_POLE_SPLIT_SIZE
+ * on the screen is not subdivided because of a pole.
+ * @param {CysConverter} cc
+ * @param {CoordinateSys} dataCoordSys
+ * @param {{norder:number, tileNumber:number, wpCorners:Array.<WorldPt>, devPtCorners:Array.<DevicePt>}} tile - the tile to subdivide
+ * @param {Object} [options]
+ * @param {number} [options.zoomDepth] - levels below the base tile to subdivide because of zoom
+ * @param {number} [options.zoomOver] - how many orders the desired norder is beyond the base tile norder
+ * @param {number} [options.level] - how many levels this tile is below the base tile
+ * @return {Array.<HiPSDeviceTileData>|undefined}
+ */
+function makeSubTilesToDepth(cc, dataCoordSys, tile, {zoomDepth=0, zoomOver=0, level=0}={}) {
+    const {norder, tileNumber, wpCorners, devPtCorners}= tile;
+    const zoomSplit= level<zoomDepth;
+    const poleSplit= level<getPoleDepth(wpCorners,zoomOver) && getDevSize(devPtCorners)>MIN_POLE_SPLIT_SIZE;
+    if (!zoomSplit && !poleSplit) return;
+    const subTiles= getProgradeTiles(cc,dataCoordSys,norder,tileNumber);
     if (!subTiles) return;
-    if (desiredNorder===norder+1) return subTiles;
     subTiles.forEach( (t) => {
-        t.subCells= getProgradeTiles(cc,dataCoordSys,norder+1,t.tileNumber);
+        t.subCells= makeSubTilesToDepth(cc,dataCoordSys,t,{zoomDepth,zoomOver,level:level+1});
     });
     return subTiles;
 }
@@ -189,6 +257,7 @@ function getProgradeTiles(cc, dataCoordSys, norder, npix,
                 tileNumber,
                 norder: proNorder,
                 devPtCorners,
+                wpCorners,
                 incompleteCell: devPtCorners.length!==4,
                 dx: imageOffsets[idx][0],
                 dy: imageOffsets[idx][1],

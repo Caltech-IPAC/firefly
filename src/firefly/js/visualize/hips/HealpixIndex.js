@@ -321,7 +321,7 @@ export class SpatialVector {
      * @return {SpatialVector} the cross product of this vector and v
      */
     cross(v) {
-        return new SpatialVector(this.y * v.z - v.y * this.z, this.z * v.x - v.z * this.x, this.x * v.y - v.x() * this.y);
+        return new SpatialVector(this.y * v.z - v.y * this.z, this.z * v.x - v.z * this.x, this.x * v.y - v.x * this.y);
     }
 
     /**
@@ -616,7 +616,7 @@ export class HealpixIndex {
         else {
             if (this.npix - this.ncap > ipix ) {
                 ip = ipix - this.ncap;
-                iring = ip / this.nl4 + this.nside;
+                iring = toInt(ip / this.nl4) + this.nside;
                 iphi = ip % this.nl4 + 1;
                 fodd = bigAnd(1, iring + this.nside) > 0 ? 1 : .5;
                 theta = Math.acos((this.nl2 - iring) * this.fact1);
