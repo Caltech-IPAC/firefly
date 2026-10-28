@@ -50,19 +50,6 @@ export const brighter = (colorStr,level=1) =>
 export const darker = (colorStr,level=1) =>
     chroma.valid(colorStr) ? chroma(colorStr).darken(level).toString() : undefined;
 
-/**
- * Make a simple color map array of no more than 10 entries.  Map goes from darker to brighter.
- * @param baseColor
- * @param mapSize
- * @param reverse
- * @return {*}
- */
-function makeSimpleColorMap(baseColor, mapSize=10, reverse=false) {
-    const c1= chroma(baseColor).brighten(2);
-    const c2= chroma(baseColor).darken(1);
-    const cAry= reverse ? [c2,c1] : [c1,c2];
-   return chroma.scale(cAry).colors(mapSize);
-}
 
 const [R, G, B, A] = [0, 1, 2, 3];
 const [LUMI, CONTRAST, HSP] = [0, 1, 2];
@@ -71,9 +58,6 @@ const [LUMI, CONTRAST, HSP] = [0, 1, 2];
 
 export function rateOpacity(color, ratio) {
     const rgba = getRGBA(color);
-    if (!rgba) {
-        return 'rgba(255, 255, 255,' + (1.0*ratio) + ')';
-    }
     const newAlpha = Math.max(Math.min(rgba[3] * ratio, 1.0), 0.0);
     const newColor = rgba.slice(R, A);
     newColor.push(newAlpha);
@@ -95,10 +79,6 @@ export function getBWBackground(color, method = LUMI) {
     let luma;
 
     const rgba = getRGBA(color);
-    if (!rgba) {
-        return 'rgba(255, 255, 255, 1.0)';
-    }
-
     const linearLuma = (w) => {
         return [R, G, B].reduce((lum, c) => {
             lum += w[c] * rgba[c];
@@ -250,18 +230,18 @@ function getComplementaryColor(color) {
 }
 
 export function toRGBAString(rgba) {
-    const len = (!rgba || !isArray(rgba)) ? 0 : rgba.length;
-    const val = len === 0 ? 255 : rgba[len-1];
-
+    if (!isArray(rgba) || !rgba.length) return '';
+    const rgbaOut= [...rgba];
+    const len= rgbaOut.length;
     if (len <= A) {
-        if (len === 0) rgba = [];
+        const lastValue= rgbaOut[len-1];
         for (let i = 0; i < A - len; i++ ) {
-            rgba.push(val);
+            rgbaOut.push(lastValue);
         }
-        rgba.push(1.0);
+        rgbaOut.push(1.0);
     }
 
-    return `rgba(${rgba[R]}, ${rgba[G]}, ${rgba[B]}, ${rgba[A]})`;
+    return `rgba(${rgbaOut[R]}, ${rgbaOut[G]}, ${rgbaOut[B]}, ${rgbaOut[A]})`;
 }
 
 /*

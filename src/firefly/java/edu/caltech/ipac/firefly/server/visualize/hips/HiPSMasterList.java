@@ -170,7 +170,8 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
 
             }
 
-            if (allSourceData.isEmpty()) {
+            int blankEntryCnt= hipsTable ? 1 : 0;
+            if (allSourceData.size() <= blankEntryCnt) {    // only the blank entry: every source failed, don't cache it
                 throw new IOException(errMsg);
             }
 
@@ -275,7 +276,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             if (colDT.getDataType() != String.class && colDT.getDataType()!= Boolean.class) continue;
 
             if ((!bMulti && colName.equals(PARAMS.SOURCE.getKey())) || colName.equals(PARAMS.URL.getKey())) {
-                colDT.setVisibility(DataType.Visibility.hidden);
+                colDT.setVisibility(DataType.Visibility.hide);
             }
             if (colName.equals(PARAMS.HAS_MOC.getKey())) colDT.setVisibility(DataType.Visibility.hide);
             if (!hipsTable && colName.equals(PARAMS.IVOID.getKey())) colDT.setVisibility(DataType.Visibility.hide);

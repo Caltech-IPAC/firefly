@@ -101,20 +101,14 @@ public class HiPSRetrieve {
         if (url==null) return new FileInfo(404, "Invalid URL");
 
         File targetFile = getHipsCacheFile(url, fileName);
-        var locationPrepared= prepareTargetLocation(targetFile, url, fileName);
-
-        if (!locationPrepared) {
-            return new FileInfo(HttpURLConnection.HTTP_FORBIDDEN,
-                    "this hips request conflicts with the HiPS protocol, cannot cache hips file correctly");
-        }
         boolean fileExistLocal= isHiPSFileCached(url.toString(),fileName);
 
         if (alwaysUseCached && fileExistLocal) return new FileInfo(targetFile);
 
-        // if we already have a version of the file set the download modified only option. Also set a very small timeout,
-        // so that if the server is down we don't wait long.
         try {
-            URLDownload.Options options= fileExistLocal ? URLDownload.Options.modifiedAndTimeoutOp(true,3) : URLDownload.Options.def();
+            URLDownload.Options options= URLDownload.Options.def();
+            options.setTimeoutInSec(3);
+            options.setOnlyIfModified(fileExistLocal);
             options.setDl(dl);
             FileInfo fetchedFileInfo= lockUrlDownload(url,fileName,targetFile,options);
             var rCode= fetchedFileInfo.getResponseCode();
@@ -156,7 +150,7 @@ public class HiPSRetrieve {
             logCacheConflict("parent path is a regular file: " + dir.getAbsolutePath(), url, fileName);
             if (dir.delete()) Logger.getLogger().warn("deleting file and making a directory");
         }
-        if (!dir.exists() && !dir.mkdirs()) {
+        if (!dir.mkdirs() && !dir.isDirectory()) { // another thread may create it first, e.g. sibling tiles
             return false;
         }
 
@@ -185,6 +179,11 @@ public class HiPSRetrieve {
         var params= new UriRefParams(url.toString());
         return LockingRetrieve.lockingRetrieve(params,
                 () -> {
+                    // inside the lock: a concurrent request for this url may be writing targetFile
+                    if (!prepareTargetLocation(targetFile, url, fileName)) {
+                        return new FileInfo(HttpURLConnection.HTTP_FORBIDDEN,
+                                "this hips request conflicts with the HiPS protocol, cannot cache hips file correctly");
+                    }
                     File f= getHipsCacheFile(url,fileName);
                     if (f!=null && f.canRead() && f.length()>minSizeCacheFile) return new FileInfo(targetFile);;
                     return URLDownload.getDataToFile(url,targetFile,null, null, options);

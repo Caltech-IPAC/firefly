@@ -231,7 +231,8 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const hipsProperties= parseProperties(str);
         const proxy= isProxying(resolvedHipsRootUrl);
         const plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, proxy);
-        plot.hipsFromHipsList= await isUrlInHipsList(resolvedHipsRootUrl);
+        // blank plots load no tiles (see HiPSTileDrawer), so skip waiting on the HiPS list
+        plot.hipsFromHipsList= !blank && await isUrlInHipsList(resolvedHipsRootUrl);
 
         if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) { //start moc retrieval but don't wait
             void createHiPSMocLayer({

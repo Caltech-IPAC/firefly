@@ -5,6 +5,7 @@ import {MetaConst} from '../data/MetaConst';
 import {makeTblRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {Logger} from '../util/Logger.js';
 import {isBlankHiPSURL} from './WebPlot.js';
 import {fixHiPSRoot} from './WebPlotRequest';
 
@@ -24,9 +25,12 @@ export const URL_COL= 'Url';
 export const IVOAID_COL= 'CreatorID';
 export const TITLE_COL= 'Title';
 
-const BLANK_HIPS_URL= 'ivo://CDS/P/2MASS/color';
+const BLANK_HIPS_URL= 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color'; // todo: only for properties, in future blank should just have hardcoded properties
 const HIPS_SEARCH = 'hips';
+const HIPS_LIST_TIMEOUT_MS= 5000;
+const logger= Logger('HiPSList');
 let FULL_HIPS_TABLE;            // saved for efficiency .. used by resolveHiPSIvoURL
+let fullHipsTablePromise;       // in-flight fetch, shared so concurrent or timed-out callers don't refetch
 
 
 
@@ -110,7 +114,7 @@ export function makeHiPSRequest(tableType,
 function convertIvoToUrl(tableModel,ivo)  {
     const ivoIdx= getColumnIdx(tableModel, IVO_ID_COL);
     const urlIdx= getColumnIdx(tableModel, URL_COL);
-    if (ivoIdx<0 || urlIdx<1) return undefined;
+    if (ivoIdx<0 || urlIdx<1) return ivo;
     const lowerIvo= ivo.toLowerCase();
     // now match the table
     const allRows= tableModel?.tableData.data ?? [];
@@ -121,9 +125,13 @@ function convertIvoToUrl(tableModel,ivo)  {
 
 async function ensureInitFullHipsTable() {
     if (FULL_HIPS_TABLE) return;
-    const request = makeHiPSRequest('hips');
-    const tableModel= await doFetchTable(request);
-    FULL_HIPS_TABLE = tableModel;
+    fullHipsTablePromise ??= doFetchTable(makeHiPSRequest('hips'))
+        .then((tableModel) => { FULL_HIPS_TABLE= tableModel; })
+        .catch((error) => logger.error('HiPS list fetch failed', error))
+        .finally(() => { fullHipsTablePromise= undefined; });
+    const timeout= new Promise((resolve) => setTimeout(resolve, HIPS_LIST_TIMEOUT_MS));
+    await Promise.race([fullHipsTablePromise, timeout]);
+    if (!FULL_HIPS_TABLE) logger.warn(`HiPS list not available after ${HIPS_LIST_TIMEOUT_MS}ms, continuing without it`);
 }
 
 
@@ -133,18 +141,21 @@ async function ensureInitFullHipsTable() {
  * @return {Promise} a promise the resolves to a url
  */
 export async function resolveHiPSIvoURL(ivoOrUrl) {
-    await ensureInitFullHipsTable();
     if (!ivoOrUrl) throw new Error('empty url');
     if (ivoOrUrl.startsWith('http')) return ivoOrUrl;
-    if (isBlankHiPSURL(ivoOrUrl)) ivoOrUrl= BLANK_HIPS_URL;
+    if (isBlankHiPSURL(ivoOrUrl)) {
+        return BLANK_HIPS_URL;
+    }
+    await ensureInitFullHipsTable();
     return fixHiPSRoot(convertIvoToUrl(FULL_HIPS_TABLE,ivoOrUrl));
 }
 
 export async function isUrlInHipsList(url='') {
     await ensureInitFullHipsTable();
+    if (!FULL_HIPS_TABLE?.tableData?.data || !FULL_HIPS_TABLE?.totalRows) return false;
     const urlIdx= getColumnIdx(FULL_HIPS_TABLE, URL_COL);
     if (urlIdx<1) return false;
-    const allRows= FULL_HIPS_TABLE?.tableData.data ?? [];
+    const allRows= FULL_HIPS_TABLE.tableData.data;
     const urlLower= url.toLowerCase();
     const foundRow= allRows.find( (row=[]) => row[urlIdx]?.toLowerCase().includes(urlLower) );
     return Boolean(foundRow?.[urlIdx]);

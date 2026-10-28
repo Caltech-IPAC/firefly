@@ -788,8 +788,8 @@ function getHipsDataRange(plot) {
 }
 
 
-function getHipsPixelCutRangeValues(plot) {
-    const {hips_pixel_cut:pixelCut}=  plot.hipsProperties ?? {};
+export function getHipsPixelCutRangeValues(plot) {
+    const {hips_pixel_cut:pixelCut, hips_pixel_function:alFromProp}=  plot.hipsProperties ?? {};
     const defaultRv= RangeValues.makeRV({which:ZSCALE, asinhQValue:4.0, algorithm:STRETCH_ASINH});
     if (!pixelCut) return defaultRv;
 
@@ -797,12 +797,11 @@ function getHipsPixelCutRangeValues(plot) {
     if (stretchValues.length>=2) {
         const min= Number(stretchValues[0]);
         const max= Number(stretchValues[1]);
+        const algorithmIn= (alFromProp || (stretchValues.length>2 && stretchValues[2]) || 'log').toLowerCase();
         if (!isNaN(min) && !isNaN(max) && min < max) {
-            const algorithm= (stretchValues.length>2  && RangeValues.isAlgorithmSupported(stretchValues[2]))
-                ? stretchValues[2].toLowerCase()
-                : 'log';
+            const algorithm= (RangeValues.isAlgorithmSupported(algorithmIn)) ? algorithmIn : 'log';
             const rv=  RangeValues.makeSimple(ABSOLUTE_STR,min,max,algorithm);
-            if (algorithm==='asinh') rv.asinhQValue= 1;
+            if (algorithm==='asinh') rv.asinhQValue= 4;
             return rv;
         }
     }
