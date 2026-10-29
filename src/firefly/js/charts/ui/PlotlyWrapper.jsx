@@ -91,7 +91,7 @@ function isSlowResize() {
 export async function downloadChart(chartId) {
     const Plotly= await getPlotLy();
     // in API we can have same chart unexpanded and expanded
-    const chartDivAll = document.querySelectorAll(`#${chartId}`);
+    const chartDivAll = document.querySelectorAll(`#${CSS.escape(chartId)}`);
     if (chartId && chartDivAll && chartDivAll.length > 0) {
         const chartDiv = chartDivAll[chartDivAll.length-1];
         showPlotLySaveDialog(Plotly,chartDiv);

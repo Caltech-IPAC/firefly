@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset, uniqueId} from 'lodash';
+import {cloneDeep, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../core/ReduxFlux.js';
@@ -700,35 +700,36 @@ function reduceData(state={}, action={}) {
         {
             const {chartId, chartType, mounted, ...rest}  = action.payload;
             // if a chart is replaced (added with the same id) mounted should not change
-            const nMounted = isUndefined(mounted) ? get(state, [chartId, 'mounted']) : mounted;
+            const nMounted = isUndefined(mounted) ? state[chartId]?.mounted : mounted;
             // save the original payload, so that the chart could be recreated
             rest['_original'] = cloneDeep(action.payload);
             applyDefaults(rest);
             useScatterGL && changeToScatterGL(rest);
 
             // the first trace is put as the last curve for plotly rendering
-            const tData = get(rest, ['data', 'length']);
+            const tData = rest.data?.length;
             if (tData) {
                 Object.assign(rest, {activeTrace: tData-1, curveNumberMap: range(tData)});
             }
-            state = updateSet(state, chartId,
-                omitBy({
+            state = {...state,
+                [chartId]: omitBy({
                     chartId,
                     chartType,
                     mounted: nMounted,
                     ...rest
-                }, isUndefined));
+                }, isUndefined)};
             logger.info(`CHART_ADD ${chartId} #mounted ${nMounted}`);
             return state;
         }
         case (CHART_UPDATE) :
         {
             const {chartId, changes}  = action.payload;
-            let chartData = getChartData(chartId);
+            let chartData = state[chartId] ?? {};
             chartData = updateObject(chartData, changes);
             useScatterGL && changeToScatterGL(chartData);
 
-            return updateSet(state, chartId, chartData);
+            // updateObject returns the same object when nothing changed; keep state too, so subscribers don't re-render
+            return chartData === state[chartId] ? state : {...state, [chartId]: chartData};
         }
         case (CHART_TRACE_REMOVE)  :
         {
@@ -743,19 +744,19 @@ function reduceData(state={}, action={}) {
                     chartData = updateObject(chartData, moreChanges);
                 }
             }
-            return updateSet(state, chartId, chartData);
+            return chartData === state[chartId] ? state : {...state, [chartId]: chartData};
         }
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
             logger.info('CHART_REMOVE '+chartId);
-            return omit(state, chartId);
+            return omit(state, [chartId]);
         }
         case (CHART_MOUNTED) :
         {
             const {chartId} = action.payload;
-            const n = get(state, [chartId,'mounted'], 0);
-            state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
+            const mountedCnt = state[chartId]?.mounted ?? 0;
+            state = {...state, [chartId]: {...state[chartId], mounted: Number(mountedCnt) + 1}};
             logger.info(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
 
             return state;
@@ -763,10 +764,10 @@ function reduceData(state={}, action={}) {
         case (CHART_UNMOUNTED) :
         {
             const {chartId} = action.payload;
-            if (has(state, chartId)) {
-                const n = get(state, [chartId,'mounted'], 0);
-                if (n > 0) {
-                    state = updateSet(state, [chartId, 'mounted'], Number(n) - 1);
+            if (state[chartId]) {
+                const mountedCnt = state[chartId].mounted ?? 0;
+                if (mountedCnt > 0) {
+                    state = {...state, [chartId]: {...state[chartId], mounted: Number(mountedCnt) - 1}};
                 } else {
                     logger.error(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
                 }
@@ -934,7 +935,7 @@ function removeTrace({chartId, traceNum}) {
 }
 
 export function getChartData(chartId, defaultChartData={}) {
-    return get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId], defaultChartData);
+    return flux.getState()[CHART_SPACE_PATH]?.data?.[chartId] ?? defaultChartData;
 }
 
 
@@ -1003,7 +1004,7 @@ export function getExpandedChartProps() {
 
 export function getChartIdsForTable(tbl_id) {
     const chartIds = [];
-    const state = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
+    const state = flux.getState()[CHART_SPACE_PATH]?.data ?? {};
     Object.keys(state).forEach((cid) => {
         if (state[cid].tbl_id === tbl_id) {
             chartIds.push(cid);
@@ -1014,7 +1015,7 @@ export function getChartIdsForTable(tbl_id) {
 
 export function getChartIdsInGroup(groupId) {
     const chartIds = [];
-    const state = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
+    const state = flux.getState()[CHART_SPACE_PATH]?.data ?? {};
     Object.keys(state).forEach((cid) => {
         if (state[cid].groupId === groupId) {
             chartIds.push(cid);
@@ -1024,7 +1025,7 @@ export function getChartIdsInGroup(groupId) {
 }
 
 export function removeChartsInGroup(groupId) {
-    const chartData = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
+    const chartData = flux.getState()[CHART_SPACE_PATH]?.data ?? {};
     Object.values(chartData)
             .filter( (v) => !groupId || v.groupId === groupId)
             .forEach( (v) => dispatchChartRemove(v.chartId));
