@@ -340,12 +340,16 @@ public class URLDownload {
     }
 
     public static HttpURLConnection makeURLConnection(URL url,
+                                                      int timeoutInSec,
                                                       Map<String, String> cookies,
                                                       Map<String, String> requestHeaders) throws IOException {
 
         var conn= makeConnection(url, cookies, requestHeaders);
         if (conn==null) throw new IOException("HTTP connection not be created");
-        if (conn instanceof HttpURLConnection httpConn) return httpConn;
+        if (conn instanceof HttpURLConnection httpConn) {
+            if (timeoutInSec>0) httpConn.setConnectTimeout(timeoutInSec * 1000);
+            return httpConn;
+        }
         throw new IOException("HTTP connection not be created, could not be cast to HttpURLConnection");
     }
 
@@ -389,7 +393,8 @@ public class URLDownload {
             StopWatch.Tracker tracker = new StopWatch.Tracker("Download", null);
             tracker.starts();
             var h= buildReqHeaders(url, requestHeaders, ops);
-            conn= makeURLConnection(url,cookies,h);
+            conn= makeURLConnection(url,ops.timeoutInSec, cookies,h);
+            if (ops.readTimeoutInSec>0) conn.setReadTimeout(ops.readTimeoutInSec * 1000);
             Map<String,List<String>> reqProp= conn.getRequestProperties();
             pushPostData(conn, postData);
 
@@ -441,8 +446,9 @@ public class URLDownload {
         Map <String,String> h= null;
         try {
             h= buildReqHeaders(url,requestHeaders,null);
-            HttpURLConnection conn= makeURLConnection(url,cookies,h);
-            return getHeaderFromConnection(conn,timeoutInSec,MAX_REDIRECT,cookies,h,useSmallRangeStyle);
+            HttpURLConnection conn= makeURLConnection(url,timeoutInSec, cookies,h);
+            int readTimeout= timeoutInSec>0?timeoutInSec+3:0;
+            return getHeaderFromConnection(conn,readTimeout,MAX_REDIRECT,cookies,h,useSmallRangeStyle);
         } catch (SSLException | SocketTimeoutException | UnknownHostException e) {
             return exceptionToResponse(e,h);
         } catch (IOException e) {
@@ -452,16 +458,13 @@ public class URLDownload {
     }
 
     private static HttpResultInfo getHeaderFromConnection(HttpURLConnection conn,
-                                                          int timeoutInSec,
+                                                          int readTimeoutInSec,
                                                           int redirectCnt,
                                                           Map<String, String> cookies,
                                                           Map<String, String> requestHeaders,
                                                           boolean useSmallRangeStyle) throws FailedRequestException {
         try {
-            if (timeoutInSec>0) {
-                conn.setConnectTimeout(timeoutInSec * 1000);
-                conn.setReadTimeout(timeoutInSec * 1000 + 3000);
-            }
+            if (readTimeoutInSec>0) conn.setReadTimeout(readTimeoutInSec * 1000);
 
             if (useSmallRangeStyle) {
                 requestHeaders= new HashMap<>(requestHeaders);
@@ -495,8 +498,8 @@ public class URLDownload {
             var responseCode= getResponseCode(conn);
             if (responseCode >= 300 && responseCode < 400) {
                 if (redirectCnt > 0 && Arrays.asList(301,302,303,307,308).contains(responseCode)) {
-                    HttpURLConnection newConn = makeURLConnection(urlFromLocation(conn), cookies, requestHeaders);
-                    return getHeaderFromConnection(newConn, 2, redirectCnt-1, cookies, requestHeaders,useSmallRangeStyle);
+                    HttpURLConnection newConn = makeURLConnection(urlFromLocation(conn), 2, cookies, requestHeaders);
+                    return getHeaderFromConnection(newConn, 5, redirectCnt-1, cookies, requestHeaders,useSmallRangeStyle);
                 }
                 result.putAttribute("Location", conn.getHeaderField("Location"));
                 throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
@@ -531,7 +534,7 @@ public class URLDownload {
                                                   int timeoutInSec) throws FailedRequestException {
         try {
             Options ops= new Options(true, true, 0L, false, false, timeoutInSec, dl, false, false);
-            return getDataToFile(makeURLConnection(url, cookies, requestHeader), outfile, ops, postData,0);
+            return getDataToFile(makeURLConnection(url, timeoutInSec, cookies, requestHeader), outfile, ops, postData,0);
         } catch (IOException e) {
             loggerError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
@@ -581,7 +584,7 @@ public class URLDownload {
                                          Options ops) throws FailedRequestException {
         try {
             var h= buildReqHeaders(url,requestHeaders,ops);
-            return getDataToFile(makeURLConnection(url, cookies, h), outfile, ops, null, ops.allowRedirect?MAX_REDIRECT:0);
+            return getDataToFile(makeURLConnection(url, ops.timeoutInSec, cookies, h), outfile, ops, null, ops.allowRedirect?MAX_REDIRECT:0);
         } catch (IOException e) {
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
@@ -613,10 +616,7 @@ public class URLDownload {
             Map<String, List<String>> sendHeaders = null;
             long start = System.currentTimeMillis();
             try {
-                if (ops.timeoutInSec > 0) {
-                    conn.setConnectTimeout(ops.timeoutInSec * 1000);//Sets a specified timeout value, in milliseconds
-                    conn.setReadTimeout(ops.timeoutInSec * 1000);
-                }
+                if (ops.readTimeoutInSec>0) conn.setReadTimeout(ops.readTimeoutInSec * 1000);
                 pushPostData(conn, postData);
                 sendHeaders = conn.getRequestProperties();
                 if (ops.onlyIfModified) {
@@ -678,7 +678,7 @@ public class URLDownload {
 
         var ignore= outfile.delete();
         String urlStr= conn.getHeaderField("Location");
-        HttpURLConnection newConn= makeURLConnection(makeURL(urlStr), null, null);
+        HttpURLConnection newConn= makeURLConnection(makeURL(urlStr), ops.timeoutInSec, null, null);
         for(Map.Entry<String,List<String>> entry : reqProp.entrySet()) {
             for(String s : entry.getValue()) newConn.setRequestProperty(entry.getKey(), s);
         }
@@ -1054,6 +1054,7 @@ public class URLDownload {
         private boolean allowRedirect;
         private boolean useCredentials;
         private int timeoutInSec;
+        private int readTimeoutInSec;     // 0: no read timeout, wait as long as the server keeps the connection open
         private DownloadListener dl;
         private boolean logErrorsOnly;
         private boolean expectStaticFile;
@@ -1082,24 +1083,13 @@ public class URLDownload {
 
 
 
-        /**
-         * convenience function
-         * set no size limit,
-         * sets true: uncompress, allowRedirect, use credentials
-         * @param onlyIfModified - check for file modification
-         * @param timeoutInSec - timeout in seconds, 0 use the default timeout
-         * @return Options
-         */
-        public static Options modifiedAndTimeoutOp(boolean onlyIfModified, int timeoutInSec) {
-            return new Options(onlyIfModified, true, 0, true, true, timeoutInSec, null, false, false);
-        }
-
         public void setOnlyIfModified(boolean onlyIfModified) { this.onlyIfModified = onlyIfModified; }
         public void setUncompress(boolean uncompress) { this.uncompress = uncompress; }
         public void setMaxFileSize(long maxFileSize) { this.maxFileSize = maxFileSize; }
         public void setAllowRedirect(boolean allowRedirect) { this.allowRedirect = allowRedirect; }
         public void setUseCredentials(boolean useCredentials) { this.useCredentials = useCredentials; }
         public void setTimeoutInSec(int timeoutInSec) { this.timeoutInSec = timeoutInSec; }
+        public void setReadTimeoutInSec(int readTimeoutInSec) { this.readTimeoutInSec = readTimeoutInSec; }
         public void setDl(DownloadListener dl) { this.dl = dl; }
         public void setLogErrorsOnly(boolean logErrorsOnly) { this.logErrorsOnly = logErrorsOnly; }
         public void setExpectStaticFile(boolean expectStaticFile) { this.expectStaticFile = expectStaticFile; }

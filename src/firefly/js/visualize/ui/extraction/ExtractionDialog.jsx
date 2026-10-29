@@ -43,7 +43,7 @@ import {
     primePlot, getPlotStateAry
 } from '../../PlotViewUtil.js';
 import {makeImagePt} from '../../Point';
-import {PLOT_IMAGE} from '../../VisConst';
+import {PLOT_HIPS, PLOT_IMAGE} from '../../VisConst';
 import {getDlAry, visRoot} from '../../VisStoreRoots';
 import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
 import {isHiPS, isImage} from '../../WebPlot.js';
@@ -77,7 +77,7 @@ function enableDrawLayer(typeId) {
     const {pv}= currentP();
     const dl= getDrawLayerByType(getDlAry(), typeId);
     !dl && dispatchCreateDrawLayer(typeId);
-    !isDrawLayerAttached(dl,pv.plotId) && dispatchAttachLayerToPlot(typeId,pv.plotId,true,true, true);
+    !isDrawLayerAttached(dl,pv.plotId) && dispatchAttachLayerToPlot(typeId,pv.plotId,true,true);
 }
 
 
@@ -91,7 +91,7 @@ export function showExtractionDialog(element,extractionType,wasCanceled) {
     dispatchAddActionWatcher( {
         id: EXTRACT_END_ID,
         callback: () => exTypeCntl[extractionType].start(),
-        actions:[PLOT_IMAGE]
+        actions:[PLOT_IMAGE, PLOT_HIPS]
     });
 }
 

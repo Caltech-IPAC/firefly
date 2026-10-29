@@ -1,5 +1,3 @@
-//import Color from '../util/Color.js';
-
 // Sequential color scales from colorlover
 // roughly matching the first 8 trace colors:
 // '#1f77b4', '#2ca02c', '#d62728', '#9467bd',
@@ -105,16 +103,3 @@ export function colorscaleNameToVal(name) {
     return undefined;
 
 }
-
-// does not work well
-// function createColorScale(baseColor) {
-//     const numcols = 5;
-//     return [[0.0, 'rgb(237, 237, 237)']].concat(
-//         Color.makeSimpleColorMap(baseColor, numcols, true).map((e,i) => {
-//             const [r, g, b] = Color.toRGB(e);
-//             let p = 1.0;
-//             if (i < (numcols-1)) p = (i+1)*(1/numcols);
-//             return [p, `rgb(${r},${g},${b})`];
-//         })
-//     );
-// }

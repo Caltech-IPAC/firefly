@@ -1,6 +1,7 @@
 import {
     API_HIPS_CONSTANTS, getAllVisibleHiPSCells, getCatalogNorderlevel, getCornersForCell, getHealpixCellAtNorder,
-    getHealpixCornerTool, getHealpixPixelAtNorder, getHiPSFitsTileLocation, getHiPSNorderlevel, getHiPSTileExt,
+    getHealpixCornerTool, getHealpixPixelAtNorder, getHiPSFitsTileLocation, getHiPSNorderlevel,
+    getHipsPixelCutRangeValues, getHiPSTileExt,
     getMaxDisplayableHiPSGridLevel, getPlotTilePixelAngSize, getProGradeTilePixels, getPropertyItem,
     getTilePixelAngSize, getVisibleHiPSCells, isHiPSFitsCube, isTileInside, loadImageMultiCall,
     makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsFitsTilePath, makeHiPSPropertiesUrl, makeHiPSTileUrl,
@@ -8,6 +9,7 @@ import {
 } from '../HiPSUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {makeWorldPt} from '../Point.js';
+import {ABSOLUTE, STRETCH_ASINH, STRETCH_LINEAR, STRETCH_LOG, STRETCH_SQRT, ZSCALE} from '../RangeValues.js';
 import {convertCelestial} from '../VisUtil.js';
 import * as WebPlot from '../WebPlot.js';
 import * as WebUtil from '../../util/WebUtil.js';
@@ -577,5 +579,68 @@ describe('Test HiPSUtil.loadImageMultiCall()', () => {
 
         WebUtil.loadImage.mockResolvedValue(undefined);
         await expect(loadImageMultiCall('http://a/empty.png')).rejects.toThrow('could not load image');
+    });
+});
+
+
+describe('Test HiPSUtil.getHipsPixelCutRangeValues()', () => {
+
+    test('getHipsPixelCutRangeValues() with no hips_pixel_cut is a zscale asinh stretch', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_function: 'sqrt'}});
+        expect(rv.lowerWhich).toBe(ZSCALE);
+        expect(rv.upperWhich).toBe(ZSCALE);
+        expect(rv.algorithm).toBe(STRETCH_ASINH);
+        expect(rv.asinhQValue).toBe(4);
+    });
+
+    test('getHipsPixelCutRangeValues() with no hipsProperties is a zscale asinh stretch', () => {
+        const rv= getHipsPixelCutRangeValues({});
+        expect(rv.lowerWhich).toBe(ZSCALE);
+        expect(rv.algorithm).toBe(STRETCH_ASINH);
+    });
+
+    test('getHipsPixelCutRangeValues() uses hips_pixel_cut as absolute bounds, log by default', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '-2.5 300'}});
+        expect(rv.lowerWhich).toBe(ABSOLUTE);
+        expect(rv.upperWhich).toBe(ABSOLUTE);
+        expect(rv.lowerValue).toBe(-2.5);
+        expect(rv.upperValue).toBe(300);
+        expect(rv.algorithm).toBe(STRETCH_LOG);
+    });
+
+    test('getHipsPixelCutRangeValues() uses hips_pixel_function for the algorithm', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '0 100', hips_pixel_function: 'sqrt'}});
+        expect(rv.algorithm).toBe(STRETCH_SQRT);
+    });
+
+    test('getHipsPixelCutRangeValues() uses a third hips_pixel_cut token when there is no hips_pixel_function', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '0 100 linear'}});
+        expect(rv.algorithm).toBe(STRETCH_LINEAR);
+    });
+
+    test('getHipsPixelCutRangeValues() hips_pixel_function wins over a third hips_pixel_cut token', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '0 100 linear', hips_pixel_function: 'sqrt'}});
+        expect(rv.algorithm).toBe(STRETCH_SQRT);
+    });
+
+    test('getHipsPixelCutRangeValues() with an unsupported algorithm falls back to log', () => {
+        const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '0 100', hips_pixel_function: 'histogram'}});
+        expect(rv.algorithm).toBe(STRETCH_LOG);
+    });
+
+    test('getHipsPixelCutRangeValues() with asinh sets asinhQValue to 4, in any case', () => {
+        ['asinh', 'ASINH', 'Asinh'].forEach( (pixelFunction) => {
+            const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: '0 100', hips_pixel_function: pixelFunction}});
+            expect(rv.algorithm).toBe(STRETCH_ASINH);
+            expect(rv.asinhQValue).toBe(4);
+        });
+    });
+
+    test('getHipsPixelCutRangeValues() with bad bounds is the zscale asinh default', () => {
+        ['100 0', '50 50', 'abc 100', '100'].forEach( (pixelCut) => {
+            const rv= getHipsPixelCutRangeValues({hipsProperties: {hips_pixel_cut: pixelCut, hips_pixel_function: 'sqrt'}});
+            expect(rv.lowerWhich).toBe(ZSCALE);
+            expect(rv.algorithm).toBe(STRETCH_ASINH);
+        });
     });
 });

@@ -54,7 +54,7 @@ public class ConcurrentDownload {
         var status= result.getResponseCode();
 
         if (status==HttpURLConnection.HTTP_FORBIDDEN && isProbablyCloudSignedURL(url)) { // try an alternate way to get the header, may have to add for GCP as well
-            result= URLDownload.getHeader(url,cookies,newHeaders,8,true);
+            result= URLDownload.getHeader(url,cookies,newHeaders,3,true);
             status= result.getResponseCode();
         }
         if (status>=400 && (status!=HttpURLConnection.HTTP_BAD_METHOD && status!=HttpURLConnection.HTTP_FORBIDDEN)) {  // bad method or forbidden just keep going

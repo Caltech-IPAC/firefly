@@ -60,12 +60,15 @@ function getRawColorTableEntry(id) {
     for(let i=0;(i<cAry.length-1); i+=4) {
         colors[j++]={idx:cAry[i],r:cAry[i+1],g:cAry[i+2],b:cAry[i+3]};
     }
+    // mirror within the table's own index range; the full tables stop at 254, slot 255 is the NaN color
+    // computed before reverse(), which reverses colors in place
+    const idxSum= colors[0].idx + colors[colors.length-1].idx;
     const revColors= reverse(colors);
 
     const revCAry= [];
     for(let i=0;(i<revColors.length); i++) {
         const cAryIdx= i*4;
-        revCAry[cAryIdx]=   255-revColors[i].idx;
+        revCAry[cAryIdx]=   idxSum-revColors[i].idx;
         revCAry[cAryIdx+1]= revColors[i].r;
         revCAry[cAryIdx+2]= revColors[i].g;
         revCAry[cAryIdx+3]= revColors[i].b;
