@@ -28,23 +28,27 @@ describe('ChartsCntlr reducer with a chart id containing a period', () => {
         const removedState = reducer(addedState, {type: CHART_REMOVE, payload: {chartId: DOTTED_CHART_ID}});
         expect(removedState.data).toEqual({});
     });
-});
-
-// CHART_UPDATE and CHART_TRACE_REMOVE read the current chart from the store (getChartData), not from the reducer state
-describe('ChartsCntlr reducer with a chart id containing a period, reading chart data from the store', () => {
-    let storeChartState;
-    beforeEach(() => jest.spyOn(flux, 'getState').mockImplementation(() => ({charts: storeChartState})));
-    afterEach(() => jest.restoreAllMocks());
 
     test('CHART_UPDATE applies changes to that chart', () => {
-        storeChartState = reducer(undefined,
-            {type: CHART_ADD, payload: {chartId: DOTTED_CHART_ID, chartType: 'plot.ly', groupId: 'main'}});
-
-        const updatedState = reducer(storeChartState,
+        const updatedState = reducer(addedState,
             {type: CHART_UPDATE, payload: {chartId: DOTTED_CHART_ID, changes: {'layout.title.text': 'J vs H-K'}}});
         expect(updatedState.data[DOTTED_CHART_ID].layout.title.text).toBe('J vs H-K');
         expect(updatedState.data['default-2mass']).toBeUndefined();
     });
+
+    test('CHART_UPDATE returns the same state when changes do not change the chart', () => {
+        const chartType = addedState.data[DOTTED_CHART_ID].chartType;
+        const unchangedState = reducer(addedState,
+            {type: CHART_UPDATE, payload: {chartId: DOTTED_CHART_ID, changes: {chartType}}});
+        expect(unchangedState.data).toBe(addedState.data);
+    });
+});
+
+// CHART_TRACE_REMOVE reads the current chart from the store (removeTrace calls getChartData), not from the reducer state
+describe('ChartsCntlr reducer with a chart id containing a period, reading chart data from the store', () => {
+    let storeChartState;
+    beforeEach(() => jest.spyOn(flux, 'getState').mockImplementation(() => ({charts: storeChartState})));
+    afterEach(() => jest.restoreAllMocks());
 
     test('CHART_TRACE_REMOVE removes the trace from that chart', () => {
         const twoTraces = [{name: 'trace0', type: 'scatter'}, {name: 'trace1', type: 'scatter'}];

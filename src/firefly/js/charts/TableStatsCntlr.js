@@ -1,9 +1,8 @@
 import {useEffect} from 'react';
 import {flux} from '../core/ReduxFlux.js';
 
-import {get, has, omit} from 'lodash';
+import {omit} from 'lodash';
 
-import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 import {REINIT_APP} from '../core/CoreConst';
 
@@ -54,11 +53,11 @@ function reducers() {
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
-    const tbl_id = get(searchRequest, 'tbl_id');
+    const tbl_id = searchRequest?.tbl_id;
     if (!tbl_id) return;
     // use resultSetID to determine if a call needs to be placed
-    const {resultSetID, numericColCnt} = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id], {});
-    const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+    const {resultSetID, numericColCnt} = flux.getState()[TBLSTATS_DATA_KEY]?.[tbl_id] ?? {};
+    const resultSetIDNow = getTblById(tbl_id)?.tableMeta?.resultSetID;
     const curNumericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER)?.length;
 
     if (resultSetID !== resultSetIDNow
@@ -103,24 +102,24 @@ export function reducer(state=getInitState(), action={}) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
             const {tbl_id} = action.payload;
-            if (has(state, [tbl_id])) {
-                return Object.assign({}, omit(state,[tbl_id]));
+            if (state[tbl_id]) {
+                return omit(state, [tbl_id]);
             }
             return state;
         }
         case (LOAD_TBL_STATS)  :
         {
-            const tblId = get(action.payload, ['searchRequest', 'tbl_id']);
+            const tblId = action.payload.searchRequest?.tbl_id;
 
             // save original table file path
-            const resultSetID = get(getTblById(tblId), 'tableMeta.resultSetID');
+            const resultSetID = getTblById(tblId)?.tableMeta?.resultSetID;
 
-            return updateSet(state, [tblId], {resultSetID, isColStatsReady: false});
+            return {...state, [tblId]: {resultSetID, isColStatsReady: false}};
         }
         case (UPDATE_TBL_STATS)  :
         {
             const {tblId, isColStatsReady, colStats} = action.payload;
-            return updateMerge(state, [tblId], {isColStatsReady, colStats});
+            return {...state, [tblId]: {...state[tblId], isColStatsReady, colStats}};
         }
         case (REINIT_APP)  :
             return getInitState();
@@ -149,7 +148,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 
     const {tbl_id} = activeTableServerRequest;
 
-    const resultSetIDOnSubmit = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+    const resultSetIDOnSubmit = getTblById(tbl_id)?.tableMeta?.resultSetID;
 
     // searchRequest
     const sreq = cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': MAX_ROW});
@@ -162,15 +161,15 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
         (tableModel) => {
 
             // if the original table has changed no need to continue
-            const resultSetIDOnFetch = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+            const resultSetIDOnFetch = getTblById(tbl_id)?.tableMeta?.resultSetID;
             if (resultSetIDOnSubmit !== resultSetIDOnFetch) {
                 return;
             }
 
-            const tblData = get(tableModel, 'tableData.data');
+            const tblData = tableModel?.tableData?.data;
             let colStats = [];
             if (tblData) {
-                const columns = get(getTblById(tbl_id), 'tableData.columns', []);
+                const columns = getTblById(tbl_id)?.tableData?.columns ?? [];
                 colStats = tblData.reduce((colstats, arow) => {
                     const r = new ColValuesStatistics(...arow);
                     const col = columns.find((c)=>{return c.name=== r.name;});
@@ -206,7 +205,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     ).finally(() => {
         pendingStatsTblIds.delete(tbl_id);
         const currentRequest = getTblById(tbl_id)?.request;
-        const currentResultSetID = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+        const currentResultSetID = getTblById(tbl_id)?.tableMeta?.resultSetID;
         if (currentRequest && currentResultSetID !== resultSetIDOnSubmit) {
             dispatchLoadTblStats(currentRequest);
         }
@@ -216,7 +215,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 export function getColValStats(tblId) {
     if (!tblId) { return undefined; }
     const tblStatsData = flux.getState()[TBLSTATS_DATA_KEY][tblId];
-    if (get(tblStatsData,'isColStatsReady')) {
+    if (tblStatsData?.isColStatsReady) {
         return tblStatsData.colStats;
     }
 }
