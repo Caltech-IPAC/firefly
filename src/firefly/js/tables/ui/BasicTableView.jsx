@@ -40,8 +40,8 @@ const tableStyleOverrides = {
     '.fixedDataTableRowLayout_rowWrapper': {
         fontSize: '12px',
     },
-    // Set clip so the browser can't scroll the header and rows out of sync with data.
-    '.fixedDataTableRowLayout_main': {
+    // Use clip, not fixed-data-table-2's overflow:hidden, to avoid header scroll-sync and Firefox text-selection issues
+    '.fixedDataTableRowLayout_main, .fixedDataTableCellGroupLayout_cellGroup, .fixedDataTableCellLayout_main': {
         overflow: 'clip',
     },
     '.fixedDataTableCellLayout_main': {
