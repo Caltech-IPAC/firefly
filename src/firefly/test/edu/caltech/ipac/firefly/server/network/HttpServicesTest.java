@@ -1,68 +1,69 @@
 package edu.caltech.ipac.firefly.server.network;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.sun.net.httpserver.*;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.visualize.plot.CircleTest;
+import edu.caltech.ipac.util.serialization.Serializer;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.logging.log4j.Level;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.Property;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.GZIPOutputStream;
 
-import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
-import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeaders;
-import static edu.caltech.ipac.firefly.server.security.SsoAdapter.SSO_FRAMEWORK_NAME;
-import static junit.framework.TestCase.assertNotNull;
+import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static org.junit.Assert.*;
 
-@Ignore("Temporarily disabled.  https://httpbin.org/ is not reliable")
+/**
+ * Tests HttpServices against a server running in this JVM, which echoes the request back as JSON
+ * the way httpbin.org does.
+ */
 public class HttpServicesTest extends ConfigTest {
 
-    private static String TEST_HOST_URL = "https://httpbin.org/";
-    private static String GET_URL = TEST_HOST_URL + "get";
-    private static String POST_URL = TEST_HOST_URL + "post";
-    private static String GZIP_URL = TEST_HOST_URL + "gzip";
-    private static String REDIRECT_URL = TEST_HOST_URL + "redirect-to";
-    private static String PUT_URL = TEST_HOST_URL + "put";
+    private static final String PARAM1_VAL = "a b&c=d/param1_val";       // needs encoding
 
+    private HttpServer server;
+    private String baseUrl;
     private HttpServiceInput input;
 
-    @BeforeClass
-    public static void init() {
-        AppProperties.setProperty(SSO_FRAMEWORK_NAME, "josso");
-        AppProperties.setProperty("sso.req.auth.hosts", "localhost,httpbin.org,acme.org,.ipac.caltech.edu");
-        AppProperties.setProperty("sso.send.user.id", "true");
-    }
-
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
+        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.setExecutor(Executors.newCachedThreadPool());
+        server.createContext("/echo", HttpServicesTest::echo);
+        server.createContext("/gzip", HttpServicesTest::gzip);
+        server.createContext("/redirect-to", HttpServicesTest::redirectTo);
+        server.start();
+        baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
+
         input = new HttpServiceInput()
                 .setCookie("cookie1", "cookie1_val").setCookie("cookie2", "cookie2_val")
-                .setParam("param1", TEST_HOST_URL+"param1_val").setParam("param2", TEST_HOST_URL+"param2_val")
+                .setParam("param1", PARAM1_VAL).setParam("param2", "param2_val")
                 .setHeader("Header1", "header1_val").setHeader("Header2", "header2_val");
     }
 
     @After
     public void tearDown() {
+        server.stop(0);
         input = null;
     }
 
@@ -74,33 +75,38 @@ public class HttpServicesTest extends ConfigTest {
     public void testGetData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GET_URL), results);
+        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(baseUrl + "/echo"), results);
         validateResults(status, results);
+        assertEquals("GET", toJson(results).path("method").asText());
     }
 
     @Test
     public void testPostData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.postData(input.setRequestUrl(POST_URL), results);
+        HttpServices.Status status = HttpServices.postData(input.setRequestUrl(baseUrl + "/echo"), results);
         validateResults(status, results);
+        assertEquals("POST", toJson(results).path("method").asText());
     }
 
     @Test
-    public void testPostMultiPartData(){
+    public void testPostMultiPartData() throws IOException {
 
-        // resolveFile is not implemented right.. it depends on classes residing under firefly... which may not be true.
-//        input.setFile("samplePng", FileLoader.resolveFile(CircleTest.class, "imageDataWithMaskTest.png"));  // a small png file to test with.
-        String relPath = CircleTest.class.getCanonicalName().replaceAll("\\.", "/").replace(CircleTest.class.getSimpleName(), "");
-        File samplePng = new File("..", FileLoader.TEST_DATA_ROOT + relPath + "imageDataWithMaskTest.png");
-        input.setFile("samplePng", samplePng);
+        File sampleFile = File.createTempFile("HttpServicesTest", ".txt");
+        sampleFile.deleteOnExit();
+        Files.writeString(sampleFile.toPath(), "sample file content");
+        input.setFile("sampleFile", sampleFile);
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.postData(input.setRequestUrl(POST_URL), results);
+        HttpServices.Status status = HttpServices.postData(input.setRequestUrl(baseUrl + "/echo"), results);
 
-        validateResults(status, results);
-
-        assertNotNull("samplePng should have been uploaded as well", getProp(results.toString(), "samplePng"));
+        assertFalse("Has error", status.isError());
+        JsonNode json = toJson(results);
+        assertTrue("should be a multipart request", json.path("contentType").asText().startsWith("multipart/form-data"));
+        String body = json.path("body").asText();
+        assertTrue("param1 should be sent as a part", body.contains("name=\"param1\""));
+        assertTrue("sampleFile should have been uploaded as well", body.contains("name=\"sampleFile\""));
+        assertTrue("sampleFile content should be uploaded", body.contains("sample file content"));
     }
 
     /**
@@ -110,10 +116,11 @@ public class HttpServicesTest extends ConfigTest {
     public void testExecMethod(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        PutMethod put = new PutMethod(PUT_URL);
+        PutMethod put = new PutMethod(baseUrl + "/echo");
         try {
             HttpServices.Status status = HttpServices.executeMethod(put, input, results);
             validateResults(status, results);
+            assertEquals("PUT", toJson(results).path("method").asText());
         } catch (IOException e) {
             fail("Encounter IO exception during a put request");
         }
@@ -123,74 +130,99 @@ public class HttpServicesTest extends ConfigTest {
     public void testGzipData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GZIP_URL), results);
+        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(baseUrl + "/gzip"), results);
 
         assertFalse("Has error", status.isError());
 
-        assertEquals("Returned content should be gzipped", "true", getProp(results.toString(), "gzipped"));
+        assertTrue("Returned content should be gzipped", toJson(results).path("gzipped").asBoolean());
     }
 
     @Test
     public void testRedirectData(){
-        input.setParam("url", GET_URL);  // redirect back to get
+        input.setParam("url", baseUrl + "/echo");  // redirect back to echo
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(REDIRECT_URL), results);
+        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(baseUrl + "/redirect-to"), results);
 
         assertFalse("Has error", status.isError());
 
-        assertEquals("url should be redirected to /get now", GET_URL, getProp(results.toString(), "url"));
+        assertEquals("url should be redirected to /echo now", "/echo", toJson(results).path("path").asText());
     }
 
     @Test
     public void testFollowRedirect(){
-        HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
-                                        .setParam("url", "http://www.acme.org")
+        HttpServiceInput nInput = input.setRequestUrl(baseUrl + "/redirect-to")
+                                        .setParam("url", baseUrl + "/echo")
                                         .setParam("status_code", "301");
 
         HttpServices.Status status = HttpServices.getData(nInput, new ByteArrayOutputStream());
         assertFalse(status.isRedirected());
 
         HttpServices.getData(nInput.setFollowRedirect(false), (method -> {
-            assertNotNull(method.getRequestHeader("X-User-Id"));
             assertTrue(HttpServices.isRedirected(method));
-            assertEquals("redirect to www.acme.org", method.getResponseHeader("location").getValue(), "http://www.acme.org");
+            assertEquals("redirect to /echo", baseUrl + "/echo", method.getResponseHeader("location").getValue());
             return HttpServices.Status.ok();
         }));
     }
 
     @Test
     public void testGetWithAuth(){
+        input.setHeader("Authorization", "Bearer abc-123");
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GET_URL), HttpServices.defaultHandler(results));
+        HttpServices.Status status = HttpServices.getData(input.setRequestUrl(baseUrl + "/echo"), HttpServices.defaultHandler(results));
         validateResults(status, results);
+        assertEquals("Bearer abc-123", getHeader(toJson(results), "Authorization"));
     }
-
 
     @Test
     public void testGetWithAuthRedirected(){
-        HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
-                .setParam("url", "https://irsa.ipac.caltech.edu/docs/help_desk.html")
-                .setParam("status_code", "301");
-
-        HttpServices.Status status = HttpServices.getData(nInput, 3, method -> {
-            assertNotNull(method.getRequestHeader("X-User-Id"));
-            return HttpServices.Status.ok();
+        AtomicReference<String> authAtRedirect = new AtomicReference<>();
+        server.createContext("/moved", ex -> {
+            authAtRedirect.set(ex.getRequestHeaders().getFirst("Authorization"));
+            ex.getResponseHeaders().set("Location", baseUrl + "/echo");
+            ex.sendResponseHeaders(301, -1);
+            ex.close();
         });
+        HttpServiceInput nInput = input.setRequestUrl(baseUrl + "/moved").setHeader("Authorization", "Bearer abc-123");
+
+        ByteArrayOutputStream results = new ByteArrayOutputStream();
+        HttpServices.Status status = HttpServices.getData(nInput, 3, HttpServices.defaultHandler(results));
+
         assertEquals(200, status.getStatusCode());    // 200 OK
+        assertEquals("Bearer abc-123", authAtRedirect.get());
+        // only credentials from the SsoAdapter are re-applied for the new url; explicit ones are not forwarded
+        assertEquals("", getHeader(toJson(results), "Authorization"));
     }
 
     @Test
-    @Ignore    // This is tested using mockbin.  It should not run normally.
     public void testFetchMaxFollow() {
-        HttpServiceInput nInput = input.setRequestUrl("https://mockbin.org/bin/c8bc6283-9129-4aef-8768-1488a85cae09");
-//                "https://mockbin.org/bin/8066cc72-aff6-4443-8812-f4983bcd43c8"    // setup to redirect to another bin
+        server.createContext("/loop", ex -> {
+            ex.getResponseHeaders().set("Location", baseUrl + "/loop");
+            ex.sendResponseHeaders(302, -1);
+            ex.close();
+        });
+        HttpServiceInput nInput = input.setRequestUrl(baseUrl + "/loop");
 
         HttpServices.Status status = HttpServices.getData(nInput, 1, method -> {
             fail("Should not get here");
             return HttpServices.Status.ok();
         });
         assertEquals(421, status.getStatusCode());    // 421 ERR_TOO_MANY_REDIRECTS
+    }
 
+    @Test
+    public void testFailedRequestLogIsRedacted() {
+        server.createContext("/fail", ex -> {
+            ex.sendResponseHeaders(500, -1);
+            ex.close();
+        });
+        List<String> logs = captureLogs(() -> HttpServices.getData(
+                input.setRequestUrl(baseUrl + "/fail").setHeader("Authorization", "Bearer secret-token-123"),
+                new ByteArrayOutputStream()));
+
+        String allLogs = String.join("\n", logs);
+        assertTrue("failed request should be logged with its curl command", allLogs.contains("CURL CMD"));
+        assertTrue(allLogs.contains("Authorization: Bearer [redacted]"));
+        assertFalse("token should not be logged", allLogs.contains("secret-token-123"));
     }
 
     @Test
@@ -207,6 +239,11 @@ public class HttpServicesTest extends ConfigTest {
         assertEquals("what ever the value is", sanitizeHeader(headers[3].getName(), headers[3].getValue()));
 
         assertEquals("Authorization: Bearer [redacted], AUTHORIZATION: basic [redacted], remove-new-line: there is and new line, ignore: what ever the value is", sanitizeHeaders(headers));
+
+        assertEquals("[redacted]", sanitizeHeader("Authorization", "abc.def.ghi"));           // no scheme
+        assertEquals("Basic [redacted]", sanitizeHeader("Proxy-Authorization", "Basic dXNlcjpwYXNz"));
+        assertEquals("[redacted]", sanitizeHeader("X-Api-Key", "secret-key"));
+        assertEquals("text/html", sanitizeHeader("Content-Type", "text/html"));
     }
 
     @Category({TestCategory.Perf.class})
@@ -260,8 +297,88 @@ public class HttpServicesTest extends ConfigTest {
     }
 
 //====================================================================
+//  test server handlers
+//====================================================================
+
+    /** Respond with the request as JSON: method, path, args, form, headers, contentType, and body. */
+    private static void echo(HttpExchange ex) throws IOException {
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String contentType = ex.getRequestHeaders().getFirst("Content-Type");
+
+        Map<String, String> headers = new LinkedHashMap<>();
+        ex.getRequestHeaders().forEach((k, v) -> headers.put(k.toLowerCase(), String.join(", ", v)));
+
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("method", ex.getRequestMethod());
+        json.put("path", ex.getRequestURI().getPath());
+        json.put("args", parseQuery(ex.getRequestURI().getRawQuery()));
+        json.put("form", contentType != null && contentType.startsWith("application/x-www-form-urlencoded") ? parseQuery(body) : Map.of());
+        json.put("headers", headers);
+        json.put("contentType", contentType);
+        json.put("body", body);
+        sendJson(ex, Serializer.toJsonBytes(json), false);
+    }
+
+    private static void gzip(HttpExchange ex) throws IOException {
+        ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+        try (GZIPOutputStream gz = new GZIPOutputStream(compressed)) {
+            gz.write(Serializer.toJsonBytes(Map.of("gzipped", true)));
+        }
+        sendJson(ex, compressed.toByteArray(), true);
+    }
+
+    /** Redirect to the 'url' query param, with 'status_code' if given, otherwise 302. */
+    private static void redirectTo(HttpExchange ex) throws IOException {
+        Map<String, String> args = parseQuery(ex.getRequestURI().getRawQuery());
+        String statusCode = args.get("status_code");
+        ex.getResponseHeaders().set("Location", args.get("url"));
+        ex.sendResponseHeaders(statusCode == null ? 302 : Integer.parseInt(statusCode), -1);
+        ex.close();
+    }
+
+    private static void sendJson(HttpExchange ex, byte[] content, boolean gzipped) throws IOException {
+        ex.getResponseHeaders().set("Content-Type", "application/json");
+        if (gzipped) ex.getResponseHeaders().set("Content-Encoding", "gzip");
+        ex.sendResponseHeaders(200, content.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(content); }
+    }
+
+    private static Map<String, String> parseQuery(String query) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (query == null || query.isEmpty()) return params;
+        for (String pair : query.split("&")) {
+            String[] keyVal = pair.split("=", 2);
+            params.put(URLDecoder.decode(keyVal[0], StandardCharsets.UTF_8),
+                       keyVal.length > 1 ? URLDecoder.decode(keyVal[1], StandardCharsets.UTF_8) : "");
+        }
+        return params;
+    }
+
+//====================================================================
 //  private
 //====================================================================
+
+    /** Run the action and return the messages HttpServices logged while it ran. */
+    private static List<String> captureLogs(Runnable action) {
+        List<String> logs = new ArrayList<>();
+        AbstractAppender appender = new AbstractAppender("HttpServicesTest", null, null, true, Property.EMPTY_ARRAY) {
+            public void append(LogEvent event) { logs.add(event.getMessage().getFormattedMessage()); }
+        };
+        appender.start();
+        String loggerName = HttpServices.class.getName();
+        var logger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
+        Level origLevel = logger.getLevel();
+        Configurator.setLevel(loggerName, Level.INFO);       // logging is OFF during tests
+        logger.addAppender(appender);
+        try {
+            action.run();
+        } finally {
+            logger.removeAppender(appender);
+            appender.stop();
+            Configurator.setLevel(loggerName, origLevel);
+        }
+        return logs;
+    }
 
     private static String execCmd(String[] cmd) {
         StringBuilder out = new StringBuilder();
@@ -278,60 +395,30 @@ public class HttpServicesTest extends ConfigTest {
     private static void validateResults(HttpServices.Status status, ByteArrayOutputStream results) {
         assertFalse("Has error", status.isError());
 
-        try {
-            JSONObject json = (JSONObject) new JSONParser().parse(results.toString());
-
-            assertEquals("cookie2 value should be cookie2_val", "cookie2_val", getCookie(json, "cookie2"));
-            assertEquals("header1 value should be header1_val", "header1_val", getHeader(json, "Header1"));
-            assertEquals("param1 value should be param1_val", TEST_HOST_URL+"param1_val", getParam(json, "param1"));
-
-        } catch (ParseException e) {
-            fail("Returned json is not parsable");
-        }
+        JsonNode json = toJson(results);
+        assertEquals("cookie2 value should be cookie2_val", "cookie2_val", getCookie(json, "cookie2"));
+        assertEquals("header1 value should be header1_val", "header1_val", getHeader(json, "Header1"));
+        assertEquals("param1 value should be " + PARAM1_VAL, PARAM1_VAL, getParam(json, "param1"));
     }
 
-    private static String getParam(JSONObject json, String key) {
-        try {
-            JSONObject args = (JSONObject) json.get("args");
-            String val = (String) args.get(key);
-            if (val == null) {
-                JSONObject form = (JSONObject) json.get("form");
-                val = (String) form.get(key);
-            }
-            return String.valueOf(val);
-        } catch (Exception e) {
-            return "";
-        }
+    private static JsonNode toJson(ByteArrayOutputStream results) {
+        return Serializer.fromJson(results.toByteArray(), JsonNode.class);
     }
 
-    private static String getHeader(JSONObject json, String key) {
-        try {
-            JSONObject headers = (JSONObject) json.get("headers");
-            return String.valueOf(headers.get(key));
-        } catch (Exception e) {
-            return "";
-        }
+    private static String getParam(JsonNode json, String key) {
+        JsonNode val = json.path("args").path(key);
+        return (val.isMissingNode() ? json.path("form").path(key) : val).asText();
     }
 
-    private static String getProp(String jsonStr, String key) {
-        try {
-            JSONObject json = (JSONObject) new JSONParser().parse(jsonStr.toString());
-            return String.valueOf(json.get(key));
-        } catch (ParseException e) {
-            return "";
-        }
+    private static String getHeader(JsonNode json, String key) {
+        return json.path("headers").path(key.toLowerCase()).asText();
     }
 
-    private static String getCookie(JSONObject json, String key) {
-        try {
-            String cookieStr = getHeader(json, "Cookie");
-            HashMap<String,String> cookies = new HashMap<>();
-            Arrays.stream(cookieStr.split(";")).map((s) -> s.trim().split("="))
-                    .forEach((c) -> cookies.put(c[0], c.length>1 ? c[1] : null));
-            return cookies.get(key);
-        } catch (Exception e) {
-            return "";
-        }
+    private static String getCookie(JsonNode json, String key) {
+        HashMap<String,String> cookies = new HashMap<>();
+        Arrays.stream(getHeader(json, "Cookie").split(";")).map((s) -> s.trim().split("="))
+                .forEach((c) -> cookies.put(c[0], c.length>1 ? c[1] : null));
+        return cookies.get(key);
     }
 
 }

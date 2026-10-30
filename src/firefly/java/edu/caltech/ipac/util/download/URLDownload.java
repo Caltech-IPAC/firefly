@@ -244,6 +244,10 @@ public class URLDownload {
         return fName;
     }
 
+    private static String joinValues(List<String> values) {
+        return values == null ? "" : String.join(", ", values);
+    }
+
     private static String sendHeadersToCompactStr(Map<String,List<String>> sendHeaders) {
 
         if (sendHeaders==null || sendHeaders.isEmpty()) return "";
@@ -271,11 +275,7 @@ public class URLDownload {
                 }
             }
             else {
-                try {
-                    workBuff.append(sanitizeHeader(se.getKey(), String.valueOf(se.getValue())));
-                } catch (NoClassDefFoundError e) {
-                    workBuff.append(se.getKey()+"="+se.getValue());
-                }
+                workBuff.append(sanitizeHeader(key, joinValues(se.getValue())));
             }
             outStr.append(workBuff.toString());
         }
@@ -859,7 +859,7 @@ public class URLDownload {
                             }
                         }
                         else {
-                            workBuff.append(sanitizeHeader(se.getKey(), String.valueOf(se.getValue())));
+                            workBuff.append(sanitizeHeader(key, joinValues(se.getValue())));
                         }
                         outStr.add(workBuff.toString());
                     }
@@ -871,20 +871,13 @@ public class URLDownload {
             }
             outStr.add("----------Received Headers");
             if (hSet!=null) {
-                List<String> values;
                 for (Map.Entry<String, List<String>> e : hSet) {
                     workBuff = new StringBuilder(100);
                     key = e.getKey();
                     if (key == null) key = "<none>";
                     workBuff.append(StringUtils.pad(20, key));
                     workBuff.append(": ");
-                    values = e.getValue();
-                    Iterator<String> valIter;
-                    int m;
-                    for (m = 0, valIter = values.iterator(); (valIter.hasNext()); m++) {
-                        if (m > 0) workBuff.append("; ");
-                        workBuff.append(valIter.next());
-                    }
+                    workBuff.append(sanitizeHeader(key, String.join("; ", e.getValue())));
                     outStr.add(workBuff.toString());
                 }
             }
@@ -939,7 +932,7 @@ public class URLDownload {
                     !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
                     !k.equalsIgnoreCase("Last-Modified")) {
                 if (cnt > 0) out.append(", ");
-                out.append(String.format("%s: %s", k, a.getValue()));
+                out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
                 cnt++;
             }
         }
@@ -955,7 +948,7 @@ public class URLDownload {
                     !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
                     !k.equalsIgnoreCase("Last-Modified") ) {
                 if (cnt>0) out.append(", ");
-                out.append(String.format("%s: %s", k, a.getValue()));
+                out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
                 cnt++;
             }
         }

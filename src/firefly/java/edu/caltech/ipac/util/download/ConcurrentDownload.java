@@ -27,6 +27,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static edu.caltech.ipac.firefly.server.network.HttpServices.sanitizeHeader;
 import static edu.caltech.ipac.util.download.URLDownload.firstParamValUsingKeyList;
 
 /**
@@ -237,7 +238,7 @@ public class ConcurrentDownload {
                     !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
                     !k.equalsIgnoreCase("Last-Modified") ) {
                 if (cnt>0) out.append(", ");
-                out.append(String.format("%s: %s", k, a.getValue()));
+                out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
                 cnt++;
             }
         }
@@ -251,7 +252,7 @@ public class ConcurrentDownload {
         for(var a : r.getSendHeaders().entrySet()) {
             var k = a.getKey();
             if (cnt>0) out.append(", ");
-            out.append(String.format("%s: %s", k, a.getValue()));
+            out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
             cnt++;
         }
         return out.toString();

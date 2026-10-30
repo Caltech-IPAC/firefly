@@ -219,7 +219,7 @@ public class HttpServiceInput implements Cloneable, Serializable {
 
         if (userId != null) {
             sb.append("\n\tuserId: ").append(userId)
-                .append("  passwd:").append(passwd);
+                .append("  passwd:").append(passwd == null ? null : "[redacted]");
         }
 
         if (params != null) {
