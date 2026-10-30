@@ -250,7 +250,12 @@ function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParam
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
     }
     else {
-        if (viewer.layout===GRID && viewer.layoutDetail===GRID_RELATED && !converter.hasRelatedBands) {
+        // use this table's layout, not viewer.layout: changeLayout (MultiViewCntlr.js) skips the update when the table's
+        // layout already matches, leaving viewer.layout stale (e.g. GRID_RELATED from another table). Checking viewer.layout
+        // here would redispatch SINGLE in an endless loop, since each CHANGE_VIEWER_LAYOUT re-runs this check
+        const tblLayout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
+        const tblLayoutDetail= getLayoutDetails(getMultiViewRoot(), imageViewerId, tbl_id);
+        if (tblLayout===GRID && tblLayoutDetail===GRID_RELATED && !converter.hasRelatedBands) {
             dispatchChangeViewerLayout(viewer.viewerId,SINGLE,undefined,tbl_id);
             viewer = getViewer(getMultiViewRoot(), imageViewerId);
         }
