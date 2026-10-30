@@ -166,7 +166,6 @@ public class OidcAdapter implements SsoAdapter {
 
         Token token = null;
         try {
-            LOGGER.debug("auth token:" + results);
 
             JSONParser parser = new JSONParser();
             JSONObject ans = (JSONObject) parser.parse(results.toString());
@@ -190,10 +189,10 @@ public class OidcAdapter implements SsoAdapter {
     }
 
     private UserInfo getUserInfo(String accessToken) {
-        String url = String.format("%s?access_token=%s", USER_INFO_URL, accessToken);
+        HttpServiceInput input = new HttpServiceInput(USER_INFO_URL).setHeader("Authorization", "Bearer " + accessToken);
         ByteArrayOutputStream results = new ByteArrayOutputStream();
 
-        if (HttpServices.getData(url, results).isError()) return null;
+        if (HttpServices.getData(input, results).isError()) return null;
         try {
             LOGGER.debug("user_info:" + results);
             JSONParser parser = new JSONParser();

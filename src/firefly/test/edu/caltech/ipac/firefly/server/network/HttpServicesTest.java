@@ -34,8 +34,9 @@ import static edu.caltech.ipac.firefly.server.security.SsoAdapter.SSO_FRAMEWORK_
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.*;
 
-@Ignore("Temporarily disabled.  https://httpbin.org/ is not reliable")
 public class HttpServicesTest extends ConfigTest {
+
+    private static final String HTTPBIN_DOWN = "Temporarily disabled.  https://httpbin.org/ is not reliable";
 
     private static String TEST_HOST_URL = "https://httpbin.org/";
     private static String GET_URL = TEST_HOST_URL + "get";
@@ -71,6 +72,7 @@ public class HttpServicesTest extends ConfigTest {
 //====================================================================
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testGetData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -79,6 +81,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testPostData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -87,6 +90,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testPostMultiPartData(){
 
         // resolveFile is not implemented right.. it depends on classes residing under firefly... which may not be true.
@@ -107,6 +111,7 @@ public class HttpServicesTest extends ConfigTest {
      * Using the low-level api to execute a 'put' method.
      */
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testExecMethod(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -120,6 +125,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testGzipData(){
 
         ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -131,6 +137,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testRedirectData(){
         input.setParam("url", GET_URL);  // redirect back to get
         ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -142,6 +149,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testFollowRedirect(){
         HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
                                         .setParam("url", "http://www.acme.org")
@@ -159,6 +167,7 @@ public class HttpServicesTest extends ConfigTest {
     }
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testGetWithAuth(){
         ByteArrayOutputStream results = new ByteArrayOutputStream();
         HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GET_URL), HttpServices.defaultHandler(results));
@@ -167,6 +176,7 @@ public class HttpServicesTest extends ConfigTest {
 
 
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void testGetWithAuthRedirected(){
         HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
                 .setParam("url", "https://irsa.ipac.caltech.edu/docs/help_desk.html")
@@ -207,10 +217,16 @@ public class HttpServicesTest extends ConfigTest {
         assertEquals("what ever the value is", sanitizeHeader(headers[3].getName(), headers[3].getValue()));
 
         assertEquals("Authorization: Bearer [redacted], AUTHORIZATION: basic [redacted], remove-new-line: there is and new line, ignore: what ever the value is", sanitizeHeaders(headers));
+
+        assertEquals("[redacted]", sanitizeHeader("Authorization", "abc.def.ghi"));           // no scheme
+        assertEquals("Basic [redacted]", sanitizeHeader("Proxy-Authorization", "Basic dXNlcjpwYXNz"));
+        assertEquals("[redacted]", sanitizeHeader("X-Api-Key", "secret-key"));
+        assertEquals("text/html", sanitizeHeader("Content-Type", "text/html"));
     }
 
     @Category({TestCategory.Perf.class})
     @Test
+    @Ignore(HTTPBIN_DOWN)
     public void perfVsCurl() throws DataAccessException {
         /*
           Performance PRIOR to any changes

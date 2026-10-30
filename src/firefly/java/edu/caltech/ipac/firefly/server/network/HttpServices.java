@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -58,6 +59,8 @@ public class HttpServices {
             (k, v) -> v.replaceAll("[\\r\\n]", ""),        // remove any new line characters from value
             new AuthHeader()
     );
+
+    private static final String REDACTED = "[redacted]";
 
     private static HttpClient newHttpClient() {
         HttpClient httpClient = new HttpClient();
@@ -540,7 +543,7 @@ public class HttpServices {
                     "\n\tRESPONSE HEADERS: " + sanitizeHeaders(method.getResponseHeaders());
 
             final StringBuilder curl = new StringBuilder("curl -v");
-            for(Header h : method.getRequestHeaders())  curl.append(String.format(" -H '%s'", h.toString().trim()));
+            for(Header h : method.getRequestHeaders())  curl.append(String.format(" -H '%s: %s'", h.getName(), sanitizeHeader(h.getName(), h.getValue())));
 
             applyIfNotEmpty(input.getParams(),
                     (p) -> p.forEach((k,v) -> curl.append(String.format(" -F '%s=%s'", k,v))));
@@ -578,16 +581,19 @@ public class HttpServices {
     }
 
     private static class AuthHeader implements BiFunction<String, String, String> {
-        // // Authorization: <scheme> <credentials>
+        // headers whose value carries a scheme, i.e. <name>: <scheme> <credentials>
+        private static final Set<String> AUTH_HEADERS = Set.of("authorization", "proxy-authorization");
+        private static final Set<String> SECRET_HEADERS = Set.of("x-api-key", "api-key", "x-auth-token");
+
         public String apply(String key, String value) {
             if (key == null || value == null) return value;
-            if (key.equalsIgnoreCase("Authorization")) {
-                int sep = value.indexOf(' ');
-                if (sep > 0) {
-                    String scheme = value.substring(0, sep);
-                    return scheme + " [redacted]";
-                }
+            String name = key.toLowerCase();
+            if (AUTH_HEADERS.contains(name)) {
+                String val = value.trim();
+                int sep = val.indexOf(' ');
+                return sep > 0 ? val.substring(0, sep) + " " + REDACTED : REDACTED;
             }
+            if (SECRET_HEADERS.contains(name)) return REDACTED;
             return value;
         }
     }
