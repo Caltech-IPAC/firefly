@@ -422,7 +422,7 @@ function colWidthInPixel(text, col, minWidth=45, paddings=8) {
 }
 
 
-function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
+export function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 
     const tableModel = getTblById(tbl_id);
     const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));
@@ -434,7 +434,8 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
             return hlRowIdx === rowIndex ? 'no-access-highlighted' : 'no-access';
         }
         if (hlRowIdx === rowIndex) return 'highlighted';
-        if (hasRelated && isSubHighlightRow(tableModel,rowIndex,hlRowIdx)) return 'related';
+        // rowIndex and hlRowIdx count from this page's first row; isSubHighlightRow reads tableModel by whole-table row
+        if (hasRelated && isSubHighlightRow(tableModel, absRowIndex, startIdx + hlRowIdx)) return 'related';
     };
 }
 
