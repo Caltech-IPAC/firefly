@@ -309,9 +309,17 @@ export class PlotlyWrapper extends Component {
                         this.syncLayout(chartId, this.div.layout);
                         if (this.div.on) {
                             const chart = this.div;
-                            // make sure clicked or selected chart is active
+                            let userSelecting = false;
+
+                            // make sure clicked or user-selected chart is active
                             chart.on('plotly_click', () => chart.parentElement.click());
-                            chart.on('plotly_selected', () => chart.parentElement.click());
+                            chart.on('plotly_selecting', () => { userSelecting = true; }); // only a user's box/lasso drag emits this
+                            chart.on('plotly_selected', () => {
+                                // Plotly also emits this when redrawing a chart with layout.selections; activating the chart can then
+                                // redraw the other charts in a multi-chart view, which emit this again in a loop - so activate only for user selections
+                                if (userSelecting) chart.parentElement.click();
+                                userSelecting = false;
+                            });
 
                             chart.on('plotly_afterplot', () => this.showMask(false));
                             chart.on('plotly_autosize', () => this.showMask(false));
