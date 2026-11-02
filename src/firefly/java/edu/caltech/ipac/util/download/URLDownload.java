@@ -248,6 +248,15 @@ public class URLDownload {
         return values == null ? "" : String.join(", ", values);
     }
 
+    // standalone launcher uses this class without HttpServices on the classpath
+    private static String safeSanitizeHeader(String name, String value) {
+        try {
+            return sanitizeHeader(name, value);
+        } catch (NoClassDefFoundError e) {
+            return value;
+        }
+    }
+
     private static String sendHeadersToCompactStr(Map<String,List<String>> sendHeaders) {
 
         if (sendHeaders==null || sendHeaders.isEmpty()) return "";
@@ -275,7 +284,7 @@ public class URLDownload {
                 }
             }
             else {
-                workBuff.append(sanitizeHeader(key, joinValues(se.getValue())));
+                workBuff.append(safeSanitizeHeader(key, joinValues(se.getValue())));
             }
             outStr.append(workBuff.toString());
         }
@@ -859,7 +868,7 @@ public class URLDownload {
                             }
                         }
                         else {
-                            workBuff.append(sanitizeHeader(key, joinValues(se.getValue())));
+                            workBuff.append(safeSanitizeHeader(key, joinValues(se.getValue())));
                         }
                         outStr.add(workBuff.toString());
                     }
@@ -877,7 +886,7 @@ public class URLDownload {
                     if (key == null) key = "<none>";
                     workBuff.append(StringUtils.pad(20, key));
                     workBuff.append(": ");
-                    workBuff.append(sanitizeHeader(key, String.join("; ", e.getValue())));
+                    workBuff.append(safeSanitizeHeader(key, String.join("; ", e.getValue())));
                     outStr.add(workBuff.toString());
                 }
             }
@@ -932,7 +941,7 @@ public class URLDownload {
                     !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
                     !k.equalsIgnoreCase("Last-Modified")) {
                 if (cnt > 0) out.append(", ");
-                out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
+                out.append(String.format("%s: %s", k, safeSanitizeHeader(k, String.valueOf(a.getValue()))));
                 cnt++;
             }
         }
@@ -948,7 +957,7 @@ public class URLDownload {
                     !k.equalsIgnoreCase("content-type") && !k.equalsIgnoreCase("content-length") &&
                     !k.equalsIgnoreCase("Last-Modified") ) {
                 if (cnt>0) out.append(", ");
-                out.append(String.format("%s: %s", k, sanitizeHeader(k, String.valueOf(a.getValue()))));
+                out.append(String.format("%s: %s", k, safeSanitizeHeader(k, String.valueOf(a.getValue()))));
                 cnt++;
             }
         }

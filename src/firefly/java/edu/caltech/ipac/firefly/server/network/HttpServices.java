@@ -57,7 +57,8 @@ public class HttpServices {
     /* Takes the header name and value, and returns a sanitized value if needed. */
     private static final List<BiFunction<String, String, String>> headerSanitizers = List.of(
             (k, v) -> v.replaceAll("[\\r\\n]", ""),        // remove any new line characters from value
-            new AuthHeader()
+            new AuthHeader(),
+            new CookieHeader()
     );
 
     private static final String REDACTED = "[redacted]";
@@ -595,6 +596,33 @@ public class HttpServices {
             }
             if (SECRET_HEADERS.contains(name)) return REDACTED;
             return value;
+        }
+    }
+
+    /**
+     * Redact cookie values but keep their names.
+     */
+    private static class CookieHeader implements BiFunction<String, String, String> {
+        private static final Set<String> SET_COOKIE_ATTRIBUTES =
+                Set.of("expires", "max-age", "domain", "path", "samesite", "secure", "httponly", "partitioned", "priority");
+
+        public String apply(String key, String value) {
+            if (key == null || value == null) return value;
+            String name = key.toLowerCase();
+            boolean isSetCookie = name.equals("set-cookie");
+            if (!isSetCookie && !name.equals("cookie")) return value;
+
+            return Arrays.stream(value.split(";"))
+                    .map(String::trim)
+                    .filter(part -> !part.isEmpty())
+                    .map(part -> {
+                        int sep = part.indexOf('=');
+                        if (sep < 0) return part;       // a flag like Secure or HttpOnly
+                        String cookieName = part.substring(0, sep).trim();
+                        if (isSetCookie && SET_COOKIE_ATTRIBUTES.contains(cookieName.toLowerCase())) return part;
+                        return cookieName + "=" + REDACTED;
+                    })
+                    .collect(Collectors.joining("; "));
         }
     }
 

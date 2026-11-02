@@ -244,6 +244,14 @@ public class HttpServicesTest extends ConfigTest {
         assertEquals("Basic [redacted]", sanitizeHeader("Proxy-Authorization", "Basic dXNlcjpwYXNz"));
         assertEquals("[redacted]", sanitizeHeader("X-Api-Key", "secret-key"));
         assertEquals("text/html", sanitizeHeader("Content-Type", "text/html"));
+
+        // cookies: values redacted, names and Set-Cookie attributes kept
+        assertEquals("JSESSIONID=[redacted]; usrkey=[redacted]", sanitizeHeader("Cookie", "JSESSIONID=abc123; usrkey=x=y"));
+        assertEquals("sid=[redacted]; Path=/; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Secure; HttpOnly",
+                sanitizeHeader("Set-Cookie", "sid=abc123; Path=/; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Secure; HttpOnly"));
+        assertEquals("a=[redacted]; Path=/; b=[redacted]; HttpOnly",
+                sanitizeHeader("set-cookie", "a=1; Path=/; b=2; HttpOnly"));      // multiple Set-Cookie headers joined
+        assertEquals("path=[redacted]", sanitizeHeader("Cookie", "path=secret"));      // attribute names only apply to Set-Cookie
     }
 
     @Category({TestCategory.Perf.class})
