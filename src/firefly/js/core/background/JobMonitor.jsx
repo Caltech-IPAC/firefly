@@ -311,7 +311,7 @@ function ControlRenderer({cellInfo}) {
 
     // the table reuses a row's cells for whichever job sorts into that row; the key gives each job its own button state
     return  (
-        <Stack key={jobId} mx={1} direction='row' justifyContent='right'>
+        <Stack key={jobId} mx={1} direction='row' justifyContent='center'>
             <Progress job={job}/>
             <Results job={job}/>
             <InfoPopup job={job}/>
@@ -506,7 +506,7 @@ function convertToTableModel(jobs, tbl_id, useLocalTime) {
         {name: 'Start Time', width: 14, ...cProps},
         {name: 'End Time', width: 14, ...cProps},
         {name: 'Phase', width: 13, type: 'char', ...cProps},
-        {name: 'Control', width: 14, sortable: false, filterable:false}
+        {name: 'Control', width: 15, sortable: false, filterable:false}
     ];
 
     const data = jobs?.map((job) =>

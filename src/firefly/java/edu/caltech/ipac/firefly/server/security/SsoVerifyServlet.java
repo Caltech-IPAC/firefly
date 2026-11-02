@@ -30,7 +30,7 @@ public class SsoVerifyServlet extends BaseHttpServlet {
         if (ssoAdapter != null) {
             SsoAdapter.Token token = ssoAdapter.resolveAuthToken(req);
             if (token != null) {
-                logger.debug("Verifying user with verId=" + token.getId() + "  ==> returned auth token:" + token);
+                logger.debug("Verifying user ==> auth token resolved");
 
                 String backTo = ssoAdapter.getRequestedUrl(req);
                 if (StringUtils.isEmpty(backTo)) {
