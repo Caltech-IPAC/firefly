@@ -8,8 +8,51 @@
 
 ---
 
+## Version 2026.4
+- 2026.4.0 — (Nov 4, 2026), _Docker tag_: `2026.4.0`, `2026.4`, `latest`
+
+This release adds HiPS data extraction, direct download of job results from the Job Monitor, more accurate HiPS rendering near the poles,
+redesigned table tooltips, and many bug fixes.
+
+#### General Features
+- HiPS: extraction from HiPS with underlying FITS — cube (drill), line, and point — Firefly-1960 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2049))
+- HiPS: improved accuracy around the poles — Firefly-2122 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2050))
+- Job Monitor: direct download of job results, including multiple results — Firefly-2032 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2048))
+- Job Monitor: show the job title in the Job Info popup — Firefly-2125 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2051))
+- DataLink: send fixed-value service descriptor parameters (needed for Euclid DR1) — IRSA-8038 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2047))
+- Charts: spectral lines: x-axis no longer stretches to fit spectral lines outside the data range — Firefly-2117 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2040))
+- Tables: redesigned column tooltips — Firefly-2119 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2042))
+
+#### Infrastructure Updates
+- ESLint: added a PR lint workflow and initial config — Firefly-2112 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2028))
+- ESLint: fixed identified errors — Firefly-2110 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2029)), Firefly-2100 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2024))
+- Added AGENTS.md and a skills directory for AI coding agents — ([PR](https://github.com/Caltech-IPAC/firefly/pull/2043))
+- Expanded unit test coverage (multiple PRs)
+
+#### Bug Fixes
+- Fixed: Firefly overly dependent on CDS MOC/HiPS service — Firefly-2148 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2053))
+- Fixed: sensitive information (credentials) printed in server logs — Firefly-2157 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2058))
+- Fixed: SPHEREx image sets identified incorrectly on pages after the first — Firefly-2149 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2057))
+- Fixed: Euclid app freezing when switching back to a DR1 Stacked Frames tab, and search-by-ID jobs not loading — Firefly-2153, Firefly-2154 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2056))
+- Fixed: multi-chart views freezing the app when plotting spectral lines — Firefly-2155 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2055))
+- Fixed: charts not showing for table/chart IDs containing a period — Firefly-2076 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2054))
+- Fixed: tooltips duplicating or overlapping on scroll or focus change — Firefly-2119 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2042))
+- Fixed: copying cells from tables in Firefox — Firefly-453 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2052))
+- Fixed: VOTable with a `.fits` extension recognized incorrectly on Linux — IRSA-8042 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2041))
+- Fixed: reverse axis not working when axis limits are set — Firefly-2103 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2036))
+- Fixed: grammar and spelling errors in messages — Firefly-2095 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2035))
+
+### _Patches 2026.4_
+
+##### _Pull Requests in this Release_
+
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2026.4+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2026.4+)
+
+---
+
 ## Version 2026.3
-- 2026.3.3 — (Oct 21, 2026), _Docker tag_: `2026.3.3`, `2026.3`, `latest`
+- 2026.3.3 — (Oct 21, 2026), _Docker tag_: `2026.3.3`, `2026.3`
 - 2026.3.2 — (Oct 20, 2026), _Docker tag_: `2026.3.2`
 - 2026.3.1 — (Oct 8, 2026), _Docker tag_: `2026.3.1`
 - 2026.3.0 — (Sept 25, 2026), _Docker tag_: `2026.3.0`

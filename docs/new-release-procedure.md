@@ -10,6 +10,7 @@
    - After looking at milestone tags, make sure all the important changes are included in the notes.
    - Make sure you edit the docker tags section of this release
    - Update the "Pull Request for this release section" change the text and the URLs for all PR and bug fixes 
+   - You can now use Claude to do most of this work for you
    
 ### Ensure release passes Test
    - `gradle :firefly:test`
