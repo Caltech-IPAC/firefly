@@ -1,4 +1,5 @@
 import {Box, Button, Divider, Sheet, Skeleton, Stack, Tooltip, Typography} from '@mui/joy';
+import DOMPurify from 'dompurify';
 import {truncate} from 'lodash';
 import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
@@ -14,18 +15,16 @@ import {getDataServiceOption} from './DataServicesOptions';
 import {showTableSelectPopup} from './TableChooser.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
-import {
-    ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton
-} from './TableSearchHelpers.jsx';
+import {ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton} from './TableSearchHelpers.jsx';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
-    defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
+    defTapBrowserState, getLoadedCapability, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
     loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR, getServiceId,
     getTapServiceByURL
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
@@ -91,7 +90,13 @@ const expandableTapSectionSx = {
     width: 1,
 };
 
-function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService, setError}) {
+/**
+ * Load the TAP capabilities for a service, ignoring a response that arrives after serviceUrl has changed
+ * @param {string} serviceUrl
+ * @param {Function} setError
+ * @return {object} the capabilities, or undefined until loaded
+ */
+function useTapCapabilities(serviceUrl, setError) {
     const [capabilities, setCapabilities] = useState(() => getLoadedCapability(serviceUrl));
     useEffect(() => {
         if (!serviceUrl) return;
@@ -99,10 +104,25 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
             setCapabilities(getLoadedCapability(serviceUrl));
             return;
         }
-        loadTapCapabilities(serviceUrl)
-            .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
-            .catch(() => setError(`Failed to retrieve capability for: ${serviceUrl}`));
-    }, [serviceUrl]);
+        setCapabilities(undefined); // don't show the previous service's capabilities while this one loads
+        let active= true;
+        const retrieveCapabilities= async () => {
+            try {
+                const loadedCapabilities= await loadTapCapabilities(serviceUrl);
+                if (active) setCapabilities(loadedCapabilities ?? getLoadedCapability(serviceUrl));
+            }
+            catch (e) {
+                if (active) setError(`Failed to retrieve capability for ${serviceUrl}: ${e?.message ?? e}`);
+            }
+        };
+        void retrieveCapabilities();
+        return () => {active=false; };
+    }, [serviceUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    return capabilities;
+}
+
+function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService, setError}) {
+    const capabilities= useTapCapabilities(serviceUrl, setError);
 
 
     return (
@@ -164,19 +184,7 @@ function BasicUI(props) {
     const {schemaLabel}= getTapServiceByURL(serviceUrl) ?? {};
 
     const schemaIsLocked= !forceLockObsCore && Boolean(lockedSchemaName);
-    const tableIsLocked= !forceLockObsCore && Boolean(lockedTableName);
-    const [capabilities, setCapabilities] = useState(() => getLoadedCapability(serviceUrl));
-
-    useEffect(() => {
-        if (!serviceUrl) return;
-        if (isCapabilityLoaded(serviceUrl)) {
-            setCapabilities(getLoadedCapability(serviceUrl));
-            return;
-        }
-        loadTapCapabilities(serviceUrl)
-            .then((c) => setCapabilities(c ?? getLoadedCapability(serviceUrl)))
-            .catch(() => setError(`Failed to retrieve capability for: ${serviceUrl}`));
-    }, [serviceUrl]);
+    const capabilities= useTapCapabilities(serviceUrl, setError);
 
 
     const setLockToObsCore= (doLock) => {
@@ -187,13 +195,13 @@ function BasicUI(props) {
                 setTableName(lockedTableName);
             }
             else {
-                const [schema, table] = obsCoreTableModel?.tableData?.data[0];
+                const [schema, table] = obsCoreTableModel?.tableData?.data[0] ?? [];
                 setSchemaName(schema);
                 setTableName(table);
             }
         }
         else {
-            const foundSchema= schemaOptions.find( (s) => {
+            const foundSchema= schemaOptions?.find( (s) => {
                 if (schemaOptions.length===2) return s.value?.toUpperCase() === 'TAP_SCHEMA';
                 else return s.value?.toUpperCase() !== 'TAP_SCHEMA' && s.value!=='ivoa';
             });
@@ -223,7 +231,7 @@ function BasicUI(props) {
                 return;
             }
             if (tableModel.error) {
-                setError(`${SERVICE_EXIST_ERROR}: ${serviceUrl}`);
+                setError(`${SERVICE_EXIST_ERROR}: ${requestServiceUrl}`);
             }
             else  {
                 const schemas = getColumnValues(tableModel, 'schema_name');
@@ -297,7 +305,7 @@ function BasicUI(props) {
             setColumnsModel(columnsModel);
             // May be redundant in a way - we know obsCoreTables should already be set,
             // and we should be able to just check the names, but this is a bit more robust (probably?)
-            const matchesObsCore = matchesObsCoreHeuristic(schemaName, tableName, columnsModel);
+            const matchesObsCore = matchesObsCoreHeuristic(requestSchemaName, requestTableName, columnsModel);
             setObsCoreEnabled(matchesObsCore);
             setTapBrowserState({...getTapBrowserState(), serviceUrl: requestServiceUrl,
                 schemaName: requestSchemaName, schemaOptions, tableName: requestTableName,
@@ -305,9 +313,9 @@ function BasicUI(props) {
         });
     };
 
-    const loadObsCoreMeta = (serviceUrl, obsCoreTableModel) => {
-        const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0];
-        const serviceId= getServiceId(serviceUrl);
+    const loadObsCoreMeta = (requestServiceUrl, obsCoreTableModel) => {
+        const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0] ?? [];
+        const serviceId= getServiceId(requestServiceUrl);
         const supportsObsCoreMetadataLoad = getDataServiceOption('enableMetadataLoad', serviceId, false);
 
         if (!obsCoreTable || !supportsObsCoreMetadataLoad) {
@@ -315,7 +323,9 @@ function BasicUI(props) {
         }
         else {
             setObsCoreMetadataModel({loading: true}); //indicates intermediate state until tableModel is available (Promise is resolved/rejected)
-            loadObsCoreMetadata(serviceUrl, obsCoreTable).then((tableModel) => {
+            loadObsCoreMetadata(requestServiceUrl, obsCoreTable).then((tableModel) => {
+                if (!mountedRef.current) return;
+                if (serviceUrlRef.current !== requestServiceUrl) return; // stale request
                 setObsCoreMetadataModel(tableModel);
             });
         }
@@ -334,22 +344,22 @@ function BasicUI(props) {
     });
 
     useEffect(() => {
-        serviceUrl && loadSchemas(serviceUrl, schemaName, tableName);
-    }, [serviceUrl]);
+        serviceUrl && loadSchemas(serviceUrl, schemaName);
+    }, [serviceUrl]);// eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         schemaName && loadTables(serviceUrl, schemaName, tableName);
-    }, [serviceUrl, schemaName]);
+    }, [serviceUrl, schemaName]);// eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         tableName && loadColumns(serviceUrl, schemaName, tableName);
-    }, [serviceUrl, schemaName, tableName]);
+    }, [serviceUrl, schemaName, tableName]);// eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         // use hasObsCoreTable instead of obsCoreEnabled to not wait until user selects the obsCore switch/table
         // fire the long-running query as soon as an ObsCore capable service is selected
         hasObsCoreTable && loadObsCoreMeta(serviceUrl, obsCoreTableModel);
-    }, [hasObsCoreTable, serviceUrl, obsCoreTableModel]);
+    }, [hasObsCoreTable, serviceUrl, obsCoreTableModel]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // need to set initialState on list fields so that the initial value that is not the first index
     // is set correctly after unmount and mount
@@ -516,7 +526,7 @@ function TableChooser({tOps=[],tableTableModel, tableName,setTableName,schemaNam
                         ({value}) =>
                             (<OpRender {...{ ops: tOps, value, label: 'Tables', lineClamp:2, rowDesc:'rows' }}/>),
                     decorator:
-                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem', rowDesc:'rows'},
+                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'}, rowDesc:'rows',
                             ops: dropOps, value}}/>),
                 }} /> :
                 <Button {...{ color:'neutral', variant:'outlined',
@@ -533,7 +543,7 @@ function TableChooser({tOps=[],tableTableModel, tableName,setTableName,schemaNam
                             setVal('tableName',selectedTapTable);
                         }
                     ) }}>
-                    <OpRender {...{sx:{minHeight:'3rem', rowDesc:'rows'},
+                    <OpRender {...{sx:{minHeight:'3rem'}, rowDesc:'rows',
                         label: 'Tables',
                         ops: tOps, value:tableName}}/>
                 </Button>
@@ -554,7 +564,8 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
     return (
         <Tooltip title={isCut &&
                 <Typography level='body-sm' component='div' width='30rem'>
-                    <div dangerouslySetInnerHTML={{__html: `${details}`}}/>
+                    {/* eslint-disable-next-line react/no-danger */}
+                    <div dangerouslySetInnerHTML={{__html: `${DOMPurify.sanitize(details)}`}}/>
                 </Typography>
         }>
             <Stack {...{alignItems: 'flex-start', alignSelf:'flex-start', sx}}>
@@ -583,7 +594,8 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
                                     WebkitBoxOrient: 'vertical',
                                 } : {}}
                             sx={{whiteSpace:'normal', textAlign:'left'}}>
-                <div dangerouslySetInnerHTML={{__html: `${shown}`}}/>
+                    {/* eslint-disable-next-line react/no-danger */}
+                <div dangerouslySetInnerHTML={{__html: `${DOMPurify.sanitize(shown)}`}}/>
                 </Typography>
             </Stack>
         </Tooltip>
