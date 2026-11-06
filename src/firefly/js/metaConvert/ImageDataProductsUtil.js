@@ -20,9 +20,7 @@ import {
 } from '../visualize/MultiViewCntlr.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getPlotGroupById} from '../visualize/PlotGroup.js';
-import {
-    currentP, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
-} from '../visualize/PlotViewUtil.js';
+import { currentP, getPlotViewAry, isDefaultCoverageActive, isImageExpanded} from '../visualize/PlotViewUtil.js';
 import { getDefaultImageColorTable, isImageDataRequestedEqual, WebPlotRequest } from '../visualize/WebPlotRequest.js';
 
 
@@ -83,15 +81,14 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
  */
 export function createSingleImageActivate(request, imageViewerId, tbl_id, highlightedRow) {
     if (!request) return undefined;
-    if (!request.getPlotId()) request.setPlotId(`${tbl_id|'no-table'}-singleview`);
+    if (!request.getPlotId()) request.setPlotId(`${tbl_id||'no-table'}-singleview`);
     if (tbl_id) {
         request.setAttributes({[PlotAttribute.RELATED_TABLE_ROW]: highlightedRow+'',
             [PlotAttribute.RELATED_TABLE_ID]: tbl_id});
     }
     return () => {
-        // const covViewer= ;
         const makeActive= !isDefaultCoverageActive(getMultiViewRoot());
-        replotImageDataProducts(request.getPlotId(), makeActive, imageViewerId, tbl_id, [request]);
+        return replotImageDataProducts(request.getPlotId(), makeActive, imageViewerId, tbl_id, [request]);
     };
 }
 
@@ -118,7 +115,7 @@ function copyRequest(inR) {
 export function createSingleImageExtraction(request, sourceObsCoreData, dlData) {
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
-    const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : copyRequest(request);
+    const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : [];
     const attributes= {[PlotAttribute.USER_PINNED_IMAGE]:true};
     if (sourceObsCoreData) attributes.sourceObsCoreData= sourceObsCoreData;
     if (dlData) attributes.dlData= dlData;
@@ -173,7 +170,7 @@ function watchForCompletedPlot(action, cancelSelf, params) {
         if (!payload.pvNewPlotInfoAry.some( (n) => n.plotId===plotId)) {
             return;
         }
-        afterComplete(getPlotViewById(visRoot(),plotId));
+        afterComplete(currentP(plotId).pv);
         cancelSelf();
         return;
     }
@@ -187,7 +184,8 @@ export function zoomPlotPerViewSize(plotId, zoomType) {
             dispatchZoom({plotId, userZoomType: zoomType});
         }
     };
-    const pv= getPlotViewById(visRoot(),plotId);
+    const {pv}= currentP(plotId);
+    if (!pv) return; // the image may be gone by the time the view size changes
     if (pv.serverCall==='working') {
         dispatchAddActionWatcher( {
             callback: watchForCompletedPlot,
@@ -204,7 +202,7 @@ function onImagePlotComplete(plotId,onComplete) {
     const afterComplete= (pv) => {
         onComplete(pv);
     };
-    const pv= getPlotViewById(visRoot(),plotId);
+    const {pv}= currentP(plotId);
     if (pv?.serverCall==='working') {
         dispatchAddActionWatcher( {
             callback: watchForCompletedPlot,
@@ -222,10 +220,9 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
     if (!tbl_id || isEmpty(plotIdAry)) return;
 
     const {highlightedRow = 0} = getTblById(tbl_id)||{};
-    const vr = visRoot();
 
     plotIdAry.find((pId) => {
-        const plot = primePlot(vr, pId);
+        const {plot}= currentP(pId);
         if (!plot) return false;
         const relatedRow= Number(plot.attributes?.[PlotAttribute.RELATED_TABLE_ROW] ??-1);
 
@@ -241,8 +238,8 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
 }
 
 export function changeTableHighlightToMatchPlotView(plotId, tbl_id) {
-    const plot= primePlot(visRoot(), plotId);
-    if (!plot) return;
+    const {plot}= currentP(plotId);
+    if (!plot || plot.attributes?.[PlotAttribute.RELATED_TABLE_ID]!==tbl_id) return;
     const row= Number(get(plot.attributes, PlotAttribute.RELATED_TABLE_ROW, -1));
     if (row<0) return;
     const table= getTblById(tbl_id);
@@ -383,7 +380,7 @@ function cleanupPlotViews({nextDisplayType, nextMetaDataTableId},
     getPlotViewAry(visRoot())
         .filter( (pv) => pv.plotGroupId===groupId)
         .filter( (pv) => {
-            const plot= primePlot(pv);
+            const {plot}= currentP(pv.plotId);
             if (!table || !plot) return true;
             return Number(plot.attributes[PlotAttribute.RELATED_TABLE_ROW])!== table.highlightedRow||
                 plot.attributes[PlotAttribute.RELATED_TABLE_ID]!==table.tbl_id;
@@ -397,8 +394,7 @@ function cleanupPlotViews({nextDisplayType, nextMetaDataTableId},
 
 function makePlottingList(reqAry) {
     return reqAry.filter( (r) => {
-        const pv= getPlotViewById(visRoot(),r.getPlotId());
-        const plot= primePlot(pv);
+        const {plot,pv}= currentP(r.getPlotId());
         if (plot) {
             return !isImageDataRequestedEqual(plot.plotState.getWebPlotRequest(), r);
         }
@@ -414,9 +410,9 @@ function makePlottingList(reqAry) {
 function make3ColorPlottingList(req3cAry) {
     const r= req3cAry.find( (r) => Boolean(r));
     if (!r) return req3cAry;
-    const p= primePlot(visRoot(),r.getPlotId());
-    if (!p) return req3cAry;
-    const plotState= p.plotState;
+    const {plot}= currentP(r.getPlotId());
+    if (!plot) return req3cAry;
+    const plotState= plot.plotState;
     if (!plotState) return req3cAry;
     const match= allBandAry.every( (b) => isImageDataRequestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
     return match ? [] : req3cAry;

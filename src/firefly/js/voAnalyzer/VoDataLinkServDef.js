@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray} from 'lodash';
+import {isArray, isNil} from 'lodash';
 import {MetaConst} from '../data/MetaConst';
 import {
     columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
@@ -37,7 +37,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '',
     const isThis = semL.includes('#this');
     const isCounterpart = semL.includes('#counterpart');
     const isCalibration = semL.includes('#calibration');
-    const isAux = semL === '#auxiliary';
+    const isAux = semL.includes('#auxiliary');
     const isGrid = semL.includes('-grid') || (locSemL.includes('-grid') || ( locSemL.includes('#grid')));
     const isCutout = semL.includes('cutout') || semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('cutout');
     const isSpectrum = locSemL.includes('spectrum') ||
@@ -136,14 +136,16 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
             serDefParams: groups
                 .find((g) => gNameMatches(g, 'inputParams'))
                 ?.params.map((p) => {
-                    const optionalParam = !p.ref && !p.value && !p.options;
+                    const value= isArray(p?.value) && p?.value.length===1 ? p.value[0] : p.value;
+                    const hasValue= !isNil(value) && value!==''; // 0 is a real value
+                    const optionalParam = !p.ref && !hasValue && !p.options;
                     return {
                         ...p,
-                        value: isArray(p?.value) && p?.value.length===1 ? p.value[0] : p.value,
+                        value,
                         colName: columnIDToName(table, p.ref),
                         optionalParam,
                         allowsInput: !p.ref,
-                        inputRequired: !p.ref && !p.value && !optionalParam
+                        inputRequired: !p.ref && !hasValue && !optionalParam
                     };
                 }),
             cisxUI: groups.find((g) => gNameMatches(g, 'CISX:ui'))?.params.map((p) => ({...p})),
@@ -210,7 +212,8 @@ export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourc
         if (!dlData.dlAnalysis.usableEntry) return;
         const {dlAnalysis:{isThis,isCounterpart,maybeImage,isCutout}, id}= dlData;
         if ((isThis || isCounterpart) && maybeImage && !isCutout) {
-            const foundCutout= dlDataAry.filter( (testData) => testData.id===id && testData.dlAnalysis.isCutout);
+            const foundCutout= dlDataAry.filter( (testData) =>
+                testData.id===id && testData.dlAnalysis.isCutout && testData.dlAnalysis.usableEntry);
             if (foundCutout.length===1) setupRelatedCutout(dlData,foundCutout[0]);
             // todo in future search for a related region for main image or cutout here
         }
@@ -278,7 +281,7 @@ export function isAnalysisTableDatalink(report) {
     /**@type FileAnalysisPart*/
     const part = report.parts[0];
     const {tableData} = part.details;
-    if (!tableData.data?.length) return;
+    if (!tableData?.data?.length) return false;
     const tabColNames = tableData.data.map((d) => d?.[0]?.toLowerCase());
     const hasCorrectCols = DATALINK_COL_NAMES.every((cname) => tabColNames.includes(cname));
     if (!hasCorrectCols) return false;
@@ -292,7 +295,7 @@ export function findWorldPtInServiceDef(serDef,sourceRow) {
         RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
     const decParam= serDefParams.find( ({UCD=''}) =>
         DEC_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
-    if (!raParam && !decParam) return;
+    if (!raParam || !decParam) return; // a position needs both; one alone can't make a point
 
     let raVal= raParam.value;
     let decVal= decParam.value;

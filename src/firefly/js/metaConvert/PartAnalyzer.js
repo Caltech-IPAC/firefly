@@ -133,7 +133,7 @@ function getTableChartColInfo(title, part, fileFormat,table) {
         }
         else {
             for(let i=0; i<colCnt; i++) colNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
-            if (colCnt===2) colNames[1]= !title || title.startsWith('(')? 'pixel value':title;
+            if (colCnt===2) colNames[1]= getPixelValueColumnName(part.desc);
         }
         const colUnits= colNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
         const naxis3= getIntHeaderFromAnalysis('NAXIS3',part,0);
@@ -192,6 +192,17 @@ function getTableChartColInfo(title, part, fileFormat,table) {
     }
 }
 
+/**
+ * Name the pixel value column of a 1D image after its HDU. The server's description is the HDU name followed by
+ * its size, e.g. "FLUX (4000 x 1)", or only the size, e.g. " (4000 x 1)", when the HDU has no name.
+ * @param {String} desc - the part description
+ * @return {String}
+ */
+function getPixelValueColumnName(desc='') {
+    const hduName= desc.replace(/\s*\([^)]*\)\s*$/, '').trim(); // remove the size
+    return hduName || 'pixel value';
+}
+
 function getTimeSeriesColumns(colInfo) {
     const xCol= findMatchingUCDColumn(colInfo,TS_UCD_COL1) ?? findMatchingColumn(colInfo,TS_C_COL1);
     const yCol= findMatchingUCDColumn(colInfo,TS_UCD_COL2) ?? findMatchingColumn(colInfo,TS_C_COL2);
@@ -235,9 +246,8 @@ function analyzeChartTableResult(table, row, part, fileFormat, source, title, to
                                  options={}, originalTitle) {
     const {uiEntry,uiRender,interpretedData=false, fileLocationIndex:tbl_index=0}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
-    if (uiEntry===UIEntry.UseSpecified) {
-        if (uiRender!==UIRender.Chart) return undefined;
-    }
+    const specifiedTableOnly= uiEntry===UIEntry.UseSpecified && uiRender===UIRender.Table;
+    if (uiEntry===UIEntry.UseSpecified && uiRender!==UIRender.Chart && !specifiedTableOnly) return undefined;
     const {tbl_id,chartId}= getIds(options,title);
 
 
@@ -251,7 +261,7 @@ function analyzeChartTableResult(table, row, part, fileFormat, source, title, to
     if (isSSATable(table)) titleInfo= getAnalysisSSATitle(table,row)??'spectrum';
     
 
-    if (chartInfo.hasChart) {
+    if (chartInfo.hasChart && !specifiedTableOnly) {
         const chartTableDefOption= getChartTableDefaultOption(part,chartInfo,partFormat);
         if (isSingleRowChart(part,partFormat,chartInfo) && partFormat===Format.FITS) { // a common case: single row table with array columns
             return makeSingleRowChartTableResult({ddTitleStr,source,activateParams,chartInfo,tbl_index, imageAsTableInfo,

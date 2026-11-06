@@ -546,7 +546,8 @@ export function obsCoreTableHasOnlyImages(table, dataLinkData=undefined) {
     }
 
     const propTypeCol = getObsCoreProdTypeCol(table);
-    if (propTypeCol?.enumVals) {
+    if (!propTypeCol) return false;
+    if (propTypeCol.enumVals) {
         const pTypes = propTypeCol.enumVals.split(',');
         if (pTypes.every((s) => s.toLowerCase() === 'image' || s.toLowerCase() === 'cube')) return true;
     }

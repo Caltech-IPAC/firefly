@@ -1,8 +1,8 @@
+import {isNil} from 'lodash';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil';
 import {doFetchTable, getCellValue, getColumnByRef, getMetaEntry} from '../../tables/TableUtil.js';
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {logger} from '../../util/Logger';
-import {isDefined} from '../../util/WebUtil.js';
 import {currentP} from '../../visualize/PlotViewUtil';
 import {getObsCoreAccessURL} from '../../voAnalyzer/TableAnalysis';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -142,7 +142,6 @@ export async function getObsCoreRelatedDataProductByFilter(table, row, threeColo
         const item= dpdtImage({name:'image grid', activate, extraction,
             dlData: gridDlData,
             enableCutout:preferCutout,
-            menu: [],
             gridForceRowSize,
             menuKey:'image-grid-0',});
 
@@ -173,29 +172,31 @@ async function fetchRelatedColsFilteredTable(table,row) {
 }
 
 function convertDLTableAryToImageGrid(dlTableAry, filteredTbl, preferCutout, activateParams=undefined, options=undefined) {
-    const dlDataAry =
-        dlTableAry.map( (t,idx) => {
-            const dlList= getDataLinkData(t,false, filteredTbl,idx).filter(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isImage);
-            return dlList[0];
-        });
-    if (!dlDataAry.length) return {errMsg:dpdtSimpleMsg('no support for related grid for this table')};
+    // keep each image with its filteredTbl row; a related row with no #this image is left out of the grid
+    const gridRows=
+        dlTableAry.map( (t,rowIdx) => {
+            const dlData= getDataLinkData(t,false, filteredTbl,rowIdx).find(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.maybeImage);
+            return {dlData, rowIdx};
+        })
+        .filter(({dlData}) => dlData);
+    if (!gridRows.length) return {errMsg:'no support for related grid for this table'};
+    const dlDataAry= gridRows.map(({dlData}) => dlData);
     const cutoutSwitching= dataSupportsCutoutSwitching(dlDataAry);
 
-    const processedGrid= dlDataAry.map( (dlData, idx) => {
+    const processedGrid= gridRows.map( ({dlData, rowIdx:idx}) => {
         const {dlAnalysis:{cutoutFullPair}}= dlData;
         const dlTableUrl= getObsCoreAccessURL(filteredTbl,idx);
         const name= createObsCoreProductTitle(filteredTbl,idx);
 
-        const menuParams= {dlTableUrl,dlData,idx, baseTitle:'', filteredTbl, dropDownText:name,
-            sourceRow:idx, options, name, doFileAnalysis:false, activateParams};
+        let menuDlData= dlData;
         if (cutoutFullPair) {
             dlData.relatedDLEntries.cutout.cutoutToFullWarning= getCutoutSizeWarning(dlData);
             if (preferCutout) {
-                menuParams.dlData = dlData.relatedDLEntries.cutout;
+                menuDlData = dlData.relatedDLEntries.cutout;
             }
         }
-        return makeMenuEntry({dlTableUrl, dlData:menuParams.dlData,idx, sourceTable:filteredTbl, sourceRow:idx,options,
-            name, doFileAnalysis:false, activateParams});
+        return makeMenuEntry({dlTableUrl, dlData:menuDlData,idx, sourceTable:filteredTbl, sourceRow:idx,options,
+            name, dropDownText:name, doFileAnalysis:false, activateParams});
     });
 
     const gridDlData= {...dlDataAry[0],
@@ -304,7 +305,8 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
     if (!bandGridMenu.length) return mi;// no highlighted row, or the highlighted row has no band entries
 
     mi.menu= bandGridMenu;
-    menuIndex= mi.menu.findIndex( (m) => menuKeysMatchBandLabel(m.menuKey,activeMenuKey) );
+    // there is no active menu key the first time the grid is shown
+    menuIndex= mi.menu.findIndex( (m) => menuKeysMatchBandLabel(m.menuKey,activeMenuKey ?? '') );
     if (menuIndex===-1) menuIndex=0;
     const activeMenuLookupKey= table.tbl_id;
     dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:mi.menu[menuIndex].menuKey}});
@@ -312,15 +314,18 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
 }
 
 
+// a DataLink error row becomes a message entry with no dlData; it has no band, so it is skipped
+const getBandEntries= (menu) => menu.filter( ({dlData}) => dlData);
+
 function isUsingBandPassExtension(resultAry)  {
     return resultAry
-        .every( (r) => r.menu
+        .every( (r) => getBandEntries(r.menu)
             .every( ({dlData}) => dlData.bandpassNameDLExt));
 }
 
 function getBandPassSet(resultAry) {
     return new Set(resultAry
-        .flatMap( (r) => r.menu
+        .flatMap( (r) => getBandEntries(r.menu)
             .map( ({dlData}) => dlData.bandpassNameDLExt)));
 }
 
@@ -364,7 +369,6 @@ function makeGridMi(bandMenu, activateParams, table, plotRows, menuKey) {
 export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options={}) {
     const {relatedBandMethod=GROUP_BY_DATALINK_RESULT }= options;
     let dataLinkGrid;
-    let gridDLData;
     if (relatedBandMethod===GROUP_BY_DATALINK_RESULT) {
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         const results = processDatalinkTable({
@@ -373,22 +377,22 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options
             options, parsingAlgorithm: RELATED_IMAGE_GRID
         });
         dataLinkGrid = results.menu;
-        gridDLData= dataLinkGrid.map( (d) => d.dlData);
     }
     else {
         const filteredTbl= await fetchRelatedColsFilteredTable(table,row);
         const dlTableAry= await fetchAllDatalinkTables(filteredTbl,options.datalinkTblRequestOptions);
         const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);
-        const {processedGrid}= convertDLTableAryToImageGrid(dlTableAry,filteredTbl,preferCutout,{});
+        const {processedGrid=[]}= convertDLTableAryToImageGrid(dlTableAry,filteredTbl,preferCutout,{}); // none when there are no images
         dataLinkGrid= processedGrid;
-        gridDLData= processedGrid.map( (d) => d.dlData);
     }
 
-    const bandData = dataLinkGrid
+    // the band titles and the band colors must both index the image entries
+    const imageEntries= dataLinkGrid
         .filter((result) => result?.request && (
             result.displayType === DPtypes.IMAGE ||
             result.displayType === DPtypes.PROMISE ||
-            result.displayType === DPtypes.ANALYZE))
+            result.displayType === DPtypes.ANALYZE));
+    const bandData = imageEntries
         .map((result) => result.request.getTitle())
         .reduce( (obj,title,idx) => {
             obj[idx]= {color:undefined, title};
@@ -396,7 +400,7 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options
         },{});
 
 
-    const {r,g,b}= get3CBandIdxes(gridDLData);
+    const {r,g,b}= get3CBandIdxes(imageEntries.map( (d) => d.dlData));
 
     if (bandData[r]) bandData[r].color= Band.RED;
     if (bandData[g]) bandData[g].color= Band.GREEN;
@@ -410,9 +414,9 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table, row, options
  * @return {{r: number, b: number, g: number}}
  */
 function get3CBandIdxes(gridDLData) {
-    const rBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.rBand);
-    const gBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.gBand);
-    const bBandIdx= gridDLData.findIndex( (d) => d.dlAnalysis.bBand);
+    const rBandIdx= gridDLData.findIndex( (d) => d?.dlAnalysis?.rBand);
+    const gBandIdx= gridDLData.findIndex( (d) => d?.dlAnalysis?.gBand);
+    const bBandIdx= gridDLData.findIndex( (d) => d?.dlAnalysis?.bBand);
 
     const bandAry= [];
     bandAry.length= gridDLData.length;
@@ -437,13 +441,19 @@ export function makeDlUrl(dlServDesc, table, row) {
     serDefParams?.forEach( (p) => {
         if (p.ref) { // value comes from the row
             const colName= p.colName || getColumnByRef(table, p.ref)?.name;
-            sendParams[p.name]=getCellValue(table, row, colName);
+            if (colName) sendParams[p.name]=getCellValue(table, row, colName); // skip a ref to a column the table does not have
         }
-        else if (isDefined(p.value) && p.value!=='') { // fixed value set by the service descriptor, e.g. RELEASE=dr1
+        else if (!isNil(p.value) && p.value!=='') { // fixed value set by the service descriptor, e.g. RELEASE=dr1
             sendParams[p.name]= p.value;
         }
     });
-    const newUrl= new URL(accessURL);
+    let newUrl;
+    try {
+        newUrl= new URL(accessURL);
+    } catch {
+        logger.warn(`DataLink service descriptor accessURL is not an absolute URL: ${accessURL}`);
+        return undefined;
+    }
     Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
     return newUrl.toString();
 }

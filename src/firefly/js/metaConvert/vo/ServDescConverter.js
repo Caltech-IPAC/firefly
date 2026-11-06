@@ -10,9 +10,6 @@ import {
 import {createServDescMenuRet} from './ServDescProducts.js';
 
 
-const DEF_MAX_PLOTS= 8;
-
-
 /**
  *
  * @param {TableModel} table
@@ -92,7 +89,7 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
 }
 
 export async function getServiceDescGridDataProduct(table, plotRows, activateParams, options) {
-    const pAry= plotRows.map( (pR) => getServiceDescSingleDataProduct(table,pR.row,activateParams,options, false));
+    const pAry= plotRows.map( (pR) => getServiceDescSingleDataProduct(table,pR.row,activateParams,options));
     return createGridResult(pAry,activateParams,table,plotRows,options);
 }
 
@@ -111,6 +108,7 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
 
 
 
-export const findDataLinkServeDescs= (sdAry=[]) =>
-    sdAry?.filter( (serDef) => Boolean(isDataLinkServiceDesc(serDef)));
+// getServiceDescriptors returns false, not [], when a table has none
+export const findDataLinkServeDescs= (sdAry) =>
+    (sdAry || []).filter( (serDef) => Boolean(isDataLinkServiceDesc(serDef)));
 

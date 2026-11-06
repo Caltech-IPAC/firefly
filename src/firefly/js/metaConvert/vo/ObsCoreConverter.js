@@ -1,6 +1,6 @@
 import {isEmpty, isUndefined} from 'lodash';
 import { getCellValue, getMetaEntry, hasRowAccess } from '../../tables/TableUtil.js';
-import {logger} from '../../util/Logger';
+import {GIG} from '../../util/WebUtil.js';
 import {
     getObsCoreAccessURL, getObsCoreCloudAccess, getObsReleaseDate, getProdTypeGuess, getSearchTarget, isFormatDataLink,
     isFormatPng, isFormatVoTable, makeWorldPtUsingCenterColumns, obsCoreTableHasOnlyImages
@@ -9,7 +9,7 @@ import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoD
 import {makePngEntry, uploadAndAnalyze} from '../AnalysisUtils.js';
 import {GROUP_BY_DATALINK_RESULT, GROUP_BY_RELATED_COLUMNS, IMAGE_ONLY} from '../DataProductConst';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
-import { dpdtFromMenu, dpdtMessageWithDownload, dpdtSimpleMsg, } from '../DataProductsType.js';
+import { dpdtFromMenu, dpdtMessageWithDownload, dpdtSimpleMsg, DPtypes, } from '../DataProductsType.js';
 import {makeDataTooLargeDLMessage} from '../VoUITitles';
 import {createGuessDataType} from './DataLinkProcessor.js';
 import {
@@ -20,7 +20,6 @@ import {
 import {createServDescMenuRet} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
 
-const GIG= 1048576 * 1024;
 export const OBSCORE_DEF_MAX_PLOTS= 8;
 
 
@@ -122,7 +121,7 @@ export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, hi
     }
     else {
         const s= getMetaEntry(table,'tbl.relatedCols');
-        if (!s) dpdtSimpleMsg('meta data tbl.relatedCols is not configured');
+        if (!s) return dpdtSimpleMsg('meta data tbl.relatedCols is not configured');
         return getObsCoreRelatedDataProductByFilter(table, row, threeColorOps, highlightPlotId, activateParams, options);
     }
 }
@@ -136,7 +135,7 @@ export function getObsCoreDataProduct(table, row, activateParams, options) {
     const dlDescriptors= descriptorsInFile && descriptorsInFile?.filter( (dDesc) => isDataLinkServiceDesc(dDesc));
 
     if (isEmpty(descriptors)) {
-        return getObsCoreSingleDataProduct({table, row, activateParams, options});
+        return getObsCoreSingleDataProduct({table, row, activateParams, dlDescriptors, options});
     }
 
     const positionWP= makeWorldPtUsingCenterColumns(table,row);
@@ -203,8 +202,11 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
             const dlProd= await getDatalinkSingleDataProduct({
                 dlTableUrl, options, sourceTable:table, row,
                 activateParams,doFileAnalysis});
-            const dlProdMenu= dlProd?.menu?.map( (p) =>  ({...p,menuKey:'extraDl-'+p.menuKey})) ?? [];
-            serviceDescMenuList= serviceDescMenuList ? [...(serviceDescMenuList??[]),...dlProdMenu] : dlProdMenu;
+            // with no other service descriptors, the DataLink entries need a menu lookup key of their own
+            const activeMenuLookupKey= serviceDescMenuList?.[0]?.activeMenuLookupKey ??
+                `${dlDescriptors[0].accessURL}--${table.tbl_id}--${row}`;
+            const dlProdMenu= getDlMenuEntries(dlProd).map( (p) =>  ({...p,menuKey:'extraDl-'+p.menuKey, activeMenuLookupKey}));
+            if (dlProdMenu.length) serviceDescMenuList= [...(serviceDescMenuList??[]),...dlProdMenu];
         }
 
 
@@ -220,8 +222,16 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
 
 
 
+// a one-row DataLink result comes back as that entry with an empty menu; a #this entry repeats the primary product
+function getDlMenuEntries(dlProd) {
+    if (dlProd?.menu?.length) return dlProd.menu;
+    if (!dlProd || dlProd.displayType===DPtypes.MESSAGE) return [];
+    if (dlProd.dlData?.dlAnalysis?.isThis) return [];
+    return [dlProd];
+}
+
 export function makeSingleDataProductWithMenu(dpId, primDPType, size, serviceDescMenuList) {
-    if (!serviceDescMenuList) return primDPType;
+    if (!serviceDescMenuList?.length) return primDPType;
     const activeMenuLookupKey= serviceDescMenuList[0].activeMenuLookupKey;
     primDPType= { ...primDPType, semantics: primDPType.semantics ?? '#this', size, activeMenuLookupKey};
     const menu= [primDPType, ...serviceDescMenuList];
@@ -240,12 +250,7 @@ export function getObsCoreRowMetaInfo(table,row) {
     const isDataLinkRow= isFormatDataLink(table,row);
     const iName= getCellValue(table,row,'instrument_name') || '';
     const obsId= getCellValue(table,row,'obs_id') || '';
-    const size= Number(getCellValue(table,row,'access_estsize')) || 0;
+    // ObsCore defines access_estsize in kB (a little weird); convert to bytes
+    const size= (Number(getCellValue(table,row,'access_estsize')) || 0) * 1024;
     return {iName,obsId,size,dataSource,cloudAccess,prodType,isVoTable,isDataLinkRow,isPng:isFormatPng(table,row)};
 }
-
-function relatedBandWarning() {
-    logger.warn('ObsCoreConverter: Warning: unable to show related bands for this table');
-    logger.warn('ObsCoreConverter: hasRelatedBands is set to true, this table must have only images or options.limitViewerDisplay must be IMAGE_ONLY');
-}
-
