@@ -123,6 +123,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
     const {setConstraintFragment}= useContext(ConstraintContext);
     const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx); // don't set these functions in dependencies
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
+    const [getDefaultsColumnsId, setDefaultsColumnsId]= useFieldGroupValue('spatialDefaultsColumnsId');
     const [posDefaultOpenMsg, setPosDefaultOpenMsg]= useState(true);
 
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
@@ -185,10 +186,16 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             const noDefaults= !lon || !lat;
             if (lon && lat) setPosDefaultOpenMsg(true);
             setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
-            if (noDefaults || disablePanel) checkHeaderCtl.setPanelActive(false);
-            checkHeaderCtl.setPanelActive(!noDefaults);
+            if (disablePanel) {
+                checkHeaderCtl.setPanelActive(false);
+                setDefaultsColumnsId(undefined);
+            }
+            else if (columnsModel?.tbl_id!== getDefaultsColumnsId()) {
+                checkHeaderCtl.setPanelActive(!noDefaults);
+                setDefaultsColumnsId(columnsModel?.tbl_id);
+            }
         }
-    }, [columnsModel, obsCoreEnabled]);
+    }, [columnsModel, obsCoreEnabled, disablePanel]);
 
     useFieldGroupWatch([PolygonCorners,DEF_TARGET_PANEL_KEY,RadiusSize,SPATIAL_TYPE],
         ([corners,target,radius],isInit) => {
