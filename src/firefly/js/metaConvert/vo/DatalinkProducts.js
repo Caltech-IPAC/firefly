@@ -299,9 +299,11 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
 
     // band pass extension is confirmed
     const bandPassSet= getBandPassSet(resultAry);
-    
-    mi.menu= makeAllRelatedGridMenu(resultAry,bandPassSet,activateParams,table,plotRows,options);
-    // menuIndex= mi.menu.findIndex( (m) => m.menuKey===activeMenuKey);
+    const bandGridMenu= makeAllRelatedGridMenu(resultAry,bandPassSet,activateParams,table,plotRows,options);
+
+    if (!bandGridMenu.length) return mi;// no highlighted row, or the highlighted row has no band entries
+
+    mi.menu= bandGridMenu;
     menuIndex= mi.menu.findIndex( (m) => menuKeysMatchBandLabel(m.menuKey,activeMenuKey) );
     if (menuIndex===-1) menuIndex=0;
     const activeMenuLookupKey= table.tbl_id;
@@ -317,8 +319,8 @@ function isUsingBandPassExtension(resultAry)  {
 }
 
 function getBandPassSet(resultAry) {
-    return new Set(...resultAry
-        .map( (r) => r.menu
+    return new Set(resultAry
+        .flatMap( (r) => r.menu
             .map( ({dlData}) => dlData.bandpassNameDLExt)));
 }
 
@@ -333,11 +335,12 @@ function makeAllRelatedGridMenu(resultAry, bandPassSet, activateParams, table, p
 
     return bandMenuAry
         .map((bandMenu, idx) => {
+            if (!bandMenu[highlightedIdx]) return;
             const label= bandMenu[highlightedIdx].dlData.labelDLExt ?? 'xxx';
             const band= bandMenu[highlightedIdx].dlData.bandpassNameDLExt ?? 'xxx';
             const menuKey= makeBandLabelMenuKey(label, band, 'grid-item'+idx);
             const entry= makeGridMi(bandMenuAry[idx], activateParams, table, plotRows, menuKey);
-            entry.name= bandMenu[highlightedIdx]?.name ?? 'Image Data';
+            entry.name= bandMenu[highlightedIdx].name ?? 'Image Data';
             return entry;
         } )
         .filter(Boolean);
