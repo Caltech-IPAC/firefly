@@ -96,8 +96,9 @@ public class FITSExtractToTable {
         // guess an error
         String errCol= null;
         for(FitsExtract.ExtractionResults result: results) {
-            String extName= result.extName()!=null ? result.extName().toLowerCase() : "";
-            if (FitsExtract.uncertainty.stream().anyMatch(name -> name.toLowerCase().contains(extName))) {
+            String extName= result.extName()!=null ? result.extName().toLowerCase() : null;
+            if (extName!=null &&
+                    FitsExtract.uncertainty.stream().anyMatch(name -> name.toLowerCase().contains(extName))) {
                 errCol= makeKeyByHDU(result);
                 break;
             }
