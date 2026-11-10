@@ -5,7 +5,7 @@ import {logger} from '../../util/Logger.js';
 import {dispatchPlotMaskLazyLoad} from '../ImagePlotDispatch';
 import {
     primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById, convertImageIdxToHDU, isPlotIdInPvNewPlotInfoAry,
-    currentP,
+    currentP, isCube, getCubePlaneIdx,
 } from '../PlotViewUtil.js';
 import {PlotState} from '../PlotState.js';
 import {RequestType} from '../RequestType.js';
@@ -195,7 +195,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const request0= plotState.getWebPlotRequest();
 
         const resultPayload= {...payload};
-        const {pv}= currentP(payload.plotId);
+        const {pv,plot:basePlot}= currentP(payload.plotId);
         const cubeIndex= convertImageIdxToHDU(pv,pv.primeIdx).cubeIdx;
         const plots= PlotCreate.map( (pc,idx) => {
             const plot=WebPlot.makeWebPlotData({plotId:imageOverlayId, wpInit:pc, asOverlay:true, cubeCtx:cubeCtx[idx], request0});
@@ -204,7 +204,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         });
         resultPayload.plots=plots;
         resultPayload.cube=PlotCreate.length>1;
-        resultPayload.primeIdx= 0;
+        resultPayload.primeIdx= (resultPayload.cube && isCube(basePlot)) ? getCubePlaneIdx(basePlot) : 0;
         resultPayload.plot=resultPayload.plots[cubeIndex];
         dispatcher({type: PLOT_MASK, payload: resultPayload});
     }
