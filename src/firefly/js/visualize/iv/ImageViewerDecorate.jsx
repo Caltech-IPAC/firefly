@@ -118,58 +118,55 @@ function showUnselect(pv,dlAry) {
 
 
 
-function contextToolbar(plotView,dlAry,extensionList, width, makeToolbar) {
+/**
+ * @param {WebPlot|undefined} plot
+ * @param {Array.<Object>} extensionList
+ * @return {Array.<Object>} the extensions for the active distance or point tool, or an empty array
+ */
+function getActiveToolExtensions(plot, extensionList) {
+    if (!plot || isEmpty(extensionList)) return EMPTY_ARRAY;
+    let extType;
+    if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) extType= LINE_SELECT;
+    else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) extType= POINT;
+    if (!extType) return EMPTY_ARRAY;
+    const toolAry= extensionList.filter( (ext) => ext.extType===extType);
+    return isEmpty(toolAry) ? EMPTY_ARRAY : toolAry;
+}
+
+export function makeContextToolbar(plotView, dlAry, extensionList, width, makeToolbar) {
     const plot= primePlot(plotView);
     if (!plot) return;
 
     const showMultiImageController= isImage(plot) ? plotView.plots.length>1 : plot.cubeDepth>1;
     const hipsFits= canConvertBetweenHipsAndFits(plotView);
+    const unselect= showUnselect(plotView,dlAry);
+    const clearFilter= showClearFilter(plotView,dlAry);
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
-        const select= showSelect(plotView,dlAry);
-        const unselect= showUnselect(plotView,dlAry);
-        const filter= showFilter(plotView,dlAry);
-        const clearFilter= showClearFilter(plotView,dlAry);
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
-        const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
-        const searchActions= getSearchActions();
         return (
-            <VisCtxToolbarView {...{plotView, extensionAry, width,
-                showSelectionTools:true, showCatSelect:select, showCatUnSelect:unselect, searchActions,
-                showFilter:filter, showClearFilter:clearFilter, showMultiImageController, makeToolbar}} />
+            <VisCtxToolbarView {...{plotView, width,
+                extensionAry: isEmpty(selAry) ? EMPTY_ARRAY : selAry,
+                showSelectionTools:true, showCatSelect:showSelect(plotView,dlAry),
+                showCatUnSelect:unselect, searchActions:getSearchActions(),
+                showFilter:showFilter(plotView,dlAry), showClearFilter:clearFilter,
+                showMultiImageController, makeToolbar}} />
         );
     }
-    else if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
-        const distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
-        if (!distAry.length && !showMultiImageController && !hipsFits) return;
+
+    const toolAry= getActiveToolExtensions(plot, extensionList);
+    if (toolAry.length) {
         return (
-                <VisCtxToolbarView {...{plotView, extensionAry:isEmpty(distAry)?EMPTY_ARRAY:distAry,
-                    width, showMultiImageController, makeToolbar}}/>
+            <VisCtxToolbarView {...{plotView, extensionAry:toolAry, width, showMultiImageController, makeToolbar}}/>
         );
     }
-    else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
-        const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length && !showMultiImageController && !hipsFits && isImage(plot)) return;
+
+    if (unselect || clearFilter || showMultiImageController || hipsFits || isHiPS(plot) || plotView.plotViewCtx.embedMainToolbar) {
         return (
-                <VisCtxToolbarView {...{plotView, extensionAry:isEmpty(ptAry)?EMPTY_ARRAY:ptAry, width,
-                    showMultiImageController, makeToolbar}}/>
+            <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY, width,
+                showCatUnSelect:unselect, showClearFilter:clearFilter,
+                showMultiImageController, makeToolbar}} />
         );
-    }
-    else if (showUnselect(plotView, dlAry)) {
-        return (
-               <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY, width,
-                       showCatUnSelect:true, showClearFilter:showClearFilter(plotView,dlAry),
-                       showMultiImageController, makeToolbar}} />
-        );
-    }
-    else if (showClearFilter(plotView,dlAry)) {
-        return (
-                <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY,  width,
-                    showClearFilter:true, showMultiImageController, makeToolbar}} />
-        );
-    }
-    else if (showMultiImageController || hipsFits || isHiPS(plot)) {
-        return ( <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY, showMultiImageController, width, makeToolbar}}/> );
     }
 }
 
@@ -284,7 +281,7 @@ const ImageViewerDecorate= memo((props) => {
     },[mousePlotId, visRoot]);
 
     const showDelete= pv.plotViewCtx.userCanDeletePlots;
-    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
+    const ctxToolbar= makeContextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
     const plot= primePlot(pv);
     const iWidth= Math.trunc(width);
     const iHeight=Math.trunc(height);
