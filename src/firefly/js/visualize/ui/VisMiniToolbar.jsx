@@ -23,7 +23,6 @@ import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
 import HiPSGrid from '../../drawingLayers/HiPSGrid';
-import {dispatchAttachLayerToPlot} from '../DrawLayerDispatch';
 import {showExtractionDialog} from './extraction/ExtractionDialog.jsx';
 import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
 import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
@@ -47,7 +46,7 @@ import {ExpandType} from '../VisConst';
 import {getDlAry, visRoot} from '../VisStoreRoots';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
-    getActivePlotView, getAllDrawLayersForPlot, getDrawLayerByType, getPlotViewById, hasWCSProjection,
+    getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasWCSProjection,
     isCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {
@@ -407,11 +406,7 @@ const HiPSDebugRow= ({pv,enabled,modalEndInfo,mi}) => {
         <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
             <Typography level='body-md' width='10em'>HiPS Debug:</Typography>
             <HiPSGridButton tip='Show HiPS/Healpix grid'
-                      onClick={() => {
-                          const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
-                          dispatchAttachLayerToPlot(dl.drawLayerId,plot.plotId);
-                      }}
-                      visible={mi.hipsGrid}/>
+                plotView={pv} typeId={HiPSGrid.TYPE_ID} plotTypeMustMatch={true} visible={mi.hipsGrid} />
             <ExtractTile tip='Extract FITS tile from HiPS' enabled={hipsWithFits&&enabled}
                                           onClick={(element) => startExtraction(element,HIPS_TILE,modalEndInfo)}
                                           visible={mi.extractHiPSTile}/>
