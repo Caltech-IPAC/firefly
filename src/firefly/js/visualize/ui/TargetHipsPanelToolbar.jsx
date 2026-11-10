@@ -14,6 +14,7 @@ export const targetHipsDefaultMenuItemKey = {
     recenter: false, selectArea: true, restore: false, maskOverlay: false, rotate: false, flipImageY: false,
     stretchQuick: false, selectTableRows: false, unselectTableRows: false, filterTableRows: false,
     clearTableFilters: false, zoomToSelection: false, recenterToSelection: false, imageStatistics: false,
+    extractHiPSTile: false,
 };
 
 
