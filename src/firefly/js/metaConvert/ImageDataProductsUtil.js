@@ -55,13 +55,15 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
     const reqAry= inReqAry
         .map( (r,idx) => {
             if (!r) return;
-            if (tbl_id) {
-                r.setAttributes({
-                    [PlotAttribute.RELATED_TABLE_ROW]: plotRows[idx].row+'',
-                    [PlotAttribute.RELATED_TABLE_ID]: tbl_id
-                });
+            if (plotRows?.[idx]) {
+                if (tbl_id) {
+                    r.setAttributes({
+                        [PlotAttribute.RELATED_TABLE_ROW]: plotRows[idx].row+'',
+                        [PlotAttribute.RELATED_TABLE_ID]: tbl_id
+                    });
+                }
+                r.setPlotId(plotRows[idx].plotId);
             }
-            r.setPlotId(plotRows[idx].plotId);
             return r;
         } )
         .filter( (r) =>r);
