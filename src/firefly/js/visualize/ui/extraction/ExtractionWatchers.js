@@ -10,19 +10,21 @@ import {isHiPSFitsCube} from '../../HiPSUtil.js';
 import {dispatchChangeHiPS, dispatchChangePrimePlot} from '../../ImagePlotDispatch';
 import {CHANGE_HIPS, CHANGE_PRIME_PLOT} from '../../VisConst';
 import {
-    dispatchTableHighlight, TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
+    dispatchTableHighlight, dispatchTableUiUpdate, TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
     TABLE_UPDATE, TBL_RESULTS_ACTIVE
 } from '../../../tables/TablesCntlr.js';
-import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from '../../../tables/TableUtil.js';
+import {getCellValue, getColumnIdx, getMetaEntry, getTableUiByTblId, getTblById} from '../../../tables/TableUtil.js';
 import {MetaConst} from '../../../data/MetaConst.js';
 import {
-    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getCubePlaneIdx, getPlotViewAry, isCube, primePlot
+    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getCubePlaneIdx, getPlotViewAry, isCube, primePlot,
+    getDrawLayersByType
 } from '../../PlotViewUtil.js';
 import {makeImagePt, parseImagePt, parseWorldPt} from '../../Point.js';
 import SearchTarget from '../../../drawingLayers/SearchTarget.js';
 import {findPlotViewUsingFitsPathMeta} from '../../saga/CatalogWatcher.js';
 import {dlRoot, visRoot} from '../../VisStoreRoots';
 import {isHiPS} from '../../WebPlot.js';
+import {makeTableColorTitle} from '../DrawLayerUIComponents';
 
 let idCnt=0;
 
@@ -83,16 +85,26 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
             .filter( (id) => id!==drawLayerId )
             .forEach( (id) => {
                 const dl= getDrawLayerById(dlRoot(),id);
-                if (dl) dispatchModifyCustomField(id, {color:dl.drawingDef.preferedColor??UNSELECTED_COLOR}, plot.plotId);
+                if (dl) {
+                    const color= dl.drawingDef.preferedColor??UNSELECTED_COLOR;
+                    dispatchModifyCustomField(id, {color}, plot.plotId);
+                }
             });
         dispatchModifyCustomField(drawLayerId, {color:SELECTED_COLOR}, plot.plotId );
+        setColorsInTableTabs();
         return retData();
     }
     if (!isTargetCube(tbl_id)) return retData();
     const {table,pv,plot}= getInfo(tbl_id);
 
     if (!drawLayerId) {
-        drawingLayerIds.forEach( (id) => dispatchModifyCustomField(id, {color:UNSELECTED_COLOR}, plot.plotId ));
+        drawingLayerIds.forEach( (id) => {
+            const dl= getDrawLayerById(dlRoot(),id);
+            if (!dl) return;
+            const color= dl.drawingDef.preferedColor??UNSELECTED_COLOR;
+            dispatchModifyCustomField(id, {color}, plot.plotId );
+        });
+
         idCnt++;
         drawLayerId= `zaxis-drill-point-${idCnt}--`+tbl_id;
         const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
@@ -102,15 +114,18 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
             {
                 plotId: plot.plotId,
+                tbl_id,
                 drawLayerId,
                 layersPanelLayoutId: 'z-axis-layout',
                 searchTargetPoint,
                 titlePrefix: table.title,
                 canUserDelete: true,
-                color: SELECTED_COLOR
+                color: SELECTED_COLOR,
+                tableCanControlColor:true
             });
         dispatchAttachLayerToPlot(newDL.drawLayerId, [plot.plotId], false);
         drawingLayerIds.push(newDL.drawLayerId);
+        setColorsInTableTabs();
     }
 
     if (isNaN(table.highlightedRow)) return retData();
@@ -123,6 +138,23 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId:plot.plotId,primeIdx});
     }
     return retData();
+}
+
+function setColorsInTableTabs() {
+    const dlAry= getDrawLayersByType(dlRoot(), SearchTarget.TYPE_ID);
+    if (!dlAry?.length) return;
+    dlAry.forEach( (dl) => {
+        if (!dl.tbl_id) return;
+        const {tbl_ui_id} = getTableUiByTblId(dl.tbl_id) ?? {};
+        if (!tbl_ui_id) return;
+        dispatchTableUiUpdate({tbl_ui_id,
+            title:makeTableColorTitle(dl.drawingDef.color,dl.drawLayerId,undefined,dl.tbl_id) ,
+            color: dl.drawingDef.color
+        });
+    });
+
+
+
 }
 
 
