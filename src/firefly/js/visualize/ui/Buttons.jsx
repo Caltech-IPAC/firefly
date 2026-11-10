@@ -174,10 +174,11 @@ export const ExtractLine= (props) => (
 
 export const ExtractTile= (props) => (<TB {...{ icon: <ExtractTileIcon/>, ...props,  }}/>);
 
-export const HiPSGridButton= (props) => (<TB {...{
-    icon: <Grid4x4Icon sx={{transform: 'rotate(30deg) scale(.8,.8)'}}/>,
-    ...props,
-}}/>);
+export const HiPSGridButton= (props) => {
+    return (<SimpleLayerOnOffButton {...{
+        SvgIconComponent:<Grid4x4Icon sx={{transform: 'rotate(30deg) scale(1.1,1.1)'}}/>,
+        ...props}}/>);
+};
 
 export const SearchDetailButton= (props) => (
     <DropDownToolbarButton {...{ icon: <BiotechOutlinedIcon/>, iconButtonSize:'44px', useDropDownIndicator: true,
