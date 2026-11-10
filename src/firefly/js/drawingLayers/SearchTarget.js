@@ -33,7 +33,8 @@ var idCnt=0;
 
 function creator(initPayload, presetDefaults) {
 
-    const {drawLayerId, displayGroupId, plotId, layersPanelLayoutId, titlePrefix, fullTitle, searchTargetPoint, color, canUserDelete=false}= initPayload;
+    const {drawLayerId, displayGroupId, plotId, layersPanelLayoutId, titlePrefix, fullTitle,
+        searchTargetPoint, color, canUserDelete=false, tbl_id, tableCanControlColor=false}= initPayload;
     const drawingDef= {
         ...makeDrawingDef(color||getNextColor(), {lineWidth:1, size:10, fontWeight:'bolder', symbol: DrawSymbol.POINT_MARKER } ),
         ...presetDefaults};
@@ -42,6 +43,7 @@ function creator(initPayload, presetDefaults) {
 
     const options= {
         plotId,
+        tbl_id,
         displayGroupId: displayGroupId ?? drawLayerId,
         layersPanelLayoutId,
         fullTitle,
@@ -52,6 +54,7 @@ function creator(initPayload, presetDefaults) {
         destroyWhenAllDetached: true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         canUserDelete,
+        tableCanControlColor,
         allocatedColor: !color,
     };
     return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef, [RECENTER, UPDATE_SEARCH_TARGET]);

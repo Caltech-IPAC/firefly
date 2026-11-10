@@ -414,7 +414,7 @@ const HiPSDebugRow= ({pv,enabled,modalEndInfo,mi}) => {
                       visible={mi.hipsGrid}/>
             <ExtractTile tip='Extract FITS tile from HiPS' enabled={hipsWithFits&&enabled}
                                           onClick={(element) => startExtraction(element,HIPS_TILE,modalEndInfo)}
-                                          visible={mi.extractPoint}/>
+                                          visible={mi.extractHiPSTile}/>
         </Stack>
     );
 };

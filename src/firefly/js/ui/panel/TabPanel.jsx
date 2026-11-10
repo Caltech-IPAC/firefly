@@ -83,7 +83,10 @@ export function TabPanel ({value, onTabSelect, showOpenTabs, actions, slotProps,
                        ...tlSticky
                    }}
             >
-                <ResizeTabHeader slotProps={slotProps} children={children}/>
+                {/* set flex: 1 and minWidth 0 to size the box to the remaining space instead of growing to fit its tabs */}
+                <Box sx={{flex: 1, minWidth: 0}}>
+                    <ResizeTabHeader slotProps={slotProps} children={children}/>
+                </Box>
                 <Stack direction='row' flexShrink={0}>
                     {actions && actions()}
                     {showOpenTabs && (

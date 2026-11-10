@@ -333,14 +333,14 @@ export const VisCtxToolbarView= memo((props) => {
     if (extraLine && showMultiImageController && showOptions) {
         return (
             <Stack direction='column'>
-                <Stack {...{direction:'row', sx: makeTbSX }}>
+                <Stack {...{direction:'row', justifyContent:'space-between', sx: makeTbSX }}>
                     <MultiImageControllerView plotView={pv} />
+                    {pv.plotViewCtx.embedMainToolbar && makeToolbar?.()}
                 </Stack>
                 <Stack {...{direction:'row', sx: makeTbSX }}>
                     <HipsControls pv={pv}/>
                     {makeButtons()}
                 </Stack>
-                {pv.pv}
             </Stack>
         );
     }
