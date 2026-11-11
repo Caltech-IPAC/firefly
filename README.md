@@ -17,21 +17,27 @@ For details on using these features, see the [Firefly Online Help](https://irsac
 
 ### Quick Start: Installing Firefly
 
-There are several ways to deploy Firefly, depending on whether you want it for personal use or for an operational deployment.
+There are several ways to deploy Firefly. Pick the one that fits your needs, from personal use on a laptop to an operational deployment on Kubernetes.
 
-#### Laptop / desktop — macOS or Linux (personal use) ([Details](docs/using-firefly-standalone.md))
+#### Option 1: Laptop or desktop (macOS or Linux, personal use)
+[See laptop install details](docs/using-firefly-standalone.md)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Caltech-IPAC/firefly/refs/heads/dev/bin/get-firefly | bash
 ```
 Then follow the instructions.
 
-#### Docker ([Details](docs/firefly-docker.md))
+#### Option 2: Docker
+[See Docker install details](docs/firefly-docker.md)
+
 ```bash
 docker run -p 8090:8080 -m 4g --rm ipac/firefly:latest
 ```
 Then open http://localhost:8090/firefly/
 
-#### Helm / Kubernetes ([Details](helm/README.md))
+#### Option 3: Helm / Kubernetes
+[See Helm install details](helm/README.md)
+
 Replace `firefly.example.com` with your own hostname.
 ```bash
 helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
