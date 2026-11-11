@@ -46,9 +46,16 @@ helm upgrade --install firefly oci://ghcr.io/caltech-ipac/helm-charts/firefly \
   --set ingress.host=firefly.example.com
 ```
 
-## Release note
+### Supported Browsers
 
-Note - if you are pulling, look at the [branches section](#branches)
+Firefly supports the following browsers:
+
+- Safari >= 17
+- Chrome >= 130
+- Firefox >= 134
+- Edge >= 130
+
+## Release note
 
 Firefly builds are available on Docker and additional notes for using it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
@@ -90,77 +97,10 @@ In addition, Firefly is able to display all-sky images in the IVOA standard HiPS
 ### Scientific Plotting
 Firefly shows 2D graphs interactively so that a user can read the data point values as moves mouse around or zooms in to investigate the data at a finer level. These graphs are used for plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1\*col2/tan(col3)). Table based charts share their data model with the table, so both table and chart can trigger or respond to the common events, such as filtering of the data. Firefly also supports creating and plotting 1D histograms and heatmaps (2D histograms).
 
-
-## Branches and tags
-There are several branches in the repository.  Here are the ones that you should care about.
-
- - rc-YYYY.N: The next release candidate branch.  This is generally the most stable branch.
- - dev: This branch could be updated every day. It is the active development branch. It is not stable. Nightly builds are performed.
- - firefly-xxx-reason, IRSA-xxx: These branches are temporary development feature branches and are associated with corresponding tickets in IPAC Jira.
- - Tags: Firefly is tagged for releases and pre-releases
- - [See Details on tags and branches](docs/tags-and-branches.md)
-
-## Setup
-
-### Prerequisites
- -  [Java 21] (https://openjdk.org/projects/jdk/21/)
-    This is the version we are using to compile and run Firefly.  
-
- -  [Gradle 8.10] (https://gradle.org/install/)
-    Gradle is an open source build automation system.
-
- -  [Tomcat 11] (https://tomcat.apache.org/download-11.cgi)
-    Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
-
- -  [Node v26] (https://nodejs.org/)
-    Javascript interpreter for command line environment, used for development tools
-
-### Prepare before the build
- - Make sure you have  `<GRADLE>/bin`, `<JAVA>/bin`, and `<NODE>/bin` in your PATH.
- - Install yarn via npm:  npm install yarn -g
-
-
-### How to build Firefly.jar:
-
-First `git clone` the firefly repository or download the zip (and unzip) to your target machine. Then install the prerequisites (node, java, tomcat).
-
-In a terminal, cd into the `firefly` directory, then run:
-
-    $ gradle :firefly:jar
-
-This generates firefly.jar located at ./jars/build/.
-You may include this jar into your project to build advanced astronomy web applications.
-
-
-### How to build and deploy Firefly Viewer:
-
-In a terminal, cd into the `firefly` directory, then run:
-
-    $ gradle :firefly:war
-
-To include the API documentation and tutorial into the war archive run:
-
-    $ gradle :firefly:warAll    
-
-This generates firefly.war located at ./build/dist/.
-Simply drop this file into your $CATALINA_HOME/webapps/ directory to deploy it.
-$CATALINA_HOME is your Tomcat server installation directory.
-
-Goto http://localhost:8080/firefly to launch Firefly Viewer.
-The documentation is accessible via http://localhost:8080/firefly/docs/js/index.html
-
-
-### Supported Browsers
-
-Firefly supports the following browsers:
-
- - safari >= 17
- - chrome >= 130
- - firefox >= 134
- - edge >= 130
-
-
 ## More Docs
+
+### Building Firefly from source
+See [firefly-developers.md](docs/firefly-developers.md)
 
 ### Firefly JavaScript API overview
 See [firefly-api-overview.md](docs/firefly-api-overview.md)
