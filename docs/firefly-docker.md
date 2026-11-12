@@ -26,6 +26,17 @@ Then, for example,
 
 
 
-More advanced Docker start commands: Go to do Firefly Docker page: https://hub.docker.com/r/ipac/firefly
+For more advanced Docker start commands, see the Firefly Docker Hub page: https://hub.docker.com/r/ipac/firefly
 
 See all tags here: https://hub.docker.com/r/ipac/firefly/tags
+
+
+#### GitHub Container Registry (GHCR)
+
+Release images are also published to GHCR, built for both `linux/amd64` and `linux/arm64`:
+
+- `docker run -p 8090:8080 -m 4g --rm ghcr.io/caltech-ipac/firefly:<version>`
+
+See all versions here: https://github.com/Caltech-IPAC/firefly/pkgs/container/firefly
+
+The [Helm chart](../helm/README.md) uses the GHCR image by default.
