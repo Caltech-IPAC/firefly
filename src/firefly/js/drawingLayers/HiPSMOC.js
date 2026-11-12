@@ -31,7 +31,7 @@ import {CoordinateSys} from '../visualize/CoordSys.js';
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
 const MocPrefix = 'MOC - ';
-const MIN_AUTO_FILL_DEPTH= 6;
+const MIN_AUTO_FILL_DEPTH= 7;
 const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, onDetach, getUIComponent, null, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
