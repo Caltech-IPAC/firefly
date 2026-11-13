@@ -8,7 +8,7 @@
 import {flattenDeep, isArray, isEmpty} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import {doConv} from '../astro/conv/CoordConv.js';
-import {makeImagePt, makeScreenPt, makeWorldPt, pointEquals} from './Point.js';
+import Point, {makeImagePt, makeScreenPt, makeWorldPt, pointEquals} from './Point.js';
 import {memorizeUsingMap} from '../util/WebUtil';
 
 
@@ -142,7 +142,13 @@ export function convertCelestial(wpt, to= CoordinateSys.EQ_J2000) {
     return makeWorldPt(ll.lon, ll.lat, to);
 }
 
-const convertToJ2000= (wpt) => convertCelestial(wpt);
+/**
+ * Convert a world point to J2000. Any other point, such as an image point, has no coordinate system to convert from
+ * (convertCelestial would throw on it) and is returned unchanged.
+ * @param {WorldPt|Point|undefined} pt
+ * @return {WorldPt|Point|undefined}
+ */
+export const convertToJ2000 = (pt) => pt?.type === Point.W_PT ? convertCelestial(pt) : pt;
 
 /**
  * Find the center of the smallest longitude range that holds all the longitudes. The range is everything outside

@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {FileAnalysisType, Format} from '../data/FileAnalysis.js';
-import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
+import {findTableEqCenterColumns} from '../voAnalyzer/TableAnalysis.js';
 import {convertFitsTableDataType, isFitsTableDataTypeArray} from '../visualize/FitsHeaderUtil.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -197,7 +197,7 @@ function applyDefColumnSelection(columns,defaultColsEnabled) {
     }
     else {
         //TODO: don't select position columns by default, UploadTableSelector can be used for non position columns fields too
-        const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
+        const {lonCol='', latCol=''} = findTableEqCenterColumns({tableData:{columns}}) ?? {}; //centerCols
         columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
     }
     return columnsSelected?.filter( (c) => c.visibility!=='hidden');

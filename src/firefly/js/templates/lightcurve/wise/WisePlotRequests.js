@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {getCellValue} from '../../../tables/TableUtil.js';
-import {findTableCenterColumns} from '../../../voAnalyzer/TableAnalysis.js';
+import {findTableEqCenterColumns} from '../../../voAnalyzer/TableAnalysis.js';
 import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
@@ -57,7 +57,8 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     fluxCol: 'w1mpro_ep',
     dataSource: 'frame_id'
 }) {
-    const centerColumns = findTableCenterColumns(tableModel);
+    // the browser sends the column values to the server's WISE image request as J2000 ra/dec
+    const centerColumns = findTableEqCenterColumns(tableModel);
     const ra_dec = [get(centerColumns, 'lonCol', 'ra'), get(centerColumns, 'latCol', 'dec')];
 
     const ra = Number(getCellValue(tableModel, hlrow, ra_dec[0]));

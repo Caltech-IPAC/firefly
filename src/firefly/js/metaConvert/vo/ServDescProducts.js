@@ -5,6 +5,7 @@ import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISe
 import {hasAnySpacial, sdToFieldDefAry} from '../../ui/dynamic/ServiceDefTools';
 import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize} from '../../ui/tap/Cutout';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
+import {convertToJ2000} from '../../visualize/VisUtil';
 import {isCatalog, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 import {isSIAStandardID} from '../../voAnalyzer/VoCoreUtils';
@@ -124,6 +125,8 @@ export function makeCutoutProduct({ name='unknown', serDef, sourceTable, sourceR
 
     const {requestedType,foundType,positionWP}= findCutoutTarget(key,serDef,sourceTable,sourceRow);
     if (!positionWP) return;  // positionWP must exist
+    // the service parameters below are J2000 ra/dec
+    const j2000WP = convertToJ2000(positionWP);
 
     const titleStr= isDefined(dataLinkTableRowIdx) ? (createObsCoreProductTitle(sourceTable,sourceRow) || name) : name;
 
@@ -133,7 +136,7 @@ export function makeCutoutProduct({ name='unknown', serDef, sourceTable, sourceR
     let pixelBasedCutout= false;
     if (isSIAStandardID(standardID) || serDefParams.find( ({xtype}) => xtype?.toLowerCase()==='circle')  ) {
         cutoutOptions.xtypeKeys= [...xtypeKeys,'circle'];
-        params= {circle : makeCircleString(positionWP.x,positionWP.y,cutoutSize,standardID)};
+        params= {circle : makeCircleString(j2000WP.x,j2000WP.y,cutoutSize,standardID)};
     }
     else {
         const obsFieldParam= serDefParams.find( ({UCD=''}) =>
@@ -157,11 +160,11 @@ export function makeCutoutProduct({ name='unknown', serDef, sourceTable, sourceR
             }
             if (raParam) {
                 cutoutOptions.ucdKeys.push(raParam.UCD);
-                params[raParam.UCD]= positionWP.x;
+                params[raParam.UCD]= j2000WP.x;
             }
             if (decParam) {
                 cutoutOptions.ucdKeys.push(decParam.UCD);
-                params[decParam.UCD]= positionWP.y;
+                params[decParam.UCD]= j2000WP.y;
             }
         }
         else { // handle pixel based cutout
