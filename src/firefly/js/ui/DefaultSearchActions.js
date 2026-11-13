@@ -10,7 +10,8 @@ import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch, dispatchTableUiUpdate, dispatchTableUpdate} from '../tables/TablesCntlr.js';
 import {tokenSub} from '../util/WebUtil';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/VisConst';
-import { findTableCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
+import {convertToJ2000} from '../visualize/VisUtil.js';
+import { findTableEqCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
 import {getTableModel} from '../voAnalyzer/VoCoreUtils';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../voAnalyzer/VoDataLinkServDef';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
@@ -227,7 +228,7 @@ async function searchWholeTable(table) {
         const tbl = getTableUiByTblId(table?.tbl_id);
         const columns = tbl.columns.map((col) =>
             col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
-        const {lonCol='', latCol=''}= findTableCenterColumns({tableData:{columns}}) ?? {};
+        const {lonCol='', latCol=''}= findTableEqCenterColumns({tableData:{columns}}) ?? {};
         const columnsList = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols
         const columnsSelected = columnsList.filter( (c) => c.visibility!=='hidden');
         const result = await doJsonRequest(ServerParams.TABLE_SAVE, params);
@@ -292,10 +293,12 @@ function canShowDatalinkTable(table) {
 
 function searchSimbad(cenWpt,radius) {
     const base = 'http://simbad.cds.unistra.fr/simbad/sim-coo';
+    // SIMBAD reads Coord as J2000 ra/dec
+    const j2000Wpt = convertToJ2000(cenWpt);
     const params = {
         ['Radius.unit']: 'degree',
         Radius: radius,
-        Coord: cenWpt.x + ' ' + cenWpt.y,
+        Coord: j2000Wpt.x + ' ' + j2000Wpt.y,
         submit: 'submit query',
         ['output.format']: 'VOTable'
     };
@@ -305,8 +308,8 @@ function searchSimbad(cenWpt,radius) {
     dispatchTableSearch(request);
     onTableLoaded(tbl_id).then( (table) => {
         if (!table.error) return;
-        const lon= sprintf('%.5f',cenWpt.getLon());
-        const lat= sprintf('%.5f',cenWpt.getLat());
+        const lon= sprintf('%.5f',j2000Wpt.getLon());
+        const lat= sprintf('%.5f',j2000Wpt.getLat());
         const radStr= sprintf('%.5f',Number(radius));
         const error= `No data found for SIMBAD cone search with center ${lon}, ${lat} and radius ${radStr} degrees`;
         dispatchTableUpdate({...table,error});
@@ -315,10 +318,12 @@ function searchSimbad(cenWpt,radius) {
 
 function gotoAndSearchSimbad(cenWpt,radius) {
     const base = 'http://simbad.cds.unistra.fr/simbad/sim-coo';
+    // SIMBAD reads Coord as J2000 ra/dec
+    const j2000Wpt = convertToJ2000(cenWpt);
     const params = {
         ['Radius.unit']: 'degree',
         Radius: radius,
-        Coord: cenWpt.x + ' ' + cenWpt.y,
+        Coord: j2000Wpt.x + ' ' + j2000Wpt.y,
         submit: 'submit query',
     };
     const url = base + '?' + new URLSearchParams(params).toString();

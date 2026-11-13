@@ -139,7 +139,7 @@ public class SearchServerCommands {
                 for(int i=0; (i<len);i++) {
                     obj= dg.get(i);
                     double[] raDecAry= (double[])obj.getDataElement(raName);
-                    long raVal= (long)(raDecAry[0]*pow);
+                    long raVal= (long)(wrapLongitude(raDecAry[0])*pow);
                     populateToLittleEndianByte(raVal,raByteAry,i*4);
                     decAry[i]= (int)(raDecAry[1]*pow);
                 }
@@ -148,7 +148,7 @@ public class SearchServerCommands {
                 for(int i=0; (i<len);i++) {
                     obj= dg.get(i);
                     double raD= obj.getDouble(decName,Double.NaN);
-                    long raVal= Double.isNaN(raD) ?Integer.MAX_VALUE : (long)((obj.getDouble(raName,0))*pow);
+                    long raVal= Double.isNaN(raD) ?Integer.MAX_VALUE : (long)(wrapLongitude(obj.getDouble(raName,0))*pow);
                     populateToLittleEndianByte(raVal,raByteAry,i*4);
                     double decD= obj.getDouble(decName,Double.NaN);
                     decAry[i]= Double.isNaN(decD) ? Integer.MAX_VALUE : (int)(decD*pow);;
@@ -167,7 +167,18 @@ public class SearchServerCommands {
             chan.close();
         }
 
-        private static void populateToLittleEndianByte(long v, byte[] raByteAry, int bIdx) {
+        /**
+         * The browser reads each packed longitude as an unsigned 32-bit integer, which cannot hold a negative value.
+         * A table can give a galactic or ecliptic longitude between -180 and 180, so the server moves the value
+         * into the range from 0 to 360 before it packs the value.
+         * @param lon the longitude in degrees, as the table gives it
+         * @return the same direction as a value from 0 to 360
+         */
+        static double wrapLongitude(double lon) {
+            return lon - 360 * Math.floor(lon / 360);
+        }
+
+        static void populateToLittleEndianByte(long v, byte[] raByteAry, int bIdx) {
             var bAry= BigInteger.valueOf(v).toByteArray();
             var start= bAry.length-1;
             for(var i=0;i<4;i++) {

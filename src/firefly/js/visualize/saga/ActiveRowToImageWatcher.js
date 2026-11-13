@@ -5,25 +5,22 @@
 import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {isDefined} from '../../util/WebUtil';
-import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableCenterColumns, getWorldPtFromTableRow} from '../../voAnalyzer/TableAnalysis.js';
 import {visRoot} from '../VisStoreRoots';
 import {
     dispatchChangeSubHighPlotView, dispatchPlotImage, dispatchRecenter, dispatchUseTableAutoScroll
 } from '../ImagePlotDispatch';
 import {
-    getTblById, getCellValue, hasSubHighlightRows, isSubHighlightRow, getActiveTableId
+    getTblById, hasSubHighlightRows, isSubHighlightRow, getActiveTableId
 } from '../../tables/TableUtil.js';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr';
 import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
-import {makeAnyPt} from '../Point.js';
 import {currentP, hasWCSProjection, primePlot} from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import {ANY_REPLOT, CHANGE_ACTIVE_PLOT_VIEW, DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID} from '../VisConst';
-import {isTableUsingRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
-import CoordinateSys from '../CoordSys';
 
 
 
@@ -174,40 +171,13 @@ function recenterPlotViewActiveRow(pv, tbl_id, force=false) {
 
 
 
-function toAngle(d, radianToDegree)  {
-    const v= Number(d ?? NaN);
-    if (isNaN(v)) return v;
-    return radianToDegree ? v*180/Math.PI : v;
-}
-
-
 /**
- *
+ * Return the position of the highlighted row, from getWorldPtFromTableRow: a world point is always J2000.
  * @param {TableModel|String} tableOrId
  * @return {WorldPt|Point|undefined}
  */
 export function getRowCenterWorldPt(tableOrId) {
-    const tbl=  getTableModel(tableOrId);
-    if (!tbl) return;
-    const cenCol= findTableCenterColumns(tbl,true);
-    if (!cenCol) return;
-    const {lonCol,latCol,csys}= cenCol;
-
-    let lon;
-    let lat;
-
-    if (lonCol===latCol) {
-        const latlonAry= getCellValue(tbl,tbl.highlightedRow, lonCol);
-        lon= toAngle(latlonAry[0],false);
-        lat= toAngle(latlonAry[1],false);
-    }
-    else {
-        const rad= isTableUsingRadians(tbl, [lonCol,latCol]);
-        lon= toAngle(getCellValue(tbl,tbl.highlightedRow, lonCol),rad);
-        lat= toAngle(getCellValue(tbl,tbl.highlightedRow, latCol),rad);
-    }
-    if (isNaN(lon) || isNaN(lat)) return;
-    return makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
+    return getWorldPtFromTableRow(getTableModel(tableOrId));
 }
 
 /**

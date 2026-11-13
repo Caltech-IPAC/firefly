@@ -243,9 +243,9 @@ const toDeg= (angle) => angle * (180 / Math.PI);
 /**
  * return a number give a number or a string
  * @param {number|string|undefined|null} v
- * @return {number} converted to a number
+ * @return {number} converted to a number; NaN for null, undefined or '', where Number() gives 0 for null and ''
  */
-function toNum(v) {
+export function toNum(v) {
     if (isNil(v)) return NaN;
     if (isString(v) && !v) return NaN;
     return Number(v);
