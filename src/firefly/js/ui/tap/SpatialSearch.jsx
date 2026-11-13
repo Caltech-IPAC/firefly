@@ -8,7 +8,7 @@ import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import {getColumnIdx} from '../../tables/TableUtil';
 import {SelectAreaForEmbedded} from '../../visualize/ui/SelectAreaUIComponents';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
-import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableEqCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
@@ -153,7 +153,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             if (!canUpload) return;
             setVal(SPATIAL_TYPE,MULTI);
             const columns = searchParams.uploadInfo.columns;
-            const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
+            const centerCols = findTableEqCenterColumns({tableData:{columns}}) ?? {};
             const {lonCol='', latCol=''}= centerCols;
             const errMsg= 'Upload tables require identifying spatial columns containing equatorial coordinates.  Please provide column names.';
             setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
@@ -535,8 +535,9 @@ const RadiusField= ({label= 'Radius', radiusInArcSec=10, embeddedInHiPS, style={
 // find ucd coordinate in type of UCDCoord
 const getUCDCoord = (columnsModel, colName) => {
     const ucdVal = getColumnAttribute(columnsModel, colName, 'ucd');
+    // match 'pos.<key>', not the bare key: 'pos.supergalactic.lon' also contains 'galactic'
     return (!ucdVal) ?
-        UCDCoord.eq : UCDCoord.enums.find((enumItem) => (ucdVal.includes(enumItem.key))) || UCDCoord.eq;
+        UCDCoord.eq : UCDCoord.enums.find((enumItem) => (ucdVal.includes(`pos.${enumItem.key}`))) || UCDCoord.eq;
 };
 
 /**
@@ -740,20 +741,33 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         const preFix= (spatialType===MULTI) && validUpload ? getTableNameAlias(tableName) : '';
         const lonColStr= makeFullyQualifiedColumn(preFix,cenLon);
         const latColStr= makeFullyQualifiedColumn(preFix,cenLat);
+        // POINT carries the label of the coordinate system of the Lon and Lat columns (adqlCoordSys).
         const point = cenLon===cenLat ? lonColStr : `POINT('${adqlCoordSys}', ${lonColStr}, ${latColStr})`;
 
         if (spatialType===SINGLE) {
             if (!radiusSizeField?.value && spatialMethod === CONE_CHOICE_KEY) errList.addError('Missing radius input');
+            // The search shape carries the same label as POINT: Firefly, in the browser, converts the search center
+            // or the polygon corners into the coordinate system of the columns (worldSys), so the label is true.
             const { valid, userArea}=
-                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, undefined, errList);
+                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, adqlCoordSys, false, undefined, errList);
             if (valid)  adqlConstraint = `CONTAINS(${point},${userArea})=1`;
             else errList.addError('Spatial input not complete');
         }
         else if (validUpload) {
             if (!radiusSizeField?.value) errList.addError('Missing radius input');
+            // ADQL has no name for the coordinate system of the Lon and Lat columns (supergalactic), so POINT cannot
+            // tell the TAP service what to convert the uploaded positions into. The service would compare the two
+            // sets of numbers as they are and return the wrong rows without an error, so Firefly refuses the search.
+            if (!adqlCoordSys) {
+                errList.addError(`Multi-object search cannot use ${ucdCoord.key} columns: change the Lon and Lat columns`);
+            }
+            // The circle is centered on the uploaded table's columns, which Firefly sends unconverted. Firefly takes
+            // them as equatorial (positionColumnFields picks them with findTableEqCenterColumns), so the circle is
+            // labeled ICRS, as in the ObsCore upload search. When POINT carries another label, the TAP service has
+            // to convert between the two or reject the query.
             const {valid, userArea}=
                 getUploadConeUserArea(tabAs, upLonCol, upLatCol, uploadColumns,
-                    radiusSizeField, adqlCoordSys, errList);
+                    radiusSizeField, ICRS, errList);
             if (valid) adqlConstraint= `CONTAINS(${point}, ${userArea})=1`;
             else errList.addError('Spatial input not complete');
         }

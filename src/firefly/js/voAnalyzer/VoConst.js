@@ -17,7 +17,7 @@ export const S_REGION = 's_region';
 export const DESCRIPTION = 'description';
 export const SERVICE_DEF= 'service_def';
 export const ERROR_MESSAGE= 'error_message';
-export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
+export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic', 'supergalactic']);
 export const obsPrefix = 'obscore:';
 export const ColNameIdx = 0;
 export const UtypeColIdx = 2;
@@ -191,7 +191,12 @@ export const posCol = {
     [UCDCoord.galactic.key]: {
         ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
         coord: CoordinateSys.GALACTIC,
-        adqlCoord: 'GALATIC'
+        adqlCoord: 'GALACTIC'
+    },
+    [UCDCoord.supergalactic.key]: {
+        ucd: [['pos.supergalactic.lon', 'pos.supergalactic.lat']],
+        coord: CoordinateSys.SUPERGALACTIC,
+        adqlCoord: ''   // ADQL has no supergalactic coordinate system; an empty string means unspecified
     }
 };
 

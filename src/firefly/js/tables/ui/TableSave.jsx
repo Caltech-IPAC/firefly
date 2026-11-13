@@ -29,7 +29,8 @@ import {download, makeDefaultDownloadFileName} from '../../util/fetch';
 import {callWhileAwaiting, getCmdSrvSyncURL} from '../../util/WebUtil';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
-import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
+import {findTableCenterColumns, findTableEqCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
+import CoordinateSys from 'firefly/visualize/CoordSys.js';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {IfWorkingMaskById} from 'firefly/ui/panel/MaskPanel.jsx';
 import {dispatchAddWorkingTask} from 'firefly/core/AppDataCntlr.js';
@@ -84,6 +85,23 @@ const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 const TBL_SAVE_MASK_ID = 'TableSavePanel';
 const WORKING_DELAY = 1000;         // ms before showing the working mask
 
+/**
+ * The DS9 region file keyword for each coordinate system a table's position columns can be in. The browser sends the
+ * keyword to the server, which writes it at the top of the region file (RegionTableWriter.java) so the saved
+ * positions are read in the table's own coordinate system.
+ * DS9 has no keyword for the other systems, such as supergalactic: for those the dialog saves the table's ra/dec
+ * columns when it has them, and offers no region file when it has none. A table whose metadata (CENTER_COLUMN or
+ * CATALOG_COORD_COLS) names the position columns in one of those systems gets no region file even when it has
+ * ra/dec columns, because findTableEqCenterColumns reads the same metadata entry.
+ * @see {@link https://ds9.si.edu/doc/ref/region.html}
+ */
+const REGION_CSYS_KEYWORDS = new Map([
+    [CoordinateSys.EQ_J2000, 'J2000'],
+    [CoordinateSys.EQ_B1950, 'B1950'],
+    [CoordinateSys.GALACTIC, 'GALACTIC'],
+    [CoordinateSys.ECL_J2000, 'ECLIPTIC'],
+]);
+
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
@@ -117,7 +135,10 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const asOriginalMsg  = 'The table will be saved in the form originally retrieved into this tool, without filtering, sorting, or any additional columns.';
     const table = getTblById(tbl_id);
     //should we send table.title along with center columns to write into the region file?
-    const cenCols = findTableCenterColumns(table, true);
+    const tableCenCols = findTableCenterColumns(table, true);
+    // position columns in a system with no DS9 keyword: the region file is saved from the table's ra/dec columns instead
+    const cenCols = REGION_CSYS_KEYWORDS.has(tableCenCols?.csys) ? tableCenCols : findTableEqCenterColumns(table, true);
+    const regionCsys = REGION_CSYS_KEYWORDS.get(cenCols?.csys);
 
     const fileFormatOptions = () => {
         const fileOptions = tableFormats.enums.reduce((options, eItem) => {
@@ -125,7 +146,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
             return options;
         }, []);
 
-        if (cenCols) fileOptions.push({label: 'Region (.reg)', value: 'reg'});
+        if (regionCsys) fileOptions.push({label: 'Region (.reg)', value: 'reg'});
 
         return (
             <ListBoxInputField
@@ -161,7 +182,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
             <Stacker endDecorator={<HelpIcon helpId={'tables.save'}/>}>
                 <CompleteButton
                     groupKey={tblDownloadGroupKey}
-                    onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
+                    onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols, regionCsys)}
                     onFail={resultFail()}
                     text={'Save'}/>
                 <Button onClick={() => onComplete?.()}>Cancel</Button>
@@ -241,7 +262,7 @@ function resultFail() {
     };
 }
 
-function resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols) {
+function resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols, regionCsys) {
     return (request) => {
         const {fileName, fileLocation, wsSelect, fileFormat, mode} = request || {};
         const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
@@ -257,7 +278,12 @@ function resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols) {
                                       [WS_SERVER_PARAM.newpath.key] : fName,
                                       [WS_SERVER_PARAM.should_overwrite.key]: true};
             if (fileFormat === 'reg') {
-                if (cenCols) Object.assign(params, {'center_cols' : cenCols.lonCol + ',' + cenCols.latCol});
+                if (cenCols) {
+                    Object.assign(params, {
+                        'center_cols' : cenCols.lonCol + ',' + cenCols.latCol,
+                        'center_cols_csys' : regionCsys
+                    });
+                }
             }
             return Object.assign(params, {file_format : fileFormat, mode});
         };

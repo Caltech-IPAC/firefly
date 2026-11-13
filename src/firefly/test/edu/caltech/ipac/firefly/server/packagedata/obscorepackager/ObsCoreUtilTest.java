@@ -69,6 +69,21 @@ public class ObsCoreUtilTest extends ConfigTest {
     }
 
     @Test
+    public void testGetPositionColValsWithoutPositionColumns() {
+        // the browser sends no column names and no values when the table has no equatorial position columns
+        String pos = "{\"centerColNames\":{},\"centerColValues\":{}}";
+
+        MappedData md = new MappedData();
+        md.put(0, "glon", "178.5");
+        md.put(0, "glat", "-30.2");
+
+        List<String> vals = ObsCoreUtil.getPositionColVals(pos, 0, md);
+        Assert.assertEquals(2, vals.size());
+        Assert.assertNull(vals.get(0));
+        Assert.assertNull(vals.get(1));
+    }
+
+    @Test
     public void testMakeUniquePrefix() {
         Map<String, Integer> m = new HashMap<>();
         Assert.assertEquals("abc", ObsCoreUtil.makeUniquePrefix("abc", m));

@@ -7,11 +7,12 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {findTableCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable, isDataProductsTable
+import {findTableEqCenterColumns, hasDataLinkSvcDesc, hasObsCoreLikeDataProducts, isDatalinkTable, isDataProductsTable
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getActiveRowToImageDef} from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {convertToJ2000} from '../../visualize/VisUtil.js';
 import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,} from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
@@ -219,13 +220,15 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
     const generateDownloadFileName= getDataServiceOptionByTable('generateDownloadFileName', tbl_id, false);
 
     const cutoutTargetVals = useStoreConnector(() => findCutoutTarget(viewerId ?? dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow));
-    const centerCols = findTableCenterColumns(tbl_id);
+    const centerCols = findTableEqCenterColumns(tbl_id);
     //this will be null if no datalink service descriptor is found, else it will return the access url and input params from the service descriptor
     const isDatalinkSerDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
     if (!tblModel?.totalRows) return;
 
-    let ra = cutoutTargetVals?.positionWP?.x;
-    let dec = cutoutTargetVals?.positionWP?.y;
+    // the server's packager reads ra/dec as J2000
+    const positionWP = convertToJ2000(cutoutTargetVals?.positionWP);
+    let ra = positionWP?.x;
+    let dec = positionWP?.y;
 
     if (cutoutTargetVals?.foundType === ROW_POSITION && !isDatalink) { //if datalink table (extracted products table), then use the ra/dec directly from cutoutTargetVals
         //server side should use center cols to get ra/dec from the file if user selects this option

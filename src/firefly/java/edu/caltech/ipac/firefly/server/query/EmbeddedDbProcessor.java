@@ -329,7 +329,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             DataGroupPart page = getData(treq);
             switch(format) {
                 case REGION:
-                    RegionTableWriter.write(new OutputStreamWriter(out), page.getData(), request.getParam("center_cols"));
+                    RegionTableWriter.write(new OutputStreamWriter(out), page.getData(),
+                            request.getParam("center_cols"), request.getParam("center_cols_csys"));
                     break;
                 case VO_TABLE_TABLEDATA:
                 case VO_TABLE_BINARY:
