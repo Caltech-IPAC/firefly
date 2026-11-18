@@ -52,6 +52,10 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, use
     const [getUploadInfo, setUploadInfo]=  useFieldGroupValue('uploadInfoObjectID');
     const [getSelectInObjList, setSelectInObjList]=  useFieldGroupValue('selectInObjList');
     const [getUseSelectIn, setUseSelectIn]=  useFieldGroupValue('useSelectIn');
+    // hidden fields to tell a user-picked Object ID column apart from one set automatically on a table switch
+    const [getAutoObjectIDCol, setAutoObjectIDCol]=  useFieldGroupValue('objectIDAutoDefault'); // current table's default
+    const [getLastSetObjectIDCol, setLastSetObjectIDCol]=  useFieldGroupValue('objectIDLastSet'); // what this panel last set
+    const [getUserPickedObjectIDCol, setUserPickedObjectIDCol]=  useFieldGroupValue('objectIDUserPicked');
     const entryType=  useFieldGroupValue(ENTRY_TYPE)[0]();
     const objIdEntry=  useFieldGroupValue(OBJ_ID_ENTRY)[0]();
     const [working,setWorking]= useState(false);
@@ -106,11 +110,19 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, use
         }
         const errMsg= 'Object ID searches require identifying a table column containing an Object ID.  Please provide a column name.';
         const prevObjectIDcol = getVal(ObjectIDColumn);
-        let prevObjectColExists = false;
-        if (prevObjectIDcol) prevObjectColExists = cols.some((c) => c.name === prevObjectIDcol);
-        const objectIDcol = getDefaultObjectIDval(cols);
+        const defaultObjectIDcol = getDefaultObjectIDval(cols);
+        let userPickedCol = getUserPickedObjectIDCol();
+        // if the field changed since we last set it, the user picked it (picking the table's default clears the pick)
+        if (prevObjectIDcol !== getLastSetObjectIDCol()) {
+            userPickedCol = prevObjectIDcol && prevObjectIDcol !== getAutoObjectIDCol() ? prevObjectIDcol : undefined;
+            setUserPickedObjectIDCol(userPickedCol);
+        }
+        // the user's pick stays remembered across tables, and is used wherever this table has that column
+        const objectIDcol = userPickedCol && cols.some((col) => col.name === userPickedCol) ? userPickedCol : defaultObjectIDcol;
+        setAutoObjectIDCol(defaultObjectIDcol);
+        setLastSetObjectIDCol(objectIDcol);
         if (checkHeaderCtl.isPanelActive()) isActive = true;
-        setVal(ObjectIDColumn, prevObjectColExists ? prevObjectIDcol : objectIDcol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+        setVal(ObjectIDColumn, objectIDcol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         if (!isActive) checkHeaderCtl.setPanelActive(false); //set PanelActive to false, if it was false before the setVal call above
     }, [columnsModel]);
 
@@ -151,7 +163,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, use
                     headerPostTitle: '(from the selected table on the right)',
                     openPreMessage:openMsg,
                     colKey: ObjectIDColumn,
-                    colTblId: defaultTblId,
+                    colTblId: `${defaultTblId}-${tableName}`, // per-table id, else the popup can show the previous table's columns (same fix as posCol in UploadTableSelector)
                     colName: 'Object ID',
                 }} />}
                 {canUpload && entryType===UPLOAD && <CheckboxGroupInputField

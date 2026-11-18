@@ -16,6 +16,7 @@ import {onTableLoaded, doFetchTable, getColumn, isColumnType, COL_TYPE, getTblBy
 import {SelectInfo} from 'firefly/tables/SelectInfo';
 import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
+import {HelpIcon} from 'firefly/ui/HelpIcon';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr';
 import {MISSING_COLS_HEADER_MSG, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 import {getEffectiveSpectralFrameOption, SF_OPTION, USER_SPECIFIED_REDSHIFT} from './SpectrumOptions.jsx';
@@ -490,7 +491,7 @@ export function SpectralLinesPanel() {
                     </Stack>
                 </Stack>
                 <Divider/>
-                <Stack sx={{py: 0.5, flexShrink: 0}}>
+                <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{py: 0.5, flexShrink: 0}}>
                     <Typography level='body-sm'>
                         {selectedCount === 0
                             ? '0 lines selected - nothing plotted on spectral chart(s) ↘'
@@ -499,6 +500,7 @@ export function SpectralLinesPanel() {
                                   &nbsp;selected - plotted live on spectral chart(s) ↘
                               </>}
                     </Typography>
+                    <HelpIcon helpId={'spectra.linelists'}/>
                 </Stack>
             </Stack>
         </FieldGroup>
