@@ -41,6 +41,8 @@ public class SpectralLinesProcessor extends EmbeddedDbProcessor {
 
     private static final List<LineListInfo> BUNDLED_RESOURCES = List.of(
             new LineListInfo("spherex-v1", "SPHEREx line list", "/edu/caltech/ipac/firefly/resources/spherex_lines.tbl"),
+            new LineListInfo("euclid-primary", "Euclid primary line list", "/edu/caltech/ipac/firefly/resources/euclid_primary_lines.csv"),
+            new LineListInfo("euclid-additional", "Euclid additional line list", "/edu/caltech/ipac/firefly/resources/euclid_additional_lines.csv"),
             new LineListInfo("pahfit", "Spitzer PAHFIT line list", "/edu/caltech/ipac/firefly/resources/pahfit_lines.csv"),
             new LineListInfo("hspot", "Herschel HSPOT line list", "/edu/caltech/ipac/firefly/resources/hspot_lines.csv")
             );
