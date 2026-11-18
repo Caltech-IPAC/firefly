@@ -1,20 +1,20 @@
 {
-  "javaVersion" : "21.0.12.1+1",
+  "javaVersion" : "21.0.13+9",
   "linux64" : {
-    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.12.1+1/linux/x64/jre/hotspot/normal/eclipse",
-    "java" : "jdk-21.0.12.1+1-jre/bin/java"
+    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.13+9/linux/x64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.13+9-jre/bin/java"
   },
   "linuxArm64" : {
-    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.12.1+1/linux/aarch64/jre/hotspot/normal/eclipse",
-    "java" : "jdk-21.0.12.1+1-jre/bin/java"
+    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.13+9/linux/aarch64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.13+9-jre/bin/java"
   },
   "macOSIntel" : {
-    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.12.1+1/mac/x64/jre/hotspot/normal/eclipse",
-    "java" : "jdk-21.0.12.1+1-jre/Contents/Home/bin/java"
+    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.13+9/mac/x64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.13+9-jre/Contents/Home/bin/java"
   },
   "macOSArm64" : {
-    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.12.1+1/mac/aarch64/jre/hotspot/normal/eclipse",
-    "java" : "jdk-21.0.12.1+1-jre/Contents/Home/bin/java"
+    "url": "https://api.adoptium.net/v3/binary/version/jdk-21.0.13.1+2/mac/aarch64/jre/hotspot/normal/eclipse",
+    "java" : "jdk-21.0.13.1+2-jre/Contents/Home/bin/java"
   },
   "window" : {
     "url": "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse",
