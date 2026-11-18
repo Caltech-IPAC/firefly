@@ -288,6 +288,7 @@ PROPS=" \
   --add-opens java.base/java.util=ALL-UNNAMED \
   -XX:+UnlockExperimentalVMOptions \
   -XX:TrimNativeHeapInterval=30000 \
+  -XX:-UseBASE64Intrinsics \
   -XX:+UseZGC \
   -DOP_standaloneEnabled=true \
   -Dnet.sf.ehcache.enableShutdownHook=true \

@@ -302,6 +302,7 @@ def main():
         f"-XX:InitialRAMPercentage={os.getenv('INIT_RAM_PERCENT', '10')}",
         f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
         "-XX:+UnlockExperimentalVMOptions",
+        "-XX:-UseBASE64Intrinsics",
         "-XX:TrimNativeHeapInterval=30000",
         "-Djava.net.preferIPv4Stack=true",
         "-Dwork.directory=/firefly/workarea",
