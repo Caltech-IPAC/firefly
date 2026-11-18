@@ -33,7 +33,9 @@ redesigned table tooltips, and many bug fixes.
 #### Bug Fixes
 - Fixed: Firefly overly dependent on CDS MOC/HiPS service — Firefly-2148 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2053))
 - Fixed: sensitive information (credentials) printed in server logs — Firefly-2157 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2058))
-- Fixed: Table secondary selection no correct on some cases — Firefly-2149 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2057))
+- Fixed: SPHEREx image sets identified incorrectly on pages after the first — Firefly-2149 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2057))
+- Fixed: Euclid app freezing when switching back to a DR1 Stacked Frames tab, and search-by-ID jobs not loading — Firefly-2153, Firefly-2154 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2056))
+- Fixed: multi-chart views freezing the app when plotting spectral lines — Firefly-2155 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2055))
 - Fixed: charts not showing for table/chart IDs containing a period — Firefly-2076 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2054))
 - Fixed: tooltips duplicating or overlapping on scroll or focus change — Firefly-2119 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2042))
 - Fixed: copying cells from tables in Firefox — Firefly-453 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2052))
