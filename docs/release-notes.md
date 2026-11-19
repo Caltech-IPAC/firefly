@@ -9,7 +9,8 @@
 ---
 
 ## Version 2026.4
-- 2026.4.0 — (Nov 4, 2026), _Docker tag_: `2026.4.0`, `2026.4`, `latest`
+- 2026.4.1 — (Nov 19, 2026), _Docker tag_: `2026.4.1`, `2026.4`, `latest`
+- 2026.4.0 — (Nov 4, 2026), _Docker tag_: `2026.4.0`
 
 This release adds HiPS data extraction, direct download of job results from the Job Monitor, more accurate HiPS rendering near the poles,
 redesigned table tooltips, and many bug fixes.
@@ -43,6 +44,23 @@ redesigned table tooltips, and many bug fixes.
 - Fixed: grammar and spelling errors in messages — Firefly-2095 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2035))
 
 ### _Patches 2026.4_
+
+#### 2026.4.1
+- HiPS: HiPS grid can now be turned on and off from a drop-down, like the coordinate grid — Firefly-2175 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2065))
+- FITS Images: Updated nom.tam.fits to 1.23.1 — Firefly-2174 ([commit](https://github.com/Caltech-IPAC/firefly/commit/539c44fdb7076e9170e75a432da35b059403dee0))
+- MOC: changed the depth at which auto mode switches to outline only (6 to 7), better for large MOCs such as Euclid DR1 coverage — ([commit](https://github.com/Caltech-IPAC/firefly/commit/a2aef60c674f8cc649f2e64fe6fd7936f69d16e2))
+- Charts: added Euclid primary and additional spectral line lists, and a help link in the Spectral Lines popup — Firefly-2163, Firefly-2170 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2067))
+- Docker, standalone: run Java with `-XX:-UseBASE64Intrinsics`; standalone now uses Java 21.0.13  (for CVE-2026-114938/"Java4Shell" hack) — Firefly-2184 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2068))
+- Admin: Java runtime version added to `admin/status` — ([commit](https://github.com/Caltech-IPAC/firefly/commit/a6b7d931dfc899e34f42c6ed797c93294ec97551))
+- Fixed: TAP: an expired capabilities failure causes the next service to show an error — Firefly-2167 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2059))
+- Fixed: TAP forgetting that position search was turned off — Firefly-2164 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2061))
+- Fixed: Result tabs slowly shifting and losing the drop-down — Firefly-2165 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2060))
+- Fixed: MultiProduct view hits exception in grid table row mode — Firefly-2159 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2062))
+- Fixed: HiPS search screen not measuring distances — Firefly-2151 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2063))
+- Fixed: possibly wrong mask overlay on first load, and color swatch missing for drill extractions — Firefly-2173, Firefly-2168 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2064))
+- Fixed: spectrum extraction choosing the wrong uncertainty column when an HDU has no EXTNAME — Firefly-2140 ([commit](https://github.com/Caltech-IPAC/firefly/commit/65f212c2a29af7690411988d5c12cb2a0511edb6))
+- Fixed: coverage HiPS in `firefly.html` now set with an `ivo://` ID — ([commit](https://github.com/Caltech-IPAC/firefly/commit/c9e191690bbc80b6ae6fae4be8a94f838cbbdd5a))
+- Fixed: TAP Object ID Search keeping the previous table's Object ID column when switching tables — Firefly-2166 ([PR](https://github.com/Caltech-IPAC/firefly/pull/2067))
 
 ##### _Pull Requests in this Release_
 

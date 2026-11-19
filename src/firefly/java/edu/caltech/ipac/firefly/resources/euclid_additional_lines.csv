@@ -1,0 +1,36 @@
+#Euclid NISP reference emission lines for spectrum overlays (rest frame).
+#wavelength: VACUUM wavelength in microns.
+#tier 2: secondary / AGN lines (optional layer).
+#label: display label.
+wavelength,label
+0.102572,Ly beta
+0.103193,O VI 1032
+0.103762,O VI 1038
+0.123882,N V 1239
+0.12428,N V 1243
+0.139376,Si IV 1394
+0.140277,Si IV 1403
+0.164042,He II 1640
+0.166081,O III] 1661
+0.166615,O III] 1666
+0.189203,Si III] 1892
+0.334679,[Ne V] 3346
+0.342685,[Ne V] 3426
+0.389015,H8 (H zeta)
+0.396859,[Ne III] 3968
+0.39712,H epsilon
+0.436444,[O III] 4363
+0.468702,He II 4686
+0.631381,[S III] 6312
+0.636554,[O I] 6364
+0.667999,He I 6678
+0.706714,He I 7065
+0.713776,[Ar III] 7136
+0.732212,[O II] 7320
+0.733222,[O II] 7330
+0.844868,O I 8446
+0.954859,Pa epsilon (Pa8)
+1.005213,Pa delta
+1.25702,[Fe II] 12570
+1.644,[Fe II] 16440
+1.87561,Pa alpha

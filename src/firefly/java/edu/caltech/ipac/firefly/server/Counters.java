@@ -244,6 +244,7 @@ public class Counters {
         VersionUtil.getVersionInfo().forEach(verInfoKeyVal ->
                 addToList(retList, verInfoKeyVal.getKey(), verInfoKeyVal.getValue()));
         addToList(retList,"Java Version", System.getProperty("java.version"));
+        addToList(retList,"Java Runtime Version", System.getProperty("java.runtime.version"));
         retList.add("");
     }
 
