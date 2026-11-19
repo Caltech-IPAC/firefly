@@ -7,6 +7,7 @@ import {ang2pixNest, radecToPolar} from '../visualize/hips/HealpixIndex';
 import {logger} from '../util/Logger';
 import {blockWhileAsyncIdWaiting, synchronizeAsyncFunctionById} from '../util/SynchronizeAsync';
 import {createBackgroundRunner, isDefined} from '../util/WebUtil';
+import CoordinateSys from '../visualize/CoordSys';
 import {getProGradeTilePixels} from '../visualize/HiPSUtil';
 import {makeWorldPt} from '../visualize/Point';
 import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/VisConst';
@@ -230,7 +231,7 @@ async function doAddTableIndex(tbl_id,dispatcher,table, csys,runId, maxInitialLo
     let orderData;
     let lonAry= undefined, latAry= undefined;
 
-    let partialIndexData= shouldUsePartialIndexType(table);
+    let partialIndexData= shouldUsePartialIndexType(table, csys);
     if (partialIndexData) orderData= await fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId);
 
     if (!orderData) {
@@ -253,8 +254,11 @@ async function doAddTableIndex(tbl_id,dispatcher,table, csys,runId, maxInitialLo
             selectAll, partialIndexData, maxInitialLoadNorder} });
 }
 
-function shouldUsePartialIndexType(table) {
+function shouldUsePartialIndexType(table, csys) {
     //TODO determine when best to use full index and when to use partial. Is there any other factor beyond total rows
+    // the partial index is computed on the server, which reads the position columns as J2000 ra/dec.
+    // a galactic or ecliptic table must use the full index, which is built in the browser and converts to J2000.
+    if (csys !== CoordinateSys.EQ_J2000) return false;
     return table?.totalRows>MIN_TOTAL_ROWS_FOR_PARTIAL;
 }
 
@@ -662,7 +666,12 @@ function initOrderData() {
 
 function addOrderRow(orderData,lonAry,latAry,rowIdx,csys) {
     if (lonAry[rowIdx]===0x7fffffff || latAry[rowIdx]===0x7fffffff) return;
-    const wp= convertCelestial(makeWorldPt( lonAry[rowIdx]/UINT_SCALE, latAry[rowIdx]/UINT_SCALE, csys));
+    const tableWp = makeWorldPt( lonAry[rowIdx]/UINT_SCALE, latAry[rowIdx]/UINT_SCALE, csys);
+    // a latitude beyond ±90 is not a sky position (a null marker such as -999).
+    // skip the row: for an EQ_J2000 table getIpixForWp would throw and the full index would lose every later row;
+    // for any other frame convertCelestial would turn the bad latitude into a wrong but valid J2000 position
+    if (!tableWp || Math.abs(tableWp.y) > 90) return;
+    const wp= convertCelestial(tableWp);
     if (!wp) return;
     const pixel= getIpixForWp(wp,DATA_NSIDE);
     const tileEntry= getOrInitDataTile(orderData,DATA_NORDER,pixel);

@@ -29,7 +29,7 @@ import {download, makeDefaultDownloadFileName} from '../../util/fetch';
 import {callWhileAwaiting, getCmdSrvSyncURL} from '../../util/WebUtil';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
-import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
+import {findTableEqCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {IfWorkingMaskById} from 'firefly/ui/panel/MaskPanel.jsx';
 import {dispatchAddWorkingTask} from 'firefly/core/AppDataCntlr.js';
@@ -117,7 +117,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const asOriginalMsg  = 'The table will be saved in the form originally retrieved into this tool, without filtering, sorting, or any additional columns.';
     const table = getTblById(tbl_id);
     //should we send table.title along with center columns to write into the region file?
-    const cenCols = findTableCenterColumns(table, true);
+    const cenCols = findTableEqCenterColumns(table, true);
 
     const fileFormatOptions = () => {
         const fileOptions = tableFormats.enums.reduce((options, eItem) => {

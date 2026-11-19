@@ -3,11 +3,11 @@
  */
 import {get, has, isArray, isEmpty, isString} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
-import {getColumn, getColumnIdx, getColumns, getMetaEntry} from '../tables/TableUtil.js';
+import {COL_TYPE, getColumn, getColumnIdx, getColumns, getMetaEntry, isOfType} from '../tables/TableUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {
     alternateMainPos, ColNameIdx, mainMeta, obsCorePosColumns, OBSTAPCOLUMNS, POS_EQ_UCD, posCol, S_REGION,
-    SSA_COV_UTYPE, UCDCoord, ucdSyntaxMap, UtypeColIdx
+    SSA_COV_UTYPE, UCDCoord, UCDSyntax, ucdSyntaxMap, UtypeColIdx
 } from './VoConst.js';
 import {findCsysFromUCD, getObsTabColEntry, isUCDWith} from './VoCoreUtils.js';
 
@@ -16,7 +16,7 @@ import {findCsysFromUCD, getObsTabColEntry, isUCDWith} from './VoCoreUtils.js';
  * table analyzer based on table model for catalog or image metadata
  */
 export class VoTableRecognizer {
-    constructor(tableModel, posCoord = 'eq') {
+    constructor(tableModel, posCoord) {
         this.tableModel = tableModel;
         this.columns = get(tableModel, ['tableData', 'columns'], []);
         this.obsCoreInfo = {isChecked: false, isObsCoreTable: false};
@@ -146,6 +146,8 @@ export class VoTableRecognizer {
 
     /**
      * get center columns pairs by checking ucd values
+     * A column tagged with extra words, such as 'pos.eq.ra;stat.mean', is still a position, unless the words make it
+     * a different quantity: an error, a proper motion or an offset (isCoordColumn).
      * @param coord
      * @returns {Array}  [[pair_1_col_ra, pair_1_col_dec], ...., [pair_n_col_ra, pair_n_col_dec]]
      */
@@ -157,14 +159,16 @@ export class VoTableRecognizer {
             return pairs;
         }
 
-        // get 'ra' column list and 'dec' column list
-        const posPairs = centerColUCDs.reduce((prev, eqUcdPair) => {
-            if (isArray(eqUcdPair) && eqUcdPair.length >= 2) {
-                const colsRA = this.getTblColumnsOnUCD(eqUcdPair[0]);
-                const colsDec = this.getTblColumnsOnUCD(eqUcdPair[1]);
+        // get longitude column list and latitude column list
+        const posPairs = centerColUCDs.reduce((prev, ucdPair) => {
+            if (isArray(ucdPair) && ucdPair.length >= 2) {
+                // getTblColumnsOnUCD finds the coordinate word anywhere in a UCD, so it also returns proper motions
+                // such as 'pos.pm;pos.eq.ra'; isCoordColumn keeps only the positions
+                const colsLon = this.getTblColumnsOnUCD(ucdPair[0]).filter((c) => isCoordColumn(c, ucdPair[0]));
+                const colsLat = this.getTblColumnsOnUCD(ucdPair[1]).filter((c) => isCoordColumn(c, ucdPair[1]));
 
-                prev[0].push(...colsRA);
-                prev[1].push(...colsDec);
+                prev[0].push(...colsLon);
+                prev[1].push(...colsLat);
             }
             return prev;
         }, [[], []]);
@@ -187,6 +191,14 @@ export class VoTableRecognizer {
             if (metaMainPair[0].length === metaMainPair[1].length) {
                 for (let i = 0; i < metaMainPair[0].length; i++) {
                     pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
+                }
+            } else if (metaMainPair[0].length + metaMainPair[1].length === 1) {
+                // meta.main is on ra but not on dec (or vice versa).
+                // pair them when only one column has a UCD starting with 'pos.eq.ra' and only one with 'pos.eq.dec'.
+                const positionCols = posPairs
+                    .map((cols, i) => cols.filter((c) => isUCDWith(c.UCD, centerColUCDs[0][i], UCDSyntax.primary)));
+                if (positionCols[0].length === 1 && positionCols[1].length === 1) {
+                    pairs.push([positionCols[0][0], positionCols[1][0]]);
                 }
             }
         } else if (posPairs[0].length > 0 && posPairs[1].length > 0) {
@@ -321,15 +333,56 @@ export class VoTableRecognizer {
     getCenterColumnsOnUCD() {
         this.centerColumnsInfo = null;
 
-        const colPairs = this.getCenterColumnPairsOnUCD(UCDCoord.eq.key);
+        // the coordinate systems to search: only posCoord when the caller sets it, otherwise all three
+        const coordSet = this.posCoord ? [UCDCoord[this.posCoord].key] :
+            [UCDCoord.eq.key, UCDCoord.galactic.key, UCDCoord.ecliptic.key];
 
-        if (colPairs && colPairs.length === 1) {
-            return this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
-        } else {
-            this.centerColumnCandidatePairs = colPairs;
+        // ra/dec columns are searched first: every feature can use them without converting,
+        // so when a table tags both ra/dec and galactic or ecliptic columns, the ra/dec columns are used
+        if (coordSet.includes(UCDCoord.eq.key)) {
+            const colPairs = this.getCenterColumnPairsOnUCD(UCDCoord.eq.key);
+            if (colPairs.length === 1) return this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
+            // more than one ra/dec pair: no pair is picked here, the UType and ObsCore name checks pick one.
+            if (colPairs.length > 1) {
+                this.centerColumnCandidatePairs = colPairs;
+                return this.centerColumnsInfo;
+            }
+            // no ra/dec pair: the galactic and ecliptic search below runs
         }
 
+        // no ra/dec pair: use the galactic or ecliptic pair, when the table tags exactly one
+        const pair = this.getSingleCenterColumnPairOnUCD(coordSet.filter((oneCoord) => oneCoord !== UCDCoord.eq.key));
+        if (pair) return this.setCenterColumnsInfo(pair.columns, posCol[pair.coord].coord);
+
+        // no galactic or ecliptic pair, or more than one: no pair is picked here, and the UType, ObsCore name and
+        // column name checks search the whole table, as they do for a table with no position UCDs
+        this.centerColumnCandidatePairs = [];
         return this.centerColumnsInfo;
+    }
+
+    /**
+     * Find the table's one galactic or ecliptic column pair, by tag.
+     * @param {Array.<string>} coordSet  the coordinate systems to check, e.g. ['galactic', 'ecliptic']
+     * @returns {{columns: Array, coord: string}|undefined}  the two column objects and their
+     *     coordinate system, e.g. {columns: [{name: 'glon', ...}, {name: 'glat', ...}], coord: 'galactic'};
+     *     undefined when the table has no such pair or more than one
+     */
+    getSingleCenterColumnPairOnUCD(coordSet) {
+        // no text columns: Firefly reads text positions like '12h30m00s' only as ra/dec
+        const taggedCols = this.columns.filter((c) => c.UCD && !isOfType(c.type, COL_TYPE.TEXT));
+        const pairs = coordSet
+            .map((coord) => ({
+                coord,
+                // plain tags only: 'pos.galactic.lon;stat.mean' is left to the later checks, which may find ra/dec.
+                lonLatCols: posCol[coord].ucd[0].map((ucdWord) =>
+                    taggedCols.filter((c) => isPlainCoordColumn(c, ucdWord)))
+            }))
+            .filter(({lonLatCols}) => lonLatCols[0].length > 0 && lonLatCols[1].length > 0);
+
+        if (pairs.length !== 1) return undefined;
+        const {coord, lonLatCols} = pairs[0];
+        if (lonLatCols[0].length !== 1 || lonLatCols[1].length !== 1) return undefined;
+        return {columns: [lonLatCols[0][0], lonLatCols[1][0]], coord};
     }
 
     /**
@@ -343,7 +396,8 @@ export class VoTableRecognizer {
         const colPairs = this.getCenterColumnPairsOnUType(candidatePairs);
 
         if (colPairs && colPairs.length === 1) {
-            this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
+            // when the UCDs give no coordinate system, ObsCore position columns are ICRS (EQ_J2000)
+            this.setCenterColumnsInfo(colPairs[0], findCsysForCoordColumns(...colPairs[0]) ?? CoordinateSys.EQ_J2000);
         }
         this.centerColumnCandidatePairs = colPairs;
 
@@ -362,14 +416,11 @@ export class VoTableRecognizer {
             ? null : candidatePairs[0];
 
         const colPair = this.getCenterColumnPairOnName(candidatePairs);
+        const centerPair = (isArray(colPair) && colPair.length === 2) ? colPair : leftMostCol;
+        if (!centerPair) return this.centerColumnsInfo;
 
-        if (isArray(colPair) && colPair.length === 2) {
-            return this.setCenterColumnsInfo(colPair, posCol[UCDCoord.eq.key].coord);
-        } else {
-            return leftMostCol ?
-                this.setCenterColumnsInfo(leftMostCol, posCol[UCDCoord.eq.key].coord) :
-                this.centerColumnsInfo;
-        }
+        // when the UCDs give no coordinate system, ObsCore position columns are ICRS (EQ_J2000)
+        return this.setCenterColumnsInfo(centerPair, findCsysForCoordColumns(...centerPair) ?? CoordinateSys.EQ_J2000);
     }
 
     /**
@@ -411,9 +462,13 @@ export class VoTableRecognizer {
                 latCol = findColumn(lat);
             }
 
-            return (lonCol && latCol)
-                ? this.setCenterColumnsInfo([lonCol, latCol], findCsysForCoordColumns(lonCol,latCol))
-                : undefined;
+            if (!lonCol || !latCol) return undefined;
+            // the UCDs give the coordinate system; when they give none, the column name may (findCsysFromColumnName)
+            const csys = findCsysForCoordColumns(lonCol, latCol) ?? findCsysFromColumnName(lonCol.name, lon);
+            // isPositionPair rejects columns that cannot hold the position in csys, such as an offset
+            // ('arith.diff;pos.angDistance') or a proper motion ('pos.pm;pos.galactic.lon')
+            if (!csys || !isPositionPair(lonCol, latCol, csys)) return undefined;
+            return this.setCenterColumnsInfo([lonCol, latCol], csys);
         };
 
         const centerColumnInfo = (guess('ra', 'dec') || guess('lon', 'lat') || guess('ra', 'dec', true) || guess('lon', 'lat', true));
@@ -545,6 +600,128 @@ function centerColumnUTypesFromObsTap() {
     });
 
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
+}
+
+/**
+ * UCD1 ra and dec words (UCD1 is the UCD format before UCD1+) and the UCD1+ words they stand for.
+ * IVOA UCD 1.1, appendix A: the UCD1 POS_EQ_DEC_MAIN is pos.eq.dec;meta.main in UCD1+. VOTable 1.5 still allows UCD1.
+ * POS_EQ_RA_OFF and POS_EQ_DEC_OFF are offsets from a position, so they are not listed.
+ * @see {@link https://www.ivoa.net/documents/REC/UCD/UCD-20050812.html#ToC22}
+ * @see {@link https://www.ivoa.net/documents/VOTable/20250116/REC-VOTable-1.5.html#sec:ucd}
+ */
+const UCD1_COORD_WORDS = {
+    pos_eq_ra_main: 'pos.eq.ra;meta.main', pos_eq_ra: 'pos.eq.ra', pos_eq_ra_other: 'pos.eq.ra',
+    pos_eq_dec_main: 'pos.eq.dec;meta.main', pos_eq_dec: 'pos.eq.dec', pos_eq_dec_other: 'pos.eq.dec',
+};
+
+/**
+ * Words that, after the coordinate word, make the column hold a different quantity. IVOA UCD 1.1 section 3.4 defines
+ * arith.diff and arith.ratio as the difference or ratio of two such values (an offset, for a position). The rest are
+ * errors, proper motions, Sun-centered positions and orbits that archives write after the coordinate word, such as
+ * 'pos.eq.ra;stat.error' or 'pos.ecliptic.lon;pos.heliocentric'. Each entry also covers the words under it.
+ * Qualifiers that keep the position, such as meta.main, stat.mean, obs.field or a band (em.*), are not listed, and
+ * neither are stat.min and stat.max: EPN-TAP tables (VizieR B/planets/epn_core) give their only ra/dec that way.
+ */
+const NOT_POSITION_QUALIFIERS = ['arith', 'stat.error', 'stat.stdev', 'pos.pm', 'pos.heliocentric', 'src.orbital'];
+
+/**
+ * The words of a UCD, read as the IVOA UCD 1.1 standard (section 2) defines them: separated by semicolons,
+ * case-insensitive, with no spaces, and with the optional ivoa: namespace removed. UCD1 coordinate words become their
+ * UCD1+ words (UCD1_COORD_WORDS).
+ * @param {string} [ucd]
+ * @returns {Array.<string>} the words of the UCD, lowercase
+ */
+function getUCDWords(ucd) {
+    return (ucd ?? '').split(';')
+        .map((word) => word.replace(/\s/g, '').toLowerCase().replace(/^ivoa:/, ''))
+        .flatMap((word) => (UCD1_COORD_WORDS[word] ?? word).split(';'))
+        .filter(Boolean);
+}
+
+/**
+ * Split a UCD into its primary word, which says what the column holds, and the words that qualify it (IVOA UCD 1.1
+ * section 3.3). meta.main only marks the main column among several of the same kind, so it is left out; that also
+ * reads 'meta.main;pos.eq.ra', a UCD written in the wrong order, as pos.eq.ra.
+ * @param {string} [ucd]
+ * @returns {{primary: (string|undefined), qualifiers: Array.<string>}}
+ */
+function splitUCD(ucd) {
+    const [primary, ...qualifiers] = getUCDWords(ucd).filter((word) => word !== mainMeta);
+    return {primary, qualifiers};
+}
+
+/**
+ * @param {string} word  a UCD word, lowercase
+ * @returns {boolean} true if the word, after the coordinate word, makes the column a different quantity
+ */
+function isNotPositionQualifier(word) {
+    return NOT_POSITION_QUALIFIERS.some((listedWord) => word === listedWord || word.startsWith(listedWord + '.'));
+}
+
+/**
+ * Check if the column holds the coordinate ucdWord names: its UCD's primary word is ucdWord, and no qualifier makes it
+ * a different quantity (NOT_POSITION_QUALIFIERS).
+ * e.g. 'pos.eq.ra;meta.main' and 'pos.galactic.lon;stat.mean' pass; 'pos.pm;pos.eq.ra' (a proper motion),
+ * 'stat.error;pos.eq.ra' (an error) and 'pos.eq.ra;arith.diff' (an offset) fail.
+ * @param {TableColumn} col
+ * @param {string} ucdWord  the longitude or latitude UCD word, such as 'pos.eq.ra' or 'POS_EQ_RA_MAIN'
+ * @returns {boolean}
+ */
+function isCoordColumn(col, ucdWord) {
+    const {primary, qualifiers} = splitUCD(col.UCD);
+    return primary === splitUCD(ucdWord).primary && !qualifiers.some(isNotPositionQualifier);
+}
+
+/**
+ * Check if the column's UCD is the coordinate word ucdWord with no qualifier but meta.main.
+ * e.g. 'pos.galactic.lon;meta.main' passes; 'pos.pm;pos.galactic.lon' and 'pos.galactic.lon;stat.mean' fail.
+ * @param {TableColumn} col
+ * @param {string} ucdWord  the longitude or latitude UCD word, such as 'pos.galactic.lon'
+ * @returns {boolean}
+ */
+function isPlainCoordColumn(col, ucdWord) {
+    const {primary, qualifiers} = splitUCD(col.UCD);
+    return primary === splitUCD(ucdWord).primary && qualifiers.length === 0;
+}
+
+/**
+ * Check if the two columns a name guess matched can hold the position in csys. Each passes when its UCD says nothing
+ * about the quantity the column holds, or says it is that coordinate itself (isCoordColumn). A UCD says nothing when
+ * it is missing or blank, or has only meta words: GAVO's rome.time_series tags its ra and dec 'meta.id;meta.main'.
+ * A text column passes only for equatorial: a text column's cells need not be numbers, and makeWorldPt parses
+ * non-numeric text only as equatorial sexagesimal.
+ * @param {TableColumn} lonCol
+ * @param {TableColumn} latCol
+ * @param {CoordinateSys} csys  a coordinate system of posCol
+ * @returns {boolean}
+ */
+function isPositionPair(lonCol, latCol, csys) {
+    const [lonWord, latWord] = Object.values(posCol).find((oneEntry) => oneEntry.coord === csys).ucd[0];
+    const isEquatorial = csys === CoordinateSys.EQ_J2000;
+    const isPositionColumn = (col, ucdWord) => {
+        if (!isEquatorial && isOfType(col.type, COL_TYPE.TEXT)) return false;
+        if (getUCDWords(col.UCD).every((word) => word.startsWith('meta.'))) return true;
+        return isCoordColumn(col, ucdWord);
+    };
+    return isPositionColumn(lonCol, lonWord) && isPositionColumn(latCol, latWord);
+}
+
+/**
+ * The coordinate system a column name gives, for a pair the name guess matched and whose UCDs give none.
+ * A g or gal before lon means galactic (glon, GLON, _Glon, gal_lon), and an e or ecl means ecliptic (elon, ELON,
+ * ecl_lon). An sg before lon gives none: sglon is supergalactic. Any other lon, such as lon, clon (IRSA's ra and dec
+ * as text) or obj_lon, is equatorial, Firefly's long-standing default, and so is the name ra.
+ * @param {string} lonColName  the name of the longitude column
+ * @param {string} lonWord  the longitude word the name guess matched, 'ra' or 'lon'
+ * @returns {CoordinateSys|undefined}
+ */
+function findCsysFromColumnName(lonColName, lonWord) {
+    if (lonWord === 'ra') return CoordinateSys.EQ_J2000;
+    const prefix = lonColName.toLowerCase().split(lonWord)[0].replace(/[-_]/g, '');
+    if (prefix === 'g' || prefix === 'gal') return CoordinateSys.GALACTIC;
+    if (prefix === 'e' || prefix === 'ecl') return CoordinateSys.ECL_J2000;
+    if (prefix === 'sg') return undefined;
+    return CoordinateSys.EQ_J2000;
 }
 
 function findCsysForCoordColumns(lonCol, latCol) {

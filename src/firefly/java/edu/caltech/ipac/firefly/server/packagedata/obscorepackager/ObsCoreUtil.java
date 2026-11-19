@@ -5,6 +5,7 @@ import edu.caltech.ipac.table.MappedData;
 import org.json.JSONObject;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,7 +58,9 @@ public class ObsCoreUtil {
             ra = Objects.toString(dgDataUrl.get(idx, lonCol), null);
             dec = Objects.toString(dgDataUrl.get(idx, latCol), null);
         }
-        return List.of(ra, dec);
+        // ra and dec are null when the table has no equatorial position columns.
+        // Arrays.asList accepts the nulls; List.of throws on them.
+        return Arrays.asList(ra, dec);
     }
 
     private static Position getPosition(String pos) {

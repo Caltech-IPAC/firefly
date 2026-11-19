@@ -5,7 +5,7 @@ import {defaultsDeep, omit} from 'lodash';
 
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent';
-import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
+import {findTableEqCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 import {ColumnFld, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
 import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
@@ -372,13 +372,13 @@ export const positionColumnFields = (lonColFields={}, latColFields={}) => [
     {
         fieldKey: UploadCenterLonColumns, name: 'longitude column', label: 'Lon Column',
         tooltip: 'Center longitude column for spatial search',
-        guessValue: (columns) => findTableCenterColumns({tableData:{columns}})?.lonCol,
+        guessValue: (columns) => findTableEqCenterColumns({tableData:{columns}})?.lonCol,
         ...lonColFields
     },
     {
         fieldKey: UploadCenterLatColumns, name: 'latitude column', label: 'Lat Column',
         tooltip: 'Center latitude column for spatial search',
-        guessValue: (columns) => findTableCenterColumns({tableData:{columns}})?.latCol,
+        guessValue: (columns) => findTableEqCenterColumns({tableData:{columns}})?.latCol,
         ...latColFields
     },
 ];

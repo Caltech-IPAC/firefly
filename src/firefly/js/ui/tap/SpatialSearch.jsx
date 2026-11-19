@@ -8,7 +8,7 @@ import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import {getColumnIdx} from '../../tables/TableUtil';
 import {SelectAreaForEmbedded} from '../../visualize/ui/SelectAreaUIComponents';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
-import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableEqCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
@@ -153,7 +153,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             if (!canUpload) return;
             setVal(SPATIAL_TYPE,MULTI);
             const columns = searchParams.uploadInfo.columns;
-            const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
+            const centerCols = findTableEqCenterColumns({tableData:{columns}}) ?? {};
             const {lonCol='', latCol=''}= centerCols;
             const errMsg= 'Upload tables require identifying spatial columns containing equatorial coordinates.  Please provide column names.';
             setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
