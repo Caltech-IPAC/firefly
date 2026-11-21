@@ -3,7 +3,7 @@ import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
-import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getMetaEntry, getObjectMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
@@ -96,7 +96,8 @@ function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
     const hostname = getHostname(sRequest?.source) ?? getHostname(sRequest?.serviceUrl);
     const serviceId= getMetaEntry(tbl_id,MetaConst.DATA_SERVICE_ID);
     const ops= getDataServiceOptionsFallback(serviceId, hostname) ?? {};
-    const template= ops.productTitleTemplate;
+    // a template set on the table itself (e.g. by the search that made it) wins, same as the UI product titles
+    const template= getObjectMetaEntry(tbl_id, MetaConst.DATA_SERVICE_OPTIONS)?.productTitleTemplate ?? ops.productTitleTemplate;
     const useSourceUrlFileName= ops.packagerUsesSourceUrlFileName;
     const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);

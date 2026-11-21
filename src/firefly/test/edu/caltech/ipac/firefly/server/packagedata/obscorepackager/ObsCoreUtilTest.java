@@ -138,4 +138,29 @@ public class ObsCoreUtilTest extends ConfigTest {
                 5, null, md, new URL("http://example.org/a.fits"), Arrays.asList(null, null));
         Assert.assertEquals("file_5", prefix2); //test final fallback to filename
     }
+
+    @Test
+    public void testGetFileNamePrefixUsesNonStringTemplateCol() throws Exception {
+        MappedData md = new MappedData();
+        md.put(0, "label", "target_alpha");
+        md.put(0, "source_id", 3L);
+        List<String> dummyRaDec = List.of("10", "-10");
+
+        String prefix = ObsCoreUtil.getFileNamePrefix(
+                0, new String[]{"label", "source_id"}, md, new URL("http://example.org/a.fits"), dummyRaDec);
+
+        Assert.assertEquals("target_alpha-3", prefix);
+    }
+
+    @Test
+    public void testGetFileNamePrefixSkipsEmptyTemplateValue() throws Exception {
+        MappedData md = new MappedData();
+        md.put(0, "label", " ");
+        List<String> dummyRaDec = List.of("10", "-10");
+
+        String prefix = ObsCoreUtil.getFileNamePrefix(
+                0, new String[]{"label"}, md, new URL("http://example.org/a.fits"), dummyRaDec);
+
+        Assert.assertEquals("10_-10", prefix); // blank label falls back to ra/dec instead of an empty prefix
+    }
 }
