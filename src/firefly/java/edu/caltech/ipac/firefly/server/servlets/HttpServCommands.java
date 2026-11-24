@@ -50,8 +50,8 @@ public class HttpServCommands {
             String fileNameExt = tblFormat.fileExt();
 
             if (fileNameExt.equalsIgnoreCase(".reg")) {
-                String cols = sp.getOptional("center_cols");
                 request.setParam("center_cols", sp.getOptional("center_cols"));
+                request.setParam("center_cols_csys", sp.getOptional("center_cols_csys"));
             }
 
             if (isEmpty(fileName)) {

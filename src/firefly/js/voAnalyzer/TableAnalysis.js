@@ -10,11 +10,12 @@ import {
 } from '../tables/TableUtil.js';
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
-import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
+import {makeAnyPt, makeWorldPt, parseWorldPt, toNum} from '../visualize/Point.js';
 import {isTableExclusiveToPlot} from '../visualize/saga/CatalogWatcher';
+import {convertCelestial, convertToJ2000} from '../visualize/VisUtil.js';
 import {
     ACCESS_FORMAT, ACCESS_URL, CLOUD_ACCESS, DATALINK_COL_NAMES, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES,
-    S_REGION, SSA_COV_UTYPE, SSA_TITLE_UTYPE
+    S_REGION, SSA_COV_UTYPE, SSA_TITLE_UTYPE, UCDCoord
 } from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
 import {getServiceDescriptors, hasServiceDescriptors, isDataLinkServiceDesc} from './VoDataLinkServDef.js';
@@ -40,6 +41,19 @@ export function findTableCenterColumns(tableOrId, acceptArrayCol = false) {
     return tblRecog && tblRecog.getCenterColumns(acceptArrayCol);
 }
 
+/**
+ * find the equatorial J2000 center columns, for a caller that uses the column values as ra/dec without converting them.
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param {boolean} acceptArrayCol - true to also accept a position stored in one column as [ra, dec], instead of in two columns
+ * @return {CoordColsDescription|undefined} undefined if no pair is found or it is not EQ_J2000
+ */
+export function findTableEqCenterColumns(tableOrId, acceptArrayCol = false) {
+    const table = getTableModel(tableOrId);
+    const tblRecog = get(table, ['tableData', 'columns']) && new VoTableRecognizer(table, UCDCoord.eq.key);
+    const cenCols = tblRecog && tblRecog.getCenterColumns(acceptArrayCol);
+    return cenCols?.csys === CoordinateSys.EQ_J2000 ? cenCols : undefined;
+}
+
 export const isRowTargetCapable= (tbl_id) => Boolean(findTableCenterColumns(tbl_id));
 
 export function findImageCenterColumns(tableOrId) {
@@ -49,10 +63,12 @@ export function findImageCenterColumns(tableOrId) {
 }
 
 /**
- * If there are center columns defined with this table then return a WorldPt
+ * If there are center columns defined with this table then return a WorldPt.
+ * A world point is always J2000: a galactic or ecliptic row position is converted, because callers read x and y as
+ * ra and dec.
  * @param {TableModel|String} tableOrId - a table model or a table id
  * @param row
- * @return {WorldPt|undefined} a world point or undefined it no center columns exist
+ * @return {WorldPt|undefined} a J2000 world point or undefined it no center columns exist
  */
 export function makeWorldPtUsingCenterColumns(tableOrId, row) {
     const table = getTableModel(tableOrId);
@@ -62,7 +78,7 @@ export function makeWorldPtUsingCenterColumns(tableOrId, row) {
     const lon= getCellValue(table, row, cen.lonCol);
     const lat= getCellValue(table, row, cen.latCol);
     if (!cen || isUndefined(lon) || isUndefined(lat)) return;
-    return makeWorldPt(lon, lat, cen.csys);
+    return convertCelestial(makeWorldPt(lon, lat, cen.csys));
 }
 /**
  * find ObsCore defined 's_region' column
@@ -403,25 +419,34 @@ export function isFormatPng(tableOrId, rowIdx) {
     return accessFormat.includes('jpeg') || accessFormat.includes('jpg') || accessFormat.includes('png');
 }
 
+/**
+ * Return the position of the highlighted row.
+ * A world point is always J2000: a galactic or ecliptic row position is converted, because callers read x and y as
+ * ra and dec.
+ * @param {TableModel} table
+ * @return {WorldPt|Point|undefined}
+ */
 export function getWorldPtFromTableRow(table) {
     const centerColumns = findTableCenterColumns(table,true);
     if (!centerColumns) return undefined;
     const {lonCol, latCol, csys} = centerColumns;
     let ra, dec, usingRad=false;
 
+    // toNum, not Number: an empty cell (null or '') becomes NaN instead of 0, and the row gets no position
     if (lonCol===latCol) {
         const latlonAry= getCellValue(table,table.highlightedRow, lonCol);
-        ra= Number(latlonAry[0] ?? NaN);
-        dec= Number(latlonAry[1] ?? NaN);
+        ra = toNum(latlonAry[0]);
+        dec = toNum(latlonAry[1]);
     }
     else {
-        ra = Number(getCellValue(table, table.highlightedRow, lonCol));
-        dec = Number(getCellValue(table, table.highlightedRow, latCol));
+        ra = toNum(getCellValue(table, table.highlightedRow, lonCol));
+        dec = toNum(getCellValue(table, table.highlightedRow, latCol));
         usingRad = isTableUsingRadians(table, [lonCol, latCol]);
     }
+    if (isNaN(ra) || isNaN(dec)) return undefined;
     const raDeg = usingRad ? ra * (180 / Math.PI) : ra;
     const decDeg = usingRad ? dec * (180 / Math.PI) : dec;
-    return makeAnyPt(raDeg, decDeg, csys || CoordinateSys.EQ_J2000);
+    return convertToJ2000(makeAnyPt(raDeg, decDeg, csys || CoordinateSys.EQ_J2000));
 }
 
 function getObsCoreTableColumnName(tableOrId,name) {
