@@ -62,14 +62,15 @@ RUN echo "============> Build platform: $(uname -m)"
 
 WORKDIR /opt/work
 COPY . .
-COPY --from=deps /opt/work/lib/node_modules ./firefly/node_modules
 COPY --from=deps /root/.gradle /root/.gradle
 
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
 RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly:checkoutFirefly ; fi
-RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
+# mount node_modules instead of copying it (~25s faster)
+RUN --mount=type=bind,from=deps,source=/opt/work/lib/node_modules,target=/opt/work/firefly/node_modules,rw \
+    gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 
 
 # =====================================
@@ -78,7 +79,8 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 FROM builder AS standalone-builder
 ARG env=local
 ARG BranchOverride=''
-RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} standalone:zip
+RUN --mount=type=bind,from=deps,source=/opt/work/lib/node_modules,target=/opt/work/firefly/node_modules,rw \
+    gradle -Penv=${env} -PBranchOverride=${BranchOverride} standalone:zip
 
 
 # ==============================
