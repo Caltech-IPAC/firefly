@@ -31,9 +31,9 @@ export function getDataServiceOption(key, dataServiceId = undefined, defVal=unde
  * @return {*}
  */
 export function getDataServiceOptionByTable(key, tableOrId, defVal=undefined) {
-    const entry= getObjectMetaEntry(tableOrId, MetaConst.DATA_SERVICE_OPTIONS)?.[key];
-    if (entry) return entry;
-    return getDataServiceOption(key, getMetaEntry(tableOrId,MetaConst.DATA_SERVICE_ID), defVal);
+    // a table may set an option to '' or false, so only a missing option falls back to the app options
+    return getObjectMetaEntry(tableOrId, MetaConst.DATA_SERVICE_OPTIONS)?.[key] ??
+        getDataServiceOption(key, getMetaEntry(tableOrId,MetaConst.DATA_SERVICE_ID), defVal);
 }
 
 /**

@@ -19,9 +19,6 @@ const LOADING_MSG= 'Loading...';
 const gridEntryHasImages= (parts) => parts.find( (p) => p.type===FileAnalysisType.Image);
 
 
-
-
-
 /**
  * create a function to analyze and show a data product
  * @param makeReq
@@ -39,7 +36,7 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
 export async function uploadAndAnalyze({request, table, row, activateParams, options, serviceDescMenuList, originalTitle}) {
     const ct= getObsCoreAccessFormat(table,row);
     const obsTitle= getObsTitle(table,row);
-    if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
+    if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to this data.');
     if (isNonServerAnalysisType(request?.getURL(), ct)) return doFileNameAndTypeAnalysis({url:request?.getURL(),ct, obsTitle});
     const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams,
         options, originalTitle, serviceDescMenuList});
@@ -119,6 +116,7 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
  * @param obj.request
  * @param obj.activateParams
  * @param obj.menuKey
+ * @param obj.activeMenuLookupKey
  * @param {ServiceDescriptorDef} [obj.serDef]
  * @param {DatalinkData} [obj.dlData]
  * @param [obj.originalTitle]
@@ -153,7 +151,8 @@ export function makeAnalysisActivateFunc({table, row, request, activateParams,
  */
 function dispatchResult(dpType, menu,menuKey,activeMenuLookupKey, dpId, serDef, analysisActivateFunc) {
     const modifiedResult= {...dpType, menu, menuKey, activeMenuLookupKey, serDef, analysisActivateFunc};
-    if (dpType.displayType===DPtypes.MESSAGE) {
+    const asIsTypes= [DPtypes.MESSAGE, DPtypes.PNG, DPtypes.TXT, DPtypes.DOWNLOAD];
+    if (asIsTypes.includes(dpType.displayType)) {
         dispatchUpdateDataProducts(dpId, modifiedResult);
     }
     else if (dpType.displayType===DPtypes.SEND_TO_BROWSER) {
@@ -175,8 +174,10 @@ export const isNonServerAnalysisType= (url, ct) => Boolean(doFileNameAndTypeAnal
 
 export function getExtensionFromUrl(url) {
     if (!url) return '';
-    const i = url.lastIndexOf('.');
-    if (i > 0 &&  i < url.length - 1) return url.substring(i+1).toLowerCase();
+    const path= url.split(/[?#]/)[0]; // a dot in the query or fragment is not the extension
+    const fileName= path.substring(path.lastIndexOf('/')+1);
+    const i = fileName.lastIndexOf('.');
+    if (i > 0 &&  i < fileName.length - 1) return fileName.substring(i+1).toLowerCase();
     return '';
 }
 
@@ -264,7 +265,7 @@ export function makeGzipEntry(url,name,obsTitle) {
 }
 
 export function makeAnyEntry(url,name, obsTitle) {
-    const {title,dropDownText,message}= getBasicTitling(name,obsTitle,Format.GZIP);
+    const {title,dropDownText,message}= getBasicTitling(name,obsTitle,Format.UNKNOWN);
     return dpdtDownload(title, url, 'download-0', 'unknown', { message, dropDownText, } );
 }
 

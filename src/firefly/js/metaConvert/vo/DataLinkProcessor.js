@@ -66,7 +66,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
 
     if (!menu.length && dataLinkData.length && originalParsingAlgorithm===USE_ALL && parsingAlgorithm!==USE_ALL) {
         menu= createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams,
-            additionalServiceDescMenuList, doFileAnalysis, USE_ALL, options, preferCutout});
+            additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm:USE_ALL, options, preferCutout});
     }
 
     const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && (!m.size || m.size<MAX_SIZE));
@@ -96,7 +96,9 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
         return dpdtFromMenu(menu,index<0?0:index,dlTableUrl);
     }
 
-    return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
+    return  menu?.length
+        ? dpdtMessage('No data to display: the data can only be downloaded',menu,{activeMenuLookupKey})
+        : dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
 }
 
 function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable}) {
@@ -225,7 +227,7 @@ export function makeMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, o
     }
     else if (dlData.url) {
         return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow,options,
-            name, prodTitle:prodTitle??name, doFileAnalysis, activateParams});
+            name, prodTitle:prodTitle??name, dropDownText, doFileAnalysis, activateParams});
     }
 }
 
@@ -435,7 +437,7 @@ export function createDataLinkSingleRowItem({dlData, activateParams, options}) {
 }
 
 export function getCutoutTotalWarning(dlDataAry, length) {
-    const allSize= dlDataAry.map ( (d) => d.size).reduce((tot,v) => tot+v,0) ;
+    const allSize= dlDataAry.map ( (d) => Number(d.size) || 0).reduce((tot,v) => tot+v,0) ; // an empty size is ''
     if (isWarnSize(allSize)) {
         return `Warning: Loading ${length} images with a total size of ${getSizeAsString(allSize)}, it might take a while to load`;
     }
@@ -493,6 +495,7 @@ export function createGuessDataType({name, menuKey='guess-0', url,cloudAccess,ct
     else if (ct.includes('table') || ct.includes('spectrum') || semantics.includes('auxiliary')) {
         return dpdtTable(name,
             createTableActivate(url, semantics, activateParams, ct),
+            createTableExtraction(url, name),
             menuKey,{url,semantics,size,dlData} );
     }
     else if (isSimpleImageType(ct)) {

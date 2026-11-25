@@ -72,7 +72,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
 
     if (request.getURL() && (serDef?.serDefParams || userInputParams)) {
         request= request.makeCopy();
-        const rowIdx= isDefined(serDef.dataLinkTableRowIdx) ? serDef.dataLinkTableRowIdx : row;
+        const rowIdx= isDefined(serDef?.dataLinkTableRowIdx) ? serDef.dataLinkTableRowIdx : row;
         const newUrl= makeUrlFromParams(request.getURL(), serDef, rowIdx, userInputParams);
         request.setURL(newUrl.toString());
     }
@@ -83,7 +83,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
     //-----
 
     const cacheKey= makeCacheKey(request,userInputParams);
-    if (uploadedCache[cacheKey] && uploadedCache[cacheKey].dataTypes!==FileAnalysisType.ErrorResponse) {
+    if (uploadedCache[cacheKey]) {
         const {serverCacheFileKey, fileFormat, fileAnalysis}= uploadedCache[cacheKey];
         return processAnalysis(serverCacheFileKey, fileFormat, fileAnalysis);
     }
@@ -99,7 +99,9 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
                                     await upload(request, 'Details',getDataProductAnalysisParams(table));
         endUpdateWatcher(request.getURL());
         const fileAnalysis= clientSideDataProductAnalysis(parseAnalysis(serverCacheFileKey, analysisResult));
-        if (fileAnalysis) uploadedCache[cacheKey]= {serverCacheFileKey,fileFormat,fileAnalysis};
+        if (fileAnalysis && !isErrorResponse(fileAnalysis)) { // an error might be temporary, so try again next time
+            uploadedCache[cacheKey]= {serverCacheFileKey,fileFormat,fileAnalysis};
+        }
         return processAnalysis(serverCacheFileKey, fileFormat, fileAnalysis);
     }
     catch (e) {
@@ -124,6 +126,8 @@ const startUpdateWatcher= (url,dpId) =>
         callback:watchForUploadUpdate, params:{url,dpId}});
 
 const endUpdateWatcher= (url) => url && dispatchCancelActionWatcher(url);
+
+const isErrorResponse= (fileAnalysis) => fileAnalysis.parts?.[0]?.type===FileAnalysisType.ErrorResponse;
 
 const makeCacheKey= (request,userInputParams) =>
     hashCode(request.toString() + (userInputParams? JSON.stringify(userInputParams):''));
@@ -226,7 +230,7 @@ function processAnalysisResult({table, row, request, activateParams,
     if (fileFormat===Format.TEXT) {
         return makeTextEntry(request.getURL(),undefined,getObsTitle(table,row));
     }
-    if (!parts || fileFormat===Format.UNKNOWN) {
+    if (!parts || (fileFormat===Format.UNKNOWN && !isErrorResponse(fileAnalysis))) { // an error response is shown below
         return dpdtMessageWithDownload('No displayable data available for this row: Unknown file type',
             fileName&&'Download File', request.getURL());
     }

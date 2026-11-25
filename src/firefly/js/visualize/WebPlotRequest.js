@@ -617,7 +617,7 @@ export class WebPlotRequest extends ServerRequest {
     getURL() { return this.getSafeParam(WPConst.URLKEY); }
 
     setExpectStaticFile(isStaticFile) {this.setParam(WPConst.EXPECT_STATIC_FILE, Boolean(isStaticFile)+''); }
-    getExpectStaticFile() {this.getBooleanParam(WPConst.EXPECT_STATIC_FILE); }
+    getExpectStaticFile() {return this.getBooleanParam(WPConst.EXPECT_STATIC_FILE); }
 
     setURLCheckForNewer(check) { this.setSafeParam(WPConst.URL_CHECK_FOR_NEWER, check+''); }
     getURLCheckForNewer() { return this.getBooleanParam(WPConst.URL_CHECK_FOR_NEWER); }

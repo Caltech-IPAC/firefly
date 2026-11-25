@@ -1,4 +1,4 @@
-import {isEmpty, isNumber, isUndefined} from 'lodash';
+import {isEmpty, isNil, isNumber, isUndefined} from 'lodash';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue} from '../../tables/TableUtil.js';
 import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
@@ -77,7 +77,7 @@ export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTa
         const request = makeObsCoreRequest({url:accessURL, positionWP, titleStr, table:sourceTable, row:sourceRow});
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
             menuKey, activeMenuLookupKey, dlData, serDef, originalTitle:name,options});
-        const tName = `${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
+        const tName = `${titleStr || servDescTitle || `Service #${idx}`} ${allowsInput ? ' (Input Required)' : ''}`;
         return dpdtAnalyze({
             name: tName, dropDownText: ensureDropDownText(tName,dropDownText),
             activate, url:request.getURL(), serDef, menuKey,
@@ -284,14 +284,14 @@ export function createServDescMenuRet({ descriptors, positionWP, table, row,
 export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
     if (!url) return undefined;
     const sendParams = new URLSearchParams();
-    serDef?.serDefParams  // if it is defaulted, then set it
-        ?.filter(({value}) => isDefined(value))
+    serDef?.serDefParams  // if it is defaulted, then set it; an empty value is not sent
+        ?.filter(({value}) => !isNil(value) && value!=='')
         .forEach(({name, value}) => sendParams.set(name, value));
     serDef?.serDefParams // if it is referenced, then set it
         ?.filter(({ref}) => ref)
         .forEach((p) => sendParams.set(p.name, getCellValue(serDef.sdSourceTable, rowIdx, p.colName)));
     Object.entries(userInputParams)
-        .forEach(([k, v]) => v && k!==CONTEXT_PARAMS_STR && sendParams.set(k,v));
+        .forEach(([k, v]) => !isNil(v) && v!=='' && k!==CONTEXT_PARAMS_STR && sendParams.set(k,v)); // 0 is a real input
 
     const inputURL= new URL(url);
     const additionalParams= new URLSearchParams(userInputParams?.[CONTEXT_PARAMS_STR]);
@@ -300,7 +300,8 @@ export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
     logServiceDescriptor(newUrl, params, newUrl);
     return newUrl;
 }
-function logServiceDescriptor(baseUrl, params, newUrl) {
+// kept for debugging: uncomment the lines below to log the service descriptor URLs
+function logServiceDescriptor(baseUrl, params, newUrl) { // eslint-disable-line no-unused-vars
      // console.log(`service descriptor base URL: ${baseUrl}`);
      // console.log(`service descriptor new URL: ${newUrl}`);
 }

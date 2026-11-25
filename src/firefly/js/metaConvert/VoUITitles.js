@@ -44,7 +44,7 @@ export function getSerDescTitling(serDef,sourceTable,sourceRow) {
  */
 export function makeObsCoreFailDownloadTitling(table, row, reason) {
     return {
-        message: `No data to display: Could not retrieve datalink data, ${reason}`,
+        message: `No data to display: Could not load datalink data, ${reason?.cause ?? reason}`,
         title: 'Download File: ' + createObsCoreProductTitle(table,row)
     };
 }
@@ -200,9 +200,13 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
+const MAX_OBS_TITLE_LENGTH= 25;
+
 export function makeObsTitleExtension(obsTitle) {
     if (!obsTitle) return '';
-    const otBase = obsTitle.length > 25 ? obsTitle.substring(0, 29) : obsTitle;
+    const otBase = obsTitle.length > MAX_OBS_TITLE_LENGTH ?
+        obsTitle.substring(0, MAX_OBS_TITLE_LENGTH-1).trimEnd() + '…' : // the ellipsis keeps it at 25
+        obsTitle;
     return ` (${otBase})`;
 }
 
@@ -240,13 +244,13 @@ export function makeDatalinkTitles({dlData, totals={}, indices={}, sourceTable, 
     if (baseTitle) return makeTitlesWithBaseTitle(dlData,totals,indices,baseTitle,imageTitles);
 
     // fallback
+    if (!isThis) return makeTitlesWithBaseTitle(dlData,totals,indices,'Related Data',imageTitles);
     const {'#this':primeCnt= 0}= indices;
     imageTitles.prodTitle??= 'Primary';
     imageTitles.imageRelatedTitle??= 'Primary';
     imageTitles.imageGridTitle??= 'Primary';
-    if (isThis && primeCnt===0) return {name:'Primary product (#this)', ...imageTitles};
-    if (isThis && primeCnt>0) return {name: `Primary product (#this ${primeCnt})`, ...imageTitles};
-    return makeNameWithBaseTitle(dlData,totals,indices,'Related Data', imageTitles);
+    if (primeCnt===0) return {name:'Primary product (#this)', ...imageTitles};
+    return {name: `Primary product (#this ${primeCnt})`, ...imageTitles};
 }
 
 function getBaseTitleFromId(id) {

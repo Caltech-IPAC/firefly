@@ -3,7 +3,7 @@
 // to run: from firefly/src/firefly
 // node ../../node_modules/mocha/bin/mocha js/util/expr/__test__/*test.js --compilers js:babel-core/register --requires ignore-styles
 
-import {encodeUrl, encodeUrlString} from '../WebUtil.js';
+import {encodeUrl, encodeUrlString, getSizeAsString, GIG, K, MEG} from '../WebUtil.js';
 
 describe('A test suite for WebUtil.js', () => {
 
@@ -48,5 +48,15 @@ describe('A test suite for WebUtil.js', () => {
         const first = encodeUrlString('http://acme.org/relative path/ref?a=key=123');
         const again = encodeUrlString(first);
         expect(first).toBe(again);
+    });
+
+    test('getSizeAsString: kilobytes, megabytes to a tenth, gigabytes to a hundredth', () => {
+        expect(getSizeAsString(539277)).toBe('527K');
+        expect(getSizeAsString(1248497280)).toBe('1190.7M'); // 1190.67 MB
+        expect(getSizeAsString(5.96 * MEG)).toBe('6.0M');
+        expect(getSizeAsString(2.05 * GIG)).toBe('2.05G');
+        expect(getSizeAsString(String(3 * GIG))).toBe('3.00G'); // table meta sizes can be strings
+        expect(getSizeAsString(K / 2)).toBe('1K');
+        expect(getSizeAsString(0)).toBe('');
     });
 });

@@ -21,7 +21,7 @@ import {
 } from '../tables/TablesCntlr';
 import {getActiveTableId, getMetaEntry, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
-import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
+import {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {UPDATE_VIEWER_CUSTOM_DATA} from '../visualize/VisConst';
 import {
     getObsCoreAccessURL, getObsCoreSRegion, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
@@ -52,8 +52,8 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
 
 const loadedTablesIds= new Map();
 
-function isTableChartNormalViewAction(payload, type) {
-    const {mode, view, tbl_id} = payload;
+function isTableChartNormalViewAction(payload, type, tbl_id) {
+    const {mode, view} = payload;
     if (type !== SET_LAYOUT_MODE) return false;
     const normal = mode === LO_MODE.expanded && (view === LO_VIEW.none || (view !== LO_VIEW.tables && view !== LO_VIEW.xyPlots));
     if (normal) return true;
@@ -98,7 +98,8 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, imageAsTableInfo
     return dataTableReq;
 }
 
-function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCharts, noopId) {
+function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCharts, actionWatcherForTableId) {
+    let productLeft= false;
     dispatchTableSearch(dataTableReq,
         {
             logHistory: false,
@@ -110,6 +111,7 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
         });
 
     onTableLoaded(tbl_id).then( () => {
+        if (productLeft) return; // left while the table was loading, so its charts are not wanted
         if (dispatchCharts) {
             dispatchCharts.forEach( (c) => {
                 if (c.useChartChooser) {
@@ -127,9 +129,11 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     });
 
     return () => {
+        productLeft= true;
+        // the cache entry is deleted after this, so stop the watcher even when the table is kept
+        dispatchCancelActionWatcher(actionWatcherForTableId);
         const table= getTblById(tbl_id);
         if (!table || table.isFetching) return;
-        dispatchCancelActionWatcher(noopId);
         dispatchTableRemove(tbl_id,false);
         dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
     };
@@ -177,7 +181,7 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
         const serDefAry= getServiceDescriptors(table);
         if (!serDefAry || !serDefAry.length) return;
         const dlSerDef= findDataLinkServeDescs(serDefAry);
-        if (!dlSerDef) return;
+        if (!dlSerDef?.length) return;
         url= makeDlUrl(dlSerDef[0],table,row);
     }
     if (!url) return;
@@ -250,13 +254,13 @@ export function createChartTableActivate({chartAndTable=false, source, titleInfo
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
             const allChartIds= chartAndTable ? dispatchCharts.map( (c) => c.chartId) : [];
-            const noopId = 'noop-' + tbl_id;
+            const actionWatcherForTableId = 'actionWatcherForTable-' + tbl_id;
             dispatchAddActionWatcher({
-                id: noopId,
+                id: actionWatcherForTableId,
                 actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE, CHART_UI_EXPANDED, ComponentCntlr.COMPONENT_STATE_CHANGE],
                 callback: ({payload,type}) => {
                     const tableInfo= loadedTablesIds.get(tbl_id);
-                    if (isTableChartNormalViewAction(payload,type) && loadedTablesIds.has(tbl_id)) {
+                    if (isTableChartNormalViewAction(payload,type,tbl_id) && loadedTablesIds.has(tbl_id)) {
                         tableInfo.deferCleanup=true;
                     } else if (type === CHART_UI_EXPANDED && allChartIds?.includes(payload.chartId)) {
                         tableInfo.doCleanup=false;
@@ -272,7 +276,7 @@ export function createChartTableActivate({chartAndTable=false, source, titleInfo
             });
 
             const {tableGroupViewerId}= activateParams;
-            const cleanupFunc= loadTableAndCharts(dataTableReq,tbl_id,tableGroupViewerId,dispatchCharts, noopId);
+            const cleanupFunc= loadTableAndCharts(dataTableReq,tbl_id,tableGroupViewerId,dispatchCharts, actionWatcherForTableId);
             loadedTablesIds.set(tbl_id, {request:dataTableReq, source,
                 doCleanup:true, deferCleanup:false, cleanupFunc});
         }
@@ -312,7 +316,7 @@ function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,tit
             data= [{tbl_id, x, y, mode}];
         }
         else if (simpleChartType===ChartType.Histogram) {
-            const columnOrExpr= yAxisColName || yAxisColName || computeYAxis || computeXAxis;
+            const columnOrExpr= xAxisColName || yAxisColName || computeYAxis || computeXAxis;
             data= [{
                 type: 'fireflyHistogram',
                 firefly: {
@@ -478,7 +482,8 @@ export function makeMultiTableActivate(activateObj,activateParams) {
 
         Promise.all(tblIdList.map( async (tbl_id) => await onTableLoaded(tbl_id)))
             .then( () => {
-                if (lastTblId) dispatchActiveTableChanged(lastTblId,activateParams.tableGroupViewerId);
+                // the table ids repeat from row to row, so the last active one is restored, but only if this product has it
+                if (tblIdList.includes(lastTblId)) dispatchActiveTableChanged(lastTblId,activateParams.tableGroupViewerId);
             });
 
         const id= tblIdList.join('-');
@@ -498,10 +503,11 @@ export function makeMultiTableActivate(activateObj,activateParams) {
                 case TBL_RESULTS_ACTIVE:
                     if (action.payload.tbl_group!==activateParams.tableGroupViewerId) return;
                     const tbl_id= action.payload.tbl_id;
+                    if (!tblIdList.includes(tbl_id)) return;
                     idx= tblIdList.indexOf(tbl_id);
                     const newChartId= chartList[idx];
-                    if (getViewer(getMultiViewRoot(),activateParams.chartViewerId)?.customData.activeItemId!==newChartId) {
-                        dispatchUpdateCustom(activateParams.chartViewerId, {activeItemId: chartList[idx]});
+                    if (getViewer(getMultiViewRoot(),activateParams.chartViewerId)?.customData?.activeItemId!==newChartId) {
+                        dispatchUpdateCustom(activateParams.chartViewerId, {activeItemId: newChartId});
                     }
                     break;
             }

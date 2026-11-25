@@ -19,8 +19,6 @@ export const WS_CONNID_HD = 'FF-connID';
 
 export const MEG          = 1048576;
 export const GIG          = 1048576 * 1024;
-const MEG_TENTH    = MEG / 10;
-const GIG_HUNDREDTH= GIG / 100;
 export const K            = 1024;
 
 /*global __PROPS__*/        // this is defined at build-time.
@@ -364,28 +362,6 @@ export function copyToClipboard(str) {
     void navigator.clipboard?.writeText(str);
 }
 
-
-// export function copyToClipboard(str) {
-//     const el = document.createElement('textarea');  // Create a <textarea> element
-//     el.value = str;                                 // Set its value to the string that you want copied
-//     el.setAttribute('readonly', '');                // Make it readonly to be tamper-proof
-//     el.style.position = 'absolute';
-//     el.style.left = '-9999px';                      // Move outside the screen to make it invisible
-//     document.body.appendChild(el);                  // Append the <textarea> element to the HTML document
-//     const selected =
-//         document.getSelection().rangeCount > 0      // Check if there is any content selected previously
-//             ? document.getSelection().getRangeAt(0) // Store selection if found
-//             : false;                                // Mark as false to know no selection existed before
-//     el.select();                                    // Select the <textarea> content
-//     document.execCommand('copy');                   // Copy - only works as a result of a user action (e.g. click events)
-//     document.body.removeChild(el);                  // Remove the <textarea> element
-//     if (selected) {                                 // If a selection existed before copying
-//         document.getSelection().removeAllRanges();  // Unselect everything on the HTML document
-//         document.getSelection().addRange(selected); // Restore the original selection
-//     }
-// }
-
-
 // export function downloadSimple(url) {
 //     let nullFrame = document.getElementById('null_frame');
 //     if (!nullFrame) return;
@@ -439,30 +415,15 @@ export function parseUrl(url) {
     };
 }
 
-export function getSizeAsString(size) {
-    const  kStr= 'K';
-    const  mStr= 'M';
-    const  gStr= 'G';
-
-    if (size > 0 && size < (MEG)) {
-        return (Math.round(size / K)) + kStr;
-    }
-    else if (size >= (MEG) && size <  (2*GIG) ) {
-        const megs = Math.round(size / MEG);
-        const  remain=  Math.round(size % MEG);
-        const decimal =  Math.round(remain / MEG_TENTH);
-        return megs +'.'+ decimal + mStr;
-    }
-    else if (size >= (2*GIG) ) {
-        const  gigs =  Math.round(size / GIG);
-        const remain=  Math.round(size % GIG);
-        const decimal =  Math.round(remain / GIG_HUNDREDTH);
-        return gigs +'.'+ decimal + gStr;
-    }
+export function getSizeAsString(size=0) {
+    if (!size) return '';
+    if (size > 0 && size < (MEG)) return (Math.round(size / K)) + 'K';
+    else if (size >= (MEG) && size <  (2*GIG) ) return (size / MEG).toFixed(1) + 'M';
+    else return (size / GIG).toFixed(2) + 'G';
 }
 
 /**
- * Diff the the two objects and prints differences to console
+ * Diff the two objects and prints differences to console
  * @param o1
  * @param o2
  * @param p the title

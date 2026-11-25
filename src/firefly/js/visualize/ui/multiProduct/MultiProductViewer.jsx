@@ -4,7 +4,7 @@
 import {Box, Stack} from '@mui/joy';
 import {isFunction} from 'lodash';
 import {bool, string} from 'prop-types';
-import React, {memo, useContext, useEffect, useState} from 'react';
+import React, {memo, useContext, useEffect, useRef, useState} from 'react';
 import {
     dataProductRoot, dispatchInitDataProducts, dispatchSetSearchParams,
     dispatchUpdateActiveKey, getActivateParams,
@@ -58,6 +58,7 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
+    const currentDisplayedProduct= useRef({});
     const dataProductsState = useStoreConnector((old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
             return (!old || (newDp!==old && newDp.displayType)) ? newDp : old;
@@ -74,6 +75,8 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     const extraction= enableExtraction && dataProductsState.extraction;
 
    const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
+
+    if (!isWorkingState) currentDisplayedProduct.current= {displayType, metaDataTableId}; // eslint-disable-line react-hooks/refs
 
     useEffect(() => {
         dispatchAddViewer(imageViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true,true);
@@ -106,10 +109,10 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
         const deActivate= activate?.(menu,searchParams);
         return () => isFunction(deActivate) &&
             deActivate( {
-                nextDisplayType:displayType,
-                nextMetaDataTableId:metaDataTableId
+                nextDisplayType:currentDisplayedProduct.current.displayType,
+                nextMetaDataTableId:currentDisplayedProduct.current.metaDataTableId
             });
-    }, [activate,searchParams,allowsInput]);
+    }, [activate,searchParams,allowsInput]);// eslint-disable-line react-hooks/exhaustive-deps
 
     const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDef?.serDefParams?.some( (sdp) => !sdp.ref));
 
