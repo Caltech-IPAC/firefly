@@ -91,7 +91,7 @@ export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelecte
     const selectInfo = useStoreConnector(selectInfoGetter);
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
 
-    const onClick = useCallback(() => {
+    const onClick = () => {
         if (selectInfoCls.getSelectedCount() || checkSelectedRow===false) {
             if(hasOnlyProprietaryData(getTblById(tbl_id))){
                 showInfoPopup('You do not have permission to download the selected data set(s).', 'Private Data Selected');
@@ -105,7 +105,7 @@ export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelecte
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
-    }, [selectInfo]);
+    };
 
     const isRowSelected = selectInfoCls.getSelectedCount()>0;
 

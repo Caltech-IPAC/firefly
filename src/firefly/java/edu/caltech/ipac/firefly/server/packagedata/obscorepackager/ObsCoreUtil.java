@@ -123,9 +123,10 @@ public class ObsCoreUtil {
 
         if (colNames != null) {
             for (String col : colNames) {
-                String value = (String) dgDataUrl.get(idx, col);
-                if (value != null) {
-                    file_name += makeValidString(value) + "-";
+                // template columns may be non-string (e.g. ra); skip empty values so a blank cell can't produce an empty prefix
+                String value = makeValidString(Objects.toString(dgDataUrl.get(idx, col), ""));
+                if (!value.isEmpty()) {
+                    file_name += value + "-";
                 }
             }
         }

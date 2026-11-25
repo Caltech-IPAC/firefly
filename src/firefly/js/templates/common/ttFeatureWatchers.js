@@ -3,7 +3,7 @@ import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
-import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getMetaEntry, getObjectMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
@@ -97,7 +97,10 @@ function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
     const hostname = getHostname(sRequest?.source) ?? getHostname(sRequest?.serviceUrl);
     const serviceId= getMetaEntry(tbl_id,MetaConst.DATA_SERVICE_ID);
     const ops= getDataServiceOptionsFallback(serviceId, hostname) ?? {};
-    const template= ops.productTitleTemplate;
+    // downloadFileNameTemplate names downloaded files without changing the UI product titles (productTitleTemplate);
+    // the table's own setting (e.g. from the search that made it) wins over the app-level one
+    const template= getObjectMetaEntry(tbl_id, MetaConst.DATA_SERVICE_OPTIONS)?.downloadFileNameTemplate
+        ?? ops.downloadFileNameTemplate ?? ops.productTitleTemplate;
     const useSourceUrlFileName= ops.packagerUsesSourceUrlFileName;
     const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);

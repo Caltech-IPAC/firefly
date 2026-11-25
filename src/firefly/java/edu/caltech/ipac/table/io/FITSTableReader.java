@@ -574,7 +574,7 @@ public final class FITSTableReader
             long zerosLong = tzero != null ? Util.Try.it(() -> Long.parseUnsignedLong(tzero)).getOrElse(0L) : 0;
             return new EvalValScaledLong(blankVal, hasBlank, scaleLong, zerosLong);
         }
-        else if (cTypeStr.contains("int") || cTypeStr.contains("short")) {
+        else if (cTypeStr.contains("int") || cTypeStr.contains("short") || cTypeStr.contains("byte")) {
             long scaleLong = tscal != null ? Util.Try.it(() -> Long.parseLong(tscal)).getOrElse(1L) : 1L;
             long zerosLong = tzero != null ? Util.Try.it(() -> Long.parseUnsignedLong(tzero)).getOrElse(0L) : 0;
             return new EvalValScaledInt(blankVal, hasBlank, scaleLong, zerosLong);
