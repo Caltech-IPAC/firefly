@@ -67,6 +67,7 @@ public final class IpacTableReader {
             handler.startTable(0);
 
             IpacTableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
+            resolveUntypedColumns(tableDef);
             DataGroup headers = create(tableDef, onlyColumns);
             handler.header(headers);
 
@@ -108,6 +109,23 @@ public final class IpacTableReader {
             part.setDetails(TableUtil.getDetails(0, meta));
         }
         return report;
+    }
+
+    /**
+     * Type untyped columns from the first data row (blank -> String) before the header is handed out;
+     * handlers like DbIngest create the table from it, so types can't change mid-stream.
+     */
+    private static void resolveUntypedColumns(IpacTableDef tableDef) {
+        String firstRow = tableDef.getExtras() == null ? null : tableDef.getExtras().getValue();
+        for (DataType col : tableDef.getCols()) {
+            if (col.getDataType() != null) continue;
+            TableUtil.ParsedColInfo colPosition = tableDef.getParsedInfo(col.getKeyName());
+            if (firstRow != null && colPosition != null && colPosition.startIdx < firstRow.length()) {
+                String val = firstRow.substring(colPosition.startIdx, Math.min(colPosition.endIdx, firstRow.length())).trim();
+                if (!val.equals(col.getNullString())) IpacTableUtil.guessDataType(col, val);
+            }
+            if (col.getDataType() == null) col.setDataType(String.class);
+        }
     }
 
     private static DataGroup create(IpacTableDef tableDef, String... onlyColumns) {
